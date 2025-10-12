@@ -22,11 +22,11 @@ endif()
 
 #file(TO_CMAKE_PATH "$ENV{VCPKG_ROOT}/installed/${TARGETPLATFORM}/include" VCPKG_INSTALL_DIR)
 
-add_executable("RetroFuturaGUI" 
+add_library("RetroFuturaGUI"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/widgets/IWidgetBase.cpp"
 )
 
-target_include_directories("RetroFuturaGUI" PRIVATE
+target_include_directories("RetroFuturaGUI" PUBLIC
     "${CMAKE_CURRENT_SOURCE_DIR}/source"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/widgets"
 )
@@ -48,7 +48,7 @@ endif()
 # Check for GLFW installation
 find_package(glfw3 CONFIG REQUIRED)
 if(glfw3_FOUND)
-    message(STATUS "GLFW is installed and found: ${GLFW3_INCLUDE_DIRS}")
+    message(STATUS "GLFW is installed and found")
 else()
     message(FATAL_ERROR "GLFW is not found. Please install GLFW via VCPKG.")
 endif()
@@ -56,7 +56,7 @@ endif()
 # Check for gml installation
 find_package(glm CONFIG REQUIRED)
 if(glm_FOUND)
-    message(STATUS "glm is installed and found: ${glm_INCLUDE_DIRS}")
+    message(STATUS "glm is installed and found")
 else()
     message(FATAL_ERROR "glm is not found. Please install glm via VCPKG.")
 endif()
@@ -64,7 +64,7 @@ endif()
 # Check for GLEW installation
 find_package(GLEW CONFIG REQUIRED)
 if(GLEW_FOUND)
-    message(STATUS "GLEW is installed and found: ${GLEW_INCLUDE_DIRS}")
+    message(STATUS "GLEW is installed and found")
 else()
     message(FATAL_ERROR "GLEW is not found. Please install GLEW via VCPKG.")
 endif()
@@ -72,7 +72,7 @@ endif()
 # Check for glad installation
 find_package(glad CONFIG REQUIRED)
 if(TARGET glad::glad)
-    message(STATUS "glad is installed and found: ${glad_INCLUDE_DIRS}")
+    message(STATUS "glad is installed and found")
 else()
     message(FATAL_ERROR "glad is not found. Please install glad via VCPKG.")
 endif()
@@ -80,12 +80,12 @@ endif()
 # Check for Freetype installation
 find_package(Freetype CONFIG REQUIRED)
 if(TARGET Freetype::Freetype)
-    message(STATUS "Freetype is installed and found: ${Freetype_INCLUDE_DIRS}")
+    message(STATUS "Freetype is installed and found")
 else()
     message(FATAL_ERROR "Freetype is not found. Please install Freetype via VCPKG.")
 endif()
 
-target_link_libraries("RetroFuturaGUI" PRIVATE
+target_link_libraries("RetroFuturaGUI" PUBLIC
         OpenGL::GL 
         glfw
         Freetype::Freetype
@@ -93,4 +93,3 @@ target_link_libraries("RetroFuturaGUI" PRIVATE
         GLEW::GLEW
         glad::glad
 )
-# & "C:\Program Files\CMake\bin\cmake.exe" .. CMakeLists.txt -DTARGETPLATFORM=x64-windows -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake"
