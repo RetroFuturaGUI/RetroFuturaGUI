@@ -20,16 +20,24 @@ else()
     message(FATAL_ERROR "VCPKG is not installed or VCPKG_ROOT environment variable is not set. Please install VCPKG and/or set the VCPKG_ROOT environment variable.")
 endif()
 
-#file(TO_CMAKE_PATH "$ENV{VCPKG_ROOT}/installed/${TARGETPLATFORM}/include" VCPKG_INSTALL_DIR)
-
 add_library("RetroFuturaGUI"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/widgets/IWidgetBase.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/source/widgets/IWidget.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/source/widgets/MainWindow.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/source/widgets/Window.cpp"
 )
 
 target_include_directories("RetroFuturaGUI" PUBLIC
     "${CMAKE_CURRENT_SOURCE_DIR}/source"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/widgets"
+    "${CMAKE_CURRENT_SOURCE_DIR}/PlatformBridge/source"
 )
+
+if(TARGETPLATFORM STREQUAL "x64-windows")
+    target_include_directories("RetroFuturaGUI" PUBLIC
+        "${CMAKE_CURRENT_SOURCE_DIR}/PlatformBridge/source/Windows"
+    )
+endif()
 
 # Check for OpenGL installation
 if(TARGETPLATFORM STREQUAL "x64-windows")
@@ -86,10 +94,25 @@ else()
 endif()
 
 target_link_libraries("RetroFuturaGUI" PUBLIC
-        OpenGL::GL 
-        glfw
-        Freetype::Freetype
-        glm::glm-header-only
-        GLEW::GLEW
-        glad::glad
+    OpenGL::GL 
+    glfw
+    Freetype::Freetype
+    glm::glm-header-only
+    GLEW::GLEW
+    glad::glad
 )
+
+if(TARGETPLATFORM STREQUAL "x64-windows")
+message(STATUS "Linking PlatformBridge for ${TARGETPLATFORM}")
+    if(BUILDTYPE STREQUAL "Debug")
+        message(STATUS "DEBUG")
+        target_link_libraries("RetroFuturaGUI" PRIVATE 
+            "${CMAKE_CURRENT_SOURCE_DIR}/PlatformBridge/libs/x64-windows/debug/PlatformBridge.lib"
+        )
+    else()
+        message(STATUS "RELEASE")
+        target_link_libraries("RetroFuturaGUI" PRIVATE 
+            "${CMAKE_CURRENT_SOURCE_DIR}/PlatformBridge/libs/x64-windows/release/PlatformBridge.lib"
+        )
+    endif()
+endif()
