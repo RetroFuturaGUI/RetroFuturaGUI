@@ -26,7 +26,7 @@ public:
 
 protected:
     std::string _name;
-    //WidgetTypeID _typeId;
+    WidgetTypeID _typeId;
     void* _parent;
     void* _child;
     

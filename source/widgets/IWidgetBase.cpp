@@ -3,7 +3,7 @@
 IWidgetBase::IWidgetBase(const std::string& name, void* parent)
 {
     _name = name;
-    //_typeId = WidgetTypeID::None;
+    _typeId = WidgetTypeID::None;
     _parent = parent;
 }
 
