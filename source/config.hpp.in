@@ -11,3 +11,15 @@ typedef int64_t i64;
 typedef uint64_t u64;
 typedef float f32;
 typedef double f64;
+
+enum class Sizing : i32
+{
+    UseCurrent = -1,
+    Default = -2
+};
+
+enum class WidgetTypeID : i32
+{
+    None = 0,
+    Label = 1,
+};
