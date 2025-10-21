@@ -1,0 +1,3 @@
+[submodule "PlatformBridge"]
+	path = PlatformBridge
+	url = https://github.com/RetroFuturaGUI/PlatformBridge.git
