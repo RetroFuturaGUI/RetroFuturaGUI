@@ -10,6 +10,7 @@ namespace RetroFuturaGUI
         MainWindow(const std::string& name, i32 width, i32 height, void* parent = nullptr, Sizing minWidth = Sizing::UseCurrent, Sizing minHeight = Sizing::UseCurrent, Sizing maxWidth = Sizing::UseCurrent, Sizing maxHeight = Sizing::UseCurrent);
         //MainWindow() = default;
         bool WindowShouldClose();
+        void SetBackgroundColor(const glm::vec4& color);
         void Draw();
         ~MainWindow();
 

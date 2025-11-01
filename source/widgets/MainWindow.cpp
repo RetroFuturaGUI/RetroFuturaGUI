@@ -51,3 +51,9 @@ bool RetroFuturaGUI::MainWindow::WindowShouldClose()
 
 	return true;
 }
+
+void RetroFuturaGUI::MainWindow::SetBackgroundColor(const glm::vec4 &color)
+{
+	if (_mainWindow)
+		_mainWindow->SetBackgroundColor(color);
+}

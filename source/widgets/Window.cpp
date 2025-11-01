@@ -11,6 +11,7 @@ RetroFuturaGUI::Window::Window(const std::string& name, i32 width, i32 height, v
 void RetroFuturaGUI::Window::createWindow()
 {
 	glfwWindowHint(GLFW_DECORATED, GLFW_FALSE);
+	glfwWindowHint(GLFW_TRANSPARENT_FRAMEBUFFER, GLFW_TRUE);
 	_window = glfwCreateWindow(_width, _height, "glfw test", nullptr, nullptr);
 
 	//std::println("Creating window: {0} ({1}x{2})", _name, _width, _height);
@@ -24,6 +25,9 @@ void RetroFuturaGUI::Window::createWindow()
 
 	glfwMakeContextCurrent(_window);
 	glfwSetMouseButtonCallback(_window, mouseButtonCallback);
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	SetBackgroundColor(_backgroundColor);
 }
 
 void RetroFuturaGUI::Window::mouseButtonCallback(GLFWwindow* window, i32 button, i32 action, i32 mods)
@@ -85,13 +89,10 @@ bool RetroFuturaGUI::Window::WindowShouldClose()
 
 void RetroFuturaGUI::Window::Draw()
 {
-    // Clear the screen
 		glClear(GL_COLOR_BUFFER_BIT);
 
-		// Render the custom top bar
 		renderCustomTopBar();
 
-		// Swap buffers and poll events
 		glfwSwapBuffers(_window);
 		glfwPollEvents();
 
@@ -118,4 +119,10 @@ void RetroFuturaGUI::Window::SetHeight(i32 height)
 {
 	_height = height;
 	glfwSetWindowSize(_window, _width, _height);
+}
+
+void RetroFuturaGUI::Window::SetBackgroundColor(const glm::vec4 &color)
+{
+	_backgroundColor = color;
+	glClearColor(_backgroundColor.r, _backgroundColor.g, _backgroundColor.b, _backgroundColor.a);
 }
