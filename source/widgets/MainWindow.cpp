@@ -20,7 +20,7 @@ RetroFuturaGUI::MainWindow::MainWindow(const std::string& name, i32 width, i32 h
 
 	glfwWindowHint(GLFW_DECORATED, GLFW_FALSE);
 
-	_mainWindow = new Window(name, width, height, parent, minWidth, minHeight, maxWidth, maxHeight);
+	_mainWindow = std::make_unique<Window>(name, width, height, parent, minWidth, minHeight, maxWidth, maxHeight);
 
 	if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
     {
@@ -31,6 +31,11 @@ RetroFuturaGUI::MainWindow::MainWindow(const std::string& name, i32 width, i32 h
 	PlatformBridge::Monitors::GetMonitors();
 
 	_mainWindowInitialized = true;
+}
+
+RetroFuturaGUI::MainWindow::~MainWindow()
+{
+    glfwTerminate();
 }
 
 void RetroFuturaGUI::MainWindow::Draw()

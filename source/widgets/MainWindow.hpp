@@ -1,4 +1,5 @@
 #pragma once
+#include <memory>
 #include "Window.hpp"
 
 namespace RetroFuturaGUI
@@ -10,10 +11,10 @@ namespace RetroFuturaGUI
         //MainWindow() = default;
         bool WindowShouldClose();
         void Draw();
-        ~MainWindow(){ delete _mainWindow; }
+        ~MainWindow();
 
     private:
-    Window* _mainWindow;
+    std::unique_ptr<Window> _mainWindow;
     static inline bool _mainWindowInitialized = false;
 
     };
