@@ -28,8 +28,8 @@ RetroFuturaGUI::MainWindow::MainWindow(const std::string& name, i32 width, i32 h
         return;
     }
 
-	PlatformBridge::Monitors::GetMonitors();
-
+	PlatformBridge::RefreshPlatformBridge();
+	ShaderManager::Init();
 	_mainWindowInitialized = true;
 }
 
