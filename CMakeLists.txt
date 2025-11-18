@@ -27,12 +27,14 @@ add_library("RetroFuturaGUI"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/Window.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Shaders/Shader.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Shaders/ShaderManager.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/source/Shapes/Rectangle.cpp"
 )
 
 target_include_directories("RetroFuturaGUI" PUBLIC
     "${CMAKE_CURRENT_SOURCE_DIR}/source"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets"
     "${CMAKE_CURRENT_SOURCE_DIR}/PlatformBridge/source" #remove once PlatformBridge CMakeLists.txt is finalized
+    "${CMAKE_CURRENT_SOURCE_DIR}/source/Shapes"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Shaders"
 )
 
