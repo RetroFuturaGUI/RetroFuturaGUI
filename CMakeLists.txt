@@ -21,16 +21,16 @@ else()
 endif()
 
 add_library("RetroFuturaGUI"
-    "${CMAKE_CURRENT_SOURCE_DIR}/source/widgets/IWidgetBase.cpp"
-    "${CMAKE_CURRENT_SOURCE_DIR}/source/widgets/IWidget.cpp"
-    "${CMAKE_CURRENT_SOURCE_DIR}/source/widgets/MainWindow.cpp"
-    "${CMAKE_CURRENT_SOURCE_DIR}/source/widgets/Window.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/IWidgetBase.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/IWidget.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/MainWindow.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/Window.cpp"
 )
 
 target_include_directories("RetroFuturaGUI" PUBLIC
     "${CMAKE_CURRENT_SOURCE_DIR}/source"
-    "${CMAKE_CURRENT_SOURCE_DIR}/source/widgets"
-    "${CMAKE_CURRENT_SOURCE_DIR}/PlatformBridge/source"
+    "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets"
+    "${CMAKE_CURRENT_SOURCE_DIR}/PlatformBridge/source" #remove once PlatformBridge CMakeLists.txt is finalized
 )
 
 if(TARGETPLATFORM STREQUAL "x64-windows")
@@ -102,7 +102,7 @@ target_link_libraries("RetroFuturaGUI" PUBLIC
     glad::glad
 )
 
-if(TARGETPLATFORM STREQUAL "x64-windows")
+if(TARGETPLATFORM STREQUAL "x64-windows") #remove once PlatformBridge CMakeLists.txt is finalized
 message(STATUS "Linking PlatformBridge for ${TARGETPLATFORM}")
     if(BUILDTYPE STREQUAL "Debug")
         message(STATUS "DEBUG")
