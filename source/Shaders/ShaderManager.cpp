@@ -6,6 +6,7 @@ using namespace RetroFuturaGUI;
 
 std::unique_ptr<Shader> ShaderManager::_fill;
 std::unique_ptr<Shader> ShaderManager::_fillGradient;
+std::unique_ptr<Shader> ShaderManager::_lineFill;
 
 Shader& ShaderManager::GetFillShader()
 {
@@ -15,6 +16,11 @@ Shader& ShaderManager::GetFillShader()
 Shader& ShaderManager::GetFillGradientShader()
 {
     return *_fillGradient;
+}
+
+Shader& RetroFuturaGUI::ShaderManager::GetLineFillShader()
+{
+    return *_lineFill;
 }
 
 void ShaderManager::Init()
@@ -45,5 +51,11 @@ void RetroFuturaGUI::ShaderManager::compileShaders()
     _fillGradient = std::make_unique<Shader>(
         std::string(exeDir + "fillGradient.vs").c_str(), 
         std::string(exeDir + "fillGradient.fs").c_str()
+    );
+
+    _lineFill = std::make_unique<Shader>(
+        std::string(exeDir + "Line.vs").c_str(), 
+        std::string(exeDir + "Line.fs").c_str(),
+        std::string(exeDir + "Line.gs").c_str()
     );
 }

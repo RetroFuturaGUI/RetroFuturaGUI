@@ -13,7 +13,11 @@ namespace RetroFuturaGUI
         /// @brief Get the fill gradient shader
         /// @return Reference to the fill gradient Shader object
         static Shader& GetFillGradientShader();
+        /// @brief Get the line fill shader
+        /// @return Reference to the line fill Shader object
+        static Shader& GetLineFillShader();
 
+        /// @brief Initialize the ShaderManager and compile all shaders
         static void Init();
 
     private:
@@ -32,5 +36,6 @@ namespace RetroFuturaGUI
         static void compileShaders();
         static std::unique_ptr<Shader> _fill;
         static std::unique_ptr<Shader> _fillGradient;
+        static std::unique_ptr<Shader> _lineFill;
     };
 }
