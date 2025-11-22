@@ -9,7 +9,7 @@ namespace RetroFuturaGUI
     class Shader
     {
     public:
-        Shader(const char* vertexPath, const char* fragmentPath);
+        Shader(const char* vertexPath, const char* fragmentPath, const char* geometryPath = nullptr);
         ~Shader();
 
         void UseProgram();
@@ -25,16 +25,18 @@ namespace RetroFuturaGUI
         void SetUniformMat2(const std::string& name, const glm::mat2& mat) const;
         void SetUniformMat3(const std::string& name, const glm::mat3& mat) const;
         void SetUniformMat4(const std::string& name, const glm::mat4& mat) const;
-        uint32_t GetProgramId() const;
+        u32 GetProgramId() const;
+        i32 GetProjectionLocation() const;
         //bool LoadVertexShaderFromFile(const char* vertexPath);
         //bool LoadFragmentShaderFromFile(const char* fragmentPath);
         //bool LoadVertexShaderFromString(const char* vertexCode);
         //bool LoadFragmentShaderFromString(const char* fragmentCode);
 
     private:
-        uint32_t _programId;
+        u32 _programId = 0;
+        i32 _projectionLocation = -1;
 
         std::string loadShaderFile(const char* shaderPath);
-        void compileShader(const char* shaderCode, const int shaderType);
+        u32 compileShader(const char* shaderCode, const int shaderType);
     };
 }

@@ -3,15 +3,46 @@
 #include <sstream>
 #include <print>
 
-RetroFuturaGUI::Shader::Shader(const char* vertexPath, const char* fragmentPath)
+RetroFuturaGUI::Shader::Shader(const char* vertexPath, const char* fragmentPath, const char* geometryPath)
 {
     std::string vertexCode = loadShaderFile(vertexPath);
     std::string fragmentCode = loadShaderFile(fragmentPath);
     const char* vShaderCode = vertexCode.c_str();
     const char* fShaderCode = fragmentCode.c_str();
     _programId = glCreateProgram();
-	compileShader(vShaderCode, GL_VERTEX_SHADER);
-	compileShader(fShaderCode, GL_FRAGMENT_SHADER);
+	u32 vertexShader = compileShader(vShaderCode, GL_VERTEX_SHADER);
+	u32 fragmentShader = compileShader(fShaderCode, GL_FRAGMENT_SHADER);
+    u32 geometryShader = 0;
+
+    if (geometryPath != nullptr)
+    {
+        std::string geometryCode = loadShaderFile(geometryPath);
+        const char* gShaderCode = geometryCode.c_str();
+        geometryShader = compileShader(gShaderCode, GL_GEOMETRY_SHADER);
+    }
+
+    glLinkProgram(_programId);
+
+    i32 success;
+    char infoLog[512];
+    glGetProgramiv(_programId, GL_LINK_STATUS, &success);
+
+    if (!success) 
+    {
+        glGetProgramInfoLog(_programId, 512, NULL, infoLog);
+        std::println("ERROR::SHADER::LINKING_FAILED\n{}", infoLog);
+    }
+
+    glDeleteShader(vertexShader);
+    glDeleteShader(fragmentShader);
+    if (geometryPath != nullptr)
+        glDeleteShader(geometryShader);
+
+    //glUseProgram(_programId);
+    _projectionLocation = glGetUniformLocation(_programId, "uProjection");
+
+    if (_projectionLocation == -1)
+        std::println("Warning: 'uProjection' uniform not found in shader program.");
 }
 
 RetroFuturaGUI::Shader::~Shader()
@@ -84,9 +115,14 @@ void RetroFuturaGUI::Shader::SetUniformMat4(const std::string& name, const glm::
     glUniformMatrix4fv(glGetUniformLocation(_programId, name.c_str()), 1, GL_FALSE, &mat[0][0]);
 }
 
-uint32_t RetroFuturaGUI::Shader::GetProgramId() const
+u32 RetroFuturaGUI::Shader::GetProgramId() const
 {
     return _programId;
+}
+
+i32 RetroFuturaGUI::Shader::GetProjectionLocation() const
+{
+    return _projectionLocation;
 }
 
 std::string RetroFuturaGUI::Shader::loadShaderFile(const char* shaderPath)
@@ -111,22 +147,22 @@ std::string RetroFuturaGUI::Shader::loadShaderFile(const char* shaderPath)
     return shaderCode;
 }
 
-void RetroFuturaGUI::Shader::compileShader(const char* shaderCode, const int shaderType)
+u32 RetroFuturaGUI::Shader::compileShader(const char* shaderCode, const int shaderType)
 {
-	if (shaderType != GL_VERTEX_SHADER && shaderType != GL_FRAGMENT_SHADER)
+	if (shaderType != GL_VERTEX_SHADER && shaderType != GL_FRAGMENT_SHADER && shaderType != GL_GEOMETRY_SHADER)
 	{
 		std::println("ERROR::SHADER::INVALID_SHADER_TYPE");
-		return;
+		return 0;
 	}
 
 	if (shaderCode == nullptr || shaderCode[0] == '\0')
 	{
 		std::println("ERROR::SHADER::EMPTY_SHADER_CODE");
-		return;
+		return 0;
 	}
 
-    uint32_t shaderObject;
-    int success;
+    u32 shaderObject;
+    i32 success;
     char infoLog[512];
 
     shaderObject = glCreateShader(shaderType);
@@ -134,23 +170,23 @@ void RetroFuturaGUI::Shader::compileShader(const char* shaderCode, const int sha
     glCompileShader(shaderObject);
     glGetShaderiv(shaderObject, GL_COMPILE_STATUS, &success);
 
-    if (!success)
+    if (!success) 
     {
+        const char* shaderTypeStr = "";
+
+        switch(shaderType) 
+        {
+            case GL_VERTEX_SHADER: shaderTypeStr = "VERTEX"; break;
+            case GL_FRAGMENT_SHADER: shaderTypeStr = "FRAGMENT"; break;
+            case GL_GEOMETRY_SHADER: shaderTypeStr = "GEOMETRY"; break;
+            default: shaderTypeStr = "UNKNOWN"; break;
+        }
+
         glGetShaderInfoLog(shaderObject, 512, NULL, infoLog);
-        std::println("ERROR::SHADER::{}::COMPILATION_FAILED\n{}", shaderType == GL_VERTEX_SHADER ? "VERTEX" : "FRAGMENT", infoLog);
-        return;
-    };
-
-    glAttachShader(_programId, shaderObject);
-    glLinkProgram(_programId);
-    glGetProgramiv(_programId, GL_LINK_STATUS, &success);
-
-    if (!success)
-    {
-        glGetProgramInfoLog(_programId, 512, NULL, infoLog);
-        std::println("ERROR::SHADER::{}::LINKING_FAILED\n{}", shaderType == GL_VERTEX_SHADER ? "VERTEX" : "FRAGMENT", infoLog);
-        return;
+        std::println("ERROR::SHADER::{}::COMPILATION_FAILED\n{}", shaderTypeStr, infoLog);
+        return 0;
     }
 
-    glDeleteShader(shaderObject);
+    glAttachShader(_programId, shaderObject);
+    return shaderObject;
 }
