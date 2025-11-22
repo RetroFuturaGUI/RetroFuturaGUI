@@ -1,9 +1,9 @@
 #pragma once
 #include "config.hpp"
 #include <glad/glad.h>
-#include <glm/glm.hpp>
 #include <GLFW/glfw3.h>
 #include "ShaderManager.hpp"
+#include "Projection.hpp"
 #include <span>
 
 namespace RetroFuturaGUI
@@ -17,9 +17,9 @@ namespace RetroFuturaGUI
             GRADIENT
         };
 
-        Rectangle();
-        Rectangle(const glm::vec4& color);
-        Rectangle(std::span<const glm::vec4> colors, const float degree = 45.0f, const float animationSpeed = 0.0003f, const float rotationSpeed = 0.02f);
+        Rectangle(Projection& projection);
+        Rectangle(Projection& projection, const glm::vec4& color);
+        Rectangle(Projection& projection, std::span<const glm::vec4> colors, const float degree = 45.0f, const float animationSpeed = 0.0003f, const float rotationSpeed = 0.02f);
         ~Rectangle();
         void Draw();
         void UpdateAnimationSpeed(const float speed);
@@ -41,6 +41,7 @@ namespace RetroFuturaGUI
             2, 3, 0
         };
 
+        Projection& _projection;
         std::unique_ptr<glm::vec4[]> _colors;
         FillType _fillType = FillType::SOLID;
         u32 _colorCount = 0;

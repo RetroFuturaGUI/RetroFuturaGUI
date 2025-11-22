@@ -1,19 +1,23 @@
 #include "Rectangle.hpp"
+#include <glm/gtc/type_ptr.hpp>
 
 using namespace RetroFuturaGUI;
 
-Rectangle::Rectangle()
+Rectangle::Rectangle(Projection& projection)
+    : _projection(projection)
 {
     glm::vec4 color(1.0f, 1.0f, 1.0f, 1.0f);
     initBasic(std::span<const glm::vec4>(&color, 1));
 }
 
-Rectangle::Rectangle(const glm::vec4 &color)
+Rectangle::Rectangle(Projection& projection, const glm::vec4 &color)
+    : _projection(projection)
 {
     initBasic(std::span<const glm::vec4>(&color, 1));
 }
 
-Rectangle::Rectangle(std::span<const glm::vec4> colors, const float degree, const float animationSpeed, const float rotationSpeed)
+Rectangle::Rectangle(Projection& projection, std::span<const glm::vec4> colors, const float degree, const float animationSpeed, const float rotationSpeed)
+    : _projection(projection)
 {
     initBasic(colors);
     _degree = degree;
@@ -107,8 +111,12 @@ void RetroFuturaGUI::Rectangle::initBasic(std::span<const glm::vec4> colors)
 void RetroFuturaGUI::Rectangle::drawWithSolidFill()
 {            
     ShaderManager::GetFillShader().UseProgram();
+
+    i32 projectionLocation = ShaderManager::GetFillShader().GetProjectionLocation();       
+    if (projectionLocation != -1) 
+        glUniformMatrix4fv(projectionLocation, 1, GL_FALSE, glm::value_ptr(_projection.GetProjectionMatrix()));
+
     i32 locColor = glGetUniformLocation(ShaderManager::GetFillShader().GetProgramId(), "uColor");
-            
     if (locColor != -1) 
         glUniform4f(locColor, _colors[0].r, _colors[0].g, _colors[0].b, _colors[0].a);
 }
@@ -117,6 +125,10 @@ void RetroFuturaGUI::Rectangle::drawWithGradientFill()
 {
     ShaderManager::GetFillGradientShader().UseProgram();
     u32 progId = ShaderManager::GetFillGradientShader().GetProgramId();
+
+    i32 projectionLocation = ShaderManager::GetFillGradientShader().GetProjectionLocation();       
+    if (projectionLocation != -1) 
+        glUniformMatrix4fv(projectionLocation, 1, GL_FALSE, glm::value_ptr(_projection.GetProjectionMatrix()));
 
     _gradientOffset += _animationSpeed;
     if (_gradientOffset > 1.0f) 
