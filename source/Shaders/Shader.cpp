@@ -75,6 +75,11 @@ void RetroFuturaGUI::Shader::SetUniformVec2(const std::string& name, const glm::
     glUniform2fv(glGetUniformLocation(_programId, name.c_str()), 1, &value[0]);
 }
 
+void RetroFuturaGUI::Shader::SetUniformVec2(const std::string & name, const f32 * value, const u32 count) const
+{
+    glUniform2fv(glGetUniformLocation(_programId, name.c_str()), count, value);
+}
+
 void RetroFuturaGUI::Shader::SetUniformVec2(const std::string& name, float x, float y) const
 {
     glUniform2f(glGetUniformLocation(_programId, name.c_str()), x, y);
@@ -85,6 +90,11 @@ void RetroFuturaGUI::Shader::SetUniformVec3(const std::string& name, const glm::
     glUniform3fv(glGetUniformLocation(_programId, name.c_str()), 1, &value[0]);
 }
 
+void RetroFuturaGUI::Shader::SetUniformVec3(const std::string & name, const f32 * value, const u32 count) const
+{
+    glUniform3fv(glGetUniformLocation(_programId, name.c_str()), count, value);
+}
+
 void RetroFuturaGUI::Shader::SetUniformVec3(const std::string& name, float x, float y, float z) const
 {
     glUniform3f(glGetUniformLocation(_programId, name.c_str()), x, y, z);
@@ -93,6 +103,11 @@ void RetroFuturaGUI::Shader::SetUniformVec3(const std::string& name, float x, fl
 void RetroFuturaGUI::Shader::SetUniformVec4(const std::string& name, const glm::vec4& value) const
 {
     glUniform4fv(glGetUniformLocation(_programId, name.c_str()), 1, &value[0]);
+}
+
+void RetroFuturaGUI::Shader::SetUniformVec4(const std::string& name, const float* value, const u32 count) const
+{
+    glUniform4fv(glGetUniformLocation(_programId, name.c_str()), count, value);
 }
 
 void RetroFuturaGUI::Shader::SetUniformVec4(const std::string& name, float x, float y, float z, float w) const
