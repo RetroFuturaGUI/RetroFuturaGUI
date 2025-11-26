@@ -6,12 +6,18 @@ RetroFuturaGUI is a signal-slot-based GUI framework written in C++. It is design
 
 | # | Name | Depends on |
 |------|-----|------------|
-| 1 | Button, Window, MainWindow |  |
+| 1 | Button, Label, Window, MainWindow, Image |  |
 | 2 | linux support | 1 |
 | 3 | dll/lib compilation with C# and Python support| 2 |
-| 4 | More Widgets (Label, TextBox, Table, Image, VideoPlayer, AudioPlayer, 3D Model, Slider, CheckBox, DropdownBox, RadioButton, Window Bar) | 1 |
+| 4 | More Widgets (TextBox, Table, VideoPlayer, AudioPlayer, 3D Model, Slider, CheckBox, DropdownBox, RadioButton, Window Bar) | 1 |
 | 5 | bechaml | 4 |
 | 6 | VS Code extension with project generator | 5 |
 | 7 | Aesthetics | 6 |
-| 8 | macos, android, ios support | 1 |
-| 9 | gcn and wii support (devkitpro, libogc)
+| 8 | macos, android, ios support | 6 |
+| 9 | gcn and wii support (devkitpro, libogc) | 6 |
+| 10 | XBox, XBox360, XBox One Support (DirectX), Direct X for Windows | 6 |
+| 11 | Dreamcast Support | 6 |
+| 12 | Wii U Support  | 6 |
+| 13 | 3DS Support | 6 |
+| 14 | Switch Support | 6 |
+| 15 | Playstation Series Support | 6 |
