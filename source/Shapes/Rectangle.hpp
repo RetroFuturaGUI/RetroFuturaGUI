@@ -17,22 +17,25 @@ namespace RetroFuturaGUI
             GRADIENT
         };
 
-        Rectangle(Projection& projection);
-        Rectangle(Projection& projection, const glm::vec4& color);
-        Rectangle(Projection& projection, std::span<const glm::vec4> colors, const float degree = 45.0f, const float animationSpeed = 0.0003f, const float rotationSpeed = 0.02f);
+        Rectangle(Projection& projection, const f32 width, const f32 height);
+        Rectangle(Projection& projection, const glm::vec4& color, const f32 width, const f32 height);
+        Rectangle(Projection& projection, std::span<const glm::vec4> colors, const f32 width, const f32 height, const f32 degree = 45.0f, const f32 animationSpeed = 0.0003f, const f32 rotationSpeed = 0.02f);
         ~Rectangle();
         void Draw();
-        void UpdateAnimationSpeed(const float speed);
-        void UpdateDegree(const float degree);
-        void UpdateRotationSpeed(const float speed);
+        void UpdateAnimationSpeed(const f32 speed);
+        void UpdateDegree(const f32 degree);
+        void UpdateRotationSpeed(const f32 speed);
+        void Resize(const f32 width, const f32 height);
+        void Move(const f32 x, const f32 y);
+        void Rotate(const float degree);
 
     private:
         f32 _vertices[3 * 4] = 
         {
-            -0.5f, -0.5f, 0.0f,
-             0.5f, -0.5f, 0.0f,
-             0.5f,  0.5f, 0.0f,
-            -0.5f,  0.5f, 0.0f
+            -1.0f, -1.0f, 0.0f,
+             1.0f, -1.0f, 0.0f,
+             1.0f,  1.0f, 0.0f,
+            -1.0f,  1.0f, 0.0f
         };
 
         u32 _indices[3 * 2] = 
@@ -42,16 +45,25 @@ namespace RetroFuturaGUI
         };
 
         Projection& _projection;
+        glm::mat4 _scalingMatrix = glm::mat4(1.0f);
+        glm::mat4 _translationMatrix = glm::mat4(1.0f);
+        glm::mat4 _rotationMatrix = glm::mat4(1.0f);
         std::unique_ptr<glm::vec4[]> _colors;
         FillType _fillType = FillType::SOLID;
         u32 _colorCount = 0;
-        float _gradientOffset = 0.0f;
-        float _animationSpeed = 0.0003f;
-        float _degree = 45.0f;
-        float _rotationSpeed = 0.02f;
+        f32 _gradientOffset = 0.0f;
+        f32 _animationSpeed = 0.0003f;
+        f32 _degree = 45.0f;
+        f32 _rotationSpeed = 0.02f;
         u32 _vao = 0;
         u32 _vbo = 0;
         u32 _ebo = 0;
+        glm::vec2 _position = glm::vec2(0.0f, 0.0f);
+        f32 _rotation = 0.0f;
+        glm::vec4 _vertexPosition = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
+        const f32 _ndc[4][2] = { {-1.0f, -1.0f}, {1.0f, -1.0f}, {1.0f, 1.0f}, {-1.0f, 1.0f} };
+        
+
 
         void setupMesh();
         void initBasic(std::span<const glm::vec4> colors);

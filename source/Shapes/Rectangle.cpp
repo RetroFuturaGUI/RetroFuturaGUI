@@ -1,22 +1,25 @@
 #include "Rectangle.hpp"
 #include <glm/gtc/type_ptr.hpp>
+#include <glm/gtc/matrix_transform.hpp>
 
 using namespace RetroFuturaGUI;
 
-Rectangle::Rectangle(Projection& projection)
+Rectangle::Rectangle(Projection& projection, const f32 width, const f32 height)
     : _projection(projection)
 {
     glm::vec4 color(1.0f, 1.0f, 1.0f, 1.0f);
     initBasic(std::span<const glm::vec4>(&color, 1));
+    Resize(width, height);
 }
 
-Rectangle::Rectangle(Projection& projection, const glm::vec4 &color)
+Rectangle::Rectangle(Projection& projection, const glm::vec4 &color, const f32 width, const f32 height)
     : _projection(projection)
 {
     initBasic(std::span<const glm::vec4>(&color, 1));
+    Resize(width, height);
 }
 
-Rectangle::Rectangle(Projection& projection, std::span<const glm::vec4> colors, const float degree, const float animationSpeed, const float rotationSpeed)
+Rectangle::Rectangle(Projection& projection, std::span<const glm::vec4> colors, const f32 width, const f32 height, const f32 degree, const f32 animationSpeed, const f32 rotationSpeed)
     : _projection(projection)
 {
     initBasic(colors);
@@ -25,16 +28,10 @@ Rectangle::Rectangle(Projection& projection, std::span<const glm::vec4> colors, 
     _rotationSpeed = rotationSpeed;
 
     ShaderManager::GetFillGradientShader().UseProgram();
-
-    u32 progId = ShaderManager::GetFillGradientShader().GetProgramId();
-    i32 locColors = glGetUniformLocation(progId, "uColors");
-    glUniform4fv(locColors, 255, &_colors[0][0]);
-
-    i32 locDegree = glGetUniformLocation(progId, "uDegree");
-    glUniform1f(locDegree, _degree);
-
-    i32 locNum = glGetUniformLocation(progId, "uNumColors");
-    glUniform1i(locNum, _colorCount);
+    ShaderManager::GetFillGradientShader().SetUniformVec4("uColors", &_colors[0][0], 255);
+    ShaderManager::GetFillGradientShader().SetUniformFloat("uDegree", _degree);
+    ShaderManager::GetFillGradientShader().SetUniformInt("uNumColors", _colorCount);
+    Resize(width, height);
 }
 
 RetroFuturaGUI::Rectangle::~Rectangle()
@@ -63,19 +60,25 @@ void RetroFuturaGUI::Rectangle::Draw()
     glBindVertexArray(0);
 }
 
-void RetroFuturaGUI::Rectangle::UpdateAnimationSpeed(const float speed)
+void RetroFuturaGUI::Rectangle::UpdateAnimationSpeed(const f32 speed)
 {
     _animationSpeed = speed;
 }
 
-void RetroFuturaGUI::Rectangle::UpdateDegree(const float degree)
+void RetroFuturaGUI::Rectangle::UpdateDegree(const f32 degree)
 {
     _degree = degree;
 }
 
-void RetroFuturaGUI::Rectangle::UpdateRotationSpeed(const float speed)
+void RetroFuturaGUI::Rectangle::UpdateRotationSpeed(const f32 speed)
 {
     _rotationSpeed = speed;
+}
+
+void RetroFuturaGUI::Rectangle::Resize(const f32 width, const f32 height)
+{
+    glm::vec2 scale = glm::vec2(width, height);
+    _scalingMatrix = glm::scale(glm::mat4(1.0f), glm::vec3(scale, 1.0f));
 }
 
 void RetroFuturaGUI::Rectangle::setupMesh()
@@ -112,23 +115,22 @@ void RetroFuturaGUI::Rectangle::drawWithSolidFill()
 {            
     ShaderManager::GetFillShader().UseProgram();
 
-    i32 projectionLocation = ShaderManager::GetFillShader().GetProjectionLocation();       
-    if (projectionLocation != -1) 
-        glUniformMatrix4fv(projectionLocation, 1, GL_FALSE, glm::value_ptr(_projection.GetProjectionMatrix()));
+    //i32 projectionLocation = ShaderManager::GetFillShader().GetProjectionLocation();       
+    //if (projectionLocation != -1) 
+      //  glUniformMatrix4fv(projectionLocation, 1, GL_FALSE, glm::value_ptr(_projection.GetProjectionMatrix()));
 
-    i32 locColor = glGetUniformLocation(ShaderManager::GetFillShader().GetProgramId(), "uColor");
-    if (locColor != -1) 
-        glUniform4f(locColor, _colors[0].r, _colors[0].g, _colors[0].b, _colors[0].a);
+    ShaderManager::GetFillShader().SetUniformMat4("uProjection", _projection.GetProjectionMatrix());
+    ShaderManager::GetFillShader().SetUniformMat4("uScaling", _scalingMatrix);
+    ShaderManager::GetFillShader().SetUniformVec4("uColor", _colors[0]);
 }
 
 void RetroFuturaGUI::Rectangle::drawWithGradientFill()
 {
     ShaderManager::GetFillGradientShader().UseProgram();
-    u32 progId = ShaderManager::GetFillGradientShader().GetProgramId();
 
-    i32 projectionLocation = ShaderManager::GetFillGradientShader().GetProjectionLocation();       
-    if (projectionLocation != -1) 
-        glUniformMatrix4fv(projectionLocation, 1, GL_FALSE, glm::value_ptr(_projection.GetProjectionMatrix()));
+    //i32 projectionLocation = ShaderManager::GetFillGradientShader().GetProjectionLocation();       
+    //if (projectionLocation != -1) 
+      //  glUniformMatrix4fv(projectionLocation, 1, GL_FALSE, glm::value_ptr(_projection.GetProjectionMatrix()));
 
     _gradientOffset += _animationSpeed;
     if (_gradientOffset > 1.0f) 
@@ -138,6 +140,8 @@ void RetroFuturaGUI::Rectangle::drawWithGradientFill()
     if(_degree >= 360.0f)
         _degree = 0.0f;
 
-    glUniform1f(glGetUniformLocation(progId, "uGradientOffset"), _gradientOffset);
-    glUniform1f(glGetUniformLocation(progId, "uDegree"), _degree);
+    ShaderManager::GetFillGradientShader().SetUniformMat4("uProjection", _projection.GetProjectionMatrix());
+    ShaderManager::GetFillGradientShader().SetUniformMat4("uScaling", _scalingMatrix);
+    ShaderManager::GetFillGradientShader().SetUniformFloat("uGradientOffset", _gradientOffset);
+    ShaderManager::GetFillGradientShader().SetUniformFloat("uDegree", _degree);
 }
