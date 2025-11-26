@@ -17,17 +17,17 @@ namespace RetroFuturaGUI
             GRADIENT
         };
 
-        Rectangle(Projection& projection, const f32 width, const f32 height, const f32 positionX = 0.0f, const f32 positionY = 0.0f);
-        Rectangle(Projection& projection, const glm::vec4& color, const f32 width, const f32 height, const f32 positionX = 0.0f, const f32 positionY = 0.0f);
-        Rectangle(Projection& projection, std::span<const glm::vec4> colors, const f32 width, const f32 height, const f32 positionX = 0.0f, const f32 positionY = 0.0f, const f32 degree = 45.0f, const f32 animationSpeed = 0.0003f, const f32 rotationSpeed = 0.02f);
+        Rectangle(Projection& projection, const f32 width, const f32 height, const f32 positionX = 0.0f, const f32 positionY = 0.0f, const f32 rotation = 0.0f);
+        Rectangle(Projection& projection, const glm::vec4& color, const f32 width, const f32 height, const f32 positionX = 0.0f, const f32 positionY = 0.0f, const f32 rotation = 0.0f);
+        Rectangle(Projection& projection, std::span<const glm::vec4> colors, const f32 width, const f32 height, const f32 positionX = 0.0f, const f32 positionY = 0.0f, const f32 rotation = 0.0f, const f32 gradientDegree = 45.0f, const f32 animationSpeed = 0.0003f, const f32 gradientRotationSpeed = 0.02f);
         ~Rectangle();
         void Draw();
         void UpdateAnimationSpeed(const f32 speed);
-        void UpdateDegree(const f32 degree);
-        void UpdateRotationSpeed(const f32 speed);
+        void UpdateGradientDegree(const f32 degree);
+        void UpdateGradientRotationSpeed(const f32 speed);
         void Resize(const f32 width, const f32 height);
         void Move(const f32 x, const f32 y);
-        void Rotate(const float degree);
+        void Rotate(const f32 rotation);
 
     private:
         f32 _vertices[3 * 4] = 
@@ -53,8 +53,8 @@ namespace RetroFuturaGUI
         u32 _colorCount = 0;
         f32 _gradientOffset = 0.0f;
         f32 _animationSpeed = 0.0003f;
-        f32 _degree = 45.0f;
-        f32 _rotationSpeed = 0.02f;
+        f32 _gradientDegree = 45.0f;
+        f32 _gradientRotationSpeed = 0.02f;
         u32 _vao = 0;
         u32 _vbo = 0;
         u32 _ebo = 0;
