@@ -30,10 +30,6 @@ namespace RetroFuturaGUI
         void SetUniformMat4(const std::string& name, const glm::mat4& mat) const;
         u32 GetProgramId() const;
         i32 GetProjectionLocation() const;
-        //bool LoadVertexShaderFromFile(const char* vertexPath);
-        //bool LoadFragmentShaderFromFile(const char* fragmentPath);
-        //bool LoadVertexShaderFromString(const char* vertexCode);
-        //bool LoadFragmentShaderFromString(const char* fragmentCode);
 
     private:
         u32 _programId = 0;
