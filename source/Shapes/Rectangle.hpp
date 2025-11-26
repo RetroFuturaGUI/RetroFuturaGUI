@@ -17,9 +17,9 @@ namespace RetroFuturaGUI
             GRADIENT
         };
 
-        Rectangle(Projection& projection, const f32 width, const f32 height);
-        Rectangle(Projection& projection, const glm::vec4& color, const f32 width, const f32 height);
-        Rectangle(Projection& projection, std::span<const glm::vec4> colors, const f32 width, const f32 height, const f32 degree = 45.0f, const f32 animationSpeed = 0.0003f, const f32 rotationSpeed = 0.02f);
+        Rectangle(Projection& projection, const f32 width, const f32 height, const f32 positionX = 0.0f, const f32 positionY = 0.0f);
+        Rectangle(Projection& projection, const glm::vec4& color, const f32 width, const f32 height, const f32 positionX = 0.0f, const f32 positionY = 0.0f);
+        Rectangle(Projection& projection, std::span<const glm::vec4> colors, const f32 width, const f32 height, const f32 positionX = 0.0f, const f32 positionY = 0.0f, const f32 degree = 45.0f, const f32 animationSpeed = 0.0003f, const f32 rotationSpeed = 0.02f);
         ~Rectangle();
         void Draw();
         void UpdateAnimationSpeed(const f32 speed);
@@ -58,6 +58,7 @@ namespace RetroFuturaGUI
         u32 _vao = 0;
         u32 _vbo = 0;
         u32 _ebo = 0;
+        glm::vec2 _scale = glm::vec2(0.01f, 0.01f);
         glm::vec2 _position = glm::vec2(0.0f, 0.0f);
         f32 _rotation = 0.0f;
         glm::vec4 _vertexPosition = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
