@@ -8,6 +8,7 @@ Rectangle::Rectangle(Projection& projection, const f32 width, const f32 height, 
     : _projection(projection)
 {
     glm::vec4 color(1.0f, 1.0f, 1.0f, 1.0f);
+    setupMesh();
     initBasic(std::span<const glm::vec4>(&color, 1));
     Resize(width, height);
     Move(positionX, positionY);
@@ -17,6 +18,7 @@ Rectangle::Rectangle(Projection& projection, const f32 width, const f32 height, 
 Rectangle::Rectangle(Projection& projection, const glm::vec4 &color, const f32 width, const f32 height, const f32 positionX, const f32 positionY, const f32 rotation)
     : _projection(projection)
 {
+    setupMesh();
     initBasic(std::span<const glm::vec4>(&color, 1));
     Resize(width, height);
     Move(positionX, positionY);
@@ -26,6 +28,7 @@ Rectangle::Rectangle(Projection& projection, const glm::vec4 &color, const f32 w
 Rectangle::Rectangle(Projection& projection, std::span<const glm::vec4> colors, const f32 width, const f32 height, const f32 positionX, const f32 positionY, const f32 rotation, const f32 gradientDegree, const f32 animationSpeed, const f32 gradientRotationSpeed)
     : _projection(projection)
 {
+    setupMesh();
     initBasic(colors);
     _gradientDegree = gradientDegree;
     _animationSpeed = animationSpeed;
@@ -120,7 +123,6 @@ void RetroFuturaGUI::Rectangle::setupMesh()
 
 void RetroFuturaGUI::Rectangle::initBasic(std::span<const glm::vec4> colors)
 {
-    setupMesh();
     _colorCount = colors.size();
     _fillType = _colorCount > 1 ? FillType::GRADIENT : FillType::SOLID;
 

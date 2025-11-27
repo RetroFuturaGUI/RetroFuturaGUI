@@ -11,12 +11,6 @@ namespace RetroFuturaGUI
     class Rectangle
     {
     public:
-        enum class FillType: u32
-        {
-            SOLID,
-            GRADIENT
-        };
-
         Rectangle(Projection& projection, const f32 width, const f32 height, const f32 positionX = 0.0f, const f32 positionY = 0.0f, const f32 rotation = 0.0f);
         Rectangle(Projection& projection, const glm::vec4& color, const f32 width, const f32 height, const f32 positionX = 0.0f, const f32 positionY = 0.0f, const f32 rotation = 0.0f);
         Rectangle(Projection& projection, std::span<const glm::vec4> colors, const f32 width, const f32 height, const f32 positionX = 0.0f, const f32 positionY = 0.0f, const f32 rotation = 0.0f, const f32 gradientDegree = 45.0f, const f32 animationSpeed = 0.0003f, const f32 gradientRotationSpeed = 0.02f);
@@ -63,8 +57,6 @@ namespace RetroFuturaGUI
         f32 _rotation = 0.0f;
         glm::vec4 _vertexPosition = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
         const f32 _ndc[4][2] = { {-1.0f, -1.0f}, {1.0f, -1.0f}, {1.0f, 1.0f}, {-1.0f, 1.0f} };
-        
-
 
         void setupMesh();
         void initBasic(std::span<const glm::vec4> colors);
