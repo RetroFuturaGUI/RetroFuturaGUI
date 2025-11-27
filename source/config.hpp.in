@@ -23,3 +23,9 @@ enum class WidgetTypeID : i32
     None = 0,
     Label = 1,
 };
+
+enum class FillType: u32
+{
+    SOLID,
+    GRADIENT
+};
