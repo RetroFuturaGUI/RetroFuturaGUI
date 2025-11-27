@@ -21,6 +21,7 @@ else()
 endif()
 
 add_library("RetroFuturaGUI"
+    "${CMAKE_CURRENT_SOURCE_DIR}/source/Frames/LineFrame.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/OpenGlHelpers/Projection.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/IWidgetBase.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/IWidget.cpp"
@@ -33,6 +34,7 @@ add_library("RetroFuturaGUI"
 
 target_include_directories("RetroFuturaGUI" PUBLIC
     "${CMAKE_CURRENT_SOURCE_DIR}/source"
+    "${CMAKE_CURRENT_SOURCE_DIR}/source/Frames"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/OpenGlHelpers"
     "${CMAKE_CURRENT_SOURCE_DIR}/PlatformBridge/source" #remove once PlatformBridge CMakeLists.txt is finalized

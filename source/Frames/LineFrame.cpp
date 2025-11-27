@@ -1,0 +1,79 @@
+#include "LineFrame.hpp"
+
+RetroFuturaGUI::LineFrame::LineFrame(Projection &projection, const glm::vec4& color, const f32 width, const f32 height, const f32 positionX, const f32 positionY, const f32 borderThickness, const f32 rotation)
+: _projection(projection), _borderThickness(borderThickness)
+{
+    setupMesh();
+    initBasic(std::span<const glm::vec4>(&color, 1));
+    Resize(width, height);
+    Move(positionX, positionY);
+    Rotate(rotation);
+}
+
+RetroFuturaGUI::LineFrame::~LineFrame()
+{
+    glDeleteVertexArrays(1, &_vao);
+    glDeleteBuffers(1, &_vbo);
+    glDeleteBuffers(1, &_ebo);
+}
+
+void RetroFuturaGUI::LineFrame::Draw()
+{
+    ShaderManager::GetLineFillShader().UseProgram();
+    ShaderManager::GetLineFillShader().SetUniformMat4("uProjection", _projection.GetProjectionMatrix());
+    ShaderManager::GetLineFillShader().SetUniformMat4("uPosition", _translationMatrix);
+    ShaderManager::GetLineFillShader().SetUniformMat4("uScaling", _scalingMatrix);
+    ShaderManager::GetLineFillShader().SetUniformMat4("uRotation", _rotationMatrix);
+    ShaderManager::GetLineFillShader().SetUniformVec4("uColor", _colors[0]);
+    ShaderManager::GetLineFillShader().SetUniformFloat("uLineThickness", _borderThickness * 0.5f);
+
+    glBindVertexArray(_vao);
+    glDrawElements(GL_LINES, 8, GL_UNSIGNED_INT, 0);
+    glBindVertexArray(0);
+}
+
+void RetroFuturaGUI::LineFrame::Resize(const f32 width, const f32 height)
+{
+    _scale = glm::vec2(width * 0.5f, height * 0.5f);
+    _scalingMatrix = glm::scale(glm::mat4(1.0f), glm::vec3(_scale, 1.0f));
+}
+
+void RetroFuturaGUI::LineFrame::Move(const f32 x, const f32 y)
+{
+    _position = glm::vec2(x, y);
+    _translationMatrix = glm::translate(glm::mat4(1.0f), glm::vec3(_position, 0.0f));
+}
+
+void RetroFuturaGUI::LineFrame::Rotate(const float rotation)
+{
+    _rotation = rotation;
+    _rotationMatrix = glm::rotate(glm::mat4(1.0f), glm::radians(_rotation), glm::vec3(0.0f, 0.0f, 1.0f));
+}
+
+void RetroFuturaGUI::LineFrame::setupMesh()
+{
+    glGenVertexArrays(1, &_vao);
+    glGenBuffers(1, &_vbo);
+
+    glBindVertexArray(_vao);
+
+    glBindBuffer(GL_ARRAY_BUFFER, _vbo);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(_testBorderPoints), _testBorderPoints, GL_STATIC_DRAW);
+
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(f32), nullptr);
+    glEnableVertexAttribArray(0);
+
+    glGenBuffers(1, &_ebo);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _ebo);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(_testBorderIndices), _testBorderIndices, GL_STATIC_DRAW);
+}
+
+void RetroFuturaGUI::LineFrame::initBasic(std::span<const glm::vec4> colors)
+{
+    _colorCount = colors.size();
+    _fillType = _colorCount > 1 ? FillType::GRADIENT : FillType::SOLID;
+
+    _colors = std::make_unique<glm::vec4[]>(_colorCount);
+    for (u32 i = 0; i < colors.size(); ++i)
+        _colors[i] = colors[i];
+}
