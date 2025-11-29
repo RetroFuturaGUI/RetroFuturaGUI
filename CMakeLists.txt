@@ -23,6 +23,7 @@ endif()
 add_library("RetroFuturaGUI"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Frames/LineFrame.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/OpenGlHelpers/Projection.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/source/OpenGlHelpers/Text.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/IWidgetBase.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/IWidget.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/MainWindow.cpp"
