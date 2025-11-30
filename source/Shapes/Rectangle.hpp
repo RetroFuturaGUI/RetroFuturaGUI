@@ -56,7 +56,6 @@ namespace RetroFuturaGUI
         glm::vec2 _position = glm::vec2(0.0f, 0.0f);
         f32 _rotation = 0.0f;
         glm::vec4 _vertexPosition = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
-        const f32 _ndc[4][2] = { {-1.0f, -1.0f}, {1.0f, -1.0f}, {1.0f, 1.0f}, {-1.0f, 1.0f} };
 
         void setupMesh();
         void initBasic(std::span<const glm::vec4> colors);
