@@ -7,6 +7,7 @@ using namespace RetroFuturaGUI;
 std::unique_ptr<Shader> ShaderManager::_fill;
 std::unique_ptr<Shader> ShaderManager::_fillGradient;
 std::unique_ptr<Shader> ShaderManager::_lineFill;
+std::unique_ptr<Shader> ShaderManager::_textFill;
 
 Shader& ShaderManager::GetFillShader()
 {
@@ -23,6 +24,11 @@ Shader& RetroFuturaGUI::ShaderManager::GetLineFillShader()
     return *_lineFill;
 }
 
+Shader& RetroFuturaGUI::ShaderManager::GetTextFillShader()
+{
+    return *_textFill;
+}
+
 void ShaderManager::Init()
 {
     SetConsoleOutputCP(CP_UTF8);
@@ -35,7 +41,7 @@ void RetroFuturaGUI::ShaderManager::compileShaders()
 {
     std::string exeDir = PlatformBridge::Paths::GetExecutablePath();
 
-#ifdef _WIN32 or _Win64
+#ifdef _WIN32 or _WIN64
     exeDir = exeDir.substr(0, exeDir.find_last_of(R"(\)"));
     exeDir.append(R"(\ShaderSource\)");
 #else
@@ -44,18 +50,23 @@ void RetroFuturaGUI::ShaderManager::compileShaders()
 #endif
 
     _fill = std::make_unique<Shader>(
-        std::string(exeDir + "fill.vs").c_str(), 
-        std::string(exeDir + "fill.fs").c_str()
+        std::string(exeDir + "Fill.vs").c_str(), 
+        std::string(exeDir + "Fill.fs").c_str()
     );
 
     _fillGradient = std::make_unique<Shader>(
-        std::string(exeDir + "fillGradient.vs").c_str(), 
-        std::string(exeDir + "fillGradient.fs").c_str()
+        std::string(exeDir + "FillGradient.vs").c_str(), 
+        std::string(exeDir + "FillGradient.fs").c_str()
     );
 
     _lineFill = std::make_unique<Shader>(
         std::string(exeDir + "Line.vs").c_str(), 
         std::string(exeDir + "Line.fs").c_str(),
         std::string(exeDir + "Line.gs").c_str()
+    );
+
+    _textFill = std::make_unique<Shader>(
+        std::string(exeDir + "Text.vs").c_str(), 
+        std::string(exeDir + "Text.fs").c_str()
     );
 }
