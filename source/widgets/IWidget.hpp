@@ -1,40 +1,75 @@
 #pragma once
-#include "IWidgetBase.hpp"
+#include "config.hpp"
 #include <glm/glm.hpp>
-//#include "FVec.hpp"
+#include <memory>
+#include "Projection.hpp"
+#include <span>
+#include <string>
+#include <string_view>
 
-class IWidget : public IWidgetBase
+namespace RetroFuturaGUI
 {
-public:
-    IWidget(const std::string& name, i32 width, i32 height, void* parent = nullptr, Sizing minWidth = Sizing::UseCurrent, Sizing minHeight = Sizing::UseCurrent, Sizing maxWidth = Sizing::UseCurrent, Sizing maxHeight = Sizing::UseCurrent);
+    enum class WidgetTypeID : i32
+    {
+        None,
+        Window,
+        Grid,
+        Label,
+        Button,
+        Unknown = -1
+    };
 
-    i32 GetMinWidth() const;
-    void SetMinWidth(const i32 minWidth);
-    i32 GetMinHeght() const;
-    void SetMinHeght(const i32 minHeight);
-    i32 GetMaxWidth() const;
-    void SetMaxWidth(const i32 maxWidth);
-    i32 GetMaxHight() const;
-    void SetMaxHight(const i32 maxHeight);
-    i32 GetWidth() const;
-    void SetWidth(const i32 width);
-    i32 GetHeight() const;
-    void SetHeight(const i32 height);
-    glm::vec4 GetBackgroundColor() const;
-    void SetBackgroundColor(const glm::vec4& backgroundColor);
+    struct IdentityParams
+    {
+        std::string_view _Name;
+        void* _Parent;
+        WidgetTypeID _ParentTypeID;
+    };
 
-protected:
-    i32 _minWidth = 0;
-    i32 _minHeght = 0;
-    i32 _maxWidth = 0;
-    i32 _maxHight = 0;
-    i32 _width = 0;
-    i32 _height = 0;
-    glm::vec4 _backgroundColor = {0.0f, 0.0f, 0.0f, 1.0f};
-    glm::vec4 _borderWidth = {1.0f, 1.0f, 1.0f, 1.0f};
-    glm::vec4 _borderColor = {1.0f, 1.0f, 1.0f, 1.0f};
-    glm::vec4 _borderCornerRadius = {0.0f, 0.0f, 0.0f, 0.0f};
+    class IWidget
+    {
+    public:
+        IWidget(const IdentityParams& identity, const GeometryParams2D& geometry);
+        virtual ~IWidget() = default;
+        virtual void Draw() = 0;
+        void SetSize(const glm::vec2& size);
+        glm::vec2 GetSize() const;
+        void SetPosition(const glm::vec2& position);
+        glm::vec2 GetPosition() const;
+        void SetRotation(const f32 rotation);
+        f32 GetRotation() const;
+        std::span<glm::vec4> GetBackgroundColors();
+        void SetBackgroundColors(std::span<glm::vec4> backgroundColors);
+        std::string_view GetName() const;
+        void SetName(std::string_view name);
 
-private:
+        template<typename T> T* GetParentWidget() const
+        {
+            return static_cast<T*>(_parent);
+        }
 
-};
+    protected:
+        //identity
+        std::string _name;
+        void* _parent;
+        WidgetTypeID _parentTypeID;
+
+        //geometry
+        Projection& _projection;
+        glm::vec2 _position;
+        glm::vec2 _size;
+        f32 _rotation;
+
+        //style
+        std::unique_ptr<glm::vec4[]> _backgroundColors;
+        u32 _colorCount = 0;
+        FillType _backgroundColorFillType = FillType::SOLID;
+        //float _borderWidth = 2.0f;
+        //glm::vec4 _borderColor = {1.0f, 1.0f, 1.0f, 1.0f};
+        //glm::vec4 _borderCornerRadius = {0.0f, 0.0f, 0.0f, 0.0f};
+
+
+    private:
+
+    };
+}

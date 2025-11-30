@@ -1,98 +1,66 @@
 #include "IWidget.hpp"
 
-IWidget::IWidget(const std::string& name, i32 width, i32 height, void* parent, Sizing minWidth, Sizing minHeight, Sizing maxWidth, Sizing maxHeight) 
-        : IWidgetBase(name, parent)
+RetroFuturaGUI::IWidget::IWidget(const IdentityParams& identity, const GeometryParams2D& geometry) 
+    : _name(identity._Name), _parent(identity._Parent), _parentTypeID(identity._ParentTypeID),
+     _projection(const_cast<Projection&>(geometry._Projection)), _position(geometry._Position), _size(geometry._Size), _rotation(geometry._Rotation)
 {
-    _width = width;
-    _height = height;
 
-    if(minWidth == Sizing::UseCurrent)
-        _minWidth = width;
-    else
-        _minWidth = static_cast<i32>(minWidth);
-
-    if(minHeight == Sizing::UseCurrent)
-        _minHeght = height;
-    else
-        _minHeght = static_cast<i32>(minHeight);
-
-    if(maxWidth == Sizing::UseCurrent)
-        _maxWidth = width;
-    else
-        _maxWidth = static_cast<i32>(maxWidth);
-
-    if(maxHeight == Sizing::UseCurrent)
-        _maxHight = height;
-    else
-        _maxHight = static_cast<i32>(maxHeight);
+    
 }
 
-i32 IWidget::GetMinWidth() const
+void RetroFuturaGUI::IWidget::SetSize(const glm::vec2 &size)
 {
-    return _minWidth;
+    _size = size;
 }
 
-void IWidget::SetMinWidth(const i32 minWidth)
+glm::vec2 RetroFuturaGUI::IWidget::GetSize() const
 {
-    _minWidth = minWidth;
+    return _size;
 }
 
-i32 IWidget::GetMinHeght() const
+void RetroFuturaGUI::IWidget::SetPosition(const glm::vec2 &position)
 {
-    return _minHeght;
+    _position = position;
 }
 
-void IWidget::SetMinHeght(const i32 minHeight)
+glm::vec2 RetroFuturaGUI::IWidget::GetPosition() const
 {
-    _minHeght = minHeight;
+    return _position;
 }
 
-i32 IWidget::GetMaxWidth() const
+void RetroFuturaGUI::IWidget::SetRotation(const f32 rotation)
 {
-    return _maxWidth;
+    _rotation;
 }
 
-void IWidget::SetMaxWidth(const i32 maxWidth)
+f32 RetroFuturaGUI::IWidget::GetRotation() const
 {
-    _maxWidth = maxWidth;
+    return _rotation;
 }
 
-i32 IWidget::GetMaxHight() const
+std::span<glm::vec4> RetroFuturaGUI::IWidget::GetBackgroundColors()
 {
-    return _maxHight;
+    return std::span<glm::vec4>(_backgroundColors.get(), _colorCount);
 }
 
-void IWidget::SetMaxHight(const i32 maxHeight)
+void RetroFuturaGUI::IWidget::SetBackgroundColors(std::span<glm::vec4> backgroundColors)
 {
-    _maxHight = maxHeight;
+    _colorCount = backgroundColors.size();
+    _backgroundColorFillType = _colorCount > 1 ? FillType::GRADIENT : FillType::SOLID;
+
+    _backgroundColors = std::make_unique<glm::vec4[]>(_colorCount);
+
+    for (u32 i = 0; i < backgroundColors.size(); ++i)
+        _backgroundColors[i] = backgroundColors[i];
 }
 
-i32 IWidget::GetWidth() const
+std::string_view RetroFuturaGUI::IWidget::GetName() const
 {
-    return _width;
+    return _name;
 }
 
-void IWidget::SetWidth(const i32 width)
+void RetroFuturaGUI::IWidget::SetName(std::string_view name)
 {
-    _width = width;
+    _name = name;
 }
 
-i32 IWidget::GetHeight() const
-{
-    return _height;
-}
-
-void IWidget::SetHeight(const i32 height)
-{
-    _height = height;
-}
-
-glm::vec4 IWidget::GetBackgroundColor() const
-{
-    return _backgroundColor;
-}
-
-void IWidget::SetBackgroundColor(const glm::vec4& backgroundColor)
-{
-    _backgroundColor = backgroundColor;
-}
