@@ -1,18 +1,20 @@
 #include "Text.hpp"
 
-RetroFuturaGUI::Text::Text(RetroFuturaGUI::Projection &projection, const std::string& text, const std::string &fontPath, const glm::vec4 &textColor, const f32 width, const f32 height, const f32 x, const f32 y, const f32 rotation, const TextAlignment textAlignment, const f32 textPadding, const glm::vec2 &parentSpan)
-: _projection(projection), _resolution(glm::vec2(width, height)), _text(text), _fontPath(fontPath), _textColor(textColor), _textAlignment(textAlignment), _textPadding(textPadding), _parentSpan(parentSpan)
+RetroFuturaGUI::Text::Text(const GeometryParams2D& geometry, const TextParams& textParams)
+: _projection(const_cast<Projection&>(geometry._Projection)), _parentSize(geometry._Size), 
+  _text(textParams._Text), _fontPath(textParams._FontPath), _textColor(textParams._TextColor), 
+  _textAlignment(textParams._TextAlignment), _textPadding(textParams._TextPadding)
 {
     if(!_ft)
         initFreeTypeLibrary();
 
     initFontFace();
     bind();
-    Resize(width, height);
-    Move(x, y);
-    Rotate(rotation);
+    Resize(textParams._GlyphSize);
+    Move(geometry._Position.x, geometry._Position.y);
+    Rotate(geometry._Rotation);
     calculateTextSpan();
-    SetTextAlignment(textAlignment);
+    SetTextAlignment(_textAlignment);
 }
 
 RetroFuturaGUI::Text::~Text()
@@ -23,7 +25,7 @@ RetroFuturaGUI::Text::~Text()
 
 void RetroFuturaGUI::Text::Draw()
 {
-    f32 scale = _scale.y * 0.00390625f;// equals dividing by 256.0f
+    f32 scale = _glyphSize.y * 0.00390625f;// equals dividing by 256.0f
     f32 x = 0.0f;
     f32 y = 0.0f;
     f32 copyX = x;
@@ -93,19 +95,19 @@ void RetroFuturaGUI::Text::SetTextAlignment(TextAlignment textAlignment)
         } break;
         case TextAlignment::RIGHT:
         {
-            Move(_position.x - _textSpan.x + _parentSpan.x * 0.5f   - _textPadding, _position.y - _textBaseHeight * 0.5f);
+            Move(_position.x - _textSpan.x + _parentSize.x * 0.5f - _textPadding, _position.y - _textBaseHeight * 0.5f);
         } break;
         default: //LEFT
         {
-            Move(_position.x - _parentSpan.x * 0.5f + _textPadding, _position.y - _textBaseHeight * 0.5f);
+            Move(_position.x - _parentSize.x * 0.5f + _textPadding, _position.y - _textBaseHeight * 0.5f);
         }
     }
 }
 
-void RetroFuturaGUI::Text::Resize(const f32 width, const f32 height)
+void RetroFuturaGUI::Text::Resize(const glm::vec2& glyphSize)
 {
-    _scale = glm::vec2(width, height);
-    _scaleMatrix = glm::scale(glm::mat4(1.0f), glm::vec3(_scale, 1.0f));
+    _glyphSize = glyphSize;
+    //_scaleMatrix = glm::scale(glm::mat4(1.0f), glm::vec3(_glyphSize, 1.0f));
 }
 
 void RetroFuturaGUI::Text::Move(const f32 x, const f32 y)
@@ -227,7 +229,7 @@ void RetroFuturaGUI::Text::textRenderCallback(const u32 length)
 
 void RetroFuturaGUI::Text::calculateTextSpan()
 {
-    f32 scale = _scale.y * _1emFraction;
+    f32 scale = _glyphSize.y * _1emFraction;
     f32 maxLineWidth = 0.0f;
     f32 totalHeight = 0.0f;
     f32 currentLineWidth = 0.0f;
