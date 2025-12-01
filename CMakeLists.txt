@@ -37,6 +37,7 @@ target_include_directories("RetroFuturaGUI" PUBLIC
     "${CMAKE_CURRENT_SOURCE_DIR}/source"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Frames"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets"
+    "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/Mechanisms"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/OpenGlHelpers"
     "${CMAKE_CURRENT_SOURCE_DIR}/PlatformBridge/source" #remove once PlatformBridge CMakeLists.txt is finalized
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Shapes"
