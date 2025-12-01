@@ -1,7 +1,4 @@
 #pragma once
-#include "config.hpp"
-#include <glad/glad.h>
-#include <GLFW/glfw3.h>
 #include "ShaderManager.hpp"
 #include "Projection.hpp"
 #include <span>

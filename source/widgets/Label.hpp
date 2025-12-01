@@ -1,6 +1,6 @@
 #pragma once
-#include "IWidget.hpp"
 #include "Text.hpp"
+#include "IWidget.hpp"
 
 namespace RetroFuturaGUI
 {

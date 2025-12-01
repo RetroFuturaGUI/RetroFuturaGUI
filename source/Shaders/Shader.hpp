@@ -1,7 +1,5 @@
 #pragma once
-#include "config.hpp"
-#include <glad/glad.h>
-#include <glm/glm.hpp>
+#include "IncludeHelper.hpp"
 #include <string>
 
 namespace RetroFuturaGUI
