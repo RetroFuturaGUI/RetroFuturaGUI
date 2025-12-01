@@ -122,6 +122,16 @@ void RetroFuturaGUI::Text::Rotate(const f32 rotation)
     _rotationMatrix = glm::rotate(glm::mat4(1.0f), glm::radians(_rotation), glm::vec3(0.0f, 0.0f, 1.0f));
 }
 
+void RetroFuturaGUI::Text::SetColor(const glm::vec4 &color)
+{
+    _textColor = color;
+}
+
+glm::vec4 RetroFuturaGUI::Text::GetColor() const
+{
+    return _textColor;
+}
+
 i32 RetroFuturaGUI::Text::initFreeTypeLibrary()
 {
     i32 err = FT_Init_FreeType(&_ft);

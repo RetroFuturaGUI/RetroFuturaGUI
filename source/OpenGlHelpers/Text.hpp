@@ -43,6 +43,8 @@ namespace RetroFuturaGUI
         void Resize(const glm::vec2& glyphSize);
         void Move(const f32 x, const f32 y);
         void Rotate(const f32 rotation);
+        void SetColor(const glm::vec4& color);
+        glm::vec4 GetColor() const;
 
     private:
         struct Character
