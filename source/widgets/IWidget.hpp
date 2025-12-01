@@ -1,6 +1,5 @@
 #pragma once
-#include "config.hpp"
-#include <glm/glm.hpp>
+#include "IncludeHelper.hpp"
 #include <memory>
 #include "Projection.hpp"
 #include <span>
@@ -24,6 +23,7 @@ namespace RetroFuturaGUI
         std::string_view _Name;
         void* _Parent;
         WidgetTypeID _ParentTypeID;
+        GLFWwindow* _ParentWindow;
     };
 
     class IWidget
@@ -53,6 +53,7 @@ namespace RetroFuturaGUI
         std::string _name;
         void* _parent;
         WidgetTypeID _parentTypeID;
+        GLFWwindow* _parentWindow = nullptr;
 
         //geometry
         Projection& _projection;
