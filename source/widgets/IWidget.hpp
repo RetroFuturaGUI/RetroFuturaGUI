@@ -70,6 +70,16 @@ namespace RetroFuturaGUI
         //glm::vec4 _borderCornerRadius = {0.0f, 0.0f, 0.0f, 0.0f};
 
 
+        bool isPointInside(const glm::vec2& point) const
+        {
+            return (point.x >= _position.x - _size.x * 0.5f && 
+                    point.x <= _position.x + _size.x * 0.5f &&
+                    point.y >= _position.y - _size.y * 0.5f && 
+                    point.y <= _position.y + _size.y * 0.5f);
+        }
+
+
+
     private:
 
     };
