@@ -24,7 +24,20 @@ namespace RetroFuturaGUI
         void Disconnect(const Slot& slot)
         {
             std::lock_guard<std::mutex> lock(_mutex);
-            _slots.erase(std::remove(_slots.begin(), _slots.end(), slot), _slots.end());
+            _slots.erase(
+                std::remove_if(
+                    _slots.begin(),
+                    _slots.end(),
+                    [&slot](const Slot& s) // make this also work with lambdas and functors if needed
+                    {
+                        if (!s || !slot)
+                            return false;
+
+                        return s.target<void(*)(Args...)>() == slot.target<void(*)(Args...)>();
+                    }
+                ),
+                _slots.end()
+            );
         }
 
         void Emit(Args... args) 
