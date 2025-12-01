@@ -5,7 +5,7 @@ RetroFuturaGUI::Text::Text(const GeometryParams2D& geometry, const TextParams& t
   _text(textParams._Text), _fontPath(textParams._FontPath), _textColor(textParams._TextColor), 
   _textAlignment(textParams._TextAlignment), _textPadding(textParams._TextPadding)
 {
-    if(!_ft)
+   // if(!_ft)
         initFreeTypeLibrary();
 
     initFontFace();
