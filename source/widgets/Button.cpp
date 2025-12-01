@@ -72,6 +72,48 @@ void RetroFuturaGUI::Button::Connect_OnDisable(const typename Signal<>::Slot &sl
         _onDisableAsync.Connect(slot); 
 }
 
+void RetroFuturaGUI::Button::Disconnect_OnClick(const typename Signal<>::Slot &slot)
+{
+    _onClick.Disconnect(slot);
+    _onClickAsync.Disconnect(slot);
+}
+
+void RetroFuturaGUI::Button::Disconnect_OnRelease(const typename Signal<>::Slot &slot)
+{
+    _onRelease.Disconnect(slot);
+    _onReleaseAsync.Disconnect(slot);
+}
+
+void RetroFuturaGUI::Button::Disconnect_WhileHover(const typename Signal<>::Slot &slot)
+{
+    _whileHover.Disconnect(slot);
+    _whileHoverAsync.Disconnect(slot);
+}
+
+void RetroFuturaGUI::Button::Disconnect_OnMouseEnter(const typename Signal<>::Slot &slot)
+{
+    _onMouseEnter.Disconnect(slot);
+    _onMouseEnterAsync.Disconnect(slot);
+}
+
+void RetroFuturaGUI::Button::Disconnect_OnMouseLeave(const typename Signal<>::Slot &slot)
+{
+    _onMouseLeave.Disconnect(slot);
+    _onMouseLeaveAsync.Disconnect(slot);
+}
+
+void RetroFuturaGUI::Button::Disconnect_OnEnable(const typename Signal<>::Slot &slot)
+{
+    _onEnable.Disconnect(slot);
+    _onEnableAsync.Disconnect(slot);
+}
+
+void RetroFuturaGUI::Button::Disconnect_OnDisable(const typename Signal<>::Slot &slot)
+{
+    _onDisable.Disconnect(slot);
+    _onDisableAsync.Disconnect(slot);
+}
+
 void RetroFuturaGUI::Button::SetEnabled(const bool enable)
 {
     _isEnabledFlag = enable;
@@ -80,13 +122,13 @@ void RetroFuturaGUI::Button::SetEnabled(const bool enable)
     {
         _onEnableAsync.EmitAsync();
         _onEnable.Emit();
-        SetBackgroundColor(_backgroundColorEnabled);
+        setColors(ColorSetKeys::Enabled);
         return;
     }
 
     _onDisableAsync.EmitAsync();
     _onDisable.Emit();
-    SetBackgroundColor(_backgroundColorDisabled);
+    setColors(ColorSetKeys::Disabled);
 }
 
 bool RetroFuturaGUI::Button::IsEnabled() const

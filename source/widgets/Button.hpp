@@ -21,6 +21,13 @@ namespace RetroFuturaGUI
         void Connect_OnMouseLeave(const typename Signal<>::Slot& slot, const bool async);
         void Connect_OnEnable(const typename Signal<>::Slot& slot, const bool async);
         void Connect_OnDisable(const typename Signal<>::Slot& slot, const bool async);
+        void Disconnect_OnClick(const typename Signal<>::Slot& slot);
+        void Disconnect_OnRelease(const typename Signal<>::Slot& slot);
+        void Disconnect_WhileHover(const typename Signal<>::Slot& slot);
+        void Disconnect_OnMouseEnter(const typename Signal<>::Slot& slot);
+        void Disconnect_OnMouseLeave(const typename Signal<>::Slot& slot);
+        void Disconnect_OnEnable(const typename Signal<>::Slot& slot);
+        void Disconnect_OnDisable(const typename Signal<>::Slot& slot);
         void SetEnabled(const bool enable);
         bool IsEnabled() const;
         void SetBackgroundColor(const glm::vec4& color);
