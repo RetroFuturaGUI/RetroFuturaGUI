@@ -96,6 +96,11 @@ void RetroFuturaGUI::Rectangle::Move(const f32 x, const f32 y)
     _translationMatrix = glm::translate(glm::mat4(1.0f), glm::vec3(_position, 0.0f));
 }
 
+glm::vec4 RetroFuturaGUI::Rectangle::GetColor() const
+{
+    return _colors[0];
+}
+
 void RetroFuturaGUI::Rectangle::Rotate(const float rotation)
 {
     _rotation = rotation;

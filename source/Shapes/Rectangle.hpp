@@ -19,6 +19,11 @@ namespace RetroFuturaGUI
         void Resize(const f32 width, const f32 height);
         void Move(const f32 x, const f32 y);
         void Rotate(const f32 rotation);
+        void SetColor(const glm::vec4& color)
+        {
+            _colors[0] = color;
+        }
+        glm::vec4 GetColor() const;
 
     private:
         f32 _vertices[3 * 4] = 
