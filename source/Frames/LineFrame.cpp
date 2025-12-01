@@ -50,6 +50,16 @@ void RetroFuturaGUI::LineFrame::Rotate(const float rotation)
     _rotationMatrix = glm::rotate(glm::mat4(1.0f), glm::radians(_rotation), glm::vec3(0.0f, 0.0f, 1.0f));
 }
 
+void RetroFuturaGUI::LineFrame::SetColor(const glm::vec4 &color)
+{
+    _colors[0] = color;
+}
+
+glm::vec4 RetroFuturaGUI::LineFrame::GetColor() const
+{
+    return _colors[0];
+}
+
 void RetroFuturaGUI::LineFrame::setupMesh()
 {
     glGenVertexArrays(1, &_vao);
