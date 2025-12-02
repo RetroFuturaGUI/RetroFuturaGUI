@@ -77,7 +77,7 @@ namespace RetroFuturaGUI
 
             static inline GLFWwindow* _focusedWindow;
             static inline GLFWwindow* _hoveredWindow;
-            static inline bool _mouseButtons[GLFW_MOUSE_BUTTON_LAST] = { false };
+            static inline bool _mouseButtons[GLFW_MOUSE_BUTTON_LAST + 1] = { false };
             glm::dvec2 _mousePosition = { 0.0, 0.0 };
     };
 };
