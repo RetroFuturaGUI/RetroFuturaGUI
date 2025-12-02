@@ -8,7 +8,6 @@ namespace RetroFuturaGUI
     class Rectangle
     {
     public:
-        Rectangle(Projection& projection, const f32 width, const f32 height, const f32 positionX = 0.0f, const f32 positionY = 0.0f, const f32 rotation = 0.0f);
         Rectangle(Projection& projection, const glm::vec4& color, const f32 width, const f32 height, const f32 positionX = 0.0f, const f32 positionY = 0.0f, const f32 rotation = 0.0f);
         Rectangle(Projection& projection, std::span<const glm::vec4> colors, const f32 width, const f32 height, const f32 positionX = 0.0f, const f32 positionY = 0.0f, const f32 rotation = 0.0f, const f32 gradientDegree = 45.0f, const f32 animationSpeed = 0.0003f, const f32 gradientRotationSpeed = 0.02f);
         ~Rectangle();

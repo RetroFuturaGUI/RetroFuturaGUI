@@ -4,17 +4,6 @@
 
 using namespace RetroFuturaGUI;
 
-Rectangle::Rectangle(Projection& projection, const f32 width, const f32 height, const f32 positionX, const f32 positionY, const f32 rotation)
-    : _projection(projection)
-{
-    glm::vec4 color(1.0f, 1.0f, 1.0f, 1.0f);
-    setupMesh();
-    initBasic(std::span<const glm::vec4>(&color, 1));
-    Resize(width, height);
-    Move(positionX, positionY);
-    Rotate(rotation);
-}
-
 Rectangle::Rectangle(Projection& projection, const glm::vec4 &color, const f32 width, const f32 height, const f32 positionX, const f32 positionY, const f32 rotation)
     : _projection(projection)
 {
