@@ -8,12 +8,12 @@ namespace RetroFuturaGUI
     class LineFrame
     {
     public:
-        LineFrame(Projection& projection, const glm::vec4& color, const f32 width, const f32 height, const f32 positionX = 0.0f, const f32 positionY = 0.0f, const f32 borderThickness = 2.0f, const f32 rotation = 0.0f);
+        LineFrame(const GeometryParams2D& geometry, const glm::vec4& color, const f32 borderThickness = 2.0f);
         ~LineFrame();
 
         void Draw();
-        void Resize(const f32 width, const f32 height);
-        void Move(const f32 x, const f32 y);
+        void Resize(const glm::vec2& size);
+        void Move(const glm::vec2& position);
         void Rotate(const float rotation);
         void SetColor(const glm::vec4& color);
         glm::vec4 GetColor() const;
@@ -42,7 +42,7 @@ namespace RetroFuturaGUI
         std::unique_ptr<glm::vec4[]> _colors;
         Projection& _projection;
         //glm::vec4 _cornerRadii;
-        f32 _borderThickness;
+        f32 _borderThickness = 2.0f;
 
         glm::mat4 _scalingMatrix = glm::mat4(1.0f);
         glm::mat4 _translationMatrix = glm::mat4(0.0f);

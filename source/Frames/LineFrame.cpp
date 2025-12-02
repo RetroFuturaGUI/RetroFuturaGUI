@@ -1,13 +1,13 @@
 #include "LineFrame.hpp"
 
-RetroFuturaGUI::LineFrame::LineFrame(Projection &projection, const glm::vec4& color, const f32 width, const f32 height, const f32 positionX, const f32 positionY, const f32 borderThickness, const f32 rotation)
-: _projection(projection), _borderThickness(borderThickness)
+RetroFuturaGUI::LineFrame::LineFrame(const GeometryParams2D& geometry, const glm::vec4& color, const f32 borderThickness)
+: _projection(const_cast<Projection&>(geometry._Projection)), _borderThickness(borderThickness)
 {
     setupMesh();
     initBasic(std::span<const glm::vec4>(&color, 1));
-    Resize(width, height);
-    Move(positionX, positionY);
-    Rotate(rotation);
+    Resize(geometry._Size);
+    Move(geometry._Position);
+    Rotate(geometry._Rotation);
 }
 
 RetroFuturaGUI::LineFrame::~LineFrame()
@@ -32,15 +32,15 @@ void RetroFuturaGUI::LineFrame::Draw()
     glBindVertexArray(0);
 }
 
-void RetroFuturaGUI::LineFrame::Resize(const f32 width, const f32 height)
+void RetroFuturaGUI::LineFrame::Resize(const glm::vec2& size)
 {
-    _scale = glm::vec2(width * 0.5f, height * 0.5f);
+    _scale = size * 0.5f;
     _scalingMatrix = glm::scale(glm::mat4(1.0f), glm::vec3(_scale, 1.0f));
 }
 
-void RetroFuturaGUI::LineFrame::Move(const f32 x, const f32 y)
+void RetroFuturaGUI::LineFrame::Move(const glm::vec2& position)
 {
-    _position = glm::vec2(x, y);
+    _position = position;
     _translationMatrix = glm::translate(glm::mat4(1.0f), glm::vec3(_position, 0.0f));
 }
 
