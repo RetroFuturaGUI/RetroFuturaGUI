@@ -8,24 +8,6 @@
 
 namespace RetroFuturaGUI
 {
-    enum class WidgetTypeID : i32
-    {
-        None,
-        Window,
-        Grid,
-        Label,
-        Button,
-        Unknown = -1
-    };
-
-    struct IdentityParams
-    {
-        std::string_view _Name;
-        void* _Parent;
-        WidgetTypeID _ParentTypeID;
-        GLFWwindow* _ParentWindow;
-    };
-
     class IWidget
     {
     public:
