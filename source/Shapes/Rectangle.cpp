@@ -1,10 +1,6 @@
 #include "Rectangle.hpp"
-#include <glm/gtc/type_ptr.hpp>
-#include <glm/gtc/matrix_transform.hpp>
 
-using namespace RetroFuturaGUI;
-
-Rectangle::Rectangle(Projection& projection, const glm::vec4 &color, const f32 width, const f32 height, const f32 positionX, const f32 positionY, const f32 rotation)
+RetroFuturaGUI::Rectangle::Rectangle(Projection& projection, const glm::vec4 &color, const f32 width, const f32 height, const f32 positionX, const f32 positionY, const f32 rotation)
     : _projection(projection)
 {
     setupMesh();
@@ -14,7 +10,7 @@ Rectangle::Rectangle(Projection& projection, const glm::vec4 &color, const f32 w
     Rotate(rotation);
 }
 
-Rectangle::Rectangle(Projection& projection, std::span<const glm::vec4> colors, const f32 width, const f32 height, const f32 positionX, const f32 positionY, const f32 rotation, const f32 gradientDegree, const f32 animationSpeed, const f32 gradientRotationSpeed)
+RetroFuturaGUI::Rectangle::Rectangle(Projection& projection, std::span<const glm::vec4> colors, const f32 width, const f32 height, const f32 positionX, const f32 positionY, const f32 rotation, const f32 gradientDegree, const f32 animationSpeed, const f32 gradientRotationSpeed)
     : _projection(projection)
 {
     setupMesh();
@@ -128,11 +124,6 @@ void RetroFuturaGUI::Rectangle::initBasic(std::span<const glm::vec4> colors)
 void RetroFuturaGUI::Rectangle::drawWithSolidFill()
 {            
     ShaderManager::GetFillShader().UseProgram();
-
-    //i32 projectionLocation = ShaderManager::GetFillShader().GetProjectionLocation();       
-    //if (projectionLocation != -1) 
-      //  glUniformMatrix4fv(projectionLocation, 1, GL_FALSE, glm::value_ptr(_projection.GetProjectionMatrix()));
-
     ShaderManager::GetFillShader().SetUniformMat4("uProjection", _projection.GetProjectionMatrix());
     ShaderManager::GetFillShader().SetUniformMat4("uPosition", _translationMatrix);
     ShaderManager::GetFillShader().SetUniformMat4("uScaling", _scalingMatrix);
@@ -142,12 +133,6 @@ void RetroFuturaGUI::Rectangle::drawWithSolidFill()
 
 void RetroFuturaGUI::Rectangle::drawWithGradientFill()
 {
-    ShaderManager::GetFillGradientShader().UseProgram();
-
-    //i32 projectionLocation = ShaderManager::GetFillGradientShader().GetProjectionLocation();       
-    //if (projectionLocation != -1) 
-      //  glUniformMatrix4fv(projectionLocation, 1, GL_FALSE, glm::value_ptr(_projection.GetProjectionMatrix()));
-
     _gradientOffset += _animationSpeed;
     if (_gradientOffset > 1.0f) 
         _gradientOffset = 0.0f;
@@ -156,6 +141,7 @@ void RetroFuturaGUI::Rectangle::drawWithGradientFill()
     if(_gradientDegree >= 360.0f)
         _gradientDegree = 0.0f;
 
+    ShaderManager::GetFillGradientShader().UseProgram();
     ShaderManager::GetFillGradientShader().SetUniformMat4("uProjection", _projection.GetProjectionMatrix());
     ShaderManager::GetFillGradientShader().SetUniformMat4("uPosition", _translationMatrix);
     ShaderManager::GetFillGradientShader().SetUniformMat4("uScaling", _scalingMatrix);
