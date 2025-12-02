@@ -14,23 +14,23 @@
 
 namespace RetroFuturaGUI
 {
-        enum class TextAlignment : u32
-        {
-            LEFT,
-            RIGHT,
-            CENTER,
-            //BLOCK
-        };
+    enum class TextAlignment : u32
+    {
+        LEFT,
+        RIGHT,
+        CENTER,
+        //BLOCK
+    };
 
-        struct TextParams
-        {
-            std::string_view _Text;
-            std::string_view _FontPath;
-            const glm::vec4& _TextColor;
-            const glm::vec2& _GlyphSize;
-            TextAlignment _TextAlignment;
-            f32 _TextPadding;
-        };
+    struct TextParams
+    {
+        std::string_view _Text;
+        std::string_view _FontPath;
+        const glm::vec4& _TextColor;
+        const glm::vec2& _GlyphSize;
+        TextAlignment _TextAlignment;
+        f32 _TextPadding;
+    };
 
     class Text
     {
