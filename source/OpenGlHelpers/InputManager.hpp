@@ -1,5 +1,7 @@
 #pragma once
 #include "IncludeHelper.hpp"
+#include <algorithm>
+#include <ranges>
 
 namespace RetroFuturaGUI
 {
@@ -32,7 +34,7 @@ namespace RetroFuturaGUI
             return _hoveredWindow;
         }
 
-        static inline void SetMouseButtonState(int button, bool state) 
+        static inline void SetMouseButtonState(i32 button, bool state) 
         {
             GetInstance()._mouseButtons[button] = state;
         }
@@ -59,8 +61,10 @@ namespace RetroFuturaGUI
             return GetInstance()._mousePosition;
         }
 
-
-
+        static inline bool AnyMouseButtonPressed()
+        {
+            return std::ranges::find(_mouseButtons, _mouseButtons + 8, true)  != (_mouseButtons + 8);
+        }
 
     private:
         InputManager() = default;
@@ -75,9 +79,10 @@ namespace RetroFuturaGUI
             return Instance;
         }
 
+            static inline constinit const u32 _mouseButtonCount = GLFW_MOUSE_BUTTON_LAST + 1;
             static inline GLFWwindow* _focusedWindow;
             static inline GLFWwindow* _hoveredWindow;
-            static inline bool _mouseButtons[GLFW_MOUSE_BUTTON_LAST + 1] = { false };
+            static inline constinit bool _mouseButtons[_mouseButtonCount] = { false };
             glm::dvec2 _mousePosition = { 0.0, 0.0 };
     };
 };
