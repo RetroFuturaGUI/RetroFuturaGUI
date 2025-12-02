@@ -5,10 +5,16 @@
 
 namespace RetroFuturaGUI
 {
+    struct BorderParams
+    {
+        const glm::vec4& _Color;
+        const float _Borderthickness;
+    };
+
     class LineBorder
     {
     public:
-        LineBorder(const GeometryParams2D& geometry, const glm::vec4& color, const f32 borderThickness = 2.0f);
+        LineBorder(const GeometryParams2D& geometry, const BorderParams& borderParams);
         ~LineBorder();
 
         void Draw();

@@ -12,7 +12,7 @@ namespace RetroFuturaGUI
     class Button : public IWidget
     {
     public:
-        Button(const IdentityParams& identity, const GeometryParams2D& geometry, const TextParams& textParams);
+        Button(const IdentityParams& identity, const GeometryParams2D& geometry, const TextParams& textParams, const BorderParams& borderParams);
         void Draw();
         void Connect_OnClick(const typename Signal<>::Slot& slot, const bool async);
         void Connect_OnRelease(const typename Signal<>::Slot& slot, const bool async);

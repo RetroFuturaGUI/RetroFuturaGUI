@@ -1,10 +1,10 @@
 #include "Button.hpp"
 
-RetroFuturaGUI::Button::Button(const IdentityParams &identity, const GeometryParams2D &geometry, const TextParams &textParams)
+RetroFuturaGUI::Button::Button(const IdentityParams &identity, const GeometryParams2D &geometry, const TextParams &textParams, const BorderParams& borderParams)
     : IWidget(identity, geometry)
 {
     _rectangle = std::make_unique<Rectangle>(geometry, _backgroundColorEnabled);
-    _lineBorder = std::make_unique<LineBorder>(geometry, _borderColorEnabled, 5.0f);
+    _lineBorder = std::make_unique<LineBorder>(geometry, borderParams);
     _text = std::make_unique<Text>(geometry, textParams);
 }
 

@@ -1,10 +1,10 @@
 #include "LineBorder.hpp"
 
-RetroFuturaGUI::LineBorder::LineBorder(const GeometryParams2D& geometry, const glm::vec4& color, const f32 borderThickness)
-: _projection(const_cast<Projection&>(geometry._Projection)), _borderThickness(borderThickness)
+RetroFuturaGUI::LineBorder::LineBorder(const GeometryParams2D& geometry, const BorderParams& borderParams)
+: _projection(const_cast<Projection&>(geometry._Projection)), _borderThickness(borderParams._Borderthickness)
 {
     setupMesh();
-    initBasic(std::span<const glm::vec4>(&color, 1));
+    initBasic(std::span<const glm::vec4>(&borderParams._Color, 1));
     Resize(geometry._Size);
     Move(geometry._Position);
     Rotate(geometry._Rotation);
