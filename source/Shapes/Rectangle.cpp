@@ -1,31 +1,31 @@
 #include "Rectangle.hpp"
 
-RetroFuturaGUI::Rectangle::Rectangle(Projection& projection, const glm::vec4 &color, const f32 width, const f32 height, const f32 positionX, const f32 positionY, const f32 rotation)
-    : _projection(projection)
+RetroFuturaGUI::Rectangle::Rectangle(const GeometryParams2D& geometry, const glm::vec4& color)
+    : _projection(const_cast<Projection&>(geometry._Projection))
 {
     setupMesh();
     initBasic(std::span<const glm::vec4>(&color, 1));
-    Resize(width, height);
-    Move(positionX, positionY);
-    Rotate(rotation);
+    Resize(geometry._Size);
+    Move(geometry._Position);
+    Rotate(geometry._Rotation);
 }
 
-RetroFuturaGUI::Rectangle::Rectangle(Projection& projection, std::span<const glm::vec4> colors, const f32 width, const f32 height, const f32 positionX, const f32 positionY, const f32 rotation, const f32 gradientDegree, const f32 animationSpeed, const f32 gradientRotationSpeed)
-    : _projection(projection)
+RetroFuturaGUI::Rectangle::Rectangle(const GeometryParams2D& geometry, const BackgroundParams& background)
+    : _projection(const_cast<Projection&>(geometry._Projection))
 {
     setupMesh();
-    initBasic(colors);
-    _gradientDegree = gradientDegree;
-    _animationSpeed = animationSpeed;
-    _gradientRotationSpeed = gradientRotationSpeed;
+    initBasic(background._Colors);
+    _gradientDegree = background._GradientDegree;
+    _animationSpeed = background._AnimationSpeed;
+    _gradientRotationSpeed = background._GradientRotationSpeed;
 
     ShaderManager::GetFillGradientShader().UseProgram();
     ShaderManager::GetFillGradientShader().SetUniformVec4("uColors", &_colors[0][0], 255);
     ShaderManager::GetFillGradientShader().SetUniformFloat("uDegree", _gradientDegree);
     ShaderManager::GetFillGradientShader().SetUniformInt("uNumColors", _colorCount);
-    Resize(width, height);
-    Move(positionX, positionY);
-    Rotate(rotation);
+    Resize(geometry._Size);
+    Move(geometry._Position);
+    Rotate(geometry._Rotation);
 }
 
 RetroFuturaGUI::Rectangle::~Rectangle()
@@ -69,15 +69,15 @@ void RetroFuturaGUI::Rectangle::UpdateGradientRotationSpeed(const f32 speed)
     _gradientRotationSpeed = speed;
 }
 
-void RetroFuturaGUI::Rectangle::Resize(const f32 width, const f32 height)
+void RetroFuturaGUI::Rectangle::Resize(const glm::vec2& size)
 {
-    _scale = glm::vec2(width * 0.5f, height * 0.5f);
+    _scale = glm::vec2(size.x * 0.5f, size.y * 0.5f);
     _scalingMatrix = glm::scale(glm::mat4(1.0f), glm::vec3(_scale, 1.0f));
 }
 
-void RetroFuturaGUI::Rectangle::Move(const f32 x, const f32 y)
+void RetroFuturaGUI::Rectangle::Move(const glm::vec2& position)
 {
-    _position = glm::vec2(x, y);
+    _position = position;
     _translationMatrix = glm::translate(glm::mat4(1.0f), glm::vec3(_position, 0.0f));
 }
 

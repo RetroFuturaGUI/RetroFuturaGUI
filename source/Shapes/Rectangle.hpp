@@ -5,18 +5,26 @@
 
 namespace RetroFuturaGUI
 {
+    struct BackgroundParams
+    {
+        const std::span<const glm::vec4>& _Colors;
+        const f32 _GradientDegree = 45.0f;
+        const f32 _AnimationSpeed = 0.0003f;
+        const f32 _GradientRotationSpeed = 0.02f;
+    };
+
     class Rectangle
     {
     public:
-        Rectangle(Projection& projection, const glm::vec4& color, const f32 width, const f32 height, const f32 positionX = 0.0f, const f32 positionY = 0.0f, const f32 rotation = 0.0f);
-        Rectangle(Projection& projection, std::span<const glm::vec4> colors, const f32 width, const f32 height, const f32 positionX = 0.0f, const f32 positionY = 0.0f, const f32 rotation = 0.0f, const f32 gradientDegree = 45.0f, const f32 animationSpeed = 0.0003f, const f32 gradientRotationSpeed = 0.02f);
+        Rectangle(const GeometryParams2D& geometry, const glm::vec4& color);
+        Rectangle(const GeometryParams2D& geometry, const BackgroundParams& background);
         ~Rectangle();
         void Draw();
         void UpdateAnimationSpeed(const f32 speed);
         void UpdateGradientDegree(const f32 degree);
         void UpdateGradientRotationSpeed(const f32 speed);
-        void Resize(const f32 width, const f32 height);
-        void Move(const f32 x, const f32 y);
+        void Resize(const glm::vec2& size);
+        void Move(const glm::vec2& position);
         void Rotate(const f32 rotation);
         void SetColor(const glm::vec4& color)
         {

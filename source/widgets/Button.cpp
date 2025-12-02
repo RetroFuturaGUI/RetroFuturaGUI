@@ -3,7 +3,7 @@
 RetroFuturaGUI::Button::Button(const IdentityParams &identity, const GeometryParams2D &geometry, const TextParams &textParams)
     : IWidget(identity, geometry)
 {
-    _rectangle = std::make_unique<Rectangle>(const_cast<Projection&>(geometry._Projection), _backgroundColorEnabled, geometry._Size.x, geometry._Size.y, geometry._Position.x, geometry._Position.y, geometry._Rotation);
+    _rectangle = std::make_unique<Rectangle>(geometry, _backgroundColorEnabled);
     _lineBorder = std::make_unique<LineFrame>(const_cast<Projection&>(geometry._Projection), _borderColorEnabled, geometry._Size.x, geometry._Size.y, geometry._Position.x, geometry._Position.y, 5.0f, geometry._Rotation);
     _text = std::make_unique<Text>(geometry, textParams);
 }
