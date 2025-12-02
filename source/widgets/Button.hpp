@@ -1,7 +1,7 @@
 #pragma once
 #include "IncludeHelper.hpp"
 #include "InputManager.hpp"
-#include "LineFrame.hpp"
+#include "LineBorder.hpp"
 #include "Rectangle.hpp"
 #include "Signal.hpp"
 #include "Text.hpp"
@@ -40,7 +40,7 @@ namespace RetroFuturaGUI
     private:
         //elements
         std::unique_ptr<Rectangle> _rectangle;
-        std::unique_ptr<LineFrame> _lineBorder;
+        std::unique_ptr<LineBorder> _lineBorder;
         std::unique_ptr<Text> _text;
         
         //logic

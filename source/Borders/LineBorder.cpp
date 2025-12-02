@@ -1,6 +1,6 @@
-#include "LineFrame.hpp"
+#include "LineBorder.hpp"
 
-RetroFuturaGUI::LineFrame::LineFrame(const GeometryParams2D& geometry, const glm::vec4& color, const f32 borderThickness)
+RetroFuturaGUI::LineBorder::LineBorder(const GeometryParams2D& geometry, const glm::vec4& color, const f32 borderThickness)
 : _projection(const_cast<Projection&>(geometry._Projection)), _borderThickness(borderThickness)
 {
     setupMesh();
@@ -10,17 +10,18 @@ RetroFuturaGUI::LineFrame::LineFrame(const GeometryParams2D& geometry, const glm
     Rotate(geometry._Rotation);
 }
 
-RetroFuturaGUI::LineFrame::~LineFrame()
+RetroFuturaGUI::LineBorder::~LineBorder()
 {
     glDeleteVertexArrays(1, &_vao);
     glDeleteBuffers(1, &_vbo);
     glDeleteBuffers(1, &_ebo);
 }
 
-void RetroFuturaGUI::LineFrame::Draw()
+void RetroFuturaGUI::LineBorder::Draw()
 {
     ShaderManager::GetLineFillShader().UseProgram();
     ShaderManager::GetLineFillShader().SetUniformMat4("uProjection", _projection.GetProjectionMatrix());
+    //ShaderManager::GetLineFillShader().SetUniformVec4("uCornerRadii", _cornerRadii);
     ShaderManager::GetLineFillShader().SetUniformMat4("uPosition", _translationMatrix);
     ShaderManager::GetLineFillShader().SetUniformMat4("uScaling", _scalingMatrix);
     ShaderManager::GetLineFillShader().SetUniformMat4("uRotation", _rotationMatrix);
@@ -32,35 +33,35 @@ void RetroFuturaGUI::LineFrame::Draw()
     glBindVertexArray(0);
 }
 
-void RetroFuturaGUI::LineFrame::Resize(const glm::vec2& size)
+void RetroFuturaGUI::LineBorder::Resize(const glm::vec2& size)
 {
     _scale = size * 0.5f;
     _scalingMatrix = glm::scale(glm::mat4(1.0f), glm::vec3(_scale, 1.0f));
 }
 
-void RetroFuturaGUI::LineFrame::Move(const glm::vec2& position)
+void RetroFuturaGUI::LineBorder::Move(const glm::vec2& position)
 {
     _position = position;
     _translationMatrix = glm::translate(glm::mat4(1.0f), glm::vec3(_position, 0.0f));
 }
 
-void RetroFuturaGUI::LineFrame::Rotate(const float rotation)
+void RetroFuturaGUI::LineBorder::Rotate(const float rotation)
 {
     _rotation = rotation;
     _rotationMatrix = glm::rotate(glm::mat4(1.0f), glm::radians(_rotation), glm::vec3(0.0f, 0.0f, 1.0f));
 }
 
-void RetroFuturaGUI::LineFrame::SetColor(const glm::vec4 &color)
+void RetroFuturaGUI::LineBorder::SetColor(const glm::vec4 &color)
 {
     _colors[0] = color;
 }
 
-glm::vec4 RetroFuturaGUI::LineFrame::GetColor() const
+glm::vec4 RetroFuturaGUI::LineBorder::GetColor() const
 {
     return _colors[0];
 }
 
-void RetroFuturaGUI::LineFrame::setupMesh()
+void RetroFuturaGUI::LineBorder::setupMesh()
 {
     glGenVertexArrays(1, &_vao);
     glGenBuffers(1, &_vbo);
@@ -78,7 +79,7 @@ void RetroFuturaGUI::LineFrame::setupMesh()
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(_testBorderIndices), _testBorderIndices, GL_STATIC_DRAW);
 }
 
-void RetroFuturaGUI::LineFrame::initBasic(std::span<const glm::vec4> colors)
+void RetroFuturaGUI::LineBorder::initBasic(std::span<const glm::vec4> colors)
 {
     _colorCount = colors.size();
     _fillType = _colorCount > 1 ? FillType::GRADIENT : FillType::SOLID;

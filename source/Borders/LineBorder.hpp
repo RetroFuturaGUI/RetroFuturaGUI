@@ -5,11 +5,11 @@
 
 namespace RetroFuturaGUI
 {
-    class LineFrame
+    class LineBorder
     {
     public:
-        LineFrame(const GeometryParams2D& geometry, const glm::vec4& color, const f32 borderThickness = 2.0f);
-        ~LineFrame();
+        LineBorder(const GeometryParams2D& geometry, const glm::vec4& color, const f32 borderThickness = 2.0f);
+        ~LineBorder();
 
         void Draw();
         void Resize(const glm::vec2& size);
@@ -41,7 +41,7 @@ namespace RetroFuturaGUI
         //glm::vec2 _roundedCorners[8];
         std::unique_ptr<glm::vec4[]> _colors;
         Projection& _projection;
-        //glm::vec4 _cornerRadii;
+        //glm::vec4 _cornerRadii = glm::vec4(10.0f);
         f32 _borderThickness = 2.0f;
 
         glm::mat4 _scalingMatrix = glm::mat4(1.0f);
