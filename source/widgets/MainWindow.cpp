@@ -1,10 +1,9 @@
-//#include "Label.hpp"
-#include <print>
-#include <glad/glad.h>
-#include "MainWindow.hpp"
 #include "PlatformBridge.hpp"
+#include <print>
+//#include <glad/glad.h>
+#include "MainWindow.hpp"
 
-RetroFuturaGUI::MainWindow::MainWindow(const std::string& name, i32 width, i32 height, void* parent, Sizing minWidth, Sizing minHeight, Sizing maxWidth, Sizing maxHeight)
+RetroFuturaGUI::MainWindow::MainWindow(const std::string& name, i32 width, i32 height, void* parent)
 {
 	if(_mainWindowInitialized)
 	{
@@ -20,16 +19,10 @@ RetroFuturaGUI::MainWindow::MainWindow(const std::string& name, i32 width, i32 h
 
 	glfwWindowHint(GLFW_DECORATED, GLFW_FALSE);
 
-	_mainWindow = std::make_unique<Window>(name, width, height, parent, minWidth, minHeight, maxWidth, maxHeight);
+	_mainWindow = std::make_unique<Window>(name, width, height, parent);
 
-	if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
-    {
-        std::println("Failed to initialize GLAD");
-        return;
-    }
 
-	PlatformBridge::RefreshPlatformBridge();
-	ShaderManager::Init();
+
 	_mainWindowInitialized = true;
 }
 

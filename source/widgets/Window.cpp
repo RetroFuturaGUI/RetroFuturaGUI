@@ -1,9 +1,9 @@
-//#include "Label.hpp"
-#include <print>
 #include "Window.hpp"
+#include <glm/gtc/type_ptr.hpp>
+#include <print>
 
-RetroFuturaGUI::Window::Window(const std::string& name, i32 width, i32 height, void* parent, Sizing minWidth, Sizing minHeight, Sizing maxWidth, Sizing maxHeight)
-    : IWidget(name, width, height, parent, minWidth, minHeight, maxWidth, maxHeight)
+RetroFuturaGUI::Window::Window(const std::string& name, i32 width, i32 height, void* parent)
+   // : IWidget(name, glm::mat4(1.0f), width, height, parent)
 {
 	createWindow();
 }
@@ -14,8 +14,6 @@ void RetroFuturaGUI::Window::createWindow()
 	glfwWindowHint(GLFW_TRANSPARENT_FRAMEBUFFER, GLFW_TRUE);
 	_window = glfwCreateWindow(_width, _height, "glfw test", nullptr, nullptr);
 
-	//std::println("Creating window: {0} ({1}x{2})", _name, _width, _height);
-
 	if (!_window)
 	{
 		std::println("{0}", "Failed to create GLFW window");
@@ -24,62 +22,70 @@ void RetroFuturaGUI::Window::createWindow()
 	}
 
 	glfwMakeContextCurrent(_window);
-	glfwSetMouseButtonCallback(_window, mouseButtonCallback);
+
+	if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) //maybe move this to MainWindow?
+    {
+        std::println("Failed to initialize GLAD in Window::createWindow");
+        glfwDestroyWindow(_window);
+        _window = nullptr;
+        glfwTerminate();
+        return;
+    }
+
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	glViewport(0, 0, _width, _height);
+
 	SetBackgroundColor(_backgroundColor);
-}
 
-void RetroFuturaGUI::Window::mouseButtonCallback(GLFWwindow* window, i32 button, i32 action, i32 mods)
-{
-	if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS)
+	if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
+    {
+        std::println("Failed to initialize GLAD");
+        return;
+    }
+
+	glfwSetCursorPosCallback(_window, cursorPositionCallback);
+	glfwSetMouseButtonCallback(_window, mouseButtonClickedCallback);
+	glfwSetWindowFocusCallback(_window, windowFocusCallback);
+
+
+	static bool shadersInitialized = false;
+	if (!shadersInitialized)		
 	{
-		// Get the mouse position
-		f64 mouseX, mouseY;
-		glfwGetCursorPos(window, &mouseX, &mouseY);
-        i32 width, height;
-        glfwGetWindowSize(window, &width, &height);
-
-		// Convert mouse coordinates to OpenGL normalized device coordinates
-		f32 normalizedX = (mouseX / width) * 2.0f - 1.0f;
-		f32 normalizedY = 1.0f - (mouseY / 
-            height) * 2.0f;
-
-		// Check if the click is within the close button bounds
-		if (normalizedX >= 0.9f && normalizedX <= 1.0f &&
-			normalizedY >= 0.9f && normalizedY <= 1.0f)
-		{
-			// Close the window
-			glfwSetWindowShouldClose(window, GLFW_TRUE);
-		}
+		ShaderManager::Init();
+		shadersInitialized = true;
 	}
-}
 
-void RetroFuturaGUI::Window::renderCustomCloseButton()
-{
-	// Render a simple rectangle as the custom top bar
-	glBegin(GL_QUADS);
-	glColor3f(1.0f, 0.0f, 0.0f); // Blue color
-	glVertex2f(0.9f, 1.0f);     // Top-left
-	glVertex2f(1.0f, 1.0f);      // Top-right
-	glVertex2f(1.0f, 0.9f);      // Bottom-right
-	glVertex2f(0.9f, 0.9f);     // Bottom-left
-	glEnd();
-}
 
-void RetroFuturaGUI::Window::renderCustomTopBar()
-{
-	// Render a simple rectangle as the custom top bar
-	glBegin(GL_QUADS);
-	glColor3f(0.2f, 0.2f, 0.8f); // Blue color
-	glVertex2f(-1.0f, 1.0f);     // Top-left
-	glVertex2f(1.0f, 1.0f);      // Top-right
-	glVertex2f(1.0f, 0.9f);      // Bottom-right
-	glVertex2f(-1.0f, 0.9f);     // Bottom-left
+	_projection = std::make_unique<Projection>((float)_width, (float)_height);
 
-	renderCustomCloseButton();
+	IdentityParams identity = { "testLabel", this, WidgetTypeID::Window };
+	GeometryParams2D geometry = { *_projection, glm::vec2(800.0f, 600.0f), glm::vec2(300.0f, 90.0f), 0.0f };
+	std::string tempPath = PlatformBridge::Fonts::GetFontsInformation().front().second;
+	TextParams textParams = { "Test Label", tempPath, glm::vec4(1.0f), glm::vec2(30.0f), TextAlignment::CENTER, 5.0f };
 
-	glEnd();
+	IdentityParams identityB = { "testButton", this, WidgetTypeID::Window };
+	GeometryParams2D geometryB = { *_projection, glm::vec2(300.0f, 300.0f), glm::vec2(300.0f, 90.0f), 0.0f };
+	TextParams textParamsB = { "Test Button", tempPath, glm::vec4(1.0f), glm::vec2(30.0f), TextAlignment::CENTER, 5.0f };
+	BorderParams borderParams = { glm::vec4(0.3f, 0.3f, 0.3f, 1.0f), 5.0f };
+
+	IdentityParams identityWB = { "testWindowbar", this, WidgetTypeID::WindowBar };
+	GeometryParams2D geometryWB = { *_projection, glm::vec2(0.0f), glm::vec2(0.0f), 0.0f };
+
+	_button = std::make_unique<Button>(identityB, geometryB, textParamsB, borderParams);
+	_label = std::make_unique<Label>(identity, geometry, textParams);
+	_windowBar = std::make_unique<WindowBar>(identityWB, geometryWB, glm::vec4(0.5f, 0.0f, 1.0f, 1.0f));
+
+	auto buttonPressed = [](){ std::println("buttonPressed Slot"); };
+	auto buttonReleased = [](){ std::println("buttonReleased Slot"); };
+	auto whileHover = [](){ std::println("whileHover Slot"); };
+	auto mouseEnter = [](){ std::println("mouseEnter Slot"); };
+	auto mouseLeave = [](){ std::println("mouseLeave Slot"); };
+	_button->Connect_OnClick(buttonPressed, true);
+	_button->Connect_OnRelease(buttonReleased, true);
+	//_button->Connect_WhileHover(whileHover, true);
+	_button->Connect_OnMouseEnter(mouseEnter, true);
+	_button->Connect_OnMouseLeave(mouseLeave, true);
 }
 
 bool RetroFuturaGUI::Window::WindowShouldClose()
@@ -89,17 +95,15 @@ bool RetroFuturaGUI::Window::WindowShouldClose()
 
 void RetroFuturaGUI::Window::Draw()
 {
-		glClear(GL_COLOR_BUFFER_BIT);
+	glClear(GL_COLOR_BUFFER_BIT);
+	_label->Draw();
+	_button->Draw();
+	_windowBar->Draw();
+	glfwSwapBuffers(_window);
+	glfwPollEvents();
 
-		renderCustomTopBar();
-
-		glfwSwapBuffers(_window);
-		glfwPollEvents();
-
-        if(_child != nullptr)
-        {
-            //GetChild<RetroFuturaGUI::Label>()->Draw();
-        }
+	if(_windowBar->WindowShouldClose())
+		glfwSetWindowShouldClose(_window, GLFW_TRUE);
 }
 
 
