@@ -9,6 +9,14 @@
 
 namespace RetroFuturaGUI
 {
+    enum ColorSetState : u32
+    {
+        Enabled,
+        Disabled,
+        Clicked,
+        Hover
+    };
+
     class Button : public IWidget
     {
     public:
@@ -30,12 +38,12 @@ namespace RetroFuturaGUI
         void Disconnect_OnDisable(const typename Signal<>::Slot& slot);
         void SetEnabled(const bool enable);
         bool IsEnabled() const;
-        void SetBackgroundColor(const glm::vec4& color);
-        glm::vec4 GetBackgroundColor() const;
-        void SetTextColor(const glm::vec4& color);
-        glm::vec4 GetTextColor() const;
-        void SetLineBorderColor(const glm::vec4& color);
-        glm::vec4 GetLineBorderColor() const;
+        void SetBackgroundColor(const glm::vec4& color, const ColorSetState state);
+        glm::vec4 GetBackgroundColor(const ColorSetState state) const;
+        void SetTextColor(const glm::vec4& color, const ColorSetState state);
+        glm::vec4 GetTextColor(const ColorSetState state) const;
+        void SetLineBorderColor(const glm::vec4& color, const ColorSetState state);
+        glm::vec4 GetLineBorderColor(const ColorSetState state) const;
 
     private:
         //elements
@@ -49,6 +57,7 @@ namespace RetroFuturaGUI
         bool _colorSetFlag = false;
         bool _mouseEnteredFlag = false;
         bool _mouseLeftFlag = false;
+        ColorSetState _state = Enabled;
         Signal<> _onClick;
         Signal<> _onClickAsync;
         Signal<> _onRelease;
@@ -64,15 +73,7 @@ namespace RetroFuturaGUI
         Signal<> _onDisable;
         Signal<> _onDisableAsync;
 
-        //style
-        enum class ColorSetKeys : u32 
-        {
-            Disabled,
-            Enabled,
-            Clicked,
-            Hover
-        };
-
+        // Style
         glm::vec4 _backgroundColorEnabled = glm::vec4(0.5f, 0.5f, 0.5f, 1.0f);
         glm::vec4 _backgroundColorDisabled = glm::vec4(0.25f, 0.25f, 0.25f, 1.0f);
         glm::vec4 _backgroundColorClicked = glm::vec4(0.6f, 0.6f,0.6f, 1.0f);
@@ -87,6 +88,9 @@ namespace RetroFuturaGUI
         glm::vec4 _textColorHover = glm::vec4(1.0f, 0.0f, 1.0f, 1.0f);
 
         void interact();
-        void setColors(const ColorSetKeys key);
+        void setColors();
+        void setBackgroundColorElement(const glm::vec4& color);
+        void setTextColorElement(const glm::vec4& color);
+        void setLineBorderColorElement(const glm::vec4& color);
     };
 }

@@ -122,13 +122,15 @@ void RetroFuturaGUI::Button::SetEnabled(const bool enable)
     {
         _onEnableAsync.EmitAsync();
         _onEnable.Emit();
-        setColors(ColorSetKeys::Enabled);
+        _state = ColorSetState::Enabled;
+        setColors();
         return;
     }
 
     _onDisableAsync.EmitAsync();
     _onDisable.Emit();
-    setColors(ColorSetKeys::Disabled);
+    ColorSetState::Disabled;
+    setColors();
 }
 
 bool RetroFuturaGUI::Button::IsEnabled() const
@@ -136,34 +138,109 @@ bool RetroFuturaGUI::Button::IsEnabled() const
     return _isEnabledFlag;
 }
 
-void RetroFuturaGUI::Button::SetBackgroundColor(const glm::vec4 &color)
+void RetroFuturaGUI::Button::SetBackgroundColor(const glm::vec4& color, const ColorSetState state)
 {
-    _rectangle->SetColor(color);
+    switch(state)
+    {
+        case ColorSetState::Clicked:
+            _backgroundColorClicked = color;
+        break;
+        case ColorSetState::Disabled:
+            _backgroundColorDisabled = color;
+        break;
+        case ColorSetState::Hover:
+            _backgroundColorHover = color;
+        break;
+        default: // Enabled
+            _backgroundColorEnabled = color;
+    }
+
+    setColors();
 }
 
-glm::vec4 RetroFuturaGUI::Button::GetBackgroundColor() const
+glm::vec4 RetroFuturaGUI::Button::GetBackgroundColor(const ColorSetState state) const
 {
-    return _rectangle->GetColor();
+    switch(state)
+    {
+        case ColorSetState::Clicked:
+            return _backgroundColorClicked;
+        case ColorSetState::Disabled:
+            return _backgroundColorDisabled;
+        case ColorSetState::Hover:
+            return _backgroundColorHover;
+        default: // Enabled
+            return _backgroundColorEnabled;
+    }
 }
 
-void RetroFuturaGUI::Button::SetTextColor(const glm::vec4 &color)
+void RetroFuturaGUI::Button::SetTextColor(const glm::vec4& color, const ColorSetState state)
 {
-    _text->SetColor(color);
+    switch(state)
+    {
+        case ColorSetState::Clicked:
+            _textColorClicked = color;
+        break;
+        case ColorSetState::Disabled:
+            _textColorDisabled = color;
+        break;
+        case ColorSetState::Hover:
+            _textColorHover = color;
+        break;
+        default: // Enabled
+            _textColorEnabled = color;
+    }
+
+    setColors();
 }
 
-glm::vec4 RetroFuturaGUI::Button::GetTextColor() const
+glm::vec4 RetroFuturaGUI::Button::GetTextColor(const ColorSetState state) const
 {
-    return _text->GetColor();
+    switch(state)
+    {
+        case ColorSetState::Clicked:
+            return _textColorClicked;
+        case ColorSetState::Disabled:
+            return _textColorDisabled;
+        case ColorSetState::Hover:
+            return _textColorHover;
+        default: // Enabled
+            return _textColorEnabled;
+    }
 }
 
-void RetroFuturaGUI::Button::SetLineBorderColor(const glm::vec4 &color)
+void RetroFuturaGUI::Button::SetLineBorderColor(const glm::vec4& color, const ColorSetState state)
 {
-    _lineBorder->SetColor(color);
+    switch(state)
+    {
+        case ColorSetState::Clicked:
+            _borderColorClicked = color;
+        break;
+        case ColorSetState::Disabled:
+            _borderColorDisabled = color;
+        break;
+        case ColorSetState::Hover:
+            _borderColorHover = color;
+        break;
+        default: // Enabled
+            _borderColorEnabled = color;
+    }
+
+    setColors();
 }
 
-glm::vec4 RetroFuturaGUI::Button::GetLineBorderColor() const
+glm::vec4 RetroFuturaGUI::Button::GetLineBorderColor(const ColorSetState state) const
 {
-    return _lineBorder->GetColor();
+    switch(state)
+    {
+        case ColorSetState::Clicked:
+            return _borderColorClicked;
+        case ColorSetState::Disabled:
+            return _borderColorDisabled;
+        case ColorSetState::Hover:
+            return _borderColorHover;
+        default: // Enabled
+            return _borderColorEnabled;
+    }
 }
 
 void RetroFuturaGUI::Button::interact()
@@ -179,7 +256,8 @@ void RetroFuturaGUI::Button::interact()
             _mouseEnteredFlag = false;
             _onMouseLeaveAsync.EmitAsync();
             _onMouseLeave.Emit();
-            setColors(ColorSetKeys::Enabled);
+            _state = ColorSetState::Enabled;
+            setColors();
         }
 
         return;
@@ -197,14 +275,16 @@ void RetroFuturaGUI::Button::interact()
         _mouseEnteredFlag = true;
         _onMouseEnterAsync.EmitAsync();
         _onMouseEnter.Emit();
-        setColors(ColorSetKeys::Hover);
+        _state = ColorSetState::Hover;
+        setColors();
     }
 
     if (isMouseButtonPressed && !_wasClicked) //click
     {
         _onClickAsync.EmitAsync();
         _onClick.Emit();
-        setColors(ColorSetKeys::Clicked);
+        _state = ColorSetState::Clicked;
+        setColors();
     }
     else if(!isMouseButtonPressed && _wasClicked) //release
     {
@@ -212,41 +292,58 @@ void RetroFuturaGUI::Button::interact()
         _onRelease.Emit();
 
         if(isHovering)
-            setColors(ColorSetKeys::Hover);
+            _state = ColorSetState::Hover;
         else
-            setColors(ColorSetKeys::Enabled);
+            _state = ColorSetState::Enabled;
+
+        setColors();
     }
 
     _wasClicked = isMouseButtonPressed;
 }
 
-void RetroFuturaGUI::Button::setColors(const ColorSetKeys key)
+void RetroFuturaGUI::Button::setColors()
 {
-    switch(key)
+    switch(_state)
     {
-        case ColorSetKeys::Enabled:
+        case ColorSetState::Enabled:
         {
-            SetBackgroundColor(_backgroundColorEnabled);
-            SetLineBorderColor(_borderColorEnabled);
-            SetTextColor(_textColorEnabled);
+            setBackgroundColorElement(_backgroundColorEnabled);
+            setLineBorderColorElement(_borderColorEnabled);
+            setTextColorElement(_textColorEnabled);
         } break;
-        case ColorSetKeys::Clicked:
+        case ColorSetState::Clicked:
         {
-            SetBackgroundColor(_backgroundColorClicked);
-            SetLineBorderColor(_borderColorClicked);
-            SetTextColor(_textColorClicked);
+            setBackgroundColorElement(_backgroundColorClicked);
+            setLineBorderColorElement(_borderColorClicked);
+            setTextColorElement(_textColorClicked);
         } break;
-        case ColorSetKeys::Hover:
+        case ColorSetState::Hover:
         {
-            SetBackgroundColor(_backgroundColorHover);
-            SetLineBorderColor(_borderColorHover);
-            SetTextColor(_textColorHover);
+            setBackgroundColorElement(_backgroundColorHover);
+            setLineBorderColorElement(_borderColorHover);
+            setTextColorElement(_textColorHover);
         } break;
         default: //Disabled
         {
-            SetBackgroundColor(_backgroundColorDisabled);
-            SetLineBorderColor(_borderColorDisabled);
-            SetTextColor(_textColorDisabled);
+            setBackgroundColorElement(_backgroundColorDisabled);
+            setLineBorderColorElement(_borderColorDisabled);
+            setTextColorElement(_textColorDisabled);
         }
     }
+}
+
+void RetroFuturaGUI::Button::setBackgroundColorElement(const glm::vec4 &color)
+{
+    _rectangle->SetColor(color);
+}
+
+void RetroFuturaGUI::Button::setTextColorElement(const glm::vec4 &color)
+{
+    _text->SetColor(color);
+}
+
+void RetroFuturaGUI::Button::setLineBorderColorElement(const glm::vec4 &color)
+{
+    _lineBorder->SetColor(color);
 }
