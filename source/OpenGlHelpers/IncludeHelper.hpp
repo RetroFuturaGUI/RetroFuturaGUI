@@ -17,6 +17,7 @@ enum class WidgetTypeID : i32
 {
     None,
     Window,
+    WindowBar,
     Grid,
     Label,
     Button,

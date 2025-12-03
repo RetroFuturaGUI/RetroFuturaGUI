@@ -1,0 +1,261 @@
+#include "WindowBar.hpp"
+
+RetroFuturaGUI::WindowBar::WindowBar(const IdentityParams &identity, GeometryParams2D &geometry, const glm::vec4 &color, const WindowBarPosition wbPosition)
+    : IWidget(identity, geometry), _projection(const_cast<Projection&>(geometry._Projection)), _windowBarPosition(wbPosition)
+{   
+    GeometryParams2D geometryAdv = 
+    {
+        geometry._Projection,
+        
+            calculateWindowBarPosition(geometry._Position),
+        
+        calculateWindowBarSize(geometry._Size),
+        0.0f
+    };
+    _background = std::make_unique<Rectangle>(geometryAdv, color);
+
+    GeometryParams2D geometryButton{
+        geometry._Projection,
+            calculateElementPosition(geometry._Position, ElementType::CloseButton),
+            glm::vec2(28.0f),
+            0.0f
+    };
+
+    IdentityParams identityCloseButton
+    {
+        "testWindowBarClosw",
+        this,
+        WidgetTypeID::WindowBar
+    };
+
+    std::string font = PlatformBridge::Fonts::GetFontsInformation().front().second;
+    TextParams textParams = 
+    {
+        "X",
+        font,
+        glm::vec4(1.0f),
+        glm::vec2(25.0f),
+        TextAlignment::CENTER,
+        3.0f
+    };
+
+    BorderParams borderParams =
+    {
+        glm::vec4(0.0f),
+        2.0f
+    };
+
+    _close = std::make_unique<Button>(identityCloseButton, geometryButton, textParams, borderParams);
+    _close->SetBackgroundColor(glm::vec4(1.0f, 0.4f, 0.4f, 1.0f), ColorSetState::Enabled);
+
+    IdentityParams identityMaximize
+    {
+        "testMaximize",
+        this,
+        WidgetTypeID::WindowBar
+    };
+
+    GeometryParams2D geometryButtonMaximize
+    {
+        geometry._Projection,
+        calculateElementPosition(geometry._Position, ElementType::MaximizeButton),
+        glm::vec2(28.0f),
+        0.0f
+    };
+
+    TextParams textParamsMaximize = 
+    {
+        "M",
+        font,
+        glm::vec4(1.0f),
+        glm::vec2(25.0f),
+        TextAlignment::CENTER,
+        3.0f
+    };
+
+    _maximize = std::make_unique<Button>(identityMaximize, geometryButtonMaximize, textParamsMaximize, borderParams);
+
+    IdentityParams identityMinimize
+    {
+        "testMinimize",
+        this,
+        WidgetTypeID::WindowBar
+    };
+
+    GeometryParams2D geometryButtonMinimize
+    {
+        geometry._Projection,
+        calculateElementPosition(geometry._Position, ElementType::MinimizeButton),
+        glm::vec2(28.0f),
+        0.0f
+    };
+
+    TextParams textParamsMinimize = 
+    {
+        "_",
+        font,
+        glm::vec4(1.0f),
+        glm::vec2(25.0f),
+        TextAlignment::CENTER,
+        3.0f
+    };
+
+    _minimize = std::make_unique<Button>(identityMinimize, geometryButtonMinimize, textParamsMinimize, borderParams);
+
+    TextParams textParamsTitel = 
+    {
+        "RetroFuturaGUI Test",
+        font,
+        glm::vec4(1.0f),
+        glm::vec2(25.0f),
+        TextAlignment::LEFT,
+        3.0f
+    };
+
+    GeometryParams2D geometryButtonTitle
+    {
+        geometry._Projection,
+        calculateElementPosition(geometry._Position, ElementType::Titel),
+        glm::vec2(28.0f),
+        0.0f
+    };
+
+    _windowTitle = std::make_unique<Text>(geometryButtonTitle, textParamsTitel);
+}
+
+void RetroFuturaGUI::WindowBar::Draw()
+{
+    _background->Draw();
+    _close->Draw();
+    _maximize->Draw();
+    _minimize->Draw();
+    _windowTitle->Draw();
+}
+
+bool RetroFuturaGUI::WindowBar::WindowShouldClose()
+{
+    return _windowShouldClose;
+}
+
+glm::vec2 RetroFuturaGUI::WindowBar::calculateWindowBarPosition(const glm::vec2 &position)
+{
+    float x, y;
+
+    if(_windowBarPosition == WindowBarPosition::Top || _windowBarPosition == WindowBarPosition::Bottom)
+        x = _projection.GetResolution().x * 0.5f;
+    else
+        y = _projection.GetResolution().y * 0.5f;
+
+    switch(_windowBarPosition)
+    {
+    case WindowBarPosition::Bottom:
+        y = _windowBarthiccness * 0.5f;
+    break;
+    case WindowBarPosition::Left:
+        x = _windowBarthiccness * 0.5f;
+    break;
+    case WindowBarPosition::Right:
+        x = _projection.GetResolution().x - _windowBarthiccness * 0.5f;
+    default: //Top
+        y = _projection.GetResolution().y - _windowBarthiccness * 0.5f;
+    }
+
+    return glm::vec2(x, y);
+}
+
+glm::vec2 RetroFuturaGUI::WindowBar::calculateWindowBarSize(const glm::vec2 &size)
+{
+    return glm::vec2(_windowBarPosition == WindowBarPosition::Top || _windowBarPosition == WindowBarPosition::Bottom ? _projection.GetResolution().x : _windowBarthiccness,
+                     _windowBarPosition == WindowBarPosition::Left || _windowBarPosition == WindowBarPosition::Right ? _projection.GetResolution().y : _windowBarthiccness);
+}
+
+glm::vec2 RetroFuturaGUI::WindowBar::calculateElementPosition(const glm::vec2 &position, const ElementType elementType)
+{
+    float offset = 3.0f, x, y;
+
+    switch(elementType)
+    {
+        case ElementType::NoDockingDrag:
+            offset *= 3.5f;
+            offset +=_windowBarthiccness * 3.5f;
+        break;
+        case ElementType::MinimizeButton:
+            offset *=  2.5f;
+            offset += _windowBarthiccness * 2.5f;
+        break;
+        case ElementType::MaximizeButton:
+            offset *=  1.5f;
+            offset += _windowBarthiccness * 1.5f;
+        break;
+        case ElementType::CloseButton:
+            offset += _windowBarthiccness * 0.5f;
+        break;
+    }
+
+    switch(elementType)
+    {
+        case ElementType::Icon:
+            if(_windowBarPosition == WindowBarPosition::Top || _windowBarPosition == WindowBarPosition::Bottom)
+                x =  _windowBarthiccness * 0.5f + offset;
+            else
+                y =  _windowBarthiccness * 0.5f + offset;
+
+            switch(_windowBarPosition)
+            {
+            case WindowBarPosition::Bottom:
+                y = _windowBarthiccness * 0.5f;
+            break;
+            case WindowBarPosition::Left:
+                x = _windowBarthiccness * 0.5f;
+            break;
+            case WindowBarPosition::Right:
+                x = _projection.GetResolution().x - _windowBarthiccness * 0.5f;
+            default: //Top
+                y = _projection.GetResolution().y - _windowBarthiccness * 0.5f;
+            }
+        break;
+        case ElementType::Titel:
+            if(_windowBarPosition == WindowBarPosition::Top || _windowBarPosition == WindowBarPosition::Bottom)
+                x =  _windowBarthiccness * 1.5f + offset;
+            else
+                y =  _windowBarthiccness * 1.5f + offset;
+
+            switch(_windowBarPosition)
+            {
+            case WindowBarPosition::Bottom:
+                y = _windowBarthiccness * 0.5f;
+            break;
+            case WindowBarPosition::Left:
+                x = _windowBarthiccness * 0.5f;
+            break;
+            case WindowBarPosition::Right:
+                x = _projection.GetResolution().x - _windowBarthiccness * 0.5f;
+            default: //Top
+                y = _projection.GetResolution().y - _windowBarthiccness * 0.5f;
+            }
+        break;
+        default:
+        {
+            if(_windowBarPosition == WindowBarPosition::Top || _windowBarPosition == WindowBarPosition::Bottom)
+                x = _projection.GetResolution().x - offset;
+            else
+                y = _projection.GetResolution().y - offset;
+
+            switch(_windowBarPosition)
+            {
+            case WindowBarPosition::Bottom:
+                y = _windowBarthiccness * 0.5f;
+            break;
+            case WindowBarPosition::Left:
+                x = _windowBarthiccness * 0.5f;
+            break;
+            case WindowBarPosition::Right:
+                x = _projection.GetResolution().x - _windowBarthiccness * 0.5f;
+            default: //Top
+                y = _projection.GetResolution().y - _windowBarthiccness * 0.5f;
+            }
+        }
+    }
+
+    return glm::vec2(x, y);
+}
