@@ -47,6 +47,7 @@ RetroFuturaGUI::WindowBar::WindowBar(const IdentityParams &identity, GeometryPar
 
     _close = std::make_unique<Button>(identityCloseButton, geometryButton, textParams, borderParams);
     _close->SetBackgroundColor(glm::vec4(1.0f, 0.4f, 0.4f, 1.0f), ColorSetState::Enabled);
+    _close->Connect_OnClick([this]() { windowShouldCloseCallback(); }, false);
 
     IdentityParams identityMaximize
     {
@@ -258,4 +259,9 @@ glm::vec2 RetroFuturaGUI::WindowBar::calculateElementPosition(const glm::vec2 &p
     }
 
     return glm::vec2(x, y);
+}
+
+void RetroFuturaGUI::WindowBar::windowShouldCloseCallback()
+{
+    _windowShouldClose = true;
 }

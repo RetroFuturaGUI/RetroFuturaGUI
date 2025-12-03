@@ -41,6 +41,7 @@ namespace RetroFuturaGUI
         glm::vec2 calculateWindowBarPosition(const glm::vec2& position);
         glm::vec2 calculateWindowBarSize(const glm::vec2& size);
         glm::vec2 calculateElementPosition(const glm::vec2& position, const ElementType elementType);
+        void windowShouldCloseCallback();
 
         // Identity
         std::string _name;
