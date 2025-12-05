@@ -35,7 +35,7 @@ void RetroFuturaGUI::LineBorder::Draw()
 
 void RetroFuturaGUI::LineBorder::Resize(const glm::vec2& size)
 {
-    _scale = size * 0.5f;
+    _scale = size;
     _scalingMatrix = glm::scale(glm::mat4(1.0f), glm::vec3(_scale, 1.0f));
 }
 

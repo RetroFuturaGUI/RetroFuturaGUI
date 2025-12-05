@@ -27,10 +27,10 @@ namespace RetroFuturaGUI
     private:
         f32 _testBorderPoints[3 * 4] = 
         {
-            -1.0f, -1.0f, 0.0f,
-             1.0f, -1.0f, 0.0f,
-             1.0f,  1.0f, 0.0f,
-            -1.0f,  1.0f, 0.0f
+            -0.5f, -0.5f, 0.0f,
+             0.5f, -0.5f, 0.0f,
+             0.5f,  0.5f, 0.0f,
+            -0.5f,  0.5f, 0.0f
         };
 
         u32 _testBorderIndices[2 * 4] = 

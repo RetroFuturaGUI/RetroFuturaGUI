@@ -71,7 +71,7 @@ void RetroFuturaGUI::Rectangle::UpdateGradientRotationSpeed(const f32 speed)
 
 void RetroFuturaGUI::Rectangle::Resize(const glm::vec2& size)
 {
-    _scale = glm::vec2(size.x * 0.5f, size.y * 0.5f);
+    _scale = glm::vec2(size.x, size.y);
     _scalingMatrix = glm::scale(glm::mat4(1.0f), glm::vec3(_scale, 1.0f));
 }
 
