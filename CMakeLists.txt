@@ -26,6 +26,7 @@ add_library("RetroFuturaGUI"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/OpenGlHelpers/Text.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/OpenGlHelpers/Texture.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/Button.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/Image2D.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/IWidget.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/Label.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/MainWindow.cpp"
@@ -105,6 +106,14 @@ if(TARGET Freetype::Freetype)
     message(STATUS "Freetype is installed and found")
 else()
     message(FATAL_ERROR "Freetype is not found. Please install Freetype via VCPKG.")
+endif()
+
+find_package(Stb REQUIRED COMPONENTS stb_image)
+if(Stb_FOUND)
+    message(STATUS "Stb is installed and found: ${Stb_DIR}")
+    target_include_directories("RetroFuturaGUI" PUBLIC ${Stb_INCLUDE_DIRS})
+else()
+    message(FATAL_ERROR "Stb is not found. Please install Stb via VCPKG.")
 endif()
 
 target_link_libraries("RetroFuturaGUI" PUBLIC
