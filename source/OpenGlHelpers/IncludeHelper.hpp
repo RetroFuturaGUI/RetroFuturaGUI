@@ -6,6 +6,7 @@
 #include <glm/gtc/type_ptr.hpp>
 #include <string_view>
 #include "config.hpp"
+#include "Projection.hpp"
 
 enum class FillType: u32
 {
@@ -30,4 +31,12 @@ struct IdentityParams
     void* _Parent;
     WidgetTypeID _ParentTypeID;
     GLFWwindow* _ParentWindow;
+};
+
+struct GeometryParams2D
+{
+    const RetroFuturaGUI::Projection& _Projection;
+    const glm::vec2& _Position;
+    const glm::vec2& _Size;
+    f32 _Rotation;
 };

@@ -20,12 +20,4 @@ namespace RetroFuturaGUI
         glm::vec2 _resolution = glm::vec2(1.0f);
         void setProjectionMatrix();
     };
-
-    struct GeometryParams2D
-    {
-        const Projection& _Projection;
-        const glm::vec2& _Position;
-        const glm::vec2& _Size;
-        f32 _Rotation;
-    };
 }
