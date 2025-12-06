@@ -8,6 +8,7 @@ std::unique_ptr<Shader> ShaderManager::_fill;
 std::unique_ptr<Shader> ShaderManager::_fillGradient;
 std::unique_ptr<Shader> ShaderManager::_lineFill;
 std::unique_ptr<Shader> ShaderManager::_textFill;
+std::unique_ptr<Shader> ShaderManager::_textureFill;
 
 Shader& ShaderManager::GetFillShader()
 {
@@ -27,6 +28,11 @@ Shader& RetroFuturaGUI::ShaderManager::GetLineFillShader()
 Shader& RetroFuturaGUI::ShaderManager::GetTextFillShader()
 {
     return *_textFill;
+}
+
+Shader& RetroFuturaGUI::ShaderManager::GetTextureFillShader()
+{
+    return *_textureFill;
 }
 
 void ShaderManager::Init()
@@ -68,5 +74,10 @@ void RetroFuturaGUI::ShaderManager::compileShaders()
     _textFill = std::make_unique<Shader>(
         std::string(exeDir + "Text.vs").c_str(), 
         std::string(exeDir + "Text.fs").c_str()
+    );
+
+    _textureFill = std::make_unique<Shader>(
+        std::string(exeDir + "Texture.vs").c_str(), 
+        std::string(exeDir + "Texture.fs").c_str()
     );
 }

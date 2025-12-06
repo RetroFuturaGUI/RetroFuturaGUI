@@ -23,6 +23,10 @@ namespace RetroFuturaGUI
         /// @return Reference to the line fill Shader object
         static Shader& GetTextFillShader();
 
+        /// @brief Get the text fill shader
+        /// @return Reference to the line fill Shader object
+        static Shader& GetTextureFillShader();
+
         /// @brief Initialize the ShaderManager and compile all shaders
         static void Init();
 
@@ -44,5 +48,6 @@ namespace RetroFuturaGUI
         static std::unique_ptr<Shader> _fillGradient;
         static std::unique_ptr<Shader> _lineFill;
         static std::unique_ptr<Shader> _textFill;
+        static std::unique_ptr<Shader> _textureFill;
     };
 }
