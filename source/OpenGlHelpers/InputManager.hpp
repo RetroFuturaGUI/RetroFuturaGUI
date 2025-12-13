@@ -46,14 +46,27 @@ namespace RetroFuturaGUI
             if(_hoveredWindow)
                 glfwGetWindowSize(_hoveredWindow, &width, &height);
 
-                                                        //adjust to window logic
-                                                        //      V
-            GetInstance()._mousePosition = glm::dvec2(x, (f64)height - y);
+            GetInstance()._mousePositionInvertedY = glm::dvec2(x, (f64)height - y); //adjust Y to inverted coordinate system
+        }
+
+        static inline void SetMousePositionTest(f64 x, f64 y) 
+        {
+            i32 width, height;
+
+            if(_hoveredWindow)
+                glfwGetWindowSize(_hoveredWindow, &width, &height);
+
+            GetInstance()._mousePosition = glm::dvec2(x, y);
         }
 
         static inline bool IsMouseButtonPressed(i32 button) 
         {
             return _mouseButtons[button];
+        }
+
+        static inline glm::dvec2 GetMousePositionInvertedY() 
+        {
+            return GetInstance()._mousePositionInvertedY;
         }
 
         static inline glm::dvec2 GetMousePosition() 
@@ -83,6 +96,7 @@ namespace RetroFuturaGUI
             static inline GLFWwindow* _focusedWindow;
             static inline GLFWwindow* _hoveredWindow;
             static inline constinit bool _mouseButtons[_mouseButtonCount] = { false };
+            glm::dvec2 _mousePositionInvertedY = { 0.0, 0.0 };
             glm::dvec2 _mousePosition = { 0.0, 0.0 };
     };
 };
