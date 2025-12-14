@@ -3,6 +3,9 @@
 #include "InputManager.hpp"
 #include "Label.hpp"
 #include "WindowBar.hpp"
+#include "Image2D.hpp"
+#include "Grid2D.hpp"
+#include <algorithm>
 
 namespace RetroFuturaGUI
 {
@@ -19,42 +22,60 @@ namespace RetroFuturaGUI
         void SetBackgroundColor(const glm::vec4& color);
 
     private:
+        enum class ResizeEdge : u32
+        {
+            NONE,
+            LEFT,
+            RIGHT,
+            TOP,
+            BOTTOM,
+            TOP_LEFT,
+            TOP_RIGHT,
+            BOTTOM_LEFT,
+            BOTTOM_RIGHT
+        };
+
         GLFWwindow* _window;
-        u32 _width = 1280;
-        u32 _height = 720;
+        i32 _width = 1280;
+        i32 _height = 720;
         glm::vec4 _backgroundColor = {0.1f, 0.1f, 0.1f, 1.0f};
         std::unique_ptr<Rectangle> _plane;
         std::unique_ptr<LineBorder> _lineBorder;
-        std::unique_ptr<Projection> _projection;
+        static inline std::unique_ptr<Projection> _projection;
         std::unique_ptr<Text> _text;
         std::unique_ptr<Label> _label;
         std::unique_ptr<Button> _button;
         std::unique_ptr<WindowBar> _windowBar;
+        std::unique_ptr<Image2D> _texture;
+        std::unique_ptr<Image2D> _backgroundImage;
+        std::unique_ptr<Grid2d> _grid;
+        double _prevX, _prevY, _xpos, _ypos;
+        ResizeEdge _resizeEdge = ResizeEdge::NONE;
+        bool _isResizing { false };
+        double _boundaryThreshold = 10.0;
+        GLFWcursor* _resizeCursorHorizontal;
+        GLFWcursor* _resizeCursorVertical;
+        GLFWcursor* _resizeCursorTLBR;
+        GLFWcursor* _resizeCursorTRBL;
+        GLFWcursor* _defaultCursor;
+        GLFWcursor* _cursorIcon;
+        i32 _minWindowDimension { 100 };
 
         void createWindow();
         void setupProjectionMatrix();
 
-        static void cursorPositionCallback(GLFWwindow* window, f64 xpos, f64 ypos)
-        {
-            InputManager::SetHoveredWindow(window);
-            InputManager::SetMousePosition(xpos, ypos);
-            // std::println("hover");
-        }
+        static void cursorPositionCallback(GLFWwindow* window, f64 xpos, f64 ypos);
 
-        static void mouseButtonClickedCallback(GLFWwindow* window, i32 button, i32 action, i32 mods) 
-        {
-            if (action == GLFW_PRESS) 
-            {
-                InputManager::SetFocusedWindow(window);
-               // std::println("mouse click: {}", button);
-            }
-            else if (action == GLFW_RELEASE) 
-            {
-                //std::println("mouse released: {}", button);
-            }
-            
-            InputManager::SetMouseButtonState(button, action == GLFW_PRESS);
-        }
+        void setCursorPosition();
+
+        void setCursorIcon();
+
+        static void mouseButtonClickedCallback(GLFWwindow* window, i32 button, i32 action, i32 mods);
+
+        void setResizeState(i32 button, i32 action, i32 mods);
+
+
+        void resize();
 
         static void windowFocusCallback(GLFWwindow* window, i32 focused) 
         {
