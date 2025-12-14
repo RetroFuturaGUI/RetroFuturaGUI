@@ -39,7 +39,7 @@ namespace RetroFuturaGUI
             GetInstance()._mouseButtons[button] = state;
         }
 
-        static inline void SetMousePosition(f64 x, f64 y) 
+        static inline void SetMousePositionInvertedY(f64 x, f64 y) 
         {
             i32 width, height;
 
@@ -49,7 +49,7 @@ namespace RetroFuturaGUI
             GetInstance()._mousePositionInvertedY = glm::dvec2(x, (f64)height - y); //adjust Y to inverted coordinate system
         }
 
-        static inline void SetMousePositionTest(f64 x, f64 y) 
+        static inline void SetMousePosition(f64 x, f64 y) 
         {
             i32 width, height;
 
