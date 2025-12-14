@@ -22,6 +22,15 @@ namespace RetroFuturaGUI
         void SetBackgroundColor(const glm::vec4& color);
 
     private:
+        void createWindow();
+        static void cursorPositionCallback(GLFWwindow* window, f64 xpos, f64 ypos);
+        void setCursorPosition();
+        void setCursorIcon();
+        static void mouseButtonClickedCallback(GLFWwindow* window, i32 button, i32 action, i32 mods);
+        void setResizeState(i32 button, i32 action, i32 mods);
+        void resize();
+        static void windowFocusCallback(GLFWwindow* window, i32 focused);
+
         enum class ResizeEdge : u32
         {
             NONE,
@@ -35,13 +44,35 @@ namespace RetroFuturaGUI
             BOTTOM_RIGHT
         };
 
+        // Window properties
         GLFWwindow* _window;
-        i32 _width = 1280;
-        i32 _height = 720;
-        glm::vec4 _backgroundColor = {0.1f, 0.1f, 0.1f, 1.0f};
+        i32 
+            _width { 1280 },
+            _height { 720 },
+            _minWindowSpan { 100 };
+        f64 
+            _prevResizeX { 0.0 },
+            _prevResizeY { 0.0 },
+            _cursorPosX { 0.0 },
+            _cursorPosY { 0.0 },
+            _boundaryThreshold { 10.0 };
+        ResizeEdge _resizeEdge { ResizeEdge::NONE };
+        bool _isResizing { false };
+        glm::vec4 _backgroundColor { 0.1f, 0.1f, 0.1f, 1.0f };
+        std::unique_ptr<Projection> _projection;
+
+        // todo: create a cursor manager once the TextBox widget exists
+        static inline GLFWcursor* _resizeCursorHorizontal { nullptr };
+        static inline GLFWcursor* _resizeCursorVertical { nullptr };
+        static inline GLFWcursor* _resizeCursorTLBR { nullptr };
+        static inline GLFWcursor* _resizeCursorTRBL { nullptr };
+        static inline GLFWcursor* _defaultCursor { nullptr };
+        static inline GLFWcursor* _cursorIcon { nullptr };
+        bool _cursorsInitialized { false };
+
+        // test widgets
         std::unique_ptr<Rectangle> _plane;
         std::unique_ptr<LineBorder> _lineBorder;
-        static inline std::unique_ptr<Projection> _projection;
         std::unique_ptr<Text> _text;
         std::unique_ptr<Label> _label;
         std::unique_ptr<Button> _button;
@@ -49,46 +80,5 @@ namespace RetroFuturaGUI
         std::unique_ptr<Image2D> _texture;
         std::unique_ptr<Image2D> _backgroundImage;
         std::unique_ptr<Grid2d> _grid;
-        double _prevX, _prevY, _xpos, _ypos;
-        ResizeEdge _resizeEdge = ResizeEdge::NONE;
-        bool _isResizing { false };
-        double _boundaryThreshold = 10.0;
-        GLFWcursor* _resizeCursorHorizontal;
-        GLFWcursor* _resizeCursorVertical;
-        GLFWcursor* _resizeCursorTLBR;
-        GLFWcursor* _resizeCursorTRBL;
-        GLFWcursor* _defaultCursor;
-        GLFWcursor* _cursorIcon;
-        i32 _minWindowDimension { 100 };
-
-        void createWindow();
-        void setupProjectionMatrix();
-
-        static void cursorPositionCallback(GLFWwindow* window, f64 xpos, f64 ypos);
-
-        void setCursorPosition();
-
-        void setCursorIcon();
-
-        static void mouseButtonClickedCallback(GLFWwindow* window, i32 button, i32 action, i32 mods);
-
-        void setResizeState(i32 button, i32 action, i32 mods);
-
-
-        void resize();
-
-        static void windowFocusCallback(GLFWwindow* window, i32 focused) 
-        {
-            if (focused)
-            {
-                InputManager::SetFocusedWindow(window);
-                std::println("focused");
-            } 
-            else if (InputManager::GetFocusedWindow() == window)
-            {
-                InputManager::SetFocusedWindow(nullptr);
-                std::println("unfocused");
-            }
-        }
     };
 }

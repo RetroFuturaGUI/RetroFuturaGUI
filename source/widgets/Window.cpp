@@ -6,11 +6,16 @@ RetroFuturaGUI::Window::Window(const std::string& name, i32 width, i32 height, v
    // : IWidget(name, glm::mat4(1.0f), width, height, parent)
 {
 	createWindow();
+
+	if(_cursorsInitialized)
+		return;
+		
 	_resizeCursorHorizontal = glfwCreateStandardCursor(GLFW_HRESIZE_CURSOR);
 	_resizeCursorVertical = glfwCreateStandardCursor(GLFW_VRESIZE_CURSOR);
 	_resizeCursorTLBR = glfwCreateStandardCursor(GLFW_RESIZE_NWSE_CURSOR);
 	_resizeCursorTRBL = glfwCreateStandardCursor(GLFW_RESIZE_NESW_CURSOR);
 	_defaultCursor = glfwCreateStandardCursor(GLFW_ARROW_CURSOR);
+	_cursorsInitialized = true;
 }
 
 void RetroFuturaGUI::Window::createWindow()
@@ -26,8 +31,8 @@ void RetroFuturaGUI::Window::createWindow()
 		glfwTerminate();
 		return;
 	}
-	_prevX = (f64)_width;
-	_prevY = (f64)_height;
+	_prevResizeX = (f64)_width;
+	_prevResizeY = (f64)_height;
 
 	glfwMakeContextCurrent(_window);
 
@@ -150,20 +155,20 @@ void RetroFuturaGUI::Window::cursorPositionCallback(GLFWwindow *window, f64 xpos
 
 void RetroFuturaGUI::Window::setCursorPosition()
 {
-	glfwGetCursorPos(_window, &_xpos, &_ypos);
+	glfwGetCursorPos(_window, &_cursorPosX, &_cursorPosY);
 }
 
 void RetroFuturaGUI::Window::setCursorIcon() // clean up this abomination
 {
-	if ((_ypos < _boundaryThreshold && _xpos < _boundaryThreshold)
-		|| (_ypos > _height - _boundaryThreshold && _xpos > _width - _boundaryThreshold))
+	if ((_cursorPosY < _boundaryThreshold && _cursorPosX < _boundaryThreshold)
+		|| (_cursorPosY > _height - _boundaryThreshold && _cursorPosX > _width - _boundaryThreshold))
 			glfwSetCursor(_window, _resizeCursorTLBR);
-	else if ((_ypos < _boundaryThreshold && _xpos > _width - _boundaryThreshold)
-		|| (_ypos > _height - _boundaryThreshold && _xpos < _boundaryThreshold))
+	else if ((_cursorPosY < _boundaryThreshold && _cursorPosX > _width - _boundaryThreshold)
+		|| (_cursorPosY > _height - _boundaryThreshold && _cursorPosX < _boundaryThreshold))
 			glfwSetCursor(_window, _resizeCursorTRBL);
-	else if (_xpos < _boundaryThreshold || _xpos > _width - _boundaryThreshold)
+	else if (_cursorPosX < _boundaryThreshold || _cursorPosX > _width - _boundaryThreshold)
 		glfwSetCursor(_window, _resizeCursorHorizontal);
-	else if (_ypos < _boundaryThreshold || _ypos > _height - _boundaryThreshold)
+	else if (_cursorPosY < _boundaryThreshold || _cursorPosY > _height - _boundaryThreshold)
 		glfwSetCursor(_window, _resizeCursorVertical);
 	else
 		glfwSetCursor(_window, _defaultCursor);
@@ -193,23 +198,23 @@ void RetroFuturaGUI::Window::setResizeState(i32 button, i32 action, i32 mods)
 {
 	if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS) 
 	{
-		glfwGetCursorPos(_window, &_xpos, &_ypos);
+		glfwGetCursorPos(_window, &_cursorPosX, &_cursorPosY);
 
-		if(_ypos < _boundaryThreshold && _xpos < _boundaryThreshold) 
+		if(_cursorPosY < _boundaryThreshold && _cursorPosX < _boundaryThreshold) 
 			_resizeEdge = ResizeEdge::TOP_LEFT;
-		else if (_ypos < _boundaryThreshold && _xpos > _width - _boundaryThreshold) 
+		else if (_cursorPosY < _boundaryThreshold && _cursorPosX > _width - _boundaryThreshold) 
 			_resizeEdge = ResizeEdge::TOP_RIGHT;
-		else if (_ypos > _height - _boundaryThreshold && _xpos < _boundaryThreshold) 
+		else if (_cursorPosY > _height - _boundaryThreshold && _cursorPosX < _boundaryThreshold) 
 			_resizeEdge = ResizeEdge::BOTTOM_LEFT;
-		else if (_ypos > _height - _boundaryThreshold && _xpos > _width - _boundaryThreshold) 
+		else if (_cursorPosY > _height - _boundaryThreshold && _cursorPosX > _width - _boundaryThreshold) 
 			_resizeEdge = ResizeEdge::BOTTOM_RIGHT;
-		else if (_xpos < _boundaryThreshold)
+		else if (_cursorPosX < _boundaryThreshold)
 			_resizeEdge = ResizeEdge::LEFT;
-		else if (_xpos > _width - _boundaryThreshold) 
+		else if (_cursorPosX > _width - _boundaryThreshold) 
 			_resizeEdge = ResizeEdge::RIGHT;
-		else if (_ypos < _boundaryThreshold) 
+		else if (_cursorPosY < _boundaryThreshold) 
 			_resizeEdge = ResizeEdge::TOP;
-		else if (_ypos > _height - _boundaryThreshold) 
+		else if (_cursorPosY > _height - _boundaryThreshold) 
 			_resizeEdge = ResizeEdge::BOTTOM;
 		else 
 			_resizeEdge = ResizeEdge::NONE;
@@ -229,54 +234,68 @@ void RetroFuturaGUI::Window::resize()
 	if (!_isResizing) 
 		return;
 		
-	glfwGetCursorPos(_window, &_xpos, &_ypos);
+	glfwGetCursorPos(_window, &_cursorPosX, &_cursorPosY);
 	i32 newWidth = _width;
 	i32 newHeight = _height;
 
 	switch(_resizeEdge) // shorten this mess
 	{
 		case ResizeEdge::TOP_LEFT:
-			newWidth = _width - (_xpos - _prevX);
-			newHeight = _height - (_ypos - _prevY);
-			_prevX = _xpos;
-			_prevY = _ypos;
+			newWidth = _width - (_cursorPosX - _prevResizeX);
+			newHeight = _height - (_cursorPosY - _prevResizeY);
+			_prevResizeX = _cursorPosX;
+			_prevResizeY = _cursorPosY;
 		break;
 		case ResizeEdge::TOP_RIGHT:
-			newWidth = _width + (_xpos - _prevX);
-			newHeight = _height - (_ypos - _prevY);
-			_prevX = _xpos;
-			_prevY = _ypos;
+			newWidth = _width + (_cursorPosX - _prevResizeX);
+			newHeight = _height - (_cursorPosY - _prevResizeY);
+			_prevResizeX = _cursorPosX;
+			_prevResizeY = _cursorPosY;
 		break;
 		case ResizeEdge::BOTTOM_LEFT:
-			newWidth = _width - (_xpos - _prevX);
-			newHeight = _height + (_ypos - _prevY);
-			_prevX = _xpos;
-			_prevY = _ypos;
+			newWidth = _width - (_cursorPosX - _prevResizeX);
+			newHeight = _height + (_cursorPosY - _prevResizeY);
+			_prevResizeX = _cursorPosX;
+			_prevResizeY = _cursorPosY;
 		break;
 		case ResizeEdge::BOTTOM_RIGHT:
-			newWidth = _width + (_xpos - _prevX);
-			newHeight = _height + (_ypos - _prevY);
-			_prevX = _xpos;
-			_prevY = _ypos;
+			newWidth = _width + (_cursorPosX - _prevResizeX);
+			newHeight = _height + (_cursorPosY - _prevResizeY);
+			_prevResizeX = _cursorPosX;
+			_prevResizeY = _cursorPosY;
 		break;
 		case ResizeEdge::LEFT:
-			newWidth = _width - (_xpos - _prevX);
-			_prevX = _xpos;
+			newWidth = _width - (_cursorPosX - _prevResizeX);
+			_prevResizeX = _cursorPosX;
 		break;
 		case ResizeEdge::RIGHT:
-			newWidth = _width + (_xpos - _prevX);
-			_prevX = _xpos;
+			newWidth = _width + (_cursorPosX - _prevResizeX);
+			_prevResizeX = _cursorPosX;
 		break;
 		case ResizeEdge::TOP:
-			newHeight = _height - (_ypos - _prevY);
-			_prevY = _ypos;
+			newHeight = _height - (_cursorPosY - _prevResizeY);
+			_prevResizeY = _cursorPosY;
 		break;
 	}
 
-	_width = std::max<i32>(newWidth, _minWindowDimension);
-	_height = std::max<i32>(newHeight, _minWindowDimension);
+	_width = std::max<i32>(newWidth, _minWindowSpan);
+	_height = std::max<i32>(newHeight, _minWindowSpan);
 	glfwSetWindowSize(_window, _width, _height);
 	_projection->UpdateProjectionMatrix((f32)_width, (f32)_height);
+}
+
+void RetroFuturaGUI::Window::windowFocusCallback(GLFWwindow *window, i32 focused)
+{
+	if (focused)
+	{
+		InputManager::SetFocusedWindow(window);
+		std::println("focused");
+	} 
+	else if (InputManager::GetFocusedWindow() == window)
+	{
+		InputManager::SetFocusedWindow(nullptr);
+		std::println("unfocused");
+	}
 }
 
 bool RetroFuturaGUI::Window::WindowShouldClose()
