@@ -276,6 +276,9 @@ void RetroFuturaGUI::Window::resize()
 			newHeight = _height - (_cursorPosY - _prevResizeY);
 			_prevResizeY = _cursorPosY;
 		break;
+		case ResizeEdge::BOTTOM:
+			newHeight = _height + (_cursorPosY - _prevResizeY);
+			_prevResizeY = _cursorPosY;
 	}
 
 	_width = std::max<i32>(newWidth, _minWindowSpan);
