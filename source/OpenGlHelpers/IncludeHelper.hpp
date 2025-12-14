@@ -19,7 +19,7 @@ enum class WidgetTypeID : i32
     None,
     Window,
     WindowBar,
-    Grid,
+    Grid2d,
     Label,
     Button,
     Unknown = -1
