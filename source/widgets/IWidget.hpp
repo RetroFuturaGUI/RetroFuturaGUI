@@ -31,14 +31,6 @@ namespace RetroFuturaGUI
         }
 
     protected:
-        bool isPointInside(const glm::vec2& point) const
-        {
-            return (point.x >= _position.x - _size.x * 0.5f && 
-                    point.x <= _position.x + _size.x * 0.5f &&
-                    point.y >= _position.y - _size.y * 0.5f && 
-                    point.y <= _position.y + _size.y * 0.5f);
-        }
-
         //identity
         std::string _name;
         void* _parent { nullptr };
@@ -47,8 +39,9 @@ namespace RetroFuturaGUI
 
         //geometry
         Projection& _projection;
-        glm::vec2 _position { 0.0f, 0.0f };
-        glm::vec2 _size { 0.0f, 0.0f };
+        glm::vec2 
+            _position { 0.0f },
+            _size { 0.0f };
         f32 _rotation { 0.0f };
 
         //style
@@ -58,7 +51,14 @@ namespace RetroFuturaGUI
         //float _borderWidth = 2.0f;
         //glm::vec4 _borderColor = {1.0f, 1.0f, 1.0f, 1.0f};
         //glm::vec4 _borderCornerRadius = {0.0f, 0.0f, 0.0f, 0.0f};
-
+        
+        bool isPointInside(const glm::vec2& point) const
+        {
+            return (point.x >= _position.x - _size.x * 0.5f && 
+                    point.x <= _position.x + _size.x * 0.5f &&
+                    point.y >= _position.y - _size.y * 0.5f && 
+                    point.y <= _position.y + _size.y * 0.5f);
+        }
     private:
 
     };
