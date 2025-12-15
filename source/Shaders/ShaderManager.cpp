@@ -2,40 +2,32 @@
 #include "PlatformBridge.hpp"
 #include <print>
 
-using namespace RetroFuturaGUI;
-
-std::unique_ptr<Shader> ShaderManager::_fill;
-std::unique_ptr<Shader> ShaderManager::_fillGradient;
-std::unique_ptr<Shader> ShaderManager::_lineFill;
-std::unique_ptr<Shader> ShaderManager::_textFill;
-std::unique_ptr<Shader> ShaderManager::_textureFill;
-
-Shader& ShaderManager::GetFillShader()
+RetroFuturaGUI::Shader& RetroFuturaGUI::ShaderManager::GetFillShader()
 {
     return *_fill;
 }
 
-Shader& ShaderManager::GetFillGradientShader()
+RetroFuturaGUI::Shader& RetroFuturaGUI::ShaderManager::GetFillGradientShader()
 {
     return *_fillGradient;
 }
 
-Shader& RetroFuturaGUI::ShaderManager::GetLineFillShader()
+RetroFuturaGUI::Shader& RetroFuturaGUI::ShaderManager::GetLineFillShader()
 {
     return *_lineFill;
 }
 
-Shader& RetroFuturaGUI::ShaderManager::GetTextFillShader()
+RetroFuturaGUI::Shader& RetroFuturaGUI::ShaderManager::GetTextFillShader()
 {
     return *_textFill;
 }
 
-Shader& RetroFuturaGUI::ShaderManager::GetTextureFillShader()
+RetroFuturaGUI::Shader& RetroFuturaGUI::ShaderManager::GetTextureFillShader()
 {
     return *_textureFill;
 }
 
-void ShaderManager::Init()
+void RetroFuturaGUI::ShaderManager::Init()
 {
     SetConsoleOutputCP(CP_UTF8);
     std::println("Compiling shaders...");

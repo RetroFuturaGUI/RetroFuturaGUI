@@ -44,10 +44,10 @@ namespace RetroFuturaGUI
         }
         
         static void compileShaders();
-        static std::unique_ptr<Shader> _fill;
-        static std::unique_ptr<Shader> _fillGradient;
-        static std::unique_ptr<Shader> _lineFill;
-        static std::unique_ptr<Shader> _textFill;
-        static std::unique_ptr<Shader> _textureFill;
+        static inline std::unique_ptr<Shader> _fill;
+        static inline std::unique_ptr<Shader> _fillGradient;
+        static inline std::unique_ptr<Shader> _lineFill;
+        static inline std::unique_ptr<Shader> _textFill;
+        static inline std::unique_ptr<Shader> _textureFill;
     };
 }
