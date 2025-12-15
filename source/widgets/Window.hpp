@@ -22,16 +22,6 @@ namespace RetroFuturaGUI
         void SetBackgroundColor(const glm::vec4& color);
 
     private:
-        void createWindow();
-        static void cursorPositionCallback(GLFWwindow* window, f64 xpos, f64 ypos);
-        void setCursorPosition();
-        void setCursorIcon();
-        static void mouseButtonClickedCallback(GLFWwindow* window, i32 button, i32 action, i32 mods);
-        void setResizeState(i32 button, i32 action, i32 mods);
-        void resize();
-        static void windowFocusCallback(GLFWwindow* window, i32 focused);
-        void moveWindow(const i32 posX, const i32 posY);
-
         enum class ResizeEdge : u32
         {
             NONE,
@@ -85,5 +75,15 @@ namespace RetroFuturaGUI
         std::unique_ptr<Image2D> _texture;
         std::unique_ptr<Image2D> _backgroundImage;
         std::unique_ptr<Grid2d> _grid;
+
+        void createWindow();
+        static void cursorPositionCallback(GLFWwindow* window, f64 xpos, f64 ypos);
+        void setCursorPosition();
+        void setCursorIcon();
+        static void mouseButtonClickedCallback(GLFWwindow* window, i32 button, i32 action, i32 mods);
+        void setResizeState(i32 button, i32 action, i32 mods);
+        void resize();
+        static void windowFocusCallback(GLFWwindow* window, i32 focused);
+        void moveWindow(const i32 posX, const i32 posY);
     };
 }
