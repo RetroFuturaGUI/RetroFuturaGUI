@@ -31,27 +31,6 @@ namespace RetroFuturaGUI
         }
 
     protected:
-        //identity
-        std::string _name;
-        void* _parent;
-        WidgetTypeID _parentTypeID;
-        GLFWwindow* _parentWindow = nullptr;
-
-        //geometry
-        Projection& _projection;
-        glm::vec2 _position;
-        glm::vec2 _size;
-        f32 _rotation;
-
-        //style
-        std::unique_ptr<glm::vec4[]> _backgroundColors;
-        u32 _colorCount = 0;
-        FillType _backgroundColorFillType = FillType::SOLID;
-        //float _borderWidth = 2.0f;
-        //glm::vec4 _borderColor = {1.0f, 1.0f, 1.0f, 1.0f};
-        //glm::vec4 _borderCornerRadius = {0.0f, 0.0f, 0.0f, 0.0f};
-
-
         bool isPointInside(const glm::vec2& point) const
         {
             return (point.x >= _position.x - _size.x * 0.5f && 
@@ -60,7 +39,25 @@ namespace RetroFuturaGUI
                     point.y <= _position.y + _size.y * 0.5f);
         }
 
+        //identity
+        std::string _name;
+        void* _parent { nullptr };
+        WidgetTypeID _parentTypeID { WidgetTypeID::None };
+        GLFWwindow* _parentWindow { nullptr };
 
+        //geometry
+        Projection& _projection;
+        glm::vec2 _position { 0.0f, 0.0f };
+        glm::vec2 _size { 0.0f, 0.0f };
+        f32 _rotation { 0.0f };
+
+        //style
+        std::unique_ptr<glm::vec4[]> _backgroundColors;
+        u32 _colorCount { 1 };
+        FillType _backgroundColorFillType { FillType::SOLID };
+        //float _borderWidth = 2.0f;
+        //glm::vec4 _borderColor = {1.0f, 1.0f, 1.0f, 1.0f};
+        //glm::vec4 _borderCornerRadius = {0.0f, 0.0f, 0.0f, 0.0f};
 
     private:
 
