@@ -52,40 +52,43 @@ namespace RetroFuturaGUI
         std::unique_ptr<Text> _text;
         
         //logic
-        bool _isEnabledFlag = true;
-        bool _wasClicked = false;
-        bool _colorSetFlag = false;
-        bool _mouseEnteredFlag = false;
-        bool _mouseLeftFlag = false;
-        ColorSetState _state = Enabled;
-        Signal<> _onClick;
-        Signal<> _onClickAsync;
-        Signal<> _onRelease;
-        Signal<> _onReleaseAsync;
-        Signal<> _whileHover;
-        Signal<> _whileHoverAsync;
-        Signal<> _onMouseEnter;
-        Signal<> _onMouseEnterAsync;
-        Signal<> _onMouseLeave;
-        Signal<> _onMouseLeaveAsync;
-        Signal<> _onEnable;
-        Signal<> _onEnableAsync;
-        Signal<> _onDisable;
-        Signal<> _onDisableAsync;
+        bool 
+            _isEnabledFlag { true },
+            _wasClicked { false },
+            _colorSetFlag { false },
+            _mouseEnteredFlag { false },
+            _mouseLeftFlag { false };
+        Signal<> 
+            _onClick,
+            _onClickAsync,
+            _onRelease,
+            _onReleaseAsync,
+            _whileHover,
+            _whileHoverAsync,
+            _onMouseEnter,
+            _onMouseEnterAsync,
+            _onMouseLeave,
+            _onMouseLeaveAsync,
+            _onEnable,
+            _onEnableAsync,
+            _onDisable,
+            _onDisableAsync;
 
         // Style
-        glm::vec4 _backgroundColorEnabled = glm::vec4(0.5f, 0.5f, 0.5f, 1.0f);
-        glm::vec4 _backgroundColorDisabled = glm::vec4(0.25f, 0.25f, 0.25f, 1.0f);
-        glm::vec4 _backgroundColorClicked = glm::vec4(0.6f, 0.6f,0.6f, 1.0f);
-        glm::vec4 _backgroundColorHover = glm::vec4(0.55f, 0.55f, 0.55f, 1.0f);
-        glm::vec4 _borderColorEnabled = glm::vec4(0.25f, 0.25f, 0.25f, 1.0f);
-        glm::vec4 _borderColorDisabled = glm::vec4(0.2f, 0.2f, 0.2f, 1.0f);
-        glm::vec4 _borderColorClicked = glm::vec4(0.3f, 0.3f, 1.3f, 1.0f);
-        glm::vec4 _borderColorHover = glm::vec4(0.275f, 0.275f, 0.275f, 1.0f);
-        glm::vec4 _textColorEnabled = glm::vec4(1.0f);
-        glm::vec4 _textColorDisabled = glm::vec4(0.5f, 0.5f,0.5f, 1.0f);
-        glm::vec4 _textColorClicked = glm::vec4(1.0f);
-        glm::vec4 _textColorHover = glm::vec4(1.0f, 0.0f, 1.0f, 1.0f);
+        glm::vec4 
+            _backgroundColorEnabled { 0.5f, 0.5f, 0.5f, 1.0 },
+            _backgroundColorDisabled { 0.25f, 0.25f, 0.25f, 1.0 },
+            _backgroundColorClicked { 0.6f, 0.6f,0.6f, 1.0 },
+            _backgroundColorHover { 0.55f, 0.55f, 0.55f, 1.0 },
+            _borderColorEnabled { 0.25f, 0.25f, 0.25f, 1.0 },
+            _borderColorDisabled { 0.2f, 0.2f, 0.2f, 1.0 },
+            _borderColorClicked { 0.3f, 0.3f, 1.3f, 1.0 },
+            _borderColorHover { 0.275f, 0.275f, 0.275f, 1.0 },
+            _textColorEnabled { 1.0 },
+            _textColorDisabled { 0.5f, 0.5f,0.5f, 1.0 },
+            _textColorClicked { 1.0 },
+            _textColorHover { 1.0f, 0.0f, 1.0f, 1.0 };
+        ColorSetState _state { ColorSetState::Enabled };
 
         void interact();
         void setColors();

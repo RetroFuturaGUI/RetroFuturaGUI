@@ -245,7 +245,7 @@ glm::vec4 RetroFuturaGUI::Button::GetLineBorderColor(const ColorSetState state) 
 
 void RetroFuturaGUI::Button::interact()
 {
-    auto mousePos = InputManager::GetMousePosition();
+    auto mousePos = InputManager::GetMousePositionInvertedY();
     bool isMouseButtonPressed = InputManager::IsMouseButtonPressed(GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS;
     bool isMouseInside = isPointInside(glm::vec2(mousePos));
 
