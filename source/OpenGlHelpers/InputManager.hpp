@@ -92,11 +92,11 @@ namespace RetroFuturaGUI
             return Instance;
         }
 
-            static inline constinit const u32 _mouseButtonCount = GLFW_MOUSE_BUTTON_LAST + 1;
-            static inline GLFWwindow* _focusedWindow;
-            static inline GLFWwindow* _hoveredWindow;
-            static inline constinit bool _mouseButtons[_mouseButtonCount] = { false };
-            glm::dvec2 _mousePositionInvertedY = { 0.0, 0.0 };
-            glm::dvec2 _mousePosition = { 0.0, 0.0 };
+            static inline constinit const u32 _mouseButtonCount { GLFW_MOUSE_BUTTON_LAST + 1 };
+            static inline GLFWwindow* _focusedWindow { nullptr };
+            static inline GLFWwindow* _hoveredWindow { nullptr };
+            static inline constinit bool _mouseButtons[_mouseButtonCount] { false };
+            glm::dvec2 _mousePositionInvertedY { 0.0, 0.0 };
+            glm::dvec2 _mousePosition { 0.0, 0.0 };
     };
 };
