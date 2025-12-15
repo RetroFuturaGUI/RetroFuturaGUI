@@ -38,29 +38,29 @@ namespace RetroFuturaGUI
         bool WindowShouldClose();
 
     private:
-        glm::vec2 calculateWindowBarPosition(const glm::vec2& position);
-        glm::vec2 calculateWindowBarSize(const glm::vec2& size);
-        glm::vec2 calculateElementPosition(const glm::vec2& position, const ElementType elementType);
-        void windowShouldCloseCallback();
-
         // Identity
         std::string _name;
+
         // Geometry
         Projection& _projection;
-        WindowBarPosition _windowBarPosition = WindowBarPosition::Top;
-        float _windowBarthiccness = 30.0f;
+        WindowBarPosition _windowBarPosition { WindowBarPosition::Top };
+        float _windowBarThiccness { 30.0f };
+
         // Elements
         std::unique_ptr<Rectangle> _background;
         std::unique_ptr<Text> _windowTitle;
         std::unique_ptr<LineBorder> _border;
-        std::unique_ptr<Button> _minimize;
-        std::unique_ptr<Button> _maximize;
-        std::unique_ptr<Button> _close;
+        std::unique_ptr<Button> 
+            _minimize,
+            _maximize,
+            _close;
         
-
-
         //logic
-        bool _windowShouldClose = false;
-
+        bool _windowShouldClose { false };
+        
+        glm::vec2 calculateWindowBarPosition(const glm::vec2& position);
+        glm::vec2 calculateWindowBarSize(const glm::vec2& size);
+        glm::vec2 calculateElementPosition(const glm::vec2& position, const ElementType elementType);
+        void windowShouldCloseCallback();
     };
 }

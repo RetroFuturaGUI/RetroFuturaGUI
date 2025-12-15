@@ -150,15 +150,15 @@ glm::vec2 RetroFuturaGUI::WindowBar::calculateWindowBarPosition(const glm::vec2 
     switch(_windowBarPosition)
     {
     case WindowBarPosition::Bottom:
-        y = _windowBarthiccness * 0.5f;
+        y = _windowBarThiccness * 0.5f;
     break;
     case WindowBarPosition::Left:
-        x = _windowBarthiccness * 0.5f;
+        x = _windowBarThiccness * 0.5f;
     break;
     case WindowBarPosition::Right:
-        x = _projection.GetResolution().x - _windowBarthiccness * 0.5f;
+        x = _projection.GetResolution().x - _windowBarThiccness * 0.5f;
     default: //Top
-        y = _projection.GetResolution().y - _windowBarthiccness * 0.5f;
+        y = _projection.GetResolution().y - _windowBarThiccness * 0.5f;
     }
 
     return glm::vec2(x, y);
@@ -166,8 +166,8 @@ glm::vec2 RetroFuturaGUI::WindowBar::calculateWindowBarPosition(const glm::vec2 
 
 glm::vec2 RetroFuturaGUI::WindowBar::calculateWindowBarSize(const glm::vec2 &size)
 {
-    return glm::vec2(_windowBarPosition == WindowBarPosition::Top || _windowBarPosition == WindowBarPosition::Bottom ? _projection.GetResolution().x : _windowBarthiccness,
-                     _windowBarPosition == WindowBarPosition::Left || _windowBarPosition == WindowBarPosition::Right ? _projection.GetResolution().y : _windowBarthiccness);
+    return glm::vec2(_windowBarPosition == WindowBarPosition::Top || _windowBarPosition == WindowBarPosition::Bottom ? _projection.GetResolution().x : _windowBarThiccness,
+                     _windowBarPosition == WindowBarPosition::Left || _windowBarPosition == WindowBarPosition::Right ? _projection.GetResolution().y : _windowBarThiccness);
 }
 
 glm::vec2 RetroFuturaGUI::WindowBar::calculateElementPosition(const glm::vec2 &position, const ElementType elementType)
@@ -178,18 +178,18 @@ glm::vec2 RetroFuturaGUI::WindowBar::calculateElementPosition(const glm::vec2 &p
     {
         case ElementType::NoDockingDrag:
             offset *= 3.5f;
-            offset +=_windowBarthiccness * 3.5f;
+            offset +=_windowBarThiccness * 3.5f;
         break;
         case ElementType::MinimizeButton:
             offset *=  2.5f;
-            offset += _windowBarthiccness * 2.5f;
+            offset += _windowBarThiccness * 2.5f;
         break;
         case ElementType::MaximizeButton:
             offset *=  1.5f;
-            offset += _windowBarthiccness * 1.5f;
+            offset += _windowBarThiccness * 1.5f;
         break;
         case ElementType::CloseButton:
-            offset += _windowBarthiccness * 0.5f;
+            offset += _windowBarThiccness * 0.5f;
         break;
     }
 
@@ -197,42 +197,42 @@ glm::vec2 RetroFuturaGUI::WindowBar::calculateElementPosition(const glm::vec2 &p
     {
         case ElementType::Icon:
             if(_windowBarPosition == WindowBarPosition::Top || _windowBarPosition == WindowBarPosition::Bottom)
-                x =  _windowBarthiccness * 0.5f + offset;
+                x =  _windowBarThiccness * 0.5f + offset;
             else
-                y =  _windowBarthiccness * 0.5f + offset;
+                y =  _windowBarThiccness * 0.5f + offset;
 
             switch(_windowBarPosition)
             {
             case WindowBarPosition::Bottom:
-                y = _windowBarthiccness * 0.5f;
+                y = _windowBarThiccness * 0.5f;
             break;
             case WindowBarPosition::Left:
-                x = _windowBarthiccness * 0.5f;
+                x = _windowBarThiccness * 0.5f;
             break;
             case WindowBarPosition::Right:
-                x = _projection.GetResolution().x - _windowBarthiccness * 0.5f;
+                x = _projection.GetResolution().x - _windowBarThiccness * 0.5f;
             default: //Top
-                y = _projection.GetResolution().y - _windowBarthiccness * 0.5f;
+                y = _projection.GetResolution().y - _windowBarThiccness * 0.5f;
             }
         break;
         case ElementType::Titel:
             if(_windowBarPosition == WindowBarPosition::Top || _windowBarPosition == WindowBarPosition::Bottom)
-                x =  _windowBarthiccness * 1.5f + offset;
+                x =  _windowBarThiccness * 1.5f + offset;
             else
-                y =  _windowBarthiccness * 1.5f + offset;
+                y =  _windowBarThiccness * 1.5f + offset;
 
             switch(_windowBarPosition)
             {
             case WindowBarPosition::Bottom:
-                y = _windowBarthiccness * 0.5f;
+                y = _windowBarThiccness * 0.5f;
             break;
             case WindowBarPosition::Left:
-                x = _windowBarthiccness * 0.5f;
+                x = _windowBarThiccness * 0.5f;
             break;
             case WindowBarPosition::Right:
-                x = _projection.GetResolution().x - _windowBarthiccness * 0.5f;
+                x = _projection.GetResolution().x - _windowBarThiccness * 0.5f;
             default: //Top
-                y = _projection.GetResolution().y - _windowBarthiccness * 0.5f;
+                y = _projection.GetResolution().y - _windowBarThiccness * 0.5f;
             }
         break;
         default:
@@ -245,15 +245,15 @@ glm::vec2 RetroFuturaGUI::WindowBar::calculateElementPosition(const glm::vec2 &p
             switch(_windowBarPosition)
             {
             case WindowBarPosition::Bottom:
-                y = _windowBarthiccness * 0.5f;
+                y = _windowBarThiccness * 0.5f;
             break;
             case WindowBarPosition::Left:
-                x = _windowBarthiccness * 0.5f;
+                x = _windowBarThiccness * 0.5f;
             break;
             case WindowBarPosition::Right:
-                x = _projection.GetResolution().x - _windowBarthiccness * 0.5f;
+                x = _projection.GetResolution().x - _windowBarThiccness * 0.5f;
             default: //Top
-                y = _projection.GetResolution().y - _windowBarthiccness * 0.5f;
+                y = _projection.GetResolution().y - _windowBarThiccness * 0.5f;
             }
         }
     }
