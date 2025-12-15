@@ -19,14 +19,17 @@ namespace RetroFuturaGUI
     private:
         // Geometry
         Projection& _projection;
-        glm::vec2 _quadSize = glm::vec2(1.0f);
-        glm::vec2 _textureSize = glm::vec2(1.0f);
-        f32 _textureAspectRatio = 0.0f;
-        glm::mat4 _scaleMatrix;
-        glm::vec2 _position;
-        glm::mat4 _translationMatrix;
-        f32 _rotation;
-        glm::mat4 _rotationMatrix;
+        glm::vec2 
+            _quadSize { 1.0f },
+            _textureSize { 1.0f },
+            _position { 0.0f };
+        glm::mat4
+            _scaleMatrix { 0.0f },
+            _translationMatrix { 0.0f },
+            _rotationMatrix { 0.0f };
+        f32 
+            _textureAspectRatio { 0.0f },
+            _rotation { 0.0f };
         std::unique_ptr<Texture> _texture;
 
         float _vertices[(3 + 2) * 4] =
@@ -45,12 +48,13 @@ namespace RetroFuturaGUI
 
         // data
         std::string _path;
-        u32 _textureId = 0;
-        u32 _vao;
-        u32 _vbo;
-        u32 _ebo;
-        glm::i32vec2 _imageSize = glm::u32vec2(0);
-        i32 _colorChannelCount = 0;
+        u32 
+            _textureId { 0 },
+            _vao { 0 },
+            _vbo { 0 },
+            _ebo { 0 },
+            _colorChannelCount { 0 };
+        glm::i32vec2 _imageSize { 0, 0 };
 
         void loadTexture();
     };
