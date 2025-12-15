@@ -196,9 +196,16 @@ void RetroFuturaGUI::Window::mouseButtonClickedCallback(GLFWwindow *window, i32 
 
 void RetroFuturaGUI::Window::setResizeState(i32 button, i32 action, i32 mods)
 {
-	if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS) 
+	if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS)
 	{
+	
+        glfwGetCursorPos(_window, &_absoluteCursorPosX, &_absoluteCursorPosY);
+        glfwGetWindowPos(_window, &_windowPosX, &_windowPosY);
 		glfwGetCursorPos(_window, &_cursorPosX, &_cursorPosY);
+        _absoluteCursorPosX += _windowPosX;
+        _absoluteCursorPosY += _windowPosY;
+        _prevResizeX = _absoluteCursorPosX;
+        _prevResizeY = _absoluteCursorPosY;
 
 		if(_cursorPosY < _boundaryThreshold && _cursorPosX < _boundaryThreshold) 
 			_resizeEdge = ResizeEdge::TOP_LEFT;
@@ -233,58 +240,68 @@ void RetroFuturaGUI::Window::resize()
 {
 	if (!_isResizing) 
 		return;
-		
-	glfwGetCursorPos(_window, &_cursorPosX, &_cursorPosY);
-	i32 newWidth = _width;
-	i32 newHeight = _height;
 
-	switch(_resizeEdge) // shorten this mess
-	{
-		case ResizeEdge::TOP_LEFT:
-			newWidth = _width - (_cursorPosX - _prevResizeX);
-			newHeight = _height - (_cursorPosY - _prevResizeY);
-			_prevResizeX = _cursorPosX;
-			_prevResizeY = _cursorPosY;
-		break;
-		case ResizeEdge::TOP_RIGHT:
-			newWidth = _width + (_cursorPosX - _prevResizeX);
-			newHeight = _height - (_cursorPosY - _prevResizeY);
-			_prevResizeX = _cursorPosX;
-			_prevResizeY = _cursorPosY;
-		break;
-		case ResizeEdge::BOTTOM_LEFT:
-			newWidth = _width - (_cursorPosX - _prevResizeX);
-			newHeight = _height + (_cursorPosY - _prevResizeY);
-			_prevResizeX = _cursorPosX;
-			_prevResizeY = _cursorPosY;
-		break;
-		case ResizeEdge::BOTTOM_RIGHT:
-			newWidth = _width + (_cursorPosX - _prevResizeX);
-			newHeight = _height + (_cursorPosY - _prevResizeY);
-			_prevResizeX = _cursorPosX;
-			_prevResizeY = _cursorPosY;
-		break;
-		case ResizeEdge::LEFT:
-			newWidth = _width - (_cursorPosX - _prevResizeX);
-			_prevResizeX = _cursorPosX;
-		break;
-		case ResizeEdge::RIGHT:
-			newWidth = _width + (_cursorPosX - _prevResizeX);
-			_prevResizeX = _cursorPosX;
-		break;
-		case ResizeEdge::TOP:
-			newHeight = _height - (_cursorPosY - _prevResizeY);
-			_prevResizeY = _cursorPosY;
-		break;
-		case ResizeEdge::BOTTOM:
-			newHeight = _height + (_cursorPosY - _prevResizeY);
-			_prevResizeY = _cursorPosY;
-	}
+    glfwGetCursorPos(_window, &_absoluteCursorPosX, &_absoluteCursorPosY);
+    glfwGetWindowPos(_window, &_windowPosX, &_windowPosY);
+    _absoluteCursorPosX += _windowPosX;
+    _absoluteCursorPosY += _windowPosY;
 
-	_width = std::max<i32>(newWidth, _minWindowSpan);
-	_height = std::max<i32>(newHeight, _minWindowSpan);
-	glfwSetWindowSize(_window, _width, _height);
-	_projection->UpdateProjectionMatrix((f32)_width, (f32)_height);
+    f64 
+		deltaX { _absoluteCursorPosX - _prevResizeX },
+     	deltaY { _absoluteCursorPosY - _prevResizeY };
+    i32
+		newWidth { _width },
+     	newHeight { _height },
+     	newPosX { _windowPosX },
+     	newPosY { _windowPosY };
+
+    switch(_resizeEdge)
+    {
+        case ResizeEdge::TOP_LEFT:
+            newWidth = _width - (i32)deltaX;
+            newHeight = _height - (i32)deltaY;
+            newPosX = _windowPosX + (i32)deltaX;
+            newPosY = _windowPosY + (i32)deltaY;
+        break;
+        case ResizeEdge::TOP_RIGHT:
+            newWidth = _width + (i32)deltaX;
+            newHeight = _height - (i32)deltaY;
+            newPosY = _windowPosY + (i32)deltaY;
+        break;
+        case ResizeEdge::BOTTOM_LEFT:
+            newWidth = _width - (i32)deltaX;
+            newHeight = _height + (i32)deltaY;
+            newPosX = _windowPosX + (i32)deltaX;
+        break;
+        case ResizeEdge::BOTTOM_RIGHT:
+            newWidth = _width + (i32)deltaX;
+            newHeight = _height + (i32)deltaY;
+        break;
+        case ResizeEdge::LEFT:
+            newWidth = _width - (i32)deltaX;
+            newPosX = _windowPosX + (i32)deltaX;
+        break;
+        case ResizeEdge::RIGHT:
+            newWidth = _width + (i32)deltaX;
+        break;
+        case ResizeEdge::TOP:
+            newHeight = _height - (i32)deltaY;
+            newPosY = _windowPosY + (i32)deltaY;
+        break;
+        case ResizeEdge::BOTTOM:
+            newHeight = _height + (i32)deltaY;
+        break;
+    }
+
+    _prevResizeX = _absoluteCursorPosX;
+    _prevResizeY = _absoluteCursorPosY;
+    _width = std::max<i32>(newWidth, _minWindowSpan);
+    _height = std::max<i32>(newHeight, _minWindowSpan);
+    _windowPosX = newPosX;
+    _windowPosY = newPosY;
+    glfwSetWindowSize(_window, _width, _height);
+    moveWindow(_windowPosX, _windowPosY);
+    _projection->UpdateProjectionMatrix((f32)_width, (f32)_height);
 }
 
 void RetroFuturaGUI::Window::windowFocusCallback(GLFWwindow *window, i32 focused)
@@ -299,6 +316,13 @@ void RetroFuturaGUI::Window::windowFocusCallback(GLFWwindow *window, i32 focused
 		InputManager::SetFocusedWindow(nullptr);
 		std::println("unfocused");
 	}
+}
+
+void RetroFuturaGUI::Window::moveWindow(const i32 posX, const i32 posY)
+{
+	glfwSetWindowPos(_window, posX, posY);
+	_windowPosX = posX;
+	_windowPosY = posY;
 }
 
 bool RetroFuturaGUI::Window::WindowShouldClose()

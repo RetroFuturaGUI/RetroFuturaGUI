@@ -30,6 +30,7 @@ namespace RetroFuturaGUI
         void setResizeState(i32 button, i32 action, i32 mods);
         void resize();
         static void windowFocusCallback(GLFWwindow* window, i32 focused);
+        void moveWindow(const i32 posX, const i32 posY);
 
         enum class ResizeEdge : u32
         {
@@ -49,12 +50,16 @@ namespace RetroFuturaGUI
         i32 
             _width { 1280 },
             _height { 720 },
-            _minWindowSpan { 100 };
+            _minWindowSpan { 100 },
+            _windowPosX { 0 },
+            _windowPosY { 0 };
         f64 
             _prevResizeX { 0.0 },
             _prevResizeY { 0.0 },
             _cursorPosX { 0.0 },
             _cursorPosY { 0.0 },
+            _absoluteCursorPosX { 0.0 },
+            _absoluteCursorPosY { 0.0 },
             _boundaryThreshold { 10.0 };
         ResizeEdge _resizeEdge { ResizeEdge::NONE };
         bool _isResizing { false };
