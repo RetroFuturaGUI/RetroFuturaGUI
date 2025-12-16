@@ -25,6 +25,7 @@ namespace RetroFuturaGUI
         glm::vec4 GetColor() const;
 
     private:
+        //Geometry
         f32 _testBorderPoints[3 * 4] = 
         {
             -0.5f, -0.5f, 0.0f,
@@ -41,23 +42,28 @@ namespace RetroFuturaGUI
             3, 0
         };
 
-        u32 _vao;
-        u32 _vbo;
-        u32 _ebo;
+        u32
+            _vao { 0 },
+            _vbo { 0 },
+            _ebo { 0 };
+        Projection& _projection;
+        glm::mat4
+            _scalingMatrix { 1.0f },
+            _translationMatrix { 1.0f },
+            _rotationMatrix { 1.0f };
+        glm::vec2
+            _scale { 1.0f },
+            _position { 0.0f };
+        f32 _rotation { 0.0f };
+        u32 _colorCount { 0 };
+
+        // Fill
+        FillType _fillType { FillType::SOLID };
+        f32 _borderThickness { 2.0f };
         //glm::vec2 _roundedCorners[8];
         std::unique_ptr<glm::vec4[]> _colors;
-        Projection& _projection;
         //glm::vec4 _cornerRadii = glm::vec4(10.0f);
-        f32 _borderThickness = 2.0f;
 
-        glm::mat4 _scalingMatrix = glm::mat4(1.0f);
-        glm::mat4 _translationMatrix = glm::mat4(0.0f);
-        glm::mat4 _rotationMatrix = glm::mat4(1.0f);
-        glm::vec2 _scale = glm::vec2(1.0f, 1.0f);
-        glm::vec2 _position = glm::vec2(0.0f, 0.0f);
-        f32 _rotation = 0.0f;
-        u32 _colorCount = 0;
-        FillType _fillType = FillType::SOLID;
         void setupMesh();
         void initBasic(std::span<const glm::vec4> colors);
     };
