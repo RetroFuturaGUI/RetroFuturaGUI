@@ -16,8 +16,8 @@ namespace RetroFuturaGUI
         glm::vec2& GetResolution();
 
     private:
-        glm::mat4 _projectionMatrix = glm::mat4(1.0f);
-        glm::vec2 _resolution = glm::vec2(1.0f);
+        glm::mat4 _projectionMatrix  { 1.0f };
+        glm::vec2 _resolution { 1.0f };
         void setProjectionMatrix();
     };
 }
