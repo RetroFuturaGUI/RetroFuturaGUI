@@ -8,14 +8,16 @@ namespace RetroFuturaGUI
 {
     struct Grid2dCell
     {
-        glm::vec2 _PositionPixels = glm::vec2(0.0f);
-        glm::vec2 _PositionNormalized = glm::vec2(0.0f);
-        glm::vec2 _SizePixels = glm::vec2(0.0f);
-        glm::vec2 _SizeNormalized = glm::vec2(0.0f);
-        glm::vec2 _PaddingPixels = glm::vec2(0.0f);
-        glm::vec2 _PaddingNormalized = glm::vec2(0.0f);
-        u32 _RowSpan = 1;
-        u32 _ColSpan = 1;
+        glm::vec2
+            _PositionPixels { 0.0f },
+            _PositionNormalized { 0.0f },
+            _SizePixels { 0.0f },
+            _SizeNormalized { 0.0f },
+            _PaddingPixels { 0.0f },
+            _PaddingNormalized { 0.0f };
+        u32 
+            _RowSpan { 1 },
+            _ColSpan { 1 };
         std::unique_ptr<IWidget> _Widget = nullptr;
         bool _SpanOccupied = false;
     };
@@ -118,12 +120,50 @@ namespace RetroFuturaGUI
 
         }
 
+        void Resize(const glm::vec2& size)
+        {
+            _size = size;
+            resizeCells();
+            resizeWidgets();
+        }
+
+        void Move(const glm::vec2& position)
+        {
+            _position = position;
+            resizeCells();
+            resizeWidgets();
+        }
+
     private:
         void drawDebugLines(const Grid2dCell& cell)
         {
+            //std::println("Drawing debug for cell pos: {}, {}", cell._PositionPixels.x, cell._PositionPixels.y);
             _debugBorder->Move(glm::vec2(cell._PositionPixels.x + cell._SizePixels.x * 0.5f, _projection.GetResolution().y - (cell._PositionPixels.y + cell._SizePixels.y * 0.5f)));
             _debugBorder->Resize(glm::vec2(cell._SizePixels.x, cell._SizePixels.y));
             _debugBorder->Draw();
+        }
+
+        void resizeCells()
+        {
+            for(u32 row = 0; row < _axisdefinition._RowDefinition.size(); ++row)
+            {
+                for(u32 column = 0; column < _axisdefinition._ColumnDefinition.size(); ++column)
+                {
+                    f32 posX = 0.0f, posY = 0.0f;
+
+                    for(u32 i = 0; i < row; ++i)
+                        posX += _axisdefinition._RowDefinition[i] * _size.x;
+
+                    for(u32 i = 0; i < column; ++i)
+                        posY += _axisdefinition._ColumnDefinition[i] * _size.y;
+
+                        
+                    _grid[row][column]._PositionPixels = glm::vec2(posX, posY);
+                    _grid[row][column]._PositionNormalized = glm::vec2(posX / _size.x, posY / _size.y);
+                    _grid[row][column]._SizePixels = glm::vec2(_axisdefinition._RowDefinition[row] * _size.x, _axisdefinition._ColumnDefinition[column] * _size.y);
+                    _grid[row][column]._SizeNormalized = glm::vec2(_axisdefinition._RowDefinition[row], _axisdefinition._ColumnDefinition[column]);
+                }
+            }
         }
 
         void resizeWidgets()
@@ -132,8 +172,11 @@ namespace RetroFuturaGUI
             {
                 for(auto& cell : column)
                 {
-                    cell._Widget->SetSize(cell._SizePixels);
+                    if(!cell._Widget)
+                        continue;
 
+                    cell._Widget->SetSize(cell._SizePixels);
+                    
                 }
             }
         }

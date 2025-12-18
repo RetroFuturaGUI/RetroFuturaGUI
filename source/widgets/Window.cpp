@@ -300,8 +300,10 @@ void RetroFuturaGUI::Window::resize()
     _windowPosX = newPosX;
     _windowPosY = newPosY;
     glfwSetWindowSize(_window, _width, _height);
-    moveWindow(_windowPosX, _windowPosY);
+	glViewport(0, 0, _width, _height); // causes lags
+	moveWindow(_windowPosX, _windowPosY);
     _projection->UpdateProjectionMatrix((f32)_width, (f32)_height);
+	_grid->Resize(glm::vec2((f32)_width, (f32)_height));
 }
 
 void RetroFuturaGUI::Window::windowFocusCallback(GLFWwindow *window, i32 focused)
