@@ -210,6 +210,8 @@ i32 RetroFuturaGUI::Text::initFontFace()
         _letterMap.push_back(0);
         _transforms.push_back(glm::mat4(1.0f));
     }
+
+    return 0;
 }
 
 void RetroFuturaGUI::Text::bind()
