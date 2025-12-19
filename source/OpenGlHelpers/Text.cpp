@@ -5,13 +5,11 @@ RetroFuturaGUI::Text::Text(const GeometryParams2D& geometry, const TextParams& t
   _text(textParams._Text), _fontPath(textParams._FontPath), _textColor(textParams._TextColor), 
   _textAlignment(textParams._TextAlignment), _textPadding(textParams._TextPadding)
 {
-   // if(!_ft)
-        initFreeTypeLibrary();
-
+    initFreeTypeLibrary();
     initFontFace();
     bind();
     Resize(textParams._GlyphSize);
-    Move(geometry._Position.x, geometry._Position.y);
+    _position = geometry._Position;
     Rotate(geometry._Rotation);
     calculateTextSpan();
     SetTextAlignment(_textAlignment);
@@ -86,22 +84,7 @@ void RetroFuturaGUI::Text::Draw()
 void RetroFuturaGUI::Text::SetTextAlignment(TextAlignment textAlignment)
 {
     _textAlignment = textAlignment;
-
-    switch(_textAlignment)
-    {
-        case TextAlignment::CENTER:
-        {
-            Move(_position.x - _textSpan.x * 0.5f, _position.y - _textBaseHeight * 0.5f);
-        } break;
-        case TextAlignment::RIGHT:
-        {
-            Move(_position.x - _textSpan.x + _parentSize.x * 0.5f - _textPadding, _position.y - _textBaseHeight * 0.5f);
-        } break;
-        default: //LEFT
-        {
-            Move(_position.x - _parentSize.x * 0.5f + _textPadding, _position.y - _textBaseHeight * 0.5f);
-        }
-    }
+    alignPosition();
 }
 
 void RetroFuturaGUI::Text::Resize(const glm::vec2& glyphSize)
@@ -110,10 +93,31 @@ void RetroFuturaGUI::Text::Resize(const glm::vec2& glyphSize)
     //_scaleMatrix = glm::scale(glm::mat4(1.0f), glm::vec3(_glyphSize, 1.0f));
 }
 
-void RetroFuturaGUI::Text::Move(const f32 x, const f32 y)
+void RetroFuturaGUI::Text::alignPosition()
 {
-    _position = glm::vec2(x, y);
-    _translationMatrix = glm::translate(glm::mat4(1.0f), glm::vec3(_position, 0.0f));
+    switch(_textAlignment)
+    {
+        case TextAlignment::CENTER:
+        {
+            _positionAligned = glm::vec2(_position.x - _textSpan.x * 0.5f, _position.y - _textBaseHeight * 0.5f);
+        } break;
+        case TextAlignment::RIGHT:
+        {
+            _positionAligned = glm::vec2(_position.x - _textSpan.x + _parentSize.x * 0.5f - _textPadding, _position.y - _textBaseHeight * 0.5f);
+        } break;
+        default: //LEFT
+        {
+            _positionAligned = glm::vec2(_position.x - _parentSize.x * 0.5f + _textPadding, _position.y - _textBaseHeight * 0.5f);
+        }
+    }
+
+    _translationMatrix = glm::translate(glm::mat4(1.0f), glm::vec3(_positionAligned, 0.0f));
+}
+
+void RetroFuturaGUI::Text::SetPosition(const glm::vec2 &position)
+{
+    _position = position;
+    SetTextAlignment(_textAlignment);
 }
 
 void RetroFuturaGUI::Text::Rotate(const f32 rotation)
@@ -305,3 +309,5 @@ void RetroFuturaGUI::Text::calculateTextSpan()
     _textSpan = glm::vec2(maxLineWidth, totalHeight);
     _textBaseHeight = globalMaxAbove;
 }
+
+
