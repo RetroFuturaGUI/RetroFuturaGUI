@@ -14,9 +14,9 @@ namespace RetroFuturaGUI
         IWidget(const IdentityParams& identity, const GeometryParams2D& geometry);
         virtual ~IWidget() = default;
         virtual void Draw() = 0;
-        void SetSize(const glm::vec2& size);
+        virtual void SetSize(const glm::vec2& size);
         glm::vec2 GetSize() const;
-        void SetPosition(const glm::vec2& position);
+        virtual void SetPosition(const glm::vec2& position);
         glm::vec2 GetPosition() const;
         void SetRotation(const f32 rotation);
         f32 GetRotation() const;
@@ -24,6 +24,7 @@ namespace RetroFuturaGUI
         void SetBackgroundColors(std::span<glm::vec4> backgroundColors);
         std::string_view GetName() const;
         void SetName(std::string_view name);
+
 
         template<typename T> T* GetParentWidget() const
         {

@@ -44,6 +44,8 @@ namespace RetroFuturaGUI
         glm::vec4 GetTextColor(const ColorSetState state) const;
         void SetLineBorderColor(const glm::vec4& color, const ColorSetState state);
         glm::vec4 GetLineBorderColor(const ColorSetState state) const;
+        void SetSize(const glm::vec2& size) override; //add extra text resizing logic
+        void SetPosition(const glm::vec2& position) override;
 
     private:
         //elements

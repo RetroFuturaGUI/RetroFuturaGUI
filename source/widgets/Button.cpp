@@ -243,6 +243,22 @@ glm::vec4 RetroFuturaGUI::Button::GetLineBorderColor(const ColorSetState state) 
     }
 }
 
+void RetroFuturaGUI::Button::SetSize(const glm::vec2 &size)
+{
+    IWidget::SetSize(size);
+    _rectangle->Resize(size);
+    _lineBorder->Resize(size);
+    //_text->Resize(size); //add extra text resizing logic
+}
+
+void RetroFuturaGUI::Button::SetPosition(const glm::vec2 &position)
+{
+    IWidget::SetPosition(position);
+    _rectangle->Move(position);
+    _lineBorder->Move(position);
+    _text->SetPosition(position);
+}
+
 void RetroFuturaGUI::Button::interact()
 {
     auto mousePos = InputManager::GetMousePositionInvertedY();
