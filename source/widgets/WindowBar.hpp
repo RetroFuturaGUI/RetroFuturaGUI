@@ -36,6 +36,7 @@ namespace RetroFuturaGUI
         WindowBar(const IdentityParams& identity, GeometryParams2D& geometry, const glm::vec4& color, const WindowBarPosition wbPosition = WindowBarPosition::Top);
         void Draw();
         bool WindowShouldClose();
+        void Resize();
 
     private:
         // Identity
