@@ -23,6 +23,14 @@ enum class WidgetTypeID : i32
     Label,
     Button,
     Unknown = -1
+};   
+
+enum class SizingMode : u32
+{
+    FIXED,
+    FILL,
+    FILL_X,
+    FILL_Y
 };
 
 struct IdentityParams
@@ -39,4 +47,5 @@ struct GeometryParams2D
     const glm::vec2& _Position;
     const glm::vec2& _Size;
     f32 _Rotation;
+    SizingMode _SizingMode;
 };

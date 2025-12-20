@@ -2,7 +2,7 @@
 
 RetroFuturaGUI::IWidget::IWidget(const IdentityParams& identity, const GeometryParams2D& geometry) 
     : _name(identity._Name), _parent(identity._Parent), _parentTypeID(identity._ParentTypeID), _parentWindow(identity._ParentWindow),
-     _projection(const_cast<Projection&>(geometry._Projection)), _position(geometry._Position), _size(geometry._Size), _rotation(geometry._Rotation)
+     _projection(const_cast<Projection&>(geometry._Projection)), _position(geometry._Position), _size(geometry._Size), _rotation(geometry._Rotation), _sizingMode(geometry._SizingMode)
 {
 
     
@@ -64,3 +64,12 @@ void RetroFuturaGUI::IWidget::SetName(std::string_view name)
     _name = name;
 }
 
+void RetroFuturaGUI::IWidget::SetSizingMode(const SizingMode sizingMode)
+{
+    _sizingMode = sizingMode;
+}
+
+SizingMode RetroFuturaGUI::IWidget::GetSizingMode() const
+{
+    return _sizingMode;
+}
