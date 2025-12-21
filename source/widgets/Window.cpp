@@ -119,6 +119,7 @@ void RetroFuturaGUI::Window::createWindow()
 	GeometryParams2D geometryWB = { *_projection, glm::vec2(0.0f), glm::vec2(0.0f), 0.0f };
 
 	_button = std::make_unique<Button>(identityB, geometryB, textParamsB, borderParams);
+	_button->SetCornerRadii(glm::vec4(45.0f));
 	_label = std::make_unique<Label>(identity, geometry, textParams);
 	_windowBar = std::make_unique<WindowBar>(identityWB, geometryWB, glm::vec4(0.5f, 0.0f, 1.0f, 1.0f));
 	_windowBar->ConnectMaximizeCallback([this]() { toggleMaximize(); });

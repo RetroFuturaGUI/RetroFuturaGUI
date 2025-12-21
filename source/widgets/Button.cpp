@@ -12,7 +12,7 @@ void RetroFuturaGUI::Button::Draw()
 {
     interact();
     _rectangle->Draw();
-    _lineBorder->Draw();
+   // _lineBorder->Draw();
     _text->Draw();
 }
 
@@ -257,6 +257,11 @@ void RetroFuturaGUI::Button::SetPosition(const glm::vec2 &position)
     _rectangle->Move(position);
     _lineBorder->Move(position);
     _text->SetPosition(position);
+}
+
+void RetroFuturaGUI::Button::SetCornerRadii(const glm::vec4 & radii)
+{
+    _rectangle->SetCornerRadii(radii);
 }
 
 void RetroFuturaGUI::Button::interact()
