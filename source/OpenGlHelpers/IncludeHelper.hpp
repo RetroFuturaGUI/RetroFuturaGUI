@@ -47,5 +47,4 @@ struct GeometryParams2D
     const glm::vec2& _Position;
     const glm::vec2& _Size;
     f32 _Rotation;
-    SizingMode _SizingMode;
 };

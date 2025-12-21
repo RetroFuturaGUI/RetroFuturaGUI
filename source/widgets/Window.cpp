@@ -111,7 +111,7 @@ void RetroFuturaGUI::Window::createWindow()
 	TextParams textParams = { "Test Label", tempPath, glm::vec4(1.0f), glm::vec2(30.0f), TextAlignment::CENTER, 5.0f };
 
 	IdentityParams identityB = { "testButton", this, WidgetTypeID::Window };
-	GeometryParams2D geometryB = { *_projection, glm::vec2(300.0f, 300.0f), glm::vec2(300.0f, 90.0f), 0.0f };
+	GeometryParams2D geometryB = { *_projection, glm::vec2(0.0f, 0.0f), glm::vec2(300.0f, 90.0f), 0.0f };
 	TextParams textParamsB = { "Test Button", tempPath, glm::vec4(1.0f), glm::vec2(30.0f), TextAlignment::CENTER, 5.0f };
 	BorderParams borderParams = { glm::vec4(0.3f, 0.3f, 0.3f, 1.0f), 5.0f };
 
@@ -133,7 +133,7 @@ void RetroFuturaGUI::Window::createWindow()
 	_button->Connect_OnMouseEnter(mouseEnter, true);
 	_button->Connect_OnMouseLeave(mouseLeave, true);
 
-	_grid->AttachWidget(0, 0, std::unique_ptr<IWidget>(std::move(_button)));
+	_grid->AttachWidget(1, 1, std::unique_ptr<IWidget>(std::move(_button)), SizingMode::FIXED);
 
 }
 
@@ -303,6 +303,8 @@ void RetroFuturaGUI::Window::resize()
 	glViewport(0, 0, _width, _height); // causes lags
 	moveWindow(_windowPosX, _windowPosY);
     _projection->UpdateProjectionMatrix((f32)_width, (f32)_height);
+	if(_windowBar)
+		_windowBar->Resize();
 	_grid->Resize(glm::vec2((f32)_width, (f32)_height));
 }
 
@@ -338,8 +340,8 @@ void RetroFuturaGUI::Window::Draw()
 	//_backgroundImage->Draw();
 	//_label->Draw();
 	//_button->Draw();
-	//_windowBar->Draw();
 	_grid->Draw(true);
+	_windowBar->Draw();
 	glfwSwapBuffers(_window);
 	glfwPollEvents();
 

@@ -20,6 +20,7 @@ namespace RetroFuturaGUI
             _ColSpan { 1 };
         std::unique_ptr<IWidget> _Widget = nullptr;
         bool _SpanOccupied = false;
+        SizingMode _SizingMode { SizingMode::FILL };
     };
 
     struct Grid2dAxisDefinition
@@ -64,7 +65,8 @@ namespace RetroFuturaGUI
                             glm::vec2(0.0f),
                             1, 1,
                             nullptr,
-                            false
+                            false,
+                            SizingMode::FILL
                         }
                     );
                 }
@@ -88,7 +90,7 @@ namespace RetroFuturaGUI
             _debugBorder = std::make_unique<LineBorder>(geometryb, borderP);
         }
 
-        void AttachWidget(u32 row, u32 col, std::unique_ptr<IWidget> widget)
+        void AttachWidget(u32 row, u32 col, std::unique_ptr<IWidget> widget, const SizingMode sizingMode = SizingMode::FILL)
         {
             if(_axisdefinition._RowDefinition.size() < row || _axisdefinition._ColumnDefinition.size() < col)
                 return;
@@ -97,6 +99,12 @@ namespace RetroFuturaGUI
                 return;
 
             _grid[row][col]._Widget = std::move(widget);
+            _grid[row][col]._Widget->SetPosition(glm::vec2(_grid[row][col]._PositionPixels.x + _grid[row][col]._SizePixels.x * 0.5f,
+                _projection.GetResolution().y - _grid[row][col]._PositionPixels.y - _grid[row][col]._SizePixels.y * 0.5f));
+        
+            _grid[row][col]._SizingMode = sizingMode;
+
+            resizeWidget(_grid[row][col]);
         }
 
         void Draw() override {};
@@ -124,14 +132,15 @@ namespace RetroFuturaGUI
         {
             _size = size;
             resizeCells();
-            resizeWidgets();
+            resizeAllWidgets();
+            moveWidgets();
         }
 
         void Move(const glm::vec2& position)
         {
             _position = position;
             resizeCells();
-            resizeWidgets();
+            resizeAllWidgets();
         }
 
     private:
@@ -166,7 +175,36 @@ namespace RetroFuturaGUI
             }
         }
 
-        void resizeWidgets()
+        void resizeAllWidgets()
+        {
+            for(auto& column : _grid)
+                for(auto& cell : column)
+                    resizeWidget(cell);
+        }
+
+        void resizeWidget(const Grid2dCell& cell)
+        {
+            if(!cell._Widget)
+                return;
+
+            switch(cell._SizingMode)
+            {
+                case SizingMode::FILL:
+                    cell._Widget->SetSize(cell._SizePixels);
+                break;
+                case SizingMode::FILL_X:
+                    cell._Widget->SetSize(glm::vec2(cell._SizePixels.x, cell._Widget->GetSize().y));
+                break;
+                case SizingMode::FILL_Y:
+                    cell._Widget->SetSize(glm::vec2(cell._Widget->GetSize().x,  cell._SizePixels.y));
+                break;
+                case SizingMode::FIXED:
+                default:
+                break;
+            }
+        }
+
+        void moveWidgets()
         {
             for(auto& column : _grid)
             {
@@ -175,8 +213,8 @@ namespace RetroFuturaGUI
                     if(!cell._Widget)
                         continue;
 
-                    cell._Widget->SetSize(cell._SizePixels);
-                    
+                    cell._Widget->SetPosition(glm::vec2(cell._PositionPixels.x + cell._SizePixels.x * 0.5f,
+                        _projection.GetResolution().y - cell._PositionPixels.y - cell._SizePixels.y * 0.5f));
                 }
             }
         }

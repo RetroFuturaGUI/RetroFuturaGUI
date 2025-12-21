@@ -8,8 +8,6 @@
 
 namespace RetroFuturaGUI
 {
-
-
     class IWidget
     {
     public:
@@ -26,8 +24,6 @@ namespace RetroFuturaGUI
         void SetBackgroundColors(std::span<glm::vec4> backgroundColors);
         std::string_view GetName() const;
         void SetName(std::string_view name);
-        void SetSizingMode(const SizingMode sizingMode);
-        SizingMode GetSizingMode() const;
 
         template<typename T> T* GetParentWidget() const
         {
@@ -40,7 +36,6 @@ namespace RetroFuturaGUI
         void* _parent { nullptr };
         WidgetTypeID _parentTypeID { WidgetTypeID::None };
         GLFWwindow* _parentWindow { nullptr };
-        SizingMode _sizingMode { SizingMode::FIXED };
 
         //geometry
         Projection& _projection;
