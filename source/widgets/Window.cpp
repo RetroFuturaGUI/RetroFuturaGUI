@@ -303,9 +303,12 @@ void RetroFuturaGUI::Window::resize()
 	glViewport(0, 0, _width, _height); // causes lags
 	moveWindow(_windowPosX, _windowPosY);
     _projection->UpdateProjectionMatrix((f32)_width, (f32)_height);
+
 	if(_windowBar)
 		_windowBar->Resize();
-	_grid->Resize(glm::vec2((f32)_width, (f32)_height));
+
+	if(_grid)
+		_grid->SetSize(glm::vec2((f32)_width, (f32)_height));
 }
 
 void RetroFuturaGUI::Window::windowFocusCallback(GLFWwindow *window, i32 focused)
