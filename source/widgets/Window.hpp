@@ -51,13 +51,23 @@ namespace RetroFuturaGUI
             _absoluteCursorPosX { 0.0 },
             _absoluteCursorPosY { 0.0 },
             _boundaryThreshold { 10.0 };
-        ResizeEdge _resizeEdge { ResizeEdge::NONE };
-        bool _isResizing { false };
-        bool _isDragging { false };
-        glm::vec2 _dragStartPos { 0.0f };
-        glm::vec2 _windowDragStartPos { 0.0f };
         glm::vec4 _backgroundColor { 0.1f, 0.1f, 0.1f, 1.0f };
         std::unique_ptr<Projection> _projection;
+        bool _windowBarOverlapsBG { false };
+        MaximizeState _maximizeState { MaximizeState::RESTORE };
+        glm::ivec2 _preMaximizeSize { 0 };
+        glm::ivec2 _preMaximizePos { 0 };
+
+        // Window Actions
+        ResizeEdge _resizeEdge { ResizeEdge::NONE };
+        bool 
+            _isResizing { false },
+            _isDragging { false };
+        glm::vec2 
+            _dragStartPos { 0.0f },
+            _windowDragStartPos { 0.0f };
+        glm::ivec2 _lastSize = { _width, _height };
+        bool _windowSizeChanged { false };
 
         // todo: create a cursor manager once the TextBox widget exists
         static inline GLFWcursor* _resizeCursorHorizontal { nullptr };
@@ -85,8 +95,12 @@ namespace RetroFuturaGUI
         void setCursorIcon();
         static void mouseButtonClickedCallback(GLFWwindow* window, i32 button, i32 action, i32 mods);
         void setResizeState(i32 button, i32 action, i32 mods);
-        void resize();        void drag();        static void windowFocusCallback(GLFWwindow* window, i32 focused);
+        void resize();
+        void drag();
+        static void windowFocusCallback(GLFWwindow* window, i32 focused);
         void moveWindow(const i32 posX, const i32 posY);
         static void setAbsoluteCursorPosition(Window* self);
+        void toggleMaximize();
+        void updateProjection();
     };
 }

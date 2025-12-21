@@ -19,6 +19,12 @@ namespace RetroFuturaGUI
         Line
     };
 
+    enum class MaximizeState : u32
+    {
+        MAXIMIZE,
+        RESTORE
+    };
+
     class WindowBar : public IWidget
     {
     private:
@@ -38,6 +44,8 @@ namespace RetroFuturaGUI
         bool WindowShouldClose();
         void Resize();
         bool IsPointInside(const f32 pointX, const f32 pointY);
+        MaximizeState GetMaximizeState();
+        void ConnectMaximizeCallback(const std::function<void()>& callback);
 
     private:
         // Identity
@@ -59,10 +67,12 @@ namespace RetroFuturaGUI
         
         //logic
         bool _windowShouldClose { false };
-        
+        MaximizeState _maximizeState { MaximizeState::RESTORE };
+
         glm::vec2 calculateWindowBarPosition(const glm::vec2& position);
         glm::vec2 calculateWindowBarSize(const glm::vec2& size);
         glm::vec2 calculateElementPosition(const glm::vec2& position, const ElementType elementType);
         void windowShouldCloseCallback();
+        void minimizeWindowCallback(GLFWwindow* window);
     };
 }

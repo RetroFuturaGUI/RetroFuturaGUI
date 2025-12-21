@@ -77,7 +77,7 @@ void RetroFuturaGUI::Window::createWindow()
 
 
 
-	IdentityParams identityG = { "testGrid", this, WidgetTypeID::Grid2d };
+	IdentityParams identityG = { "testGrid", this, WidgetTypeID::Grid2d, _window };
 	GeometryParams2D geometryG = { *_projection, glm::vec2(0.0f, 0.0f), glm::vec2((float)_width, (float)_height), 0.0f };
 	Grid2dAxisDefinition axisDefinition = 
 	{
@@ -105,22 +105,23 @@ void RetroFuturaGUI::Window::createWindow()
 	_backgroundImage = std::make_unique<Image2D>(geometryTexture);
 
 
-	IdentityParams identity = { "testLabel", this, WidgetTypeID::Window };
+	IdentityParams identity = { "testLabel", this, WidgetTypeID::Window, _window };
 	GeometryParams2D geometry = { *_projection, glm::vec2(800.0f, 600.0f), glm::vec2(300.0f, 90.0f), 0.0f };
 	std::string tempPath = PlatformBridge::Fonts::GetFontsInformation().front().second;
 	TextParams textParams = { "Test Label", tempPath, glm::vec4(1.0f), glm::vec2(30.0f), TextAlignment::CENTER, 5.0f };
 
-	IdentityParams identityB = { "testButton", this, WidgetTypeID::Window };
+	IdentityParams identityB = { "testButton", this, WidgetTypeID::Window, _window };
 	GeometryParams2D geometryB = { *_projection, glm::vec2(0.0f, 0.0f), glm::vec2(300.0f, 90.0f), 0.0f };
 	TextParams textParamsB = { "Test Button", tempPath, glm::vec4(1.0f), glm::vec2(30.0f), TextAlignment::CENTER, 5.0f };
 	BorderParams borderParams = { glm::vec4(0.3f, 0.3f, 0.3f, 1.0f), 5.0f };
 
-	IdentityParams identityWB = { "testWindowbar", this, WidgetTypeID::WindowBar };
+	IdentityParams identityWB = { "testWindowbar", this, WidgetTypeID::WindowBar, _window };
 	GeometryParams2D geometryWB = { *_projection, glm::vec2(0.0f), glm::vec2(0.0f), 0.0f };
 
 	_button = std::make_unique<Button>(identityB, geometryB, textParamsB, borderParams);
 	_label = std::make_unique<Label>(identity, geometry, textParams);
 	_windowBar = std::make_unique<WindowBar>(identityWB, geometryWB, glm::vec4(0.5f, 0.0f, 1.0f, 1.0f));
+	_windowBar->ConnectMaximizeCallback([this]() { toggleMaximize(); });
 
 	auto buttonPressed = [](){ std::println("buttonPressed Slot"); };
 	auto buttonReleased = [](){ std::println("buttonReleased Slot"); };
@@ -182,7 +183,7 @@ void RetroFuturaGUI::Window::mouseButtonClickedCallback(GLFWwindow *window, i32 
 	if (action == GLFW_PRESS) 
 	{
 		InputManager::SetFocusedWindow(window);
-		//std::println("mouse click: {}", button);
+		// self->setMaximizeState(); // Remove this - maximize should be triggered by windowbar button
 	}
 	else if (action == GLFW_RELEASE) 
 	{
@@ -313,15 +314,7 @@ void RetroFuturaGUI::Window::resize()
     _windowPosX = newPosX;
     _windowPosY = newPosY;
     glfwSetWindowSize(_window, _width, _height);
-	glViewport(0, 0, _width, _height); // causes lags
-	moveWindow(_windowPosX, _windowPosY);
-    _projection->UpdateProjectionMatrix((f32)_width, (f32)_height);
-
-	if(_windowBar)
-		_windowBar->Resize();
-
-	if(_grid)
-		_grid->SetSize(glm::vec2((f32)_width, (f32)_height));
+	_windowSizeChanged = true;
 }
 
 void RetroFuturaGUI::Window::drag()
@@ -370,6 +363,47 @@ void RetroFuturaGUI::Window::setAbsoluteCursorPosition(Window *self)
 	self->_absoluteCursorPosY += self->_windowPosY;
 }
 
+void RetroFuturaGUI::Window::toggleMaximize()
+{
+	if (_maximizeState == MaximizeState::RESTORE)
+	{
+
+		_preMaximizeSize = glm::ivec2(_width, _height);
+		_preMaximizePos = glm::ivec2(_windowPosX, _windowPosY);
+		glfwMaximizeWindow(_window);
+		_maximizeState = MaximizeState::MAXIMIZE;
+	} 
+	else
+	{
+		glfwRestoreWindow(_window);
+		SetWindowSize(_preMaximizeSize.x, _preMaximizeSize.y);
+		moveWindow(_preMaximizePos.x, _preMaximizePos.y);
+		_maximizeState = MaximizeState::RESTORE;
+	}
+	
+	_windowSizeChanged = true;
+}
+
+void RetroFuturaGUI::Window::updateProjection()
+{ 
+	glfwGetWindowSize(_window, &_width, &_height);
+
+	if (_lastSize == glm::ivec2(_width, _height))
+		return;
+		
+	_projection->UpdateProjectionMatrix((f32)_width, (f32)_height);
+	glViewport(0, 0, _width, _height);
+
+	if (_windowBar)
+		_windowBar->Resize();
+
+	if (_grid) 
+		_grid->SetSize(glm::vec2((f32)_width, (f32)_height));
+
+	_lastSize = { _width, _height };
+	_windowSizeChanged = false;
+}
+
 bool RetroFuturaGUI::Window::WindowShouldClose()
 {
     return glfwWindowShouldClose(_window);
@@ -377,6 +411,9 @@ bool RetroFuturaGUI::Window::WindowShouldClose()
 
 void RetroFuturaGUI::Window::Draw()
 {
+	if(_windowSizeChanged)
+		updateProjection();
+
 	glClear(GL_COLOR_BUFFER_BIT);
 	//_backgroundImage->Draw();
 	//_label->Draw();

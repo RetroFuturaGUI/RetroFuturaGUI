@@ -27,7 +27,8 @@ RetroFuturaGUI::WindowBar::WindowBar(const IdentityParams &identity, GeometryPar
     {
         "testWindowBarClosw",
         this,
-        WidgetTypeID::WindowBar
+        WidgetTypeID::WindowBar,
+        _parentWindow
     };
 
     std::string font = PlatformBridge::Fonts::GetFontsInformation().front().second;
@@ -55,7 +56,8 @@ RetroFuturaGUI::WindowBar::WindowBar(const IdentityParams &identity, GeometryPar
     {
         "testMaximize",
         this,
-        WidgetTypeID::WindowBar
+        WidgetTypeID::WindowBar,
+        _parentWindow
     };
 
     GeometryParams2D geometryButtonMaximize
@@ -82,7 +84,8 @@ RetroFuturaGUI::WindowBar::WindowBar(const IdentityParams &identity, GeometryPar
     {
         "testMinimize",
         this,
-        WidgetTypeID::WindowBar
+        WidgetTypeID::WindowBar,
+        _parentWindow
     };
 
     GeometryParams2D geometryButtonMinimize
@@ -104,6 +107,7 @@ RetroFuturaGUI::WindowBar::WindowBar(const IdentityParams &identity, GeometryPar
     };
 
     _minimize = std::make_unique<Button>(identityMinimize, geometryButtonMinimize, textParamsMinimize, borderParams);
+    _minimize->Connect_OnClick([this]() { minimizeWindowCallback(_parentWindow); }, false);
 
     TextParams textParamsTitel = 
     {
@@ -279,6 +283,21 @@ glm::vec2 RetroFuturaGUI::WindowBar::calculateElementPosition(const glm::vec2 &p
 void RetroFuturaGUI::WindowBar::windowShouldCloseCallback()
 {
     _windowShouldClose = true;
+}
+
+RetroFuturaGUI::MaximizeState RetroFuturaGUI::WindowBar::GetMaximizeState()
+{
+    return _maximizeState;
+}
+
+void RetroFuturaGUI::WindowBar::ConnectMaximizeCallback(const std::function<void()> &callback)
+{
+    _maximize->Connect_OnClick(callback, false);
+}
+
+void RetroFuturaGUI::WindowBar::minimizeWindowCallback(GLFWwindow *window)
+{
+    glfwIconifyWindow(window);
 }
 
 bool RetroFuturaGUI::WindowBar::IsPointInside(const f32 pointX, const f32 pointY)
