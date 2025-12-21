@@ -13,6 +13,11 @@ namespace RetroFuturaGUI
         const f32 _GradientRotationSpeed = 0.02f;
     };
 
+    enum ShaderFeatures : u32
+    {
+        ROUNDED_CORNERS = 1
+    };
+
     class Rectangle
     {
     public:
@@ -26,11 +31,10 @@ namespace RetroFuturaGUI
         void Resize(const glm::vec2& size);
         void Move(const glm::vec2& position);
         void Rotate(const f32 rotation);
-        void SetColor(const glm::vec4& color)
-        {
-            _colors[0] = color;
-        }
+        void SetColor(const glm::vec4& color);
         glm::vec4 GetColor() const;
+        void SetCornerRadii(const glm::vec4& radii);
+        void SetShaderFeatures(const u32 features, const bool reset = true);
 
     private:
         //Geometry
@@ -73,6 +77,8 @@ namespace RetroFuturaGUI
             _animationSpeed { 0.0003f },
             _gradientDegree { 45.0f },
             _gradientRotationSpeed { 0.02f };
+            glm::vec4 _cornerRadii { 20.0f, 10.0f, 30.0f, 40.0f };
+        u32 _shaderFeatureDIP { 0 };
 
         void setupMesh();
         void initBasic(std::span<const glm::vec4> colors);

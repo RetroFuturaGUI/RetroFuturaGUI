@@ -1,4 +1,5 @@
 #include "Rectangle.hpp"
+#include <print>
 
 RetroFuturaGUI::Rectangle::Rectangle(const GeometryParams2D& geometry, const glm::vec4& color)
     : _projection(const_cast<Projection&>(geometry._Projection))
@@ -81,9 +82,38 @@ void RetroFuturaGUI::Rectangle::Move(const glm::vec2& position)
     _translationMatrix = glm::translate(glm::mat4(1.0f), glm::vec3(_position, 0.0f));
 }
 
+void RetroFuturaGUI::Rectangle::SetColor(const glm::vec4 &color)
+{
+    _colors[0] = color;
+}
+
 glm::vec4 RetroFuturaGUI::Rectangle::GetColor() const
 {
     return _colors[0];
+}
+
+void RetroFuturaGUI::Rectangle::SetCornerRadii(const glm::vec4 &radii)
+{
+    _cornerRadii = radii;
+
+    for(u32 i = 0; i < 4; ++i)
+    {
+        if(_cornerRadii[i] > 0.0f)
+        {
+            _shaderFeatureDIP |= ShaderFeatures::ROUNDED_CORNERS;
+            return;
+        }
+    }
+
+    _shaderFeatureDIP &= ~ShaderFeatures::ROUNDED_CORNERS;
+}
+
+void RetroFuturaGUI::Rectangle::SetShaderFeatures(const u32 features, const bool reset)
+{
+    if(reset)
+        _shaderFeatureDIP = features;
+    else
+        _shaderFeatureDIP |= features;
 }
 
 void RetroFuturaGUI::Rectangle::Rotate(const float rotation)
@@ -122,13 +152,20 @@ void RetroFuturaGUI::Rectangle::initBasic(std::span<const glm::vec4> colors)
 }
 
 void RetroFuturaGUI::Rectangle::drawWithSolidFill()
-{            
+{
     ShaderManager::GetFillShader().UseProgram();
+    ShaderManager::GetFillShader().SetUniformInt("uDIP", _shaderFeatureDIP);
     ShaderManager::GetFillShader().SetUniformMat4("uProjection", _projection.GetProjectionMatrix());
     ShaderManager::GetFillShader().SetUniformMat4("uPosition", _translationMatrix);
     ShaderManager::GetFillShader().SetUniformMat4("uScaling", _scalingMatrix);
     ShaderManager::GetFillShader().SetUniformMat4("uRotation", _rotationMatrix);
     ShaderManager::GetFillShader().SetUniformVec4("uColor", _colors[0]);
+
+    if(_shaderFeatureDIP)
+    {
+        ShaderManager::GetFillShader().SetUniformVec4("uCornerRadii", _cornerRadii);
+        ShaderManager::GetFillShader().SetUniformVec2("uScale", _scale);
+    }
 }
 
 void RetroFuturaGUI::Rectangle::drawWithGradientFill()
