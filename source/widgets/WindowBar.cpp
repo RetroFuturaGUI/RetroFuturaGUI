@@ -1,24 +1,26 @@
 #include "WindowBar.hpp"
+#include "Window.hpp"
 
 RetroFuturaGUI::WindowBar::WindowBar(const IdentityParams &identity, GeometryParams2D &geometry, const glm::vec4 &color, const WindowBarPosition wbPosition)
     : IWidget(identity, geometry), _projection(const_cast<Projection&>(geometry._Projection)), _windowBarPosition(wbPosition)
 {   
+    _position = calculateWindowBarPosition(geometry._Position);
+    _size = calculateWindowBarSize(geometry._Size);
+
     GeometryParams2D geometryAdv = 
     {
         geometry._Projection,
-        
-        calculateWindowBarPosition(geometry._Position),
-        
-        calculateWindowBarSize(geometry._Size),
+        _position,
+        _size,
         0.0f
     };
     _background = std::make_unique<Rectangle>(geometryAdv, color);
 
     GeometryParams2D geometryButton{
         geometry._Projection,
-            calculateElementPosition(geometry._Position, ElementType::CloseButton),
-            glm::vec2(28.0f),
-            0.0f
+        calculateElementPosition(geometry._Position, ElementType::CloseButton),
+        glm::vec2(28.0f),
+        0.0f
     };
 
     IdentityParams identityCloseButton
@@ -277,4 +279,26 @@ glm::vec2 RetroFuturaGUI::WindowBar::calculateElementPosition(const glm::vec2 &p
 void RetroFuturaGUI::WindowBar::windowShouldCloseCallback()
 {
     _windowShouldClose = true;
+}
+
+bool RetroFuturaGUI::WindowBar::IsPointInside(const f32 pointX, const f32 pointY)
+{
+    f32 buttonSpan = 28.0f * 3.0f + 3.0f * 4.0f; //3 buttons + offsets
+
+    switch(_windowBarPosition)
+    {
+        case WindowBarPosition::Top:
+        case WindowBarPosition::Bottom:
+        {
+            return (pointX >= _position.x - _size.x * 0.5f &&
+                    pointX <= (_position.x + _size.x * 0.5f) - buttonSpan &&
+                    _projection.GetResolution().y - pointY >= _position.y - _size.y * 0.5f &&
+                    _projection.GetResolution().y - pointY <= _position.y + _size.y * 0.5f);
+        }
+        case WindowBarPosition::Left:
+        case WindowBarPosition::Right:
+        {
+            //todo
+        }
+    }
 }

@@ -37,6 +37,7 @@ namespace RetroFuturaGUI
         void Draw();
         bool WindowShouldClose();
         void Resize();
+        bool IsPointInside(const f32 pointX, const f32 pointY);
 
     private:
         // Identity
