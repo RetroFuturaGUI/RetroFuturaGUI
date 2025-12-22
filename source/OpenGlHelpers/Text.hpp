@@ -45,6 +45,7 @@ namespace RetroFuturaGUI
         void Rotate(const f32 rotation);
         void SetColor(const glm::vec4& color);
         glm::vec4 GetColor() const;
+        void SetText(std::string_view text);
 
     private:
         struct Character

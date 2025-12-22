@@ -136,6 +136,12 @@ glm::vec4 RetroFuturaGUI::Text::GetColor() const
     return _textColor;
 }
 
+void RetroFuturaGUI::Text::SetText(std::string_view text)
+{
+    _text = text;
+    calculateTextSpan();
+}
+
 i32 RetroFuturaGUI::Text::initFreeTypeLibrary()
 {
     i32 err = FT_Init_FreeType(&_ft);
