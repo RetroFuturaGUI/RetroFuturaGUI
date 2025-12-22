@@ -19,6 +19,7 @@ namespace RetroFuturaGUI
         void SetWindowSize(i32 width, i32 height);
         void SetWidth(i32 width);
         void SetHeight(i32 height);
+        
         void SetBackgroundColor(const glm::vec4& color);
 
     private:

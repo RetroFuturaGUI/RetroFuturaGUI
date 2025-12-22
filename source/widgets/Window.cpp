@@ -21,7 +21,7 @@ RetroFuturaGUI::Window::Window(const std::string& name, i32 width, i32 height, v
 void RetroFuturaGUI::Window::createWindow()
 {
 	glfwWindowHint(GLFW_DECORATED, GLFW_FALSE);
-	glfwWindowHint(GLFW_TRANSPARENT_FRAMEBUFFER, GLFW_TRUE);
+	glfwWindowHint(GLFW_TRANSPARENT_FRAMEBUFFER, GLFW_FALSE);
 	glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
 	_window = glfwCreateWindow(_width, _height, "glfw test", nullptr, nullptr);
 
@@ -47,6 +47,7 @@ void RetroFuturaGUI::Window::createWindow()
 
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
 	glViewport(0, 0, _width, _height);
 
 	SetBackgroundColor(_backgroundColor);
@@ -120,9 +121,33 @@ void RetroFuturaGUI::Window::createWindow()
 
 	_button = std::make_unique<Button>(identityB, geometryB, textParamsB, borderParams);
 	_button->SetCornerRadii(glm::vec4(45.0f));
+	_button->SetWindowBackgroundImageTextureID(_backgroundImage->GetTextureID());
+	_button->SetBackgroundColor(glm::vec4(0.0f, 0.0f, 1.0f, 0.65f), ColorSetState::Enabled);
+	_button->SetBackgroundColor(glm::vec4(0.1f, 0.1f, 1.0f, 0.65f), ColorSetState::Hover);
+	_button->SetBackgroundColor(glm::vec4(0.2f, 0.2f, 1.0f, 0.75f), ColorSetState::Clicked);
+
+
+
 	_label = std::make_unique<Label>(identity, geometry, textParams);
 	_windowBar = std::make_unique<WindowBar>(identityWB, geometryWB, glm::vec4(0.5f, 0.0f, 1.0f, 1.0f));
 	_windowBar->ConnectMaximizeCallback([this]() { toggleMaximize(); });
+	_windowBar->SetElementBackgroundColor(glm::vec4(0.5f, 0.0f, 1.0f, 0.65f), ColorSetState::Enabled, WindowBar::ElementType::Title);
+	_windowBar->SetElementBackgroundColor(glm::vec4(1.0f, 0.1f, 0.1f, 0.65f), ColorSetState::Enabled, WindowBar::ElementType::CloseButton);
+	_windowBar->SetElementBackgroundColor(glm::vec4(1.0f, 0.2f, 0.2f, 0.65f), ColorSetState::Hover, WindowBar::ElementType::CloseButton);
+	_windowBar->SetElementBackgroundColor(glm::vec4(1.0f, 0.3f, 0.3f, 0.75f), ColorSetState::Clicked, WindowBar::ElementType::CloseButton);
+	_windowBar->SetElementBackgroundColor(glm::vec4(0.5f, 0.5f, 0.5f, 0.75f), ColorSetState::Enabled, WindowBar::ElementType::MaximizeButton);
+	_windowBar->SetElementBackgroundColor(glm::vec4(0.7f, 0.7f, 0.7f, 0.75f), ColorSetState::Hover, WindowBar::ElementType::MaximizeButton);
+	_windowBar->SetElementBackgroundColor(glm::vec4(0.8f, 0.8f, 0.8f, 0.85f), ColorSetState::Clicked, WindowBar::ElementType::MaximizeButton);
+	_windowBar->SetElementBackgroundColor(glm::vec4(0.5f, 0.5f, 0.5f, 0.75f), ColorSetState::Enabled, WindowBar::ElementType::MinimizeButton);
+	_windowBar->SetElementBackgroundColor(glm::vec4(0.7f, 0.7f, 0.7f, 0.75f), ColorSetState::Hover, WindowBar::ElementType::MinimizeButton);
+	_windowBar->SetElementBackgroundColor(glm::vec4(0.8f, 0.8f, 0.8f, 0.85f), ColorSetState::Clicked, WindowBar::ElementType::MinimizeButton);
+	_windowBar->SetElementBackgroundImageTextureID(_backgroundImage->GetTextureID(), WindowBar::ElementType::Title);
+	_windowBar->SetElementBackgroundImageTextureID(_backgroundImage->GetTextureID(), WindowBar::ElementType::CloseButton);
+	_windowBar->SetElementBackgroundImageTextureID(_backgroundImage->GetTextureID(), WindowBar::ElementType::MaximizeButton);
+	_windowBar->SetElementBackgroundImageTextureID(_backgroundImage->GetTextureID(), WindowBar::ElementType::MinimizeButton);
+	_windowBar->SetButtonCornerRadii(glm::vec4(10.0f), WindowBar::ElementType::CloseButton);
+	_windowBar->SetButtonCornerRadii(glm::vec4(10.0f), WindowBar::ElementType::MaximizeButton);
+	_windowBar->SetButtonCornerRadii(glm::vec4(10.0f), WindowBar::ElementType::MinimizeButton);
 
 	auto buttonPressed = [](){ std::println("buttonPressed Slot"); };
 	auto buttonReleased = [](){ std::println("buttonReleased Slot"); };
@@ -401,6 +426,9 @@ void RetroFuturaGUI::Window::updateProjection()
 	if (_grid) 
 		_grid->SetSize(glm::vec2((f32)_width, (f32)_height));
 
+	if( _backgroundImage)
+		_backgroundImage->SetSize(glm::vec2((f32)_width, (f32)_height));
+
 	_lastSize = { _width, _height };
 	_windowSizeChanged = false;
 }
@@ -412,14 +440,20 @@ bool RetroFuturaGUI::Window::WindowShouldClose()
 
 void RetroFuturaGUI::Window::Draw()
 {
+	glClearColor(_backgroundColor.r, _backgroundColor.g, _backgroundColor.b, _backgroundColor.a); // Opaque white background
+glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+glfwWindowHint(GLFW_TRANSPARENT_FRAMEBUFFER, GLFW_FALSE);
+	glfwWindowHint(GLFW_ALPHA_BITS, 0); // Disable alpha bits if not needed
+
+
 	if(_windowSizeChanged)
 		updateProjection();
 
-	glClear(GL_COLOR_BUFFER_BIT);
-	//_backgroundImage->Draw();
+	
+	_backgroundImage->Draw();
 	//_label->Draw();
 	//_button->Draw();
-	_grid->Draw(true);
+	_grid->Draw(false);
 	_windowBar->Draw();
 	glfwSwapBuffers(_window);
 	glfwPollEvents();
