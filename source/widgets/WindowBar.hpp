@@ -27,18 +27,17 @@ namespace RetroFuturaGUI
 
     class WindowBar : public IWidget
     {
-    private:
+    public:
         enum class ElementType : u32
         {
             CloseButton,
             MaximizeButton,
             MinimizeButton,
             NoDockingDrag,
-            Titel,
+            Title,
             Icon
         };
 
-    public:
         WindowBar(const IdentityParams& identity, GeometryParams2D& geometry, const glm::vec4& color, const WindowBarPosition wbPosition = WindowBarPosition::Top);
         void Draw();
         bool WindowShouldClose();
@@ -46,6 +45,11 @@ namespace RetroFuturaGUI
         bool IsPointInside(const f32 pointX, const f32 pointY);
         MaximizeState GetMaximizeState();
         void ConnectMaximizeCallback(const std::function<void()>& callback);
+        void SetElementBackgroundColor(const glm::vec4& color, const ColorSetState state, const ElementType elementType);
+        void SetElementTextColor(const glm::vec4& color, const ColorSetState state, const ElementType elementType);
+        void SetElementBackgroundImageTextureID(const u32 textureID, const ElementType elementType);
+        void SetButtonCornerRadii(const glm::vec4& radii, const ElementType buttonType);
+
 
     private:
         // Identity
