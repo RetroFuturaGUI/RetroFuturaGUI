@@ -58,7 +58,8 @@ namespace RetroFuturaGUI
         MaximizeState _maximizeState { MaximizeState::RESTORE };
         glm::ivec2 _preMaximizeSize { 0 };
         glm::ivec2 _preMaximizePos { 0 };
-
+        std::string _windowTitle { "RetroFuturaGUI Test" };
+        
         // Window Actions
         ResizeEdge _resizeEdge { ResizeEdge::NONE };
         bool 

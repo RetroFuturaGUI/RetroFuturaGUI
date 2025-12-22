@@ -23,7 +23,8 @@ void RetroFuturaGUI::Window::createWindow()
 	glfwWindowHint(GLFW_DECORATED, GLFW_FALSE);
 	glfwWindowHint(GLFW_TRANSPARENT_FRAMEBUFFER, GLFW_FALSE);
 	glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
-	_window = glfwCreateWindow(_width, _height, "glfw test", nullptr, nullptr);
+	_window = glfwCreateWindow(_width, _height, _windowTitle.c_str(), nullptr, nullptr);
+	glfwSetWindowTitle(_window, _windowTitle.c_str());
 
 	if (!_window)
 	{
@@ -148,6 +149,7 @@ void RetroFuturaGUI::Window::createWindow()
 	_windowBar->SetButtonCornerRadii(glm::vec4(10.0f), WindowBar::ElementType::CloseButton);
 	_windowBar->SetButtonCornerRadii(glm::vec4(10.0f), WindowBar::ElementType::MaximizeButton);
 	_windowBar->SetButtonCornerRadii(glm::vec4(10.0f), WindowBar::ElementType::MinimizeButton);
+	_windowBar->SetWindowTitle("RetroFuturaGUI Test");
 
 	auto buttonPressed = [](){ std::println("buttonPressed Slot"); };
 	auto buttonReleased = [](){ std::println("buttonReleased Slot"); };
@@ -427,7 +429,10 @@ void RetroFuturaGUI::Window::updateProjection()
 		_grid->SetSize(glm::vec2((f32)_width, (f32)_height));
 
 	if( _backgroundImage)
+	{
 		_backgroundImage->SetSize(glm::vec2((f32)_width, (f32)_height));
+		_backgroundImage->Move(glm::vec2((f32)_width * 0.5f, (f32)_height * 0.5f));
+	}
 
 	_lastSize = { _width, _height };
 	_windowSizeChanged = false;
