@@ -13,5 +13,5 @@ out vec2 TexCoord;
 void main()
 {
 	gl_Position = uProjection * uPosition * uRotation * uScaling * Position;
-	TexCoord = vec2(aTexCoord.x /* *repeat */, aTexCoord.y /* *repeat */);
+	TexCoord = aTexCoord;
 }
