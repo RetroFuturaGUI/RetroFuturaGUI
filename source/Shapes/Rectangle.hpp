@@ -2,6 +2,7 @@
 #include "ShaderManager.hpp"
 #include "Projection.hpp"
 #include <span>
+#include "Image2D.hpp"
 
 namespace RetroFuturaGUI
 {
@@ -15,7 +16,8 @@ namespace RetroFuturaGUI
 
     enum ShaderFeatures : u32
     {
-        ROUNDED_CORNERS = 1
+        ROUNDED_CORNERS = 1,
+        GLASS_EFFECT = 1 << 1
     };
 
     class Rectangle
@@ -35,6 +37,7 @@ namespace RetroFuturaGUI
         glm::vec4 GetColor() const;
         void SetCornerRadii(const glm::vec4& radii);
         void SetShaderFeatures(const u32 features, const bool reset = true);
+        void SetWindowBackgroundImageTextureID(const u32 textureID);
 
     private:
         //Geometry
@@ -79,7 +82,8 @@ namespace RetroFuturaGUI
             _gradientRotationSpeed { 0.02f };
             glm::vec4 _cornerRadii { 20.0f, 10.0f, 30.0f, 40.0f };
         u32 _shaderFeatureDIP { 0 };
-
+        u32 _windowBackgroundTextureID { 0 };
+        
         void setupMesh();
         void initBasic(std::span<const glm::vec4> colors);
         void drawWithSolidFill();

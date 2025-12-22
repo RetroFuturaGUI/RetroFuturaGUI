@@ -116,6 +116,12 @@ void RetroFuturaGUI::Rectangle::SetShaderFeatures(const u32 features, const bool
         _shaderFeatureDIP |= features;
 }
 
+void RetroFuturaGUI::Rectangle::SetWindowBackgroundImageTextureID(const u32 textureID)
+{
+    _shaderFeatureDIP |= ShaderFeatures::GLASS_EFFECT;
+    _windowBackgroundTextureID = textureID;
+}
+
 void RetroFuturaGUI::Rectangle::Rotate(const float rotation)
 {
     _rotation = rotation;
@@ -161,10 +167,17 @@ void RetroFuturaGUI::Rectangle::drawWithSolidFill()
     ShaderManager::GetFillShader().SetUniformMat4("uRotation", _rotationMatrix);
     ShaderManager::GetFillShader().SetUniformVec4("uColor", _colors[0]);
 
-    if(_shaderFeatureDIP)
+    if(_shaderFeatureDIP & ShaderFeatures::ROUNDED_CORNERS)
     {
         ShaderManager::GetFillShader().SetUniformVec4("uCornerRadii", _cornerRadii);
         ShaderManager::GetFillShader().SetUniformVec2("uScale", _scale);
+    }
+
+    if(_shaderFeatureDIP & ShaderFeatures::GLASS_EFFECT)
+    {
+        ShaderManager::GetFillShader().SetUniformInt("uBackgroundTexture", 0);
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, (_windowBackgroundTextureID));
     }
 }
 
