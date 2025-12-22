@@ -47,6 +47,7 @@ namespace RetroFuturaGUI
         void SetSize(const glm::vec2& size) override; //add extra text resizing logic
         void SetPosition(const glm::vec2& position) override;
         void SetCornerRadii(const glm::vec4& radii);
+        void SetWindowBackgroundImageTextureID(const u32 textureID);
 
     private:
         //elements
@@ -90,7 +91,7 @@ namespace RetroFuturaGUI
             _textColorEnabled { 1.0 },
             _textColorDisabled { 0.5f, 0.5f,0.5f, 1.0 },
             _textColorClicked { 1.0 },
-            _textColorHover { 1.0f, 0.0f, 1.0f, 1.0 };
+            _textColorHover { 1.0f, 1.0f, 1.0f, 1.0 };
         ColorSetState _state { ColorSetState::Enabled };
 
         void interact();

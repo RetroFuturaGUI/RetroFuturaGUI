@@ -264,6 +264,11 @@ void RetroFuturaGUI::Button::SetCornerRadii(const glm::vec4 & radii)
     _rectangle->SetCornerRadii(radii);
 }
 
+void RetroFuturaGUI::Button::SetWindowBackgroundImageTextureID(const u32 textureID)
+{
+    _rectangle->SetWindowBackgroundImageTextureID(textureID);
+}
+
 void RetroFuturaGUI::Button::interact()
 {
     auto mousePos = InputManager::GetMousePositionInvertedY();
