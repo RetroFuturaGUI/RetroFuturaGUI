@@ -10,11 +10,12 @@ namespace RetroFuturaGUI
     public:
         Image2D(const GeometryParams2D& geometry);
         ~Image2D();
-        void Resize(const glm::vec2& size);
+        void SetSize(const glm::vec2& size);
         void Move(const glm::vec2& position);
         void Rotate(const f32 rotation);
         void FitGeometryToTexture();
         void Draw();
+        u32 GetTextureID();
 
     private:
         // Geometry

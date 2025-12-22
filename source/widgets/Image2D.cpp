@@ -28,7 +28,7 @@ RetroFuturaGUI::Image2D::Image2D(const GeometryParams2D &geometry)
     glActiveTexture(GL_TEXTURE0);
 
     _textureAspectRatio = (f32)_imageSize.x / (f32)_imageSize.y; 
-    Resize(geometry._Size);
+    SetSize(geometry._Size);
     FitGeometryToTexture();
     Move(geometry._Position);
     Rotate(geometry._Rotation);
@@ -46,7 +46,7 @@ RetroFuturaGUI::Image2D::~Image2D()
     glDeleteBuffers(1, &_ebo);
 }
 
-void RetroFuturaGUI::Image2D::Resize(const glm::vec2& size)
+void RetroFuturaGUI::Image2D::SetSize(const glm::vec2& size)
 {
     _quadSize = size;
     _scaleMatrix = glm::scale(glm::mat4(1.0f), glm::vec3(_quadSize, 1.0f));
@@ -85,6 +85,11 @@ void RetroFuturaGUI::Image2D::Draw()
     glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 }
 
+u32 RetroFuturaGUI::Image2D::GetTextureID()
+{
+    return _textureId;
+}
+
 void RetroFuturaGUI::Image2D::loadTexture()
 {
     glGenTextures(1, &_textureId);
@@ -97,7 +102,7 @@ void RetroFuturaGUI::Image2D::loadTexture()
     std::string path = PlatformBridge::Paths::GetExecutablePath();
 #if defined(_WIN32) || defined(_WIN64)
     path = path.substr(0, path.find_last_of(R"(\)"));
-    path.append(R"(\Resources\img\BG.jpg)");
+    path.append(R"(\Resources\img\FrutigerAero.png)");
 #else
     path = path.substr(0, path.find_last_of(R"(/)"));
     path.append("/ShaderSource/");
