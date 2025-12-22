@@ -2,6 +2,7 @@
 #include "IncludeHelper.hpp"
 #include "Button.hpp"
 #include "PlatformBridge.hpp"
+#include <string_view>
 
 namespace RetroFuturaGUI
 {
@@ -49,11 +50,12 @@ namespace RetroFuturaGUI
         void SetElementTextColor(const glm::vec4& color, const ColorSetState state, const ElementType elementType);
         void SetElementBackgroundImageTextureID(const u32 textureID, const ElementType elementType);
         void SetButtonCornerRadii(const glm::vec4& radii, const ElementType buttonType);
-
+        void SetWindowTitle(std::string_view title);
 
     private:
         // Identity
         std::string _name;
+        std::string _title;
 
         // Geometry
         Projection& _projection;

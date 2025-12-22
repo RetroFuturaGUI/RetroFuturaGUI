@@ -111,7 +111,7 @@ RetroFuturaGUI::WindowBar::WindowBar(const IdentityParams &identity, GeometryPar
 
     TextParams textParamsTitle = 
     {
-        "RetroFuturaGUI Test",
+        _title,
         font,
         glm::vec4(1.0f),
         glm::vec2(25.0f),
@@ -384,6 +384,12 @@ void RetroFuturaGUI::WindowBar::SetButtonCornerRadii(const glm::vec4 &radii, con
             _minimize->SetCornerRadii(radii);
         break;
     }
+}
+
+void RetroFuturaGUI::WindowBar::SetWindowTitle(std::string_view title)
+{
+    _title = title;
+    _windowTitle->SetText(_title);
 }
 
 void RetroFuturaGUI::WindowBar::minimizeWindowCallback(GLFWwindow *window)
