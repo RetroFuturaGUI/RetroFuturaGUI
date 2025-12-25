@@ -12,15 +12,17 @@ namespace RetroFuturaGUI
     class Window// : public IWidget
     {
     public:
-        Window(const std::string& name, i32 width, i32 height, void* parent = nullptr);
+        Window(std::string_view name, i32 width, i32 height, void* parent = nullptr);
 
         bool WindowShouldClose();
         void Draw();
         void SetWindowSize(i32 width, i32 height);
         void SetWidth(i32 width);
         void SetHeight(i32 height);
-        
         void SetBackgroundColor(const glm::vec4& color);
+        void SetGrid(Grid2d* grid);
+        GLFWwindow* GetGlfwWindow() const;
+        Projection* GetProjection() const;
 
     private:
         enum class ResizeEdge : u32
@@ -59,7 +61,7 @@ namespace RetroFuturaGUI
         glm::ivec2 _preMaximizeSize { 0 };
         glm::ivec2 _preMaximizePos { 0 };
         std::string _windowTitle { "RetroFuturaGUI Test" };
-        
+
         // Window Actions
         ResizeEdge _resizeEdge { ResizeEdge::NONE };
         bool 
@@ -89,7 +91,7 @@ namespace RetroFuturaGUI
         std::unique_ptr<WindowBar> _windowBar;
         std::unique_ptr<Image2D> _texture;
         std::unique_ptr<Image2D> _backgroundImage;
-        std::unique_ptr<Grid2d> _grid;
+        Grid2d* _grid;
 
         void createWindow();
         static void cursorPositionCallback(GLFWwindow* window, f64 xpos, f64 ypos);

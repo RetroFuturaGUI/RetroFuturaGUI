@@ -57,7 +57,7 @@ RetroFuturaGUI::Grid2d::Grid2d(const IdentityParams &identity, const GeometryPar
     _debugBorder = std::make_unique<LineBorder>(geometryb, borderP);
 }
 
-void RetroFuturaGUI::Grid2d::AttachWidget(u32 row, u32 col, std::unique_ptr<IWidget> widget, const SizingMode sizingMode)
+void RetroFuturaGUI::Grid2d::AttachWidget(u32 row, u32 col, IWidget* widget, const SizingMode sizingMode)
 {
     if(_axisdefinition._RowDefinition.size() < row || _axisdefinition._ColumnDefinition.size() < col)
         return;
@@ -65,7 +65,7 @@ void RetroFuturaGUI::Grid2d::AttachWidget(u32 row, u32 col, std::unique_ptr<IWid
     if(_grid[row][col]._SpanOccupied)
         return;
 
-    _grid[row][col]._Widget = std::move(widget);
+    _grid[row][col]._Widget = widget;
     _grid[row][col]._Widget->SetPosition(glm::vec2(_grid[row][col]._PositionPixels.x + _grid[row][col]._SizePixels.x * 0.5f,
                                                    _projection.GetResolution().y - _grid[row][col]._PositionPixels.y - _grid[row][col]._SizePixels.y * 0.5f));
     _grid[row][col]._SizingMode = sizingMode;

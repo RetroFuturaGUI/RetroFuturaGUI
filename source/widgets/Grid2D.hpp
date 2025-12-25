@@ -19,7 +19,7 @@ namespace RetroFuturaGUI
         u32 
             _RowSpan { 1 },
             _ColSpan { 1 };
-        std::unique_ptr<IWidget> _Widget = nullptr;
+        IWidget* _Widget = nullptr;
         bool _SpanOccupied = false;
         SizingMode _SizingMode { SizingMode::FILL };
     };
@@ -34,11 +34,15 @@ namespace RetroFuturaGUI
     {
     public:
         Grid2d(const IdentityParams& identity, const GeometryParams2D& geometry, const Grid2dAxisDefinition& axisDefinition);
-        void AttachWidget(u32 row, u32 col, std::unique_ptr<IWidget> widget, const SizingMode sizingMode = SizingMode::FILL);
+        void AttachWidget(u32 row, u32 col, IWidget* widget, const SizingMode sizingMode = SizingMode::FILL);
         void Draw() override {};
         void Draw(const bool alsoDrawDebugLines = false);
         void SetSize(const glm::vec2& size);
         void SetPosition(const glm::vec2& position);
+        void operator =(const Grid2d& other)
+        {
+            *this = other;
+        }
 
     private:
         // Data

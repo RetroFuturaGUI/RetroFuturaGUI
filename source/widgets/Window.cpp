@@ -2,7 +2,7 @@
 #include <glm/gtc/type_ptr.hpp>
 #include <print>
 
-RetroFuturaGUI::Window::Window(const std::string& name, i32 width, i32 height, void* parent)
+RetroFuturaGUI::Window::Window(std::string_view name, i32 width, i32 height, void* parent)
    // : IWidget(name, glm::mat4(1.0f), width, height, parent)
 {
 	createWindow();
@@ -74,26 +74,6 @@ void RetroFuturaGUI::Window::createWindow()
 
 
 	_projection = std::make_unique<Projection>((float)_width, (float)_height);
-	
-
-
-
-
-	IdentityParams identityG = { "testGrid", this, WidgetTypeID::Grid2d, _window };
-	GeometryParams2D geometryG = { *_projection, glm::vec2(0.0f, 0.0f), glm::vec2((float)_width, (float)_height), 0.0f };
-	Grid2dAxisDefinition axisDefinition = 
-	{
-		{ 0.3f, 0.5f, 0.2f },
-		{ 0.6f, 0.4f }
-	};
-
-	_grid = std::make_unique<Grid2d>(identityG, geometryG, axisDefinition);
-
-
-
-
-
-
 
 
 	GeometryParams2D geometryTexture
@@ -112,22 +92,8 @@ void RetroFuturaGUI::Window::createWindow()
 	std::string tempPath = PlatformBridge::Fonts::GetFontsInformation().front().second;
 	TextParams textParams = { "Test Label", tempPath, glm::vec4(1.0f), glm::vec2(30.0f), TextAlignment::CENTER, 5.0f };
 
-	IdentityParams identityB = { "testButton", this, WidgetTypeID::Window, _window };
-	GeometryParams2D geometryB = { *_projection, glm::vec2(0.0f, 0.0f), glm::vec2(300.0f, 90.0f), 0.0f };
-	TextParams textParamsB = { "Test Button", tempPath, glm::vec4(1.0f), glm::vec2(30.0f), TextAlignment::CENTER, 5.0f };
-	BorderParams borderParams = { glm::vec4(0.3f, 0.3f, 0.3f, 1.0f), 5.0f };
-
 	IdentityParams identityWB = { "testWindowbar", this, WidgetTypeID::WindowBar, _window };
 	GeometryParams2D geometryWB = { *_projection, glm::vec2(0.0f), glm::vec2(0.0f), 0.0f };
-
-	_button = std::make_unique<Button>(identityB, geometryB, textParamsB, borderParams);
-	_button->SetCornerRadii(glm::vec4(45.0f));
-	_button->SetWindowBackgroundImageTextureID(_backgroundImage->GetTextureID());
-	_button->SetBackgroundColor(glm::vec4(0.0f, 0.0f, 1.0f, 0.65f), ColorSetState::Enabled);
-	_button->SetBackgroundColor(glm::vec4(0.1f, 0.1f, 1.0f, 0.65f), ColorSetState::Hover);
-	_button->SetBackgroundColor(glm::vec4(0.2f, 0.2f, 1.0f, 0.75f), ColorSetState::Clicked);
-
-
 
 	_label = std::make_unique<Label>(identity, geometry, textParams);
 	_windowBar = std::make_unique<WindowBar>(identityWB, geometryWB, glm::vec4(0.5f, 0.0f, 1.0f, 1.0f));
@@ -150,20 +116,6 @@ void RetroFuturaGUI::Window::createWindow()
 	_windowBar->SetButtonCornerRadii(glm::vec4(10.0f), WindowBar::ElementType::MaximizeButton);
 	_windowBar->SetButtonCornerRadii(glm::vec4(10.0f), WindowBar::ElementType::MinimizeButton);
 	_windowBar->SetWindowTitle("RetroFuturaGUI Test");
-
-	auto buttonPressed = [](){ std::println("buttonPressed Slot"); };
-	auto buttonReleased = [](){ std::println("buttonReleased Slot"); };
-	auto whileHover = [](){ std::println("whileHover Slot"); };
-	auto mouseEnter = [](){ std::println("mouseEnter Slot"); };
-	auto mouseLeave = [](){ std::println("mouseLeave Slot"); };
-	_button->Connect_OnClick(buttonPressed, true);
-	_button->Connect_OnRelease(buttonReleased, true);
-	//_button->Connect_WhileHover(whileHover, true);
-	_button->Connect_OnMouseEnter(mouseEnter, true);
-	_button->Connect_OnMouseLeave(mouseLeave, true);
-
-	_grid->AttachWidget(1, 1, std::unique_ptr<IWidget>(std::move(_button)), SizingMode::FIXED);
-
 }
 
 void RetroFuturaGUI::Window::cursorPositionCallback(GLFWwindow *window, f64 xpos, f64 ypos)
@@ -446,8 +398,8 @@ bool RetroFuturaGUI::Window::WindowShouldClose()
 void RetroFuturaGUI::Window::Draw()
 {
 	glClearColor(_backgroundColor.r, _backgroundColor.g, _backgroundColor.b, _backgroundColor.a); // Opaque white background
-glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-glfwWindowHint(GLFW_TRANSPARENT_FRAMEBUFFER, GLFW_FALSE);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	glfwWindowHint(GLFW_TRANSPARENT_FRAMEBUFFER, GLFW_FALSE);
 	glfwWindowHint(GLFW_ALPHA_BITS, 0); // Disable alpha bits if not needed
 
 
@@ -489,4 +441,19 @@ void RetroFuturaGUI::Window::SetBackgroundColor(const glm::vec4 &color)
 {
 	_backgroundColor = color;
 	glClearColor(_backgroundColor.r, _backgroundColor.g, _backgroundColor.b, _backgroundColor.a);
+}
+
+void RetroFuturaGUI::Window::SetGrid(Grid2d* grid)
+{
+	_grid = grid;
+}
+
+GLFWwindow* RetroFuturaGUI::Window::GetGlfwWindow() const
+{
+    return _window;
+}
+
+RetroFuturaGUI::Projection* RetroFuturaGUI::Window::GetProjection() const
+{
+    return &*_projection;
 }
