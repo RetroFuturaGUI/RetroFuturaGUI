@@ -1,8 +1,8 @@
 #include "Image2D.hpp"
 #include "ShaderManager.hpp"
 
-RetroFuturaGUI::Image2D::Image2D(const GeometryParams2D &geometry)
-: _projection(const_cast<Projection&>(geometry._Projection))
+RetroFuturaGUI::Image2D::Image2D(const GeometryParams2D &geometry, std::string_view imagePath)
+: _projection(const_cast<Projection&>(geometry._Projection)), _path(imagePath)
 {
     glGenVertexArrays(1, &_vao);
     glGenBuffers(1, &_vbo);
@@ -98,20 +98,9 @@ void RetroFuturaGUI::Image2D::loadTexture()
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-    std::string path = PlatformBridge::Paths::GetExecutablePath();
-#if defined(_WIN32) || defined(_WIN64)
-    path = path.substr(0, path.find_last_of(R"(\)"));
-    path.append(R"(\Resources\img\FrutigerAero.png)");
-#else
-    path = path.substr(0, path.find_last_of(R"(/)"));
-    path.append("/ShaderSource/");
-#endif
-
-    _texture = std::make_unique<Texture>(path, true);
+    _texture = std::make_unique<Texture>(_path, true);
     _colorChannelCount = _texture->GetColorChannelCount();
     _imageSize = _texture->GetResolution();
-
     u32 format = (_colorChannelCount == 4) ? GL_RGBA : GL_RGB;
     glTexImage2D(GL_TEXTURE_2D, 0, format, _imageSize.x, _imageSize.y, 0, format, GL_UNSIGNED_BYTE, _texture->GetTextureData()->data());
     glGenerateMipmap(GL_TEXTURE_2D);

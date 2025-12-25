@@ -8,7 +8,7 @@ namespace RetroFuturaGUI
     class Image2D
     {
     public:
-        Image2D(const GeometryParams2D& geometry);
+        Image2D(const GeometryParams2D& geometry, std::string_view imagePath);
         ~Image2D();
         void SetSize(const glm::vec2& size);
         void Move(const glm::vec2& position);
