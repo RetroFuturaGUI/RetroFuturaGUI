@@ -20,6 +20,7 @@ namespace RetroFuturaGUI
         void SetWidth(i32 width);
         void SetHeight(i32 height);
         void SetBackgroundColor(const glm::vec4& color);
+        void SetBackgroundImage(std::string_view imagePath);
         void SetGrid(Grid2d* grid);
         GLFWwindow* GetGlfwWindow() const;
         Projection* GetProjection() const;
@@ -89,7 +90,6 @@ namespace RetroFuturaGUI
         std::unique_ptr<Label> _label;
         std::unique_ptr<Button> _button;
         std::unique_ptr<WindowBar> _windowBar;
-        std::unique_ptr<Image2D> _texture;
         std::unique_ptr<Image2D> _backgroundImage;
         Grid2d* _grid;
 

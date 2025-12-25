@@ -75,27 +75,9 @@ void RetroFuturaGUI::Window::createWindow()
 
 	_projection = std::make_unique<Projection>((float)_width, (float)_height);
 
-
-	GeometryParams2D geometryTexture
-	{
-		*_projection,
-		glm::vec2((f32)_width * 0.5f, (f32)_height * 0.5f),
-		glm::vec2(_width, _height),
-		0.0f
-	};
-
-	_backgroundImage = std::make_unique<Image2D>(geometryTexture);
-
-
-	IdentityParams identity = { "testLabel", this, WidgetTypeID::Window, _window };
-	GeometryParams2D geometry = { *_projection, glm::vec2(800.0f, 600.0f), glm::vec2(300.0f, 90.0f), 0.0f };
-	std::string tempPath = PlatformBridge::Fonts::GetFontsInformation().front().second;
-	TextParams textParams = { "Test Label", tempPath, glm::vec4(1.0f), glm::vec2(30.0f), TextAlignment::CENTER, 5.0f };
-
 	IdentityParams identityWB = { "testWindowbar", this, WidgetTypeID::WindowBar, _window };
 	GeometryParams2D geometryWB = { *_projection, glm::vec2(0.0f), glm::vec2(0.0f), 0.0f };
 
-	_label = std::make_unique<Label>(identity, geometry, textParams);
 	_windowBar = std::make_unique<WindowBar>(identityWB, geometryWB, glm::vec4(0.5f, 0.0f, 1.0f, 1.0f));
 	_windowBar->ConnectMaximizeCallback([this]() { toggleMaximize(); });
 	_windowBar->SetElementBackgroundColor(glm::vec4(0.5f, 0.0f, 1.0f, 0.65f), ColorSetState::Enabled, WindowBar::ElementType::Title);
@@ -108,10 +90,6 @@ void RetroFuturaGUI::Window::createWindow()
 	_windowBar->SetElementBackgroundColor(glm::vec4(0.5f, 0.5f, 0.5f, 0.75f), ColorSetState::Enabled, WindowBar::ElementType::MinimizeButton);
 	_windowBar->SetElementBackgroundColor(glm::vec4(0.7f, 0.7f, 0.7f, 0.75f), ColorSetState::Hover, WindowBar::ElementType::MinimizeButton);
 	_windowBar->SetElementBackgroundColor(glm::vec4(0.8f, 0.8f, 0.8f, 0.85f), ColorSetState::Clicked, WindowBar::ElementType::MinimizeButton);
-	_windowBar->SetElementBackgroundImageTextureID(_backgroundImage->GetTextureID(), WindowBar::ElementType::Title);
-	_windowBar->SetElementBackgroundImageTextureID(_backgroundImage->GetTextureID(), WindowBar::ElementType::CloseButton);
-	_windowBar->SetElementBackgroundImageTextureID(_backgroundImage->GetTextureID(), WindowBar::ElementType::MaximizeButton);
-	_windowBar->SetElementBackgroundImageTextureID(_backgroundImage->GetTextureID(), WindowBar::ElementType::MinimizeButton);
 	_windowBar->SetButtonCornerRadii(glm::vec4(10.0f), WindowBar::ElementType::CloseButton);
 	_windowBar->SetButtonCornerRadii(glm::vec4(10.0f), WindowBar::ElementType::MaximizeButton);
 	_windowBar->SetButtonCornerRadii(glm::vec4(10.0f), WindowBar::ElementType::MinimizeButton);
@@ -441,6 +419,24 @@ void RetroFuturaGUI::Window::SetBackgroundColor(const glm::vec4 &color)
 {
 	_backgroundColor = color;
 	glClearColor(_backgroundColor.r, _backgroundColor.g, _backgroundColor.b, _backgroundColor.a);
+}
+
+void RetroFuturaGUI::Window::SetBackgroundImage(std::string_view imagePath)
+{
+	GeometryParams2D geometryTexture
+	{
+		*_projection,
+		glm::vec2((f32)_width * 0.5f, (f32)_height * 0.5f),
+		glm::vec2(_width, _height),
+		0.0f
+	};
+
+	_backgroundImage = std::make_unique<Image2D>(geometryTexture, imagePath);
+
+	_windowBar->SetElementBackgroundImageTextureID(_backgroundImage->GetTextureID(), WindowBar::ElementType::Title);
+	_windowBar->SetElementBackgroundImageTextureID(_backgroundImage->GetTextureID(), WindowBar::ElementType::CloseButton);
+	_windowBar->SetElementBackgroundImageTextureID(_backgroundImage->GetTextureID(), WindowBar::ElementType::MaximizeButton);
+	_windowBar->SetElementBackgroundImageTextureID(_backgroundImage->GetTextureID(), WindowBar::ElementType::MinimizeButton);
 }
 
 void RetroFuturaGUI::Window::SetGrid(Grid2d* grid)
