@@ -390,6 +390,7 @@ void RetroFuturaGUI::WindowBar::SetWindowTitle(std::string_view title)
 {
     _title = title;
     _windowTitle->SetText(_title);
+    Resize(); //hotfix for dislocation when Text has been initialized with an empty string
 }
 
 void RetroFuturaGUI::WindowBar::minimizeWindowCallback(GLFWwindow *window)
