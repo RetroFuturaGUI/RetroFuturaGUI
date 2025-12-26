@@ -1,6 +1,7 @@
 #version 330 core
 #define ROUNDED_CORNERS 1
 #define GLASS_EFFECT 2
+#define GLASS_EFFECT_WITH_IMAGE 6
 
 layout(location = 0) out vec4 Color;
 uniform vec4 uColor;
@@ -43,8 +44,17 @@ void main()
     {
         // Apply glass distortion
         vec2 distortedUV = vUV + (noise(vUV * 10.0) - 0.5) * 0.02; // Small distortion
-        vec4 background = texture(uBackgroundTexture, distortedUV);
-        finalColor = mix(background, uColor, uColor.a);
+
+        if((uDIP & GLASS_EFFECT_WITH_IMAGE) != 0)
+        {
+            vec4 background = texture(uBackgroundTexture, distortedUV);
+            finalColor = mix(background, uColor, uColor.a);
+        }
+        else
+        {
+            float fakeBackground = noise(distortedUV * 5.0);
+            finalColor = mix(vec4(vec3(fakeBackground), 1.0), uColor, uColor.a);
+        }
     }
     
     if((uDIP & ROUNDED_CORNERS) != 0)
