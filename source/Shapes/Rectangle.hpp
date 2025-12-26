@@ -17,7 +17,8 @@ namespace RetroFuturaGUI
     enum ShaderFeatures : u32
     {
         ROUNDED_CORNERS = 1,
-        GLASS_EFFECT = 1 << 1
+        GLASS_EFFECT = 1 << 1,
+        GLASS_EFFECT_WITH_IMAGE = GLASS_EFFECT + (1 << 2)
     };
 
     class Rectangle

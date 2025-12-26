@@ -124,7 +124,7 @@ void RetroFuturaGUI::Rectangle::SetShaderFeatures(const u32 features, const bool
 
 void RetroFuturaGUI::Rectangle::SetWindowBackgroundImageTextureID(const u32 textureID)
 {
-    _shaderFeatureDIP |= ShaderFeatures::GLASS_EFFECT;
+    _shaderFeatureDIP |= ShaderFeatures::GLASS_EFFECT_WITH_IMAGE;
     _windowBackgroundTextureID = textureID;
 }
 
@@ -179,7 +179,7 @@ void RetroFuturaGUI::Rectangle::drawWithSolidFill()
         ShaderManager::GetFillShader().SetUniformVec2("uScale", _scale);
     }
 
-    if(_shaderFeatureDIP & ShaderFeatures::GLASS_EFFECT)
+    if(_shaderFeatureDIP & ShaderFeatures::GLASS_EFFECT_WITH_IMAGE)
     {
         ShaderManager::GetFillShader().SetUniformInt("uBackgroundTexture", 0);
         glActiveTexture(GL_TEXTURE0);
@@ -212,7 +212,7 @@ void RetroFuturaGUI::Rectangle::drawWithGradientFill()
         ShaderManager::GetFillGradientShader().SetUniformVec2("uScale", _scale);
     }
 
-    if(_shaderFeatureDIP & ShaderFeatures::GLASS_EFFECT)
+    if(_shaderFeatureDIP & ShaderFeatures::GLASS_EFFECT_WITH_IMAGE)
     {
         ShaderManager::GetFillGradientShader().SetUniformInt("uBackgroundTexture", 0);
         glActiveTexture(GL_TEXTURE0);
