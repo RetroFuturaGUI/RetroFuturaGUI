@@ -6,27 +6,28 @@ RetroFuturaGUI::Rectangle::Rectangle(const GeometryParams2D& geometry, const glm
 {
     setupMesh();
     initBasic(std::span<const glm::vec4>(&color, 1));
-    Resize(geometry._Size);
-    Move(geometry._Position);
-    Rotate(geometry._Rotation);
+    SetSize(geometry._Size);
+    SetPosition(geometry._Position);
+    SetRotation(geometry._Rotation);
 }
 
-RetroFuturaGUI::Rectangle::Rectangle(const GeometryParams2D& geometry, const BackgroundParams& background)
+RetroFuturaGUI::Rectangle::Rectangle(const GeometryParams2D &geometry, std::span<glm::vec4> colors)
     : _projection(const_cast<Projection&>(geometry._Projection))
 {
     setupMesh();
-    initBasic(background._Colors);
-    _gradientDegree = background._GradientDegree;
-    _animationSpeed = background._AnimationSpeed;
-    _gradientRotationSpeed = background._GradientRotationSpeed;
+    initBasic(colors);
 
-    ShaderManager::GetFillGradientShader().UseProgram();
-    ShaderManager::GetFillGradientShader().SetUniformVec4("uColors", &_colors[0][0], 255);
-    ShaderManager::GetFillGradientShader().SetUniformFloat("uDegree", _gradientDegree);
-    ShaderManager::GetFillGradientShader().SetUniformInt("uNumColors", _colorCount);
-    Resize(geometry._Size);
-    Move(geometry._Position);
-    Rotate(geometry._Rotation);
+    if(colors.size() > 1)
+    {
+        ShaderManager::GetFillGradientShader().UseProgram();
+        ShaderManager::GetFillGradientShader().SetUniformVec4("uColors", &_colors[0][0], 255);
+        ShaderManager::GetFillGradientShader().SetUniformFloat("uDegree", _gradientDegree);
+        ShaderManager::GetFillGradientShader().SetUniformInt("uNumColors", _colorCount);
+    }
+
+    SetSize(geometry._Size);
+    SetPosition(geometry._Position);
+    SetRotation(geometry._Rotation);
 }
 
 RetroFuturaGUI::Rectangle::~Rectangle()
@@ -55,28 +56,13 @@ void RetroFuturaGUI::Rectangle::Draw()
     glBindVertexArray(0);
 }
 
-void RetroFuturaGUI::Rectangle::UpdateAnimationSpeed(const f32 speed)
-{
-    _animationSpeed = speed;
-}
-
-void RetroFuturaGUI::Rectangle::UpdateGradientDegree(const f32 degree)
-{
-    _gradientDegree = degree;
-}
-
-void RetroFuturaGUI::Rectangle::UpdateGradientRotationSpeed(const f32 speed)
-{
-    _gradientRotationSpeed = speed;
-}
-
-void RetroFuturaGUI::Rectangle::Resize(const glm::vec2& size)
+void RetroFuturaGUI::Rectangle::SetSize(const glm::vec2& size)
 {
     _scale = glm::vec2(size.x, size.y);
     _scalingMatrix = glm::scale(glm::mat4(1.0f), glm::vec3(_scale, 1.0f));
 }
 
-void RetroFuturaGUI::Rectangle::Move(const glm::vec2& position)
+void RetroFuturaGUI::Rectangle::SetPosition(const glm::vec2& position)
 {
     _position = position;
     _translationMatrix = glm::translate(glm::mat4(1.0f), glm::vec3(_position, 0.0f));
@@ -108,6 +94,26 @@ void RetroFuturaGUI::Rectangle::SetCornerRadii(const glm::vec4 &radii)
     _shaderFeatureDIP &= ~ShaderFeatures::ROUNDED_CORNERS;
 }
 
+void RetroFuturaGUI::Rectangle::SetGradientOffset(const f32 gradientOffset)
+{
+    _gradientOffset = gradientOffset;
+}
+
+void RetroFuturaGUI::Rectangle::SetGradientAnimationSpeed(const f32 animationSpeed)
+{
+    _gradientAnimationSpeed = animationSpeed;
+}
+
+void RetroFuturaGUI::Rectangle::SetGradientDegree(const f32 degree)
+{
+    _gradientDegree = degree;
+}
+
+void RetroFuturaGUI::Rectangle::SetGradientRotationSpeed(const f32 rotationSpeed)
+{
+    _gradientRotationSpeed = rotationSpeed;
+}
+
 void RetroFuturaGUI::Rectangle::SetShaderFeatures(const u32 features, const bool reset)
 {
     if(reset)
@@ -122,7 +128,7 @@ void RetroFuturaGUI::Rectangle::SetWindowBackgroundImageTextureID(const u32 text
     _windowBackgroundTextureID = textureID;
 }
 
-void RetroFuturaGUI::Rectangle::Rotate(const float rotation)
+void RetroFuturaGUI::Rectangle::SetRotation(const f32 rotation)
 {
     _rotation = rotation;
     _rotationMatrix = glm::rotate(glm::mat4(1.0f), glm::radians(_rotation), glm::vec3(0.0f, 0.0f, 1.0f));
@@ -183,7 +189,7 @@ void RetroFuturaGUI::Rectangle::drawWithSolidFill()
 
 void RetroFuturaGUI::Rectangle::drawWithGradientFill()
 {
-    _gradientOffset += _animationSpeed;
+    _gradientOffset += _gradientAnimationSpeed;
     if (_gradientOffset > 1.0f) 
         _gradientOffset = 0.0f;
 

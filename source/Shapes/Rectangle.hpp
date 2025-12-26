@@ -24,18 +24,19 @@ namespace RetroFuturaGUI
     {
     public:
         Rectangle(const GeometryParams2D& geometry, const glm::vec4& color);
-        Rectangle(const GeometryParams2D& geometry, const BackgroundParams& background);
+        Rectangle(const GeometryParams2D& geometry, std::span<glm::vec4> colors);
         ~Rectangle();
         void Draw();
-        void UpdateAnimationSpeed(const f32 speed);
-        void UpdateGradientDegree(const f32 degree);
-        void UpdateGradientRotationSpeed(const f32 speed);
-        void Resize(const glm::vec2& size);
-        void Move(const glm::vec2& position);
-        void Rotate(const f32 rotation);
+        void SetSize(const glm::vec2& size);
+        void SetPosition(const glm::vec2& position);
+        void SetRotation(const f32 rotation);
         void SetColor(const glm::vec4& color);
         glm::vec4 GetColor() const;
         void SetCornerRadii(const glm::vec4& radii);
+        void SetGradientOffset(const f32 gradientOffset);
+        void SetGradientAnimationSpeed(const f32 animationSpeed);
+        void SetGradientDegree(const f32 degree);
+        void SetGradientRotationSpeed(const f32 rotationSpeed);
         void SetShaderFeatures(const u32 features, const bool reset = true);
         void SetWindowBackgroundImageTextureID(const u32 textureID);
 
@@ -77,10 +78,10 @@ namespace RetroFuturaGUI
         u32 _colorCount { 0 };
         f32
             _gradientOffset { 0.0f },
-            _animationSpeed { 0.0003f },
+            _gradientAnimationSpeed { 0.003f },
             _gradientDegree { 45.0f },
             _gradientRotationSpeed { 0.02f };
-            glm::vec4 _cornerRadii { 20.0f, 10.0f, 30.0f, 40.0f };
+            glm::vec4 _cornerRadii { 15.0f };
         u32 _shaderFeatureDIP { 0 };
         u32 _windowBackgroundTextureID { 0 };
         
