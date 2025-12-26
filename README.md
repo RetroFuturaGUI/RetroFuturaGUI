@@ -29,8 +29,6 @@ RetroFuturaGUI is a signal-slot-based GUI framework written in C++. It is design
   - UTF-8 support
   - Emoji support
   - Fix rotation
-- Rectangle
-  - Automate setting/passing colors (gradients, etc)
 - WindowBar
   - Positioning to bottom, left, right
 - Borders
