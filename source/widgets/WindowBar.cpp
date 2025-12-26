@@ -148,8 +148,8 @@ void RetroFuturaGUI::WindowBar::Resize()
 {
     _size = calculateWindowBarSize(_size);
     _position = calculateWindowBarPosition(_position);
-    _background->Resize(_size);
-    _background->Move(_position);
+    _background->SetSize(_size);
+    _background->SetPosition(_position);
     _close->SetPosition(calculateElementPosition(_position, ElementType::CloseButton));
     _maximize->SetPosition(calculateElementPosition(_position, ElementType::MaximizeButton));
     _minimize->SetPosition(calculateElementPosition(_position, ElementType::MinimizeButton));
