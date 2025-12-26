@@ -2,8 +2,8 @@
 #include <glm/gtc/type_ptr.hpp>
 #include <print>
 
-RetroFuturaGUI::Window::Window(std::string_view name, i32 width, i32 height, void* parent)
-   // : IWidget(name, glm::mat4(1.0f), width, height, parent)
+RetroFuturaGUI::Window::Window(std::string_view name, std::string_view windowTitle, i32 width, i32 height, void* parent)
+: _name(name), _windowTitle(windowTitle)
 {
 	createWindow();
 
@@ -37,7 +37,7 @@ void RetroFuturaGUI::Window::createWindow()
 
 	glfwMakeContextCurrent(_window);
 
-	if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) //maybe move this to MainWindow?
+	if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
     {
         std::println("Failed to initialize GLAD in Window::createWindow");
         glfwDestroyWindow(_window);
@@ -74,8 +74,8 @@ void RetroFuturaGUI::Window::createWindow()
 
 
 	_projection = std::make_unique<Projection>((float)_width, (float)_height);
-
-	IdentityParams identityWB = { "testWindowbar", this, WidgetTypeID::WindowBar, _window };
+	std::string windowBarName = _name + "/WindowBar";
+	IdentityParams identityWB = { windowBarName, this, WidgetTypeID::WindowBar, _window };
 	GeometryParams2D geometryWB = { *_projection, glm::vec2(0.0f), glm::vec2(0.0f), 0.0f };
 
 	_windowBar = std::make_unique<WindowBar>(identityWB, geometryWB, glm::vec4(0.5f, 0.0f, 1.0f, 1.0f));
@@ -93,7 +93,7 @@ void RetroFuturaGUI::Window::createWindow()
 	_windowBar->SetButtonCornerRadii(glm::vec4(10.0f), WindowBar::ElementType::CloseButton);
 	_windowBar->SetButtonCornerRadii(glm::vec4(10.0f), WindowBar::ElementType::MaximizeButton);
 	_windowBar->SetButtonCornerRadii(glm::vec4(10.0f), WindowBar::ElementType::MinimizeButton);
-	_windowBar->SetWindowTitle("RetroFuturaGUI Test");
+	_windowBar->SetWindowTitle(_windowTitle);
 }
 
 void RetroFuturaGUI::Window::cursorPositionCallback(GLFWwindow *window, f64 xpos, f64 ypos)
@@ -141,7 +141,6 @@ void RetroFuturaGUI::Window::mouseButtonClickedCallback(GLFWwindow *window, i32 
 	if (action == GLFW_PRESS) 
 	{
 		InputManager::SetFocusedWindow(window);
-		// self->setMaximizeState(); // Remove this - maximize should be triggered by windowbar button
 	}
 	else if (action == GLFW_RELEASE) 
 	{
@@ -294,12 +293,12 @@ void RetroFuturaGUI::Window::windowFocusCallback(GLFWwindow *window, i32 focused
 	if (focused)
 	{
 		InputManager::SetFocusedWindow(window);
-		std::println("focused");
+		//std::println("focused");
 	} 
 	else if (InputManager::GetFocusedWindow() == window)
 	{
 		InputManager::SetFocusedWindow(nullptr);
-		std::println("unfocused");
+		//std::println("unfocused");
 	}
 }
 
@@ -380,14 +379,10 @@ void RetroFuturaGUI::Window::Draw()
 	glfwWindowHint(GLFW_TRANSPARENT_FRAMEBUFFER, GLFW_FALSE);
 	glfwWindowHint(GLFW_ALPHA_BITS, 0); // Disable alpha bits if not needed
 
-
 	if(_windowSizeChanged)
 		updateProjection();
 
-	
 	_backgroundImage->Draw();
-	//_label->Draw();
-	//_button->Draw();
 	_grid->Draw(false);
 	_windowBar->Draw();
 	glfwSwapBuffers(_window);
@@ -432,7 +427,6 @@ void RetroFuturaGUI::Window::SetBackgroundImage(std::string_view imagePath)
 	};
 
 	_backgroundImage = std::make_unique<Image2D>(geometryTexture, imagePath);
-
 	_windowBar->SetElementBackgroundImageTextureID(_backgroundImage->GetTextureID(), WindowBar::ElementType::Title);
 	_windowBar->SetElementBackgroundImageTextureID(_backgroundImage->GetTextureID(), WindowBar::ElementType::CloseButton);
 	_windowBar->SetElementBackgroundImageTextureID(_backgroundImage->GetTextureID(), WindowBar::ElementType::MaximizeButton);
@@ -442,6 +436,11 @@ void RetroFuturaGUI::Window::SetBackgroundImage(std::string_view imagePath)
 void RetroFuturaGUI::Window::SetGrid(Grid2d* grid)
 {
 	_grid = grid;
+}
+
+i32 RetroFuturaGUI::Window::GetBackgroundImageId() const
+{
+    return _backgroundImage->GetTextureID();
 }
 
 GLFWwindow* RetroFuturaGUI::Window::GetGlfwWindow() const

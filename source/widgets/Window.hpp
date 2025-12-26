@@ -12,7 +12,7 @@ namespace RetroFuturaGUI
     class Window// : public IWidget
     {
     public:
-        Window(std::string_view name, i32 width, i32 height, void* parent = nullptr);
+        Window(std::string_view name, std::string_view windowTitle, i32 width, i32 height, void* parent = nullptr);
 
         bool WindowShouldClose();
         void Draw();
@@ -22,6 +22,7 @@ namespace RetroFuturaGUI
         void SetBackgroundColor(const glm::vec4& color);
         void SetBackgroundImage(std::string_view imagePath);
         void SetGrid(Grid2d* grid);
+        i32 GetBackgroundImageId() const;
         GLFWwindow* GetGlfwWindow() const;
         Projection* GetProjection() const;
 
@@ -59,9 +60,12 @@ namespace RetroFuturaGUI
         std::unique_ptr<Projection> _projection;
         bool _windowBarOverlapsBG { false };
         MaximizeState _maximizeState { MaximizeState::RESTORE };
-        glm::ivec2 _preMaximizeSize { 0 };
-        glm::ivec2 _preMaximizePos { 0 };
-        std::string _windowTitle { "RetroFuturaGUI Test" };
+        glm::ivec2
+            _preMaximizeSize { 0 },
+            _preMaximizePos { 0 };
+        std::string 
+            _name,
+            _windowTitle;
 
         // Window Actions
         ResizeEdge _resizeEdge { ResizeEdge::NONE };
@@ -84,11 +88,6 @@ namespace RetroFuturaGUI
         bool _cursorsInitialized { false };
 
         // test widgets
-        std::unique_ptr<Rectangle> _plane;
-        std::unique_ptr<LineBorder> _lineBorder;
-        std::unique_ptr<Text> _text;
-        std::unique_ptr<Label> _label;
-        std::unique_ptr<Button> _button;
         std::unique_ptr<WindowBar> _windowBar;
         std::unique_ptr<Image2D> _backgroundImage;
         Grid2d* _grid;
