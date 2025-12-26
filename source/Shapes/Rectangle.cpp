@@ -198,10 +198,24 @@ void RetroFuturaGUI::Rectangle::drawWithGradientFill()
         _gradientDegree = 0.0f;
 
     ShaderManager::GetFillGradientShader().UseProgram();
+    ShaderManager::GetFillGradientShader().SetUniformInt("uDIP", _shaderFeatureDIP);
     ShaderManager::GetFillGradientShader().SetUniformMat4("uProjection", _projection.GetProjectionMatrix());
     ShaderManager::GetFillGradientShader().SetUniformMat4("uPosition", _translationMatrix);
     ShaderManager::GetFillGradientShader().SetUniformMat4("uScaling", _scalingMatrix);
     ShaderManager::GetFillGradientShader().SetUniformMat4("uRotation", _rotationMatrix);
     ShaderManager::GetFillGradientShader().SetUniformFloat("uGradientOffset", _gradientOffset);
     ShaderManager::GetFillGradientShader().SetUniformFloat("uDegree", _gradientDegree);
+
+    if(_shaderFeatureDIP & ShaderFeatures::ROUNDED_CORNERS)
+    {
+        ShaderManager::GetFillGradientShader().SetUniformVec4("uCornerRadii", _cornerRadii);
+        ShaderManager::GetFillGradientShader().SetUniformVec2("uScale", _scale);
+    }
+
+    if(_shaderFeatureDIP & ShaderFeatures::GLASS_EFFECT)
+    {
+        ShaderManager::GetFillGradientShader().SetUniformInt("uBackgroundTexture", 0);
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, (_windowBackgroundTextureID));
+    }
 }

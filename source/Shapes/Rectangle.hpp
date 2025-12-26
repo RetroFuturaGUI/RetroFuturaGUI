@@ -78,10 +78,10 @@ namespace RetroFuturaGUI
         u32 _colorCount { 0 };
         f32
             _gradientOffset { 0.0f },
-            _gradientAnimationSpeed { 0.003f },
+            _gradientAnimationSpeed { 0.0003f },
             _gradientDegree { 45.0f },
             _gradientRotationSpeed { 0.02f };
-            glm::vec4 _cornerRadii { 15.0f };
+        glm::vec4 _cornerRadii { 15.0f };
         u32 _shaderFeatureDIP { 0 };
         u32 _windowBackgroundTextureID { 0 };
         
