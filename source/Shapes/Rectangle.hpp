@@ -18,7 +18,9 @@ namespace RetroFuturaGUI
     {
         ROUNDED_CORNERS = 1,
         GLASS_EFFECT = 1 << 1,
-        GLASS_EFFECT_WITH_IMAGE = GLASS_EFFECT + (1 << 2)
+        GLASS_EFFECT_WITH_IMAGE = GLASS_EFFECT + (1 << 2),
+        BORDER = 1 << 3,
+        BORDER_ONLY = BORDER + (1 << 4)
     };
 
     class Rectangle
@@ -40,6 +42,8 @@ namespace RetroFuturaGUI
         void SetGradientRotationSpeed(const f32 rotationSpeed);
         void SetShaderFeatures(const u32 features, const bool reset = true);
         void SetWindowBackgroundImageTextureID(const u32 textureID);
+        void SetBorderWidth(const f32 width);
+        void SetBorderColor(const glm::vec4& color);
 
     private:
         //Geometry
@@ -85,6 +89,8 @@ namespace RetroFuturaGUI
         glm::vec4 _cornerRadii { 15.0f };
         u32 _shaderFeatureDIP { 0 };
         u32 _windowBackgroundTextureID { 0 };
+        f32 _borderWidth { 5.0f };
+        glm::vec4 _borderColor { 0.5f };
         
         void setupMesh();
         void initBasic(std::span<const glm::vec4> colors);
