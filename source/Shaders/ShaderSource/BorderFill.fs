@@ -1,0 +1,117 @@
+#version 330
+#define ROUNDED_CORNERS 1
+#define GLASS_EFFECT 2
+#define GLASS_EFFECT_WITH_IMAGE 6
+
+layout(location = 0) out vec4 Color;
+uniform vec4 uColor;
+uniform vec4 uCornerRadii;
+uniform vec2 uScale;
+uniform int uDIP;
+uniform sampler2D uBackgroundTexture;
+uniform float uBorderWidth;
+
+in vec2 vLocalPos;
+in vec2 vUV;
+
+float random(vec2 st)
+{
+    return fract(sin(dot(st, vec2(12.9898, 78.233))) * 43758.5453);
+}
+
+float noise(vec2 p)
+{
+    vec2 i = floor(p);
+    vec2 f = fract(p);
+    
+    float a = random(i);
+    float b = random(i + vec2(1.0, 0.0));
+    float c = random(i + vec2(0.0, 1.0));
+    float d = random(i + vec2(1.0, 1.0));
+    
+    // Linear interpolation (less smooth)
+    vec2 u = f;
+    // Smooth interpolation (smoothstep)
+    //vec2 u = f * f * (3.0 - 2.0 * f);
+    
+    return mix(mix(a, b, u.x), mix(c, d, u.x), u.y);
+}
+
+float roundedRectSDF(vec2 p, vec2 halfSize, float radius)
+{
+    vec2 d = abs(p) - halfSize + vec2(radius);
+    return length(max(d, 0.0)) + min(max(d.x, d.y), 0.0) - radius;
+}
+
+void main()
+{
+    vec4 finalColor = uColor;
+
+    vec2 scaledPos = vLocalPos * uScale;
+    vec2 halfSize = vec2(0.5) * uScale;
+    vec2 innerHalfSize = halfSize - vec2(uBorderWidth);
+    
+    float cornerRadius = ((uDIP & ROUNDED_CORNERS) != 0) ? uCornerRadii.x : 0.0;
+    float innerRadius = max(cornerRadius - uBorderWidth, 0.0);
+    
+    float outerDist = roundedRectSDF(scaledPos, halfSize, cornerRadius);
+    float innerDist = roundedRectSDF(scaledPos, innerHalfSize, innerRadius);
+    
+    if (outerDist > 0.0 || innerDist <= 0.0)
+    {
+        discard;
+    }
+    else
+    {
+        if((uDIP & GLASS_EFFECT) != 0)
+        {
+            // Apply glass distortion
+            vec2 distortedUV = vUV + (noise(vUV * 10.0) - 0.5) * 0.02; // Small distortion
+
+            if((uDIP & GLASS_EFFECT_WITH_IMAGE) != 0)
+            {
+                vec4 background = texture(uBackgroundTexture, distortedUV);
+                finalColor = mix(background, uColor, uColor.a);
+            }
+            else
+            {
+                float fakeBackground = noise(distortedUV * 5.0);
+                finalColor = mix(vec4(vec3(fakeBackground), 1.0), uColor, uColor.a);
+            }
+        }
+    
+        if((uDIP & ROUNDED_CORNERS) != 0)
+        {
+            vec2 scaledPos = vLocalPos * uScale;
+            vec2 halfSize = vec2(0.5) * uScale;
+
+            float cornerRadius;
+            if (scaledPos.x >= 0.0 && scaledPos.y >= 0.0)
+            {
+                cornerRadius = uCornerRadii.y;
+            }
+            else if (scaledPos.x < 0.0 && scaledPos.y >= 0.0)
+            {
+                cornerRadius = uCornerRadii.x;
+            }
+            else if (scaledPos.x < 0.0 && scaledPos.y < 0.0)
+            {
+                cornerRadius = uCornerRadii.w;
+            }
+            else
+            {
+                cornerRadius = uCornerRadii.z;
+            }
+            
+            vec2 p = abs(scaledPos) - halfSize + vec2(cornerRadius);
+            float dist = length(max(p, 0.0)) + min(max(p.x, p.y), 0.0) - cornerRadius;
+
+            if (dist > 0.0)
+                discard;
+        }
+
+        finalColor = uColor;
+    }
+
+    Color = finalColor;
+}
