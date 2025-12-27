@@ -17,6 +17,11 @@ RetroFuturaGUI::Shader& RetroFuturaGUI::ShaderManager::GetLineFillShader()
     return *_lineFill;
 }
 
+RetroFuturaGUI::Shader& RetroFuturaGUI::ShaderManager::GetBorderFillShader()
+{
+    return *_borderFill;
+}
+
 RetroFuturaGUI::Shader& RetroFuturaGUI::ShaderManager::GetTextFillShader()
 {
     return *_textFill;
@@ -55,6 +60,11 @@ void RetroFuturaGUI::ShaderManager::compileShaders()
     _fillGradient = std::make_unique<Shader>(
         std::string(exeDir + "FillGradient.vs").c_str(), 
         std::string(exeDir + "FillGradient.fs").c_str()
+    );
+
+    _borderFill = std::make_unique<Shader>(
+        std::string(exeDir + "BorderFill.vs").c_str(), 
+        std::string(exeDir + "BorderFill.fs").c_str()
     );
 
     _lineFill = std::make_unique<Shader>(
