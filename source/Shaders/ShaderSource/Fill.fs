@@ -2,6 +2,8 @@
 #define ROUNDED_CORNERS 1
 #define GLASS_EFFECT 2
 #define GLASS_EFFECT_WITH_IMAGE 6
+#define BORDER 8
+#define BORDER_ONLY 24
 
 layout(location = 0) out vec4 Color;
 uniform vec4 uColor;
@@ -9,6 +11,8 @@ uniform vec4 uCornerRadii;
 uniform vec2 uScale;
 uniform int uDIP;
 uniform sampler2D uBackgroundTexture;
+uniform float uBorderWidth;
+uniform vec4 uBorderColor;
 
 in vec2 vLocalPos;
 in vec2 vUV;
@@ -34,6 +38,12 @@ float noise(vec2 p)
     //vec2 u = f * f * (3.0 - 2.0 * f);
     
     return mix(mix(a, b, u.x), mix(c, d, u.x), u.y);
+}
+
+float roundedRectSDF(vec2 p, vec2 halfSize, float radius)
+{
+    vec2 d = abs(p) - halfSize + vec2(radius);
+    return length(max(d, 0.0)) + min(max(d.x, d.y), 0.0) - radius;
 }
 
 void main()
@@ -87,5 +97,34 @@ void main()
             discard;
     }
 
+    if((uDIP & BORDER) != 0)
+    {
+        vec2 scaledPos = vLocalPos * uScale;
+        vec2 halfSize = vec2(0.5) * uScale;
+        vec2 innerHalfSize = halfSize - vec2(uBorderWidth);
+        
+        float cornerRadius = ((uDIP & ROUNDED_CORNERS) != 0) ? uCornerRadii.x : 0.0;
+        float innerRadius = max(cornerRadius - uBorderWidth, 0.0);
+        
+        float outerDist = roundedRectSDF(scaledPos, halfSize, cornerRadius);
+        float innerDist = roundedRectSDF(scaledPos, innerHalfSize, innerRadius);
+        
+        if (outerDist > 0.0 || innerDist <= 0.0)
+        {
+            if((uDIP & BORDER_ONLY) == BORDER_ONLY)
+            {
+                finalColor = vec4(0.0, 0.0, 0.0, 0.0);
+            }
+            else
+            {
+                finalColor = uColor;
+            }
+        }
+        else
+        {
+            finalColor = uBorderColor;
+        }
+    }
+    
     Color = finalColor;
 }
