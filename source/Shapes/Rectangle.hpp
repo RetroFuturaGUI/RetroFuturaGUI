@@ -18,9 +18,13 @@ namespace RetroFuturaGUI
     {
         ROUNDED_CORNERS = 1,
         GLASS_EFFECT = 1 << 1,
-        GLASS_EFFECT_WITH_IMAGE = GLASS_EFFECT + (1 << 2),
-        BORDER = 1 << 3,
-        BORDER_ONLY = BORDER + (1 << 4)
+        GLASS_EFFECT_WITH_IMAGE = GLASS_EFFECT + (1 << 2)
+    };
+
+    enum class RectangleMode : u32
+    {
+        PLANE,
+        BORDER
     };
 
     class Rectangle
@@ -44,6 +48,7 @@ namespace RetroFuturaGUI
         void SetWindowBackgroundImageTextureID(const u32 textureID);
         void SetBorderWidth(const f32 width);
         void SetBorderColor(const glm::vec4& color);
+        void SetRectangleMode(const RectangleMode rectanlgeMode);
 
     private:
         //Geometry
@@ -86,15 +91,17 @@ namespace RetroFuturaGUI
             _gradientAnimationSpeed { 0.0003f },
             _gradientDegree { 45.0f },
             _gradientRotationSpeed { 0.02f };
-        glm::vec4 _cornerRadii { 15.0f };
+        glm::vec4 _cornerRadii { 0.0f };
         u32 _shaderFeatureDIP { 0 };
         u32 _windowBackgroundTextureID { 0 };
         f32 _borderWidth { 5.0f };
         glm::vec4 _borderColor { 0.5f };
+        RectangleMode _rectangleMode { RectangleMode::PLANE };
         
         void setupMesh();
         void initBasic(std::span<const glm::vec4> colors);
         void drawWithSolidFill();
         void drawWithGradientFill();
+        void drawSolidBorder();
     };
 }
