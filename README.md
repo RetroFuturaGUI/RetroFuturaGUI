@@ -33,3 +33,7 @@ RetroFuturaGUI is a signal-slot-based GUI framework written in C++. It is design
 - WindowBar
   - Positioning to bottom, left, right
 - Better Viewports mayhaps
+
+### Known Bugs
+- Window.hpp/.cpp
+  - glfwWindowHint(GLFW_TRANSPARENT_FRAMEBUFFER, GLFW_TRUE()) causes objects with transparency to show what's behind the window even if the background is completely opaque

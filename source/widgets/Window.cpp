@@ -21,7 +21,7 @@ RetroFuturaGUI::Window::Window(std::string_view name, std::string_view windowTit
 void RetroFuturaGUI::Window::createWindow()
 {
 	glfwWindowHint(GLFW_DECORATED, GLFW_FALSE);
-	glfwWindowHint(GLFW_TRANSPARENT_FRAMEBUFFER, GLFW_FALSE);
+	glfwWindowHint(GLFW_TRANSPARENT_FRAMEBUFFER, GLFW_FALSE); //Using GLFW_TRUE enables the possibility of rendering transparent backgrounds (desired) but causes any other object with transparency to be bugged (makes everything behind the window is visible)
 	glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
 	_window = glfwCreateWindow(_width, _height, _windowTitle.c_str(), nullptr, nullptr);
 	glfwSetWindowTitle(_window, _windowTitle.c_str());
@@ -430,8 +430,6 @@ void RetroFuturaGUI::Window::SetBackgroundImage(std::string_view imagePath)
 	_windowBar->SetElementBackgroundImageTextureID(_backgroundImage->GetTextureID(), WindowBar::ElementType::CloseButton);
 	_windowBar->SetElementBackgroundImageTextureID(_backgroundImage->GetTextureID(), WindowBar::ElementType::MaximizeButton);
 	_windowBar->SetElementBackgroundImageTextureID(_backgroundImage->GetTextureID(), WindowBar::ElementType::MinimizeButton);
-
-	_testRect->SetWindowBackgroundImageTextureID(_backgroundImage->GetTextureID());
 }
 
 void RetroFuturaGUI::Window::SetGrid(Grid2d* grid)
