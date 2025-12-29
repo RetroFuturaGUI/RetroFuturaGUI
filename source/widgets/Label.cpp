@@ -11,5 +11,6 @@ RetroFuturaGUI::Label::Label(const IdentityParams& identity, const GeometryParam
 
 void RetroFuturaGUI::Label::Draw()
 {
-    _textObject->Draw();
+    if(_textObject)
+        _textObject->Draw();
 }
