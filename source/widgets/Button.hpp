@@ -20,7 +20,7 @@ namespace RetroFuturaGUI
     class Button : public IWidget
     {
     public:
-        Button(const IdentityParams& identity, const GeometryParams2D& geometry, const TextParams& textParams, const BorderParams& borderParams);
+        Button(const IdentityParams& identity, const GeometryParams2D& geometry, const TextParams& textParams, const float borderWidth = 5.0f);
         void Draw();
         void Connect_OnClick(const typename Signal<>::Slot& slot, const bool async);
         void Connect_OnRelease(const typename Signal<>::Slot& slot, const bool async);
@@ -39,20 +39,27 @@ namespace RetroFuturaGUI
         void SetEnabled(const bool enable);
         bool IsEnabled() const;
         void SetBackgroundColor(const glm::vec4& color, const ColorSetState state);
-        glm::vec4 GetBackgroundColor(const ColorSetState state) const;
+        void SetBackgroundColors(std::span<glm::vec4> colors, const ColorSetState state);
+        void SetBorderColor(const glm::vec4& color, const ColorSetState state);
+        void SetBorderColors(std::span<glm::vec4> colors, const ColorSetState state);
+        std::vector<glm::vec4> GetBackgroundColors(const ColorSetState state) const;
         void SetTextColor(const glm::vec4& color, const ColorSetState state);
-        glm::vec4 GetTextColor(const ColorSetState state) const;
+        std::vector<glm::vec4> GetTextColor(const ColorSetState state) const;
         void SetLineBorderColor(const glm::vec4& color, const ColorSetState state);
-        glm::vec4 GetLineBorderColor(const ColorSetState state) const;
+        std::vector<glm::vec4> GetLineBorderColor(const ColorSetState state) const;
         void SetSize(const glm::vec2& size) override; //add extra text resizing logic
         void SetPosition(const glm::vec2& position) override;
         void SetCornerRadii(const glm::vec4& radii);
         void SetWindowBackgroundImageTextureID(const u32 textureID);
+        void SetBorderGradientOffset(const f32 gradientOffset);
+        void SetBorderGradientAnimationSpeed(const f32 animationSpeed);
+        void SetBorderGradientDegree(const f32 degree);
+        void SetBorderGradientRotationSpeed(const f32 rotationSpeed);
 
     private:
         //elements
         std::unique_ptr<Rectangle> _rectangle;
-        std::unique_ptr<LineBorder> _lineBorder;
+        std::unique_ptr<Rectangle> _border;
         std::unique_ptr<Text> _text;
         
         //logic
@@ -79,25 +86,25 @@ namespace RetroFuturaGUI
             _onDisableAsync;
 
         // Style
-        glm::vec4 
-            _backgroundColorEnabled { 0.5f, 0.5f, 0.5f, 1.0 },
-            _backgroundColorDisabled { 0.25f, 0.25f, 0.25f, 1.0 },
-            _backgroundColorClicked { 0.6f, 0.6f,0.6f, 1.0 },
-            _backgroundColorHover { 0.55f, 0.55f, 0.55f, 1.0 },
-            _borderColorEnabled { 0.25f, 0.25f, 0.25f, 1.0 },
-            _borderColorDisabled { 0.2f, 0.2f, 0.2f, 1.0 },
-            _borderColorClicked { 0.3f, 0.3f, 1.3f, 1.0 },
-            _borderColorHover { 0.275f, 0.275f, 0.275f, 1.0 },
-            _textColorEnabled { 1.0 },
-            _textColorDisabled { 0.5f, 0.5f,0.5f, 1.0 },
-            _textColorClicked { 1.0 },
-            _textColorHover { 1.0f, 1.0f, 1.0f, 1.0 };
+        std::vector<glm::vec4> 
+            _backgroundColorEnabled { glm::vec4(0.5f, 0.5f, 0.5f, 1.0f) },
+            _backgroundColorDisabled { glm::vec4(0.25f, 0.25f, 0.25f, 1.0f) },
+            _backgroundColorClicked { glm::vec4(0.6f, 0.6f,0.6f, 1.0f) },
+            _backgroundColorHover { glm::vec4(0.55f, 0.55f, 0.55f, 1.0f) },
+            _borderColorEnabled { glm::vec4(0.25f, 0.25f, 0.25f, 1.0f) },
+            _borderColorDisabled { glm::vec4(0.2f, 0.2f, 0.2f, 1.0f) },
+            _borderColorClicked { glm::vec4(0.3f, 0.3f, 1.3f, 1.0f) },
+            _borderColorHover { glm::vec4(0.275f, 0.275f, 0.275f, 1.0f) },
+            _textColorEnabled { glm::vec4(1.0f) },
+            _textColorDisabled { glm::vec4(0.5f, 0.5f,0.5f, 1.0f) },
+            _textColorClicked { glm::vec4(1.0f) },
+            _textColorHover { glm::vec4(1.0f, 1.0f, 1.0f, 1.0f) };
         ColorSetState _state { ColorSetState::Enabled };
 
         void interact();
         void setColors();
-        void setBackgroundColorElement(const glm::vec4& color);
+        void setBackgroundColorElement(std::vector<glm::vec4>& color);
         void setTextColorElement(const glm::vec4& color);
-        void setLineBorderColorElement(const glm::vec4& color);
+        void setBorderColorElement(std::vector<glm::vec4>& color);
     };
 }
