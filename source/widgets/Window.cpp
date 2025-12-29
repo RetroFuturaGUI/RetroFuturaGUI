@@ -362,12 +362,16 @@ void RetroFuturaGUI::Window::Draw()
 	if(_backgroundImage)
 		_backgroundImage->Draw();
 
-	_grid->Draw(false);
-	_windowBar->Draw();
+	if(_grid)
+		_grid->Draw(false);
+
+	if(_windowBar)
+		_windowBar->Draw();
+
 	glfwSwapBuffers(_window);
 	glfwPollEvents();
 
-	if(_windowBar->WindowShouldClose())
+	if(_windowBar && _windowBar->WindowShouldClose())
 		glfwSetWindowShouldClose(_window, GLFW_TRUE);
 }
 
@@ -406,6 +410,10 @@ void RetroFuturaGUI::Window::SetBackgroundImage(std::string_view imagePath)
 	};
 
 	_backgroundImage = std::make_unique<Image2D>(geometryTexture, imagePath);
+
+	if(!_windowBar)
+		return;
+
 	_windowBar->SetElementBackgroundImageTextureID(_backgroundImage->GetTextureID(), WindowBar::ElementType::Title);
 	_windowBar->SetElementBackgroundImageTextureID(_backgroundImage->GetTextureID(), WindowBar::ElementType::CloseButton);
 	_windowBar->SetElementBackgroundImageTextureID(_backgroundImage->GetTextureID(), WindowBar::ElementType::MaximizeButton);
@@ -419,7 +427,10 @@ void RetroFuturaGUI::Window::SetGrid(Grid2d* grid)
 
 i32 RetroFuturaGUI::Window::GetBackgroundImageId() const
 {
-    return _backgroundImage->GetTextureID();
+	if(_backgroundImage)
+    	return _backgroundImage->GetTextureID();
+
+	return -1;
 }
 
 GLFWwindow* RetroFuturaGUI::Window::GetGlfwWindow() const
@@ -443,6 +454,10 @@ void RetroFuturaGUI::Window::setupWindowBar()
 	IdentityParams identityWB = { windowBarName, this, WidgetTypeID::WindowBar, _window };
 	GeometryParams2D geometryWB = { *_projection, glm::vec2(0.0f), glm::vec2(0.0f), 0.0f };
 	_windowBar = std::make_unique<WindowBar>(identityWB, geometryWB, glm::vec4(0.5f, 0.0f, 1.0f, 1.0f), WindowBarPosition::Top);
+	
+	if(!_windowBar)
+		return;
+		
 	_windowBar->ConnectMaximizeCallback([this]() { toggleMaximize(); });
 	_windowBar->SetWindowTitle(_windowTitle);
 }
