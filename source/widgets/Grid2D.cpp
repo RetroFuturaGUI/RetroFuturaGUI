@@ -48,13 +48,8 @@ RetroFuturaGUI::Grid2d::Grid2d(const IdentityParams &identity, const GeometryPar
         0.0f
     };
 
-    BorderParams borderP = 
-    {
-        glm::vec4(1.0f),
-        5.0f
-    };
-
-    _debugBorder = std::make_unique<LineBorder>(geometryb, borderP);
+    _debugBorder = std::make_unique<Rectangle>(geometryb, _debugBorderColor, RectangleMode::BORDER);
+    _debugBorder->SetBorderWidth(5.0f);
 }
 
 void RetroFuturaGUI::Grid2d::AttachWidget(u32 row, u32 col, IWidget* widget, const SizingMode sizingMode)
@@ -106,8 +101,8 @@ void RetroFuturaGUI::Grid2d::SetPosition(const glm::vec2 &position)
 
 void RetroFuturaGUI::Grid2d::drawDebugLines(const Grid2dCell &cell)
 {
-    _debugBorder->Move(glm::vec2(cell._PositionPixels.x + cell._SizePixels.x * 0.5f, _projection.GetResolution().y - (cell._PositionPixels.y + cell._SizePixels.y * 0.5f)));
-    _debugBorder->Resize(glm::vec2(cell._SizePixels.x, cell._SizePixels.y));
+    _debugBorder->SetPosition(glm::vec2(cell._PositionPixels.x + cell._SizePixels.x * 0.5f, _projection.GetResolution().y - (cell._PositionPixels.y + cell._SizePixels.y * 0.5f)));
+    _debugBorder->SetSize(glm::vec2(cell._SizePixels.x, cell._SizePixels.y));
     _debugBorder->Draw();
 }
 

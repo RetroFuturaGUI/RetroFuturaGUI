@@ -3,7 +3,7 @@
 #include "IWidget.hpp"
 #include <string>
 #include <vector>
-#include "LineBorder.hpp"
+#include "Rectangle.hpp"
 
 namespace RetroFuturaGUI
 {
@@ -50,7 +50,8 @@ namespace RetroFuturaGUI
         static constinit const u32 _maxCountPerAxis = 64;
         bool _drawDebugLines = false;
         Grid2dAxisDefinition _axisdefinition;
-        std::unique_ptr<LineBorder> _debugBorder;
+        std::unique_ptr<Rectangle> _debugBorder;
+        std::vector<glm::vec4> _debugBorderColor { glm::vec4(1.0f) };
 
         void drawDebugLines(const Grid2dCell& cell);
         void resizeCells();
