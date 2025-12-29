@@ -12,7 +12,7 @@ RetroFuturaGUI is a signal-slot-based GUI framework written in C++. It is design
 | 4 | More Widgets (TextBox, Table, VideoPlayer, AudioPlayer, 3D Model, Slider, CheckBox, DropdownBox, RadioButton, Tabs, 3D Scene, Lights, Grid3D, Carousel, Color Pickers) | 1 | | 
 | 5 | .bechaml 🥣 (**B**ased and **E**xtra **C**reamy **H**ollandaise **A**pplication **M**arkup **L**anguage) | 4 | | 
 | 6 | VS Code extension with project generator/manager | 5 | | 
-| 7 | Aesthetics: Flat Metro, Frutiger Aero (Win Vista/7, Wii, Wii U, Pikmin 3), Frutiger Metro, Y2K (F-Zero GX), Vaporwave, Outrun, Neumorphism, Glassmorphism/Liquid Glass, Comic/Anime/LoFi, ... | 6 | | 
+| 7 | Aesthetics: Flat Metro, Frutiger Aero (Win Vista/7, Wii, Wii U, Pikmin 3), Frutiger Metro, Y2K (F-Zero GX), Vaporwave, Outrun/Synthwave, Neumorphism, Glassmorphism/Liquid Glass, Comic/Anime/LoFi, ... | 6 | | 
 | 8 | Android (w/o Android Studio), MacOS, iOS support | 6 | | 
 | 9 | dll/so/dylib compilation for C, Rust, Zig, Java, JavaScript, TypeScript, Go, Ruby, Lua, Swift, Carbon, Gleem (if it has evolved enough) | 6 | | 
 | 10 | gcn and wii support (devkitpro/libogc) | 6 | | 
@@ -23,6 +23,7 @@ RetroFuturaGUI is a signal-slot-based GUI framework written in C++. It is design
 | 15 | Switch support | 6 | | 
 | 16 | Playstation series support | 6 | | 
 
+
 ### WIP in detail
 - Text
   - Vertical text flow
@@ -31,6 +32,4 @@ RetroFuturaGUI is a signal-slot-based GUI framework written in C++. It is design
   - Fix rotation
 - WindowBar
   - Positioning to bottom, left, right
-- Borders
-  - Reimplementation
 - Better Viewports mayhaps
