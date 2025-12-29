@@ -56,7 +56,7 @@ namespace RetroFuturaGUI
             _absoluteCursorPosX { 0.0 },
             _absoluteCursorPosY { 0.0 },
             _boundaryThreshold { 10.0 };
-        glm::vec4 _backgroundColor { 0.1f, 0.1f, 0.1f, 1.0f };
+        glm::vec4 _backgroundColor { 0.086f, 0.086f, 0.1137f, 1.0f };
         std::unique_ptr<Projection> _projection;
         bool _windowBarOverlapsBG { false };
         MaximizeState _maximizeState { MaximizeState::RESTORE };
