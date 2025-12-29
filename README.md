@@ -25,12 +25,16 @@ RetroFuturaGUI is a signal-slot-based GUI framework written in C++. It is design
 
 
 ### WIP in detail
+
+### ToDo
 - Text
-  - Vertical text flow
   - UTF-8 support
   - Emoji support
+  - Vertical text flow
 - WindowBar
-  - Positioning to bottom, left, right
+  - Positioning, left, right
+- Window
+  - Docking
 - Better Viewports mayhaps
 
 ### Known Bugs
