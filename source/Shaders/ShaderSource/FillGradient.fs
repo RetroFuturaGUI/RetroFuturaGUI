@@ -125,32 +125,3 @@ void main()
 
     fragColor = mix(color1, color2, interpolation);
 }
-
-/*  Usage:
-    _shader->UseProgram();
-
-    i32 locColors = glGetUniformLocation(_shader->GetProgramId(), "uColors");
-    glUniform4fv(locColors, 255, &colors[0][0]);
-
-    i32 locDegree = glGetUniformLocation(_shader->GetProgramId(), "uDegree");
-    glUniform1f(locDegree, degree);
-
-    i32 locNum = glGetUniformLocation(_shader->GetProgramId(), "uNumColors");
-    glUniform1i(locNum, sizeof(colors) / sizeof(glm::vec4));
-
-
-    // Update the gradient and degree in a loop for animation
-
-    gradientOffset += animationSpeed;
-    if (gradientOffset > 1.0f)
-        gradientOffset = 0.0f;
-
-    degree += 0.02f;
-    if(degree >= 360.0f)
-        degree = 0.0f;
-
-    // Set the offset uniform
-    u32 shaderID = _shader->GetProgramId();
-    glUniform1f(glGetUniformLocation(shaderID, "uGradientOffset"), gradientOffset);
-    glUniform1f(glGetUniformLocation(shaderID, "uDegree"), degree);
-*/

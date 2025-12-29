@@ -30,14 +30,14 @@ namespace RetroFuturaGUI
     class Rectangle
     {
     public:
-        Rectangle(const GeometryParams2D& geometry, const glm::vec4& color, const RectangleMode rectangleMode);
+        //Rectangle(const GeometryParams2D& geometry, glm::vec4& color, const RectangleMode rectangleMode);
         Rectangle(const GeometryParams2D& geometry, std::span<glm::vec4> colors, const RectangleMode rectangleMode);
         ~Rectangle();
         void Draw();
         void SetSize(const glm::vec2& size);
         void SetPosition(const glm::vec2& position);
         void SetRotation(const f32 rotation);
-        void SetColor(const glm::vec4& color);
+        void SetColor(std::span<glm::vec4> color);
         glm::vec4 GetColor() const;
         void SetCornerRadii(const glm::vec4& radii);
         void SetGradientOffset(const f32 gradientOffset);
@@ -47,7 +47,7 @@ namespace RetroFuturaGUI
         void SetShaderFeatures(const u32 features, const bool reset = true);
         void SetWindowBackgroundImageTextureID(const u32 textureID);
         void SetBorderWidth(const f32 width);
-        void SetBorderColor(const glm::vec4& color);
+        void SetBorderColor(std::span<glm::vec4> color);
         void SetRectangleMode(const RectangleMode rectanlgeMode);
 
     private:
@@ -83,7 +83,7 @@ namespace RetroFuturaGUI
         glm::vec4 _vertexPosition = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
 
         // Fill
-        std::unique_ptr<glm::vec4[]> _colors;
+        std::span<glm::vec4> _colors;
         FillType _fillType { FillType::SOLID };
         u32 _colorCount { 0 };
         f32
@@ -95,11 +95,10 @@ namespace RetroFuturaGUI
         u32 _shaderFeatureDIP { 0 };
         u32 _windowBackgroundTextureID { 0 };
         f32 _borderWidth { 5.0f };
-        glm::vec4 _borderColor { 0.5f };
         RectangleMode _rectangleMode { RectangleMode::PLANE };
         
         void setupMesh();
-        void initBasic(std::span<const glm::vec4> colors);
+        void initBasic(std::span<glm::vec4> colors);
         void drawWithSolidFill();
         void drawWithGradientFill();
         void drawSolidBorder();

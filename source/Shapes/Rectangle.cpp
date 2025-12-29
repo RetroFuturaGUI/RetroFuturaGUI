@@ -1,41 +1,21 @@
 #include "Rectangle.hpp"
 #include <print>
 
-RetroFuturaGUI::Rectangle::Rectangle(const GeometryParams2D& geometry, const glm::vec4& color, const RectangleMode rectangleMode)
+/*RetroFuturaGUI::Rectangle::Rectangle(const GeometryParams2D& geometry, glm::vec4& color, const RectangleMode rectangleMode)
     : _projection(const_cast<Projection&>(geometry._Projection)), _rectangleMode(rectangleMode)
 {
     setupMesh();
-    initBasic(std::span<const glm::vec4>(&color, 1));
+    initBasic(color);
     SetSize(geometry._Size);
     SetPosition(geometry._Position);
     SetRotation(geometry._Rotation);
-}
+}*/
 
 RetroFuturaGUI::Rectangle::Rectangle(const GeometryParams2D &geometry, std::span<glm::vec4> colors, const RectangleMode rectangleMode)
     : _projection(const_cast<Projection&>(geometry._Projection)), _rectangleMode(rectangleMode)
 {
     setupMesh();
     initBasic(colors);
-
-    if(colors.size() > 1)
-    {
-        switch(_rectangleMode)
-        {
-            case RectangleMode::BORDER:
-                ShaderManager::GetBorderFillGradientShader().UseProgram();
-                ShaderManager::GetBorderFillGradientShader().SetUniformVec4("uColors", &_colors[0][0], 255);
-                ShaderManager::GetBorderFillGradientShader().SetUniformFloat("uDegree", _gradientDegree);
-                ShaderManager::GetBorderFillGradientShader().SetUniformInt("uNumColors", _colorCount);
-            break;
-            default:
-                ShaderManager::GetFillGradientShader().UseProgram();
-                ShaderManager::GetFillGradientShader().SetUniformVec4("uColors", &_colors[0][0], 255);
-                ShaderManager::GetFillGradientShader().SetUniformFloat("uDegree", _gradientDegree);
-                ShaderManager::GetFillGradientShader().SetUniformInt("uNumColors", _colorCount);
-        }
-
-    }
-
     SetSize(geometry._Size);
     SetPosition(geometry._Position);
     SetRotation(geometry._Rotation);
@@ -99,9 +79,9 @@ void RetroFuturaGUI::Rectangle::SetPosition(const glm::vec2& position)
     _translationMatrix = glm::translate(glm::mat4(1.0f), glm::vec3(_position, 0.0f));
 }
 
-void RetroFuturaGUI::Rectangle::SetColor(const glm::vec4 &color)
+void RetroFuturaGUI::Rectangle::SetColor(std::span<glm::vec4> color)
 {
-    _colors[0] = color;
+    initBasic(color);
 }
 
 glm::vec4 RetroFuturaGUI::Rectangle::GetColor() const
@@ -109,7 +89,7 @@ glm::vec4 RetroFuturaGUI::Rectangle::GetColor() const
     return _colors[0];
 }
 
-void RetroFuturaGUI::Rectangle::SetCornerRadii(const glm::vec4 &radii)
+void RetroFuturaGUI::Rectangle::SetCornerRadii(const glm::vec4& radii)
 {
     _cornerRadii = radii;
 
@@ -184,14 +164,11 @@ void RetroFuturaGUI::Rectangle::setupMesh()
     glBindVertexArray(0);
 }
 
-void RetroFuturaGUI::Rectangle::initBasic(std::span<const glm::vec4> colors)
+void RetroFuturaGUI::Rectangle::initBasic(std::span<glm::vec4> colors)
 {
-    _colorCount = colors.size();
+    _colors = colors;
+    _colorCount = _colors.size();
     _fillType = _colorCount > 1 ? FillType::GRADIENT : FillType::SOLID;
-
-    _colors = std::make_unique<glm::vec4[]>(_colorCount);
-    for (u32 i = 0; i < colors.size(); ++i)
-        _colors[i] = colors[i];
 }
 
 void RetroFuturaGUI::Rectangle::drawWithSolidFill()
@@ -229,6 +206,9 @@ void RetroFuturaGUI::Rectangle::drawWithGradientFill()
         _gradientDegree = 0.0f;
 
     ShaderManager::GetFillGradientShader().UseProgram();
+    ShaderManager::GetFillGradientShader().SetUniformVec4("uColors", &_colors[0][0], 255);
+    ShaderManager::GetFillGradientShader().SetUniformFloat("uDegree", _gradientDegree);
+    ShaderManager::GetFillGradientShader().SetUniformInt("uNumColors", _colorCount);
     ShaderManager::GetFillGradientShader().SetUniformInt("uDIP", _shaderFeatureDIP);
     ShaderManager::GetFillGradientShader().SetUniformMat4("uProjection", _projection.GetProjectionMatrix());
     ShaderManager::GetFillGradientShader().SetUniformMat4("uPosition", _translationMatrix);
@@ -283,6 +263,9 @@ void RetroFuturaGUI::Rectangle::drawGradientBorder()
         _gradientDegree = 0.0f;
 
     ShaderManager::GetBorderFillGradientShader().UseProgram();
+    ShaderManager::GetBorderFillGradientShader().SetUniformVec4("uColors", &_colors[0][0], 255);
+    ShaderManager::GetBorderFillGradientShader().SetUniformFloat("uDegree", _gradientDegree);
+    ShaderManager::GetBorderFillGradientShader().SetUniformInt("uNumColors", _colorCount);
     ShaderManager::GetBorderFillGradientShader().SetUniformInt("uDIP", _shaderFeatureDIP);
     ShaderManager::GetBorderFillGradientShader().SetUniformMat4("uProjection", _projection.GetProjectionMatrix());
     ShaderManager::GetBorderFillGradientShader().SetUniformMat4("uPosition", _translationMatrix);
@@ -305,11 +288,6 @@ void RetroFuturaGUI::Rectangle::drawGradientBorder()
 void RetroFuturaGUI::Rectangle::SetBorderWidth(const f32 width)
 {
     _borderWidth = width;
-}
-
-void RetroFuturaGUI::Rectangle::SetBorderColor(const glm::vec4& color)
-{
-    _borderColor = color;
 }
 
 void RetroFuturaGUI::Rectangle::SetRectangleMode(const RectangleMode rectanlgeMode)
