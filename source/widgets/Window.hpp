@@ -25,6 +25,7 @@ namespace RetroFuturaGUI
         i32 GetBackgroundImageId() const;
         GLFWwindow* GetGlfwWindow() const;
         Projection* GetProjection() const;
+        WindowBar& GetWindowBar();
 
     private:
         enum class ResizeEdge : u32
@@ -105,5 +106,6 @@ namespace RetroFuturaGUI
         static void setAbsoluteCursorPosition(Window* self);
         void toggleMaximize();
         void updateProjection();
+        void setupWindowBar();
     };
 }

@@ -69,28 +69,8 @@ void RetroFuturaGUI::Window::createWindow()
 		shadersInitialized = true;
 	}
 
-
 	_projection = std::make_unique<Projection>((float)_width, (float)_height);
-	std::string windowBarName = _name + "/WindowBar";
-	IdentityParams identityWB = { windowBarName, this, WidgetTypeID::WindowBar, _window };
-	GeometryParams2D geometryWB = { *_projection, glm::vec2(0.0f), glm::vec2(0.0f), 0.0f };
-
-	_windowBar = std::make_unique<WindowBar>(identityWB, geometryWB, glm::vec4(0.5f, 0.0f, 1.0f, 1.0f));
-	_windowBar->ConnectMaximizeCallback([this]() { toggleMaximize(); });
-	_windowBar->SetElementBackgroundColor(glm::vec4(0.5f, 0.0f, 1.0f, 0.65f), ColorSetState::Enabled, WindowBar::ElementType::Title);
-	_windowBar->SetElementBackgroundColor(glm::vec4(1.0f, 0.1f, 0.1f, 0.65f), ColorSetState::Enabled, WindowBar::ElementType::CloseButton);
-	_windowBar->SetElementBackgroundColor(glm::vec4(1.0f, 0.2f, 0.2f, 0.65f), ColorSetState::Hover, WindowBar::ElementType::CloseButton);
-	_windowBar->SetElementBackgroundColor(glm::vec4(1.0f, 0.3f, 0.3f, 0.75f), ColorSetState::Clicked, WindowBar::ElementType::CloseButton);
-	_windowBar->SetElementBackgroundColor(glm::vec4(0.5f, 0.5f, 0.5f, 0.75f), ColorSetState::Enabled, WindowBar::ElementType::MaximizeButton);
-	_windowBar->SetElementBackgroundColor(glm::vec4(0.7f, 0.7f, 0.7f, 0.75f), ColorSetState::Hover, WindowBar::ElementType::MaximizeButton);
-	_windowBar->SetElementBackgroundColor(glm::vec4(0.8f, 0.8f, 0.8f, 0.85f), ColorSetState::Clicked, WindowBar::ElementType::MaximizeButton);
-	_windowBar->SetElementBackgroundColor(glm::vec4(0.5f, 0.5f, 0.5f, 0.75f), ColorSetState::Enabled, WindowBar::ElementType::MinimizeButton);
-	_windowBar->SetElementBackgroundColor(glm::vec4(0.7f, 0.7f, 0.7f, 0.75f), ColorSetState::Hover, WindowBar::ElementType::MinimizeButton);
-	_windowBar->SetElementBackgroundColor(glm::vec4(0.8f, 0.8f, 0.8f, 0.85f), ColorSetState::Clicked, WindowBar::ElementType::MinimizeButton);
-	_windowBar->SetButtonCornerRadii(glm::vec4(10.0f), WindowBar::ElementType::CloseButton);
-	_windowBar->SetButtonCornerRadii(glm::vec4(10.0f), WindowBar::ElementType::MaximizeButton);
-	_windowBar->SetButtonCornerRadii(glm::vec4(10.0f), WindowBar::ElementType::MinimizeButton);
-	_windowBar->SetWindowTitle(_windowTitle);
+	setupWindowBar();
 }
 
 void RetroFuturaGUI::Window::cursorPositionCallback(GLFWwindow *window, f64 xpos, f64 ypos)
@@ -450,4 +430,19 @@ GLFWwindow* RetroFuturaGUI::Window::GetGlfwWindow() const
 RetroFuturaGUI::Projection* RetroFuturaGUI::Window::GetProjection() const
 {
     return &*_projection;
+}
+
+RetroFuturaGUI::WindowBar& RetroFuturaGUI::Window::GetWindowBar()
+{
+	return *_windowBar;
+}
+
+void RetroFuturaGUI::Window::setupWindowBar()
+{
+	std::string windowBarName = _name + "/WindowBar";
+	IdentityParams identityWB = { windowBarName, this, WidgetTypeID::WindowBar, _window };
+	GeometryParams2D geometryWB = { *_projection, glm::vec2(0.0f), glm::vec2(0.0f), 0.0f };
+	_windowBar = std::make_unique<WindowBar>(identityWB, geometryWB, glm::vec4(0.5f, 0.0f, 1.0f, 1.0f), WindowBarPosition::Top);
+	_windowBar->ConnectMaximizeCallback([this]() { toggleMaximize(); });
+	_windowBar->SetWindowTitle(_windowTitle);
 }
