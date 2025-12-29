@@ -70,6 +70,7 @@ namespace RetroFuturaGUI
             _minimize,
             _maximize,
             _close;
+        std::vector<glm::vec4> _backgroundColors { glm::vec4(1.0f) };
         
         //logic
         bool _windowShouldClose { false };

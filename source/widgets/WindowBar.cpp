@@ -1,7 +1,7 @@
 #include "WindowBar.hpp"
 #include "Window.hpp"
 
-RetroFuturaGUI::WindowBar::WindowBar(const IdentityParams &identity, GeometryParams2D &geometry, const glm::vec4 &color, const WindowBarPosition wbPosition)
+RetroFuturaGUI::WindowBar::WindowBar(const IdentityParams &identity, GeometryParams2D &geometry, const glm::vec4& color, const WindowBarPosition wbPosition)
     : IWidget(identity, geometry), _projection(const_cast<Projection&>(geometry._Projection)), _windowBarPosition(wbPosition)
 {   
     _position = calculateWindowBarPosition(geometry._Position);
@@ -14,7 +14,9 @@ RetroFuturaGUI::WindowBar::WindowBar(const IdentityParams &identity, GeometryPar
         _size,
         0.0f
     };
-    _background = std::make_unique<Rectangle>(geometryAdv, color);
+
+    _backgroundColors.resize(1, color);
+    _background = std::make_unique<Rectangle>(geometryAdv, _backgroundColors, RectangleMode::PLANE);
 
     GeometryParams2D geometryButton{
         geometry._Projection,
@@ -25,7 +27,7 @@ RetroFuturaGUI::WindowBar::WindowBar(const IdentityParams &identity, GeometryPar
 
     IdentityParams identityCloseButton
     {
-        "testWindowBarClosw",
+        "testWindowBarClose",
         this,
         WidgetTypeID::WindowBar,
         _parentWindow
@@ -48,7 +50,7 @@ RetroFuturaGUI::WindowBar::WindowBar(const IdentityParams &identity, GeometryPar
         2.0f
     };
 
-    _close = std::make_unique<Button>(identityCloseButton, geometryButton, textParams, borderParams);
+    _close = std::make_unique<Button>(identityCloseButton, geometryButton, textParams, 2.0f);
     _close->SetBackgroundColor(glm::vec4(1.0f, 0.4f, 0.4f, 1.0f), ColorSetState::Enabled);
     _close->Connect_OnClick([this]() { windowShouldCloseCallback(); }, false);
 
@@ -78,7 +80,7 @@ RetroFuturaGUI::WindowBar::WindowBar(const IdentityParams &identity, GeometryPar
         3.0f
     };
 
-    _maximize = std::make_unique<Button>(identityMaximize, geometryButtonMaximize, textParamsMaximize, borderParams);
+    _maximize = std::make_unique<Button>(identityMaximize, geometryButtonMaximize, textParamsMaximize, 0.2f);
 
     IdentityParams identityMinimize
     {
@@ -106,7 +108,7 @@ RetroFuturaGUI::WindowBar::WindowBar(const IdentityParams &identity, GeometryPar
         3.0f
     };
 
-    _minimize = std::make_unique<Button>(identityMinimize, geometryButtonMinimize, textParamsMinimize, borderParams);
+    _minimize = std::make_unique<Button>(identityMinimize, geometryButtonMinimize, textParamsMinimize, 0.2f);
     _minimize->Connect_OnClick([this]() { minimizeWindowCallback(_parentWindow); }, false);
 
     TextParams textParamsTitle = 
@@ -295,7 +297,7 @@ void RetroFuturaGUI::WindowBar::ConnectMaximizeCallback(const std::function<void
     _maximize->Connect_OnClick(callback, false);
 }
 
-void RetroFuturaGUI::WindowBar::SetElementBackgroundColor(const glm::vec4 &color, const ColorSetState state, const ElementType elementType)
+void RetroFuturaGUI::WindowBar::SetElementBackgroundColor(const glm::vec4& color, const ColorSetState state, const ElementType elementType)
 {
     switch(elementType)
     {
@@ -312,7 +314,9 @@ void RetroFuturaGUI::WindowBar::SetElementBackgroundColor(const glm::vec4 &color
             //todo
         break;
         case ElementType::Title:
-            _background->SetColor(color);
+            _backgroundColors.clear();
+            _backgroundColors.resize(1, color);
+            _background->SetColor(_backgroundColors);
         break;
         case ElementType::Icon:
             //todo
@@ -337,7 +341,7 @@ void RetroFuturaGUI::WindowBar::SetElementTextColor(const glm::vec4 &color, cons
             //todo
         break;
         case ElementType::Title:
-            _background->SetColor(color);
+            _windowTitle->SetColor(color);
         break;
         case ElementType::Icon:
             //todo
