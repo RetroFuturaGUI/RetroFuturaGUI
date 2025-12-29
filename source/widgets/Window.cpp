@@ -48,10 +48,8 @@ void RetroFuturaGUI::Window::createWindow()
 
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-	glViewport(0, 0, _width, _height);
-
 	SetBackgroundColor(_backgroundColor);
+	glViewport(0, 0, _width, _height);
 
 	if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
     {
@@ -63,7 +61,6 @@ void RetroFuturaGUI::Window::createWindow()
 	glfwSetMouseButtonCallback(_window, mouseButtonClickedCallback);
 	glfwSetWindowFocusCallback(_window, windowFocusCallback);
 	glfwSetWindowUserPointer(_window, this);
-
 
 	static bool shadersInitialized = false;
 	if (!shadersInitialized)		
@@ -284,7 +281,6 @@ void RetroFuturaGUI::Window::drag()
 	glm::vec2 delta = currentPos - _dragStartPos;
 	i32 newPosX = _windowDragStartPos.x + (i32)delta.x;
 	i32 newPosY = _windowDragStartPos.y + (i32)delta.y;
-
 	moveWindow(newPosX, newPosY);
 }
 
@@ -374,7 +370,8 @@ bool RetroFuturaGUI::Window::WindowShouldClose()
 
 void RetroFuturaGUI::Window::Draw()
 {
-	glClearColor(_backgroundColor.r, _backgroundColor.g, _backgroundColor.b, _backgroundColor.a); // Opaque white background
+	glClearColor(_backgroundColor.r, _backgroundColor.g, _backgroundColor.b, _backgroundColor.a);
+	glClear(GL_COLOR_BUFFER_BIT);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glfwWindowHint(GLFW_TRANSPARENT_FRAMEBUFFER, GLFW_FALSE);
 	glfwWindowHint(GLFW_ALPHA_BITS, 0); // Disable alpha bits if not needed
@@ -382,7 +379,9 @@ void RetroFuturaGUI::Window::Draw()
 	if(_windowSizeChanged)
 		updateProjection();
 
-	_backgroundImage->Draw();
+	if(_backgroundImage)
+		_backgroundImage->Draw();
+
 	_grid->Draw(false);
 	_windowBar->Draw();
 	glfwSwapBuffers(_window);
@@ -431,6 +430,8 @@ void RetroFuturaGUI::Window::SetBackgroundImage(std::string_view imagePath)
 	_windowBar->SetElementBackgroundImageTextureID(_backgroundImage->GetTextureID(), WindowBar::ElementType::CloseButton);
 	_windowBar->SetElementBackgroundImageTextureID(_backgroundImage->GetTextureID(), WindowBar::ElementType::MaximizeButton);
 	_windowBar->SetElementBackgroundImageTextureID(_backgroundImage->GetTextureID(), WindowBar::ElementType::MinimizeButton);
+
+	_testRect->SetWindowBackgroundImageTextureID(_backgroundImage->GetTextureID());
 }
 
 void RetroFuturaGUI::Window::SetGrid(Grid2d* grid)
