@@ -9,9 +9,9 @@ namespace RetroFuturaGUI
     enum WindowBarPosition : u32
     {
         Top,
-        Left,
-        Bottom,
-        Right
+        //Left,
+        Bottom
+        //Right
     };
 
     enum WindowBorderDecoration : u32

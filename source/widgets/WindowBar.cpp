@@ -173,11 +173,11 @@ glm::vec2 RetroFuturaGUI::WindowBar::calculateWindowBarPosition(const glm::vec2 
     case WindowBarPosition::Bottom:
         y = _windowBarThiccness * 0.5f;
     break;
-    case WindowBarPosition::Left:
+    /*case WindowBarPosition::Left:
         x = _windowBarThiccness * 0.5f;
     break;
     case WindowBarPosition::Right:
-        x = _projection.GetResolution().x - _windowBarThiccness * 0.5f;
+        x = _projection.GetResolution().x - _windowBarThiccness * 0.5f;*/
     default: //Top
         y = _projection.GetResolution().y - _windowBarThiccness * 0.5f;
     }
@@ -187,8 +187,8 @@ glm::vec2 RetroFuturaGUI::WindowBar::calculateWindowBarPosition(const glm::vec2 
 
 glm::vec2 RetroFuturaGUI::WindowBar::calculateWindowBarSize(const glm::vec2 &size)
 {
-    return glm::vec2(_windowBarPosition == WindowBarPosition::Top || _windowBarPosition == WindowBarPosition::Bottom ? _projection.GetResolution().x : _windowBarThiccness,
-                     _windowBarPosition == WindowBarPosition::Left || _windowBarPosition == WindowBarPosition::Right ? _projection.GetResolution().y : _windowBarThiccness);
+    return glm::vec2(_windowBarPosition == WindowBarPosition::Top || _windowBarPosition == WindowBarPosition::Bottom ? _projection.GetResolution().x : _windowBarThiccness/*,
+                     _windowBarPosition == WindowBarPosition::Left || _windowBarPosition == WindowBarPosition::Right ? _projection.GetResolution().y : _windowBarThiccness*/, _windowBarThiccness);
 }
 
 glm::vec2 RetroFuturaGUI::WindowBar::calculateElementPosition(const glm::vec2 &position, const ElementType elementType)
@@ -227,11 +227,11 @@ glm::vec2 RetroFuturaGUI::WindowBar::calculateElementPosition(const glm::vec2 &p
             case WindowBarPosition::Bottom:
                 y = _windowBarThiccness * 0.5f;
             break;
-            case WindowBarPosition::Left:
+            /*case WindowBarPosition::Left:
                 x = _windowBarThiccness * 0.5f;
             break;
             case WindowBarPosition::Right:
-                x = _projection.GetResolution().x - _windowBarThiccness * 0.5f;
+                x = _projection.GetResolution().x - _windowBarThiccness * 0.5f;*/
             default: //Top
                 y = _projection.GetResolution().y - _windowBarThiccness * 0.5f;
             }
@@ -247,11 +247,11 @@ glm::vec2 RetroFuturaGUI::WindowBar::calculateElementPosition(const glm::vec2 &p
             case WindowBarPosition::Bottom:
                 y = _windowBarThiccness * 0.5f;
             break;
-            case WindowBarPosition::Left:
+            /*case WindowBarPosition::Left:
                 x = _windowBarThiccness * 0.5f;
             break;
             case WindowBarPosition::Right:
-                x = _projection.GetResolution().x - _windowBarThiccness * 0.5f;
+                x = _projection.GetResolution().x - _windowBarThiccness * 0.5f;*/
             default: //Top
                 y = _projection.GetResolution().y - _windowBarThiccness * 0.5f;
             }
@@ -268,11 +268,11 @@ glm::vec2 RetroFuturaGUI::WindowBar::calculateElementPosition(const glm::vec2 &p
             case WindowBarPosition::Bottom:
                 y = _windowBarThiccness * 0.5f;
             break;
-            case WindowBarPosition::Left:
+            /*case WindowBarPosition::Left:
                 x = _windowBarThiccness * 0.5f;
             break;
             case WindowBarPosition::Right:
-                x = _projection.GetResolution().x - _windowBarThiccness * 0.5f;
+                x = _projection.GetResolution().x - _windowBarThiccness * 0.5f;*/
             default: //Top
                 y = _projection.GetResolution().y - _windowBarThiccness * 0.5f;
             }
@@ -416,10 +416,10 @@ bool RetroFuturaGUI::WindowBar::IsPointInside(const f32 pointX, const f32 pointY
                     _projection.GetResolution().y - pointY >= _position.y - _size.y * 0.5f &&
                     _projection.GetResolution().y - pointY <= _position.y + _size.y * 0.5f);
         }
-        case WindowBarPosition::Left:
+        /*case WindowBarPosition::Left:
         case WindowBarPosition::Right:
         {
             //todo
-        }
+        }*/
     }
 }
