@@ -51,8 +51,12 @@ RetroFuturaGUI::WindowBar::WindowBar(const IdentityParams &identity, GeometryPar
     };
 
     _close = std::make_unique<Button>(identityCloseButton, geometryButton, textParams, 2.0f);
-    _close->SetBackgroundColor(glm::vec4(1.0f, 0.4f, 0.4f, 1.0f), ColorSetState::Enabled);
-    _close->Connect_OnClick([this]() { windowShouldCloseCallback(); }, false);
+    
+    if(_close)
+    {
+        _close->SetBackgroundColor(glm::vec4(1.0f, 0.4f, 0.4f, 1.0f), ColorSetState::Enabled);
+        _close->Connect_OnClick([this]() { windowShouldCloseCallback(); }, false);
+    }
 
     IdentityParams identityMaximize
     {
@@ -109,7 +113,9 @@ RetroFuturaGUI::WindowBar::WindowBar(const IdentityParams &identity, GeometryPar
     };
 
     _minimize = std::make_unique<Button>(identityMinimize, geometryButtonMinimize, textParamsMinimize, 0.2f);
-    _minimize->Connect_OnClick([this]() { minimizeWindowCallback(_parentWindow); }, false);
+   
+    if(_minimize)
+        _minimize->Connect_OnClick([this]() { minimizeWindowCallback(_parentWindow); }, false);
 
     TextParams textParamsTitle = 
     {
@@ -134,11 +140,20 @@ RetroFuturaGUI::WindowBar::WindowBar(const IdentityParams &identity, GeometryPar
 
 void RetroFuturaGUI::WindowBar::Draw()
 {
-    _background->Draw();
-    _close->Draw();
-    _maximize->Draw();
-    _minimize->Draw();
-    _windowTitle->Draw();
+    if(_background)
+        _background->Draw();
+
+    if(_close)
+        _close->Draw();
+    
+    if(_maximize)
+        _maximize->Draw();
+    
+    if(_minimize)
+        _minimize->Draw();
+    
+    if(_windowTitle)
+        _windowTitle->Draw();
 }
 
 bool RetroFuturaGUI::WindowBar::WindowShouldClose()
@@ -150,13 +165,27 @@ void RetroFuturaGUI::WindowBar::Resize()
 {
     _size = calculateWindowBarSize(_size);
     _position = calculateWindowBarPosition(_position);
-    _background->SetSize(_size);
-    _background->SetPosition(_position);
-    _close->SetPosition(calculateElementPosition(_position, ElementType::CloseButton));
-    _maximize->SetPosition(calculateElementPosition(_position, ElementType::MaximizeButton));
-    _minimize->SetPosition(calculateElementPosition(_position, ElementType::MinimizeButton));
-    glm::vec2 titlePosition = calculateElementPosition(_position, ElementType::Title);
-    _windowTitle->SetPosition(titlePosition);
+    
+    if(_background)
+    {
+        _background->SetSize(_size);
+        _background->SetPosition(_position);
+    }
+
+    if(_close)
+        _close->SetPosition(calculateElementPosition(_position, ElementType::CloseButton));
+    
+    if(_maximize)
+        _maximize->SetPosition(calculateElementPosition(_position, ElementType::MaximizeButton));
+    
+    if(_minimize)
+        _minimize->SetPosition(calculateElementPosition(_position, ElementType::MinimizeButton));
+
+    if(_windowTitle)
+    {
+        glm::vec2 titlePosition = calculateElementPosition(_position, ElementType::Title);
+        _windowTitle->SetPosition(titlePosition);
+    }
 }
 
 glm::vec2 RetroFuturaGUI::WindowBar::calculateWindowBarPosition(const glm::vec2 &position)
@@ -294,7 +323,8 @@ RetroFuturaGUI::MaximizeState RetroFuturaGUI::WindowBar::GetMaximizeState()
 
 void RetroFuturaGUI::WindowBar::ConnectMaximizeCallback(const std::function<void()> &callback)
 {
-    _maximize->Connect_OnClick(callback, false);
+    if(_maximize)
+        _maximize->Connect_OnClick(callback, false);
 }
 
 void RetroFuturaGUI::WindowBar::SetElementBackgroundColor(const glm::vec4& color, const ColorSetState state, const ElementType elementType)
@@ -302,18 +332,24 @@ void RetroFuturaGUI::WindowBar::SetElementBackgroundColor(const glm::vec4& color
     switch(elementType)
     {
         case ElementType::CloseButton:
-            _close->SetBackgroundColor(color, state);
+            if(_close)
+                _close->SetBackgroundColor(color, state);
         break;
         case ElementType::MaximizeButton:
-            _maximize->SetBackgroundColor(color, state);
+            if(_maximize)
+                _maximize->SetBackgroundColor(color, state);
         break;
         case ElementType::MinimizeButton:
-            _minimize->SetBackgroundColor(color, state);
+            if(_minimize)
+                _minimize->SetBackgroundColor(color, state);
         break;
         case ElementType::NoDockingDrag:
             //todo
         break;
         case ElementType::Title:
+            if(!_background)
+                break;
+
             _backgroundColors.clear();
             _backgroundColors.resize(1, color);
             _background->SetColor(_backgroundColors);
@@ -329,19 +365,23 @@ void RetroFuturaGUI::WindowBar::SetElementTextColor(const glm::vec4 &color, cons
     switch(elementType)
     {
         case ElementType::CloseButton:
-            _close->SetTextColor(color, state);
+            if(_close)
+                _close->SetTextColor(color, state);
         break;
         case ElementType::MaximizeButton:
-            _maximize->SetTextColor(color, state);
+            if(_maximize)
+                _maximize->SetTextColor(color, state);
         break;
         case ElementType::MinimizeButton:
-            _minimize->SetTextColor(color, state);
+            if(_minimize)
+                _minimize->SetTextColor(color, state);
         break;
         case ElementType::NoDockingDrag:
             //todo
         break;
         case ElementType::Title:
-            _windowTitle->SetColor(color);
+            if(_windowTitle)
+                _windowTitle->SetColor(color);
         break;
         case ElementType::Icon:
             //todo
@@ -354,19 +394,23 @@ void RetroFuturaGUI::WindowBar::SetElementBackgroundImageTextureID(const u32 tex
     switch(elementType)
     {
         case ElementType::CloseButton:
-            _close->SetWindowBackgroundImageTextureID(textureID);
+            if(_close)
+                _close->SetWindowBackgroundImageTextureID(textureID);
         break;
         case ElementType::MaximizeButton:
-            _maximize->SetWindowBackgroundImageTextureID(textureID);
+            if(_maximize)
+                _maximize->SetWindowBackgroundImageTextureID(textureID);
         break;
         case ElementType::MinimizeButton:
-            _minimize->SetWindowBackgroundImageTextureID(textureID);
+            if(_minimize)
+                _minimize->SetWindowBackgroundImageTextureID(textureID);
         break;
         case ElementType::NoDockingDrag:
             //todo
         break;
         case ElementType::Title:
-            _background->SetWindowBackgroundImageTextureID(textureID);
+            if(_background)
+                _background->SetWindowBackgroundImageTextureID(textureID);
         break;
         case ElementType::Icon:
             //todo
@@ -379,19 +423,25 @@ void RetroFuturaGUI::WindowBar::SetButtonCornerRadii(const glm::vec4 &radii, con
     switch(buttonType)
     {
         case ElementType::CloseButton:
-            _close->SetCornerRadii(radii);
+            if(_close)
+                _close->SetCornerRadii(radii);
         break;
         case ElementType::MaximizeButton:
-            _maximize->SetCornerRadii(radii);
+            if(_maximize)
+                _maximize->SetCornerRadii(radii);
         break;
         case ElementType::MinimizeButton:
-            _minimize->SetCornerRadii(radii);
+            if(_minimize)
+                _minimize->SetCornerRadii(radii);
         break;
     }
 }
 
 void RetroFuturaGUI::WindowBar::SetWindowTitle(std::string_view title)
 {
+    if(!_windowTitle)
+        return;
+
     _title = title;
     _windowTitle->SetText(_title);
     Resize(); //hotfix for dislocation when Text has been initialized with an empty string
