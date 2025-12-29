@@ -33,10 +33,9 @@ RetroFuturaGUI::Image2D::Image2D(const GeometryParams2D &geometry, std::string_v
     Move(geometry._Position);
     Rotate(geometry._Rotation);
 
-GLenum err;
-while ((err = glGetError()) != GL_NO_ERROR) {
-    std::println("OpenGL error: ", err);
-}
+    u32 err;
+    while ((err = glGetError()) != GL_NO_ERROR)
+        std::println("OpenGL error: ", err);
 }
 
 RetroFuturaGUI::Image2D::~Image2D()
@@ -99,6 +98,10 @@ void RetroFuturaGUI::Image2D::loadTexture()
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     _texture = std::make_unique<Texture>(_path, true);
+
+    if(!_texture)
+        return;
+        
     _colorChannelCount = _texture->GetColorChannelCount();
     _imageSize = _texture->GetResolution();
     u32 format = (_colorChannelCount == 4) ? GL_RGBA : GL_RGB;
