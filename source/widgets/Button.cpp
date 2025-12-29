@@ -20,57 +20,57 @@ void RetroFuturaGUI::Button::Draw()
 void RetroFuturaGUI::Button::Connect_OnClick(const typename Signal<>::Slot &slot, const bool async)
 {
     if (async)
-        _onClick.Connect(slot);
+        _onClickAsync.Connect(slot);
     else
-        _onClickAsync.Connect(slot); 
+        _onClick.Connect(slot); 
 }
 
 void RetroFuturaGUI::Button::Connect_OnRelease(const typename Signal<>::Slot &slot, const bool async)
 {
     if (async)
+        _onReleaseAsync.Connect(slot);
+    else 
         _onRelease.Connect(slot);
-    else
-        _onReleaseAsync.Connect(slot); 
 }
 
 void RetroFuturaGUI::Button::Connect_WhileHover(const typename Signal<>::Slot &slot, const bool async)
 {
     if (async)
-        _whileHover.Connect(slot);
+        _whileHoverAsync.Connect(slot);
     else
-        _whileHoverAsync.Connect(slot); 
+        _whileHover.Connect(slot);
 }
 
 void RetroFuturaGUI::Button::Connect_OnMouseEnter(const typename Signal<>::Slot &slot, const bool async)
 {
     if (async)
-        _onMouseEnter.Connect(slot);
+        _onMouseEnterAsync.Connect(slot);
     else
-        _onMouseEnterAsync.Connect(slot); 
+        _onMouseEnter.Connect(slot);
 }
 
 void RetroFuturaGUI::Button::Connect_OnMouseLeave(const typename Signal<>::Slot &slot, const bool async)
 {
     if (async)
-        _onMouseLeave.Connect(slot);
+        _onMouseLeaveAsync.Connect(slot);
     else
-        _onMouseLeaveAsync.Connect(slot); 
+        _onMouseLeave.Connect(slot);
 }
 
 void RetroFuturaGUI::Button::Connect_OnEnable(const typename Signal<>::Slot & slot, const bool async)
 {
     if (async)
-        _onEnable.Connect(slot);
+        _onEnableAsync.Connect(slot);
     else
-        _onEnableAsync.Connect(slot); 
+        _onEnable.Connect(slot);
 }
 
 void RetroFuturaGUI::Button::Connect_OnDisable(const typename Signal<>::Slot &slot, const bool async)
 {
     if (async)
-        _onDisable.Connect(slot);
+        _onDisableAsync.Connect(slot);
     else
-        _onDisableAsync.Connect(slot); 
+        _onDisable.Connect(slot);
 }
 
 void RetroFuturaGUI::Button::Disconnect_OnClick(const typename Signal<>::Slot &slot)
