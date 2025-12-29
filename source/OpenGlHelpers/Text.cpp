@@ -10,7 +10,7 @@ RetroFuturaGUI::Text::Text(const GeometryParams2D& geometry, const TextParams& t
     bind();
     Resize(textParams._GlyphSize);
     _position = geometry._Position;
-    Rotate(geometry._Rotation);
+    SetRotation(geometry._Rotation);
     calculateTextSpan();
     SetTextAlignment(_textAlignment);
 }
@@ -120,13 +120,18 @@ void RetroFuturaGUI::Text::SetPosition(const glm::vec2 &position)
     SetTextAlignment(_textAlignment);
 }
 
-void RetroFuturaGUI::Text::Rotate(const f32 rotation)
+void RetroFuturaGUI::Text::SetRotation(const f32 rotation)
 {
     _rotation = rotation;
-    _rotationMatrix = glm::rotate(glm::mat4(1.0f), glm::radians(_rotation), glm::vec3(0.0f, 0.0f, 1.0f));
+    float halfWidth = _textSpan.x * 0.5f;
+    float halfHeight = _textSpan.y * 0.5f;
+    _rotationMatrix =
+        glm::translate(glm::mat4(1.0f), glm::vec3(halfWidth, halfHeight, 0.0f)) *            // translate to the center
+        glm::rotate(glm::mat4(1.0f), glm::radians(_rotation), glm::vec3(0.0f, 0.0f, 1.0f)) * // Ractually tate
+        glm::translate(glm::mat4(1.0f), glm::vec3(-halfWidth, -halfHeight, 0.0f));           // translate back
 }
 
-void RetroFuturaGUI::Text::SetColor(const glm::vec4 &color)
+void RetroFuturaGUI::Text::SetColor(const glm::vec4& color)
 {
     _textColor = color;
 }

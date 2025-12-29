@@ -42,7 +42,7 @@ namespace RetroFuturaGUI
         void SetTextAlignment(TextAlignment textAlignment);
         void Resize(const glm::vec2& glyphSize);
         void SetPosition(const glm::vec2& position);
-        void Rotate(const f32 rotation);
+        void SetRotation(const f32 rotation);
         void SetColor(const glm::vec4& color);
         glm::vec4 GetColor() const;
         void SetText(std::string_view text);
