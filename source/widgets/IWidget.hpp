@@ -18,7 +18,7 @@ namespace RetroFuturaGUI
         glm::vec2 GetSize() const;
         virtual void SetPosition(const glm::vec2& position);
         glm::vec2 GetPosition() const;
-        void SetRotation(const f32 rotation);
+        virtual void SetRotation(const f32 rotation);
         f32 GetRotation() const;
         std::span<glm::vec4> GetBackgroundColors();
         void SetBackgroundColors(std::span<glm::vec4> backgroundColors);

@@ -359,6 +359,20 @@ void RetroFuturaGUI::Button::SetBorderGradientRotationSpeed(const f32 rotationSp
     _border->SetGradientRotationSpeed(rotationSpeed);
 }
 
+void RetroFuturaGUI::Button::SetRotation(const float rotation)
+{
+    _rotation = rotation;
+
+    if(_rectangle)
+        _rectangle->SetRotation(rotation);
+
+    if(_border)
+        _border->SetRotation(rotation);
+
+    if(_text)
+        _text->SetRotation(rotation);
+}
+
 void RetroFuturaGUI::Button::interact()
 {
     auto mousePos = InputManager::GetMousePositionInvertedY();

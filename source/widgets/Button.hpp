@@ -55,6 +55,7 @@ namespace RetroFuturaGUI
         void SetBorderGradientAnimationSpeed(const f32 animationSpeed);
         void SetBorderGradientDegree(const f32 degree);
         void SetBorderGradientRotationSpeed(const f32 rotationSpeed);
+        void SetRotation(const float rotation) override;
 
     private:
         //elements
