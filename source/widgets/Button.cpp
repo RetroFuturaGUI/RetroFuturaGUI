@@ -5,16 +5,25 @@ RetroFuturaGUI::Button::Button(const IdentityParams& identity, const GeometryPar
 {
     _rectangle = std::make_unique<Rectangle>(geometry, _backgroundColorEnabled, RectangleMode::PLANE);
     _border = std::make_unique<Rectangle>(geometry, _borderColorEnabled, RectangleMode::BORDER);
-    _border->SetBorderWidth(borderWidth);
+    
+    if(_border) 
+        _border->SetBorderWidth(borderWidth);
+
     _text = std::make_unique<Text>(geometry, textParams);
 }
 
 void RetroFuturaGUI::Button::Draw()
 {
     interact();
-    _rectangle->Draw();
-    _border->Draw();
-    _text->Draw();
+
+    if(_rectangle)
+        _rectangle->Draw();
+
+    if(_border)
+        _border->Draw();
+
+    if(_text)
+        _text->Draw();
 }
 
 void RetroFuturaGUI::Button::Connect_OnClick(const typename Signal<>::Slot &slot, const bool async)
@@ -315,48 +324,68 @@ std::vector<glm::vec4> RetroFuturaGUI::Button::GetLineBorderColor(const ColorSet
 void RetroFuturaGUI::Button::SetSize(const glm::vec2 &size)
 {
     IWidget::SetSize(size);
-    _rectangle->SetSize(size);
-    _border->SetSize(size);
-    //_text->Resize(size); //add extra text resizing logic
+
+    if(_rectangle)
+        _rectangle->SetSize(size);
+
+    if(_border)
+        _border->SetSize(size);
+
+    //if(_text)    
+        //_text->Resize(size); //add extra text resizing logic
 }
 
 void RetroFuturaGUI::Button::SetPosition(const glm::vec2 &position)
 {
     IWidget::SetPosition(position);
-    _rectangle->SetPosition(position);
-    _border->SetPosition(position);
-    _text->SetPosition(position);
+
+    if(_rectangle)
+        _rectangle->SetPosition(position);
+
+    if(_border)
+        _border->SetPosition(position);
+
+    if(_text)
+        _text->SetPosition(position);
 }
 
 void RetroFuturaGUI::Button::SetCornerRadii(const glm::vec4 & radii)
 {
-    _rectangle->SetCornerRadii(radii);
-    _border->SetCornerRadii(radii);
+    if(_rectangle)
+        _rectangle->SetCornerRadii(radii);
+
+    if(_border)    
+        _border->SetCornerRadii(radii);
 }
 
 void RetroFuturaGUI::Button::SetWindowBackgroundImageTextureID(const u32 textureID)
 {
-    _rectangle->SetWindowBackgroundImageTextureID(textureID);
+    if(_rectangle)
+        _rectangle->SetWindowBackgroundImageTextureID(textureID);
 }
 
 void RetroFuturaGUI::Button::SetBorderGradientOffset(const f32 gradientOffset)
 {
-    _border->SetGradientOffset(gradientOffset);
+    if(_border) 
+        _border->SetGradientOffset(gradientOffset);
 }
 
 void RetroFuturaGUI::Button::SetBorderGradientAnimationSpeed(const f32 animationSpeed)
 {
-    _border->SetGradientAnimationSpeed(animationSpeed);
+    if(_border) 
+        _border->SetGradientAnimationSpeed(animationSpeed);
 }
 
 void RetroFuturaGUI::Button::SetBorderGradientDegree(const f32 degree)
 {
-    _border->SetGradientDegree(degree);
+    if(_border) 
+        _border->SetGradientDegree(degree);
 }
 
 void RetroFuturaGUI::Button::SetBorderGradientRotationSpeed(const f32 rotationSpeed)
 {
-    _border->SetGradientRotationSpeed(rotationSpeed);
+    if(_border) 
+        _border->SetGradientRotationSpeed(rotationSpeed);
 }
 
 void RetroFuturaGUI::Button::SetRotation(const float rotation)
@@ -465,15 +494,18 @@ void RetroFuturaGUI::Button::setColors()
 
 void RetroFuturaGUI::Button::setBackgroundColorElement(std::vector<glm::vec4>& color)
 {
-    _rectangle->SetColor(color);
+    if(_rectangle) 
+        _rectangle->SetColor(color);
 }
 
 void RetroFuturaGUI::Button::setTextColorElement(const glm::vec4& color)
 {
-    _text->SetColor(color);
+    if(_text) 
+        _text->SetColor(color);
 }
 
 void RetroFuturaGUI::Button::setBorderColorElement(std::vector<glm::vec4>& color)
 {
-    _border->SetColor(color);
+    if(_border) 
+        _border->SetColor(color);
 }
