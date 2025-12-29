@@ -101,6 +101,9 @@ void RetroFuturaGUI::Grid2d::SetPosition(const glm::vec2 &position)
 
 void RetroFuturaGUI::Grid2d::drawDebugLines(const Grid2dCell &cell)
 {
+    if(!_debugBorder)
+        return;
+
     _debugBorder->SetPosition(glm::vec2(cell._PositionPixels.x + cell._SizePixels.x * 0.5f, _projection.GetResolution().y - (cell._PositionPixels.y + cell._SizePixels.y * 0.5f)));
     _debugBorder->SetSize(glm::vec2(cell._SizePixels.x, cell._SizePixels.y));
     _debugBorder->Draw();
