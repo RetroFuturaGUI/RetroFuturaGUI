@@ -24,6 +24,7 @@ namespace RetroFuturaGUI
         void SetBackgroundColors(std::span<glm::vec4> backgroundColors);
         std::string_view GetName() const;
         void SetName(std::string_view name);
+        WidgetTypeID GetWidgetTypeID() const;
 
         template<typename T> T* GetParentWidget() const
         {
@@ -34,7 +35,9 @@ namespace RetroFuturaGUI
         //identity
         std::string _name;
         void* _parent { nullptr };
-        WidgetTypeID _parentTypeID { WidgetTypeID::None };
+        WidgetTypeID 
+            _parentTypeID { WidgetTypeID::None },
+            _widgetTypeID { WidgetTypeID::None };
         GLFWwindow* _parentWindow { nullptr };
 
         //geometry
