@@ -1,6 +1,8 @@
 # RetroFuturaGUI
 
-RetroFuturaGUI is a signal-slot-based GUI framework written in C++. It is designed to maximize flexibility across multiple platforms. By compiling the framework's logic to a dynamic library, it is possible to use the framework with other languages as well. Last but not least, RetroFuturaGUI brings back many aesthetics of the past, as well as the present and future; hence its name.
+RetroFuturaGUI is a signal-slot-based GUI framework written in C++. It merges retro-inspired and modern aesthetics with backward/forward compatibility - hence its name.
+The framework is designed for cross-platform use, and its logic can be compiled into a dynamic library, making it accessible from other languages while ensuring compatibility with past, current, and future standards.
+
 
 ## Roadmap
 
@@ -13,7 +15,7 @@ RetroFuturaGUI is a signal-slot-based GUI framework written in C++. It is design
 | 5 | .bechaml 🥣 (**B**ased and **E**xtra **C**reamy **H**ollandaise **A**pplication **M**arkup **L**anguage) | 4 | | 
 | 6 | VS Code extension with project generator/manager | 5 | | 
 | 7 | Aesthetics: Flat Metro, Frutiger Aero (Win Vista/7, Wii, Wii U, Pikmin 3), Frutiger Metro, Y2K (F-Zero GX), Vaporwave, Outrun/Synthwave, Neumorphism, Glassmorphism/Liquid Glass, Comic/Anime/LoFi, ... | 6 | | 
-| 8 | Android (w/o Android Studio), MacOS, iOS support | 6 | | 
+| 8 | Android (without Android Studio), MacOS, iOS support | 6 | | 
 | 9 | dll/so/dylib compilation for C, Rust, Zig, Java, JavaScript, TypeScript, Go, Ruby, Lua, Swift, Carbon, Gleem (if it has evolved enough) | 6 | | 
 | 10 | gcn and wii support (libogc (devkitPro)) | 6 | | 
 | 11 | XBox series Support (all XBox consoles, not just the Series series, du'h) (DirectX), Direct X for Windows | 6 | | 
@@ -27,7 +29,9 @@ RetroFuturaGUI is a signal-slot-based GUI framework written in C++. It is design
 ### WIP in detail
 - Updating cmake
 - Widget ID manager
-
+- C#/.NET interface
+- Python interface
+- Replacing std::string and std::string_view with std::u8string and std::u8string_view
 
 ### ToDo
 - Text
@@ -41,9 +45,73 @@ RetroFuturaGUI is a signal-slot-based GUI framework written in C++. It is design
   - Icon
 - Window
   - Docking
-- Better Viewports mayhaps
+- Font Manager
+- Cursor Icon Manager
+- Animation Engine
+- Test Carbon compatibility
 
+#### Nice-to-have's
+- Better (relative) Viewports
+- Custom text renderer with many IANA character sets
+
+### Why?
+There are many C++ GUI frameworks available, but most come with one or more limitations: restrictive licensing, enforced use of proprietary containers, inflexible window layouts, limited design capabilities, or poor cross-platform support—often confined to C++ only.
+RetroFuturaGUI aims to break these barriers!
+
+### Implemented Features
+- Widgets
+  - Label
+    - Render text
+    - Align Text
+  - Button
+    - Shadered background and borders (solid, animated gradients)
+    - Corner Radii
+    - Signals
+      - onClick
+      - whileHover
+      - onMouseEnter
+      - onMouseLeave
+      - onRelease
+    - SetPosition, SetSize, SetRotation
+    - Image2D
+      - SetPosition, SetSize, SetRotation
+      - Supports most image formats
+    - Grid2D
+      - Align Widgets
+      - Widget Size Policies (const size, expand X, Y, X/Y)
+      - Debug Lines
+      - Row Definitions
+      - Column Defitions
+  - WindowBar
+    - Top, Bottom Position
+    - Close, Minimize, Maximize (all shadered)
+    - Window Title
+    - Shadered background
+  - Window
+    - Background image
+      - Background image ID can be used to create glass effects on widgets
+      - Resizeable
+      - Movable
+- Shaders
+  - Solid Fill
+    - Glass Effect
+    - Rounded corners
+  - Gradient Fill
+    - Animated (rotation, motion)
+    - up to 256 colors (RGBA)
+    - Glass Effect
+    - Rounded corners
+  - Texture
+  - Shader Manager
+- Input Manager
+- Cross Language Capabilities
+  - Widget ID Manager
+  - C#
+- Text Renderer
+  - Basic Text Renderer (ASCII)
+  - Solid color fill
 
 ### Known Bugs
 - Window.hpp/.cpp
   - glfwWindowHint(GLFW_TRANSPARENT_FRAMEBUFFER, GLFW_TRUE()) causes objects with transparency to show what's behind the window even if the background is completely opaque
+  - fix wrong reposition when resizing by grbbing the left edge or bottom-left corner
