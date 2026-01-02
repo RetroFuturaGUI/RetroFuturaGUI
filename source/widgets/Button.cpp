@@ -3,6 +3,7 @@
 RetroFuturaGUI::Button::Button(const IdentityParams& identity, const GeometryParams2D& geometry, const TextParams& textParams, const float borderWidth)
     : IWidget(identity, geometry)
 {
+    _widgetTypeID = WidgetTypeID::Button;
     _rectangle = std::make_unique<Rectangle>(geometry, _backgroundColorEnabled, RectangleMode::PLANE);
     _border = std::make_unique<Rectangle>(geometry, _borderColorEnabled, RectangleMode::BORDER);
     
