@@ -5,22 +5,22 @@ RetroFuturaGUI::Grid2d::Grid2d(const IdentityParams &identity, const GeometryPar
 {
     _grid.reserve(_maxCountPerAxis);
 
-    for(u32 i = 0; i < _maxCountPerAxis; ++i)
+    for(uSize i = 0; i < _maxCountPerAxis; ++i)
     {
         _grid.emplace_back();
         _grid.back().reserve(_maxCountPerAxis);
     }
 
-    for(u32 row = 0; row < _axisdefinition._RowDefinition.size(); ++row)
+    for(uSize row = 0; row < _axisdefinition._RowDefinition.size(); ++row)
     {
-        for(u32 column = 0; column < _axisdefinition._ColumnDefinition.size(); ++column)
+        for(uSize column = 0; column < _axisdefinition._ColumnDefinition.size(); ++column)
         {
             f32 posX = 0.0f, posY = 0.0f;
 
-            for(u32 i = 0; i < row; ++i)
+            for(uSize i = 0; i < row; ++i)
                 posX += _axisdefinition._RowDefinition[i];
 
-            for(u32 i = 0; i < column; ++i)
+            for(uSize i = 0; i < column; ++i)
                 posY += _axisdefinition._ColumnDefinition[i];
 
             _grid[row].push_back(Grid2dCell
@@ -111,16 +111,16 @@ void RetroFuturaGUI::Grid2d::drawDebugLines(const Grid2dCell &cell)
 
 void RetroFuturaGUI::Grid2d::resizeCells()
 {
-    for(u32 row = 0; row < _axisdefinition._RowDefinition.size(); ++row)
+    for(uSize row = 0; row < _axisdefinition._RowDefinition.size(); ++row)
     {
-        for(u32 column = 0; column < _axisdefinition._ColumnDefinition.size(); ++column)
+        for(uSize column = 0; column < _axisdefinition._ColumnDefinition.size(); ++column)
         {
             f32 posX = 0.0f, posY = 0.0f;
 
-            for(u32 i = 0; i < row; ++i)
+            for(uSize i = 0; i < row; ++i)
                 posX += _axisdefinition._RowDefinition[i] * _size.x;
 
-            for(u32 i = 0; i < column; ++i)
+            for(uSize i = 0; i < column; ++i)
                 posY += _axisdefinition._ColumnDefinition[i] * _size.y;
 
                 

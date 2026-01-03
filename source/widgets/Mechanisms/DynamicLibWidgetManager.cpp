@@ -10,13 +10,11 @@ void RetroFuturaGUI::DynamicLibWidgetManager::AddWidget(std::string_view id, IWi
 void RetroFuturaGUI::DynamicLibWidgetManager::ConnectSlot(const char *id, CallbackType callback, const i32 action, const bool async)
 {
     IWidget* widget { getWidgetPointer(id) };
-std::println("{}", reinterpret_cast<u64>(widget));
 
     if(!widget)
         return;
 
     WidgetTypeID widgetTypeID = widget->GetWidgetTypeID();
-std::println("{}", static_cast<u64>(widgetTypeID));
 
     switch (widgetTypeID)
     {

@@ -80,7 +80,7 @@ namespace RetroFuturaGUI
             _rotationMatrix { 0.0f };
 
         //text
-        const u32 ARRAY_LIMIT { 400 };
+        const uSize ARRAY_LIMIT { 400 };
         std::map<char, Character> _characters;
         u32 _textureArrayObj { 0 };
         std::vector<glm::mat4> _transforms;

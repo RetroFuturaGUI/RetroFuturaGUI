@@ -49,7 +49,7 @@ void RetroFuturaGUI::IWidget::SetBackgroundColors(std::span<glm::vec4> backgroun
 
     _backgroundColors = std::make_unique<glm::vec4[]>(_colorCount);
 
-    for (u32 i = 0; i < backgroundColors.size(); ++i)
+    for (uSize i = 0; i < backgroundColors.size(); ++i)
         _backgroundColors[i] = backgroundColors[i];
 }
 

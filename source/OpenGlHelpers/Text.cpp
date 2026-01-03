@@ -23,10 +23,12 @@ RetroFuturaGUI::Text::~Text()
 
 void RetroFuturaGUI::Text::Draw()
 {
-    f32 scale = _glyphSize.y * 0.00390625f;// equals dividing by 256.0f
-    f32 x = 0.0f;
-    f32 y = 0.0f;
-    f32 copyX = x;
+    f32 
+        scale { _glyphSize.y * _1emFraction }, // equals dividing by 256.0f
+        x = 0.0f,
+        y = 0.0f,
+        copyX = x;
+
     ShaderManager::GetTextFillShader().UseProgram();
     ShaderManager::GetTextFillShader().SetUniformVec3("textColor", _textColor);
     ShaderManager::GetTextFillShader().SetUniformMat4("uProjection", _projection.GetProjectionMatrix());
@@ -41,8 +43,7 @@ void RetroFuturaGUI::Text::Draw()
 
     u32 workingIndex = 0;
 
-    std::string::const_iterator c;
-    for (c = _text.begin(); c != _text.end(); ++c)
+    for (std::string::const_iterator c = _text.begin(); c != _text.end(); ++c)
     {
         Character ch = _characters[*c];
 
@@ -182,7 +183,7 @@ i32 RetroFuturaGUI::Text::initFontFace()
     glTexImage3D(GL_TEXTURE_2D_ARRAY, 0, GL_R8, 256, 256, 128, 0, GL_RED, GL_UNSIGNED_BYTE, 0);
 
     // load first 128 characters of ASCII set
-    for (unsigned char c = 0; c < 128; ++c)
+    for (uChar c = 0; c < 128; ++c)
     {
         if (FT_Load_Char(face, c, FT_LOAD_RENDER))
         {
@@ -220,7 +221,7 @@ i32 RetroFuturaGUI::Text::initFontFace()
     FT_Done_Face(face);
     FT_Done_FreeType(_ft);
 
-    for (u32 i = 0; i < ARRAY_LIMIT; ++i) 
+    for (uSize i = 0; i < ARRAY_LIMIT; ++i) 
     {
         _letterMap.push_back(0);
         _transforms.push_back(glm::mat4(1.0f));
