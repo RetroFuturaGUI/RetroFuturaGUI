@@ -22,7 +22,7 @@ namespace RetroFuturaGUI
         typedef void (*CallbackType)();
     }
 
-    class WidgetIdManager
+    class DynamicLibWidgetManager
     {
     public:
 
@@ -53,15 +53,15 @@ namespace RetroFuturaGUI
         }
 
     private:
-        WidgetIdManager() = default;
-        ~WidgetIdManager() = default;
-        WidgetIdManager(const WidgetIdManager&) = delete;
-        WidgetIdManager(WidgetIdManager&&) = delete;
-        void operator=(const WidgetIdManager&) = delete;
-        void operator=(WidgetIdManager&&) = delete;
-        static WidgetIdManager& GetInstance()
+        DynamicLibWidgetManager() = default;
+        ~DynamicLibWidgetManager() = default;
+        DynamicLibWidgetManager(const DynamicLibWidgetManager&) = delete;
+        DynamicLibWidgetManager(DynamicLibWidgetManager&&) = delete;
+        void operator=(const DynamicLibWidgetManager&) = delete;
+        void operator=(DynamicLibWidgetManager&&) = delete;
+        static DynamicLibWidgetManager& GetInstance()
         {
-            static WidgetIdManager Instance;
+            static DynamicLibWidgetManager Instance;
             return Instance;
         }
 
