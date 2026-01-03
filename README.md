@@ -49,6 +49,10 @@ The framework is designed for cross-platform use, and its logic can be compiled 
 - Cursor Icon Manager
 - Animation Engine
 - Test Carbon compatibility
+- Add more widget interactions to the DynamicLibWidgetManager
+  - SetRotation, SetPosition, SetSize
+  - Set Color/Decoration parameters
+- C++ modules once ALL common compilers (GCC, CLang, MSVC) support them
 
 #### Nice-to-have's
 - Better (relative) Viewports

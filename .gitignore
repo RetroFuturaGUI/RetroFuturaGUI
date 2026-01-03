@@ -1,1 +1,6 @@
 source/config.hpp
+*.cpp.txt
+*.hpp.txt
+FrutigerAero.png
+Line.*
+LineBorder.*
