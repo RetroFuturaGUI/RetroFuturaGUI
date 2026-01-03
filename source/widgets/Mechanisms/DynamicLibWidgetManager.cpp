@@ -9,35 +9,29 @@ void RetroFuturaGUI::DynamicLibWidgetManager::AddWidget(std::string_view id, IWi
 
 void RetroFuturaGUI::DynamicLibWidgetManager::ConnectSlot(const char *id, CallbackType callback, const i32 action, const bool async)
 {
-    //std::println("id: {}", id);
-
-    if(_metaWidgets.find(id) == _metaWidgets.end())
-        return;
-
-    auto widget = _metaWidgets[id];
+    IWidget* widget { getWidgetPointer(id) };
+std::println("{}", reinterpret_cast<u64>(widget));
 
     if(!widget)
         return;
 
     WidgetTypeID widgetTypeID = widget->GetWidgetTypeID();
+std::println("{}", static_cast<u64>(widgetTypeID));
 
     switch (widgetTypeID)
     {
         case WidgetTypeID::Button:
             connectSlotToButton(widget, callback, action, async);
         break;
-        case WidgetTypeID::Label:
-            connectSlotToLabel(widget, callback, action, async);
-        break;
+        /*case WidgetTypeID::Label:
+            connectSlotFromLabel(widget, callback, action, async);
+        break;*/
     }
 }
 
 void RetroFuturaGUI::DynamicLibWidgetManager::DisconnectSlot(const char *id, CallbackType callback, const i32 action)
 {
-    if(_metaWidgets.find(id) == _metaWidgets.end())
-        return;
-
-    auto widget = _metaWidgets[id];
+    IWidget* widget { getWidgetPointer(id) };
 
     if(!widget)
         return;
@@ -49,23 +43,38 @@ void RetroFuturaGUI::DynamicLibWidgetManager::DisconnectSlot(const char *id, Cal
         case WidgetTypeID::Button:
             disconnectSlotToButton(widget, callback, action);
         break;
-        case WidgetTypeID::Label:
-            disconnectSlotToLabel(widget, callback, action);
-        break;
+        /*case WidgetTypeID::Label:
+            disconnectSlotFromLabel(widget, callback, action);
+        break;*/
     }
 }
 
 void RetroFuturaGUI::DynamicLibWidgetManager::SetRotation(const char *id, const f32 degree)
 {
-    if(_metaWidgets.find(id) == _metaWidgets.end())
-        return;
-
-    auto widget = _metaWidgets[id];
+    IWidget* widget { getWidgetPointer(id) };
 
     if(!widget)
         return;
 
     widget->SetRotation(degree);
+}
+
+void RetroFuturaGUI::DynamicLibWidgetManager::SetSize(const char *id, const f32 width, const f32 height)
+{
+    IWidget* widget { getWidgetPointer(id) };
+
+    if(!widget)
+        return;
+
+    widget->SetSize(glm::vec2(width, height));
+}
+
+RetroFuturaGUI::IWidget* RetroFuturaGUI::DynamicLibWidgetManager::getWidgetPointer(const char *id)
+{
+    if(_metaWidgets.find(id) == _metaWidgets.end())
+        return nullptr;
+
+    return _metaWidgets[id];
 }
 
 void RetroFuturaGUI::DynamicLibWidgetManager::connectSlotToButton(IWidget *widget, CallbackType callback, const i32 action, const bool async)
@@ -94,7 +103,7 @@ void RetroFuturaGUI::DynamicLibWidgetManager::connectSlotToButton(IWidget *widge
     }
 }
 
-void RetroFuturaGUI::DynamicLibWidgetManager::connectSlotToLabel(IWidget *widget, CallbackType callback, const i32 action, const bool async)
+/*void RetroFuturaGUI::DynamicLibWidgetManager::connectSlotFromLabel(IWidget *widget, CallbackType callback, const i32 action, const bool async)
 {
     Label* label = dynamic_cast<Label*>(widget);
 
@@ -104,7 +113,7 @@ void RetroFuturaGUI::DynamicLibWidgetManager::connectSlotToLabel(IWidget *widget
         default:
             std::println("Warning: Action type of {0} is not compatible with Labels.", action);
     }
-}
+}*/
 
 void RetroFuturaGUI::DynamicLibWidgetManager::disconnectSlotToButton(IWidget *widget, CallbackType callback, const i32 action)
 {
@@ -132,7 +141,7 @@ void RetroFuturaGUI::DynamicLibWidgetManager::disconnectSlotToButton(IWidget *wi
     }
 }
 
-void RetroFuturaGUI::DynamicLibWidgetManager::disconnectSlotToLabel(IWidget *widget, CallbackType callback, const i32 action)
+/*void RetroFuturaGUI::DynamicLibWidgetManager::disconnectSlotFromLabel(IWidget *widget, CallbackType callback, const i32 action)
 {
     Label* label = dynamic_cast<Label*>(widget);
 
@@ -142,4 +151,4 @@ void RetroFuturaGUI::DynamicLibWidgetManager::disconnectSlotToLabel(IWidget *wid
         default:
             std::println("Warning: Action type of {0} is not compatible with Labels.", action);
     }
-}
+}*/

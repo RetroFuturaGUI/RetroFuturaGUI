@@ -12,7 +12,7 @@ namespace RetroFuturaGUI
     class Window// : public IWidget
     {
     public:
-        Window(std::string_view name, std::string_view windowTitle, i32 width, i32 height, void* parent = nullptr);
+        Window(std::string_view name, std::string_view windowTitle, const i32 width, const i32 height);
 
         bool WindowShouldClose();
         void Draw();
@@ -97,8 +97,8 @@ namespace RetroFuturaGUI
         static void cursorPositionCallback(GLFWwindow* window, f64 xpos, f64 ypos);
         void setCursorPosition();
         void setCursorIcon();
-        static void mouseButtonClickedCallback(GLFWwindow* window, i32 button, i32 action, i32 mods);
-        void setResizeState(i32 button, i32 action, i32 mods);
+        static void mouseButtonClickedCallback(GLFWwindow* window, i32 button, i32 action, [[maybe_unused]] i32 mods);
+        void setResizeState(i32 button, i32 action, [[maybe_unused]] i32 mods);
         void resize();
         void drag();
         static void windowFocusCallback(GLFWwindow* window, i32 focused);

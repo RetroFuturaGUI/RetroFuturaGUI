@@ -85,7 +85,7 @@ namespace RetroFuturaGUI
         // Fill
         std::span<glm::vec4> _colors;
         FillType _fillType { FillType::SOLID };
-        u32 _colorCount { 0 };
+        i32 _colorCount { 0 };
         f32
             _gradientOffset { 0.0f },
             _gradientAnimationSpeed { 0.0003f },

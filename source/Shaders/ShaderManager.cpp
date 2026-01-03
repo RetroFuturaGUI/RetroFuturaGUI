@@ -49,7 +49,7 @@ void RetroFuturaGUI::ShaderManager::compileShaders()
 {
     std::string exeDir = PlatformBridge::Paths::GetExecutablePath();
 
-#ifdef _WIN32 or _WIN64
+#ifdef _WIN32 //or _WIN64
     exeDir = exeDir.substr(0, exeDir.find_last_of(R"(\)"));
     exeDir.append(R"(\ShaderSource\)");
 #else

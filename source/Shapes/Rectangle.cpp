@@ -167,7 +167,7 @@ void RetroFuturaGUI::Rectangle::setupMesh()
 void RetroFuturaGUI::Rectangle::initBasic(std::span<glm::vec4> colors)
 {
     _colors = colors;
-    _colorCount = _colors.size();
+    _colorCount = static_cast<i32>(_colors.size());
     _fillType = _colorCount > 1 ? FillType::GRADIENT : FillType::SOLID;
 }
 

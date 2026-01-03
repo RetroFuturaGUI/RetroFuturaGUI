@@ -2,8 +2,8 @@
 #include <glm/gtc/type_ptr.hpp>
 #include <print>
 
-RetroFuturaGUI::Window::Window(std::string_view name, std::string_view windowTitle, i32 width, i32 height, void* parent)
-: _name(name), _windowTitle(windowTitle)
+RetroFuturaGUI::Window::Window(std::string_view name, std::string_view windowTitle, const i32 width, const i32 height)
+: _name(name), _windowTitle(windowTitle), _width(width), _height(height)
 {
 	createWindow();
 
@@ -130,7 +130,7 @@ void RetroFuturaGUI::Window::mouseButtonClickedCallback(GLFWwindow *window, i32 
 	if (self)
 		self->setResizeState(button, action, mods);
 
-	if (self->_windowBar && self->_windowBar->IsPointInside(self->_cursorPosX, self->_cursorPosY))
+	if (self->_windowBar && self->_windowBar->IsPointInside(static_cast<f32>(self->_cursorPosX), static_cast<f32>(self->_cursorPosY)))
 	{
 		if (action == GLFW_PRESS)
 		{
@@ -142,7 +142,7 @@ void RetroFuturaGUI::Window::mouseButtonClickedCallback(GLFWwindow *window, i32 
 	}
 }
 
-void RetroFuturaGUI::Window::setResizeState(i32 button, i32 action, i32 mods)
+void RetroFuturaGUI::Window::setResizeState(i32 button, i32 action, [[maybe_unused]] i32 mods)
 {
 	if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS)
 	{
@@ -259,8 +259,8 @@ void RetroFuturaGUI::Window::drag()
 	setAbsoluteCursorPosition(this);
 	glm::vec2 currentPos = glm::vec2(_absoluteCursorPosX, _absoluteCursorPosY);
 	glm::vec2 delta = currentPos - _dragStartPos;
-	i32 newPosX = _windowDragStartPos.x + (i32)delta.x;
-	i32 newPosY = _windowDragStartPos.y + (i32)delta.y;
+	i32 newPosX = (i32)_windowDragStartPos.x + (i32)delta.x;
+	i32 newPosY = (i32)_windowDragStartPos.y + (i32)delta.y;
 	moveWindow(newPosX, newPosY);
 }
 

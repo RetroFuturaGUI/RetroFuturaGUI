@@ -28,6 +28,7 @@ namespace RetroFuturaGUI
         static void ConnectSlot(const char* id, CallbackType callback, const i32 action, const bool async);
         static void DisconnectSlot(const char* id, CallbackType callback, const i32 action);
         static void SetRotation(const char* id, const f32 degree);
+        static void SetSize(const char* id, const f32 width, const f32 height);
 
     private:
         DynamicLibWidgetManager() = default;
@@ -43,12 +44,13 @@ namespace RetroFuturaGUI
         }
 
         static inline std::unordered_map<std::string, IWidget*> _metaWidgets;
+        static IWidget* getWidgetPointer(const char* id);
 
         //Slots
         static void connectSlotToButton(IWidget* widget, CallbackType callback, const i32 action, const bool async);
-        static void connectSlotToLabel(IWidget* widget, CallbackType callback, const i32 action, const bool async);
+        //static void connectSlotFromLabel(IWidget* widget, CallbackType callback, const i32 action, const bool async);
         static void disconnectSlotToButton(IWidget* widget, CallbackType callback, const i32 action);
-        static void disconnectSlotToLabel(IWidget* widget, CallbackType callback, const i32 action);
+        //static void disconnectSlotFromLabel(IWidget* widget, CallbackType callback, const i32 action);
 
         //Geometry
     };

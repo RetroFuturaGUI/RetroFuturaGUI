@@ -29,7 +29,7 @@ glm::vec2 RetroFuturaGUI::IWidget::GetPosition() const
 
 void RetroFuturaGUI::IWidget::SetRotation(const f32 rotation)
 {
-    _rotation;
+    _rotation = rotation;
 }
 
 f32 RetroFuturaGUI::IWidget::GetRotation() const
@@ -44,7 +44,7 @@ std::span<glm::vec4> RetroFuturaGUI::IWidget::GetBackgroundColors()
 
 void RetroFuturaGUI::IWidget::SetBackgroundColors(std::span<glm::vec4> backgroundColors)
 {
-    _colorCount = backgroundColors.size();
+    _colorCount = static_cast<i32>(backgroundColors.size());
     _backgroundColorFillType = _colorCount > 1 ? FillType::GRADIENT : FillType::SOLID;
 
     _backgroundColors = std::make_unique<glm::vec4[]>(_colorCount);

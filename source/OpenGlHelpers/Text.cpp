@@ -39,7 +39,7 @@ void RetroFuturaGUI::Text::Draw()
     glBindVertexArray(_vao);
     glBindBuffer(GL_ARRAY_BUFFER, _vbo);
 
-    i32 workingIndex = 0;
+    u32 workingIndex = 0;
 
     std::string::const_iterator c;
     for (c = _text.begin(); c != _text.end(); ++c)
@@ -48,7 +48,7 @@ void RetroFuturaGUI::Text::Draw()
 
         if (*c == '\n')
         {
-            y -= ((ch.Size.y)) * 1.3 * scale;
+            y -= ((ch.Size.y)) * 1.3f * scale;
             x = copyX;
         }
         else if (*c==' ')
@@ -210,7 +210,7 @@ i32 RetroFuturaGUI::Text::initFontFace()
             i32(c),
             glm::ivec2(face->glyph->bitmap.width, face->glyph->bitmap.rows),
             glm::ivec2(face->glyph->bitmap_left, face->glyph->bitmap_top),
-            static_cast<unsigned int>(face->glyph->advance.x)
+            static_cast<u32>(face->glyph->advance.x)
         };
 
         _characters.insert(std::pair<char, Character>(c, character));
@@ -220,7 +220,7 @@ i32 RetroFuturaGUI::Text::initFontFace()
     FT_Done_Face(face);
     FT_Done_FreeType(_ft);
 
-    for (int i = 0; i < ARRAY_LIMIT; ++i) 
+    for (u32 i = 0; i < ARRAY_LIMIT; ++i) 
     {
         _letterMap.push_back(0);
         _transforms.push_back(glm::mat4(1.0f));

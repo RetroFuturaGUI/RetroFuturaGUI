@@ -41,7 +41,9 @@ namespace RetroFuturaGUI
 
         static inline void SetMousePositionInvertedY(f64 x, f64 y) 
         {
-            i32 width, height;
+            i32 
+                width { 0 }, 
+                height { 0 };
 
             if(_hoveredWindow)
                 glfwGetWindowSize(_hoveredWindow, &width, &height);

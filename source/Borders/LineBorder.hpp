@@ -55,7 +55,7 @@ namespace RetroFuturaGUI
             _scale { 1.0f },
             _position { 0.0f };
         f32 _rotation { 0.0f };
-        u32 _colorCount { 0 };
+        uSize _colorCount { 0 };
 
         // Fill
         FillType _fillType { FillType::SOLID };

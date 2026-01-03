@@ -49,7 +49,7 @@ namespace RetroFuturaGUI
 
         //style
         std::unique_ptr<glm::vec4[]> _backgroundColors;
-        u32 _colorCount { 1 };
+        i32 _colorCount { 1 };
         FillType _backgroundColorFillType { FillType::SOLID };
         //float _borderWidth = 2.0f;
         //glm::vec4 _borderColor = {1.0f, 1.0f, 1.0f, 1.0f};

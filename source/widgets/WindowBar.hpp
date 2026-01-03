@@ -76,9 +76,9 @@ namespace RetroFuturaGUI
         bool _windowShouldClose { false };
         MaximizeState _maximizeState { MaximizeState::RESTORE };
 
-        glm::vec2 calculateWindowBarPosition(const glm::vec2& position);
-        glm::vec2 calculateWindowBarSize(const glm::vec2& size);
-        glm::vec2 calculateElementPosition(const glm::vec2& position, const ElementType elementType);
+        glm::vec2 calculateWindowBarPosition();
+        glm::vec2 calculateWindowBarSize();
+        glm::vec2 calculateElementPosition(const ElementType elementType);
         void windowShouldCloseCallback();
         void minimizeWindowCallback(GLFWwindow* window);
     };
