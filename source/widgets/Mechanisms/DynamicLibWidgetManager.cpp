@@ -55,6 +55,19 @@ void RetroFuturaGUI::DynamicLibWidgetManager::DisconnectSlot(const char *id, Cal
     }
 }
 
+void RetroFuturaGUI::DynamicLibWidgetManager::SetRotation(const char *id, const f32 degree)
+{
+    if(_metaWidgets.find(id) == _metaWidgets.end())
+        return;
+
+    auto widget = _metaWidgets[id];
+
+    if(!widget)
+        return;
+
+    widget->SetRotation(degree);
+}
+
 void RetroFuturaGUI::DynamicLibWidgetManager::connectSlotToButton(IWidget *widget, CallbackType callback, const i32 action, const bool async)
 {
     Button* button = dynamic_cast<Button*>(widget);

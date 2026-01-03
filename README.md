@@ -119,3 +119,5 @@ RetroFuturaGUI aims to break these barriers!
 - Window.hpp/.cpp
   - glfwWindowHint(GLFW_TRANSPARENT_FRAMEBUFFER, GLFW_TRUE()) causes objects with transparency to show what's behind the window even if the background is completely opaque
   - fix wrong reposition when resizing by grbbing the left edge or bottom-left corner
+- Button
+  - Also rotate collision
