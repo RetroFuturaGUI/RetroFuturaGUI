@@ -8,7 +8,7 @@ Projection::Projection(const f32 width, const f32 height)
     setProjectionMatrix();
 }
 
-glm::mat4 &Projection::GetProjectionMatrix()
+const glm::mat4& Projection::GetProjectionMatrix() const
 {
      return _projectionMatrix;
 }
@@ -20,7 +20,7 @@ void Projection::UpdateProjectionMatrix(const f32 width, const f32 height)
     setProjectionMatrix();
 }
 
-glm::vec2& Projection::GetResolution()
+const glm::vec2& Projection::GetResolution() const
 {
     return _resolution;
 }

@@ -11,9 +11,9 @@ namespace RetroFuturaGUI
         Projection(const f32 width, const f32 height);
         ~Projection() = default;
 
-        glm::mat4& GetProjectionMatrix();
+        const glm::mat4& GetProjectionMatrix() const;
         void UpdateProjectionMatrix(const f32 width, const f32 height);
-        glm::vec2& GetResolution();
+        const glm::vec2& GetResolution() const;
 
     private:
         glm::mat4 _projectionMatrix  { 1.0f };
