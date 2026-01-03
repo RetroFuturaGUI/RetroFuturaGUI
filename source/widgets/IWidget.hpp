@@ -54,14 +54,21 @@ namespace RetroFuturaGUI
         //float _borderWidth = 2.0f;
         //glm::vec4 _borderColor = {1.0f, 1.0f, 1.0f, 1.0f};
         //glm::vec4 _borderCornerRadius = {0.0f, 0.0f, 0.0f, 0.0f};
-        
+
         bool isPointInside(const glm::vec2& point) const
         {
-            return (point.x >= _position.x - _size.x * 0.5f && 
-                    point.x <= _position.x + _size.x * 0.5f &&
-                    point.y >= _position.y - _size.y * 0.5f && 
-                    point.y <= _position.y + _size.y * 0.5f);
+            glm::vec2 translatedPoint = point - _position;
+            float radians = glm::radians(-_rotation);
+            glm::vec2 rotatedPoint(
+                translatedPoint.x * cos(radians) - translatedPoint.y * sin(radians),
+                translatedPoint.x * sin(radians) + translatedPoint.y * cos(radians)
+            );
+            return (rotatedPoint.x >= -_size.x * 0.5f &&
+                    rotatedPoint.x <= _size.x * 0.5f &&
+                    rotatedPoint.y >= -_size.y * 0.5f &&
+                    rotatedPoint.y <= _size.y * 0.5f);
         }
+
     private:
 
     };
