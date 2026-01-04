@@ -29,6 +29,7 @@ namespace RetroFuturaGUI
         static void DisconnectSlot(const char* id, CallbackType callback, const i32 action);
         static void SetRotation(const char* id, const f32 degree);
         static void SetSize(const char* id, const f32 width, const f32 height);
+        static void SetBackgroundColors(const char* id, std::span<glm::vec4> colors, const u32 colorSetState);
 
     private:
         DynamicLibWidgetManager() = default;
@@ -37,11 +38,7 @@ namespace RetroFuturaGUI
         DynamicLibWidgetManager(DynamicLibWidgetManager&&) = delete;
         void operator=(const DynamicLibWidgetManager&) = delete;
         void operator=(DynamicLibWidgetManager&&) = delete;
-        static DynamicLibWidgetManager& GetInstance()
-        {
-            static DynamicLibWidgetManager Instance;
-            return Instance;
-        }
+        static DynamicLibWidgetManager& GetInstance();
 
         static inline std::unordered_map<std::string, IWidget*> _metaWidgets;
         static IWidget* getWidgetPointer(const char* id);

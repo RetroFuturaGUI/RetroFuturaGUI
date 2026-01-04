@@ -67,7 +67,32 @@ void RetroFuturaGUI::DynamicLibWidgetManager::SetSize(const char *id, const f32 
     widget->SetSize(glm::vec2(width, height));
 }
 
-RetroFuturaGUI::IWidget* RetroFuturaGUI::DynamicLibWidgetManager::getWidgetPointer(const char *id)
+void RetroFuturaGUI::DynamicLibWidgetManager::SetBackgroundColors(const char* id, std::span<glm::vec4> colors, const u32 colorSetState)
+{
+    IWidget* widget { getWidgetPointer(id) };
+
+    if(!widget)
+        return;
+
+    WidgetTypeID widgetTypeID = widget->GetWidgetTypeID();
+
+    switch(widgetTypeID)
+    {
+        case WidgetTypeID::Button:
+        {
+            Button* button = dynamic_cast<Button*>(widget);
+            button->SetBackgroundColors(colors, (ColorSetState)colorSetState);
+        } break;
+    }
+}
+
+RetroFuturaGUI::DynamicLibWidgetManager& RetroFuturaGUI::DynamicLibWidgetManager::GetInstance()
+{
+    static DynamicLibWidgetManager Instance;
+    return Instance;
+}
+
+RetroFuturaGUI::IWidget *RetroFuturaGUI::DynamicLibWidgetManager::getWidgetPointer(const char *id)
 {
     if(_metaWidgets.find(id) == _metaWidgets.end())
         return nullptr;
