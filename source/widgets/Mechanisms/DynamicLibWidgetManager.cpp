@@ -81,7 +81,102 @@ void RetroFuturaGUI::DynamicLibWidgetManager::SetBackgroundColors(const char* id
         case WidgetTypeID::Button:
         {
             Button* button = dynamic_cast<Button*>(widget);
-            button->SetBackgroundColors(colors, (ColorState)colorState);
+            button->SetBackgroundColors(colors, colorState);
+        } break;
+    }
+}
+
+void RetroFuturaGUI::DynamicLibWidgetManager::SetBackgroundGradientOffset(const char *id, const f32 gradientOffset)
+{
+    IWidget* widget { getWidgetPointer(id) };
+
+    if(!widget)
+        return;
+
+    WidgetTypeID widgetTypeID = widget->GetWidgetTypeID();
+
+    switch(widgetTypeID)
+    {
+        case WidgetTypeID::Button:
+        {
+            Button* button = dynamic_cast<Button*>(widget);
+            button->SetBackgroundGradientOffset(gradientOffset);
+        } break;
+    }
+}
+
+void RetroFuturaGUI::DynamicLibWidgetManager::SetBackgroundGradientAnimationSpeed(const char *id, const f32 animationSpeed)
+{
+    IWidget* widget { getWidgetPointer(id) };
+
+    if(!widget)
+        return;
+
+    WidgetTypeID widgetTypeID = widget->GetWidgetTypeID();
+
+    switch(widgetTypeID)
+    {
+        case WidgetTypeID::Button:
+        {
+            Button* button = dynamic_cast<Button*>(widget);
+            button->SetBackgroundGradientAnimationSpeed(animationSpeed);
+        } break;
+    }
+}
+
+void RetroFuturaGUI::DynamicLibWidgetManager::SetBackgroundGradientDegree(const char *id, const f32 degree)
+{
+    IWidget* widget { getWidgetPointer(id) };
+
+    if(!widget)
+        return;
+
+    WidgetTypeID widgetTypeID = widget->GetWidgetTypeID();
+
+    switch(widgetTypeID)
+    {
+        case WidgetTypeID::Button:
+        {
+            Button* button = dynamic_cast<Button*>(widget);
+            button->SetBackgroundGradientDegree(degree);
+        } break;
+    }
+}
+
+void RetroFuturaGUI::DynamicLibWidgetManager::SetBackgroundGradientRotationSpeed(const char *id, const f32 rotationSpeed)
+{
+    IWidget* widget { getWidgetPointer(id) };
+
+    if(!widget)
+        return;
+
+    WidgetTypeID widgetTypeID = widget->GetWidgetTypeID();
+
+    switch(widgetTypeID)
+    {
+        case WidgetTypeID::Button:
+        {
+            Button* button = dynamic_cast<Button*>(widget);
+            button->SetBackgroundGradientRotationSpeed(rotationSpeed);
+        } break;
+    }
+}
+
+void RetroFuturaGUI::DynamicLibWidgetManager::SetWindowBackgroundImageTextureID(const char *id, const u32 textureID)
+{
+    IWidget* widget { getWidgetPointer(id) };
+
+    if(!widget)
+        return;
+
+    WidgetTypeID widgetTypeID = widget->GetWidgetTypeID();
+
+    switch(widgetTypeID)
+    {
+        case WidgetTypeID::Button:
+        {
+            Button* button = dynamic_cast<Button*>(widget);
+            button->SetWindowBackgroundImageTextureID(textureID);
         } break;
     }
 }
@@ -100,7 +195,102 @@ void RetroFuturaGUI::DynamicLibWidgetManager::SetBorderColors(const char* id, st
         case WidgetTypeID::Button:
         {
             Button* button = dynamic_cast<Button*>(widget);
-            button->SetBorderColors(colors, (ColorState)colorState);
+            button->SetBorderColors(colors, colorState);
+        } break;
+    }
+}
+
+void RetroFuturaGUI::DynamicLibWidgetManager::SetBorderGradientOffset(const char *id, const f32 gradientOffset)
+{
+    IWidget* widget { getWidgetPointer(id) };
+
+    if(!widget)
+        return;
+
+    WidgetTypeID widgetTypeID = widget->GetWidgetTypeID();
+
+    switch(widgetTypeID)
+    {
+        case WidgetTypeID::Button:
+        {
+            Button* button = dynamic_cast<Button*>(widget);
+            button->SetBorderGradientOffset(gradientOffset);
+        } break;
+    }
+}
+
+void RetroFuturaGUI::DynamicLibWidgetManager::SetBorderGradientAnimationSpeed(const char *id, const f32 animationSpeed)
+{
+    IWidget* widget { getWidgetPointer(id) };
+
+    if(!widget)
+        return;
+
+    WidgetTypeID widgetTypeID = widget->GetWidgetTypeID();
+
+    switch(widgetTypeID)
+    {
+        case WidgetTypeID::Button:
+        {
+            Button* button = dynamic_cast<Button*>(widget);
+            button->SetBorderGradientAnimationSpeed(animationSpeed);
+        } break;
+    }
+}
+
+void RetroFuturaGUI::DynamicLibWidgetManager::SetBorderGradientDegree(const char *id, const f32 degree)
+{
+    IWidget* widget { getWidgetPointer(id) };
+
+    if(!widget)
+        return;
+
+    WidgetTypeID widgetTypeID = widget->GetWidgetTypeID();
+
+    switch(widgetTypeID)
+    {
+        case WidgetTypeID::Button:
+        {
+            Button* button = dynamic_cast<Button*>(widget);
+            button->SetBorderGradientDegree(degree);
+        } break;
+    }
+}
+
+void RetroFuturaGUI::DynamicLibWidgetManager::SetBorderGradientRotationSpeed(const char *id, const f32 rotationSpeed)
+{
+    IWidget* widget { getWidgetPointer(id) };
+
+    if(!widget)
+        return;
+
+    WidgetTypeID widgetTypeID = widget->GetWidgetTypeID();
+
+    switch(widgetTypeID)
+    {
+        case WidgetTypeID::Button:
+        {
+            Button* button = dynamic_cast<Button*>(widget);
+            button->SetBorderGradientRotationSpeed(rotationSpeed);
+        } break;
+    }
+}
+
+void RetroFuturaGUI::DynamicLibWidgetManager::SetWindowBorderImageTextureID(const char *id, const u32 textureID)
+{
+    IWidget* widget { getWidgetPointer(id) };
+
+    if(!widget)
+        return;
+
+    WidgetTypeID widgetTypeID = widget->GetWidgetTypeID();
+
+    switch(widgetTypeID)
+    {
+        case WidgetTypeID::Button:
+        {
+            Button* button = dynamic_cast<Button*>(widget);
+            button->SetWindowBorderImageTextureID(textureID);
         } break;
     }
 }
