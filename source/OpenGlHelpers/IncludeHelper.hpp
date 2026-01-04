@@ -48,3 +48,14 @@ struct GeometryParams2D
     const glm::vec2& _Size;
     f32 _Rotation;
 };
+
+namespace RetroFuturaGUI
+{
+enum ColorSetState : u32
+{
+    Enabled,
+    Disabled,
+    Clicked,
+    Hover
+};
+}

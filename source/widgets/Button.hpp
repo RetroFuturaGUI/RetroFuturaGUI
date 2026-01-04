@@ -9,14 +9,6 @@
 
 namespace RetroFuturaGUI
 {
-    enum ColorSetState : u32
-    {
-        Enabled,
-        Disabled,
-        Clicked,
-        Hover
-    };
-
     class Button : public IWidget
     {
     public:
