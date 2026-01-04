@@ -319,6 +319,30 @@ void RetroFuturaGUI::DynamicLibWidgetManager::SetWindowBorderImageTextureID(cons
     }
 }
 
+void RetroFuturaGUI::DynamicLibWidgetManager::SetTextColors(const char *id, std::span<glm::vec4> colors, const ColorState colorState)
+{
+    IWidget* widget { getWidgetPointer(id) };
+
+    if(!widget)
+        return;
+
+    WidgetTypeID widgetTypeID = widget->GetWidgetTypeID();
+
+    switch(widgetTypeID)
+    {
+        case WidgetTypeID::Button:
+        {
+            Button* button = dynamic_cast<Button*>(widget);
+            button->SetTextColor(colors.front(), colorState);
+        } break;
+        case WidgetTypeID::Label:
+        {
+            Label* label = dynamic_cast<Label*>(widget);
+            label->SetTextColors(colors, colorState);
+        } break;
+    }
+}
+
 RetroFuturaGUI::DynamicLibWidgetManager& RetroFuturaGUI::DynamicLibWidgetManager::GetInstance()
 {
     static DynamicLibWidgetManager Instance;

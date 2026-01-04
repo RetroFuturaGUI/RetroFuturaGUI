@@ -35,6 +35,26 @@ void RetroFuturaGUI::Label::SetEnabled(const bool enable)
     setColors();
 }
 
+void RetroFuturaGUI::Label::SetTextColors(std::span<glm::vec4> colors, const ColorState colorState)
+{
+    switch(colorState)
+    {
+        /*case ColorState::Clicked:
+            _textColorClicked.assign(colors.begin(), colors.end());
+        break;*/
+        case ColorState::Disabled:
+            _textColorDisabled.assign(colors.begin(), colors.end());
+        break;
+        case ColorState::Hover:
+            _textColorHover.assign(colors.begin(), colors.end());
+        break;
+        default: // Enabled
+            _textColorEnabled.assign(colors.begin(), colors.end());
+    }
+
+    setColors();
+}
+
 void RetroFuturaGUI::Label::setColors()
 {
     switch(_colorState)

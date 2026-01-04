@@ -42,6 +42,7 @@ namespace RetroFuturaGUI
         static void SetBorderGradientDegree(const char* id, const f32 degree);
         static void SetBorderGradientRotationSpeed(const char* id, const f32 rotationSpeed);
         static void SetWindowBorderImageTextureID(const char* id, const u32 textureID);
+        static void SetTextColors(const char* id, std::span<glm::vec4> colors, const ColorState colorState);
 
     private:
         DynamicLibWidgetManager() = default;

@@ -12,6 +12,7 @@ namespace RetroFuturaGUI
         ~Label() = default;
         void Draw() override;
         void SetEnabled(const bool enable);
+        void SetTextColors(std::span<glm::vec4> colors, const ColorState colorState);
 
     private:
         std::unique_ptr<Text> _textObject;
