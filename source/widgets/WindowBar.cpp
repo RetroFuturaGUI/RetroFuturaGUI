@@ -44,12 +44,6 @@ RetroFuturaGUI::WindowBar::WindowBar(const IdentityParams &identity, GeometryPar
         3.0f
     };
 
-    BorderParams borderParams =
-    {
-        glm::vec4(0.0f),
-        2.0f
-    };
-
     _close = std::make_unique<Button>(identityCloseButton, geometryButton, textParams, 2.0f);
     
     if(_close)

@@ -65,7 +65,6 @@ namespace RetroFuturaGUI
         // Elements
         std::unique_ptr<Rectangle> _background;
         std::unique_ptr<Text> _windowTitle;
-        std::unique_ptr<LineBorder> _border;
         std::unique_ptr<Button> 
             _minimize,
             _maximize,
