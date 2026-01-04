@@ -63,7 +63,7 @@ void RetroFuturaGUI::IWidget::SetName(std::string_view name)
     _name = name;
 }
 
-WidgetTypeID RetroFuturaGUI::IWidget::GetWidgetTypeID() const
+RetroFuturaGUI::WidgetTypeID RetroFuturaGUI::IWidget::GetWidgetTypeID() const
 {
     return _widgetTypeID;
 }

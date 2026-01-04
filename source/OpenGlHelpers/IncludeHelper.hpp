@@ -8,54 +8,55 @@
 #include "config.hpp"
 #include "Projection.hpp"
 
-enum class FillType: u32
-{
-    SOLID,
-    GRADIENT
-};
-
-enum class WidgetTypeID : i32
-{
-    None,
-    Window,
-    WindowBar,
-    Grid2d,
-    Label,
-    Button,
-    Unknown = -1
-};   
-
-enum class SizingMode : u32
-{
-    FIXED,
-    FILL,
-    FILL_X,
-    FILL_Y
-};
-
-struct IdentityParams
-{
-    std::string_view _Name;
-    void* _Parent;
-    WidgetTypeID _ParentTypeID;
-    GLFWwindow* _ParentWindow;
-};
-
-struct GeometryParams2D
-{
-    const RetroFuturaGUI::Projection& _Projection;
-    const glm::vec2& _Position;
-    const glm::vec2& _Size;
-    f32 _Rotation;
-};
-
 namespace RetroFuturaGUI
 {
-enum ColorSetState : u32
-{
-    Enabled,
-    Disabled,
-    Clicked,
-    Hover
-};
+    enum class FillType: u32
+    {
+        SOLID,
+        GRADIENT
+    };
+
+    enum class WidgetTypeID : i32
+    {
+        None,
+        Window,
+        WindowBar,
+        Grid2d,
+        Label,
+        Button,
+        Unknown = -1
+    };   
+
+    enum class SizingMode : u32
+    {
+        FIXED,
+        FILL,
+        FILL_X,
+        FILL_Y
+    };
+
+    struct IdentityParams
+    {
+        std::string_view _Name;
+        void* _Parent;
+        WidgetTypeID _ParentTypeID;
+        GLFWwindow* _ParentWindow;
+    };
+
+    struct GeometryParams2D
+    {
+        const RetroFuturaGUI::Projection& _Projection;
+        const glm::vec2& _Position;
+        const glm::vec2& _Size;
+        f32 _Rotation;
+    };
+
+
+    enum ColorSetState : u32
+    {
+        Enabled,
+        Disabled,
+        Clicked,
+        Hover
+    };
 }
