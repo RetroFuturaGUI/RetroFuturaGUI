@@ -83,6 +83,11 @@ void RetroFuturaGUI::DynamicLibWidgetManager::SetEnabled(const char* id, const b
             Button* button = dynamic_cast<Button*>(widget);
             button->SetEnabled(enable);
         } break;
+        case WidgetTypeID::Label:
+        {
+            Label* label = dynamic_cast<Label*>(widget);
+            label->SetEnabled(enable);
+        } break;
     }
 }
 
