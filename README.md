@@ -53,6 +53,7 @@ The framework is designed for cross-platform use, and its logic can be compiled 
   - SetRotation, SetPosition, SetSize
   - Set Color/Decoration parameters
 - C++ modules once ALL common compilers (GCC, CLang, MSVC) support them
+- Wiki/Documentation
 
 #### Nice-to-have's
 - Better (relative) Viewports

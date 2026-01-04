@@ -5,6 +5,7 @@
 #include <span>
 #include <string>
 #include <string_view>
+#include "Signal.hpp"
 
 namespace RetroFuturaGUI
 {
@@ -14,6 +15,10 @@ namespace RetroFuturaGUI
         IWidget(const IdentityParams& identity, const GeometryParams2D& geometry);
         virtual ~IWidget() = default;
         virtual void Draw() = 0;
+        void Connect_OnEnable(const typename Signal<>::Slot& slot, const bool async);
+        void Connect_OnDisable(const typename Signal<>::Slot& slot, const bool async);
+        void Disconnect_OnEnable(const typename Signal<>::Slot& slot);
+        void Disconnect_OnDisable(const typename Signal<>::Slot& slot);
         virtual void SetSize(const glm::vec2& size);
         glm::vec2 GetSize() const;
         virtual void SetPosition(const glm::vec2& position);
@@ -25,6 +30,8 @@ namespace RetroFuturaGUI
         std::string_view GetName() const;
         void SetName(std::string_view name);
         WidgetTypeID GetWidgetTypeID() const;
+        void SetEnabled(const bool enable);
+        bool IsEnabled() const;
 
         template<typename T> T* GetParentWidget() const
         {
@@ -54,6 +61,15 @@ namespace RetroFuturaGUI
         //float _borderWidth = 2.0f;
         //glm::vec4 _borderColor = {1.0f, 1.0f, 1.0f, 1.0f};
         //glm::vec4 _borderCornerRadius = {0.0f, 0.0f, 0.0f, 0.0f};
+
+        //logic
+        bool _isEnabledFlag { true };
+        ColorState _colorState { ColorState::Enabled };
+        Signal<>
+            _onEnable,
+            _onEnableAsync,
+            _onDisable,
+            _onDisableAsync;
 
         bool isPointInside(const glm::vec2& point) const
         {

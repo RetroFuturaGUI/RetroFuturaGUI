@@ -1,9 +1,7 @@
 #pragma once
 #include "IncludeHelper.hpp"
 #include "InputManager.hpp"
-//#include "LineBorder.hpp"
 #include "Rectangle.hpp"
-#include "Signal.hpp"
 #include "Text.hpp"
 #include "IWidget.hpp"
 
@@ -19,17 +17,12 @@ namespace RetroFuturaGUI
         void Connect_WhileHover(const typename Signal<>::Slot& slot, const bool async);
         void Connect_OnMouseEnter(const typename Signal<>::Slot& slot, const bool async);
         void Connect_OnMouseLeave(const typename Signal<>::Slot& slot, const bool async);
-        void Connect_OnEnable(const typename Signal<>::Slot& slot, const bool async);
-        void Connect_OnDisable(const typename Signal<>::Slot& slot, const bool async);
         void Disconnect_OnClick(const typename Signal<>::Slot& slot);
         void Disconnect_OnRelease(const typename Signal<>::Slot& slot);
         void Disconnect_WhileHover(const typename Signal<>::Slot& slot);
         void Disconnect_OnMouseEnter(const typename Signal<>::Slot& slot);
         void Disconnect_OnMouseLeave(const typename Signal<>::Slot& slot);
-        void Disconnect_OnEnable(const typename Signal<>::Slot& slot);
-        void Disconnect_OnDisable(const typename Signal<>::Slot& slot);
         void SetEnabled(const bool enable);
-        bool IsEnabled() const;
 
         //Background
         void SetBackgroundColor(const glm::vec4& color, const ColorState state);
@@ -69,7 +62,6 @@ namespace RetroFuturaGUI
         
         //logic
         bool 
-            _isEnabledFlag { true },
             _wasClicked { false },
             _colorSetFlag { false },
             _mouseEnteredFlag { false },
@@ -84,11 +76,7 @@ namespace RetroFuturaGUI
             _onMouseEnter,
             _onMouseEnterAsync,
             _onMouseLeave,
-            _onMouseLeaveAsync,
-            _onEnable,
-            _onEnableAsync,
-            _onDisable,
-            _onDisableAsync;
+            _onMouseLeaveAsync;
 
         // Style
         std::vector<glm::vec4> 
@@ -104,7 +92,6 @@ namespace RetroFuturaGUI
             _textColorDisabled { glm::vec4(0.5f, 0.5f,0.5f, 1.0f) },
             _textColorClicked { glm::vec4(1.0f) },
             _textColorHover { glm::vec4(1.0f, 1.0f, 1.0f, 1.0f) };
-        ColorState _state { ColorState::Enabled };
 
         void interact();
         void setColors();

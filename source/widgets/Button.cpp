@@ -67,22 +67,6 @@ void RetroFuturaGUI::Button::Connect_OnMouseLeave(const typename Signal<>::Slot 
         _onMouseLeave.Connect(slot);
 }
 
-void RetroFuturaGUI::Button::Connect_OnEnable(const typename Signal<>::Slot & slot, const bool async)
-{
-    if (async)
-        _onEnableAsync.Connect(slot);
-    else
-        _onEnable.Connect(slot);
-}
-
-void RetroFuturaGUI::Button::Connect_OnDisable(const typename Signal<>::Slot &slot, const bool async)
-{
-    if (async)
-        _onDisableAsync.Connect(slot);
-    else
-        _onDisable.Connect(slot);
-}
-
 void RetroFuturaGUI::Button::Disconnect_OnClick(const typename Signal<>::Slot &slot)
 {
     _onClick.Disconnect(slot);
@@ -113,18 +97,6 @@ void RetroFuturaGUI::Button::Disconnect_OnMouseLeave(const typename Signal<>::Sl
     _onMouseLeaveAsync.Disconnect(slot);
 }
 
-void RetroFuturaGUI::Button::Disconnect_OnEnable(const typename Signal<>::Slot &slot)
-{
-    _onEnable.Disconnect(slot);
-    _onEnableAsync.Disconnect(slot);
-}
-
-void RetroFuturaGUI::Button::Disconnect_OnDisable(const typename Signal<>::Slot &slot)
-{
-    _onDisable.Disconnect(slot);
-    _onDisableAsync.Disconnect(slot);
-}
-
 void RetroFuturaGUI::Button::SetEnabled(const bool enable)
 {
     _isEnabledFlag = enable;
@@ -133,7 +105,7 @@ void RetroFuturaGUI::Button::SetEnabled(const bool enable)
     {
         _onEnableAsync.EmitAsync();
         _onEnable.Emit();
-        _state = ColorState::Enabled;
+        _colorState = ColorState::Enabled;
         setColors();
         return;
     }
@@ -142,11 +114,6 @@ void RetroFuturaGUI::Button::SetEnabled(const bool enable)
     _onDisable.Emit();
     ColorState::Disabled;
     setColors();
-}
-
-bool RetroFuturaGUI::Button::IsEnabled() const
-{
-    return _isEnabledFlag;
 }
 
 void RetroFuturaGUI::Button::SetBackgroundColor(const glm::vec4& color, const ColorState state)
@@ -426,7 +393,7 @@ void RetroFuturaGUI::Button::interact()
             _mouseEnteredFlag = false;
             _onMouseLeaveAsync.EmitAsync();
             _onMouseLeave.Emit();
-            _state = ColorState::Enabled;
+            _colorState = ColorState::Enabled;
             setColors();
         }
 
@@ -445,7 +412,7 @@ void RetroFuturaGUI::Button::interact()
         _mouseEnteredFlag = true;
         _onMouseEnterAsync.EmitAsync();
         _onMouseEnter.Emit();
-        _state = ColorState::Hover;
+        _colorState = ColorState::Hover;
         setColors();
     }
 
@@ -453,7 +420,7 @@ void RetroFuturaGUI::Button::interact()
     {
         _onClickAsync.EmitAsync();
         _onClick.Emit();
-        _state = ColorState::Clicked;
+        _colorState = ColorState::Clicked;
         setColors();
     }
     else if(!isMouseButtonPressed && _wasClicked) //release
@@ -462,9 +429,9 @@ void RetroFuturaGUI::Button::interact()
         _onRelease.Emit();
 
         if(isHovering)
-            _state = ColorState::Hover;
+            _colorState = ColorState::Hover;
         else
-            _state = ColorState::Enabled;
+            _colorState = ColorState::Enabled;
 
         setColors();
     }
@@ -474,7 +441,7 @@ void RetroFuturaGUI::Button::interact()
 
 void RetroFuturaGUI::Button::setColors()
 {
-    switch(_state)
+    switch(_colorState)
     {
         case ColorState::Enabled:
         {

@@ -7,6 +7,34 @@ RetroFuturaGUI::IWidget::IWidget(const IdentityParams& identity, const GeometryP
     
 }
 
+void RetroFuturaGUI::IWidget::Connect_OnEnable(const typename Signal<>::Slot & slot, const bool async)
+{
+    if (async)
+        _onEnableAsync.Connect(slot);
+    else
+        _onEnable.Connect(slot);
+}
+
+void RetroFuturaGUI::IWidget::Connect_OnDisable(const typename Signal<>::Slot &slot, const bool async)
+{
+    if (async)
+        _onDisableAsync.Connect(slot);
+    else
+        _onDisable.Connect(slot);
+}
+
+void RetroFuturaGUI::IWidget::Disconnect_OnEnable(const typename Signal<>::Slot &slot)
+{
+    _onEnable.Disconnect(slot);
+    _onEnableAsync.Disconnect(slot);
+}
+
+void RetroFuturaGUI::IWidget::Disconnect_OnDisable(const typename Signal<>::Slot &slot)
+{
+    _onDisable.Disconnect(slot);
+    _onDisableAsync.Disconnect(slot);
+}
+
 void RetroFuturaGUI::IWidget::SetSize(const glm::vec2 &size)
 {
     _size = size;
@@ -66,4 +94,14 @@ void RetroFuturaGUI::IWidget::SetName(std::string_view name)
 RetroFuturaGUI::WidgetTypeID RetroFuturaGUI::IWidget::GetWidgetTypeID() const
 {
     return _widgetTypeID;
+}
+
+void RetroFuturaGUI::IWidget::SetEnabled(const bool enable)
+{
+    _isEnabledFlag = enable;
+}
+
+bool RetroFuturaGUI::IWidget::IsEnabled() const
+{
+    return _isEnabledFlag;
 }

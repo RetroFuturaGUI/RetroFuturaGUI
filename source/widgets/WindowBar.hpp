@@ -51,6 +51,7 @@ namespace RetroFuturaGUI
         void SetElementBackgroundImageTextureID(const u32 textureID, const ElementType elementType);
         void SetButtonCornerRadii(const glm::vec4& radii, const ElementType buttonType);
         void SetWindowTitle(std::string_view title);
+        void SetEnabled(const bool enable) = delete;
 
     private:
         // Identity
