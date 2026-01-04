@@ -67,7 +67,7 @@ void RetroFuturaGUI::DynamicLibWidgetManager::SetSize(const char *id, const f32 
     widget->SetSize(glm::vec2(width, height));
 }
 
-void RetroFuturaGUI::DynamicLibWidgetManager::SetBackgroundColors(const char* id, std::span<glm::vec4> colors, const ColorSetState colorSetState)
+void RetroFuturaGUI::DynamicLibWidgetManager::SetBackgroundColors(const char* id, std::span<glm::vec4> colors, const ColorState colorState)
 {
     IWidget* widget { getWidgetPointer(id) };
 
@@ -81,12 +81,12 @@ void RetroFuturaGUI::DynamicLibWidgetManager::SetBackgroundColors(const char* id
         case WidgetTypeID::Button:
         {
             Button* button = dynamic_cast<Button*>(widget);
-            button->SetBackgroundColors(colors, (ColorSetState)colorSetState);
+            button->SetBackgroundColors(colors, (ColorState)colorState);
         } break;
     }
 }
 
-void RetroFuturaGUI::DynamicLibWidgetManager::SetBorderColors(const char* id, std::span<glm::vec4> colors, const ColorSetState colorSetState)
+void RetroFuturaGUI::DynamicLibWidgetManager::SetBorderColors(const char* id, std::span<glm::vec4> colors, const ColorState colorState)
 {
     IWidget* widget { getWidgetPointer(id) };
 
@@ -100,7 +100,7 @@ void RetroFuturaGUI::DynamicLibWidgetManager::SetBorderColors(const char* id, st
         case WidgetTypeID::Button:
         {
             Button* button = dynamic_cast<Button*>(widget);
-            button->SetBorderColors(colors, (ColorSetState)colorSetState);
+            button->SetBorderColors(colors, (ColorState)colorState);
         } break;
     }
 }

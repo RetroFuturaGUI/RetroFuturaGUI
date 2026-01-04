@@ -30,15 +30,15 @@ namespace RetroFuturaGUI
         void Disconnect_OnDisable(const typename Signal<>::Slot& slot);
         void SetEnabled(const bool enable);
         bool IsEnabled() const;
-        void SetBackgroundColor(const glm::vec4& color, const ColorSetState state);
-        void SetBackgroundColors(std::span<glm::vec4> colors, const ColorSetState state);
-        void SetBorderColor(const glm::vec4& color, const ColorSetState state);
-        void SetBorderColors(std::span<glm::vec4> colors, const ColorSetState state);
-        std::vector<glm::vec4> GetBackgroundColors(const ColorSetState state) const;
-        void SetTextColor(const glm::vec4& color, const ColorSetState state);
-        std::vector<glm::vec4> GetTextColor(const ColorSetState state) const;
-        void SetLineBorderColor(const glm::vec4& color, const ColorSetState state);
-        std::vector<glm::vec4> GetLineBorderColor(const ColorSetState state) const;
+        void SetBackgroundColor(const glm::vec4& color, const ColorState state);
+        void SetBackgroundColors(std::span<glm::vec4> colors, const ColorState state);
+        void SetBorderColor(const glm::vec4& color, const ColorState state);
+        void SetBorderColors(std::span<glm::vec4> colors, const ColorState state);
+        std::vector<glm::vec4> GetBackgroundColors(const ColorState state) const;
+        void SetTextColor(const glm::vec4& color, const ColorState state);
+        std::vector<glm::vec4> GetTextColor(const ColorState state) const;
+        void SetLineBorderColor(const glm::vec4& color, const ColorState state);
+        std::vector<glm::vec4> GetLineBorderColor(const ColorState state) const;
         void SetSize(const glm::vec2& size) override; //add extra text resizing logic
         void SetPosition(const glm::vec2& position) override;
         void SetCornerRadii(const glm::vec4& radii);
@@ -92,7 +92,7 @@ namespace RetroFuturaGUI
             _textColorDisabled { glm::vec4(0.5f, 0.5f,0.5f, 1.0f) },
             _textColorClicked { glm::vec4(1.0f) },
             _textColorHover { glm::vec4(1.0f, 1.0f, 1.0f, 1.0f) };
-        ColorSetState _state { ColorSetState::Enabled };
+        ColorState _state { ColorState::Enabled };
 
         void interact();
         void setColors();

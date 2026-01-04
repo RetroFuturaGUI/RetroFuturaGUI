@@ -52,7 +52,7 @@ namespace RetroFuturaGUI
     };
 
 
-    enum ColorSetState : u32
+    enum ColorState : u32
     {
         Enabled,
         Disabled,

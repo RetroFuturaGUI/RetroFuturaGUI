@@ -46,8 +46,8 @@ namespace RetroFuturaGUI
         bool IsPointInside(const f32 pointX, const f32 pointY);
         MaximizeState GetMaximizeState();
         void ConnectMaximizeCallback(const std::function<void()>& callback);
-        void SetElementBackgroundColor(const glm::vec4& color, const ColorSetState state, const ElementType elementType);
-        void SetElementTextColor(const glm::vec4& color, const ColorSetState state, const ElementType elementType);
+        void SetElementBackgroundColor(const glm::vec4& color, const ColorState state, const ElementType elementType);
+        void SetElementTextColor(const glm::vec4& color, const ColorState state, const ElementType elementType);
         void SetElementBackgroundImageTextureID(const u32 textureID, const ElementType elementType);
         void SetButtonCornerRadii(const glm::vec4& radii, const ElementType buttonType);
         void SetWindowTitle(std::string_view title);

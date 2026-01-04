@@ -29,8 +29,8 @@ namespace RetroFuturaGUI
         static void DisconnectSlot(const char* id, CallbackType callback, const i32 action);
         static void SetRotation(const char* id, const f32 degree);
         static void SetSize(const char* id, const f32 width, const f32 height);
-        static void SetBackgroundColors(const char* id, std::span<glm::vec4> colors, const ColorSetState colorSetState);
-        static void SetBorderColors(const char* id, std::span<glm::vec4> colors, const ColorSetState colorSetState);
+        static void SetBackgroundColors(const char* id, std::span<glm::vec4> colors, const ColorState colorState);
+        static void SetBorderColors(const char* id, std::span<glm::vec4> colors, const ColorState colorState);
 
     private:
         DynamicLibWidgetManager() = default;

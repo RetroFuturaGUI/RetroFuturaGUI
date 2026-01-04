@@ -54,7 +54,7 @@ RetroFuturaGUI::WindowBar::WindowBar(const IdentityParams &identity, GeometryPar
     
     if(_close)
     {
-        _close->SetBackgroundColor(glm::vec4(1.0f, 0.4f, 0.4f, 1.0f), ColorSetState::Enabled);
+        _close->SetBackgroundColor(glm::vec4(1.0f, 0.4f, 0.4f, 1.0f), ColorState::Enabled);
         _close->Connect_OnClick([this]() { windowShouldCloseCallback(); }, false);
     }
 
@@ -332,7 +332,7 @@ void RetroFuturaGUI::WindowBar::ConnectMaximizeCallback(const std::function<void
         _maximize->Connect_OnClick(callback, false);
 }
 
-void RetroFuturaGUI::WindowBar::SetElementBackgroundColor(const glm::vec4& color, const ColorSetState state, const ElementType elementType)
+void RetroFuturaGUI::WindowBar::SetElementBackgroundColor(const glm::vec4& color, const ColorState state, const ElementType elementType)
 {
     switch(elementType)
     {
@@ -365,7 +365,7 @@ void RetroFuturaGUI::WindowBar::SetElementBackgroundColor(const glm::vec4& color
     }
 }
 
-void RetroFuturaGUI::WindowBar::SetElementTextColor(const glm::vec4 &color, const ColorSetState state, const ElementType elementType)
+void RetroFuturaGUI::WindowBar::SetElementTextColor(const glm::vec4 &color, const ColorState state, const ElementType elementType)
 {
     switch(elementType)
     {
