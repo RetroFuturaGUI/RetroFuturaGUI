@@ -193,6 +193,30 @@ void RetroFuturaGUI::Button::SetBackgroundColors(std::span<glm::vec4> colors, co
     setColors();
 }
 
+void RetroFuturaGUI::Button::SetBackgroundGradientOffset(const f32 gradientOffset)
+{
+    if(_rectangle)
+        _rectangle->SetGradientOffset(gradientOffset);
+}
+
+void RetroFuturaGUI::Button::SetBackgroundGradientAnimationSpeed(const f32 animationSpeed)
+{
+    if(_rectangle)
+        _rectangle->SetGradientAnimationSpeed(animationSpeed);
+}
+
+void RetroFuturaGUI::Button::SetBackgroundGradientDegree(const f32 degree)
+{
+    if(_rectangle)
+        _rectangle->SetGradientDegree(degree);
+}
+
+void RetroFuturaGUI::Button::SetBackgroundGradientRotationSpeed(const f32 rotationSpeed)
+{    
+    if(_rectangle)
+        _rectangle->SetGradientRotationSpeed(rotationSpeed);
+}
+
 void RetroFuturaGUI::Button::SetBorderColor(const glm::vec4 & color, const ColorState state)
 {
         switch(state)
@@ -237,7 +261,7 @@ void RetroFuturaGUI::Button::SetBorderColors(std::span<glm::vec4> colors, const 
     setColors();
 }
 
-std::vector<glm::vec4> RetroFuturaGUI::Button::GetBackgroundColors(const ColorState state) const
+const std::vector<glm::vec4>& RetroFuturaGUI::Button::GetBackgroundColors(const ColorState state) const
 {
     switch(state)
     {
@@ -287,27 +311,7 @@ std::vector<glm::vec4> RetroFuturaGUI::Button::GetTextColor(const ColorState sta
     }
 }
 
-void RetroFuturaGUI::Button::SetLineBorderColor(const glm::vec4& color, const ColorState state)
-{
-    switch(state)
-    {
-        case ColorState::Clicked:
-            _borderColorClicked.resize(1, color);
-        break;
-        case ColorState::Disabled:
-            _borderColorDisabled.resize(1, color);
-        break;
-        case ColorState::Hover:
-            _borderColorHover.resize(1, color);
-        break;
-        default: // Enabled
-            _borderColorEnabled.resize(1, color);
-    }
-
-    setColors();
-}
-
-std::vector<glm::vec4> RetroFuturaGUI::Button::GetLineBorderColor(const ColorState state) const
+const std::vector<glm::vec4>& RetroFuturaGUI::Button::GetBorderColor(const ColorState state) const
 {
     switch(state)
     {
@@ -387,6 +391,12 @@ void RetroFuturaGUI::Button::SetBorderGradientRotationSpeed(const f32 rotationSp
 {
     if(_border) 
         _border->SetGradientRotationSpeed(rotationSpeed);
+}
+
+void RetroFuturaGUI::Button::SetWindowBorderImageTextureID(const u32 textureID)
+{
+    if(_border)
+        _border->SetWindowBackgroundImageTextureID(textureID);
 }
 
 void RetroFuturaGUI::Button::SetRotation(const float rotation)

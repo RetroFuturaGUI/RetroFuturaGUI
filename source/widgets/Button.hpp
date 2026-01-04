@@ -1,7 +1,7 @@
 #pragma once
 #include "IncludeHelper.hpp"
 #include "InputManager.hpp"
-#include "LineBorder.hpp"
+//#include "LineBorder.hpp"
 #include "Rectangle.hpp"
 #include "Signal.hpp"
 #include "Text.hpp"
@@ -30,24 +30,36 @@ namespace RetroFuturaGUI
         void Disconnect_OnDisable(const typename Signal<>::Slot& slot);
         void SetEnabled(const bool enable);
         bool IsEnabled() const;
+
+        //Background
         void SetBackgroundColor(const glm::vec4& color, const ColorState state);
         void SetBackgroundColors(std::span<glm::vec4> colors, const ColorState state);
+        void SetBackgroundGradientOffset(const f32 gradientOffset);
+        void SetBackgroundGradientAnimationSpeed(const f32 animationSpeed);
+        void SetBackgroundGradientDegree(const f32 degree);
+        void SetBackgroundGradientRotationSpeed(const f32 rotationSpeed);
+        void SetWindowBackgroundImageTextureID(const u32 textureID);
+        const std::vector<glm::vec4>& GetBackgroundColors(const ColorState state) const;
+
+        //Border
         void SetBorderColor(const glm::vec4& color, const ColorState state);
         void SetBorderColors(std::span<glm::vec4> colors, const ColorState state);
-        std::vector<glm::vec4> GetBackgroundColors(const ColorState state) const;
-        void SetTextColor(const glm::vec4& color, const ColorState state);
-        std::vector<glm::vec4> GetTextColor(const ColorState state) const;
-        void SetLineBorderColor(const glm::vec4& color, const ColorState state);
-        std::vector<glm::vec4> GetLineBorderColor(const ColorState state) const;
-        void SetSize(const glm::vec2& size) override; //add extra text resizing logic
-        void SetPosition(const glm::vec2& position) override;
-        void SetCornerRadii(const glm::vec4& radii);
-        void SetWindowBackgroundImageTextureID(const u32 textureID);
         void SetBorderGradientOffset(const f32 gradientOffset);
         void SetBorderGradientAnimationSpeed(const f32 animationSpeed);
         void SetBorderGradientDegree(const f32 degree);
         void SetBorderGradientRotationSpeed(const f32 rotationSpeed);
+        void SetWindowBorderImageTextureID(const u32 textureID);
+        const std::vector<glm::vec4>& GetBorderColor(const ColorState state) const;
+        
+        //Geometry
+        void SetSize(const glm::vec2& size) override;
+        void SetPosition(const glm::vec2& position) override;
         void SetRotation(const float rotation) override;
+        void SetCornerRadii(const glm::vec4& radii);
+
+        //Text
+        void SetTextColor(const glm::vec4& color, const ColorState state);
+        std::vector<glm::vec4> GetTextColor(const ColorState state) const;
 
     private:
         //elements
