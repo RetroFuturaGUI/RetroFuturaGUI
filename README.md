@@ -39,6 +39,9 @@ The framework is designed for cross-platform use, and its logic can be compiled 
   - Emoji support
   - Vertical text flow
   - Shaders
+    - Text Border
+    - Text shadow
+    - glow fog
 - WindowBar
   - Positioning, left, right
   - Docking emblem
@@ -54,6 +57,10 @@ The framework is designed for cross-platform use, and its logic can be compiled 
   - Set Color/Decoration parameters
 - C++ modules once ALL common compilers (GCC, CLang, MSVC) support them
 - Wiki/Documentation
+- More text color properties
+- Rectangle
+  - shadow
+  - glow fog
 
 #### Nice-to-have's
 - Better (relative) Viewports

@@ -47,49 +47,47 @@ void RetroFuturaGUI::ShaderManager::Init()
 
 void RetroFuturaGUI::ShaderManager::compileShaders()
 {
-    std::string exeDir = PlatformBridge::Paths::GetExecutablePath();
+    std::string workingDir = PlatformBridge::Paths::GetWorkingDir();
 
-#ifdef _WIN32 //or _WIN64
-    exeDir = exeDir.substr(0, exeDir.find_last_of(R"(\)"));
-    exeDir.append(R"(\ShaderSource\)");
+#ifdef _WIN32
+    workingDir.append(R"(\ShaderSource\)");
 #else
-    exeDir = exeDir.substr(0, exeDir.find_last_of(R"(/)"));
-    exeDir.append("/ShaderSource/");
+    workingDir.append("/ShaderSource/");
 #endif
 
     _fill = std::make_unique<Shader>(
-        std::string(exeDir + "Fill.vs").c_str(), 
-        std::string(exeDir + "Fill.fs").c_str()
+        std::string(workingDir + "Fill.vs").c_str(), 
+        std::string(workingDir + "Fill.fs").c_str()
     );
 
     _fillGradient = std::make_unique<Shader>(
-        std::string(exeDir + "FillGradient.vs").c_str(), 
-        std::string(exeDir + "FillGradient.fs").c_str()
+        std::string(workingDir + "FillGradient.vs").c_str(), 
+        std::string(workingDir + "FillGradient.fs").c_str()
     );
 
     _borderFill = std::make_unique<Shader>(
-        std::string(exeDir + "BorderFill.vs").c_str(), 
-        std::string(exeDir + "BorderFill.fs").c_str()
+        std::string(workingDir + "BorderFill.vs").c_str(), 
+        std::string(workingDir + "BorderFill.fs").c_str()
     );
 
     _borderFillGradient = std::make_unique<Shader>(
-        std::string(exeDir + "BorderFillGradient.vs").c_str(), 
-        std::string(exeDir + "BorderFillGradient.fs").c_str()
+        std::string(workingDir + "BorderFillGradient.vs").c_str(), 
+        std::string(workingDir + "BorderFillGradient.fs").c_str()
     );
 
     _lineFill = std::make_unique<Shader>(
-        std::string(exeDir + "Line.vs").c_str(), 
-        std::string(exeDir + "Line.fs").c_str(),
-        std::string(exeDir + "Line.gs").c_str()
+        std::string(workingDir + "Line.vs").c_str(), 
+        std::string(workingDir + "Line.fs").c_str(),
+        std::string(workingDir + "Line.gs").c_str()
     );
 
     _textFill = std::make_unique<Shader>(
-        std::string(exeDir + "Text.vs").c_str(), 
-        std::string(exeDir + "Text.fs").c_str()
+        std::string(workingDir + "Text.vs").c_str(), 
+        std::string(workingDir + "Text.fs").c_str()
     );
 
     _textureFill = std::make_unique<Shader>(
-        std::string(exeDir + "Texture.vs").c_str(), 
-        std::string(exeDir + "Texture.fs").c_str()
+        std::string(workingDir + "Texture.vs").c_str(), 
+        std::string(workingDir + "Texture.fs").c_str()
     );
 }

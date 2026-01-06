@@ -128,7 +128,7 @@ target_link_libraries("RetroFuturaGUI" PUBLIC
 
 if(TARGETPLATFORM STREQUAL "x64-windows") #remove once PlatformBridge CMakeLists.txt is finalized
 message(STATUS "Linking PlatformBridge for ${TARGETPLATFORM}")
-    if(BUILDTYPE STREQUAL "Debug")
+    if(CMAKE_BUILD_TYPE STREQUAL "Debug")
         message(STATUS "DEBUG")
         target_link_libraries("RetroFuturaGUI" PRIVATE 
             "${CMAKE_CURRENT_SOURCE_DIR}/PlatformBridge/libs/x64-windows/debug/PlatformBridge.lib"
