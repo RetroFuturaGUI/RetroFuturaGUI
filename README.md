@@ -11,7 +11,7 @@ The framework is designed for cross-platform use, and its logic can be compiled 
 | 1 | Button, Label, Window, MainWindow, Image, Grid2D, WindowBar with Buttons |  | ✅ |
 | 2 | dll/so/dylib compilation for C# and Python support, Widget ID manager | 1 | WIP | 
 | 3 | linux support | 2 | | 
-| 4 | More Widgets (TextBox, Table, VideoPlayer, AudioPlayer, 3D Model, Slider, CheckBox, DropdownBox, RadioButton, Tabs, 3D Scene, Lights, Grid3D, Carousel, Color Pickers) | 1 | | 
+| 4 | More Widgets (TextBox, Table, VideoPlayer, AudioPlayer, 3D Model, Slider, CheckBox, DropdownBox, RadioButton, Tabs, 3D Scene, Lights, change Grid2d to "Grid" and add a 3rd dimension, Carousel, Color Pickers) | 1 | | 
 | 5 | .bechaml 🥣 (**B**ased and **E**xtra **C**reamy **H**ollandaise **A**pplication **M**arkup **L**anguage) | 4 | | 
 | 6 | VS Code extension with project generator/manager | 5 | | 
 | 7 | Aesthetics: Flat Metro, Frutiger Aero (Win Vista/7, Wii, Wii U, Pikmin 3), Frutiger Metro, Y2K (F-Zero GX), Vaporwave, Outrun/Synthwave, Neumorphism, Glassmorphism/Liquid Glass, Comic/Anime/LoFi, ... | 6 | | 
@@ -25,23 +25,31 @@ The framework is designed for cross-platform use, and its logic can be compiled 
 | 15 | Switch support (deko3d (devkitPro)) | 6 | | 
 | 16 | PS2 (ps2gl), PS3 (RSXGL), PS4 (OpenOrbis/GNMX/GNM) support | 6 | | 
 
-
 ### WIP in detail
 - Updating cmake
 - Widget ID manager
 - C#/.NET interface
 - Python interface
-- Replacing std::string and std::string_view with std::u8string and std::u8string_view
 
-### ToDo
+### ToDos before milestone 5
+- Update and FixedUpdate loops
 - Text
   - UTF-8 support
   - Emoji support
   - Vertical text flow
-  - Shaders
-    - Text Border
-    - Text shadow
-    - glow fog
+  - Text Shaders with all shader options
+  - Text Border
+- Shaders
+  - shadow
+  - glow fog
+  - cut corners
+  - rename gradient fill to linear shift
+  - radial shift
+  - conic radiant shift
+  - noise options
+  - optimize shader handling
+    - different IDs but only once compiled code
+    - only pass parameters on initialzation and on parameter value change
 - WindowBar
   - Positioning, left, right
   - Docking emblem
@@ -58,9 +66,10 @@ The framework is designed for cross-platform use, and its logic can be compiled 
 - C++ modules once ALL common compilers (GCC, CLang, MSVC) support them
 - Wiki/Documentation
 - More text color properties
-- Rectangle
-  - shadow
-  - glow fog
+- Rename Grid2d to Grid and give it a 3rd dimension
+- Rectangle, Text, Texture, IWidget: 3rd dimension
+- Complete Python binding
+- Refactor Binding
 
 #### Nice-to-have's
 - Better (relative) Viewports

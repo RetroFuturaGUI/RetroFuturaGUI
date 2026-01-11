@@ -20,7 +20,9 @@ else()
     message(FATAL_ERROR "VCPKG is not installed or VCPKG_ROOT environment variable is not set. Please install VCPKG and/or set the VCPKG_ROOT environment variable.")
 endif()
 
-add_library("RetroFuturaGUI"
+set(RetroFuturaGuiSources)
+
+list(APPEND RetroFuturaGuiSources
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Borders/LineBorder.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/OpenGlHelpers/Projection.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/OpenGlHelpers/Text.cpp"
@@ -35,8 +37,15 @@ add_library("RetroFuturaGUI"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/Label.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/Window.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/WindowBar.cpp"
-    "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/Mechanisms/DynamicLibWidgetManager.cpp"
 )
+
+if(DEFINED DYNLIB_MODE AND DYNLIB_MODE)
+    list(APPEND RetroFuturaGuiSources
+        "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/Mechanisms/DynamicLibWidgetManager.cpp"
+    )
+endif()
+
+add_library("RetroFuturaGUI" STATIC "${RetroFuturaGuiSources}")
 
 target_include_directories("RetroFuturaGUI" PUBLIC
     "${CMAKE_CURRENT_SOURCE_DIR}/source"
