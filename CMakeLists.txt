@@ -46,6 +46,7 @@ if(DEFINED DYNLIB_MODE AND DYNLIB_MODE)
 endif()
 
 add_library("RetroFuturaGUI" STATIC "${RetroFuturaGuiSources}")
+add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/PlatformBridge")
 
 target_include_directories("RetroFuturaGUI" PUBLIC
     "${CMAKE_CURRENT_SOURCE_DIR}/source"
@@ -53,16 +54,9 @@ target_include_directories("RetroFuturaGUI" PUBLIC
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/Mechanisms"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/OpenGlHelpers"
-    "${CMAKE_CURRENT_SOURCE_DIR}/PlatformBridge/source" #remove once PlatformBridge CMakeLists.txt is finalized
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Shapes"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Shaders"
 )
-
-if(TARGETPLATFORM STREQUAL "x64-windows")
-    target_include_directories("RetroFuturaGUI" PUBLIC
-        "${CMAKE_CURRENT_SOURCE_DIR}/PlatformBridge/source/Windows" #remove once PlatformBridge CMakeLists.txt is finalized
-    )
-endif()
 
 # Check for OpenGL installation
 if(TARGETPLATFORM STREQUAL "x64-windows")
@@ -133,19 +127,5 @@ target_link_libraries("RetroFuturaGUI" PUBLIC
     glm::glm-header-only
     GLEW::GLEW
     glad::glad
+    PlatformBridge
 )
-
-if(TARGETPLATFORM STREQUAL "x64-windows") #remove once PlatformBridge CMakeLists.txt is finalized
-message(STATUS "Linking PlatformBridge for ${TARGETPLATFORM}")
-    if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-        message(STATUS "DEBUG")
-        target_link_libraries("RetroFuturaGUI" PRIVATE 
-            "${CMAKE_CURRENT_SOURCE_DIR}/PlatformBridge/libs/x64-windows/debug/PlatformBridge.lib"
-        )
-    else()
-        message(STATUS "RELEASE")
-        target_link_libraries("RetroFuturaGUI" PRIVATE 
-            "${CMAKE_CURRENT_SOURCE_DIR}/PlatformBridge/libs/x64-windows/release/PlatformBridge.lib"
-        )
-    endif()
-endif()
