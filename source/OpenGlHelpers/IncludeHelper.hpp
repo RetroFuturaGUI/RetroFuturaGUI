@@ -13,7 +13,8 @@ namespace RetroFuturaGUI
     enum class FillType: u32
     {
         SOLID,
-        GRADIENT
+        GRADIENT,
+        RADIAL_GRADIENT
     };
 
     enum class WidgetTypeID : i32
@@ -50,7 +51,6 @@ namespace RetroFuturaGUI
         const glm::vec2& _Size;
         f32 _Rotation;
     };
-
 
     enum ColorState : u32
     {
