@@ -247,6 +247,7 @@ void RetroFuturaGUI::Window::resize()
     _height = std::max<i32>(newHeight, _minWindowSpan);
     _windowPosX = newPosX;
     _windowPosY = newPosY;
+    glfwSetWindowPos(_window, _windowPosX, _windowPosY);
     glfwSetWindowSize(_window, _width, _height);
 	_windowSizeChanged = true;
 }

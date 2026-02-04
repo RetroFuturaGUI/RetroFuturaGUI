@@ -5,14 +5,13 @@ The framework is designed for cross-platform use, and its logic can be compiled 
 
 
 ## Roadmap
-
 | # | Name | Depends on | Current State |
 |------|-----|------------| ---- |
 | 1 | Button, Label, Window, MainWindow, Image, Grid2D, WindowBar with Buttons |  | ✅ |
-| 2 | dll/so/dylib compilation for C# and Python support, Widget ID manager | 1 | WIP | 
-| 3 | linux support | 2 | | 
+| 2 | dll/so/dylib compilation for C# and Python support, Widget ID manager | 1 | ✅ | 
+| 3 | linux support | 2 | WIP | 
 | 4 | More Widgets (TextBox, Table, VideoPlayer, AudioPlayer, 3D Model, Slider, CheckBox, DropdownBox, RadioButton, Tabs, 3D Scene, Lights, change Grid2d to "Grid" and add a 3rd dimension, Carousel, Color Pickers) | 1 | | 
-| 5 | .bechaml 🥣 (**B**ased and **E**xtra **C**reamy **H**ollandaise **A**pplication **M**arkup **L**anguage) | 4 | | 
+| 5 | .bechaml markup language for GUI design 🥣 <!-- (**B**ased and **E**xtra **C**reamy **H**ollandaise **A**pplication **M**arkup **L**anguage) -->| 4 | | 
 | 6 | VS Code extension with project generator/manager | 5 | | 
 | 7 | Aesthetics: Flat Metro, Frutiger Aero (Win Vista/7, Wii, Wii U, Pikmin 3), Frutiger Metro, Y2K (F-Zero GX), Vaporwave, Outrun/Synthwave, Neumorphism, Glassmorphism/Liquid Glass, Comic/Anime/LoFi, ... | 6 | | 
 | 8 | Android (without Android Studio), MacOS, iOS support | 6 | | 
@@ -26,10 +25,8 @@ The framework is designed for cross-platform use, and its logic can be compiled 
 | 16 | PS2 (ps2gl), PS3 (RSXGL), PS4 (OpenOrbis/GNMX/GNM) support | 6 | | 
 
 ### WIP in detail
-- Updating cmake
-- Widget ID manager
-- C#/.NET interface
-- Python interface
+- Linux Support
+  - Add  Linux API to PlatformBridge
 
 ### ToDos before milestone 5
 - Update and FixedUpdate loops
@@ -135,4 +132,3 @@ RetroFuturaGUI aims to break these barriers!
 ### Known Bugs
 - Window.hpp/.cpp
   - glfwWindowHint(GLFW_TRANSPARENT_FRAMEBUFFER, GLFW_TRUE()) causes objects with transparency to show what's behind the window even if the background is completely opaque
-  - fix wrong reposition when resizing by grbbing the left edge or bottom-left corner
