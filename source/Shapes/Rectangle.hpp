@@ -49,6 +49,7 @@ namespace RetroFuturaGUI
         void SetBorderWidth(const f32 width);
         void SetBorderColor(std::span<glm::vec4> color);
         void SetRectangleMode(const RectangleMode rectanlgeMode);
+        void SetFillType(const FillType fillType);
 
     private:
         //Geometry
@@ -100,6 +101,7 @@ namespace RetroFuturaGUI
         void setupMesh();
         void initBasic(std::span<glm::vec4> colors);
         void drawWithSolidFill();
+        void drawRadialGradientFill();
         void drawWithGradientFill();
         void drawSolidBorder();
         void drawGradientBorder();
