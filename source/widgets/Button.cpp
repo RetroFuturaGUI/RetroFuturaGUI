@@ -243,6 +243,14 @@ const std::vector<glm::vec4>& RetroFuturaGUI::Button::GetBackgroundColors(const 
     }
 }
 
+void RetroFuturaGUI::Button::SetBackgroundFillType(const FillType fillType)
+{
+    _backgroundFillType = fillType;
+
+    if(_rectangle)
+        _rectangle->SetFillType(fillType);
+}
+
 void RetroFuturaGUI::Button::SetTextColor(const glm::vec4& color, const ColorState state)
 {
     switch(state)
@@ -291,6 +299,14 @@ const std::vector<glm::vec4>& RetroFuturaGUI::Button::GetBorderColor(const Color
         default: // Enabled
             return _borderColorEnabled;
     }
+}
+
+void RetroFuturaGUI::Button::SetBorderFillType(const FillType fillType)
+{
+    _borderFillType = fillType;
+
+    if(_border)
+        _border->SetFillType(fillType);
 }
 
 void RetroFuturaGUI::Button::SetSize(const glm::vec2 &size)

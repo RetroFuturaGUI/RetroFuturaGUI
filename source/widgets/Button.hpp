@@ -33,6 +33,7 @@ namespace RetroFuturaGUI
         void SetBackgroundGradientRotationSpeed(const f32 rotationSpeed);
         void SetWindowBackgroundImageTextureID(const u32 textureID);
         const std::vector<glm::vec4>& GetBackgroundColors(const ColorState state) const;
+        void SetBackgroundFillType(const FillType fillType);
 
         //Border
         void SetBorderColor(const glm::vec4& color, const ColorState state);
@@ -43,6 +44,7 @@ namespace RetroFuturaGUI
         void SetBorderGradientRotationSpeed(const f32 rotationSpeed);
         void SetWindowBorderImageTextureID(const u32 textureID);
         const std::vector<glm::vec4>& GetBorderColor(const ColorState state) const;
+        void SetBorderFillType(const FillType fillType);
         
         //Geometry
         void SetSize(const glm::vec2& size) override;
@@ -92,6 +94,9 @@ namespace RetroFuturaGUI
             _textColorDisabled { glm::vec4(0.5f, 0.5f,0.5f, 1.0f) },
             _textColorClicked { glm::vec4(1.0f) },
             _textColorHover { glm::vec4(1.0f, 1.0f, 1.0f, 1.0f) };
+            FillType
+                _backgroundFillType { FillType::SOLID },
+                _borderFillType { FillType::SOLID };
 
         void interact();
         void setColors();
