@@ -73,8 +73,6 @@ std::span<glm::vec4> RetroFuturaGUI::IWidget::GetBackgroundColors()
 void RetroFuturaGUI::IWidget::SetBackgroundColors(std::span<glm::vec4> backgroundColors)
 {
     _colorCount = static_cast<i32>(backgroundColors.size());
-    _backgroundColorFillType = _colorCount > 1 ? FillType::GRADIENT : FillType::SOLID;
-
     _backgroundColors = std::make_unique<glm::vec4[]>(_colorCount);
 
     for (uSize i = 0; i < backgroundColors.size(); ++i)
