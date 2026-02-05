@@ -96,7 +96,7 @@ RetroFuturaGUI::WidgetTypeID RetroFuturaGUI::IWidget::GetWidgetTypeID() const
     return _widgetTypeID;
 }
 
-void RetroFuturaGUI::IWidget::SetEnabled(const bool enable)
+void RetroFuturaGUI::IWidget::SetEnabled(const bool enable, [[maybe_unused]] const bool emitSignal)
 {
     _isEnabledFlag = enable;
 }

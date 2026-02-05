@@ -30,7 +30,7 @@ namespace RetroFuturaGUI
         std::string_view GetName() const;
         void SetName(std::string_view name);
         WidgetTypeID GetWidgetTypeID() const;
-        void SetEnabled(const bool enable);
+        void SetEnabled(const bool enable, const bool emitSignal = true);
         bool IsEnabled() const;
 
         template<typename T> T* GetParentWidget() const
