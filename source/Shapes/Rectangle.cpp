@@ -40,6 +40,10 @@ void RetroFuturaGUI::Rectangle::Draw()
                 {
                     drawGradientBorder();
                 } break;
+                case FillType::RADIAL_GRADIENT:
+                {
+                    drawRadialGradientBorder();
+                } break;
                 default: // FillType::SOLID
                 {
                     drawSolidBorder();
@@ -325,6 +329,39 @@ void RetroFuturaGUI::Rectangle::drawGradientBorder()
     }
 }
 
+void RetroFuturaGUI::Rectangle::drawRadialGradientBorder()
+{
+    _gradientOffset += _gradientAnimationSpeed;
+    if (_gradientOffset > 1.0f) 
+        _gradientOffset = 0.0f;
+
+    _gradientDegree += _gradientRotationSpeed;
+    if(_gradientDegree >= 360.0f)
+        _gradientDegree = 0.0f;
+
+    ShaderManager::GetBorderRadialGradientShader().UseProgram();
+    ShaderManager::GetBorderRadialGradientShader().SetUniformVec4("uColors", &_colors[0][0], 255);
+    ShaderManager::GetBorderRadialGradientShader().SetUniformFloat("uDegree", _gradientDegree);
+    ShaderManager::GetBorderRadialGradientShader().SetUniformInt("uNumColors", _colorCount);
+    ShaderManager::GetBorderRadialGradientShader().SetUniformInt("uDIP", _shaderFeatureDIP);
+    ShaderManager::GetBorderRadialGradientShader().SetUniformMat4("uProjection", _projection.GetProjectionMatrix());
+    ShaderManager::GetBorderRadialGradientShader().SetUniformMat4("uPosition", _translationMatrix);
+    ShaderManager::GetBorderRadialGradientShader().SetUniformMat4("uScaling", _scalingMatrix);
+    ShaderManager::GetBorderRadialGradientShader().SetUniformMat4("uRotation", _rotationMatrix);
+    ShaderManager::GetBorderRadialGradientShader().SetUniformFloat("uGradientOffset", _gradientOffset);
+    ShaderManager::GetBorderRadialGradientShader().SetUniformFloat("uDegree", _gradientDegree);
+    ShaderManager::GetBorderRadialGradientShader().SetUniformVec4("uCornerRadii", _cornerRadii);
+    ShaderManager::GetBorderRadialGradientShader().SetUniformVec2("uScale", _scale);
+    ShaderManager::GetBorderRadialGradientShader().SetUniformFloat("uBorderWidth", _borderWidth);
+
+    if(_shaderFeatureDIP & ShaderFeatures::GLASS_EFFECT_WITH_IMAGE)
+    {
+        ShaderManager::GetBorderRadialGradientShader().SetUniformInt("uBackgroundTexture", 0);
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, (_windowBackgroundTextureID));
+    }
+}
+
 void RetroFuturaGUI::Rectangle::SetBorderWidth(const f32 width)
 {
     _borderWidth = width;
@@ -333,4 +370,9 @@ void RetroFuturaGUI::Rectangle::SetBorderWidth(const f32 width)
 void RetroFuturaGUI::Rectangle::SetRectangleMode(const RectangleMode rectanlgeMode)
 {
     _rectangleMode = rectanlgeMode;
+}
+
+void RetroFuturaGUI::Rectangle::SetFillType(const FillType fillType)
+{
+    _fillType = fillType;
 }
