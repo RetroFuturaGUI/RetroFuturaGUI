@@ -22,7 +22,7 @@ namespace RetroFuturaGUI
         void Disconnect_WhileHover(const typename Signal<>::Slot& slot);
         void Disconnect_OnMouseEnter(const typename Signal<>::Slot& slot);
         void Disconnect_OnMouseLeave(const typename Signal<>::Slot& slot);
-        void SetEnabled(const bool enable);
+        void SetEnabled(const bool enable, const bool emitSignal = true);
 
         //Background
         void SetBackgroundColor(const glm::vec4& color, const ColorState state);
@@ -94,9 +94,9 @@ namespace RetroFuturaGUI
             _textColorDisabled { glm::vec4(0.5f, 0.5f,0.5f, 1.0f) },
             _textColorClicked { glm::vec4(1.0f) },
             _textColorHover { glm::vec4(1.0f, 1.0f, 1.0f, 1.0f) };
-            FillType
-                _backgroundFillType { FillType::SOLID },
-                _borderFillType { FillType::SOLID };
+        FillType
+            _backgroundFillType { FillType::SOLID },
+            _borderFillType { FillType::SOLID };
 
         void interact();
         void setColors();

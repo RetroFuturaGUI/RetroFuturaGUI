@@ -97,22 +97,30 @@ void RetroFuturaGUI::Button::Disconnect_OnMouseLeave(const typename Signal<>::Sl
     _onMouseLeaveAsync.Disconnect(slot);
 }
 
-void RetroFuturaGUI::Button::SetEnabled(const bool enable)
+void RetroFuturaGUI::Button::SetEnabled(const bool enable, const bool emitSignal)
 {
     _isEnabledFlag = enable;
 
     if(_isEnabledFlag)
     {
-        _onEnableAsync.EmitAsync();
-        _onEnable.Emit();
+        if(emitSignal)
+        {
+            _onEnableAsync.EmitAsync();
+            _onEnable.Emit();
+        }
+
         _colorState = ColorState::Enabled;
         setColors();
         return;
     }
 
-    _onDisableAsync.EmitAsync();
-    _onDisable.Emit();
-    ColorState::Disabled;
+    if(emitSignal)
+    {
+        _onDisableAsync.EmitAsync();
+        _onDisable.Emit();
+    }
+
+    _colorState = ColorState::Disabled;
     setColors();
 }
 
