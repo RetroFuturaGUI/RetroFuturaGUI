@@ -186,7 +186,7 @@ The framework is designed for cross-platform use, and its logic can be compiled 
 - Custom text renderer with many IANA character sets
 
 ### Why?
-There are many C++ GUI frameworks available, but most come with one or more limitations: restrictive licensing, enforced use of proprietary containers, inflexible window layouts, limited design capabilities, or poor cross-platform support—often confined to C++ only.
+There are many C++ GUI frameworks available, but most come with one or more drawbacks: restrictive licensing, enforced use of proprietary containers, inflexible window layouts, limited design capabilities, or poor cross-platform support, often confined to C++ only.
 RetroFuturaGUI aims to break these barriers!
 
 ### Known Bugs
