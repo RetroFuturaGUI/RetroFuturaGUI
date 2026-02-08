@@ -31,45 +31,155 @@ The framework is designed for cross-platform use, and its logic can be compiled 
 - Linux Support
   - Add  Linux API to PlatformBridge
 
+### Implemented Features
+<details><summary>CLICK TO EXPAND</summary>
+  <ul>
+<li>Widgets</li>
+  <ul>
+  <li>Label</li>
+    <ul>
+    <li>Render text</li>
+    <li>Align Text</li>
+    </ul>
+  <li>Button</li>
+  </ul>
+    <li>Shadered background and borders (solid, animated gradients)</li>
+    <li>Corner Radii</li>
+    <li>Signals</li>
+      <ul>
+      <li>onClick</li>
+      <li>whileHover</li>
+      <li>onMouseEnter</li>
+      <li>onMouseLeave</li>
+      <li>onRelease</li>
+      <li>setEnable</li>
+      </ul>
+    <li>SetPosition, SetSize, SetRotation</li>
+    <li>Image2D</li>
+      <ul>
+      <li>SetPosition, SetSize, SetRotation</li>
+      <li>Supports most image formats</li>
+      </ul>
+    <li>Grid2D</li>
+      <ul>
+      <li>Align Widgets</li>
+      <li>Widget Size Policies (const size, expand X, Y, X/Y)</li>
+      <li>Debug Lines</li>
+      <li>Row Definitions</li>
+      <li>Column Defitions</li>
+      </ul>
+  <li>WindowBar</li>
+    <ul>
+    <li>Top, Bottom Position</li>
+    <li>Close, Minimize, Maximize (all shadered)</li>
+    <li>Window Title</li>
+    <li>Shadered background</li>
+    </ul>
+  <li>Window</li>
+    <ul></ul>
+    <li>Background image</li>
+    <ul>
+      <li>Background image ID can be used to create glass effects on widgets</li>
+      <li>Resizeable</li>
+      <li>Movable</li>
+  </ul>
+</ul>
+<li>Shaders</li>
+  <ul>
+  <li>Solid Fill</li>
+    <ul>
+    <li>Glass Effect</li>
+    <li>Rounded corners</li>
+    </ul>
+  <li>Linear Gradient</li>
+  <ul>
+    <li>Animated (rotation, motion)</li>
+    <li>up to 256 colors (RGBA)</li>
+    <li>Glass Effect</li>
+    <li>Rounded corners</li>
+  </ul>
+  <li>Radiant Gradient</li>
+  <ul>
+    <li>Animated (rotation, motion)</li>
+    <li>up to 256 colors (RGBA)</li>
+    <li>Glass Effect</li>
+    <li>Rounded corners</li>
+  </ul>
+  <li>Texture</li>
+  <li>Shader Manager</li>
+  </ul>
+<li>Input Manager</li>
+<li>Cross Language Capabilities</li>
+  <ul>
+  <li>Widget ID Manager</li>
+  <li>C#</li>
+  <li>Python</li>
+  </ul>
+<li>Text Renderer</li>
+<ul>
+  <li>Basic Text Renderer (ASCII)</li>
+  <li>Solid color fill</li>
+</ul>
+</ul>
+</details>
+  
+
+
 ### ToDos before milestone 5
-- Update and FixedUpdate loops
-- Text
-  - UTF-8 support
-  - Emoji support
-  - Vertical text flow
-  - Text Shaders with all shader options
-  - Text Border
-- Shaders
-  - shadow
-  - glow fog
-  - cut corners
-  - rename gradient fill to linear shift
-  - radial shift
-  - conic radiant shift
-  - noise options
-  - optimize shader handling
-    - different IDs but only once compiled code
-    - only pass parameters on initialzation and on parameter value change
-- WindowBar
-  - Positioning, left, right
-  - Docking emblem
-  - Icon
-- Window
-  - Docking
-- Font Manager
-- Cursor Icon Manager
-- Animation Engine
-- Test Carbon compatibility
-- Add more widget interactions to the DynamicLibWidgetManager
-  - SetRotation, SetPosition, SetSize
-  - Set Color/Decoration parameters
-- C++ modules once ALL common compilers (GCC, CLang, MSVC) support them
-- Wiki/Documentation
-- More text color properties
-- Rename Grid2d to Grid and give it a 3rd dimension
-- Rectangle, Text, Texture, IWidget: 3rd dimension
-- Complete Python binding
-- Refactor Binding
+<details><summary>CLICK TO EXPAND</summary>
+  <ul>
+<li>Update and FixedUpdate loops</li>
+<li>Text</li>
+  <ul>
+  <li>UTF-8 support</li>
+  <li>Emoji support</li>
+  <li>Vertical text flow</li>
+  <li>Text Shaders with all shader options</li>
+  <li>Text Border</li>
+  </ul>
+<li>Shaders</li>
+  <ul>
+  <li>shadow</li>
+  <li>glow fog</li>
+  <li>cut corners</li>
+  <li>rename gradient fill to linear shift</li>
+  <li>radial shift</li>
+  <li>conic radiant shift</li>
+  <li>noise options</li>
+  <li>optimize shader handling</li>
+    <ul>
+    <li>different IDs but only once compiled code</li>
+    <li>only pass parameters on initialzation and on parameter value change</li>
+    </ul>
+  </ul>
+<li>WindowBar</li>
+  <ul>
+  <li>Positioning, left, right</li>
+  <li>Docking emblem</li>
+  <li>Icon</li>
+  </ul>
+<li>Window
+  <ul>
+  <li>Docking</li>
+  </ul>
+<li>Font Manager</li>
+<li>Cursor Icon Manager</li>
+<li>Animation Engine</li>
+<li>Test Carbon compatibility</li>
+<li>Add more widget interactions to the DynamicLibWidgetManager</li>
+  <ul>
+  <li>SetRotation, SetPosition, SetSize</li>
+  <li>Set Color/Decoration parameters</li>
+  </ul>
+<li>C++ modules once ALL common compilers (GCC, CLang, MSVC) support them</li>
+<li>Wiki/Documentation</li>
+<li>More text color properties</li>
+<li>Rename Grid2d to Grid and give it a 3rd dimension</li>
+<li>Rectangle, Text, Texture, IWidget: 3rd dimension</li>
+<li>Complete Python binding</li>
+<li>Refactor Binding</li>
+</ul>
+</details>
 
 #### Nice-to-have's
 - Better (relative) Viewports
@@ -78,59 +188,6 @@ The framework is designed for cross-platform use, and its logic can be compiled 
 ### Why?
 There are many C++ GUI frameworks available, but most come with one or more limitations: restrictive licensing, enforced use of proprietary containers, inflexible window layouts, limited design capabilities, or poor cross-platform support—often confined to C++ only.
 RetroFuturaGUI aims to break these barriers!
-
-### Implemented Features
-- Widgets
-  - Label
-    - Render text
-    - Align Text
-  - Button
-    - Shadered background and borders (solid, animated gradients)
-    - Corner Radii
-    - Signals
-      - onClick
-      - whileHover
-      - onMouseEnter
-      - onMouseLeave
-      - onRelease
-    - SetPosition, SetSize, SetRotation
-    - Image2D
-      - SetPosition, SetSize, SetRotation
-      - Supports most image formats
-    - Grid2D
-      - Align Widgets
-      - Widget Size Policies (const size, expand X, Y, X/Y)
-      - Debug Lines
-      - Row Definitions
-      - Column Defitions
-  - WindowBar
-    - Top, Bottom Position
-    - Close, Minimize, Maximize (all shadered)
-    - Window Title
-    - Shadered background
-  - Window
-    - Background image
-      - Background image ID can be used to create glass effects on widgets
-      - Resizeable
-      - Movable
-- Shaders
-  - Solid Fill
-    - Glass Effect
-    - Rounded corners
-  - Gradient Fill
-    - Animated (rotation, motion)
-    - up to 256 colors (RGBA)
-    - Glass Effect
-    - Rounded corners
-  - Texture
-  - Shader Manager
-- Input Manager
-- Cross Language Capabilities
-  - Widget ID Manager
-  - C#
-- Text Renderer
-  - Basic Text Renderer (ASCII)
-  - Solid color fill
 
 ### Known Bugs
 - Window.hpp/.cpp
