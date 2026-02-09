@@ -40,8 +40,37 @@ The framework is designed for cross-platform use, and its logic can be compiled 
     <ul>
     <li>Render text</li>
     <li>Align Text</li>
+      <ul>
+        <li>Left</li>
+        <li>Right</li>
+        <li>Center</li>
     </ul>
   <li>Button</li>
+      <ul>
+        <li>Slots</li>
+        <ul>
+          <li>OnClick</li>
+          <li>OnRelease</li>
+          <li>OnMouseEnter</li>
+          <li>OnMouseLeave</li>
+          <li>WhileHover</li>
+          <li>SetEnabled</li>
+        </ul>
+        <li>Background</li>
+        <ul>
+          <li>Solid Fill</li>
+          <li>Linear Gradient</li>
+          <li>Radial Gradient</li>
+        </ul>
+        <li>Borders</li>
+        <ul>
+          <li>Solid Fill</li>
+          <li>Linear Gradient</li>
+          <li>Radial Gradient</li>
+          <li>Set Corner Radii</li>
+          <li>Set Corner Width</li>
+        </ul>
+      </ul>
   </ul>
     <li>Shadered background and borders (solid, animated gradients)</li>
     <li>Corner Radii</li>
