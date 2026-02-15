@@ -102,7 +102,8 @@ namespace RetroFuturaGUI
         void initBasic(std::span<glm::vec4> colors);
         void drawWithSolidFill();
         void drawRadialGradientFill();
-        void drawWithGradientFill();
+        void drawHueStarGradientFill();
+        void drawLinearGradientFill();
         void drawSolidBorder();
         void drawLinearGradientBorder();
         void drawRadialGradientBorder();

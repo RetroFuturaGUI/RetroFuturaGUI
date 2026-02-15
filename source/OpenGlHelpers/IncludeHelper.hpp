@@ -14,7 +14,8 @@ namespace RetroFuturaGUI
     {
         SOLID,
         LINEAR_GRADIENT,
-        RADIAL_GRADIENT
+        RADIAL_GRADIENT,
+        HUESTAR_GRADIENT
     };
 
     enum class WidgetTypeID : i32

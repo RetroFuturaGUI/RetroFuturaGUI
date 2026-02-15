@@ -82,7 +82,7 @@ void RetroFuturaGUI::LineBorder::setupMesh()
 void RetroFuturaGUI::LineBorder::initBasic(std::span<const glm::vec4> colors)
 {
     _colorCount = colors.size();
-    _fillType = _colorCount > 1 ? FillType::GRADIENT : FillType::SOLID;
+    //_fillType = _colorCount > 1 ? FillType::GRADIENT : FillType::SOLID;
 
     _colors = std::make_unique<glm::vec4[]>(_colorCount);
     for (u32 i = 0; i < colors.size(); ++i)
