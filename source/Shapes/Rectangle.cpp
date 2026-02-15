@@ -44,6 +44,10 @@ void RetroFuturaGUI::Rectangle::Draw()
                 {
                     drawRadialGradientBorder();
                 } break;
+                case FillType::HUESTAR_GRADIENT:
+                {
+                    drawHueStarGradientBorder();
+                } break;
                 default: // FillType::SOLID
                 {
                     drawSolidBorder();
@@ -397,6 +401,39 @@ void RetroFuturaGUI::Rectangle::drawRadialGradientBorder()
     if(_shaderFeatureDIP & ShaderFeatures::GLASS_EFFECT_WITH_IMAGE)
     {
         ShaderManager::GetBorderRadialGradientShader().SetUniformInt("uBackgroundTexture", 0);
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, (_windowBackgroundTextureID));
+    }
+}
+
+void RetroFuturaGUI::Rectangle::drawHueStarGradientBorder()
+{
+    _gradientOffset += _gradientAnimationSpeed;
+    if (_gradientOffset > 1.0f) 
+        _gradientOffset = 0.0f;
+
+    _gradientDegree += _gradientRotationSpeed;
+    if(_gradientDegree >= 360.0f)
+        _gradientDegree = 0.0f;
+
+    ShaderManager::GetBorderHueStarGradientShader().UseProgram();
+    ShaderManager::GetBorderHueStarGradientShader().SetUniformVec4("uColors", &_colors[0][0], 255);
+    ShaderManager::GetBorderHueStarGradientShader().SetUniformFloat("uDegree", _gradientDegree);
+    ShaderManager::GetBorderHueStarGradientShader().SetUniformInt("uNumColors", _colorCount);
+    ShaderManager::GetBorderHueStarGradientShader().SetUniformInt("uDIP", _shaderFeatureDIP);
+    ShaderManager::GetBorderHueStarGradientShader().SetUniformMat4("uProjection", _projection.GetProjectionMatrix());
+    ShaderManager::GetBorderHueStarGradientShader().SetUniformMat4("uPosition", _translationMatrix);
+    ShaderManager::GetBorderHueStarGradientShader().SetUniformMat4("uScaling", _scalingMatrix);
+    ShaderManager::GetBorderHueStarGradientShader().SetUniformMat4("uRotation", _rotationMatrix);
+    ShaderManager::GetBorderHueStarGradientShader().SetUniformFloat("uGradientOffset", _gradientOffset);
+    ShaderManager::GetBorderHueStarGradientShader().SetUniformFloat("uDegree", _gradientDegree);
+    ShaderManager::GetBorderHueStarGradientShader().SetUniformVec4("uCornerRadii", _cornerRadii);
+    ShaderManager::GetBorderHueStarGradientShader().SetUniformVec2("uScale", _scale);
+    ShaderManager::GetBorderHueStarGradientShader().SetUniformFloat("uBorderWidth", _borderWidth);
+
+    if(_shaderFeatureDIP & ShaderFeatures::GLASS_EFFECT_WITH_IMAGE)
+    {
+        ShaderManager::GetBorderHueStarGradientShader().SetUniformInt("uBackgroundTexture", 0);
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, (_windowBackgroundTextureID));
     }

@@ -107,5 +107,6 @@ namespace RetroFuturaGUI
         void drawSolidBorder();
         void drawLinearGradientBorder();
         void drawRadialGradientBorder();
+        void drawHueStarGradientBorder();
     };
 }

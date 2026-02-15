@@ -42,6 +42,11 @@ RetroFuturaGUI::Shader& RetroFuturaGUI::ShaderManager::GetBorderRadialGradientSh
     return *_borderRadialGradient;
 }
 
+RetroFuturaGUI::Shader& RetroFuturaGUI::ShaderManager::GetBorderHueStarGradientShader()
+{
+    return *_borderHueStarGradient;
+}
+
 RetroFuturaGUI::Shader& RetroFuturaGUI::ShaderManager::GetTextFillShader()
 {
     return *_textFill;
@@ -103,6 +108,11 @@ void RetroFuturaGUI::ShaderManager::compileShaders()
     _borderRadialGradient = std::make_unique<Shader>(
         std::string(workingDir + "BorderRadialGradient.vs").c_str(), 
         std::string(workingDir + "BorderRadialGradient.fs").c_str()
+    );
+
+    _borderHueStarGradient = std::make_unique<Shader>(
+        std::string(workingDir + "BorderHueStarGradient.vs").c_str(), 
+        std::string(workingDir + "BorderHueStarGradient.fs").c_str()
     );
 
     _lineFill = std::make_unique<Shader>(
