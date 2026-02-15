@@ -23,9 +23,9 @@ namespace RetroFuturaGUI
         /// @return Reference to the border solid fill Shader object
         static Shader& GetBorderSolidFillShader();
 
-        /// @brief Get the border fill gradient shader
-        /// @return Reference to the border fill gradient Shader object
-        static Shader& GetBorderFillGradientShader();
+        /// @brief Get the border linear gradient shader
+        /// @return Reference to the border linear gradient Shader object
+        static Shader& GetBorderLinearGradientShader();
 
         /// @brief Get the border radial gradient shader
         /// @return Reference to the border radial gradient Shader object
@@ -64,7 +64,7 @@ namespace RetroFuturaGUI
         static inline std::unique_ptr<Shader> _linearGradient;
         static inline std::unique_ptr<Shader> _radialGradient;
         static inline std::unique_ptr<Shader> _borderSolidFill;
-        static inline std::unique_ptr<Shader> _borderFillGradient;
+        static inline std::unique_ptr<Shader> _borderLinearGradient;
         static inline std::unique_ptr<Shader> _borderRadialGradient;
         static inline std::unique_ptr<Shader> _lineFill;
         static inline std::unique_ptr<Shader> _textFill;

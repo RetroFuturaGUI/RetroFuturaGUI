@@ -306,24 +306,24 @@ void RetroFuturaGUI::Rectangle::drawGradientBorder()
     if(_gradientDegree >= 360.0f)
         _gradientDegree = 0.0f;
 
-    ShaderManager::GetBorderFillGradientShader().UseProgram();
-    ShaderManager::GetBorderFillGradientShader().SetUniformVec4("uColors", &_colors[0][0], 255);
-    ShaderManager::GetBorderFillGradientShader().SetUniformFloat("uDegree", _gradientDegree);
-    ShaderManager::GetBorderFillGradientShader().SetUniformInt("uNumColors", _colorCount);
-    ShaderManager::GetBorderFillGradientShader().SetUniformInt("uDIP", _shaderFeatureDIP);
-    ShaderManager::GetBorderFillGradientShader().SetUniformMat4("uProjection", _projection.GetProjectionMatrix());
-    ShaderManager::GetBorderFillGradientShader().SetUniformMat4("uPosition", _translationMatrix);
-    ShaderManager::GetBorderFillGradientShader().SetUniformMat4("uScaling", _scalingMatrix);
-    ShaderManager::GetBorderFillGradientShader().SetUniformMat4("uRotation", _rotationMatrix);
-    ShaderManager::GetBorderFillGradientShader().SetUniformFloat("uGradientOffset", _gradientOffset);
-    ShaderManager::GetBorderFillGradientShader().SetUniformFloat("uDegree", _gradientDegree);
-    ShaderManager::GetBorderFillGradientShader().SetUniformVec4("uCornerRadii", _cornerRadii);
-    ShaderManager::GetBorderFillGradientShader().SetUniformVec2("uScale", _scale);
-    ShaderManager::GetBorderFillGradientShader().SetUniformFloat("uBorderWidth", _borderWidth);
+    ShaderManager::GetBorderLinearGradientShader().UseProgram();
+    ShaderManager::GetBorderLinearGradientShader().SetUniformVec4("uColors", &_colors[0][0], 255);
+    ShaderManager::GetBorderLinearGradientShader().SetUniformFloat("uDegree", _gradientDegree);
+    ShaderManager::GetBorderLinearGradientShader().SetUniformInt("uNumColors", _colorCount);
+    ShaderManager::GetBorderLinearGradientShader().SetUniformInt("uDIP", _shaderFeatureDIP);
+    ShaderManager::GetBorderLinearGradientShader().SetUniformMat4("uProjection", _projection.GetProjectionMatrix());
+    ShaderManager::GetBorderLinearGradientShader().SetUniformMat4("uPosition", _translationMatrix);
+    ShaderManager::GetBorderLinearGradientShader().SetUniformMat4("uScaling", _scalingMatrix);
+    ShaderManager::GetBorderLinearGradientShader().SetUniformMat4("uRotation", _rotationMatrix);
+    ShaderManager::GetBorderLinearGradientShader().SetUniformFloat("uGradientOffset", _gradientOffset);
+    ShaderManager::GetBorderLinearGradientShader().SetUniformFloat("uDegree", _gradientDegree);
+    ShaderManager::GetBorderLinearGradientShader().SetUniformVec4("uCornerRadii", _cornerRadii);
+    ShaderManager::GetBorderLinearGradientShader().SetUniformVec2("uScale", _scale);
+    ShaderManager::GetBorderLinearGradientShader().SetUniformFloat("uBorderWidth", _borderWidth);
 
     if(_shaderFeatureDIP & ShaderFeatures::GLASS_EFFECT_WITH_IMAGE)
     {
-        ShaderManager::GetBorderFillGradientShader().SetUniformInt("uBackgroundTexture", 0);
+        ShaderManager::GetBorderLinearGradientShader().SetUniformInt("uBackgroundTexture", 0);
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, (_windowBackgroundTextureID));
     }
