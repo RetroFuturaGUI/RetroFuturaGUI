@@ -2,9 +2,9 @@
 #include "PlatformBridge.hpp"
 #include <print>
 
-RetroFuturaGUI::Shader& RetroFuturaGUI::ShaderManager::GetFillShader()
+RetroFuturaGUI::Shader& RetroFuturaGUI::ShaderManager::GetSolidFillShader()
 {
-    return *_fill;
+    return *_solidFill;
 }
 
 RetroFuturaGUI::Shader& RetroFuturaGUI::ShaderManager::GetLinearGradientShader()
@@ -65,9 +65,9 @@ void RetroFuturaGUI::ShaderManager::compileShaders()
     workingDir.append("/ShaderSource/");
 #endif
 
-    _fill = std::make_unique<Shader>(
-        std::string(workingDir + "Fill.vs").c_str(), 
-        std::string(workingDir + "Fill.fs").c_str()
+    _solidFill = std::make_unique<Shader>(
+        std::string(workingDir + "SolidFill.vs").c_str(), 
+        std::string(workingDir + "SolidFill.fs").c_str()
     );
 
     _linearGradient = std::make_unique<Shader>(

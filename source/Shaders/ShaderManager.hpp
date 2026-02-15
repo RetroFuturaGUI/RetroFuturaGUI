@@ -7,9 +7,9 @@ namespace RetroFuturaGUI
     class ShaderManager
     {
     public:
-        /// @brief Get the fill shader
-        /// @return Reference to the fill Shader object
-        static Shader& GetFillShader();
+        /// @brief Get the solid fill shader
+        /// @return Reference to the solid fill Shader object
+        static Shader& GetSolidFillShader();
 
         /// @brief Get the linear gradient shader
         /// @return Reference to the linear gradient Shader object
@@ -60,7 +60,7 @@ namespace RetroFuturaGUI
         }
         
         static void compileShaders();
-        static inline std::unique_ptr<Shader> _fill;
+        static inline std::unique_ptr<Shader> _solidFill;
         static inline std::unique_ptr<Shader> _linearGradient;
         static inline std::unique_ptr<Shader> _radialGradient;
         static inline std::unique_ptr<Shader> _borderFill;

@@ -181,23 +181,23 @@ void RetroFuturaGUI::Rectangle::initBasic(std::span<glm::vec4> colors)
 
 void RetroFuturaGUI::Rectangle::drawWithSolidFill()
 {
-    ShaderManager::GetFillShader().UseProgram();
-    ShaderManager::GetFillShader().SetUniformInt("uDIP", _shaderFeatureDIP);
-    ShaderManager::GetFillShader().SetUniformMat4("uProjection", _projection.GetProjectionMatrix());
-    ShaderManager::GetFillShader().SetUniformMat4("uPosition", _translationMatrix);
-    ShaderManager::GetFillShader().SetUniformMat4("uScaling", _scalingMatrix);
-    ShaderManager::GetFillShader().SetUniformMat4("uRotation", _rotationMatrix);
-    ShaderManager::GetFillShader().SetUniformVec4("uColor", _colors[0]);
+    ShaderManager::GetSolidFillShader().UseProgram();
+    ShaderManager::GetSolidFillShader().SetUniformInt("uDIP", _shaderFeatureDIP);
+    ShaderManager::GetSolidFillShader().SetUniformMat4("uProjection", _projection.GetProjectionMatrix());
+    ShaderManager::GetSolidFillShader().SetUniformMat4("uPosition", _translationMatrix);
+    ShaderManager::GetSolidFillShader().SetUniformMat4("uScaling", _scalingMatrix);
+    ShaderManager::GetSolidFillShader().SetUniformMat4("uRotation", _rotationMatrix);
+    ShaderManager::GetSolidFillShader().SetUniformVec4("uColor", _colors[0]);
 
     if(_shaderFeatureDIP & ShaderFeatures::ROUNDED_CORNERS)
     {
-        ShaderManager::GetFillShader().SetUniformVec4("uCornerRadii", _cornerRadii);
-        ShaderManager::GetFillShader().SetUniformVec2("uScale", _scale);
+        ShaderManager::GetSolidFillShader().SetUniformVec4("uCornerRadii", _cornerRadii);
+        ShaderManager::GetSolidFillShader().SetUniformVec2("uScale", _scale);
     }
 
     if(_shaderFeatureDIP & ShaderFeatures::GLASS_EFFECT_WITH_IMAGE)
     {
-        ShaderManager::GetFillShader().SetUniformInt("uBackgroundTexture", 0);
+        ShaderManager::GetSolidFillShader().SetUniformInt("uBackgroundTexture", 0);
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, (_windowBackgroundTextureID));
     }
