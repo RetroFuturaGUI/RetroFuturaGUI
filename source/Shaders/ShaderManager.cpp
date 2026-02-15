@@ -22,9 +22,9 @@ RetroFuturaGUI::Shader& RetroFuturaGUI::ShaderManager::GetLineFillShader()
     return *_lineFill;
 }
 
-RetroFuturaGUI::Shader& RetroFuturaGUI::ShaderManager::GetBorderFillShader()
+RetroFuturaGUI::Shader& RetroFuturaGUI::ShaderManager::GetBorderSolidFillShader()
 {
-    return *_borderFill;
+    return *_borderSolidFill;
 }
 
 RetroFuturaGUI::Shader& RetroFuturaGUI::ShaderManager::GetBorderFillGradientShader()
@@ -80,9 +80,9 @@ void RetroFuturaGUI::ShaderManager::compileShaders()
         std::string(workingDir + "RadialGradient.fs").c_str()
     );
 
-    _borderFill = std::make_unique<Shader>(
-        std::string(workingDir + "BorderFill.vs").c_str(), 
-        std::string(workingDir + "BorderFill.fs").c_str()
+    _borderSolidFill = std::make_unique<Shader>(
+        std::string(workingDir + "BorderSolidFill.vs").c_str(), 
+        std::string(workingDir + "BorderSolidFill.fs").c_str()
     );
 
     _borderFillGradient = std::make_unique<Shader>(

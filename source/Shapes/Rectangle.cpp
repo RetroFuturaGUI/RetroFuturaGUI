@@ -277,20 +277,20 @@ void RetroFuturaGUI::Rectangle::drawRadialGradientFill()
 
 void RetroFuturaGUI::Rectangle::drawSolidBorder()
 {
-    ShaderManager::GetBorderFillShader().UseProgram();
-    ShaderManager::GetBorderFillShader().SetUniformInt("uDIP", _shaderFeatureDIP);
-    ShaderManager::GetBorderFillShader().SetUniformMat4("uProjection", _projection.GetProjectionMatrix());
-    ShaderManager::GetBorderFillShader().SetUniformMat4("uPosition", _translationMatrix);
-    ShaderManager::GetBorderFillShader().SetUniformMat4("uScaling", _scalingMatrix);
-    ShaderManager::GetBorderFillShader().SetUniformMat4("uRotation", _rotationMatrix);
-    ShaderManager::GetBorderFillShader().SetUniformVec4("uColor", _colors[0]);
-    ShaderManager::GetBorderFillShader().SetUniformFloat("uBorderWidth", _borderWidth);
-    ShaderManager::GetBorderFillShader().SetUniformVec4("uCornerRadii", _cornerRadii);
-    ShaderManager::GetBorderFillShader().SetUniformVec2("uScale", _scale);
+    ShaderManager::GetBorderSolidFillShader().UseProgram();
+    ShaderManager::GetBorderSolidFillShader().SetUniformInt("uDIP", _shaderFeatureDIP);
+    ShaderManager::GetBorderSolidFillShader().SetUniformMat4("uProjection", _projection.GetProjectionMatrix());
+    ShaderManager::GetBorderSolidFillShader().SetUniformMat4("uPosition", _translationMatrix);
+    ShaderManager::GetBorderSolidFillShader().SetUniformMat4("uScaling", _scalingMatrix);
+    ShaderManager::GetBorderSolidFillShader().SetUniformMat4("uRotation", _rotationMatrix);
+    ShaderManager::GetBorderSolidFillShader().SetUniformVec4("uColor", _colors[0]);
+    ShaderManager::GetBorderSolidFillShader().SetUniformFloat("uBorderWidth", _borderWidth);
+    ShaderManager::GetBorderSolidFillShader().SetUniformVec4("uCornerRadii", _cornerRadii);
+    ShaderManager::GetBorderSolidFillShader().SetUniformVec2("uScale", _scale);
 
     if(_shaderFeatureDIP & ShaderFeatures::GLASS_EFFECT_WITH_IMAGE)
     {
-        ShaderManager::GetBorderFillShader().SetUniformInt("uBackgroundTexture", 0);
+        ShaderManager::GetBorderSolidFillShader().SetUniformInt("uBackgroundTexture", 0);
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, (_windowBackgroundTextureID));
     }
