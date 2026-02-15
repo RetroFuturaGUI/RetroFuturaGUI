@@ -36,9 +36,9 @@ void RetroFuturaGUI::Rectangle::Draw()
         {
             switch(_fillType)
             {
-                case FillType::GRADIENT:
+                case FillType::LINEAR_GRADIENT:
                 {
-                    drawGradientBorder();
+                    drawLinearGradientBorder();
                 } break;
                 case FillType::RADIAL_GRADIENT:
                 {
@@ -54,7 +54,7 @@ void RetroFuturaGUI::Rectangle::Draw()
         {
             switch(_fillType)
             {
-                case FillType::GRADIENT:
+                case FillType::LINEAR_GRADIENT:
                 {
                     drawWithGradientFill();
                 } break;
@@ -296,7 +296,7 @@ void RetroFuturaGUI::Rectangle::drawSolidBorder()
     }
 }
 
-void RetroFuturaGUI::Rectangle::drawGradientBorder()
+void RetroFuturaGUI::Rectangle::drawLinearGradientBorder()
 {
     _gradientOffset += _gradientAnimationSpeed;
     if (_gradientOffset > 1.0f) 

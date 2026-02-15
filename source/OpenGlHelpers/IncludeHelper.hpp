@@ -13,7 +13,7 @@ namespace RetroFuturaGUI
     enum class FillType: u32
     {
         SOLID,
-        GRADIENT,
+        LINEAR_GRADIENT,
         RADIAL_GRADIENT
     };
 
