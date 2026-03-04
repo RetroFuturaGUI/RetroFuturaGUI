@@ -59,16 +59,14 @@ target_include_directories("RetroFuturaGUI" PUBLIC
 )
 
 # Check for OpenGL installation
-if(TARGETPLATFORM STREQUAL "x64-windows")
-    find_package(OpenGL REQUIRED)
-    if(OpenGL_FOUND)
-        message(STATUS "OpenGL is installed and available for ${TARGETPLATFORM}")
-    else()
-        message(FATAL_ERROR "OpenGL is not installed or not found. Please install OpenGL development libraries.")
-    endif()
-elseif(TARGETPLATFORM STREQUAL "x64-linux")
-    message(FATAL_ERROR "Linux not yet supported")
-elseif(TARGETPLATFORM STREQUAL "x64-osx")
+find_package(OpenGL REQUIRED)
+if(OpenGL_FOUND)
+    message(STATUS "OpenGL is installed and available for ${TARGETPLATFORM}")
+else()
+    message(FATAL_ERROR "OpenGL is not installed or not found. Please install OpenGL development libraries.")
+endif()
+
+if(TARGETPLATFORM STREQUAL "x64-osx")
     message(FATAL_ERROR "macOS not yet supported")
 endif()
 
