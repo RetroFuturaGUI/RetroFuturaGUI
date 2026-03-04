@@ -1,4 +1,9 @@
 #include "Text.hpp"
+#include <algorithm>
+
+#ifndef _MSC_VER
+    using std::max;
+#endif
 
 RetroFuturaGUI::Text::Text(const GeometryParams2D& geometry, const TextParams& textParams)
 : _projection(const_cast<Projection&>(geometry._Projection)), _parentSize(geometry._Size), 

@@ -31,7 +31,7 @@ void RetroFuturaGUI::Label::SetEnabled(const bool enable)
 
     _onDisableAsync.EmitAsync();
     _onDisable.Emit();
-    ColorState::Disabled;
+    _colorState = ColorState::Disabled;
     setColors();
 }
 

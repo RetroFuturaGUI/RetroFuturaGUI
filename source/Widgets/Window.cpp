@@ -3,7 +3,7 @@
 #include <print>
 
 RetroFuturaGUI::Window::Window(std::string_view name, std::string_view windowTitle, const i32 width, const i32 height)
-: _name(name), _windowTitle(windowTitle), _width(width), _height(height)
+: _width(width), _height(height), _name(name), _windowTitle(windowTitle)
 {
 	createWindow();
 
@@ -239,6 +239,8 @@ void RetroFuturaGUI::Window::resize()
         case ResizeEdge::BOTTOM:
             newHeight = _height + (i32)deltaY;
         break;
+		default:
+		break;
     }
 
     _prevResizeX = _absoluteCursorPosX;

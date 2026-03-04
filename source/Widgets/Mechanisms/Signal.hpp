@@ -33,7 +33,7 @@ namespace RetroFuturaGUI
                         if (!s || !slot)
                             return false;
 
-                        return s.target<void(*)(Args...)>() == slot.target<void(*)(Args...)>();
+                        return s.template target<void(*)(Args...)>() == slot.template target<void(*)(Args...)>();
                     }
                 ),
                 _slots.end()

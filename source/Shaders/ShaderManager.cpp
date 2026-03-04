@@ -59,7 +59,6 @@ RetroFuturaGUI::Shader& RetroFuturaGUI::ShaderManager::GetTextureFillShader()
 
 void RetroFuturaGUI::ShaderManager::Init()
 {
-    SetConsoleOutputCP(CP_UTF8);
     std::println("Compiling shaders...");
     compileShaders();
     std::println("Shaders compiled.");

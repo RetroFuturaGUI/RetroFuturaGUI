@@ -240,6 +240,8 @@ glm::vec2 RetroFuturaGUI::WindowBar::calculateElementPosition(const ElementType 
         case ElementType::CloseButton:
             offset += _windowBarThiccness * 0.5f;
         break;
+        default: //TITLE
+        break;
     }
 
     switch(elementType)
@@ -432,6 +434,8 @@ void RetroFuturaGUI::WindowBar::SetButtonCornerRadii(const glm::vec4 &radii, con
         case ElementType::MinimizeButton:
             if(_minimize)
                 _minimize->SetCornerRadii(radii);
+        break;
+        default:
         break;
     }
 }

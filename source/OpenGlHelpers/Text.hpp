@@ -86,17 +86,18 @@ namespace RetroFuturaGUI
         std::vector<glm::mat4> _transforms;
         std::vector<i32> _letterMap;
         static inline FT_Library _ft { nullptr };
-        std::string _fontPath { PlatformBridge::Fonts::GetFontsInformation().front().second }; //create FontManager later
-        std::string _text;
+        std::string 
+            _text,
+            _fontPath { PlatformBridge::Fonts::GetFontsInformation().front().second }; //create FontManager later
         glm::vec2 _glyphSize { 1.0f };
         glm::vec2 _textSpan { 0.0f };
         static inline constinit const f32 _1emFraction { 0.00390625f };
+        glm::vec4 _textColor { 1.0f };
         TextAlignment _textAlignment { TextAlignment::LEFT };
         f32
             _lineSpacingFactor { 1.3f },
-            _textPadding { 5.0f },
-            _textBaseHeight { 8.0f };
-        glm::vec4 _textColor { 1.0f };
+            _textBaseHeight { 8.0f },
+            _textPadding { 5.0f };
 
         i32 initFreeTypeLibrary();
         i32 initFontFace();
