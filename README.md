@@ -12,7 +12,7 @@ The framework is designed for cross-platform use, and its logic can be compiled 
 |------|-----|------------| ---- |
 | 1 | Button, Label, Window, MainWindow, Image, Grid2D, WindowBar with Buttons |  | ✅ |
 | 2 | dll/so/dylib compilation for C# and Python support, Widget ID manager | 1 | ✅ | 
-| 3 | linux support | 2 | WIP | 
+| 3 | Linux Support, Font Manager | 2 | WIP | 
 | 4 | More Widgets (TextBox, Table, VideoPlayer, AudioPlayer, 3D Model, Slider, CheckBox, DropdownBox, RadioButton, Tabs, 3D Scene, Lights, change Grid2d to "Grid" and add a 3rd dimension, Carousel, Color Pickers) | 1 | | 
 | 5 | .bechaml markup language for GUI design 🥣 <!-- (**B**ased and **E**xtra **C**reamy **H**ollandaise **A**pplication **M**arkup **L**anguage) -->| 4 | | 
 | 6 | VS Code extension with project generator/manager | 5 | | 
@@ -28,8 +28,8 @@ The framework is designed for cross-platform use, and its logic can be compiled 
 | 16 | PS2 (ps2gl), PS3 (RSXGL), PS4 (OpenOrbis/GNMX/GNM) support | 6 | | 
 
 ### WIP in detail
-- Linux Support
-  - Add  Linux API to PlatformBridge
+- Font Manager
+  - Unicode Support
 
 ### Implemented Features
 <details><summary>CLICK TO EXPAND</summary>

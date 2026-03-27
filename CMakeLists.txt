@@ -24,6 +24,7 @@ set(RetroFuturaGuiSources)
 
 list(APPEND RetroFuturaGuiSources
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Borders/LineBorder.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/source/Fonts/FontManager.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/OpenGlHelpers/Projection.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/OpenGlHelpers/Text.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/OpenGlHelpers/Texture.cpp"
@@ -51,6 +52,7 @@ add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/PlatformBridge")
 target_include_directories("RetroFuturaGUI" PUBLIC
     "${CMAKE_CURRENT_SOURCE_DIR}/source"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Borders"
+    "${CMAKE_CURRENT_SOURCE_DIR}/source/Fonts"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/Mechanisms"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/OpenGlHelpers"
