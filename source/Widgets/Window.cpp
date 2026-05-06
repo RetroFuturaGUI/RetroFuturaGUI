@@ -74,13 +74,13 @@ void RetroFuturaGUI::Window::createWindow()
 	setupWindowBar();
 }
 
-void RetroFuturaGUI::Window::SetWindowTitle(std::string_view title, std::string_view fontPath)
+void RetroFuturaGUI::Window::SetWindowTitle(std::string_view title, std::string_view fontName)
 {
 	_windowTitle = title;
 	glfwSetWindowTitle(_window, _windowTitle.c_str());
 
 	if(_windowBar)
-		_windowBar->SetWindowTitle(_windowTitle, fontPath);
+		_windowBar->SetWindowTitle(_windowTitle, fontName);
 }
 
 void RetroFuturaGUI::Window::cursorPositionCallback(GLFWwindow *window, f64 xpos, f64 ypos)

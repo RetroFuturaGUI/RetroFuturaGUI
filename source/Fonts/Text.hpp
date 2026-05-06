@@ -20,7 +20,7 @@ namespace RetroFuturaGUI
     struct TextParams
     {
         std::string_view _Text;
-        std::string_view _FontPath;
+        std::string_view _FontName;
         const glm::vec4& _TextColor;
         const glm::vec2& _GlyphSize;
         TextAlignment _TextAlignment { TextAlignment::LEFT };

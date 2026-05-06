@@ -1,7 +1,8 @@
 #include "FontManager.hpp"
+#include "PlatformBridge.hpp"
 #include "UnicodeBlocks.hpp"
 #include <print>
-#include <GL/gl.h> // Assuming OpenGL headers are available
+#include <GL/gl.h>
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include "stb_image_write.h"
 
@@ -10,7 +11,7 @@ i32 RetroFuturaGUI::FontManager::Init()
     return initFreeTypeLibrary();
 }
 
-i32 RetroFuturaGUI::FontManager::LoadFont(std::string_view fontPath, const u32 size, [[maybe_unused]] const u32 fontStyles, const u32 codePointFirst, const u32 codePointLast)
+i32 RetroFuturaGUI::FontManager::LoadFont(std::string_view fontName, const u32 size, [[maybe_unused]] const u32 fontStyles, const u32 codePointFirst, const u32 codePointLast)
 {
     if(_ft == nullptr)
     {
@@ -23,14 +24,37 @@ i32 RetroFuturaGUI::FontManager::LoadFont(std::string_view fontPath, const u32 s
         }
     }
 
-    if (fontPath.empty())
+    auto fonts = PlatformBridge::Fonts::GetFontsInformation();
+
+    auto font = std::find_if(fonts.begin(), fonts.end(), [fontName, fontStyles](const auto& pair)
     {
-        std::println("ERROR::FREETYPE: Failed to load font_name");
+        std::string fontStyle;
+
+        switch(fontStyles)
+        {
+            case FontStyle::BOLD: fontStyle = "Bold"; break;
+            case FontStyle::ITALIC: fontStyle = "Italic"; break;
+            default: fontStyle = "Regular"; break;
+        }
+
+        std::string fontNameExt = std::string(fontName) + ":style=" + fontStyle;
+        return pair.first.find(fontNameExt) != std::string::npos;
+    });
+
+    if (font == fonts.end())
+    {
+        std::println("ERROR::FREETYPE: Font not found");
+        return -1;
+    }
+
+    if (font->second.empty())
+    {
+        std::println("ERROR::FREETYPE: No font path");
         return -1;
     }
 
     FT_Face face;
-    if (FT_New_Face(_ft, fontPath.data(), 0, &face)) 
+    if (FT_New_Face(_ft, font->second.data(), 0, &face)) 
     {
         std::println("ERROR::FREETYPE: Failed to load font");
         return -1;
@@ -103,7 +127,7 @@ i32 RetroFuturaGUI::FontManager::LoadFont(std::string_view fontPath, const u32 s
 
     _fonts.push_back(
         { 
-            std::string(fontPath), std::string(fontPath), FontStyle::REGULAR, FontStyle::REGULAR, 
+            std::string(fontName), std::string(font->second), FontStyle::REGULAR, FontStyle::REGULAR, 
             {
                 textureID,
                 atlasWidth,

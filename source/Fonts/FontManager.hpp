@@ -56,7 +56,7 @@ namespace RetroFuturaGUI
     {
     public:
         static i32 Init();
-        static i32 LoadFont(std::string_view fontPath, const u32 size, const u32 fontStyles, const u32 codePointFirst, const u32 codePointLast);
+        static i32 LoadFont(std::string_view fontName, const u32 size, const u32 fontStyles, const u32 codePointFirst, const u32 codePointLast);
         static const std::list<FontInfo>& GetFonts() { return _fonts; }
 
     private:

@@ -19,7 +19,7 @@ namespace RetroFuturaGUI
         void SetWindowSize(i32 width, i32 height);
         void SetWidth(i32 width);
         void SetHeight(i32 height);
-        void SetWindowTitle(std::string_view title, std::string_view fontPath);
+        void SetWindowTitle(std::string_view title, std::string_view fontName);
         //void SetWindowTitleFont(std::string_view fontPath); separate later when fallback fonts are implemented
         void SetBackgroundColor(const glm::vec4& color);
         void SetBackgroundImage(std::string_view imagePath);

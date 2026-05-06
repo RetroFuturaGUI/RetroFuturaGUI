@@ -440,17 +440,17 @@ void RetroFuturaGUI::WindowBar::SetButtonCornerRadii(const glm::vec4 &radii, con
     }
 }
 
-void RetroFuturaGUI::WindowBar::SetWindowTitle(std::string_view title, std::string_view fontPath)
+void RetroFuturaGUI::WindowBar::SetWindowTitle(std::string_view title, std::string_view fontName)
 {
     _title = title;
-    _fontPath = fontPath;
+    //_fontName = fontName;
 
     if(!_windowTitle)
     {
         TextParams textParamsTitle = 
         {
             _title,
-            fontPath,
+            fontName,
             glm::vec4(1.0f),
             glm::vec2(25.0f),
             TextAlignment::LEFT,

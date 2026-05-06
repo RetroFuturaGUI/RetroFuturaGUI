@@ -8,11 +8,11 @@
 
 namespace RetroFuturaGUI
 {    
-    std::shared_ptr<GlyphAtlas> getAtlas(std::string_view fontPath)
+    std::shared_ptr<GlyphAtlas> getAtlas(std::string_view fontName)
     {
         for (const auto& font : FontManager::GetFonts())
         {
-            if (font._path == fontPath)
+            if (font._name == fontName)
             {
                 return std::make_shared<GlyphAtlas>(font._atlas);
             }
@@ -23,7 +23,7 @@ namespace RetroFuturaGUI
 
     Text::Text(const GeometryParams2D& geometry, const TextParams& textParams)
         : _projection(const_cast<Projection&>(geometry._Projection)),
-          _atlas(getAtlas(textParams._FontPath)),
+          _atlas(getAtlas(textParams._FontName)),
           _text(textParams._Text),
           _glyphSize(textParams._GlyphSize),
           _textColor(textParams._TextColor),
@@ -35,7 +35,7 @@ namespace RetroFuturaGUI
     {
         if (!_atlas)
         {
-            std::println("ERROR: Atlas not found for font {}", textParams._FontPath);
+            std::println("ERROR: Atlas not found for font {}", textParams._FontName);
             return;
         }
 
