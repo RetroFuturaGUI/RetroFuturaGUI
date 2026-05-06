@@ -16,44 +16,29 @@ namespace RetroFuturaGUI
         ITALIC = 1 << 2
     };
 
-    struct Character
-    {
-        i32 _TextureID,
-            _Width { 0 },
-            _Height { 0 },
-            _BearingX { 0 },
-            _BearingY { 0 };
-        u32 _Advance;
-    };
-
     struct Glyph
     {
-        f32 _UV[4] { 0.0f, 0.0f, 0.0f, 0.0f };
-        i32 _Size[2] { 0, 0} ;
+        f32 _UV[4] { 0.0f, 0.0f, 0.0f, 0.0f }; // minU, minV, maxU, maxV
+        i32 _Size[2] { 0, 0 };
         i32 _Bearing[2] { 0, 0 };
         u32 _Advance { 0 },
-            _AtlasIndex { 0 };
-    };
-
-    struct GlyphMeta
-    {
-        u32 _CodePoint { 0 },
+            _CodePoint { 0 },
             _OriginX { 0 },
             _OriginY { 0 },
             _EndX { 0 },
             _EndY { 0 },
             _BearingX { 0 },
-            _BearingY { 0 },
-            _Advance { 0 };
+            _BearingY { 0 };
     };
 
     struct GlyphAtlas
     {
-        i32 _textureID,
-            _Width { 0 },
-            _Height { 0 };
-
-        std::unordered_map<u8, Glyph> _Glyphs;
+        u32 _textureID { 0 };
+        u32 _Width { 0 };
+        u32 _Height { 0 };
+        u32 _FontSize { 0 };
+        std::unordered_map<u32, Glyph> _Glyphs; // keyed by codepoint
+        FT_CharMap _charMap;
     };
 
     struct FontInfo
@@ -64,8 +49,7 @@ namespace RetroFuturaGUI
         u32
             _currentFontStyleDIP { FontStyle::REGULAR },
             _fontStylesAvailable { FontStyle::REGULAR };
-        FT_CharMap _charMap;
-        std::map<f32, std::shared_ptr<std::vector<Character>>> _glyphsBySize;
+        GlyphAtlas _atlas;
     };
 
     class FontManager
@@ -93,6 +77,5 @@ namespace RetroFuturaGUI
         
         static inline std::list<FontInfo> _fonts;
         static inline FT_Library _ft;
-
     };
 }
