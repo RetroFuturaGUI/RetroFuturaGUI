@@ -52,6 +52,11 @@ RetroFuturaGUI::Shader& RetroFuturaGUI::ShaderManager::GetTextFillShader()
     return *_textFill;
 }
 
+RetroFuturaGUI::Shader& RetroFuturaGUI::ShaderManager::GetFontAtlasFillShader()
+{
+    return *_fontAtlasFill;
+}
+
 RetroFuturaGUI::Shader& RetroFuturaGUI::ShaderManager::GetTextureFillShader()
 {
     return *_textureFill;
@@ -123,6 +128,11 @@ void RetroFuturaGUI::ShaderManager::compileShaders()
     _textFill = std::make_unique<Shader>(
         std::string(workingDir + "Text.vs").c_str(), 
         std::string(workingDir + "Text.fs").c_str()
+    );
+
+    _fontAtlasFill = std::make_unique<Shader>(
+        std::string(workingDir + "FontAtlas.vs").c_str(), 
+        std::string(workingDir + "FontAtlas.fs").c_str()
     );
 
     _textureFill = std::make_unique<Shader>(
