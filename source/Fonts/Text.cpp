@@ -7,7 +7,7 @@
 #endif
 
 namespace RetroFuturaGUI
-{
+{    
     std::shared_ptr<GlyphAtlas> getAtlas(std::string_view fontPath)
     {
         for (const auto& font : FontManager::GetFonts())
@@ -39,12 +39,11 @@ namespace RetroFuturaGUI
             return;
         }
 
-        // Initialize VAO/VBO
         glGenVertexArrays(1, &_vao);
         glGenBuffers(1, &_vbo);
         glBindVertexArray(_vao);
         glBindBuffer(GL_ARRAY_BUFFER, _vbo);
-        glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(f32), (void*)0); // position
+        glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(f32), nullptr); // position
         glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(f32), (void*)(2 * sizeof(f32))); // uv
         glEnableVertexAttribArray(0);
         glEnableVertexAttribArray(1);
@@ -65,7 +64,8 @@ namespace RetroFuturaGUI
 
     void Text::Draw()
     {
-        if (_vertices.empty() || !_atlas) return;
+        if (_vertices.empty() || !_atlas)
+            return;
 
         ShaderManager::GetFontAtlasFillShader().UseProgram();
         ShaderManager::GetFontAtlasFillShader().SetUniformVec3("textColor", _textColor);
@@ -80,7 +80,7 @@ namespace RetroFuturaGUI
         glBindVertexArray(_vao);
         glBindBuffer(GL_ARRAY_BUFFER, _vbo);
         glBufferData(GL_ARRAY_BUFFER, _vertices.size() * sizeof(f32), _vertices.data(), GL_DYNAMIC_DRAW);
-        glDrawArrays(GL_TRIANGLES, 0, static_cast<GLsizei>(_vertices.size() / 4));
+        glDrawArrays(GL_TRIANGLES, 0, static_cast<i32>(_vertices.size() / 4));
         glBindBuffer(GL_ARRAY_BUFFER, 0);
         glBindVertexArray(0);
         glBindTexture(GL_TEXTURE_2D, 0);
@@ -138,12 +138,16 @@ namespace RetroFuturaGUI
     void Text::updateMesh()
     {
         _vertices.clear();
-        f32 nativeSize = _atlas->_FontSize > 0 ? static_cast<f32>(_atlas->_FontSize) : 1.0f;
-        f32 scale = _glyphSize.y / nativeSize;
-        f32 currentX = 0.0f;
-        f32 currentY = 0.0f;
+        f32 nativeSize { _atlas->_FontSize > 0 ? static_cast<f32>(_atlas->_FontSize) : 1.0f },
+            scale { _glyphSize.y / nativeSize },
+            currentX { 0.0f },
+            currentY { 0.0f },
+            xPos { 0.0f },
+            yPos { 0.0f },
+            width { 0.0f },
+            height { 0.0f };
 
-        for (char c : _text)
+        for (u32 c : _text)
         {
             if (c == '\n')
             {
@@ -152,11 +156,11 @@ namespace RetroFuturaGUI
                 continue;
             }
 
-            auto it = _atlas->_Glyphs.find(static_cast<u32>(c));
-            if (it == _atlas->_Glyphs.end())
+            auto iter = _atlas->_Glyphs.find(c);
+            if (iter == _atlas->_Glyphs.end())
                 continue;
 
-            const Glyph& glyph = it->second;
+            const Glyph& glyph = iter->second;
 
             if (c == ' ')
             {
@@ -164,34 +168,34 @@ namespace RetroFuturaGUI
                 continue;
             }
 
-            f32 xpos = currentX + glyph._Bearing[0] * scale;
-            f32 ypos = currentY - (glyph._Size[1] - glyph._Bearing[1]) * scale;
-            f32 w = glyph._Size[0] * scale;
-            f32 h = glyph._Size[1] * scale;
+            xPos = currentX + glyph._Bearing[0] * scale;
+            yPos = currentY - (glyph._Size[1] - glyph._Bearing[1]) * scale;
+            width = glyph._Size[0] * scale;
+            height = glyph._Size[1] * scale;
 
             _vertices.reserve(_vertices.size() + 24);
-            _vertices.push_back(xpos);
-            _vertices.push_back(ypos + h);
+            _vertices.push_back(xPos);
+            _vertices.push_back(yPos + height);
             _vertices.push_back(glyph._UV[0]);
             _vertices.push_back(glyph._UV[1]);
-            _vertices.push_back(xpos);
-            _vertices.push_back(ypos);
+            _vertices.push_back(xPos);
+            _vertices.push_back(yPos);
             _vertices.push_back(glyph._UV[0]);
             _vertices.push_back(glyph._UV[3]);
-            _vertices.push_back(xpos + w);
-            _vertices.push_back(ypos);
+            _vertices.push_back(xPos + width);
+            _vertices.push_back(yPos);
             _vertices.push_back(glyph._UV[2]);
             _vertices.push_back(glyph._UV[3]);
-            _vertices.push_back(xpos);
-            _vertices.push_back(ypos + h);
+            _vertices.push_back(xPos);
+            _vertices.push_back(yPos + height);
             _vertices.push_back(glyph._UV[0]);
             _vertices.push_back(glyph._UV[1]);
-            _vertices.push_back(xpos + w);
-            _vertices.push_back(ypos);
+            _vertices.push_back(xPos + width);
+            _vertices.push_back(yPos);
             _vertices.push_back(glyph._UV[2]);
             _vertices.push_back(glyph._UV[3]);
-            _vertices.push_back(xpos + w);
-            _vertices.push_back(ypos + h);
+            _vertices.push_back(xPos + width);
+            _vertices.push_back(yPos + height);
             _vertices.push_back(glyph._UV[2]);
             _vertices.push_back(glyph._UV[1]);
 

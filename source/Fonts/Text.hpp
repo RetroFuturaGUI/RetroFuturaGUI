@@ -23,8 +23,8 @@ namespace RetroFuturaGUI
         std::string_view _FontPath;
         const glm::vec4& _TextColor;
         const glm::vec2& _GlyphSize;
-        TextAlignment _TextAlignment;
-        f32 _TextPadding;
+        TextAlignment _TextAlignment { TextAlignment::LEFT };
+        f32 _TextPadding { 0.0f };
     };
 
     class Text
@@ -45,30 +45,30 @@ namespace RetroFuturaGUI
         Projection& _projection;
         std::shared_ptr<GlyphAtlas> _atlas;
         std::string _text;
-        glm::vec2 _glyphSize;
-        glm::vec4 _textColor;
-        TextAlignment _textAlignment;
-        f32 _textPadding;
+        glm::vec2 _glyphSize { 16.0f };
+        glm::vec4 _textColor { 1.0f };
+        TextAlignment _textAlignment { TextAlignment::LEFT };
+        f32 _textPadding { 0.0f };
 
         // geometry
-        glm::vec2 _position;
-        glm::vec2 _positionAligned;
-        glm::vec2 _parentSize;
-        f32 _rotation;
-        glm::mat4 _translationMatrix;
-        glm::mat4 _rotationMatrix;
+        glm::vec2 _position { 0.0f },
+            _positionAligned { 0.0f },
+            _parentSize { 0.0f },
+            _textSpan { 0.0f };
+        f32 _rotation { 0.0f },
+            _textBaseHeight { 0.0f },
+            _lineSpacingFactor { 1.3f };
+        glm::mat4 _translationMatrix { 0.0f },
+            _rotationMatrix { 0.0f };
+        static inline constinit const f32 _1emFraction { 0.00390625f };
 
         // mesh
         std::vector<f32> _vertices; // x,y,u,v per vertex
-        GLuint _vao { 0 }, _vbo { 0 };
-
-        static inline constinit const f32 _1emFraction { 0.00390625f };
-        f32 _lineSpacingFactor { 1.3f };
+        u32 _vao { 0 },
+            _vbo { 0 };
 
         void updateMesh();
         void alignPosition();
         void calculateTextSpan();
-        glm::vec2 _textSpan;
-        f32 _textBaseHeight;
     };
 }
