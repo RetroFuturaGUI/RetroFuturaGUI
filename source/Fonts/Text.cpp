@@ -8,22 +8,9 @@
 
 namespace RetroFuturaGUI
 {    
-    std::shared_ptr<GlyphAtlas> getAtlas(std::string_view fontName)
-    {
-        for (const auto& font : FontManager::GetFonts())
-        {
-            if (font._name == fontName)
-            {
-                return std::make_shared<GlyphAtlas>(font._atlas);
-            }
-        }
-        
-        return std::make_shared<GlyphAtlas>(FontManager::GetFonts().front()._atlas);
-    }
-
     Text::Text(const GeometryParams2D& geometry, const TextParams& textParams)
         : _projection(const_cast<Projection&>(geometry._Projection)),
-          _atlas(getAtlas(textParams._FontName)),
+          _atlas(FontManager::GetAtlas(textParams._FontName)),
           _text(textParams._Text),
           _glyphSize(textParams._GlyphSize),
           _textColor(textParams._TextColor),

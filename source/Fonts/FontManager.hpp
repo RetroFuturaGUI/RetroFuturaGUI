@@ -58,7 +58,8 @@ namespace RetroFuturaGUI
         static i32 Init();
         static i32 LoadFont(std::string_view fontName, const u32 size, const u32 fontStyles, const u32 codePointFirst, const u32 codePointLast);
         static const std::list<FontInfo>& GetFonts() { return _fonts; }
-
+        static std::shared_ptr<GlyphAtlas> GetAtlas(std::string_view fontName);
+        
     private:
         FontManager() = default;
         static FontManager& getInstance()

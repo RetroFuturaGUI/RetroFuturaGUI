@@ -170,3 +170,16 @@ i32 RetroFuturaGUI::FontManager::initFreeTypeLibrary()
     std::println("ERROR::FREETYPE: Could not init FreeType Library");
     return -1;
 }
+
+std::shared_ptr<RetroFuturaGUI::GlyphAtlas> RetroFuturaGUI::FontManager::GetAtlas(std::string_view fontName)
+{
+    for (const auto& font : FontManager::GetFonts())
+    {
+        if (font._name == fontName)
+        {
+            return std::make_shared<GlyphAtlas>(font._atlas);
+        }
+    }
+    
+    return std::make_shared<GlyphAtlas>(FontManager::GetFonts().front()._atlas);
+}
