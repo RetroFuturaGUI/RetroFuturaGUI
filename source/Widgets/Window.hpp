@@ -12,13 +12,15 @@ namespace RetroFuturaGUI
     class Window// : public IWidget
     {
     public:
-        Window(std::string_view name, std::string_view windowTitle, const i32 width, const i32 height);
+        Window(std::string_view name, const i32 width, const i32 height);
 
         bool WindowShouldClose();
         void Draw();
         void SetWindowSize(i32 width, i32 height);
         void SetWidth(i32 width);
         void SetHeight(i32 height);
+        void SetWindowTitle(std::string_view title, std::string_view fontPath);
+        //void SetWindowTitleFont(std::string_view fontPath); separate later when fallback fonts are implemented
         void SetBackgroundColor(const glm::vec4& color);
         void SetBackgroundImage(std::string_view imagePath);
         void SetGrid(Grid2d* grid);
@@ -42,8 +44,9 @@ namespace RetroFuturaGUI
         };
 
         // Window properties
-        GLFWwindow* _window;
-        i32 
+        GLFWwindow* _window {nullptr};
+
+        i32
             _width { 1280 },
             _height { 720 },
             _minWindowSpan { 100 },
@@ -66,7 +69,7 @@ namespace RetroFuturaGUI
             _preMaximizePos { 0 };
         std::string 
             _name,
-            _windowTitle;
+            _windowTitle { "RetroFuturaGUI Window" };
 
         // Window Actions
         ResizeEdge _resizeEdge { ResizeEdge::NONE };
@@ -88,7 +91,7 @@ namespace RetroFuturaGUI
         static inline GLFWcursor* _cursorIcon { nullptr };
         bool _cursorsInitialized { false };
 
-        // test widgets
+        // widgets
         std::unique_ptr<WindowBar> _windowBar;
         std::unique_ptr<Image2D> _backgroundImage;
         Grid2d* _grid;

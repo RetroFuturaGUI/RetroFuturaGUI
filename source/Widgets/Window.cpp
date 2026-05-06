@@ -2,8 +2,8 @@
 #include <glm/gtc/type_ptr.hpp>
 #include <print>
 
-RetroFuturaGUI::Window::Window(std::string_view name, std::string_view windowTitle, const i32 width, const i32 height)
-: _width(width), _height(height), _name(name), _windowTitle(windowTitle)
+RetroFuturaGUI::Window::Window(std::string_view name, const i32 width, const i32 height)
+: _width(width), _height(height), _name(name)
 {
 	createWindow();
 
@@ -23,6 +23,7 @@ void RetroFuturaGUI::Window::createWindow()
 	glfwWindowHint(GLFW_DECORATED, GLFW_FALSE);
 	glfwWindowHint(GLFW_TRANSPARENT_FRAMEBUFFER, GLFW_FALSE); //Using GLFW_TRUE enables the possibility of rendering transparent backgrounds (desired) but causes any other object with transparency to be bugged (makes everything behind the window is visible)
 	glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
+
 	_window = glfwCreateWindow(_width, _height, _windowTitle.c_str(), nullptr, nullptr);
 	glfwSetWindowTitle(_window, _windowTitle.c_str());
 
@@ -71,6 +72,15 @@ void RetroFuturaGUI::Window::createWindow()
 
 	_projection = std::make_unique<Projection>((float)_width, (float)_height);
 	setupWindowBar();
+}
+
+void RetroFuturaGUI::Window::SetWindowTitle(std::string_view title, std::string_view fontPath)
+{
+	_windowTitle = title;
+	glfwSetWindowTitle(_window, _windowTitle.c_str());
+
+	if(_windowBar)
+		_windowBar->SetWindowTitle(_windowTitle, fontPath);
 }
 
 void RetroFuturaGUI::Window::cursorPositionCallback(GLFWwindow *window, f64 xpos, f64 ypos)
@@ -146,7 +156,6 @@ void RetroFuturaGUI::Window::setResizeState(i32 button, i32 action, [[maybe_unus
 {
 	if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS)
 	{
-	
         glfwGetCursorPos(_window, &_absoluteCursorPosX, &_absoluteCursorPosY);
         glfwGetWindowPos(_window, &_windowPosX, &_windowPosY);
 		glfwGetCursorPos(_window, &_cursorPosX, &_cursorPosY);
@@ -457,10 +466,10 @@ void RetroFuturaGUI::Window::setupWindowBar()
 	IdentityParams identityWB = { windowBarName, this, WidgetTypeID::WindowBar, _window };
 	GeometryParams2D geometryWB = { *_projection, glm::vec2(0.0f), glm::vec2(0.0f), 0.0f };
 	_windowBar = std::make_unique<WindowBar>(identityWB, geometryWB, glm::vec4(0.5f, 0.0f, 1.0f, 1.0f), WindowBarPosition::Top);
-	
+
 	if(!_windowBar)
 		return;
 		
 	_windowBar->ConnectMaximizeCallback([this]() { toggleMaximize(); });
-	_windowBar->SetWindowTitle(_windowTitle);
+	//_windowBar->SetWindowTitle(_windowTitle, "");
 }

@@ -36,7 +36,7 @@ RetroFuturaGUI::WindowBar::WindowBar(const IdentityParams &identity, GeometryPar
     std::string font = PlatformBridge::Fonts::GetFontsInformation().front().second;
     TextParams textParams = 
     {
-        "X",
+        "",//X
         font,
         glm::vec4(1.0f),
         glm::vec2(25.0f),
@@ -70,7 +70,7 @@ RetroFuturaGUI::WindowBar::WindowBar(const IdentityParams &identity, GeometryPar
 
     TextParams textParamsMaximize = 
     {
-        "M",
+        "",//M
         font,
         glm::vec4(1.0f),
         glm::vec2(25.0f),
@@ -98,7 +98,7 @@ RetroFuturaGUI::WindowBar::WindowBar(const IdentityParams &identity, GeometryPar
 
     TextParams textParamsMinimize = 
     {
-        "_",
+        "",//_
         font,
         glm::vec4(1.0f),
         glm::vec2(25.0f),
@@ -111,7 +111,7 @@ RetroFuturaGUI::WindowBar::WindowBar(const IdentityParams &identity, GeometryPar
     if(_minimize)
         _minimize->Connect_OnClick([this]() { minimizeWindowCallback(_parentWindow); }, false);
 
-    TextParams textParamsTitle = 
+    /*TextParams textParamsTitle = 
     {
         _title,
         font,
@@ -129,7 +129,7 @@ RetroFuturaGUI::WindowBar::WindowBar(const IdentityParams &identity, GeometryPar
         0.0f
     };
 
-    _windowTitle = std::make_unique<Text>(geometryButtonTitle, textParamsTitle);
+    _windowTitle = std::make_unique<Text>(geometryButtonTitle, textParamsTitle);*/
 }
 
 void RetroFuturaGUI::WindowBar::Draw()
@@ -440,12 +440,36 @@ void RetroFuturaGUI::WindowBar::SetButtonCornerRadii(const glm::vec4 &radii, con
     }
 }
 
-void RetroFuturaGUI::WindowBar::SetWindowTitle(std::string_view title)
+void RetroFuturaGUI::WindowBar::SetWindowTitle(std::string_view title, std::string_view fontPath)
 {
-    if(!_windowTitle)
-        return;
-
     _title = title;
+    _fontPath = fontPath;
+
+    if(!_windowTitle)
+    {
+        TextParams textParamsTitle = 
+        {
+            _title,
+            fontPath,
+            glm::vec4(1.0f),
+            glm::vec2(25.0f),
+            TextAlignment::LEFT,
+            3.0f
+        };
+
+        GeometryParams2D geometryButtonTitle
+        {
+            _projection,
+            calculateElementPosition(ElementType::Title),
+            glm::vec2(28.0f),
+            0.0f
+        };
+
+        _windowTitle = std::make_unique<Text>(geometryButtonTitle, textParamsTitle);
+        Resize(); //hotfix for dislocation when Text has been initialized with an empty string
+        return;
+    }
+
     _windowTitle->SetText(_title);
     Resize(); //hotfix for dislocation when Text has been initialized with an empty string
 }

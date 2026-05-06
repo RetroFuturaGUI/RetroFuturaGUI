@@ -10,7 +10,8 @@ RetroFuturaGUI::Button::Button(const IdentityParams& identity, const GeometryPar
     if(_border) 
         _border->SetBorderWidth(borderWidth);
 
-    _text = std::make_unique<Text>(geometry, textParams);
+    if(textParams._Text.size() > 0)
+        _text = std::make_unique<Text>(geometry, textParams);
 }
 
 void RetroFuturaGUI::Button::Draw()

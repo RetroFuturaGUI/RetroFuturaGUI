@@ -50,7 +50,7 @@ namespace RetroFuturaGUI
         void SetElementTextColor(const glm::vec4& color, const ColorState state, const ElementType elementType);
         void SetElementBackgroundImageTextureID(const u32 textureID, const ElementType elementType);
         void SetButtonCornerRadii(const glm::vec4& radii, const ElementType buttonType);
-        void SetWindowTitle(std::string_view title);
+        void SetWindowTitle(std::string_view title, std::string_view fontPath);
         void SetEnabled(const bool enable) = delete;
 
     private:
@@ -66,6 +66,7 @@ namespace RetroFuturaGUI
         // Elements
         std::unique_ptr<Rectangle> _background;
         std::unique_ptr<Text> _windowTitle;
+        std::string _fontPath;
         std::unique_ptr<Button> 
             _minimize,
             _maximize,
