@@ -43,9 +43,10 @@ namespace RetroFuturaGUI
 
     private:
         Projection& _projection;
-        std::shared_ptr<GlyphAtlas> _atlas;
-        std::string _text;
         glm::vec2 _glyphSize { 16.0f };
+        u32 _fontSize { 16 };
+        std::shared_ptr<FontInfo> _fontInfo;
+        std::string _text;
         glm::vec4 _textColor { 1.0f };
         TextAlignment _textAlignment { TextAlignment::LEFT };
         f32 _textPadding { 0.0f };

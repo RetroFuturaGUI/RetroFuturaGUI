@@ -6,6 +6,7 @@
 #include <map>
 #include <memory>
 #include <list>
+#include "UnicodeBlocks.hpp"
 
 namespace RetroFuturaGUI
 {
@@ -49,7 +50,7 @@ namespace RetroFuturaGUI
         u32
             _currentFontStyleDIP { FontStyle::REGULAR },
             _fontStylesAvailable { FontStyle::REGULAR };
-        GlyphAtlas _atlas;
+        std::unordered_map<u32, GlyphAtlas> _atlasses; // keyed by font size
     };
 
     class FontManager
@@ -58,8 +59,9 @@ namespace RetroFuturaGUI
         static i32 Init();
         static i32 LoadFont(std::string_view fontName, const u32 size, const u32 fontStyles, const u32 codePointFirst, const u32 codePointLast);
         static const std::list<FontInfo>& GetFonts() { return _fonts; }
-        static std::shared_ptr<GlyphAtlas> GetAtlas(std::string_view fontName);
-        
+        static std::shared_ptr<FontInfo> GetFontInfo(std::string_view fontName, u32 size);
+        static void SetDefaultFont(std::string_view fontName, u32 size = 16, u32 fontStyles = FontStyle::REGULAR, const u32 codePointFirst = BasicLatinFirst, const u32 codePointLast = BasicLatinLast);
+
     private:
         FontManager() = default;
         static FontManager& getInstance()
@@ -76,7 +78,9 @@ namespace RetroFuturaGUI
 
         static i32 initFreeTypeLibrary();
         
-        static inline std::list<FontInfo> _fonts;
-        static inline FT_Library _ft;
+        static inline std::list<FontInfo> _fonts {};
+        static inline FT_Library _ft { nullptr };
+        static inline std::string _defaultFontName;
+        static inline FontInfo* _defaultFontInfo { nullptr };
     };
 }

@@ -1,6 +1,5 @@
 #include "FontManager.hpp"
 #include "PlatformBridge.hpp"
-#include "UnicodeBlocks.hpp"
 #include <print>
 #include <GL/gl.h>
 #define STB_IMAGE_WRITE_IMPLEMENTATION
@@ -125,18 +124,20 @@ i32 RetroFuturaGUI::FontManager::LoadFont(std::string_view fontName, const u32 s
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
-    _fonts.push_back(
-        { 
-            std::string(fontName), std::string(font->second), FontStyle::REGULAR, FontStyle::REGULAR, 
-            {
-                textureID,
-                atlasWidth,
-                atlasHeight,
-                size,
-                {},
-                face->charmap
-            }
-        });
+    _fonts.emplace_back();
+    _fonts.back()._name = fontName;
+    _fonts.back()._path = font->second;
+    _fonts.back()._currentFontStyleDIP = FontStyle::REGULAR;
+    _fonts.back()._fontStylesAvailable = FontStyle::REGULAR;
+    _fonts.back()._atlasses[size] = 
+    {
+        ._textureID = textureID,
+        ._Width = atlasWidth,
+        ._Height = atlasHeight,
+        ._FontSize = size,
+        ._Glyphs = {},
+        ._charMap = face->charmap
+    };
 
     for(uSize i = 0; i < numGlyphs; ++i)
     {
@@ -151,7 +152,7 @@ i32 RetroFuturaGUI::FontManager::LoadFont(std::string_view fontName, const u32 s
         glyph._UV[2] = static_cast<f32>(info[i]._EndX) / atlasWidth; // maxU
         glyph._UV[3] = static_cast<f32>(info[i]._EndY) / atlasHeight; // maxV
 
-        _fonts.back()._atlas._Glyphs.insert({ info[i]._CodePoint, glyph });
+        _fonts.back()._atlasses[size]._Glyphs.insert({ info[i]._CodePoint, glyph });
     }
 
     FT_Done_Face(face);
@@ -171,15 +172,29 @@ i32 RetroFuturaGUI::FontManager::initFreeTypeLibrary()
     return -1;
 }
 
-std::shared_ptr<RetroFuturaGUI::GlyphAtlas> RetroFuturaGUI::FontManager::GetAtlas(std::string_view fontName)
+std::shared_ptr<RetroFuturaGUI::FontInfo> RetroFuturaGUI::FontManager::GetFontInfo(std::string_view fontName, u32 size)
 {
-    for (const auto& font : FontManager::GetFonts())
+    for (const auto& font : GetFonts())
     {
-        if (font._name == fontName)
+        if (font._name == fontName && font._atlasses.count(size) > 0)
         {
-            return std::make_shared<GlyphAtlas>(font._atlas);
+            return std::make_shared<FontInfo>(font);
         }
     }
-    
-    return std::make_shared<GlyphAtlas>(FontManager::GetFonts().front()._atlas);
+
+    // If not found, load it
+    if (LoadFont(fontName, size, FontStyle::REGULAR, BasicLatinFirst, BasicLatinLast) == 0)
+    {
+        for (const auto& font : GetFonts())
+            if (font._name == fontName && font._atlasses.count(size) > 0)
+                return std::make_shared<FontInfo>(font);
+    }
+
+    return nullptr;
+}
+
+void RetroFuturaGUI::FontManager::SetDefaultFont(std::string_view fontName, u32 size, u32 fontStyles, const u32 codePointFirst, const u32 codePointLast)
+{
+    _defaultFontName = fontName;
+    LoadFont(fontName, size, fontStyles, codePointFirst, codePointLast);
 }
