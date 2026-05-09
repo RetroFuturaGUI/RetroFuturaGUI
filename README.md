@@ -31,6 +31,7 @@ The framework is designed for cross-platform use, and its logic can be compiled 
 - Font Manager
   - Unicode Support
   - Font Styles
+  - Font Merging
 
 ### Implemented Features
 <details><summary>CLICK TO EXPAND</summary>
