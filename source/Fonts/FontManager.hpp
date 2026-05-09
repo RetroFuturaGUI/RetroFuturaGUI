@@ -34,9 +34,9 @@ namespace RetroFuturaGUI
 
     struct GlyphAtlas
     {
-        u32 _textureID { 0 };
-        u32 _Width { 0 };
-        u32 _Height { 0 };
+        u32 _TextureID { 0 },
+            _Width { 0 },
+            _Height { 0 };
         f32 _FontSize { 1.0f };
         std::unordered_map<u32, Glyph> _Glyphs; // keyed by codepoint
         FT_CharMap _charMap;
@@ -58,12 +58,19 @@ namespace RetroFuturaGUI
     public:
         static i32 Init();
         static i32 LoadFont(std::string_view fontName, const f32 size, const u32 fontStyles, const u32 codePointFirst, const u32 codePointLast);
-        static const std::list<FontInfo>& GetFonts() { return _fonts; }
+        static const std::list<FontInfo>& GetFonts();
         static std::shared_ptr<FontInfo> GetFontInfo(std::string_view fontName, f32 size);
         static void SetDefaultFont(std::string_view fontName, f32 size = 16.0f, u32 fontStyles = FontStyle::REGULAR, const u32 codePointFirst = BasicLatinFirst, const u32 codePointLast = BasicLatinLast);
         static u32 FontSizeToIntegral(const f32 size);
 
     private:
+        struct AtlasDimension
+        {
+            u32 _Width { 0 },
+                _Height { 0 },
+                _NumGlyphs { 0 };
+        };
+
         FontManager() = default;
         static FontManager& getInstance()
         {
@@ -78,7 +85,12 @@ namespace RetroFuturaGUI
         }
 
         static i32 initFreeTypeLibrary();
-        
+        static i32 checkFontIntegrity(std::string_view fontName, const u32 integralSize, const u32 fontStyles);
+        static bool isFontLoaded(std::string_view fontName, const u32 integralSize, [[maybe_unused]] const u32 fontStyles);
+        static std::pair<std::string, std::string> findFontPath(std::string_view fontName, const u32 fontStyles);
+        static u32 generateGlyphAtlas(FT_Face face, const u32 codePointFirst, const u32 codePointLast, const u32 integralFontSize, std::vector<Glyph>* glyphs, AtlasDimension* atlasDim);
+        //static void assignGlyphData(const u32 textureID, f32 fontSize, std::vector<Glyph>* glyphs, AtlasDimension* atlasDim, std::pair<std::string, std::string>* font, FT_Face face);
+
         static inline std::list<FontInfo> _fonts {};
         static inline FT_Library _ft { nullptr };
         static inline std::string _defaultFontName;

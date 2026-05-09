@@ -65,7 +65,7 @@ namespace RetroFuturaGUI
         ShaderManager::GetFontAtlasFillShader().SetUniformInt("uTexture", 0);
 
         glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, _fontInfo->_atlasses[_fontIndex]._textureID);
+        glBindTexture(GL_TEXTURE_2D, _fontInfo->_atlasses[_fontIndex]._TextureID);
         glBindVertexArray(_vao);
         glBindBuffer(GL_ARRAY_BUFFER, _vbo);
         glBufferData(GL_ARRAY_BUFFER, _vertices.size() * sizeof(f32), _vertices.data(), GL_DYNAMIC_DRAW);

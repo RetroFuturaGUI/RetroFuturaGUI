@@ -10,25 +10,17 @@ i32 RetroFuturaGUI::FontManager::Init()
     return initFreeTypeLibrary();
 }
 
-i32 RetroFuturaGUI::FontManager::LoadFont(std::string_view fontName, const f32 size, [[maybe_unused]] const u32 fontStyles, const u32 codePointFirst, const u32 codePointLast)
+bool RetroFuturaGUI::FontManager::isFontLoaded(std::string_view fontName, const u32 integralSize, [[maybe_unused]] const u32 fontStyles)
 {
-    u32 integralFontSize = FontSizeToIntegral(size);
-
     for(const auto& fontInfo : _fonts)
-        if(fontInfo._name == fontName && fontInfo._atlasses.count(integralFontSize) > 0)
-            return 0; // font already loaded with requested size
+        if(fontInfo._name == fontName && fontInfo._atlasses.count(integralSize) > 0)
+            return true;
+        
+    return false;
+}
 
-    if(_ft == nullptr)
-    {
-        initFreeTypeLibrary();
-
-        if(_ft == nullptr)
-        {
-            std::println("ERROR::FREETYPE: FreeType Library not initialized");
-            return -1;
-        }
-    }
-
+std::pair<std::string, std::string> RetroFuturaGUI::FontManager::findFontPath(std::string_view fontName, const u32 fontStyles)
+{
     auto fonts = PlatformBridge::Fonts::GetFontsInformation();
 
     auto font = std::find_if(fonts.begin(), fonts.end(), [fontName, fontStyles](const auto& pair)
@@ -37,47 +29,40 @@ i32 RetroFuturaGUI::FontManager::LoadFont(std::string_view fontName, const f32 s
 
         switch(fontStyles)
         {
-            case FontStyle::BOLD: fontStyle = "Bold"; break;
-            case FontStyle::ITALIC: fontStyle = "Italic"; break;
-            default: fontStyle = "Regular"; break;
+            case FontStyle::BOLD: 
+                fontStyle = "Bold"; 
+            break;
+            case FontStyle::ITALIC:
+                fontStyle = "Italic";
+                break;
+            default:
+                fontStyle = "Regular";
+            break;
         }
 
         std::string fontNameExt = std::string(fontName) + ":style=" + fontStyle;
         return pair.first.find(fontNameExt) != std::string::npos;
     });
 
-    if (font == fonts.end())
-    {
-        std::println("ERROR::FREETYPE: Font not found");
-        return -1;
-    }
+    return { font->first, font->second };
+}
 
-    if (font->second.empty())
-    {
-        std::println("ERROR::FREETYPE: No font path");
-        return -1;
-    }
-
-    FT_Face face;
-    if (FT_New_Face(_ft, font->second.data(), 0, &face)) 
-    {
-        std::println("ERROR::FREETYPE: Failed to load font");
-        return -1;
-    }
-
+u32 RetroFuturaGUI::FontManager::generateGlyphAtlas(FT_Face face, const u32 codePointFirst, const u32 codePointLast, const u32 integralFontSize, std::vector<Glyph>* glyphs, AtlasDimension* atlasDim)
+{
     FT_Set_Char_Size(face, 0, integralFontSize << 6, 96, 96);
 
-    u32 numGlyphs = codePointLast - codePointFirst + 1;
-    u32 maxGlyphDimension = (1 + (face->size->metrics.height >> 6)) * ceilf(sqrtf(numGlyphs));
-    u32 atlasWidth = 1;
+    u32 numGlyphs { codePointLast - codePointFirst + 1 },
+        maxGlyphDimension { (u32)(1 + (face->size->metrics.height >> 6)) * (u32)ceilf(sqrtf(numGlyphs)) },
+        atlasWidth { 1 };
+    glyphs->resize(numGlyphs);
 
     while(atlasWidth < maxGlyphDimension) 
         atlasWidth <<= 1;
         
-    u32 atlasHeight = atlasWidth;
+    u32 atlasHeight { atlasWidth };
     std::vector<u8> pixels(atlasWidth * atlasHeight);
-    u32 penX = 0, penY = 0;
-    std::vector<Glyph> info(numGlyphs);
+    u32 penX { 0 }, 
+        penY { 0 };
 
     for(uSize codePoint = codePointFirst; codePoint <= codePointLast; ++codePoint)
     {
@@ -99,14 +84,14 @@ i32 RetroFuturaGUI::FontManager::LoadFont(std::string_view fontName, const f32 s
             }
         }
 
-        info[codePoint - codePointFirst]._CodePoint = codePoint;
-        info[codePoint - codePointFirst]._OriginX = penX;
-        info[codePoint - codePointFirst]._OriginY = penY;
-        info[codePoint - codePointFirst]._EndX = penX + bitmap->width;
-        info[codePoint - codePointFirst]._EndY = penY + bitmap->rows;
-        info[codePoint - codePointFirst]._BearingX   = face->glyph->bitmap_left;
-        info[codePoint - codePointFirst]._BearingY   = face->glyph->bitmap_top;
-        info[codePoint - codePointFirst]._Advance = face->glyph->advance.x >> 6;
+        (*glyphs)[codePoint - codePointFirst]._CodePoint = codePoint;
+        (*glyphs)[codePoint - codePointFirst]._OriginX = penX;
+        (*glyphs)[codePoint - codePointFirst]._OriginY = penY;
+        (*glyphs)[codePoint - codePointFirst]._EndX = penX + bitmap->width;
+        (*glyphs)[codePoint - codePointFirst]._EndY = penY + bitmap->rows;
+        (*glyphs)[codePoint - codePointFirst]._BearingX   = face->glyph->bitmap_left;
+        (*glyphs)[codePoint - codePointFirst]._BearingY   = face->glyph->bitmap_top;
+        (*glyphs)[codePoint - codePointFirst]._Advance = face->glyph->advance.x >> 6;
         penX += bitmap->width + 1;
     }
 
@@ -130,6 +115,53 @@ i32 RetroFuturaGUI::FontManager::LoadFont(std::string_view fontName, const f32 s
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
+    if(atlasDim)
+    {
+        atlasDim->_Width = atlasWidth;
+        atlasDim->_Height = atlasHeight;
+        atlasDim->_NumGlyphs = numGlyphs;
+    }
+
+    return textureID;
+}
+
+i32 RetroFuturaGUI::FontManager::LoadFont(std::string_view fontName, const f32 size, [[maybe_unused]] const u32 fontStyles, const u32 codePointFirst, const u32 codePointLast)
+{
+    u32 integralFontSize = FontSizeToIntegral(size);
+
+    if(isFontLoaded(fontName, integralFontSize, fontStyles))
+        return 0;
+
+    if(_ft == nullptr)
+    {
+        initFreeTypeLibrary();
+
+        if(_ft == nullptr)
+        {
+            std::println("ERROR::FREETYPE: FreeType Library not initialized");
+            return -1;
+        }
+    }
+
+    auto font = findFontPath(fontName, fontStyles);
+    
+    if (font.second.empty())
+    {
+        std::println("ERROR::FREETYPE: No font path");
+        return -1;
+    }
+
+    FT_Face face;
+    if (FT_New_Face(_ft, font.second.data(), 0, &face)) 
+    {
+        std::println("ERROR::FREETYPE: Failed to load font");
+        return -1;
+    }
+
+    std::vector<Glyph> glyphs {};
+    AtlasDimension atlasDim {};
+    u32 textureID = generateGlyphAtlas(face, codePointFirst, codePointLast, integralFontSize, &glyphs, &atlasDim);
+
     bool fontNameExists = false;
     for(const auto& fontInfo : _fonts)
     {
@@ -144,35 +176,34 @@ i32 RetroFuturaGUI::FontManager::LoadFont(std::string_view fontName, const f32 s
     { 
         _fonts.emplace_back();
         _fonts.back()._name = fontName;
-        _fonts.back()._path = font->second;
+        _fonts.back()._path = font.second;
         _fonts.back()._currentFontStyleDIP = FontStyle::REGULAR;
         _fonts.back()._fontStylesAvailable = FontStyle::REGULAR;
     }
 
     _fonts.back()._atlasses[integralFontSize] = 
     {
-        ._textureID = textureID,
-        ._Width = atlasWidth,
-        ._Height = atlasHeight,
+        ._TextureID = textureID,
+        ._Width = atlasDim._Width,
+        ._Height = atlasDim._Height,
         ._FontSize = size,
         ._Glyphs = {},
         ._charMap = face->charmap
     };
 
-    for(uSize i = 0; i < numGlyphs; ++i)
+    for(uSize i = 0; i < atlasDim._NumGlyphs; ++i)
     {
         Glyph glyph;
-        glyph._Size[0] = info[i]._EndX - info[i]._OriginX;
-        glyph._Size[1] = info[i]._EndY - info[i]._OriginY;
-        glyph._Bearing[0] = info[i]._BearingX;
-        glyph._Bearing[1] = info[i]._BearingY;
-        glyph._Advance = info[i]._Advance;
-        glyph._UV[0] = static_cast<f32>(info[i]._OriginX) / atlasWidth; // minU
-        glyph._UV[1] = static_cast<f32>(info[i]._OriginY) / atlasHeight; // minV
-        glyph._UV[2] = static_cast<f32>(info[i]._EndX) / atlasWidth; // maxU
-        glyph._UV[3] = static_cast<f32>(info[i]._EndY) / atlasHeight; // maxV
-
-        _fonts.back()._atlasses[integralFontSize]._Glyphs.insert({ info[i]._CodePoint, glyph });
+        glyph._Size[0] = glyphs[i]._EndX - glyphs[i]._OriginX;
+        glyph._Size[1] = glyphs[i]._EndY - glyphs[i]._OriginY;
+        glyph._Bearing[0] = glyphs[i]._BearingX;
+        glyph._Bearing[1] = glyphs[i]._BearingY;
+        glyph._Advance = glyphs[i]._Advance;
+        glyph._UV[0] = static_cast<f32>(glyphs[i]._OriginX) / atlasDim._Width; // minU
+        glyph._UV[1] = static_cast<f32>(glyphs[i]._OriginY) / atlasDim._Height; // minV
+        glyph._UV[2] = static_cast<f32>(glyphs[i]._EndX) / atlasDim._Width; // maxU
+        glyph._UV[3] = static_cast<f32>(glyphs[i]._EndY) / atlasDim._Height; // maxV 
+        _fonts.back()._atlasses[integralFontSize]._Glyphs.insert({ glyphs[i]._CodePoint, glyph });
     }
 
     FT_Done_Face(face);
@@ -195,7 +226,7 @@ std::shared_ptr<RetroFuturaGUI::FontInfo> RetroFuturaGUI::FontManager::GetFontIn
 {
     u32 fontIndex = FontSizeToIntegral(size);
 
-    for (const auto& font : GetFonts())
+    for (const auto& font : _fonts)
     {
         if (font._name == fontName && font._atlasses.count(fontIndex) > 0)
         {
@@ -206,7 +237,7 @@ std::shared_ptr<RetroFuturaGUI::FontInfo> RetroFuturaGUI::FontManager::GetFontIn
     // If not found, load it
     if (LoadFont(fontName, size, FontStyle::REGULAR, BasicLatinFirst, BasicLatinLast) == 0)
     {
-        for (const auto& font : GetFonts())
+        for (const auto& font : _fonts)
             if (font._name == fontName && font._atlasses.count(fontIndex) > 0)
                 return std::make_shared<FontInfo>(font);
     }
@@ -223,4 +254,9 @@ void RetroFuturaGUI::FontManager::SetDefaultFont(std::string_view fontName, f32 
 u32 RetroFuturaGUI::FontManager::FontSizeToIntegral(const f32 size)
 {
     return size < 1.0f && size > 0.0f ? 1 : static_cast<u32>(size);
+}
+
+const std::list<RetroFuturaGUI::FontInfo>& RetroFuturaGUI::FontManager::GetFonts()
+{
+    return _fonts;
 }

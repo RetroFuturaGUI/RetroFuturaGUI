@@ -452,7 +452,7 @@ void RetroFuturaGUI::WindowBar::SetWindowTitle(std::string_view title, std::stri
             ._Text = _title,
             ._FontName = fontName,
             ._TextColor = glm::vec4(1.0f),
-            ._GlyphSize = glm::vec2( _windowBarThiccness * 0.8f ),
+            ._GlyphSize = glm::vec2( _windowBarThiccness * 0.6f ),
             ._TextAlignment = TextAlignment::LEFT,
             ._TextPadding = 3.0f
         };
