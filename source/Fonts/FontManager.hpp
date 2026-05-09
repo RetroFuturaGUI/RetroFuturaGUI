@@ -37,7 +37,7 @@ namespace RetroFuturaGUI
         u32 _textureID { 0 };
         u32 _Width { 0 };
         u32 _Height { 0 };
-        u32 _FontSize { 0 };
+        f32 _FontSize { 1.0f };
         std::unordered_map<u32, Glyph> _Glyphs; // keyed by codepoint
         FT_CharMap _charMap;
     };
@@ -57,10 +57,10 @@ namespace RetroFuturaGUI
     {
     public:
         static i32 Init();
-        static i32 LoadFont(std::string_view fontName, const u32 size, const u32 fontStyles, const u32 codePointFirst, const u32 codePointLast);
+        static i32 LoadFont(std::string_view fontName, const f32 size, const u32 fontStyles, const u32 codePointFirst, const u32 codePointLast);
         static const std::list<FontInfo>& GetFonts() { return _fonts; }
-        static std::shared_ptr<FontInfo> GetFontInfo(std::string_view fontName, u32 size);
-        static void SetDefaultFont(std::string_view fontName, u32 size = 16, u32 fontStyles = FontStyle::REGULAR, const u32 codePointFirst = BasicLatinFirst, const u32 codePointLast = BasicLatinLast);
+        static std::shared_ptr<FontInfo> GetFontInfo(std::string_view fontName, f32 size);
+        static void SetDefaultFont(std::string_view fontName, f32 size = 16.0f, u32 fontStyles = FontStyle::REGULAR, const u32 codePointFirst = BasicLatinFirst, const u32 codePointLast = BasicLatinLast);
 
     private:
         FontManager() = default;
@@ -82,5 +82,6 @@ namespace RetroFuturaGUI
         static inline FT_Library _ft { nullptr };
         static inline std::string _defaultFontName;
         static inline FontInfo* _defaultFontInfo { nullptr };
+        static u32 fontSizeToIntegral(const f32 size);
     };
 }
