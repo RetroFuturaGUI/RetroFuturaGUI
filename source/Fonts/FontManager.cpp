@@ -59,7 +59,7 @@ i32 RetroFuturaGUI::FontManager::LoadFont(std::string_view fontName, const f32 s
         return -1;
     }
 
-    u32 integralFontSize = fontSizeToIntegral(size);
+    u32 integralFontSize = FontSizeToIntegral(size);
     FT_Set_Char_Size(face, 0, integralFontSize << 6, 96, 96);
 
     u32 numGlyphs = codePointLast - codePointFirst + 1;
@@ -174,7 +174,7 @@ i32 RetroFuturaGUI::FontManager::initFreeTypeLibrary()
 
 std::shared_ptr<RetroFuturaGUI::FontInfo> RetroFuturaGUI::FontManager::GetFontInfo(std::string_view fontName, f32 size)
 {
-    u32 fontIndex = fontSizeToIntegral(size);
+    u32 fontIndex = FontSizeToIntegral(size);
 
     for (const auto& font : GetFonts())
     {
@@ -201,7 +201,7 @@ void RetroFuturaGUI::FontManager::SetDefaultFont(std::string_view fontName, f32 
     LoadFont(fontName, size, fontStyles, codePointFirst, codePointLast);
 }
 
-u32 RetroFuturaGUI::FontManager::fontSizeToIntegral(const f32 size)
+u32 RetroFuturaGUI::FontManager::FontSizeToIntegral(const f32 size)
 {
     return size < 1.0f && size > 0.0f ? 1 : static_cast<u32>(size);
 }

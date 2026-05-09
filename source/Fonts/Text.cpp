@@ -11,7 +11,8 @@ namespace RetroFuturaGUI
     Text::Text(const GeometryParams2D& geometry, const TextParams& textParams)
         : _projection(const_cast<Projection&>(geometry._Projection)),
           _glyphSize(textParams._GlyphSize),
-          _fontSize(static_cast<u32>(_glyphSize.x)),
+          _fontSize(_glyphSize.x),
+          _fontIndex(FontManager::FontSizeToIntegral(_fontSize)),
           _fontInfo(FontManager::GetFontInfo(textParams._FontName, _fontSize)),
           _text(textParams._Text),
           _textColor(textParams._TextColor),
@@ -64,7 +65,7 @@ namespace RetroFuturaGUI
         ShaderManager::GetFontAtlasFillShader().SetUniformInt("uTexture", 0);
 
         glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, _fontInfo->_atlasses[_fontSize]._textureID);
+        glBindTexture(GL_TEXTURE_2D, _fontInfo->_atlasses[_fontIndex]._textureID);
         glBindVertexArray(_vao);
         glBindBuffer(GL_ARRAY_BUFFER, _vbo);
         glBufferData(GL_ARRAY_BUFFER, _vertices.size() * sizeof(f32), _vertices.data(), GL_DYNAMIC_DRAW);
@@ -126,7 +127,7 @@ namespace RetroFuturaGUI
     void Text::updateMesh()
     {
         _vertices.clear();
-        f32 nativeSize { _fontInfo->_atlasses[_fontSize]._FontSize > 0 ? static_cast<f32>(_fontInfo->_atlasses[_fontSize]._FontSize) : 1.0f },
+        f32 nativeSize { _fontInfo->_atlasses[_fontIndex]._FontSize },
             scale { _glyphSize.y / nativeSize },
             currentX { 0.0f },
             currentY { 0.0f },
@@ -144,8 +145,8 @@ namespace RetroFuturaGUI
                 continue;
             }
 
-            auto iter = _fontInfo->_atlasses[_fontSize]._Glyphs.find(c);
-            if (iter == _fontInfo->_atlasses[_fontSize]._Glyphs.end())
+            auto iter = _fontInfo->_atlasses[_fontIndex]._Glyphs.find(c);
+            if (iter == _fontInfo->_atlasses[_fontIndex]._Glyphs.end())
                 continue;
 
             const Glyph& glyph = iter->second;
@@ -214,7 +215,7 @@ namespace RetroFuturaGUI
 
     void Text::calculateTextSpan()
     {
-        f32 nativeSize = _fontInfo->_atlasses[_fontSize]._FontSize > 0 ? static_cast<f32>(_fontInfo->_atlasses[_fontSize]._FontSize) : 1.0f;
+        f32 nativeSize = _fontInfo->_atlasses[_fontIndex]._FontSize > 0 ? static_cast<f32>(_fontInfo->_atlasses[_fontIndex]._FontSize) : 1.0f;
         f32 scale = _glyphSize.y / nativeSize;
         f32 maxLineWidth = 0.0f;
         f32 totalHeight = 0.0f;
@@ -237,8 +238,10 @@ namespace RetroFuturaGUI
                 continue;
             }
 
-            auto iter = _fontInfo->_atlasses[_fontSize]._Glyphs.find(static_cast<u32>(c));
-            if (iter == _fontInfo->_atlasses[_fontSize]._Glyphs.end()) continue;
+            auto iter = _fontInfo->_atlasses[_fontIndex]._Glyphs.find(static_cast<u32>(c));
+
+            if (iter == _fontInfo->_atlasses[_fontIndex]._Glyphs.end()) 
+                continue;
 
             const Glyph& glyph = iter->second;
             f32 advancePx = glyph._Advance * scale;

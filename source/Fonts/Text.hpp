@@ -44,7 +44,8 @@ namespace RetroFuturaGUI
     private:
         Projection& _projection;
         glm::vec2 _glyphSize { 16.0f };
-        u32 _fontSize { 16 };
+        f32 _fontSize { 16.0f };
+        u32 _fontIndex { 0 };
         std::shared_ptr<FontInfo> _fontInfo;
         std::string _text;
         glm::vec4 _textColor { 1.0f };

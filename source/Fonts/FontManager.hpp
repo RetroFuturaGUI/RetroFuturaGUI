@@ -61,6 +61,7 @@ namespace RetroFuturaGUI
         static const std::list<FontInfo>& GetFonts() { return _fonts; }
         static std::shared_ptr<FontInfo> GetFontInfo(std::string_view fontName, f32 size);
         static void SetDefaultFont(std::string_view fontName, f32 size = 16.0f, u32 fontStyles = FontStyle::REGULAR, const u32 codePointFirst = BasicLatinFirst, const u32 codePointLast = BasicLatinLast);
+        static u32 FontSizeToIntegral(const f32 size);
 
     private:
         FontManager() = default;
@@ -82,6 +83,5 @@ namespace RetroFuturaGUI
         static inline FT_Library _ft { nullptr };
         static inline std::string _defaultFontName;
         static inline FontInfo* _defaultFontInfo { nullptr };
-        static u32 fontSizeToIntegral(const f32 size);
     };
 }
