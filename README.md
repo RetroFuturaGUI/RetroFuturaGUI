@@ -16,7 +16,7 @@ The framework is designed for cross-platform use, and its logic can be compiled 
 | 4 | More Widgets (TextBox, Table, VideoPlayer, AudioPlayer, 3D Model, Slider, CheckBox, DropdownBox, RadioButton, Tabs, 3D Scene, Lights, change Grid2d to "Grid" and add a 3rd dimension, Carousel, Color Pickers) | 1 | | 
 | 5 | .bechaml markup language for GUI design 🥣 <!-- (**B**ased and **E**xtra **C**reamy **H**ollandaise **A**pplication **M**arkup **L**anguage) -->| 4 | | 
 | 6 | VS Code extension with project generator/manager | 5 | | 
-| 7 | Aesthetics: Flat Metro, Frutiger Aero (Win Vista/7, Wii, Wii U, Pikmin 3), Frutiger Metro, Y2K (F-Zero GX), Vaporwave, Outrun/Synthwave, Neumorphism, Glassmorphism/Liquid Glass, Comic/Anime/LoFi, ... | 6 | | 
+| 7 | Aesthetics: Flat Metro, Frutiger Aero (Win Vista/7, Wii, Wii U, Pikmin 3), Frutiger Metro, Y2K Futurism (F-Zero GX), Vaporwave, Outrun/Synthwave, Neumorphism, Glassmorphism/Liquid Glass, Comic/Anime/LoFi, ... | 6 | | 
 | 8 | Android (without Android Studio), MacOS, iOS support | 6 | | 
 | 9 | dll/so/dylib compilation for C, Rust, Zig, Java, JavaScript, TypeScript, Go, Ruby, Lua, Swift, Carbon, Gleem (if it has evolved enough) | 6 | | 
 | 10 | gcn and wii support (libogc (devkitPro)) | 6 | | 
@@ -30,6 +30,7 @@ The framework is designed for cross-platform use, and its logic can be compiled 
 ### WIP in detail
 - Font Manager
   - Unicode Support
+  - Font Styles
 
 ### Implemented Features
 <details><summary>CLICK TO EXPAND</summary>
