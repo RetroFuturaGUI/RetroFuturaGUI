@@ -12,6 +12,12 @@ i32 RetroFuturaGUI::FontManager::Init()
 
 i32 RetroFuturaGUI::FontManager::LoadFont(std::string_view fontName, const f32 size, [[maybe_unused]] const u32 fontStyles, const u32 codePointFirst, const u32 codePointLast)
 {
+    u32 integralFontSize = FontSizeToIntegral(size);
+
+    for(const auto& fontInfo : _fonts)
+        if(fontInfo._name == fontName && fontInfo._atlasses.count(integralFontSize) > 0)
+            return 0; // font already loaded with requested size
+
     if(_ft == nullptr)
     {
         initFreeTypeLibrary();
@@ -59,7 +65,6 @@ i32 RetroFuturaGUI::FontManager::LoadFont(std::string_view fontName, const f32 s
         return -1;
     }
 
-    u32 integralFontSize = FontSizeToIntegral(size);
     FT_Set_Char_Size(face, 0, integralFontSize << 6, 96, 96);
 
     u32 numGlyphs = codePointLast - codePointFirst + 1;
@@ -125,11 +130,25 @@ i32 RetroFuturaGUI::FontManager::LoadFont(std::string_view fontName, const f32 s
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
-    _fonts.emplace_back();
-    _fonts.back()._name = fontName;
-    _fonts.back()._path = font->second;
-    _fonts.back()._currentFontStyleDIP = FontStyle::REGULAR;
-    _fonts.back()._fontStylesAvailable = FontStyle::REGULAR;
+    bool fontNameExists = false;
+    for(const auto& fontInfo : _fonts)
+    {
+        if(fontInfo._name == fontName)
+        {
+            fontNameExists = true;
+            break;
+        }
+    }
+
+    if(!fontNameExists)
+    { 
+        _fonts.emplace_back();
+        _fonts.back()._name = fontName;
+        _fonts.back()._path = font->second;
+        _fonts.back()._currentFontStyleDIP = FontStyle::REGULAR;
+        _fonts.back()._fontStylesAvailable = FontStyle::REGULAR;
+    }
+
     _fonts.back()._atlasses[integralFontSize] = 
     {
         ._textureID = textureID,

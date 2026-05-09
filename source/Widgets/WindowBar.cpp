@@ -449,12 +449,12 @@ void RetroFuturaGUI::WindowBar::SetWindowTitle(std::string_view title, std::stri
     {
         TextParams textParamsTitle = 
         {
-            _title,
-            fontName,
-            glm::vec4(1.0f),
-            glm::vec2(25.0f),
-            TextAlignment::LEFT,
-            3.0f
+            ._Text = _title,
+            ._FontName = fontName,
+            ._TextColor = glm::vec4(1.0f),
+            ._GlyphSize = glm::vec2( _windowBarThiccness * 0.8f ),
+            ._TextAlignment = TextAlignment::LEFT,
+            ._TextPadding = 3.0f
         };
 
         GeometryParams2D geometryButtonTitle
