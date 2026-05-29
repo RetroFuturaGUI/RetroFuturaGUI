@@ -32,6 +32,7 @@ The framework is designed for cross-platform use, and its logic can be compiled 
   - Unicode Support
   - Font Styles
   - Font Merging
+  - Update Windows font support to the new system
 
 ### Implemented Features
 <details><summary>CLICK TO EXPAND</summary>

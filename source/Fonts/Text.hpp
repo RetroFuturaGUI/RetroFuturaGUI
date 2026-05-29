@@ -25,6 +25,8 @@ namespace RetroFuturaGUI
         const glm::vec2& _GlyphSize;
         TextAlignment _TextAlignment { TextAlignment::LEFT };
         f32 _TextPadding { 0.0f };
+        PlatformBridge::Fonts::Slant _FontSlant { PlatformBridge::Fonts::Slant::Roman };
+        PlatformBridge::Fonts::Weight _FontWeight { PlatformBridge::Fonts::Weight::Normal };
     };
 
     class Text
@@ -45,6 +47,8 @@ namespace RetroFuturaGUI
         Projection& _projection;
         glm::vec2 _glyphSize { 16.0f };
         f32 _fontSize { 16.0f };
+        PlatformBridge::Fonts::Slant _fontSlant { PlatformBridge::Fonts::Slant::Roman };
+        PlatformBridge::Fonts::Weight _fontWeight { PlatformBridge::Fonts::Weight::Normal };
         u32 _fontIndex { 0 };
         std::shared_ptr<FontInfo> _fontInfo;
         std::string _text;

@@ -33,7 +33,7 @@ RetroFuturaGUI::WindowBar::WindowBar(const IdentityParams &identity, GeometryPar
         _parentWindow
     };
 
-    std::string font = PlatformBridge::Fonts::GetFontsInformation().front().second;
+    std::string font = PlatformBridge::Fonts::GetFontProperties().front()._Name;
     TextParams textParams = 
     {
         "",//X

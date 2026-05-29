@@ -7,15 +7,16 @@
 #include <memory>
 #include <list>
 #include "UnicodeBlocks.hpp"
+#include "PlatformBridge.hpp"
 
 namespace RetroFuturaGUI
 {
-    enum FontStyle : u32
+    /*enum FontStyle : u32
     {
         REGULAR = 1,
         BOLD = 1 << 1,
         ITALIC = 1 << 2
-    };
+    };*/
 
     struct Glyph
     {
@@ -32,36 +33,40 @@ namespace RetroFuturaGUI
             _BearingY { 0 };
     };
 
-    struct GlyphAtlas
+    struct GlyphBlock
     {
         u32 _TextureID { 0 },
             _Width { 0 },
-            _Height { 0 };
-        f32 _FontSize { 1.0f };
+            _Height { 0 },
+            _CodePointFirst { 0 },
+            _CodePointLast { 0 };
+        bool _LoadIndividually { false };
         std::unordered_map<u32, Glyph> _Glyphs; // keyed by codepoint
-        FT_CharMap _charMap;
+        FT_CharMap _CharMap;
+    };
+
+    struct GlyphAtlas
+    {
+        f32 _FontSize { 16.0f };
+        std::unordered_map<u32, GlyphBlock> _GlyphBlocks; // keyed by first codepoint
     };
 
     struct FontInfo
     {
-        std::string 
-            _name,
-            _path;
-        u32
-            _currentFontStyleDIP { FontStyle::REGULAR },
-            _fontStylesAvailable { FontStyle::REGULAR };
-        std::unordered_map<u32, GlyphAtlas> _atlasses; // keyed by font size
+        PlatformBridge::Fonts::FontProperty _FontProperty {};
+        std::unordered_map<u32, GlyphAtlas> _Atlasses; // keyed by font size
     };
 
     class FontManager
     {
     public:
         static i32 Init();
-        static i32 LoadFont(std::string_view fontName, const f32 size, const u32 fontStyles, const u32 codePointFirst, const u32 codePointLast);
+        static i32 LoadFont(std::string_view fontName, const f32 size, const PlatformBridge::Fonts::Slant slant, const PlatformBridge::Fonts::Weight weight, const u32 codePointFirst, const u32 codePointLast);
         static const std::list<FontInfo>& GetFonts();
-        static std::shared_ptr<FontInfo> GetFontInfo(std::string_view fontName, f32 size);
-        static void SetDefaultFont(std::string_view fontName, f32 size = 16.0f, u32 fontStyles = FontStyle::REGULAR, const u32 codePointFirst = BasicLatinFirst, const u32 codePointLast = BasicLatinLast);
+        static std::shared_ptr<FontInfo> GetFontInfo(std::string_view fontName, const f32 size, const PlatformBridge::Fonts::Slant slant, const PlatformBridge::Fonts::Weight weight);
+        static void SetDefaultFont(std::string_view fontName, const f32 size = 16.0f, const PlatformBridge::Fonts::Slant slant = PlatformBridge::Fonts::Slant::Roman, const PlatformBridge::Fonts::Weight weight = PlatformBridge::Fonts::Weight::Normal, const u32 codePointFirst = BasicLatinFirst, const u32 codePointLast = BasicLatinLast);
         static u32 FontSizeToIntegral(const f32 size);
+        static const Glyph* GetGlyph(const GlyphAtlas& atlas, const u32 codePoint);
 
     private:
         struct AtlasDimension
@@ -86,8 +91,8 @@ namespace RetroFuturaGUI
 
         static i32 initFreeTypeLibrary();
         static i32 checkFontIntegrity(std::string_view fontName, const u32 integralSize, const u32 fontStyles);
-        static bool isFontLoaded(std::string_view fontName, const u32 integralSize, [[maybe_unused]] const u32 fontStyles);
-        static std::pair<std::string, std::string> findFontPath(std::string_view fontName, const u32 fontStyles);
+        static bool isFontLoaded(std::string_view fontName, const u32 integralSize, const PlatformBridge::Fonts::Slant slant, const PlatformBridge::Fonts::Weight weight);
+        static PlatformBridge::Fonts::FontProperty findFontProperty(std::string_view fontName, const PlatformBridge::Fonts::Slant slant, const PlatformBridge::Fonts::Weight weight);
         static u32 generateGlyphAtlas(FT_Face face, const u32 codePointFirst, const u32 codePointLast, const u32 integralFontSize, std::vector<Glyph>* glyphs, AtlasDimension* atlasDim);
         //static void assignGlyphData(const u32 textureID, f32 fontSize, std::vector<Glyph>* glyphs, AtlasDimension* atlasDim, std::pair<std::string, std::string>* font, FT_Face face);
 
