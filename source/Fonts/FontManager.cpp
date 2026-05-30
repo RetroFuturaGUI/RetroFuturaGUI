@@ -119,6 +119,8 @@ u32 RetroFuturaGUI::FontManager::generateGlyphAtlas(FT_Face face, const u32 code
         imageData[i * 4 + 3] = 0xFF;
     }
 
+    stbi_write_png((std::string("font_output_") + std::to_string(codePointFirst) + "-" + std::to_string(codePointLast) + ".png").c_str(), atlasWidth, atlasHeight, 4, imageData.data(), atlasWidth * 4);
+
     u32 textureID { 0 };
     glGenTextures(1, &textureID);
     glBindTexture(GL_TEXTURE_2D, textureID);
@@ -138,12 +140,12 @@ u32 RetroFuturaGUI::FontManager::generateGlyphAtlas(FT_Face face, const u32 code
     return textureID;
 }
 
-i32 RetroFuturaGUI::FontManager::LoadFont(std::string_view fontName, const f32 size, const PlatformBridge::Fonts::Slant slant, const PlatformBridge::Fonts::Weight weight, const u32 codePointFirst, const u32 codePointLast)
+RetroFuturaGUI::FontManager::LoadFontResult RetroFuturaGUI::FontManager::LoadFont(std::string_view fontName, const f32 size, const PlatformBridge::Fonts::Slant slant, const PlatformBridge::Fonts::Weight weight, const u32 codePointFirst, const u32 codePointLast)
 {
     u32 integralFontSize = FontSizeToIntegral(size);
 
     if(isFontLoaded(fontName, integralFontSize, slant, weight))
-        return 0;
+        return LoadFontResult::FontAlreadyLoaded;
 
     if(_ft == nullptr)
     {
@@ -152,7 +154,7 @@ i32 RetroFuturaGUI::FontManager::LoadFont(std::string_view fontName, const f32 s
         if(_ft == nullptr)
         {
             std::println("ERROR::FREETYPE: FreeType Library not initialized");
-            return -1;
+            return LoadFontResult::FreeTypeError;
         }
     }
 
@@ -161,38 +163,19 @@ i32 RetroFuturaGUI::FontManager::LoadFont(std::string_view fontName, const f32 s
     if (fontProperty._Path.empty())
     {
         std::println("ERROR::FREETYPE: No font path");
-        return -1;
+        return LoadFontResult::FontNotFound;
     }
 
     FT_Face face;
     if (FT_New_Face(_ft, fontProperty._Path.data(), 0, &face)) 
     {
         std::println("ERROR::FREETYPE: Failed to load font");
-        return -1;
+        return LoadFontResult::FreeTypeError;
     }
 
     std::vector<Glyph> glyphs {};
     AtlasDimension atlasDim {};
     u32 textureID = generateGlyphAtlas(face, codePointFirst, codePointLast, integralFontSize, &glyphs, &atlasDim);
-
-    /*bool fontNameExists = false;
-    for(const auto& fontInfo : _fonts)
-    {
-        if(fontInfo._FontProperty._Name == fontName)
-        {
-            fontNameExists = true;
-            break;
-        }
-    }
-
-    if(!fontNameExists)
-    { 
-        _fonts.emplace_back();
-        _fonts.back()._FontProperty._Name = fontName;
-        _fonts.back()._FontProperty._Path = fontProperty._Path;
-        _fonts.back()._CurrentFontStyleDIP = FontStyle::REGULAR;
-        _fonts.back()._FontStylesAvailable = FontStyle::REGULAR;
-    }*/
 
     _fonts.emplace_back();
     _fonts.back()._FontProperty = fontProperty;
@@ -225,8 +208,7 @@ i32 RetroFuturaGUI::FontManager::LoadFont(std::string_view fontName, const f32 s
     }
 
     FT_Done_Face(face);
-	//stbi_write_png("font_output.png", atlasWidth, atlasHeight, 4, imageData.data(), atlasWidth * 4);
-    return 0;
+    return LoadFontResult::Success;
 }
 
 i32 RetroFuturaGUI::FontManager::initFreeTypeLibrary()
@@ -292,4 +274,27 @@ const RetroFuturaGUI::Glyph* RetroFuturaGUI::FontManager::GetGlyph(const GlyphAt
 const std::list<RetroFuturaGUI::FontInfo>& RetroFuturaGUI::FontManager::GetFonts()
 {
     return _fonts;
+}
+
+void RetroFuturaGUI::FontManager::ExtendFontset(std::string_view fontName, std::string_view fontNameExtension, const f32 size, const PlatformBridge::Fonts::Slant slant, const PlatformBridge::Fonts::Weight weight, const u32 codePointFirst, const u32 codePointLast)
+{
+    u32 integralFontSize = FontSizeToIntegral(size);
+
+    for (auto& font : _fonts)
+    {
+        if (font._FontProperty._Name == fontName
+            && font._Atlasses.count(integralFontSize) > 0
+            && font._FontProperty._Slant == slant
+            && font._FontProperty._Weight == weight)
+        {
+        
+            if(LoadFont(fontNameExtension, size, slant, weight, codePointFirst, codePointLast) != LoadFontResult::Success)
+                return;
+            
+            font._Atlasses[integralFontSize]._GlyphBlocks[codePointFirst] = _fonts.back()._Atlasses[integralFontSize]._GlyphBlocks[codePointFirst];
+            _fonts.pop_back();
+            return;
+            
+        }
+    }
 }

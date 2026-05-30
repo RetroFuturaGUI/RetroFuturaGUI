@@ -2,7 +2,7 @@
 #define ControlBlockFirst 0x0U
 #define ControlBlockLast 0x1FU
 #define BasicLatinFirst 0x20U
-#define BasicLatinLast 0x7EU
+#define BasicLatinLast 0x7FU
 #define Latin1SupplementFirst 0x80U
 #define Latin1SupplementLast 0xFFU
 #define LatinExtendedAFirst 0x100U
