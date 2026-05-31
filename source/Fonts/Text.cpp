@@ -1,6 +1,8 @@
 #include "Text.hpp"
 #include <algorithm>
 #include <print>
+#include <cstdint>
+#include <stdexcept>
 
 #ifndef _MSC_VER
     using std::max;
@@ -16,7 +18,6 @@ namespace RetroFuturaGUI
           _fontWeight(textParams._FontWeight),
           _fontIndex(FontManager::FontSizeToIntegral(_fontSize)),
           _fontInfo(FontManager::GetFontInfo(textParams._FontName, _fontSize, _fontSlant, _fontWeight)),
-          _text(textParams._Text),
           _textColor(textParams._TextColor),
           _textAlignment(textParams._TextAlignment),
           _textPadding(textParams._TextPadding),
@@ -30,6 +31,7 @@ namespace RetroFuturaGUI
             return;
         }
 
+        _codepoints = utf8ToUtf32(textParams._Text);
         glGenVertexArrays(1, &_vao);
         glGenBuffers(1, &_vbo);
         glBindVertexArray(_vao);
@@ -55,7 +57,7 @@ namespace RetroFuturaGUI
 
     void Text::Draw()
     {
-        if (_vertices.empty() || !_fontInfo)
+        if (_vertices.empty() || !_fontInfo || _glyphDraws.empty())
             return;
 
         ShaderManager::GetFontAtlasFillShader().UseProgram();
@@ -66,16 +68,17 @@ namespace RetroFuturaGUI
         ShaderManager::GetFontAtlasFillShader().SetUniformMat4("uScaling", glm::mat4(1.0f));
         ShaderManager::GetFontAtlasFillShader().SetUniformInt("uTexture", 0);
 
-        glActiveTexture(GL_TEXTURE0);
-        // Get texture ID from the first glyph block
-        u32 textureID = 0;
-        if (!_fontInfo->_Atlasses[_fontIndex]._GlyphBlocks.empty())
-            textureID = _fontInfo->_Atlasses[_fontIndex]._GlyphBlocks.begin()->second._TextureID;
-        glBindTexture(GL_TEXTURE_2D, textureID);
         glBindVertexArray(_vao);
         glBindBuffer(GL_ARRAY_BUFFER, _vbo);
         glBufferData(GL_ARRAY_BUFFER, _vertices.size() * sizeof(f32), _vertices.data(), GL_DYNAMIC_DRAW);
-        glDrawArrays(GL_TRIANGLES, 0, static_cast<i32>(_vertices.size() / 4));
+        glActiveTexture(GL_TEXTURE0);
+        
+        for (const auto& draw : _glyphDraws)
+        {
+            glBindTexture(GL_TEXTURE_2D, draw._TextureID);
+            glDrawArrays(GL_TRIANGLES, draw._VertexStart, draw._VertexCount);
+        }
+
         glBindBuffer(GL_ARRAY_BUFFER, 0);
         glBindVertexArray(0);
         glBindTexture(GL_TEXTURE_2D, 0);
@@ -124,15 +127,27 @@ namespace RetroFuturaGUI
 
     void Text::SetText(std::string_view text)
     {
-        _text = text;
+        _codepoints = utf8ToUtf32(text);
         calculateTextSpan();
         SetTextAlignment(_textAlignment);
         updateMesh();
     }
 
+    u32 Text::findGlyphBlockKey(const u32 codePoint)
+    {
+        for (const auto& [blockFirst, blockLast] : UnicodeBlocks)
+        {
+            if (codePoint >= blockFirst && codePoint <= blockLast)
+                return blockFirst;
+        }
+
+        return 0;
+    }
+
     void Text::updateMesh()
     {
         _vertices.clear();
+        _glyphDraws.clear();
         f32 nativeSize { _fontInfo->_Atlasses[_fontIndex]._FontSize },
             scale { _glyphSize.y / nativeSize },
             currentX { 0.0f },
@@ -141,23 +156,35 @@ namespace RetroFuturaGUI
             yPos { 0.0f },
             width { 0.0f },
             height { 0.0f };
+        u32 lastTextureID { 0 },
+            blockKey { 0 },
+            foundTextureID { 0 };
+        i32 vertexStart { 0 },
+            vertexCount { 0 };
+        bool batching { false };
 
-        for (u32 c : _text)
+        for (const u32 codepoint : _codepoints)
         {
-            if (c == '\n')
+            if (codepoint == U'\n')
             {
                 currentY -= _glyphSize.y * _lineSpacingFactor;
                 currentX = 0.0f;
                 continue;
             }
 
-            const Glyph* glyphPtr = FontManager::GetGlyph(_fontInfo->_Atlasses[_fontIndex], c);
-            if (!glyphPtr)
+            blockKey = findGlyphBlockKey(codepoint);
+            auto blockIt { _fontInfo->_Atlasses[_fontIndex]._GlyphBlocks.find(blockKey) };
+            if (blockIt == _fontInfo->_Atlasses[_fontIndex]._GlyphBlocks.end())
                 continue;
 
-            const Glyph& glyph = *glyphPtr;
+            auto glyphIt { blockIt->second._Glyphs.find(codepoint) };
+            if (glyphIt == blockIt->second._Glyphs.end())
+                continue;
 
-            if (c == ' ')
+            const Glyph& glyph { glyphIt->second };
+            foundTextureID = blockIt->second._TextureID;
+
+            if (codepoint == U' ')
             {
                 currentX += glyph._Advance * scale;
                 continue;
@@ -167,6 +194,19 @@ namespace RetroFuturaGUI
             yPos = currentY - (glyph._Size[1] - glyph._Bearing[1]) * scale;
             width = glyph._Size[0] * scale;
             height = glyph._Size[1] * scale;
+
+            // If texture changes, flush previous batch
+            if (!batching || foundTextureID != lastTextureID)
+            {
+                if (batching && vertexCount > 0)
+                {
+                    _glyphDraws.push_back({lastTextureID, vertexStart, vertexCount});
+                    vertexStart += vertexCount;
+                    vertexCount = 0;
+                }
+                lastTextureID = foundTextureID;
+                batching = true;
+            }
 
             _vertices.reserve(_vertices.size() + 24);
             _vertices.push_back(xPos);
@@ -194,7 +234,13 @@ namespace RetroFuturaGUI
             _vertices.push_back(glyph._UV[2]);
             _vertices.push_back(glyph._UV[1]);
 
+            vertexCount += 6;
             currentX += glyph._Advance * scale;
+        }
+        // Flush last batch
+        if (batching && vertexCount > 0)
+        {
+            _glyphDraws.push_back({lastTextureID, vertexStart, vertexCount});
         }
     }
 
@@ -236,22 +282,27 @@ namespace RetroFuturaGUI
             penX = 0.0f;
         };
 
-        for (const char c : _text)
+        for (const u32 codepoint : _codepoints)
         {
-            if (c == '\n')
+            if (codepoint == U'\n')
             {
                 finalizeLine();
                 continue;
             }
 
-            const Glyph* glyphPtr = FontManager::GetGlyph(_fontInfo->_Atlasses[_fontIndex], static_cast<u32>(c));
-            if (!glyphPtr)
+            u32 blockKey = findGlyphBlockKey(codepoint);
+            auto blockIt = _fontInfo->_Atlasses[_fontIndex]._GlyphBlocks.find(blockKey);
+            if (blockIt == _fontInfo->_Atlasses[_fontIndex]._GlyphBlocks.end())
                 continue;
 
-            const Glyph& glyph = *glyphPtr;
+            auto glyphIt = blockIt->second._Glyphs.find(codepoint);
+            if (glyphIt == blockIt->second._Glyphs.end())
+                continue;
+
+            const Glyph& glyph = glyphIt->second;
             f32 advancePx = glyph._Advance * scale;
 
-            if (c == ' ')
+            if (codepoint == U' ')
             {
                 penX += advancePx;
                 currentLineWidth = max(currentLineWidth, penX);
@@ -267,4 +318,81 @@ namespace RetroFuturaGUI
         _textSpan = glm::vec2(maxLineWidth, totalHeight);
         _textBaseHeight = _glyphSize.y;
     }
+}
+
+std::vector<uint32_t> RetroFuturaGUI::Text::utf8ToUtf32(std::string_view utf8)
+{
+    constexpr static const uint32_t maskSingle = 0;
+    constexpr static const uint32_t maskDouble = 0b11000000;
+    constexpr static const uint32_t maskTriple = 0b11100000;
+    constexpr static const uint32_t maskQuadruple = 0b11110000;
+    constexpr static const uint32_t maskSequence = 0b10000000;
+    constexpr static const uint32_t ANDMaskSingle = 0b10000000;
+    constexpr static const uint32_t ANDMaskDouble = 0b11100000;
+    constexpr static const uint32_t ANDMaskTriple = 0b11110000;
+    constexpr static const uint32_t ANDMaskQuadruple = 0b11111000;
+    constexpr static const uint32_t ANDMaskSequence = 0b11000000;
+    constexpr static const uint32_t InvMaskDouble = 0b00011111;
+    constexpr static const uint32_t InvMaskTriple = 0b00001111;
+    constexpr static const uint32_t InvMaskQuadruple = 0b00000111;
+    constexpr static const uint32_t InvMaskSequence = 0b00111111;
+    std::vector<uint32_t> result(utf8.size(), '\0');
+    size_t count { 0 };
+    
+    for(size_t i { 0 }; i < utf8.size();)
+    {
+        if((utf8[i] & ANDMaskDouble) == maskDouble)
+        {
+            if((utf8[i+1] & ANDMaskSequence) != maskSequence)
+                break;
+            
+            result[count] = ((utf8[i] & InvMaskDouble) << 6);
+            result[count] |= (utf8[i+1] & InvMaskSequence);
+            ++count;
+            i += 2;
+        }
+        else if((utf8[i] & ANDMaskTriple) == maskTriple)
+        {
+            if((utf8[i+1] & ANDMaskSequence) != maskSequence)
+                break;
+                
+            if((utf8[i+2] & ANDMaskSequence) != maskSequence)
+                break;
+            
+            result[count] = ((utf8[i] & InvMaskTriple) << 12);
+            result[count] |= (utf8[i+1] & InvMaskSequence) << 6;
+            result[count] |= (utf8[i+2] & InvMaskSequence);
+            ++count;
+            i += 3;
+        }
+        else if((utf8[i] & ANDMaskQuadruple) == maskQuadruple)
+        {
+            if((utf8[i+1] & ANDMaskSequence) != maskSequence)
+                break;
+                
+            if((utf8[i+2] & ANDMaskSequence) != maskSequence)
+                break;
+                
+            if((utf8[i+3] & ANDMaskSequence) != maskSequence)
+                break;
+            
+            result[count] = ((utf8[i] & InvMaskQuadruple) << 18);
+            result[count] |= (utf8[i+1] & InvMaskSequence) << 12;
+            result[count] |= (utf8[i+2] & InvMaskSequence) << 6;
+            result[count] |= (utf8[i+3] & InvMaskSequence);
+            ++count;
+            i += 4;
+        }
+        else
+        {
+            if((utf8[i] & ANDMaskSingle) != maskSingle)
+                break;
+                
+            result[count] = static_cast<uint32_t>(utf8[i]);    
+            ++count;    
+            ++i;   
+        }
+    }
+    result.resize(count);
+    return result;
 }

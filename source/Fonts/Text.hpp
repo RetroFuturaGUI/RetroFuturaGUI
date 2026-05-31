@@ -29,6 +29,13 @@ namespace RetroFuturaGUI
         PlatformBridge::Fonts::Weight _FontWeight { PlatformBridge::Fonts::Weight::Normal };
     };
 
+    struct GlyphDraw
+    {
+        u32 _TextureID { 0 };
+        i32 _VertexStart { 0 },
+            _VertexCount { 0 };
+    };
+
     class Text
     {
     public:
@@ -51,7 +58,7 @@ namespace RetroFuturaGUI
         PlatformBridge::Fonts::Weight _fontWeight { PlatformBridge::Fonts::Weight::Normal };
         u32 _fontIndex { 0 };
         std::shared_ptr<FontInfo> _fontInfo;
-        std::string _text;
+        std::vector<u32> _codepoints;
         glm::vec4 _textColor { 1.0f };
         TextAlignment _textAlignment { TextAlignment::LEFT };
         f32 _textPadding { 0.0f };
@@ -70,11 +77,14 @@ namespace RetroFuturaGUI
 
         // mesh
         std::vector<f32> _vertices; // x,y,u,v per vertex
+        std::vector<GlyphDraw> _glyphDraws;
         u32 _vao { 0 },
             _vbo { 0 };
 
         void updateMesh();
         void alignPosition();
         void calculateTextSpan();
+        u32 findGlyphBlockKey(const u32 codePoint);
+        std::vector<uint32_t> utf8ToUtf32(std::string_view utf8);
     };
 }
