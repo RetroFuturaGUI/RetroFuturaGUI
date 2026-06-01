@@ -32,6 +32,12 @@ The framework is designed for cross-platform use, and its logic can be compiled 
   - Update Windows font support to the new system
 - Text
   - Optimizations
+- TextInput Widget
+- Window
+  - Make WindowBar optional
+- WindowBar
+  - Window Icon
+  - Make Buttons and title optional
 
 ### Implemented Features
 <details><summary>CLICK TO EXPAND</summary>
@@ -91,7 +97,7 @@ The framework is designed for cross-platform use, and its logic can be compiled 
       <li>SetPosition, SetSize, SetRotation</li>
       <li>Supports most image formats</li>
       </ul>
-    <li>Lasagna (three-dimensional successor of a grid)</li>
+    <li>Lasagna (three-dimensional successor of grid)</li>
       <ul>
       <li>Align Widgets in a three dimensional pattern</li>
       <li>Widget Size Policies (const size, expand X, Y, Z)</li>
