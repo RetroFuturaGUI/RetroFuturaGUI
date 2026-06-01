@@ -23,7 +23,7 @@ namespace RetroFuturaGUI
         None,
         Window,
         WindowBar,
-        Grid2d,
+        Lasagna,
         Label,
         Button,
         Unknown = -1
@@ -34,7 +34,9 @@ namespace RetroFuturaGUI
         FIXED,
         FILL,
         FILL_X,
-        FILL_Y
+        FILL_Y,
+        FILL_Z,
+        FILL_XY,
     };
 
     struct IdentityParams
@@ -45,11 +47,11 @@ namespace RetroFuturaGUI
         GLFWwindow* _ParentWindow;
     };
 
-    struct GeometryParams2D
+    struct GeometryParams3D
     {
         const RetroFuturaGUI::Projection& _Projection;
-        const glm::vec2& _Position;
-        const glm::vec2& _Size;
+        const glm::vec3& _Position;
+        const glm::vec3& _Size;
         f32 _Rotation;
     };
 

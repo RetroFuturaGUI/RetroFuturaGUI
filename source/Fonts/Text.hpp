@@ -39,7 +39,7 @@ namespace RetroFuturaGUI
     class Text
     {
     public:
-        Text(const GeometryParams2D& geometry, const TextParams& textParams);
+        Text(const GeometryParams3D& geometry, const TextParams& textParams);
         ~Text();
         void Draw();
         void SetTextAlignment(TextAlignment textAlignment);

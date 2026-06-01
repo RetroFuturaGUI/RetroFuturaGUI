@@ -12,17 +12,17 @@ namespace RetroFuturaGUI
     class IWidget
     {
     public:
-        IWidget(const IdentityParams& identity, const GeometryParams2D& geometry);
+        IWidget(const IdentityParams& identity, const GeometryParams3D& geometry);
         virtual ~IWidget() = default;
         virtual void Draw() = 0;
         void Connect_OnEnable(const typename Signal<>::Slot& slot, const bool async);
         void Connect_OnDisable(const typename Signal<>::Slot& slot, const bool async);
         void Disconnect_OnEnable(const typename Signal<>::Slot& slot);
         void Disconnect_OnDisable(const typename Signal<>::Slot& slot);
-        virtual void SetSize(const glm::vec2& size);
-        glm::vec2 GetSize() const;
-        virtual void SetPosition(const glm::vec2& position);
-        glm::vec2 GetPosition() const;
+        virtual void SetSize(const glm::vec3& size);
+        glm::vec3 GetSize() const;
+        virtual void SetPosition(const glm::vec3& position);
+        glm::vec3 GetPosition() const;
         virtual void SetRotation(const f32 rotation);
         f32 GetRotation() const;
         std::span<glm::vec4> GetBackgroundColors();
@@ -49,7 +49,7 @@ namespace RetroFuturaGUI
 
         //geometry
         Projection& _projection;
-        glm::vec2 
+        glm::vec3
             _position { 0.0f },
             _size { 0.0f };
         f32 _rotation { 0.0f };
@@ -72,7 +72,7 @@ namespace RetroFuturaGUI
 
         bool isPointInside(const glm::vec2& point) const
         {
-            glm::vec2 translatedPoint = point - _position;
+            glm::vec2 translatedPoint = point - glm::vec2(_position.x, _position.y);
             float radians = glm::radians(-_rotation);
             glm::vec2 rotatedPoint(
                 translatedPoint.x * cos(radians) - translatedPoint.y * sin(radians),

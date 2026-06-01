@@ -4,7 +4,7 @@
 #include "Label.hpp"
 #include "WindowBar.hpp"
 #include "Image2D.hpp"
-#include "Grid2D.hpp"
+#include "Lasagna.hpp"
 #include <algorithm>
 
 namespace RetroFuturaGUI
@@ -23,7 +23,7 @@ namespace RetroFuturaGUI
         //void SetWindowTitleFont(std::string_view fontPath); separate later when fallback fonts are implemented
         void SetBackgroundColor(const glm::vec4& color);
         void SetBackgroundImage(std::string_view imagePath);
-        void SetGrid(Grid2d* grid);
+        void SetLasagna(Lasagna* lasagna);
         i32 GetBackgroundImageId() const;
         GLFWwindow* GetGlfwWindow() const;
         Projection* GetProjection() const;
@@ -94,7 +94,7 @@ namespace RetroFuturaGUI
         // widgets
         std::unique_ptr<WindowBar> _windowBar;
         std::unique_ptr<Image2D> _backgroundImage;
-        Grid2d* _grid;
+        Lasagna* _lasagna;
 
         void createWindow();
         static void cursorPositionCallback(GLFWwindow* window, f64 xpos, f64 ypos);

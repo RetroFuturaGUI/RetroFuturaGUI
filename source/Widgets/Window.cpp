@@ -342,10 +342,10 @@ void RetroFuturaGUI::Window::updateProjection()
 	if (_windowBar)
 		_windowBar->Resize();
 
-	if (_grid) 
-		_grid->SetSize(glm::vec2((f32)_width, (f32)_height));
+	if (_lasagna) 
+		_lasagna->SetSize(glm::vec3((f32)_width, (f32)_height, _lasagna->GetSize().z));
 
-	if( _backgroundImage)
+	if(_backgroundImage)
 	{
 		_backgroundImage->SetSize(glm::vec2((f32)_width, (f32)_height));
 		_backgroundImage->Move(glm::vec2((f32)_width * 0.5f, (f32)_height * 0.5f));
@@ -374,8 +374,8 @@ void RetroFuturaGUI::Window::Draw()
 	if(_backgroundImage)
 		_backgroundImage->Draw();
 
-	if(_grid)
-		_grid->Draw(false);
+	if(_lasagna)
+		_lasagna->Draw(false);
 
 	if(_windowBar)
 		_windowBar->Draw();
@@ -413,12 +413,12 @@ void RetroFuturaGUI::Window::SetBackgroundColor(const glm::vec4 &color)
 
 void RetroFuturaGUI::Window::SetBackgroundImage(std::string_view imagePath)
 {
-	GeometryParams2D geometryTexture
+	GeometryParams3D geometryTexture
 	{
-		*_projection,
-		glm::vec2((f32)_width * 0.5f, (f32)_height * 0.5f),
-		glm::vec2(_width, _height),
-		0.0f
+		._Projection = *_projection,
+		._Position = glm::vec3((f32)_width * 0.5f, (f32)_height * 0.5f, -_projection->GetDepth()),
+		._Size = glm::vec3(_width, _height, 0.01f),
+		._Rotation = 0.0f
 	};
 
 	_backgroundImage = std::make_unique<Image2D>(geometryTexture, imagePath);
@@ -432,9 +432,9 @@ void RetroFuturaGUI::Window::SetBackgroundImage(std::string_view imagePath)
 	_windowBar->SetElementBackgroundImageTextureID(_backgroundImage->GetTextureID(), WindowBar::ElementType::MinimizeButton);
 }
 
-void RetroFuturaGUI::Window::SetGrid(Grid2d* grid)
+void RetroFuturaGUI::Window::SetLasagna(Lasagna* lasagna)
 {
-	_grid = grid;
+	_lasagna = lasagna;
 }
 
 i32 RetroFuturaGUI::Window::GetBackgroundImageId() const
@@ -464,7 +464,7 @@ void RetroFuturaGUI::Window::setupWindowBar()
 {
 	std::string windowBarName = _name + "/WindowBar";
 	IdentityParams identityWB = { windowBarName, this, WidgetTypeID::WindowBar, _window };
-	GeometryParams2D geometryWB = { *_projection, glm::vec2(0.0f), glm::vec2(0.0f), 0.0f };
+	GeometryParams3D geometryWB = { *_projection, glm::vec3(0.0f), glm::vec3(0.0f), 0.0f };
 	_windowBar = std::make_unique<WindowBar>(identityWB, geometryWB, glm::vec4(0.5f, 0.0f, 1.0f, 1.0f), WindowBarPosition::Top);
 
 	if(!_windowBar)

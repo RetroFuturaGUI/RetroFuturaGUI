@@ -8,7 +8,7 @@ namespace RetroFuturaGUI
     {
     public:
 
-        Label(const IdentityParams& identity, const GeometryParams2D& geometry, const TextParams& textParams);
+        Label(const IdentityParams& identity, const GeometryParams3D& geometry, const TextParams& textParams);
         ~Label() = default;
         void Draw() override;
         void SetEnabled(const bool enable);

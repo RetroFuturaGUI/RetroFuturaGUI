@@ -5,6 +5,7 @@ using namespace RetroFuturaGUI;
 Projection::Projection(const f32 width, const f32 height)
 : _resolution(width, height)
 {
+    _depth = 1000.0f;
     setProjectionMatrix();
 }
 
@@ -30,6 +31,14 @@ void Projection::setProjectionMatrix()
     _projectionMatrix = glm::ortho(
         0.0f, _resolution.x,
         0.0f, _resolution.y,
-        -1.0f, 1.0f
+        -_depth, _depth
     );
+
+    /*float aspectRatio = _resolution.x / _resolution.y;
+    _projectionMatrix = glm::perspective(
+    glm::radians(45.0f),  // FOV
+    aspectRatio,
+    0.1f,                 // near plane
+    1000.0f               // far plane
+); */
 }

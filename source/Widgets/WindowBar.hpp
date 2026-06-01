@@ -39,7 +39,7 @@ namespace RetroFuturaGUI
             Icon
         };
 
-        WindowBar(const IdentityParams& identity, GeometryParams2D& geometry, const glm::vec4& color, const WindowBarPosition wbPosition = WindowBarPosition::Top);
+        WindowBar(const IdentityParams& identity, GeometryParams3D& geometry, const glm::vec4& color, const WindowBarPosition wbPosition = WindowBarPosition::Top);
         void Draw();
         bool WindowShouldClose();
         void Resize();
@@ -77,9 +77,9 @@ namespace RetroFuturaGUI
         bool _windowShouldClose { false };
         MaximizeState _maximizeState { MaximizeState::RESTORE };
 
-        glm::vec2 calculateWindowBarPosition();
-        glm::vec2 calculateWindowBarSize();
-        glm::vec2 calculateElementPosition(const ElementType elementType);
+        glm::vec3 calculateWindowBarPosition();
+        glm::vec3 calculateWindowBarSize();
+        glm::vec3 calculateElementPosition(const ElementType elementType);
         void windowShouldCloseCallback();
         void minimizeWindowCallback(GLFWwindow* window);
     };

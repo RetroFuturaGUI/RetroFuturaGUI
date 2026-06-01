@@ -10,7 +10,7 @@
 
 namespace RetroFuturaGUI
 {    
-    Text::Text(const GeometryParams2D& geometry, const TextParams& textParams)
+    Text::Text(const GeometryParams3D& geometry, const TextParams& textParams)
         : _projection(const_cast<Projection&>(geometry._Projection)),
           _glyphSize(textParams._GlyphSize),
           _fontSize(_glyphSize.x),

@@ -10,7 +10,7 @@ namespace RetroFuturaGUI
     class Button : public IWidget
     {
     public:
-        Button(const IdentityParams& identity, const GeometryParams2D& geometry, const TextParams& textParams, const float borderWidth = 5.0f);
+        Button(const IdentityParams& identity, const GeometryParams3D& geometry, const TextParams& textParams, const float borderWidth = 5.0f);
         void Draw();
         void Connect_OnClick(const typename Signal<>::Slot& slot, const bool async);
         void Connect_OnRelease(const typename Signal<>::Slot& slot, const bool async);
@@ -47,8 +47,8 @@ namespace RetroFuturaGUI
         void SetBorderFillType(const FillType fillType);
         
         //Geometry
-        void SetSize(const glm::vec2& size) override;
-        void SetPosition(const glm::vec2& position) override;
+        void SetSize(const glm::vec3& size) override;
+        void SetPosition(const glm::vec3& position) override;
         void SetRotation(const float rotation) override;
         void SetCornerRadii(const glm::vec4& radii);
 

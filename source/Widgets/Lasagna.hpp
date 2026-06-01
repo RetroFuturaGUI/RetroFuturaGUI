@@ -7,9 +7,9 @@
 
 namespace RetroFuturaGUI
 {
-    struct Grid2dCell
+    struct LasagnaCell
     {
-        glm::vec2
+        glm::vec3
             _PositionPixels { 0.0f },
             _PositionNormalized { 0.0f },
             _SizePixels { 0.0f },
@@ -18,44 +18,47 @@ namespace RetroFuturaGUI
             _PaddingNormalized { 0.0f };
         u32 
             _RowSpan { 1 },
-            _ColSpan { 1 };
+            _ColSpan { 1 },
+            _LayerSpan { 1 };
         IWidget* _Widget = nullptr;
         bool _SpanOccupied = false;
         SizingMode _SizingMode { SizingMode::FILL };
     };
 
-    struct Grid2dAxisDefinition
+    struct AxisDefinition
     {
-        std::vector<f32> _RowDefinition;
-        std::vector<f32> _ColumnDefinition;
+        std::vector<f32>
+            _RowDefinition {},
+            _ColumnDefinition {},
+            _LayerDefinition {};
     };
 
-    class Grid2d: public IWidget
+    class Lasagna: public IWidget
     {
     public:
-        Grid2d(const IdentityParams& identity, const GeometryParams2D& geometry, const Grid2dAxisDefinition& axisDefinition);
-        void AttachWidget(u32 row, u32 col, IWidget* widget, const SizingMode sizingMode = SizingMode::FILL);
+        Lasagna(const IdentityParams& identity, const GeometryParams3D& geometry, const AxisDefinition& axisDefinition);
+        void AttachWidget(const u32 row, const u32 col, const u32 layer, IWidget* widget, const SizingMode sizingMode = SizingMode::FILL);
         void Draw() override {};
         void Draw(const bool alsoDrawDebugLines = false);
-        void SetSize(const glm::vec2& size);
-        void SetPosition(const glm::vec2& position);
-        void operator =(const Grid2d& other)
+        void SetSize(const glm::vec3& size);
+        void SetPosition(const glm::vec3& position);
+        void operator =(const Lasagna& other)
         {
             *this = other;
         }
 
     private:
         // Data
-        std::vector<std::vector<Grid2dCell>> _grid;
+        std::vector<std::vector<std::vector<LasagnaCell>>> _lasagna;
         static constinit const u32 _maxCountPerAxis = 64;
         bool _drawDebugLines = false;
-        Grid2dAxisDefinition _axisdefinition;
+        AxisDefinition _axisdefinition;
         std::unique_ptr<Rectangle> _debugBorder;
         std::vector<glm::vec4> _debugBorderColor { glm::vec4(1.0f) };
 
-        void drawDebugLines(const Grid2dCell& cell);
+        void drawDebugLines(const LasagnaCell& cell);
         void resizeCells();
-        void resizeWidget(const Grid2dCell& cell);
+        void resizeWidget(const LasagnaCell& cell);
         void resizeAllWidgets();
         void moveWidgets();
     };

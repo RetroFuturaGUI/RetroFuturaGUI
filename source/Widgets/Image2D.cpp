@@ -1,7 +1,7 @@
 #include "Image2D.hpp"
 #include "ShaderManager.hpp"
 
-RetroFuturaGUI::Image2D::Image2D(const GeometryParams2D &geometry, std::string_view imagePath)
+RetroFuturaGUI::Image2D::Image2D(const GeometryParams3D &geometry, std::string_view imagePath)
 : _projection(const_cast<Projection&>(geometry._Projection)), _path(imagePath)
 {
     glGenVertexArrays(1, &_vao);

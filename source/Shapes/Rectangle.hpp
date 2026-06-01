@@ -30,8 +30,8 @@ namespace RetroFuturaGUI
     class Rectangle
     {
     public:
-        //Rectangle(const GeometryParams2D& geometry, glm::vec4& color, const RectangleMode rectangleMode);
-        Rectangle(const GeometryParams2D& geometry, std::span<glm::vec4> colors, const RectangleMode rectangleMode);
+        //Rectangle(const GeometryParams3D& geometry, glm::vec4& color, const RectangleMode rectangleMode);
+        Rectangle(const GeometryParams3D& geometry, std::span<glm::vec4> colors, const RectangleMode rectangleMode);
         ~Rectangle();
         void Draw();
         void SetSize(const glm::vec2& size);

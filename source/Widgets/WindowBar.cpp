@@ -1,13 +1,13 @@
 #include "WindowBar.hpp"
 #include "Window.hpp"
 
-RetroFuturaGUI::WindowBar::WindowBar(const IdentityParams &identity, GeometryParams2D &geometry, const glm::vec4& color, const WindowBarPosition wbPosition)
+RetroFuturaGUI::WindowBar::WindowBar(const IdentityParams &identity, GeometryParams3D &geometry, const glm::vec4& color, const WindowBarPosition wbPosition)
     : IWidget(identity, geometry), _projection(const_cast<Projection&>(geometry._Projection)), _windowBarPosition(wbPosition)
 {   
     _position = calculateWindowBarPosition();
     _size = calculateWindowBarSize();
 
-    GeometryParams2D geometryAdv = 
+    GeometryParams3D geometryAdv = 
     {
         geometry._Projection,
         _position,
@@ -18,11 +18,11 @@ RetroFuturaGUI::WindowBar::WindowBar(const IdentityParams &identity, GeometryPar
     _backgroundColors.resize(1, color);
     _background = std::make_unique<Rectangle>(geometryAdv, _backgroundColors, RectangleMode::PLANE);
 
-    GeometryParams2D geometryButton{
-        geometry._Projection,
-        calculateElementPosition(ElementType::CloseButton),
-        glm::vec2(28.0f),
-        0.0f
+    GeometryParams3D geometryButton{
+        ._Projection = geometry._Projection,
+        ._Position = calculateElementPosition(ElementType::CloseButton),
+        ._Size = glm::vec3(28.0f, 28.0f, 0.01f),
+        ._Rotation = 0.0f
     };
 
     IdentityParams identityCloseButton
@@ -60,12 +60,12 @@ RetroFuturaGUI::WindowBar::WindowBar(const IdentityParams &identity, GeometryPar
         _parentWindow
     };
 
-    GeometryParams2D geometryButtonMaximize
+    GeometryParams3D geometryButtonMaximize
     {
-        geometry._Projection,
-        calculateElementPosition(ElementType::MaximizeButton),
-        glm::vec2(28.0f),
-        0.0f
+        ._Projection = geometry._Projection,
+        ._Position = calculateElementPosition(ElementType::MaximizeButton),
+        ._Size = glm::vec3(28.0f, 28.0f, 0.01f),
+        ._Rotation = 0.0f
     };
 
     TextParams textParamsMaximize = 
@@ -88,12 +88,12 @@ RetroFuturaGUI::WindowBar::WindowBar(const IdentityParams &identity, GeometryPar
         _parentWindow
     };
 
-    GeometryParams2D geometryButtonMinimize
+    GeometryParams3D geometryButtonMinimize
     {
-        geometry._Projection,
-        calculateElementPosition(ElementType::MinimizeButton),
-        glm::vec2(28.0f),
-        0.0f
+        ._Projection = geometry._Projection,
+        ._Position = calculateElementPosition(ElementType::MinimizeButton),
+        ._Size = glm::vec3(28.0f, 28.0f, 0.01f),
+        ._Rotation = 0.0f
     };
 
     TextParams textParamsMinimize = 
@@ -121,7 +121,7 @@ RetroFuturaGUI::WindowBar::WindowBar(const IdentityParams &identity, GeometryPar
         3.0f
     };
 
-    GeometryParams2D geometryButtonTitle
+    GeometryParams3D geometryButtonTitle
     {
         geometry._Projection,
         calculateElementPosition(ElementType::Title),
@@ -182,7 +182,7 @@ void RetroFuturaGUI::WindowBar::Resize()
     }
 }
 
-glm::vec2 RetroFuturaGUI::WindowBar::calculateWindowBarPosition()
+glm::vec3 RetroFuturaGUI::WindowBar::calculateWindowBarPosition()
 {
     f32 
         x { 0.0f }, 
@@ -207,16 +207,17 @@ glm::vec2 RetroFuturaGUI::WindowBar::calculateWindowBarPosition()
         y = _projection.GetResolution().y - _windowBarThiccness * 0.5f;
     }
 
-    return glm::vec2(x, y);
+    return glm::vec3(x, y, _position.z);
 }
 
-glm::vec2 RetroFuturaGUI::WindowBar::calculateWindowBarSize()
+glm::vec3 RetroFuturaGUI::WindowBar::calculateWindowBarSize()
 {
-    return glm::vec2(_windowBarPosition == WindowBarPosition::Top || _windowBarPosition == WindowBarPosition::Bottom ? _projection.GetResolution().x : _windowBarThiccness/*,
-                     _windowBarPosition == WindowBarPosition::Left || _windowBarPosition == WindowBarPosition::Right ? _projection.GetResolution().y : _windowBarThiccness*/, _windowBarThiccness);
+    return glm::vec3(_windowBarPosition == WindowBarPosition::Top || _windowBarPosition == WindowBarPosition::Bottom ? _projection.GetResolution().x : _windowBarThiccness/*,
+                     _windowBarPosition == WindowBarPosition::Left || _windowBarPosition == WindowBarPosition::Right ? _projection.GetResolution().y : _windowBarThiccness*/, _windowBarThiccness,
+                    _size.z);
 }
 
-glm::vec2 RetroFuturaGUI::WindowBar::calculateElementPosition(const ElementType elementType)
+glm::vec3 RetroFuturaGUI::WindowBar::calculateElementPosition(const ElementType elementType)
 {
     f32
         offset { 3.0f }, 
@@ -309,7 +310,7 @@ glm::vec2 RetroFuturaGUI::WindowBar::calculateElementPosition(const ElementType 
         }
     }
 
-    return glm::vec2(x, y);
+    return glm::vec3(x, y, _position.z);
 }
 
 void RetroFuturaGUI::WindowBar::windowShouldCloseCallback()
@@ -457,12 +458,12 @@ void RetroFuturaGUI::WindowBar::SetWindowTitle(std::string_view title, std::stri
             ._TextPadding = 3.0f
         };
 
-        GeometryParams2D geometryButtonTitle
+        GeometryParams3D geometryButtonTitle
         {
-            _projection,
-            calculateElementPosition(ElementType::Title),
-            glm::vec2(28.0f),
-            0.0f
+            ._Projection = _projection,
+            ._Position = calculateElementPosition(ElementType::Title),
+            ._Size = glm::vec3(28.0f, 28.0f, 0.01f),
+            ._Rotation = 0.0f
         };
 
         _windowTitle = std::make_unique<Text>(geometryButtonTitle, textParamsTitle);

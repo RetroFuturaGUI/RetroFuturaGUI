@@ -1,7 +1,7 @@
 #include "Rectangle.hpp"
 #include <print>
 
-/*RetroFuturaGUI::Rectangle::Rectangle(const GeometryParams2D& geometry, glm::vec4& color, const RectangleMode rectangleMode)
+/*RetroFuturaGUI::Rectangle::Rectangle(const GeometryParams3D& geometry, glm::vec4& color, const RectangleMode rectangleMode)
     : _projection(const_cast<Projection&>(geometry._Projection)), _rectangleMode(rectangleMode)
 {
     setupMesh();
@@ -11,7 +11,7 @@
     SetRotation(geometry._Rotation);
 }*/
 
-RetroFuturaGUI::Rectangle::Rectangle(const GeometryParams2D &geometry, std::span<glm::vec4> colors, const RectangleMode rectangleMode)
+RetroFuturaGUI::Rectangle::Rectangle(const GeometryParams3D &geometry, std::span<glm::vec4> colors, const RectangleMode rectangleMode)
     : _projection(const_cast<Projection&>(geometry._Projection)), _rectangleMode(rectangleMode)
 {
     setupMesh();

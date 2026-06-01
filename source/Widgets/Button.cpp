@@ -1,6 +1,6 @@
 #include "Button.hpp"
 
-RetroFuturaGUI::Button::Button(const IdentityParams& identity, const GeometryParams2D& geometry, const TextParams& textParams, const float borderWidth)
+RetroFuturaGUI::Button::Button(const IdentityParams& identity, const GeometryParams3D& geometry, const TextParams& textParams, const float borderWidth)
     : IWidget(identity, geometry)
 {
     _widgetTypeID = WidgetTypeID::Button;
@@ -318,7 +318,7 @@ void RetroFuturaGUI::Button::SetBorderFillType(const FillType fillType)
         _border->SetFillType(fillType);
 }
 
-void RetroFuturaGUI::Button::SetSize(const glm::vec2 &size)
+void RetroFuturaGUI::Button::SetSize(const glm::vec3& size)
 {
     IWidget::SetSize(size);
 
@@ -332,7 +332,7 @@ void RetroFuturaGUI::Button::SetSize(const glm::vec2 &size)
         //_text->Resize(size); //add extra text resizing logic
 }
 
-void RetroFuturaGUI::Button::SetPosition(const glm::vec2 &position)
+void RetroFuturaGUI::Button::SetPosition(const glm::vec3& position)
 {
     IWidget::SetPosition(position);
 
@@ -346,7 +346,7 @@ void RetroFuturaGUI::Button::SetPosition(const glm::vec2 &position)
         _text->SetPosition(position);
 }
 
-void RetroFuturaGUI::Button::SetCornerRadii(const glm::vec4 & radii)
+void RetroFuturaGUI::Button::SetCornerRadii(const glm::vec4& radii)
 {
     if(_rectangle)
         _rectangle->SetCornerRadii(radii);

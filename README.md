@@ -91,13 +91,14 @@ The framework is designed for cross-platform use, and its logic can be compiled 
       <li>SetPosition, SetSize, SetRotation</li>
       <li>Supports most image formats</li>
       </ul>
-    <li>Grid2D</li>
+    <li>Lasagna (three-dimensional successor of a grid)</li>
       <ul>
-      <li>Align Widgets</li>
-      <li>Widget Size Policies (const size, expand X, Y, X/Y)</li>
+      <li>Align Widgets in a three dimensional pattern</li>
+      <li>Widget Size Policies (const size, expand X, Y, Z)</li>
       <li>Debug Lines</li>
       <li>Row Definitions</li>
       <li>Column Defitions</li>
+      <li>Layer Defitions</li>
       </ul>
   <li>WindowBar</li>
     <ul>
@@ -162,7 +163,6 @@ The framework is designed for cross-platform use, and its logic can be compiled 
 <li>Update and FixedUpdate loops</li>
 <li>Text</li>
   <ul>
-  <li>UTF-8 support</li>
   <li>Emoji support</li>
   <li>Vertical text flow</li>
   <li>Text Shaders with all shader options</li>
@@ -205,7 +205,6 @@ The framework is designed for cross-platform use, and its logic can be compiled 
 <li>C++ modules once ALL common compilers (GCC, CLang, MSVC) support them</li>
 <li>Wiki/Documentation</li>
 <li>More text color properties</li>
-<li>Rename Grid2d to Grid and give it a 3rd dimension</li>
 <li>Rectangle, Text, Texture, IWidget: 3rd dimension</li>
 <li>Complete Python binding</li>
 <li>Refactor Binding</li>
