@@ -31,11 +31,13 @@ list(APPEND RetroFuturaGuiSources
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Shaders/Shader.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Shaders/ShaderManager.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Shapes/Rectangle.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/source/Types/DoubleEncodedString.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/Button.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/Lasagna.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/Image2D.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/IWidget.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/Label.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/TextBox.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/Window.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/WindowBar.cpp"
 )
@@ -58,6 +60,7 @@ target_include_directories("RetroFuturaGUI" PUBLIC
     "${CMAKE_CURRENT_SOURCE_DIR}/source/OpenGlHelpers"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Shapes"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Shaders"
+    "${CMAKE_CURRENT_SOURCE_DIR}/source/Types"
 )
 
 # Check for OpenGL installation
