@@ -31,7 +31,7 @@ namespace RetroFuturaGUI
             return;
         }
 
-        _codepoints = utf8ToUtf32(textParams._Text);
+        _text = textParams._Text;
         glGenVertexArrays(1, &_vao);
         glGenBuffers(1, &_vbo);
         glBindVertexArray(_vao);
@@ -127,7 +127,7 @@ namespace RetroFuturaGUI
 
     void Text::SetText(std::string_view text)
     {
-        _codepoints = utf8ToUtf32(text);
+        _text = text;
         calculateTextSpan();
         SetTextAlignment(_textAlignment);
         updateMesh();
@@ -163,7 +163,7 @@ namespace RetroFuturaGUI
             vertexCount { 0 };
         bool batching { false };
 
-        for (const u32 codepoint : _codepoints)
+        for (const u32 codepoint : _text.GetUtf32())
         {
             if (codepoint == U'\n')
             {
@@ -282,7 +282,7 @@ namespace RetroFuturaGUI
             penX = 0.0f;
         };
 
-        for (const u32 codepoint : _codepoints)
+        for (const u32 codepoint : _text.GetUtf32())
         {
             if (codepoint == U'\n')
             {
@@ -318,81 +318,4 @@ namespace RetroFuturaGUI
         _textSpan = glm::vec2(maxLineWidth, totalHeight);
         _textBaseHeight = _glyphSize.y;
     }
-}
-
-std::vector<uint32_t> RetroFuturaGUI::Text::utf8ToUtf32(std::string_view utf8)
-{
-    constexpr static const uint32_t maskSingle = 0;
-    constexpr static const uint32_t maskDouble = 0b11000000;
-    constexpr static const uint32_t maskTriple = 0b11100000;
-    constexpr static const uint32_t maskQuadruple = 0b11110000;
-    constexpr static const uint32_t maskSequence = 0b10000000;
-    constexpr static const uint32_t ANDMaskSingle = 0b10000000;
-    constexpr static const uint32_t ANDMaskDouble = 0b11100000;
-    constexpr static const uint32_t ANDMaskTriple = 0b11110000;
-    constexpr static const uint32_t ANDMaskQuadruple = 0b11111000;
-    constexpr static const uint32_t ANDMaskSequence = 0b11000000;
-    constexpr static const uint32_t InvMaskDouble = 0b00011111;
-    constexpr static const uint32_t InvMaskTriple = 0b00001111;
-    constexpr static const uint32_t InvMaskQuadruple = 0b00000111;
-    constexpr static const uint32_t InvMaskSequence = 0b00111111;
-    std::vector<uint32_t> result(utf8.size(), '\0');
-    size_t count { 0 };
-    
-    for(size_t i { 0 }; i < utf8.size();)
-    {
-        if((utf8[i] & ANDMaskDouble) == maskDouble)
-        {
-            if((utf8[i+1] & ANDMaskSequence) != maskSequence)
-                break;
-            
-            result[count] = ((utf8[i] & InvMaskDouble) << 6);
-            result[count] |= (utf8[i+1] & InvMaskSequence);
-            ++count;
-            i += 2;
-        }
-        else if((utf8[i] & ANDMaskTriple) == maskTriple)
-        {
-            if((utf8[i+1] & ANDMaskSequence) != maskSequence)
-                break;
-                
-            if((utf8[i+2] & ANDMaskSequence) != maskSequence)
-                break;
-            
-            result[count] = ((utf8[i] & InvMaskTriple) << 12);
-            result[count] |= (utf8[i+1] & InvMaskSequence) << 6;
-            result[count] |= (utf8[i+2] & InvMaskSequence);
-            ++count;
-            i += 3;
-        }
-        else if((utf8[i] & ANDMaskQuadruple) == maskQuadruple)
-        {
-            if((utf8[i+1] & ANDMaskSequence) != maskSequence)
-                break;
-                
-            if((utf8[i+2] & ANDMaskSequence) != maskSequence)
-                break;
-                
-            if((utf8[i+3] & ANDMaskSequence) != maskSequence)
-                break;
-            
-            result[count] = ((utf8[i] & InvMaskQuadruple) << 18);
-            result[count] |= (utf8[i+1] & InvMaskSequence) << 12;
-            result[count] |= (utf8[i+2] & InvMaskSequence) << 6;
-            result[count] |= (utf8[i+3] & InvMaskSequence);
-            ++count;
-            i += 4;
-        }
-        else
-        {
-            if((utf8[i] & ANDMaskSingle) != maskSingle)
-                break;
-                
-            result[count] = static_cast<uint32_t>(utf8[i]);    
-            ++count;    
-            ++i;   
-        }
-    }
-    result.resize(count);
-    return result;
 }

@@ -1,6 +1,6 @@
 #pragma once
 #include "FontManager.hpp"
-#include "IncludeHelper.hpp"
+#include "DoubleEncodedString.hpp"
 #include "Projection.hpp"
 #include "ShaderManager.hpp"
 #include <string>
@@ -58,7 +58,7 @@ namespace RetroFuturaGUI
         PlatformBridge::Fonts::Weight _fontWeight { PlatformBridge::Fonts::Weight::Normal };
         u32 _fontIndex { 0 };
         std::shared_ptr<FontInfo> _fontInfo;
-        std::vector<u32> _codepoints;
+        DoubleEncodedString _text;
         glm::vec4 _textColor { 1.0f };
         TextAlignment _textAlignment { TextAlignment::LEFT };
         f32 _textPadding { 0.0f };
@@ -85,6 +85,5 @@ namespace RetroFuturaGUI
         void alignPosition();
         void calculateTextSpan();
         u32 findGlyphBlockKey(const u32 codePoint);
-        std::vector<uint32_t> utf8ToUtf32(std::string_view utf8);
     };
 }
