@@ -43,9 +43,6 @@ void RetroFuturaGUI::DoubleEncodedString::operator=(const DoubleEncodedString&& 
 
 void RetroFuturaGUI::DoubleEncodedString::operator=(std::string_view newString)
 {
-    if(newString.empty())
-        return;
-
     if(_capacity < newString.length())
     {
         _capacity = newString.length();

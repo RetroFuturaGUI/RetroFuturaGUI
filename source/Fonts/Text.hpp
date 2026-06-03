@@ -49,6 +49,7 @@ namespace RetroFuturaGUI
         void SetColor(const glm::vec4& color);
         glm::vec4 GetColor() const;
         void SetText(std::string_view text);
+        const std::string& GetText() const;
 
     private:
         Projection& _projection;

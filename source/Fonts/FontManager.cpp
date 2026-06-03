@@ -119,7 +119,7 @@ u32 RetroFuturaGUI::FontManager::generateGlyphAtlas(FT_Face face, const u32 code
         imageData[i * 4 + 3] = 0xFF;
     }
 
-    stbi_write_png((std::string("font_output_") + std::to_string(codePointFirst) + "-" + std::to_string(codePointLast) + ".png").c_str(), atlasWidth, atlasHeight, 4, imageData.data(), atlasWidth * 4);
+    //stbi_write_png((std::string("font_output_") + std::to_string(codePointFirst) + "-" + std::to_string(codePointLast) + ".png").c_str(), atlasWidth, atlasHeight, 4, imageData.data(), atlasWidth * 4);
 
     u32 textureID { 0 };
     glGenTextures(1, &textureID);

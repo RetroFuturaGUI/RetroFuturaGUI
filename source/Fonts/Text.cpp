@@ -319,3 +319,8 @@ namespace RetroFuturaGUI
         _textBaseHeight = _glyphSize.y;
     }
 }
+
+const std::string& RetroFuturaGUI::Text::GetText() const
+{
+    return _text.GetUtf8();
+}

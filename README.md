@@ -32,7 +32,11 @@ The framework is designed for cross-platform use, and its logic can be compiled 
   - Update Windows font support to the new system
 - Text
   - Optimizations
-- TextInput Widget
+- TextBox
+  - Improve text input
+  - suppress text overflow
+- Button
+  - suppress text overflow
 - Window
   - Make WindowBar optional
 - WindowBar
@@ -79,6 +83,11 @@ The framework is designed for cross-platform use, and its logic can be compiled 
           <li>Set Corner Width</li>
         </ul>
       </ul>
+  <li>TextBox</li>
+    <ul>
+      <li>Text Input</li>
+      <li>OnTextChange Signal</li>
+    </ul>
   </ul>
     <li>Shadered background and borders (solid, animated gradients)</li>
     <li>Corner Radii</li>

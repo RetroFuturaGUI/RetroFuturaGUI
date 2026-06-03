@@ -26,6 +26,7 @@ namespace RetroFuturaGUI
         Lasagna,
         Label,
         Button,
+        TextBox,
         Unknown = -1
     };   
 
