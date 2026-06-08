@@ -70,7 +70,7 @@ namespace RetroFuturaGUI
 
     public:
         static i32 Init();
-        static LoadFontResult LoadFont(std::string_view fontName, const f32 size, const PlatformBridge::Fonts::Slant slant, const PlatformBridge::Fonts::Weight weight, const u32 codePointFirst, const u32 codePointLast);
+        static LoadFontResult LoadFont(std::string_view fontName, const f32 size, const PlatformBridge::Fonts::Slant slant, const PlatformBridge::Fonts::Weight weight, const u32 codePointFirst, const u32 codePointLast, const bool extendMode = false);
         static const std::list<FontInfo>& GetFonts();
         static std::shared_ptr<FontInfo> GetFontInfo(std::string_view fontName, const f32 size, const PlatformBridge::Fonts::Slant slant, const PlatformBridge::Fonts::Weight weight);
         static void SetDefaultFont(std::string_view fontName, const f32 size = 16.0f, const PlatformBridge::Fonts::Slant slant = PlatformBridge::Fonts::Slant::Roman, const PlatformBridge::Fonts::Weight weight = PlatformBridge::Fonts::Weight::Normal, const u32 codePointFirst = BasicLatinFirst, const u32 codePointLast = BasicLatinLast);

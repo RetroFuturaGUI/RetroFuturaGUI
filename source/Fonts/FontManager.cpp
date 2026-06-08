@@ -140,12 +140,13 @@ u32 RetroFuturaGUI::FontManager::generateGlyphAtlas(FT_Face face, const u32 code
     return textureID;
 }
 
-RetroFuturaGUI::FontManager::LoadFontResult RetroFuturaGUI::FontManager::LoadFont(std::string_view fontName, const f32 size, const PlatformBridge::Fonts::Slant slant, const PlatformBridge::Fonts::Weight weight, const u32 codePointFirst, const u32 codePointLast)
+RetroFuturaGUI::FontManager::LoadFontResult RetroFuturaGUI::FontManager::LoadFont(std::string_view fontName, const f32 size, const PlatformBridge::Fonts::Slant slant, const PlatformBridge::Fonts::Weight weight, const u32 codePointFirst, const u32 codePointLast, const bool extendMode)
 {
     u32 integralFontSize = FontSizeToIntegral(size);
 
-    if(isFontLoaded(fontName, integralFontSize, slant, weight))
-        return LoadFontResult::FontAlreadyLoaded;
+    if(!extendMode)
+        if(isFontLoaded(fontName, integralFontSize, slant, weight))
+            return LoadFontResult::FontAlreadyLoaded;
 
     if(_ft == nullptr)
     {
@@ -288,7 +289,7 @@ void RetroFuturaGUI::FontManager::ExtendFontset(std::string_view fontName, std::
             && font._FontProperty._Weight == weight)
         {
         
-            if(LoadFont(fontNameExtension, size, slant, weight, codePointFirst, codePointLast) != LoadFontResult::Success)
+            if(LoadFont(fontNameExtension, size, slant, weight, codePointFirst, codePointLast, true) != LoadFontResult::Success)
                 return;
             
             font._Atlasses[integralFontSize]._GlyphBlocks[codePointFirst] = _fonts.back()._Atlasses[integralFontSize]._GlyphBlocks[codePointFirst];
