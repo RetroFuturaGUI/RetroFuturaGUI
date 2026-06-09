@@ -13,7 +13,6 @@ message(STATUS "Target Platform: ${TARGETPLATFORM}")
 configure_file("${CMAKE_CURRENT_SOURCE_DIR}/source/config.hpp.in" "${CMAKE_CURRENT_SOURCE_DIR}/source/config.hpp" @ONLY)
 message(STATUS "Configured file: ${CMAKE_CURRENT_SOURCE_DIR}/source/config.hpp")
 
-
 if(DEFINED ENV{VCPKG_ROOT})
     message(STATUS "VCPKG_ROOT is set to: $ENV{VCPKG_ROOT}")
 else()
@@ -132,3 +131,9 @@ target_link_libraries("RetroFuturaGUI" PUBLIC
     glad::glad
     PlatformBridge
 )
+
+if(TARGETPLATFORM STREQUAL "x64-Linux")
+    target_compile_definitions("RetroFuturaGUI" PUBLIC TARGET_PLATFORM_LINUX)
+elseif(TARGETPLATFORM STREQUAL "x64-Windows")
+    target_compile_definitions("RetroFuturaGUI" PUBLIC TARGET_PLATFORM_WINDOWS)
+endif()

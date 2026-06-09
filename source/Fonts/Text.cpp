@@ -173,16 +173,17 @@ namespace RetroFuturaGUI
             }
 
             blockKey = findGlyphBlockKey(codepoint);
-            auto blockIt { _fontInfo->_Atlasses[_fontIndex]._GlyphBlocks.find(blockKey) };
-            if (blockIt == _fontInfo->_Atlasses[_fontIndex]._GlyphBlocks.end())
+            auto blockIterator { _fontInfo->_Atlasses[_fontIndex]._GlyphBlocks.find(blockKey) };
+
+            if (blockIterator == _fontInfo->_Atlasses[_fontIndex]._GlyphBlocks.end())
                 continue;
 
-            auto glyphIt { blockIt->second._Glyphs.find(codepoint) };
-            if (glyphIt == blockIt->second._Glyphs.end())
+            auto glyphIt { blockIterator->second._Glyphs.find(codepoint) };
+            if (glyphIt == blockIterator->second._Glyphs.end())
                 continue;
 
             const Glyph& glyph { glyphIt->second };
-            foundTextureID = blockIt->second._TextureID;
+            foundTextureID = blockIterator->second._TextureID;
 
             if (codepoint == U' ')
             {
@@ -291,12 +292,12 @@ namespace RetroFuturaGUI
             }
 
             u32 blockKey = findGlyphBlockKey(codepoint);
-            auto blockIt = _fontInfo->_Atlasses[_fontIndex]._GlyphBlocks.find(blockKey);
-            if (blockIt == _fontInfo->_Atlasses[_fontIndex]._GlyphBlocks.end())
+            auto blockIterator = _fontInfo->_Atlasses[_fontIndex]._GlyphBlocks.find(blockKey);
+            if (blockIterator == _fontInfo->_Atlasses[_fontIndex]._GlyphBlocks.end())
                 continue;
 
-            auto glyphIt = blockIt->second._Glyphs.find(codepoint);
-            if (glyphIt == blockIt->second._Glyphs.end())
+            auto glyphIt = blockIterator->second._Glyphs.find(codepoint);
+            if (glyphIt == blockIterator->second._Glyphs.end())
                 continue;
 
             const Glyph& glyph = glyphIt->second;

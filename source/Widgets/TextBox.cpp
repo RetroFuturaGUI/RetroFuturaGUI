@@ -1,5 +1,12 @@
 #include "TextBox.hpp"
 
+#if defined(TARGET_PLATFORM_LINUX)
+    #define GLFW_EXPOSE_NATIVE_X11
+#elif defined(TARGET_PLATFORM_WINDOWS)
+    #define GLFW_EXPOSE_NATIVE_WIN32
+#endif
+#include <GLFW/glfw3native.h>
+
 RetroFuturaGUI::TextBox::TextBox(const IdentityParams& identity, const GeometryParams3D& geometry, const TextParams& textParams, const float borderWidth)
     : IWidget(identity, geometry)
 {
@@ -445,6 +452,7 @@ void RetroFuturaGUI::TextBox::interact()
             setColors();
         }
 
+        PlatformBridge::Keyboard::SetActiveWindow(0);
         return;
     }
     
@@ -471,6 +479,11 @@ void RetroFuturaGUI::TextBox::interact()
         _colorState = ColorState::Clicked;
         setColors();
         _editingEnabled = true;
+#if defined(TARGET_PLATFORM_LINUX)
+        PlatformBridge::Keyboard::SetActiveWindow(glfwGetX11Window(_parentWindow));
+#elif defined(TARGET_PLATFORM_WINDOWS)
+        PlatformBridge::Keyboard::SetActiveWindow(glfwGetWin32Window(_parentWindow));
+#endif
     }
     else if(!isMouseTextBoxPressed && _wasClicked) //release
     {
@@ -555,21 +568,24 @@ bool RetroFuturaGUI::TextBox::IsReadOnly() const
     return _readOnly;
 }
 
-void RetroFuturaGUI::TextBox::editText() // prototype function
+void RetroFuturaGUI::TextBox::editText()
 {
     if(!_editingEnabled || !_text)
         return;
 
-    GLFWwindow* window = InputManager::GetFocusedWindow();
-    if(!window)
+    if(_parentWindow != InputManager::GetFocusedWindow())
         return;
 
-    i32
-        key { 0 },
-        state { 0 };
-    std::string currentText {};
-    bool shiftKeyPressed = glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS 
-                           || glfwGetKey(window, GLFW_KEY_RIGHT_SHIFT) == GLFW_PRESS;
+    static constexpr int keyRepeatInitialDelay = 60;
+    static constexpr int keyRepeatInterval = 5;
+
+    if(PlatformBridge::Keyboard::GetKeyboardUseState() == PlatformBridge::KeyboardUseState::KeyReleased)
+    {
+        _keyWasReleased = true;
+        _keyHoldFrames = 0;
+        _keyRepeatText.clear();
+        return;
+    }
 
     auto emitChange = [this]() 
     {
@@ -577,82 +593,49 @@ void RetroFuturaGUI::TextBox::editText() // prototype function
         _onTextChange.Emit();
     };
 
-    for(key = GLFW_KEY_A; key <= GLFW_KEY_Z; ++key)
+    if(!_keyWasReleased)
     {
-        state = glfwGetKey(window, key);
-
-        if(state == GLFW_PRESS && !_prevKeyStates[key])
+        if (!_keyRepeatText.empty())
         {
-            char character = 'a' + (key - GLFW_KEY_A);
-            if(shiftKeyPressed) character = (char)std::toupper(character);
-            currentText = _text->GetText();
-            currentText.push_back(character );
-            _text->SetText(currentText);
-            emitChange();
+            ++_keyHoldFrames;
+            if (_keyHoldFrames >= keyRepeatInitialDelay && (_keyHoldFrames - keyRepeatInitialDelay) % keyRepeatInterval == 0)
+            {
+                _text->SetText(_text->GetText() + _keyRepeatText);
+                emitChange();
+            }
         }
-
-        _prevKeyStates[key] = (state == GLFW_PRESS);
+        return;
     }
 
-    for(key = GLFW_KEY_0; key <= GLFW_KEY_9; ++key)
+    if(PlatformBridge::Keyboard::GetKeyPressState(PB_KEY_BACKSPACE) == PlatformBridge::KeyPressState::Press)
     {
-        state = glfwGetKey(window, key);
+        if(_text->GetText().size() == 0)
+            return;
 
-        if(state == GLFW_PRESS && !_prevKeyStates[key])
-        {
-            char character = '0' + (key - GLFW_KEY_0);
-            currentText = _text->GetText();
-            currentText.push_back(character);
-            _text->SetText(currentText);
-            emitChange();
-        }
-
-        _prevKeyStates[key] = (state == GLFW_PRESS);
+        uSize numDelete { 1 };
+        
+        for(uSize count { 0 }; ((u8)_text->GetText()[_text->GetText().size() - 1 - count] & (u8)0b11000000) == (u8)0b10000000; ++count)
+            ++numDelete;
+    
+        _text->SetText(_text->GetText().substr(0, _text->GetText().size() - numDelete));
+        _keyWasReleased = false;
+        _keyHoldFrames = 0;
+        _keyRepeatText.clear();
+        emitChange();
+        return;
     }
 
-    key = GLFW_KEY_SPACE;
-    state = glfwGetKey(window, key);
-
-    if(state == GLFW_PRESS && !_prevKeyStates[key])
+    const std::string keyText = PlatformBridge::Keyboard::GetInputString();
+    if (!keyText.empty())
     {
-        std::string currentText { _text->GetText() };
-        currentText.push_back(' ');
-        _text->SetText(currentText);
+        _text->SetText(_text->GetText() + keyText);
+        _keyRepeatText = keyText;
+        _keyWasReleased = false;
+        _keyHoldFrames = 0;
         emitChange();
     }
 
-    _prevKeyStates[key] = (state == GLFW_PRESS);
-
-    
-    key = GLFW_KEY_BACKSPACE;
-    state = glfwGetKey(window, key);
-
-    if(state == GLFW_PRESS && !_prevKeyStates[key])
-    {
-        currentText = _text->GetText();
-
-        if(!currentText.empty())
-        {
-            uSize i { currentText.size() };
-
-            while(i > 0)
-            {
-                --i;
-                unsigned char c = static_cast<unsigned char>(currentText[i]);
-                if((c & 0x80) == 0 || (c & 0xC0) == 0xC0)
-                {
-                    currentText.resize(i);
-                    break;
-                }
-            }
-
-            _text->SetText(currentText);
-            emitChange();
-        }
-    }
-
-    _prevKeyStates[key] = (state == GLFW_PRESS);
-    
+    return;
 }
 
 const std::string& RetroFuturaGUI::TextBox::GetText() const

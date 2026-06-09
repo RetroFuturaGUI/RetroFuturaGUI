@@ -76,7 +76,10 @@ namespace RetroFuturaGUI
             _mouseLeftFlag { false },
             _textChangedFlag { false },
             _readOnly { false },
-            _editingEnabled { false };
+            _editingEnabled { false },
+            _keyWasReleased { true };
+        u32 _keyHoldFrames { 0 };
+        std::string _keyRepeatText {};
         std::vector<char> _prevKeyStates {};
         Signal<> 
             _onClick,
