@@ -33,6 +33,7 @@ list(APPEND RetroFuturaGuiSources
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Types/DoubleEncodedString.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/Button.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/Lasagna.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/IClickable.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/Image2D.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/IWidget.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/Label.cpp"

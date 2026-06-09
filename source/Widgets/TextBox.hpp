@@ -4,25 +4,16 @@
 #include "Rectangle.hpp"
 #include "Text.hpp"
 #include "IWidget.hpp"
+#include "IClickable.hpp"
 
 namespace RetroFuturaGUI
 {
-    class TextBox : public IWidget
+    class TextBox : public IWidget, public IClickable
     {
     public:
         TextBox(const IdentityParams& identity, const GeometryParams3D& geometry, const TextParams& textParams, const float borderWidth = 5.0f);
         void Draw();
-        void Connect_OnClick(const typename Signal<>::Slot& slot, const bool async);
-        void Connect_OnRelease(const typename Signal<>::Slot& slot, const bool async);
-        void Connect_WhileHover(const typename Signal<>::Slot& slot, const bool async);
-        void Connect_OnMouseEnter(const typename Signal<>::Slot& slot, const bool async);
-        void Connect_OnMouseLeave(const typename Signal<>::Slot& slot, const bool async);
         void Connect_OnTextChange(const typename Signal<>::Slot& slot, const bool async);
-        void Disconnect_OnClick(const typename Signal<>::Slot& slot);
-        void Disconnect_OnRelease(const typename Signal<>::Slot& slot);
-        void Disconnect_WhileHover(const typename Signal<>::Slot& slot);
-        void Disconnect_OnMouseEnter(const typename Signal<>::Slot& slot);
-        void Disconnect_OnMouseLeave(const typename Signal<>::Slot& slot);
         void Disconnect_OnTextChange(const typename Signal<>::Slot& slot);
         void SetEnabled(const bool enable, const bool emitSignal = true);
 
@@ -69,11 +60,8 @@ namespace RetroFuturaGUI
         std::unique_ptr<Text> _text;
         
         //logic
-        bool 
-            _wasClicked { false },
+        bool
             _colorSetFlag { false },
-            _mouseEnteredFlag { false },
-            _mouseLeftFlag { false },
             _textChangedFlag { false },
             _readOnly { false },
             _editingEnabled { false },
@@ -81,17 +69,7 @@ namespace RetroFuturaGUI
         u32 _keyHoldFrames { 0 };
         std::string _keyRepeatText {};
         std::vector<char> _prevKeyStates {};
-        Signal<> 
-            _onClick,
-            _onClickAsync,
-            _onRelease,
-            _onReleaseAsync,
-            _whileHover,
-            _whileHoverAsync,
-            _onMouseEnter,
-            _onMouseEnterAsync,
-            _onMouseLeave,
-            _onMouseLeaveAsync,
+        Signal<>
             _onTextChange,
             _onTextChangeAsync;
 
