@@ -1,28 +1,25 @@
 #pragma once
 #include "Text.hpp"
 #include "IWidget.hpp"
+#include "IClickable.hpp"
+#include "ITextProperties.hpp"
 
 namespace RetroFuturaGUI
 {
-    class Label : public IWidget
+    class Label : public IWidget, public ITextProperties
     {
     public:
-
         Label(const IdentityParams& identity, const GeometryParams3D& geometry, const TextParams& textParams);
         ~Label() = default;
         void Draw() override;
         void SetEnabled(const bool enable);
-        void SetTextColors(std::span<glm::vec4> colors, const ColorState colorState);
+        
+    //Geometry
+        void SetSize(const glm::vec3& size) override;
+        void SetPosition(const glm::vec3& position) override;
+        void SetRotation(const float rotation) override;
 
     private:
-        std::unique_ptr<Text> _textObject;
-        // Style
-        std::vector<glm::vec4> 
-            _textColorEnabled { glm::vec4(1.0f) },
-            _textColorDisabled { glm::vec4(0.5f, 0.5f,0.5f, 1.0f) },
-            //_textColorClicked { glm::vec4(1.0f) }, //might be used for link features
-            _textColorHover { glm::vec4(1.0f, 1.0f, 1.0f, 1.0f) };
-
-        void setColors();
+        void setColors(const ColorState state);
     };
 }

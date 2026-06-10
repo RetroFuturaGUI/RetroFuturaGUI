@@ -4,16 +4,14 @@ RetroFuturaGUI::Label::Label(const IdentityParams& identity, const GeometryParam
 : IWidget(identity, geometry)
 {
     _widgetTypeID = WidgetTypeID::Label;
-    _textObject = std::make_unique<Text>(geometry, textParams);
 
-
-
+    if(textParams._Text.size() > 0)
+        _text = std::make_unique<Text>(geometry, textParams);
 }
 
 void RetroFuturaGUI::Label::Draw()
 {
-    if(_textObject)
-        _textObject->Draw();
+    drawText();
 }
 
 void RetroFuturaGUI::Label::SetEnabled(const bool enable)
@@ -24,56 +22,41 @@ void RetroFuturaGUI::Label::SetEnabled(const bool enable)
     {
         _onEnableAsync.EmitAsync();
         _onEnable.Emit();
-        _colorState = ColorState::Enabled;
-        setColors();
+        setColors(ColorState::Enabled);
         return;
     }
 
     _onDisableAsync.EmitAsync();
     _onDisable.Emit();
-    _colorState = ColorState::Disabled;
-    setColors();
+    setColors(ColorState::Disabled);
 }
 
-void RetroFuturaGUI::Label::SetTextColors(std::span<glm::vec4> colors, const ColorState colorState)
+void RetroFuturaGUI::Label::setColors(const ColorState state)
 {
-    switch(colorState)
-    {
-        /*case ColorState::Clicked:
-            _textColorClicked.assign(colors.begin(), colors.end());
-        break;*/
-        case ColorState::Disabled:
-            _textColorDisabled.assign(colors.begin(), colors.end());
-        break;
-        case ColorState::Hover:
-            _textColorHover.assign(colors.begin(), colors.end());
-        break;
-        default: // Enabled
-            _textColorEnabled.assign(colors.begin(), colors.end());
-    }
-
-    setColors();
+    _textColorState = state;
+    setTextColors();
 }
 
-void RetroFuturaGUI::Label::setColors()
+void RetroFuturaGUI::Label::SetSize(const glm::vec3& size)
 {
-    switch(_colorState)
-    {
-        case ColorState::Enabled:
-        {
-            _textObject->SetColor(_textColorEnabled.front());
-        } break;
-        /*case ColorState::Clicked:
-        {
-            _textObject->SetColor(_textColorClicked.front());
-        } break;*/
-        case ColorState::Hover:
-        {
-            _textObject->SetColor(_textColorHover.front());
-        } break;
-        default: //Disabled
-        {
-            _textObject->SetColor(_textColorDisabled.front());
-        }
-    }
+    IWidget::SetSize(size);
+
+    //if(_text)    
+        //_text->Resize(size); //add extra text resizing logic
+}
+
+void RetroFuturaGUI::Label::SetPosition(const glm::vec3& position)
+{
+    IWidget::SetPosition(position);
+
+    if(_text)
+        _text->SetPosition(position);
+}
+
+void RetroFuturaGUI::Label::SetRotation(const float rotation)
+{
+    _rotation = rotation;
+
+    if(_text)
+        _text->SetRotation(rotation);
 }
