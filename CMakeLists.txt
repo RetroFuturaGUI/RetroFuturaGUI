@@ -36,6 +36,7 @@ list(APPEND RetroFuturaGuiSources
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/IClickable.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/IDesignable.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/Image2D.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/ITextProperties.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/IWidget.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/Label.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/TextBox.cpp"
