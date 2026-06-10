@@ -6,10 +6,11 @@
 #include <string>
 #include <string_view>
 #include "Signal.hpp"
+#include "IWindowAccessor.hpp"
 
 namespace RetroFuturaGUI
 {
-    class IWidget
+    class IWidget : virtual public IWindowAccessor
     {
     public:
         IWidget(const IdentityParams& identity, const GeometryParams3D& geometry);
@@ -25,8 +26,6 @@ namespace RetroFuturaGUI
         glm::vec3 GetPosition() const;
         virtual void SetRotation(const f32 rotation);
         f32 GetRotation() const;
-        std::span<glm::vec4> GetBackgroundColors();
-        void SetBackgroundColors(std::span<glm::vec4> backgroundColors);
         std::string_view GetName() const;
         void SetName(std::string_view name);
         WidgetTypeID GetWidgetTypeID() const;
@@ -45,7 +44,6 @@ namespace RetroFuturaGUI
         WidgetTypeID 
             _parentTypeID { WidgetTypeID::None },
             _widgetTypeID { WidgetTypeID::None };
-        GLFWwindow* _parentWindow { nullptr };
 
         //geometry
         Projection& _projection;
@@ -53,13 +51,6 @@ namespace RetroFuturaGUI
             _position { 0.0f },
             _size { 0.0f };
         f32 _rotation { 0.0f };
-
-        //style
-        std::unique_ptr<glm::vec4[]> _backgroundColors;
-        i32 _colorCount { 1 };
-        //float _borderWidth = 2.0f;
-        //glm::vec4 _borderColor = {1.0f, 1.0f, 1.0f, 1.0f};
-        //glm::vec4 _borderCornerRadius = {0.0f, 0.0f, 0.0f, 0.0f};
 
         //logic
         bool _isEnabledFlag { true };

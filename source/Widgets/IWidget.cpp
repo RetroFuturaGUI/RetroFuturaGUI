@@ -1,10 +1,10 @@
 #include "IWidget.hpp"
 
 RetroFuturaGUI::IWidget::IWidget(const IdentityParams& identity, const GeometryParams3D& geometry) 
-    : _name(identity._Name), _parent(identity._Parent), _parentTypeID(identity._ParentTypeID), _parentWindow(identity._ParentWindow),
+    : _name(identity._Name), _parent(identity._Parent), _parentTypeID(identity._ParentTypeID),
      _projection(const_cast<Projection&>(geometry._Projection)), _position(geometry._Position), _size(geometry._Size), _rotation(geometry._Rotation)
 {
-    
+    _parentWindow = identity._ParentWindow;
 }
 
 void RetroFuturaGUI::IWidget::Connect_OnEnable(const typename Signal<>::Slot& slot, const bool async)
@@ -63,20 +63,6 @@ void RetroFuturaGUI::IWidget::SetRotation(const f32 rotation)
 f32 RetroFuturaGUI::IWidget::GetRotation() const
 {
     return _rotation;
-}
-
-std::span<glm::vec4> RetroFuturaGUI::IWidget::GetBackgroundColors()
-{
-    return std::span<glm::vec4>(_backgroundColors.get(), _colorCount);
-}
-
-void RetroFuturaGUI::IWidget::SetBackgroundColors(std::span<glm::vec4> backgroundColors)
-{
-    _colorCount = static_cast<i32>(backgroundColors.size());
-    _backgroundColors = std::make_unique<glm::vec4[]>(_colorCount);
-
-    for (uSize i = 0; i < backgroundColors.size(); ++i)
-        _backgroundColors[i] = backgroundColors[i];
 }
 
 std::string_view RetroFuturaGUI::IWidget::GetName() const
