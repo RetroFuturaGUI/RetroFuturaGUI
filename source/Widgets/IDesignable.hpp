@@ -31,6 +31,9 @@ namespace RetroFuturaGUI
         const std::vector<glm::vec4>& GetBorderColor(const ColorState state) const;
         void SetBorderFillType(const FillType fillType);
 
+    //Border and Background
+        void SetCornerRadii(const glm::vec4& radii);
+
     protected:
         void setborderBackgroundColors();
         void drawBackgroundBorder();

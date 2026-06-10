@@ -97,15 +97,6 @@ void RetroFuturaGUI::TextBox::SetPosition(const glm::vec3& position)
         _text->SetPosition(position);
 }
 
-void RetroFuturaGUI::TextBox::SetCornerRadii(const glm::vec4& radii)
-{
-    if(_rectangle)
-        _rectangle->SetCornerRadii(radii);
-
-    if(_border)    
-        _border->SetCornerRadii(radii);
-}
-
 void RetroFuturaGUI::TextBox::SetRotation(const float rotation)
 {
     _rotation = rotation;

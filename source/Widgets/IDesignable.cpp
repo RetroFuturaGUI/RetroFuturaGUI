@@ -97,6 +97,15 @@ void RetroFuturaGUI::IDesignable::SetWindowBackgroundImageTextureID(const u32 te
         _rectangle->SetWindowBackgroundImageTextureID(textureID);
 }
 
+void RetroFuturaGUI::IDesignable::SetCornerRadii(const glm::vec4& radii)
+{
+    if(_rectangle)
+        _rectangle->SetCornerRadii(radii);
+
+    if(_border)    
+        _border->SetCornerRadii(radii);
+}
+
 void RetroFuturaGUI::IDesignable::setBackgroundColorElement(std::vector<glm::vec4>& color)
 {
     if(_rectangle) 
