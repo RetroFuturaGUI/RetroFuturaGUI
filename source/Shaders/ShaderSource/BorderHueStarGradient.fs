@@ -1,7 +1,7 @@
 #version 330 core
 #define ROUNDED_CORNERS 1
 #define GLASS_EFFECT 2
-#define GLASS_EFFECT_WITH_IMAGE 6
+#define GlassEffectWithImage 6
 
 in vec2 vTexCoord;
 out vec4 fragColor;
@@ -108,7 +108,7 @@ void main()
             // Apply glass distortion
             vec2 distortedUV = vUV + (noise(vUV * 10.0) - 0.5) * 0.02; // Small distortion
             
-            if((uDIP & GLASS_EFFECT_WITH_IMAGE) != 0)
+            if((uDIP & GlassEffectWithImage) != 0)
             {
                 vec4 background = texture(uBackgroundTexture, distortedUV);
                 color1 = mix(background, color1, color1.a);

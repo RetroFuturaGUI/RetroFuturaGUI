@@ -40,22 +40,6 @@ namespace RetroFuturaGUI
         FILL_XY,
     };
 
-    struct IdentityParams
-    {
-        std::string_view _Name;
-        void* _Parent;
-        WidgetTypeID _ParentTypeID;
-        GLFWwindow* _ParentWindow;
-    };
-
-    struct GeometryParams3D
-    {
-        const RetroFuturaGUI::Projection& _Projection;
-        const glm::vec3& _Position;
-        const glm::vec3& _Size;
-        f32 _Rotation;
-    };
-
     enum ColorState : u32
     {
         Enabled,

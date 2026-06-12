@@ -1,12 +1,10 @@
 #include "Label.hpp"
 
-RetroFuturaGUI::Label::Label(const IdentityParams& identity, const GeometryParams3D& geometry, const TextParams& textParams)
-: IWidget(identity, geometry)
+RetroFuturaGUI::Label::Label(const std::string& name, Projection* projection, IWidget* parentWidget, const WidgetTypeID parentWidgetTypeID, GLFWwindow* parentWindow)
+    : IWidget(name, projection, parentWidget, parentWidgetTypeID, parentWindow)
 {
     _widgetTypeID = WidgetTypeID::Label;
-
-    if(textParams._Text.size() > 0)
-        _text = std::make_unique<Text>(geometry, textParams);
+    _text = std::make_unique<Text>(projection);
 }
 
 void RetroFuturaGUI::Label::Draw()
@@ -41,8 +39,8 @@ void RetroFuturaGUI::Label::SetSize(const glm::vec3& size)
 {
     IWidget::SetSize(size);
 
-    //if(_text)    
-        //_text->Resize(size); //add extra text resizing logic
+    if(_text)
+        _text->SetParentSize(glm::vec2(size.x, size.y));
 }
 
 void RetroFuturaGUI::Label::SetPosition(const glm::vec3& position)

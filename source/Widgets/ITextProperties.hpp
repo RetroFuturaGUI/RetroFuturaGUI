@@ -8,16 +8,19 @@
 
 namespace RetroFuturaGUI
 {
+    //An interface to specialize a widget with text capabilities. It also inherits from IWindowAccessor to let its children 💎✨ Shine bright like a diamond ✨💎
     class ITextProperties : virtual public IWindowAccessor
     {
     public:
-    //Text
         void SetTextColor(const glm::vec4& color, const ColorState state);
         std::vector<glm::vec4> GetTextColor(const ColorState state) const;
         void SetText(std::string_view text);
         void SetReadOnly(const bool readOnly);
         bool IsReadOnly() const;
         const std::string& GetText() const;
+        void SetFontFamily(std::string_view fontFamily, const f32 fontSize, const PlatformBridge::Fonts::Slant slant, const PlatformBridge::Fonts::Weight fontWeight);
+        void SetTextAlignment(const TextAlignment alignment);
+        void SetTextPadding(const f32 padding);
 
     protected:
         void setTextColors();

@@ -60,6 +60,24 @@ const std::string& RetroFuturaGUI::ITextProperties::GetText() const
     return _text->GetText();
 }
 
+void RetroFuturaGUI::ITextProperties::SetFontFamily(std::string_view fontFamily, const f32 fontSize, const PlatformBridge::Fonts::Slant slant, const PlatformBridge::Fonts::Weight fontWeight)
+{
+    if(_text)
+        _text->SetFontFamily(fontFamily, fontSize, slant, fontWeight);
+}
+
+void RetroFuturaGUI::ITextProperties::SetTextAlignment(const TextAlignment alignment)
+{
+    if(_text)
+        _text->SetTextAlignment(alignment);
+}
+        
+void RetroFuturaGUI::ITextProperties::SetTextPadding(const f32 padding)
+{
+    if(_text)
+        _text->SetTextPadding(padding);
+}
+
 void RetroFuturaGUI::ITextProperties::setTextColorElement(std::vector<glm::vec4>& color)
 {
     if(_text) 

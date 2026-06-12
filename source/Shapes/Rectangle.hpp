@@ -6,39 +6,29 @@
 
 namespace RetroFuturaGUI
 {
-    struct BackgroundParams
-    {
-        const std::span<const glm::vec4>& _Colors;
-        const f32 _GradientDegree = 45.0f;
-        const f32 _AnimationSpeed = 0.0003f;
-        const f32 _GradientRotationSpeed = 0.02f;
-    };
-
     enum ShaderFeatures : u32
     {
-        ROUNDED_CORNERS = 1,
-        GLASS_EFFECT = 1 << 1,
-        GLASS_EFFECT_WITH_IMAGE = GLASS_EFFECT + (1 << 2)
+        RoundedCorners = 1,
+        GlassEffect = 1 << 1,
+        GlassEffectWithImage = GlassEffect + (1 << 2)
     };
 
     enum class RectangleMode : u32
     {
-        PLANE,
-        BORDER
+        Plane,
+        Border
     };
 
     class Rectangle
     {
     public:
-        //Rectangle(const GeometryParams3D& geometry, glm::vec4& color, const RectangleMode rectangleMode);
-        Rectangle(const GeometryParams3D& geometry, std::span<glm::vec4> colors, const RectangleMode rectangleMode);
+        Rectangle(Projection* projection);
         ~Rectangle();
         void Draw();
         void SetSize(const glm::vec2& size);
         void SetPosition(const glm::vec2& position);
         void SetRotation(const f32 rotation);
-        void SetColor(std::span<glm::vec4> color);
-        glm::vec4 GetColor() const;
+        void SetColors(std::span<glm::vec4> colors);
         void SetCornerRadii(const glm::vec4& radii);
         void SetGradientOffset(const f32 gradientOffset);
         void SetGradientAnimationSpeed(const f32 animationSpeed);
@@ -47,12 +37,11 @@ namespace RetroFuturaGUI
         void SetShaderFeatures(const u32 features, const bool reset = true);
         void SetWindowBackgroundImageTextureID(const u32 textureID);
         void SetBorderWidth(const f32 width);
-        void SetBorderColor(std::span<glm::vec4> color);
         void SetRectangleMode(const RectangleMode rectanlgeMode);
         void SetFillType(const FillType fillType);
 
     private:
-        //Geometry
+    //Geometry
         f32 _vertices[3 * 4] = 
         {
             -0.5f, -0.5f, 0.0f,
@@ -84,7 +73,7 @@ namespace RetroFuturaGUI
         glm::vec4 _vertexPosition = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
 
         // Fill
-        std::span<glm::vec4> _colors;
+        std::span<glm::vec4> _colors; //this considers the color source may change many during runtime
         FillType _fillType { FillType::SOLID };
         i32 _colorCount { 0 };
         f32
@@ -96,10 +85,10 @@ namespace RetroFuturaGUI
         u32 _shaderFeatureDIP { 0 };
         u32 _windowBackgroundTextureID { 0 };
         f32 _borderWidth { 5.0f };
-        RectangleMode _rectangleMode { RectangleMode::PLANE };
+        RectangleMode _rectangleMode { RectangleMode::Plane };
         
         void setupMesh();
-        void initBasic(std::span<glm::vec4> colors);
+        void initColors(std::span<glm::vec4> colors);
         void drawWithSolidFill();
         void drawRadialGradientFill();
         void drawHueStarGradientFill();

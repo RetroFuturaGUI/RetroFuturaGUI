@@ -8,10 +8,15 @@ namespace RetroFuturaGUI
     class Image2D
     {
     public:
-        Image2D(const GeometryParams3D& geometry, std::string_view imagePath);
+        Image2D(Projection* projection, std::string_view imagePath);
+        Image2D() = delete;
+        Image2D(const Image2D&) = delete;
+        Image2D(Image2D&&) = delete;
+        auto operator =(const Image2D&) = delete;
+        auto operator =(Image2D&&) = delete;
         ~Image2D();
         void SetSize(const glm::vec2& size);
-        void Move(const glm::vec2& position);
+        void SetPosition(const glm::vec3& position);
         void Rotate(const f32 rotation);
         void FitGeometryToTexture();
         void Draw();
@@ -22,8 +27,8 @@ namespace RetroFuturaGUI
         Projection& _projection;
         glm::vec2 
             _quadSize { 1.0f },
-            _textureSize { 1.0f },
-            _position { 0.0f };
+            _textureSize { 1.0f };
+        glm::vec3 _position { 0.0f };
         glm::mat4
             _scaleMatrix { 0.0f },
             _translationMatrix { 0.0f },

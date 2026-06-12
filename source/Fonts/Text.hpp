@@ -17,18 +17,6 @@ namespace RetroFuturaGUI
         //BLOCK
     };
 
-    struct TextParams
-    {
-        std::string_view _Text;
-        std::string_view _FontName;
-        const glm::vec4& _TextColor;
-        const glm::vec2& _GlyphSize;
-        TextAlignment _TextAlignment { TextAlignment::LEFT };
-        f32 _TextPadding { 0.0f };
-        PlatformBridge::Fonts::Slant _FontSlant { PlatformBridge::Fonts::Slant::Roman };
-        PlatformBridge::Fonts::Weight _FontWeight { PlatformBridge::Fonts::Weight::Normal };
-    };
-
     struct GlyphDraw
     {
         u32 _TextureID { 0 };
@@ -39,14 +27,18 @@ namespace RetroFuturaGUI
     class Text
     {
     public:
-        Text(const GeometryParams3D& geometry, const TextParams& textParams);
+        Text(Projection* projection);
+        Text() = delete;
         ~Text();
         void Draw();
+        void SetFontFamily(std::string_view fontFamily, const f32 glyphSize, PlatformBridge::Fonts::Slant slant, PlatformBridge::Fonts::Weight weight);
         void SetTextAlignment(TextAlignment textAlignment);
-        void Resize(const glm::vec2& glyphSize);
+        void SetSize(const glm::vec2& glyphSize);
         void SetPosition(const glm::vec2& position);
         void SetRotation(const f32 rotation);
         void SetColor(const glm::vec4& color);
+        void SetParentSize(const glm::vec2 size);
+        void SetTextPadding(const f32 padding);
         glm::vec4 GetColor() const;
         void SetText(std::string_view text);
         const std::string& GetText() const;

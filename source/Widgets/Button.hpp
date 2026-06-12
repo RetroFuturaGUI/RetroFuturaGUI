@@ -7,14 +7,19 @@
 
 namespace RetroFuturaGUI
 {
+    //A widget that triggers actions
     class Button : public IWidget, public IClickable, public IDesignable, public ITextProperties
     {
     public:
-        Button(const IdentityParams& identity, const GeometryParams3D& geometry, const TextParams& textParams, const float borderWidth = 5.0f);
+        Button(const std::string& name, Projection* projection, IWidget* parentWidget, const WidgetTypeID parentWidgetTypeID, GLFWwindow* parentWindow);
+        Button() = delete;
+        Button(const Button&) = delete;
+        Button(Button&&) = delete;
+        auto operator =(const Button&) = delete;
+        auto operator =(Button&&) = delete;
+        ~Button() = default;
         void Draw();
         void SetEnabled(const bool enable, const bool emitSignal = true);
-        
-    //Geometry
         void SetSize(const glm::vec3& size) override;
         void SetPosition(const glm::vec3& position) override;
         void SetRotation(const float rotation) override;

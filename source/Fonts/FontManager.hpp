@@ -70,13 +70,13 @@ namespace RetroFuturaGUI
 
     public:
         static i32 Init();
-        static LoadFontResult LoadFont(std::string_view fontName, const f32 size, const PlatformBridge::Fonts::Slant slant, const PlatformBridge::Fonts::Weight weight, const u32 codePointFirst, const u32 codePointLast, const bool extendMode = false);
+        static LoadFontResult LoadFont(std::string_view fontFamily, const f32 size, const PlatformBridge::Fonts::Slant slant, const PlatformBridge::Fonts::Weight weight, const u32 codePointFirst, const u32 codePointLast, const bool extendMode = false);
         static const std::list<FontInfo>& GetFonts();
-        static std::shared_ptr<FontInfo> GetFontInfo(std::string_view fontName, const f32 size, const PlatformBridge::Fonts::Slant slant, const PlatformBridge::Fonts::Weight weight);
-        static void SetDefaultFont(std::string_view fontName, const f32 size = 16.0f, const PlatformBridge::Fonts::Slant slant = PlatformBridge::Fonts::Slant::Roman, const PlatformBridge::Fonts::Weight weight = PlatformBridge::Fonts::Weight::Normal, const u32 codePointFirst = BasicLatinFirst, const u32 codePointLast = BasicLatinLast);
+        static std::shared_ptr<FontInfo> GetFontInfo(std::string_view fontFamily, const f32 size, const PlatformBridge::Fonts::Slant slant, const PlatformBridge::Fonts::Weight weight);
+        static void SetDefaultFont(std::string_view fontFamily, const f32 size = 16.0f, const PlatformBridge::Fonts::Slant slant = PlatformBridge::Fonts::Slant::Roman, const PlatformBridge::Fonts::Weight weight = PlatformBridge::Fonts::Weight::Normal, const u32 codePointFirst = BasicLatinFirst, const u32 codePointLast = BasicLatinLast);
         static u32 FontSizeToIntegral(const f32 size);
         static const Glyph* GetGlyph(const GlyphAtlas& atlas, const u32 codePoint);
-        static void ExtendFontset(std::string_view fontName, std::string_view fontNameExtension, const f32 size, const PlatformBridge::Fonts::Slant slant, const PlatformBridge::Fonts::Weight weight, const u32 codePointFirst, const u32 codePointLast);
+        static void ExtendFontset(std::string_view fontFamily, std::string_view fontFamilyExtension, const f32 size, const PlatformBridge::Fonts::Slant slant, const PlatformBridge::Fonts::Weight weight, const u32 codePointFirst, const u32 codePointLast);
 
     private:
         struct AtlasDimension
@@ -100,15 +100,15 @@ namespace RetroFuturaGUI
         }
 
         static i32 initFreeTypeLibrary();
-        static i32 checkFontIntegrity(std::string_view fontName, const u32 integralSize, const u32 fontStyles);
-        static bool isFontLoaded(std::string_view fontName, const u32 integralSize, const PlatformBridge::Fonts::Slant slant, const PlatformBridge::Fonts::Weight weight);
-        static PlatformBridge::Fonts::FontProperty findFontProperty(std::string_view fontName, const PlatformBridge::Fonts::Slant slant, const PlatformBridge::Fonts::Weight weight);
+        static i32 checkFontIntegrity(std::string_view fontFamily, const u32 integralSize, const u32 fontStyles);
+        static bool isFontLoaded(std::string_view fontFamily, const u32 integralSize, const PlatformBridge::Fonts::Slant slant, const PlatformBridge::Fonts::Weight weight);
+        static PlatformBridge::Fonts::FontProperty findFontProperty(std::string_view fontFamily, const PlatformBridge::Fonts::Slant slant, const PlatformBridge::Fonts::Weight weight);
         static u32 generateGlyphAtlas(FT_Face face, const u32 codePointFirst, const u32 codePointLast, const u32 integralFontSize, std::vector<Glyph>* glyphs, AtlasDimension* atlasDim);
         //static void assignGlyphData(const u32 textureID, f32 fontSize, std::vector<Glyph>* glyphs, AtlasDimension* atlasDim, std::pair<std::string, std::string>* font, FT_Face face);
 
         static inline std::list<FontInfo> _fonts {};
         static inline FT_Library _ft { nullptr };
-        static inline std::string _defaultFontName;
+        static inline std::string _defaultFontFamily;
         static inline FontInfo* _defaultFontInfo { nullptr };
     };
 }

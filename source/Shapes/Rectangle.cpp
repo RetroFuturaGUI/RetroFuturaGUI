@@ -1,24 +1,9 @@
 #include "Rectangle.hpp"
-#include <print>
 
-/*RetroFuturaGUI::Rectangle::Rectangle(const GeometryParams3D& geometry, glm::vec4& color, const RectangleMode rectangleMode)
-    : _projection(const_cast<Projection&>(geometry._Projection)), _rectangleMode(rectangleMode)
+RetroFuturaGUI::Rectangle::Rectangle(Projection* projection)
+    : _projection(*projection)
 {
     setupMesh();
-    initBasic(color);
-    SetSize(geometry._Size);
-    SetPosition(geometry._Position);
-    SetRotation(geometry._Rotation);
-}*/
-
-RetroFuturaGUI::Rectangle::Rectangle(const GeometryParams3D &geometry, std::span<glm::vec4> colors, const RectangleMode rectangleMode)
-    : _projection(const_cast<Projection&>(geometry._Projection)), _rectangleMode(rectangleMode)
-{
-    setupMesh();
-    initBasic(colors);
-    SetSize(geometry._Size);
-    SetPosition(geometry._Position);
-    SetRotation(geometry._Rotation);
 }
 
 RetroFuturaGUI::Rectangle::~Rectangle()
@@ -30,9 +15,12 @@ RetroFuturaGUI::Rectangle::~Rectangle()
 
 void RetroFuturaGUI::Rectangle::Draw()
 {
+    if(_colors.size() == 0)
+        return;
+
     switch(_rectangleMode)
     {
-        case RectangleMode::BORDER:
+        case RectangleMode::Border:
         {
             switch(_fillType)
             {
@@ -54,7 +42,7 @@ void RetroFuturaGUI::Rectangle::Draw()
                 } break;
             }
         } break;
-        default: // RectangleMode::PLANE
+        default: // RectangleMode::Plane
         {
             switch(_fillType)
             {
@@ -95,14 +83,9 @@ void RetroFuturaGUI::Rectangle::SetPosition(const glm::vec2& position)
     _translationMatrix = glm::translate(glm::mat4(1.0f), glm::vec3(_position, 0.0f));
 }
 
-void RetroFuturaGUI::Rectangle::SetColor(std::span<glm::vec4> color)
+void RetroFuturaGUI::Rectangle::SetColors(std::span<glm::vec4> colors)
 {
-    initBasic(color);
-}
-
-glm::vec4 RetroFuturaGUI::Rectangle::GetColor() const
-{
-    return _colors[0];
+    initColors(colors);
 }
 
 void RetroFuturaGUI::Rectangle::SetCornerRadii(const glm::vec4& radii)
@@ -113,12 +96,12 @@ void RetroFuturaGUI::Rectangle::SetCornerRadii(const glm::vec4& radii)
     {
         if(_cornerRadii[i] > 0.0f)
         {
-            _shaderFeatureDIP |= ShaderFeatures::ROUNDED_CORNERS;
+            _shaderFeatureDIP |= ShaderFeatures::RoundedCorners;
             return;
         }
     }
 
-    _shaderFeatureDIP &= ~ShaderFeatures::ROUNDED_CORNERS;
+    _shaderFeatureDIP &= ~ShaderFeatures::RoundedCorners;
 }
 
 void RetroFuturaGUI::Rectangle::SetGradientOffset(const f32 gradientOffset)
@@ -151,7 +134,7 @@ void RetroFuturaGUI::Rectangle::SetShaderFeatures(const u32 features, const bool
 
 void RetroFuturaGUI::Rectangle::SetWindowBackgroundImageTextureID(const u32 textureID)
 {
-    _shaderFeatureDIP |= ShaderFeatures::GLASS_EFFECT_WITH_IMAGE;
+    _shaderFeatureDIP |= ShaderFeatures::GlassEffectWithImage;
     _windowBackgroundTextureID = textureID;
 }
 
@@ -180,11 +163,10 @@ void RetroFuturaGUI::Rectangle::setupMesh()
     glBindVertexArray(0);
 }
 
-void RetroFuturaGUI::Rectangle::initBasic(std::span<glm::vec4> colors)
+void RetroFuturaGUI::Rectangle::initColors(std::span<glm::vec4> colors)
 {
     _colors = colors;
     _colorCount = static_cast<i32>(_colors.size());
-    //_fillType = _colorCount > 1 ? FillType::GRADIENT : FillType::SOLID;
 }
 
 void RetroFuturaGUI::Rectangle::drawWithSolidFill()
@@ -197,13 +179,13 @@ void RetroFuturaGUI::Rectangle::drawWithSolidFill()
     ShaderManager::GetSolidFillShader().SetUniformMat4("uRotation", _rotationMatrix);
     ShaderManager::GetSolidFillShader().SetUniformVec4("uColor", _colors[0]);
 
-    if(_shaderFeatureDIP & ShaderFeatures::ROUNDED_CORNERS)
+    if(_shaderFeatureDIP & ShaderFeatures::RoundedCorners)
     {
         ShaderManager::GetSolidFillShader().SetUniformVec4("uCornerRadii", _cornerRadii);
         ShaderManager::GetSolidFillShader().SetUniformVec2("uScale", _scale);
     }
 
-    if(_shaderFeatureDIP & ShaderFeatures::GLASS_EFFECT_WITH_IMAGE)
+    if(_shaderFeatureDIP & ShaderFeatures::GlassEffectWithImage)
     {
         ShaderManager::GetSolidFillShader().SetUniformInt("uBackgroundTexture", 0);
         glActiveTexture(GL_TEXTURE0);
@@ -233,13 +215,13 @@ void RetroFuturaGUI::Rectangle::drawLinearGradientFill()
     ShaderManager::GetLinearGradientShader().SetUniformFloat("uGradientOffset", _gradientOffset);
     ShaderManager::GetLinearGradientShader().SetUniformFloat("uDegree", _gradientDegree);
 
-    if(_shaderFeatureDIP & ShaderFeatures::ROUNDED_CORNERS)
+    if(_shaderFeatureDIP & ShaderFeatures::RoundedCorners)
     {
         ShaderManager::GetLinearGradientShader().SetUniformVec4("uCornerRadii", _cornerRadii);
         ShaderManager::GetLinearGradientShader().SetUniformVec2("uScale", _scale);
     }
 
-    if(_shaderFeatureDIP & ShaderFeatures::GLASS_EFFECT_WITH_IMAGE)
+    if(_shaderFeatureDIP & ShaderFeatures::GlassEffectWithImage)
     {
         ShaderManager::GetLinearGradientShader().SetUniformInt("uBackgroundTexture", 0);
         glActiveTexture(GL_TEXTURE0);
@@ -269,13 +251,13 @@ void RetroFuturaGUI::Rectangle::drawRadialGradientFill()
     ShaderManager::GetRadialGradientShader().SetUniformFloat("uGradientOffset", _gradientOffset);
     ShaderManager::GetRadialGradientShader().SetUniformFloat("uDegree", _gradientDegree);
 
-    if(_shaderFeatureDIP & ShaderFeatures::ROUNDED_CORNERS)
+    if(_shaderFeatureDIP & ShaderFeatures::RoundedCorners)
     {
         ShaderManager::GetRadialGradientShader().SetUniformVec4("uCornerRadii", _cornerRadii);
         ShaderManager::GetRadialGradientShader().SetUniformVec2("uScale", _scale);
     }
 
-    if(_shaderFeatureDIP & ShaderFeatures::GLASS_EFFECT_WITH_IMAGE)
+    if(_shaderFeatureDIP & ShaderFeatures::GlassEffectWithImage)
     {
         ShaderManager::GetRadialGradientShader().SetUniformInt("uBackgroundTexture", 0);
         glActiveTexture(GL_TEXTURE0);
@@ -305,13 +287,13 @@ void RetroFuturaGUI::Rectangle::drawHueStarGradientFill()
     ShaderManager::GetHueStarGradientShader().SetUniformFloat("uGradientOffset", _gradientOffset);
     ShaderManager::GetHueStarGradientShader().SetUniformFloat("uDegree", _gradientDegree);
 
-    if(_shaderFeatureDIP & ShaderFeatures::ROUNDED_CORNERS)
+    if(_shaderFeatureDIP & ShaderFeatures::RoundedCorners)
     {
         ShaderManager::GetHueStarGradientShader().SetUniformVec4("uCornerRadii", _cornerRadii);
         ShaderManager::GetHueStarGradientShader().SetUniformVec2("uScale", _scale);
     }
 
-    if(_shaderFeatureDIP & ShaderFeatures::GLASS_EFFECT_WITH_IMAGE)
+    if(_shaderFeatureDIP & ShaderFeatures::GlassEffectWithImage)
     {
         ShaderManager::GetHueStarGradientShader().SetUniformInt("uBackgroundTexture", 0);
         glActiveTexture(GL_TEXTURE0);
@@ -332,7 +314,7 @@ void RetroFuturaGUI::Rectangle::drawSolidBorder()
     ShaderManager::GetBorderSolidFillShader().SetUniformVec4("uCornerRadii", _cornerRadii);
     ShaderManager::GetBorderSolidFillShader().SetUniformVec2("uScale", _scale);
 
-    if(_shaderFeatureDIP & ShaderFeatures::GLASS_EFFECT_WITH_IMAGE)
+    if(_shaderFeatureDIP & ShaderFeatures::GlassEffectWithImage)
     {
         ShaderManager::GetBorderSolidFillShader().SetUniformInt("uBackgroundTexture", 0);
         glActiveTexture(GL_TEXTURE0);
@@ -365,7 +347,7 @@ void RetroFuturaGUI::Rectangle::drawLinearGradientBorder()
     ShaderManager::GetBorderLinearGradientShader().SetUniformVec2("uScale", _scale);
     ShaderManager::GetBorderLinearGradientShader().SetUniformFloat("uBorderWidth", _borderWidth);
 
-    if(_shaderFeatureDIP & ShaderFeatures::GLASS_EFFECT_WITH_IMAGE)
+    if(_shaderFeatureDIP & ShaderFeatures::GlassEffectWithImage)
     {
         ShaderManager::GetBorderLinearGradientShader().SetUniformInt("uBackgroundTexture", 0);
         glActiveTexture(GL_TEXTURE0);
@@ -398,7 +380,7 @@ void RetroFuturaGUI::Rectangle::drawRadialGradientBorder()
     ShaderManager::GetBorderRadialGradientShader().SetUniformVec2("uScale", _scale);
     ShaderManager::GetBorderRadialGradientShader().SetUniformFloat("uBorderWidth", _borderWidth);
 
-    if(_shaderFeatureDIP & ShaderFeatures::GLASS_EFFECT_WITH_IMAGE)
+    if(_shaderFeatureDIP & ShaderFeatures::GlassEffectWithImage)
     {
         ShaderManager::GetBorderRadialGradientShader().SetUniformInt("uBackgroundTexture", 0);
         glActiveTexture(GL_TEXTURE0);
@@ -431,7 +413,7 @@ void RetroFuturaGUI::Rectangle::drawHueStarGradientBorder()
     ShaderManager::GetBorderHueStarGradientShader().SetUniformVec2("uScale", _scale);
     ShaderManager::GetBorderHueStarGradientShader().SetUniformFloat("uBorderWidth", _borderWidth);
 
-    if(_shaderFeatureDIP & ShaderFeatures::GLASS_EFFECT_WITH_IMAGE)
+    if(_shaderFeatureDIP & ShaderFeatures::GlassEffectWithImage)
     {
         ShaderManager::GetBorderHueStarGradientShader().SetUniformInt("uBackgroundTexture", 0);
         glActiveTexture(GL_TEXTURE0);

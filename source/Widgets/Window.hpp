@@ -13,13 +13,18 @@ namespace RetroFuturaGUI
     {
     public:
         Window(std::string_view name, const i32 width, const i32 height);
-
+        Window() = delete;
+        Window(const Window&) = delete;
+        Window(Window&&) = delete;
+        auto operator =(const Window&) = delete;
+        auto operator =(Window&&) = delete;
+        ~Window() = default;
         bool WindowShouldClose();
         void Draw();
         void SetWindowSize(i32 width, i32 height);
         void SetWidth(i32 width);
         void SetHeight(i32 height);
-        void SetWindowTitle(std::string_view title, std::string_view fontName);
+        void SetWindowTitle(std::string_view title, std::string_view fontFamily);
         //void SetWindowTitleFont(std::string_view fontPath); separate later when fallback fonts are implemented
         void SetBackgroundColor(const glm::vec4& color);
         void SetBackgroundImage(std::string_view imagePath);
@@ -28,19 +33,20 @@ namespace RetroFuturaGUI
         GLFWwindow* GetGlfwWindow() const;
         Projection* GetProjection() const;
         WindowBar& GetWindowBar();
+        void ShowWindowBar(const bool show);
 
     private:
         enum class ResizeEdge : u32
         {
-            NONE,
-            LEFT,
-            RIGHT,
-            TOP,
-            BOTTOM,
-            TOP_LEFT,
-            TOP_RIGHT,
-            BOTTOM_LEFT,
-            BOTTOM_RIGHT
+            None,
+            Left,
+            Right,
+            Top,
+            Bottom,
+            TopLeft,
+            TopRight,
+            BottomLeft,
+            BottomRight
         };
 
         // Window properties
@@ -72,7 +78,7 @@ namespace RetroFuturaGUI
             _windowTitle { "RetroFuturaGUI Window" };
 
         // Window Actions
-        ResizeEdge _resizeEdge { ResizeEdge::NONE };
+        ResizeEdge _resizeEdge { ResizeEdge::None };
         bool 
             _isResizing { false },
             _isDragging { false };
@@ -110,5 +116,6 @@ namespace RetroFuturaGUI
         void toggleMaximize();
         void updateProjection();
         void setupWindowBar();
+        void destroyWindowBar();
     };
 }

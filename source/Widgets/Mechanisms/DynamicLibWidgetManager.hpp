@@ -49,8 +49,8 @@ namespace RetroFuturaGUI
         ~DynamicLibWidgetManager() = default;
         DynamicLibWidgetManager(const DynamicLibWidgetManager&) = delete;
         DynamicLibWidgetManager(DynamicLibWidgetManager&&) = delete;
-        void operator=(const DynamicLibWidgetManager&) = delete;
-        void operator=(DynamicLibWidgetManager&&) = delete;
+        auto operator=(const DynamicLibWidgetManager&) = delete;
+        auto operator=(DynamicLibWidgetManager&&) = delete;
         static DynamicLibWidgetManager& GetInstance();
 
         static inline std::unordered_map<std::string, IWidget*> _metaWidgets;

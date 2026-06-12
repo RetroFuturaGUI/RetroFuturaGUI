@@ -9,10 +9,10 @@ i32 RetroFuturaGUI::FontManager::Init()
     return initFreeTypeLibrary();
 }
 
-bool RetroFuturaGUI::FontManager::isFontLoaded(std::string_view fontName, const u32 integralSize, const PlatformBridge::Fonts::Slant slant, const PlatformBridge::Fonts::Weight weight)
+bool RetroFuturaGUI::FontManager::isFontLoaded(std::string_view fontFamily, const u32 integralSize, const PlatformBridge::Fonts::Slant slant, const PlatformBridge::Fonts::Weight weight)
 {
     for(const auto& fontInfo : _fonts)
-        if(fontInfo._FontProperty._Name == fontName 
+        if(fontInfo._FontProperty._Name == fontFamily 
             && fontInfo._Atlasses.count(integralSize) > 0
             && fontInfo._FontProperty._Slant == slant
             && fontInfo._FontProperty._Weight == weight)
@@ -21,37 +21,37 @@ bool RetroFuturaGUI::FontManager::isFontLoaded(std::string_view fontName, const 
     return false;
 }
 
-PlatformBridge::Fonts::FontProperty RetroFuturaGUI::FontManager::findFontProperty(std::string_view fontName, const PlatformBridge::Fonts::Slant slant, const PlatformBridge::Fonts::Weight weight)
+PlatformBridge::Fonts::FontProperty RetroFuturaGUI::FontManager::findFontProperty(std::string_view fontFamily, const PlatformBridge::Fonts::Slant slant, const PlatformBridge::Fonts::Weight weight)
 {
     auto fonts = PlatformBridge::Fonts::GetFontProperties();
 
-    auto font = std::find_if(fonts.begin(), fonts.end(), [fontName, slant, weight](const auto& property)
+    auto font = std::find_if(fonts.begin(), fonts.end(), [fontFamily, slant, weight](const auto& property)
     {
-        return property._Name == fontName && property._Slant == slant && property._Weight == weight;
+        return property._Name == fontFamily && property._Slant == slant && property._Weight == weight;
     });
 
     if(font != fonts.end())
         return *font;
 
-    font = std::find_if(fonts.begin(), fonts.end(), [fontName, slant](const auto& property)
+    font = std::find_if(fonts.begin(), fonts.end(), [fontFamily, slant](const auto& property)
     {
-        return property._Name == fontName && property._Slant == slant;
+        return property._Name == fontFamily && property._Slant == slant;
     });
 
     if(font != fonts.end())
         return *font;
 
-    font = std::find_if(fonts.begin(), fonts.end(), [fontName, weight](const auto& property)
+    font = std::find_if(fonts.begin(), fonts.end(), [fontFamily, weight](const auto& property)
     {
-        return property._Name == fontName && property._Weight == weight;
+        return property._Name == fontFamily && property._Weight == weight;
     });
 
     if(font != fonts.end())
         return *font;
 
-    font = std::find_if(fonts.begin(), fonts.end(), [fontName](const auto& property)
+    font = std::find_if(fonts.begin(), fonts.end(), [fontFamily](const auto& property)
     {
-        return property._Name == fontName;
+        return property._Name == fontFamily;
     });
 
     if(font != fonts.end())
@@ -140,12 +140,12 @@ u32 RetroFuturaGUI::FontManager::generateGlyphAtlas(FT_Face face, const u32 code
     return textureID;
 }
 
-RetroFuturaGUI::FontManager::LoadFontResult RetroFuturaGUI::FontManager::LoadFont(std::string_view fontName, const f32 size, const PlatformBridge::Fonts::Slant slant, const PlatformBridge::Fonts::Weight weight, const u32 codePointFirst, const u32 codePointLast, const bool extendMode)
+RetroFuturaGUI::FontManager::LoadFontResult RetroFuturaGUI::FontManager::LoadFont(std::string_view fontFamily, const f32 size, const PlatformBridge::Fonts::Slant slant, const PlatformBridge::Fonts::Weight weight, const u32 codePointFirst, const u32 codePointLast, const bool extendMode)
 {
     u32 integralFontSize = FontSizeToIntegral(size);
 
     if(!extendMode)
-        if(isFontLoaded(fontName, integralFontSize, slant, weight))
+        if(isFontLoaded(fontFamily, integralFontSize, slant, weight))
             return LoadFontResult::FontAlreadyLoaded;
 
     if(_ft == nullptr)
@@ -159,7 +159,7 @@ RetroFuturaGUI::FontManager::LoadFontResult RetroFuturaGUI::FontManager::LoadFon
         }
     }
 
-    auto fontProperty = findFontProperty(fontName, slant, weight);
+    auto fontProperty = findFontProperty(fontFamily, slant, weight);
     
     if (fontProperty._Path.empty())
     {
@@ -223,13 +223,13 @@ i32 RetroFuturaGUI::FontManager::initFreeTypeLibrary()
     return -1;
 }
 
-std::shared_ptr<RetroFuturaGUI::FontInfo> RetroFuturaGUI::FontManager::GetFontInfo(std::string_view fontName, const f32 size, const PlatformBridge::Fonts::Slant slant, const PlatformBridge::Fonts::Weight weight)
+std::shared_ptr<RetroFuturaGUI::FontInfo> RetroFuturaGUI::FontManager::GetFontInfo(std::string_view fontFamily, const f32 size, const PlatformBridge::Fonts::Slant slant, const PlatformBridge::Fonts::Weight weight)
 {
     u32 fontIndex = FontSizeToIntegral(size);
 
     for (const auto& font : _fonts)
     {
-        if (font._FontProperty._Name == fontName
+        if (font._FontProperty._Name == fontFamily
             && font._Atlasses.count(fontIndex) > 0
             && font._FontProperty._Slant == slant
             && font._FontProperty._Weight == weight)
@@ -239,20 +239,20 @@ std::shared_ptr<RetroFuturaGUI::FontInfo> RetroFuturaGUI::FontManager::GetFontIn
     }
 
     // If not found, load it
-    if (LoadFont(fontName, size, slant, weight, BasicLatinFirst, BasicLatinLast) == 0)
+    if (LoadFont(fontFamily, size, slant, weight, BasicLatinFirst, BasicLatinLast) == 0)
     {
         for (const auto& font : _fonts)
-            if (font._FontProperty._Name == fontName && font._Atlasses.count(fontIndex) > 0)
+            if (font._FontProperty._Name == fontFamily && font._Atlasses.count(fontIndex) > 0)
                 return std::make_shared<FontInfo>(font);
     }
 
     return nullptr;
 }
 
-void RetroFuturaGUI::FontManager::SetDefaultFont(std::string_view fontName, const f32 size, const PlatformBridge::Fonts::Slant slant, const PlatformBridge::Fonts::Weight weight, const u32 codePointFirst, const u32 codePointLast)
+void RetroFuturaGUI::FontManager::SetDefaultFont(std::string_view fontFamily, const f32 size, const PlatformBridge::Fonts::Slant slant, const PlatformBridge::Fonts::Weight weight, const u32 codePointFirst, const u32 codePointLast)
 {
-    _defaultFontName = fontName;
-    LoadFont(fontName, size, slant, weight, codePointFirst, codePointLast);
+    _defaultFontFamily = fontFamily;
+    LoadFont(fontFamily, size, slant, weight, codePointFirst, codePointLast);
 }
 
 u32 RetroFuturaGUI::FontManager::FontSizeToIntegral(const f32 size)
@@ -277,19 +277,19 @@ const std::list<RetroFuturaGUI::FontInfo>& RetroFuturaGUI::FontManager::GetFonts
     return _fonts;
 }
 
-void RetroFuturaGUI::FontManager::ExtendFontset(std::string_view fontName, std::string_view fontNameExtension, const f32 size, const PlatformBridge::Fonts::Slant slant, const PlatformBridge::Fonts::Weight weight, const u32 codePointFirst, const u32 codePointLast)
+void RetroFuturaGUI::FontManager::ExtendFontset(std::string_view fontFamily, std::string_view fontFamilyExtension, const f32 size, const PlatformBridge::Fonts::Slant slant, const PlatformBridge::Fonts::Weight weight, const u32 codePointFirst, const u32 codePointLast)
 {
     u32 integralFontSize = FontSizeToIntegral(size);
 
     for (auto& font : _fonts)
     {
-        if (font._FontProperty._Name == fontName
+        if (font._FontProperty._Name == fontFamily
             && font._Atlasses.count(integralFontSize) > 0
             && font._FontProperty._Slant == slant
             && font._FontProperty._Weight == weight)
         {
         
-            if(LoadFont(fontNameExtension, size, slant, weight, codePointFirst, codePointLast, true) != LoadFontResult::Success)
+            if(LoadFont(fontFamilyExtension, size, slant, weight, codePointFirst, codePointLast, true) != LoadFontResult::Success)
                 return;
             
             font._Atlasses[integralFontSize]._GlyphBlocks[codePointFirst] = _fonts.back()._Atlasses[integralFontSize]._GlyphBlocks[codePointFirst];

@@ -46,26 +46,26 @@ void RetroFuturaGUI::IDesignable::SetBackgroundColors(std::span<glm::vec4> color
 
 void RetroFuturaGUI::IDesignable::SetBackgroundGradientOffset(const f32 gradientOffset)
 {
-    if(_rectangle)
-        _rectangle->SetGradientOffset(gradientOffset);
+    if(_background)
+        _background->SetGradientOffset(gradientOffset);
 }
 
 void RetroFuturaGUI::IDesignable::SetBackgroundGradientAnimationSpeed(const f32 animationSpeed)
 {
-    if(_rectangle)
-        _rectangle->SetGradientAnimationSpeed(animationSpeed);
+    if(_background)
+        _background->SetGradientAnimationSpeed(animationSpeed);
 }
 
 void RetroFuturaGUI::IDesignable::SetBackgroundGradientDegree(const f32 degree)
 {
-    if(_rectangle)
-        _rectangle->SetGradientDegree(degree);
+    if(_background)
+        _background->SetGradientDegree(degree);
 }
 
 void RetroFuturaGUI::IDesignable::SetBackgroundGradientRotationSpeed(const f32 rotationSpeed)
 {    
-    if(_rectangle)
-        _rectangle->SetGradientRotationSpeed(rotationSpeed);
+    if(_background)
+        _background->SetGradientRotationSpeed(rotationSpeed);
 }
 
 const std::vector<glm::vec4>& RetroFuturaGUI::IDesignable::GetBackgroundColors(const ColorState state) const
@@ -87,20 +87,20 @@ void RetroFuturaGUI::IDesignable::SetBackgroundFillType(const FillType fillType)
 {
     _backgroundFillType = fillType;
 
-    if(_rectangle)
-        _rectangle->SetFillType(fillType);
+    if(_background)
+        _background->SetFillType(fillType);
 }
 
 void RetroFuturaGUI::IDesignable::SetWindowBackgroundImageTextureID(const u32 textureID)
 {
-    if(_rectangle)
-        _rectangle->SetWindowBackgroundImageTextureID(textureID);
+    if(_background)
+        _background->SetWindowBackgroundImageTextureID(textureID);
 }
 
 void RetroFuturaGUI::IDesignable::SetCornerRadii(const glm::vec4& radii)
 {
-    if(_rectangle)
-        _rectangle->SetCornerRadii(radii);
+    if(_background)
+        _background->SetCornerRadii(radii);
 
     if(_border)    
         _border->SetCornerRadii(radii);
@@ -108,14 +108,20 @@ void RetroFuturaGUI::IDesignable::SetCornerRadii(const glm::vec4& radii)
 
 void RetroFuturaGUI::IDesignable::setBackgroundColorElement(std::vector<glm::vec4>& color)
 {
-    if(_rectangle) 
-        _rectangle->SetColor(color);
+    if(_background) 
+        _background->SetColors(color);
 }
 
 void RetroFuturaGUI::IDesignable::setBorderColorElement(std::vector<glm::vec4>& color)
 {
     if(_border) 
-        _border->SetColor(color);
+        _border->SetColors(color);
+}
+
+void RetroFuturaGUI::IDesignable::SetBorderWidth(const f32 borderWidth)
+{
+    if(_border)    
+        _border->SetBorderWidth(borderWidth);
 }
 
 void RetroFuturaGUI::IDesignable::setborderBackgroundColors()
@@ -244,8 +250,8 @@ void RetroFuturaGUI::IDesignable::SetWindowBorderImageTextureID(const u32 textur
 
 void RetroFuturaGUI::IDesignable::drawBackgroundBorder()
 {
-    if(_rectangle)
-        _rectangle->Draw();
+    if(_background)
+        _background->Draw();
 
     if(_border)
         _border->Draw();

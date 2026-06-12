@@ -7,20 +7,19 @@
 #endif
 #include <GLFW/glfw3native.h>
 
-RetroFuturaGUI::TextBox::TextBox(const IdentityParams& identity, const GeometryParams3D& geometry, const TextParams& textParams, const float borderWidth)
-    : IWidget(identity, geometry)
+RetroFuturaGUI::TextBox::TextBox(const std::string& name, Projection* projection, IWidget* parentWidget, const WidgetTypeID parentWidgetTypeID, GLFWwindow* parentWindow)
+   : IWidget(name, projection, parentWidget, parentWidgetTypeID, parentWindow)
 {
-    _widgetTypeID = WidgetTypeID::TextBox;
-    _rectangle = std::make_unique<Rectangle>(geometry, _backgroundColorEnabled, RectangleMode::PLANE);
-    _border = std::make_unique<Rectangle>(geometry, _borderColorEnabled, RectangleMode::BORDER);
-    
-    if(_border) 
-        _border->SetBorderWidth(borderWidth);
+    _widgetTypeID = WidgetTypeID::Button;
+    _background = std::make_unique<Rectangle>(projection);
+    _border = std::make_unique<Rectangle>(projection);
+    _text = std::make_unique<Text>(projection);
 
-    if(textParams._Text.size() > 0)
-        _text = std::make_unique<Text>(geometry, textParams);
+    if (_background)
+        _background->SetRectangleMode(RectangleMode::Plane);
 
-    _prevKeyStates.resize(GLFW_KEY_LAST + 1, 0);
+    if (_border)
+        _border->SetRectangleMode(RectangleMode::Border);
 }
 
 void RetroFuturaGUI::TextBox::Draw()
@@ -73,22 +72,22 @@ void RetroFuturaGUI::TextBox::SetSize(const glm::vec3& size)
 {
     IWidget::SetSize(size);
 
-    if(_rectangle)
-        _rectangle->SetSize(size);
+    if(_background)
+        _background->SetSize(size);
 
     if(_border)
         _border->SetSize(size);
 
-    //if(_text)    
-        //_text->Resize(size); //add extra text resizing logic
+    if(_text)
+        _text->SetParentSize(glm::vec2(size.x, size.y));
 }
 
 void RetroFuturaGUI::TextBox::SetPosition(const glm::vec3& position)
 {
     IWidget::SetPosition(position);
 
-    if(_rectangle)
-        _rectangle->SetPosition(position);
+    if(_background)
+        _background->SetPosition(position);
 
     if(_border)
         _border->SetPosition(position);
@@ -101,8 +100,8 @@ void RetroFuturaGUI::TextBox::SetRotation(const float rotation)
 {
     _rotation = rotation;
 
-    if(_rectangle)
-        _rectangle->SetRotation(rotation);
+    if(_background)
+        _background->SetRotation(rotation);
 
     if(_border)
         _border->SetRotation(rotation);

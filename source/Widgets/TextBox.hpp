@@ -9,10 +9,17 @@
 
 namespace RetroFuturaGUI
 {
+    //A single-line text input widget
     class TextBox : public IWidget, public IClickable, public IDesignable, public ITextProperties 
     {
     public:
-        TextBox(const IdentityParams& identity, const GeometryParams3D& geometry, const TextParams& textParams, const float borderWidth = 5.0f);
+        TextBox(const std::string& name, Projection* projection, IWidget* parentWidget, const WidgetTypeID parentWidgetTypeID, GLFWwindow* parentWindow);
+        TextBox() = delete;
+        TextBox(const TextBox&) = delete;
+        TextBox(TextBox&&) = delete;
+        ~TextBox() = default;
+        auto operator =(const TextBox&) = delete;
+        auto operator =(TextBox&&) = delete;
         void Draw();
         void Connect_OnTextChange(const typename Signal<>::Slot& slot, const bool async);
         void Disconnect_OnTextChange(const typename Signal<>::Slot& slot);

@@ -1,7 +1,7 @@
 #include "Lasagna.hpp"
 
-RetroFuturaGUI::Lasagna::Lasagna(const IdentityParams& identity, const GeometryParams3D& geometry, const AxisDefinition& axisDefinition)
-: IWidget(identity, geometry), _axisdefinition(axisDefinition)
+RetroFuturaGUI::Lasagna::Lasagna(const std::string& name, Projection* projection, IWidget* parentWidget, const WidgetTypeID parentWidgetTypeID, GLFWwindow* parentWindow, AxisDefinition* _axisDefinition)
+    : IWidget(name, projection, parentWidget, parentWidgetTypeID, parentWindow), _axisdefinition(*_axisDefinition)
 {
     _lasagna.reserve(_maxCountPerAxis);
 
@@ -60,16 +60,18 @@ RetroFuturaGUI::Lasagna::Lasagna(const IdentityParams& identity, const GeometryP
         }
     }
 
-    GeometryParams3D geometryb = 
-    {
-        _projection,
-        glm::vec3(0.0f),
-        glm::vec3(0.0f),
-        0.0f
-    };
+    _debugBorder = std::make_unique<Rectangle>(&_projection);
 
-    _debugBorder = std::make_unique<Rectangle>(geometryb, _debugBorderColor, RectangleMode::BORDER);
-    _debugBorder->SetBorderWidth(5.0f);
+    if(_debugBorder)
+    {
+        _debugBorder->SetRectangleMode(RectangleMode::Border);
+        _debugBorder->SetPosition(glm::vec3(0.0f));
+        _debugBorder->SetSize(glm::vec3(0.0f));
+        _debugBorder->SetRotation(0.0f);
+        _debugBorder->SetColors(_debugBorderColor);
+        _debugBorder->SetBorderWidth(5.0f);
+    }
+
 }
 
 void RetroFuturaGUI::Lasagna::AttachWidget(const u32 row, const u32 col, const u32 layer, IWidget* widget, const SizingMode sizingMode)

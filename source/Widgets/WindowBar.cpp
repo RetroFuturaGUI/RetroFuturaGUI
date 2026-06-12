@@ -1,135 +1,21 @@
 #include "WindowBar.hpp"
 #include "Window.hpp"
 
-RetroFuturaGUI::WindowBar::WindowBar(const IdentityParams &identity, GeometryParams3D &geometry, const glm::vec4& color, const WindowBarPosition wbPosition)
-    : IWidget(identity, geometry), _projection(const_cast<Projection&>(geometry._Projection)), _windowBarPosition(wbPosition)
-{   
+RetroFuturaGUI::WindowBar::WindowBar(const std::string& name, Projection* projection, IWidget* parentWidget, const WidgetTypeID parentWidgetTypeID, GLFWwindow* parentWindow)
+    : IWidget(name, projection, parentWidget, parentWidgetTypeID, parentWindow), _projection(static_cast<Projection&>(*projection))
+{
+    _widgetTypeID = WidgetTypeID::WindowBar;
     _position = calculateWindowBarPosition();
     _size = calculateWindowBarSize();
+    _background = std::make_unique<Rectangle>(const_cast<Projection*>(&_projection));
 
-    GeometryParams3D geometryAdv = 
+    if(_background)
     {
-        geometry._Projection,
-        _position,
-        _size,
-        0.0f
-    };
-
-    _backgroundColors.resize(1, color);
-    _background = std::make_unique<Rectangle>(geometryAdv, _backgroundColors, RectangleMode::PLANE);
-
-    GeometryParams3D geometryButton{
-        ._Projection = geometry._Projection,
-        ._Position = calculateElementPosition(ElementType::CloseButton),
-        ._Size = glm::vec3(28.0f, 28.0f, 0.01f),
-        ._Rotation = 0.0f
-    };
-
-    IdentityParams identityCloseButton
-    {
-        "testWindowBarClose",
-        this,
-        WidgetTypeID::WindowBar,
-        _parentWindow
-    };
-
-    std::string font = PlatformBridge::Fonts::GetFontProperties().front()._Name;
-    TextParams textParams = 
-    {
-        "",//X
-        font,
-        glm::vec4(1.0f),
-        glm::vec2(25.0f),
-        TextAlignment::CENTER,
-        3.0f
-    };
-
-    _close = std::make_unique<Button>(identityCloseButton, geometryButton, textParams, 2.0f);
-    
-    if(_close)
-    {
-        _close->SetBackgroundColor(glm::vec4(1.0f, 0.4f, 0.4f, 1.0f), ColorState::Enabled);
-        _close->Connect_OnClick([this]() { windowShouldCloseCallback(); }, false);
+        _background->SetRectangleMode(RectangleMode::Plane);
+        _background->SetPosition(_position);
+        _background->SetSize(_size);
+        _background->SetRotation(0.0f);
     }
-
-    IdentityParams identityMaximize
-    {
-        "testMaximize",
-        this,
-        WidgetTypeID::WindowBar,
-        _parentWindow
-    };
-
-    GeometryParams3D geometryButtonMaximize
-    {
-        ._Projection = geometry._Projection,
-        ._Position = calculateElementPosition(ElementType::MaximizeButton),
-        ._Size = glm::vec3(28.0f, 28.0f, 0.01f),
-        ._Rotation = 0.0f
-    };
-
-    TextParams textParamsMaximize = 
-    {
-        "",//M
-        font,
-        glm::vec4(1.0f),
-        glm::vec2(25.0f),
-        TextAlignment::CENTER,
-        3.0f
-    };
-
-    _maximize = std::make_unique<Button>(identityMaximize, geometryButtonMaximize, textParamsMaximize, 0.2f);
-
-    IdentityParams identityMinimize
-    {
-        "testMinimize",
-        this,
-        WidgetTypeID::WindowBar,
-        _parentWindow
-    };
-
-    GeometryParams3D geometryButtonMinimize
-    {
-        ._Projection = geometry._Projection,
-        ._Position = calculateElementPosition(ElementType::MinimizeButton),
-        ._Size = glm::vec3(28.0f, 28.0f, 0.01f),
-        ._Rotation = 0.0f
-    };
-
-    TextParams textParamsMinimize = 
-    {
-        "",//_
-        font,
-        glm::vec4(1.0f),
-        glm::vec2(25.0f),
-        TextAlignment::CENTER,
-        3.0f
-    };
-
-    _minimize = std::make_unique<Button>(identityMinimize, geometryButtonMinimize, textParamsMinimize, 0.2f);
-   
-    if(_minimize)
-        _minimize->Connect_OnClick([this]() { minimizeWindowCallback(_parentWindow); }, false);
-
-    /*TextParams textParamsTitle = 
-    {
-        _title,
-        font,
-        glm::vec4(1.0f),
-        glm::vec2(25.0f),
-        TextAlignment::LEFT,
-        3.0f
-    };
-
-    GeometryParams3D geometryButtonTitle
-    {
-        geometry._Projection,
-        calculateElementPosition(ElementType::Title),
-        glm::vec2(28.0f),
-        0.0f
-    };
-
-    _windowTitle = std::make_unique<Text>(geometryButtonTitle, textParamsTitle);*/
 }
 
 void RetroFuturaGUI::WindowBar::Draw()
@@ -325,41 +211,10 @@ RetroFuturaGUI::MaximizeState RetroFuturaGUI::WindowBar::GetMaximizeState()
 
 void RetroFuturaGUI::WindowBar::ConnectMaximizeCallback(const std::function<void()> &callback)
 {
+    _maximizeCallback = callback;
+
     if(_maximize)
-        _maximize->Connect_OnClick(callback, false);
-}
-
-void RetroFuturaGUI::WindowBar::SetElementBackgroundColor(const glm::vec4& color, const ColorState state, const ElementType elementType)
-{
-    switch(elementType)
-    {
-        case ElementType::CloseButton:
-            if(_close)
-                _close->SetBackgroundColor(color, state);
-        break;
-        case ElementType::MaximizeButton:
-            if(_maximize)
-                _maximize->SetBackgroundColor(color, state);
-        break;
-        case ElementType::MinimizeButton:
-            if(_minimize)
-                _minimize->SetBackgroundColor(color, state);
-        break;
-        case ElementType::NoDockingDrag:
-            //todo
-        break;
-        case ElementType::Title:
-            if(!_background)
-                break;
-
-            _backgroundColors.clear();
-            _backgroundColors.resize(1, color);
-            _background->SetColor(_backgroundColors);
-        break;
-        case ElementType::Icon:
-            //todo
-        break;
-    }
+        _maximize->Connect_OnClick(_maximizeCallback, false);
 }
 
 void RetroFuturaGUI::WindowBar::SetElementTextColor(const glm::vec4 &color, const ColorState state, const ElementType elementType)
@@ -387,6 +242,8 @@ void RetroFuturaGUI::WindowBar::SetElementTextColor(const glm::vec4 &color, cons
         break;
         case ElementType::Icon:
             //todo
+        break;
+        default:
         break;
     }
 }
@@ -417,6 +274,8 @@ void RetroFuturaGUI::WindowBar::SetElementBackgroundImageTextureID(const u32 tex
         case ElementType::Icon:
             //todo
         break;
+        default:
+        break;
     }
 }
 
@@ -441,32 +300,26 @@ void RetroFuturaGUI::WindowBar::SetButtonCornerRadii(const glm::vec4 &radii, con
     }
 }
 
-void RetroFuturaGUI::WindowBar::SetWindowTitle(std::string_view title, std::string_view fontName)
+void RetroFuturaGUI::WindowBar::SetWindowTitle(std::string_view title, std::string_view fontFamily)
 {
     _title = title;
-    //_fontName = fontName;
 
     if(!_windowTitle)
     {
-        TextParams textParamsTitle = 
-        {
-            ._Text = _title,
-            ._FontName = fontName,
-            ._TextColor = glm::vec4(1.0f),
-            ._GlyphSize = glm::vec2( _windowBarThiccness * 0.6f ),
-            ._TextAlignment = TextAlignment::LEFT,
-            ._TextPadding = 3.0f
-        };
+        _windowTitle = std::make_unique<Text>(&_projection);
 
-        GeometryParams3D geometryButtonTitle
+        if(_windowTitle)
         {
-            ._Projection = _projection,
-            ._Position = calculateElementPosition(ElementType::Title),
-            ._Size = glm::vec3(28.0f, 28.0f, 0.01f),
-            ._Rotation = 0.0f
-        };
+            _windowTitle->SetFontFamily(fontFamily, _windowBarThiccness * 0.5f, PlatformBridge::Fonts::Slant::Roman, PlatformBridge::Fonts::Weight::Normal);
+            _windowTitle->SetText(_title);
+            _windowTitle->SetColor(glm::vec4(1.0f));
+            _windowTitle->SetSize(glm::vec3(_windowBarThiccness * 0.7f, _windowBarThiccness * 0.7f, 0.01f));
+            _windowTitle->SetTextAlignment(TextAlignment::LEFT);
+            _windowTitle->SetTextPadding(3.0f);
+            _windowTitle->SetPosition(calculateElementPosition(ElementType::Title));
+            _windowTitle->SetRotation(0.0f);
+        }
 
-        _windowTitle = std::make_unique<Text>(geometryButtonTitle, textParamsTitle);
         Resize(); //hotfix for dislocation when Text has been initialized with an empty string
         return;
     }
@@ -502,4 +355,254 @@ bool RetroFuturaGUI::WindowBar::IsPointInside(const f32 pointX, const f32 pointY
     }
 
     return false;
+}
+
+void RetroFuturaGUI::WindowBar::EnableElement(const RetroFuturaGUI::WindowBar::ElementType elementType)
+{
+    *reinterpret_cast<u32*>(&_elements) |= static_cast<u32>(elementType);
+
+    switch(elementType)
+    {
+        case ElementType::CloseButton:
+        {
+            if(_close)
+                return;
+
+            _close = std::make_unique<Button>("CloseButton", static_cast<RetroFuturaGUI::Projection*>(&_projection), this, RetroFuturaGUI::WidgetTypeID::WindowBar, _parentWindow);
+            
+            if(!_close)
+                return;
+
+            _close->SetPosition(calculateElementPosition(ElementType::CloseButton));
+            _close->SetSize(glm::vec3(_windowBarThiccness - 2.0f, _windowBarThiccness - 2.0f, 0.01f));
+            _close->SetRotation(0.0f);
+            _close->SetTextAlignment(RetroFuturaGUI::TextAlignment::CENTER);
+            _close->SetTextPadding(3.0f);
+            _close->SetFontFamily("Noto Sans", _windowBarThiccness * 0.5f, PlatformBridge::Fonts::Slant::Roman, PlatformBridge::Fonts::Weight::Normal);
+            _close->SetBorderWidth(2.0f);
+            _close->SetText("X");
+            _close->Connect_OnClick([this]() { windowShouldCloseCallback(); }, false);
+        } return;
+        case ElementType::MinimizeButton:
+        {
+            if(_minimize)
+                return;
+
+            _minimize = std::make_unique<Button>("MinimizeButton", static_cast<RetroFuturaGUI::Projection*>(&_projection), this, RetroFuturaGUI::WidgetTypeID::WindowBar, _parentWindow);
+
+            if(!_minimize)
+                return;
+
+            _minimize->SetPosition(calculateElementPosition(ElementType::MinimizeButton));
+            _minimize->SetSize(glm::vec3(_windowBarThiccness - 2.0f, _windowBarThiccness - 2.0f, 0.01f));
+            _minimize->SetRotation(0.0f);
+            _minimize->SetTextAlignment(RetroFuturaGUI::TextAlignment::CENTER);
+            _minimize->SetTextPadding(3.0f);
+            _minimize->SetFontFamily("Noto Sans", _windowBarThiccness * 0.5f, PlatformBridge::Fonts::Slant::Roman, PlatformBridge::Fonts::Weight::Normal);
+            _minimize->SetBorderWidth(2.0f);
+            _minimize->SetText("_");
+            _minimize->Connect_OnClick([this]() { minimizeWindowCallback(_parentWindow); }, false);
+        } return;
+        case ElementType::MaximizeButton:
+        {
+            if(_maximize)
+                return;
+
+            _maximize = std::make_unique<Button>("MaximizeButton", static_cast<RetroFuturaGUI::Projection*>(&_projection), this, RetroFuturaGUI::WidgetTypeID::WindowBar, _parentWindow);
+                
+            if(!_maximize)
+                return;
+
+            _maximize->SetPosition(calculateElementPosition(ElementType::MaximizeButton));
+            _maximize->SetSize(glm::vec3(_windowBarThiccness - 2.0f, _windowBarThiccness - 2.0f, 0.01f));
+            _maximize->SetRotation(0.0f);
+            _maximize->SetTextAlignment(RetroFuturaGUI::TextAlignment::CENTER);
+            _maximize->SetTextPadding(3.0f);
+            _maximize->SetFontFamily("Noto Sans", _windowBarThiccness * 0.5f, PlatformBridge::Fonts::Slant::Roman, PlatformBridge::Fonts::Weight::Normal);
+            _maximize->SetBorderWidth(2.0f);
+            _maximize->SetText("M");
+
+            if(_maximizeCallback)
+                _maximize->Connect_OnClick(_maximizeCallback, false);
+        } return;
+        case ElementType::Title:
+        {
+            if(_windowTitle)
+                return;
+
+            _windowTitle = std::make_unique<Text>(static_cast<RetroFuturaGUI::Projection*>(&_projection));
+                
+            if(!_windowTitle)
+                return;
+
+            _windowTitle->SetPosition(calculateElementPosition(ElementType::Title));
+            _windowTitle->SetSize(glm::vec3(_windowBarThiccness - 2.0f, _windowBarThiccness - 2.0f, 0.01f));
+            _windowTitle->SetRotation(0.0f);
+            _windowTitle->SetTextAlignment(RetroFuturaGUI::TextAlignment::CENTER);
+            _windowTitle->SetTextPadding(3.0f);
+        } return;
+        case ElementType::Background:
+        {
+            if(_background)
+                return;
+
+            _background = std::make_unique<Rectangle>(&_projection);
+
+            if(!_background)
+                return;
+    
+            _background->SetRectangleMode(RectangleMode::Plane);
+            _background->SetPosition(_position);
+            _background->SetSize(_size);
+            _background->SetRotation(0.0f);
+        } return;
+        default:
+        return;
+    }
+}
+
+void RetroFuturaGUI::WindowBar::GiveMaximizeCallback(const std::function<void ()>& callback)
+{
+    _maximizeCallback = callback;
+}
+
+
+void RetroFuturaGUI::WindowBar::SetButtonBackgroundFillType(const ElementType elementType, const FillType fillType)
+{
+    switch(elementType)
+    {
+        case ElementType::CloseButton:
+            if(_close)
+                _close->SetBackgroundFillType(fillType);
+        return;
+        case ElementType::MinimizeButton:
+            if(_minimize)
+                _minimize->SetBackgroundFillType(fillType);
+        return;
+        case ElementType::MaximizeButton:
+            if(_maximize)
+                _maximize->SetBackgroundFillType(fillType);
+        return;
+        default:
+        return;
+    }
+}
+
+void RetroFuturaGUI::WindowBar::SetButtonBorderFillType(const ElementType elementType, const FillType fillType)
+{
+    switch(elementType)
+    {
+        case ElementType::CloseButton:
+            if(_close)
+                _close->SetBorderFillType(fillType);
+        return;
+        case ElementType::MinimizeButton:
+            if(_minimize)
+                _minimize->SetBorderFillType(fillType);
+        return;
+        case ElementType::MaximizeButton:
+            if(_maximize)
+                _maximize->SetBorderFillType(fillType);
+        return;
+        default:
+        return;
+    }
+}
+
+void RetroFuturaGUI::WindowBar::SetButtonBorderWidth(const ElementType elementType, const f32 width)
+{
+    switch(elementType)
+    {
+        case ElementType::CloseButton:
+            if(_close)
+                _close->SetBorderWidth(width);
+        return;
+        case ElementType::MinimizeButton:
+            if(_minimize)
+                _minimize->SetBorderWidth(width);
+        return;
+        case ElementType::MaximizeButton:
+            if(_maximize)
+                _maximize->SetBorderWidth(width);
+        return;
+        default:
+        return;
+    }
+}
+
+void RetroFuturaGUI::WindowBar::SetButtonCornerRadii(const ElementType elementType, const glm::vec4& radii)
+{
+    switch(elementType)
+    {
+        case ElementType::CloseButton:
+            if(_close)
+                _close->SetCornerRadii(radii);
+        return;
+        case ElementType::MinimizeButton:
+            if(_minimize)
+                _minimize->SetCornerRadii(radii);
+        return;
+        case ElementType::MaximizeButton:
+            if(_maximize)
+                _maximize->SetCornerRadii(radii);
+        return;
+        default:
+        return;
+    }
+}
+
+void RetroFuturaGUI::WindowBar::SetWindowTitleFontFamily(const std::string& family, const f32 fontSize, const PlatformBridge::Fonts::Slant fontSlant, const PlatformBridge::Fonts::Weight fontWeight)
+{
+    if(_windowTitle)
+        _windowTitle->SetFontFamily(family, fontSize, fontSlant, fontWeight);
+}
+
+void RetroFuturaGUI::WindowBar::SetButtonBackgroundColors(const ElementType elementType, std::span<glm::vec4> colors, const ColorState colorState)
+{
+    switch(elementType)
+    {
+        case ElementType::CloseButton:
+            if(_close)
+                _close->SetBackgroundColors(colors, colorState);
+        return;
+        case ElementType::MinimizeButton:
+            if(_minimize)
+                _minimize->SetBackgroundColors(colors, colorState);
+        return;
+        case ElementType::MaximizeButton:
+            if(_maximize)
+                _maximize->SetBackgroundColors(colors, colorState);
+        return;
+        default:
+        return;
+    }
+}
+
+void RetroFuturaGUI::WindowBar::SetButtonBorderColors(const ElementType elementType, std::span<glm::vec4> colors, const ColorState colorState)
+{
+    switch(elementType)
+    {
+        case ElementType::CloseButton:
+            if(_close)
+                _close->SetBorderColors(colors, colorState);
+        return;
+        case ElementType::MinimizeButton:
+            if(_minimize)
+                _minimize->SetBorderColors(colors, colorState);
+        return;
+        case ElementType::MaximizeButton:
+            if(_maximize)
+                _maximize->SetBorderColors(colors, colorState);
+        return;
+        default:
+        return;
+    }
+}
+
+void RetroFuturaGUI::WindowBar::SetBackgroundColors(std::span<glm::vec4> colors)
+{
+    _backgroundColors = std::vector<glm::vec4>(colors.begin(), colors.end());
+
+    if(_background)
+        _background->SetColors(std::span<glm::vec4>(_backgroundColors.data(), _backgroundColors.size()));
 }

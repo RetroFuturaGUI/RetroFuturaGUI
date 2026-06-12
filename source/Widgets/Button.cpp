@@ -1,17 +1,18 @@
 #include "Button.hpp"
 
-RetroFuturaGUI::Button::Button(const IdentityParams& identity, const GeometryParams3D& geometry, const TextParams& textParams, const float borderWidth)
-    : IWidget(identity, geometry)
+RetroFuturaGUI::Button::Button(const std::string& name, Projection* projection, IWidget* parentWidget, const WidgetTypeID parentWidgetTypeID, GLFWwindow* parentWindow)
+   : IWidget(name, projection, parentWidget, parentWidgetTypeID, parentWindow)
 {
     _widgetTypeID = WidgetTypeID::Button;
-    _rectangle = std::make_unique<Rectangle>(geometry, _backgroundColorEnabled, RectangleMode::PLANE);
-    _border = std::make_unique<Rectangle>(geometry, _borderColorEnabled, RectangleMode::BORDER);
-    
-    if(_border) 
-        _border->SetBorderWidth(borderWidth);
+    _background = std::make_unique<Rectangle>(projection);
+    _border = std::make_unique<Rectangle>(projection);
+    _text = std::make_unique<Text>(projection);
 
-    if(textParams._Text.size() > 0)
-        _text = std::make_unique<Text>(geometry, textParams);
+    if (_background)
+        _background->SetRectangleMode(RectangleMode::Plane);
+
+    if (_border)
+        _border->SetRectangleMode(RectangleMode::Border);
 }
 
 void RetroFuturaGUI::Button::Draw()
@@ -50,22 +51,25 @@ void RetroFuturaGUI::Button::SetSize(const glm::vec3& size)
 {
     IWidget::SetSize(size);
 
-    if(_rectangle)
-        _rectangle->SetSize(size);
+    if(_background)
+        _background->SetSize(size);
 
     if(_border)
         _border->SetSize(size);
 
-    //if(_text)    
-        //_text->Resize(size); //add extra text resizing logic
+    if(_text)
+    {
+        _text->SetParentSize(glm::vec2(size.x, size.y));
+        _text->SetPosition(glm::vec2(_position.x, _position.y));
+    }
 }
 
 void RetroFuturaGUI::Button::SetPosition(const glm::vec3& position)
 {
     IWidget::SetPosition(position);
 
-    if(_rectangle)
-        _rectangle->SetPosition(position);
+    if(_background)
+        _background->SetPosition(position);
 
     if(_border)
         _border->SetPosition(position);
@@ -78,8 +82,8 @@ void RetroFuturaGUI::Button::SetRotation(const float rotation)
 {
     _rotation = rotation;
 
-    if(_rectangle)
-        _rectangle->SetRotation(rotation);
+    if(_background)
+        _background->SetRotation(rotation);
 
     if(_border)
         _border->SetRotation(rotation);

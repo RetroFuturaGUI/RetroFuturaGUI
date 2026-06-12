@@ -10,10 +10,12 @@
 
 namespace RetroFuturaGUI
 {
-    class IWidget : virtual public IWindowAccessor
+    //An interface with properties that all Widgets must implement.
+    class IWidget : virtual public IWindowAccessor 
     {
     public:
-        IWidget(const IdentityParams& identity, const GeometryParams3D& geometry);
+        IWidget(std::string_view name, Projection* projection, IWidget* parentWidget, const WidgetTypeID parentWidgetTypeID, GLFWwindow* parentWindow);
+        IWidget() = delete;
         virtual ~IWidget() = default;
         virtual void Draw() = 0;
         void Connect_OnEnable(const typename Signal<>::Slot& slot, const bool async);
@@ -34,25 +36,25 @@ namespace RetroFuturaGUI
 
         template<typename T> T* GetParentWidget() const
         {
-            return static_cast<T*>(_parent);
+            return static_cast<T*>(_parentWidget);
         }
 
     protected:
-        //identity
+    //Identity
         std::string _name;
-        void* _parent { nullptr };
+        IWidget* _parentWidget { nullptr };
         WidgetTypeID 
-            _parentTypeID { WidgetTypeID::None },
+            _parentWidgetTypeID { WidgetTypeID::None },
             _widgetTypeID { WidgetTypeID::None };
 
-        //geometry
+    //Geometry
         Projection& _projection;
         glm::vec3
             _position { 0.0f },
             _size { 0.0f };
         f32 _rotation { 0.0f };
 
-        //logic
+    //Logic
         bool _isEnabledFlag { true };
         ColorState _colorState { ColorState::Enabled };
         Signal<>
@@ -61,19 +63,8 @@ namespace RetroFuturaGUI
             _onDisable,
             _onDisableAsync;
 
-        bool isPointInside(const glm::vec2& point) const
-        {
-            glm::vec2 translatedPoint = point - glm::vec2(_position.x, _position.y);
-            float radians = glm::radians(-_rotation);
-            glm::vec2 rotatedPoint(
-                translatedPoint.x * cos(radians) - translatedPoint.y * sin(radians),
-                translatedPoint.x * sin(radians) + translatedPoint.y * cos(radians)
-            );
-            return (rotatedPoint.x >= -_size.x * 0.5f &&
-                    rotatedPoint.x <= _size.x * 0.5f &&
-                    rotatedPoint.y >= -_size.y * 0.5f &&
-                    rotatedPoint.y <= _size.y * 0.5f);
-        }
+    protected:
+        bool isPointInside(const glm::vec2& point) const;
 
     private:
 

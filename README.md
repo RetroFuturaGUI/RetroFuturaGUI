@@ -14,7 +14,7 @@ The framework is designed for cross-platform use, and its logic can be compiled 
 | 2 | dll/so/dylib compilation for C# and Python support, Widget ID manager | 1 | ✅ | 
 | 3 | Linux Support, Font Manager | 2 | ✅ | 
 | 4 | More Widgets (TextBox, Table, VideoPlayer, AudioPlayer, 3D Model, Slider, CheckBox, DropdownBox, RadioButton, Tabs, 3D Scene, Lights, change Grid2d to "Lasagna" and add a 3rd dimension, Carousel, Color Pickers) | 1 | WIP | 
-| 5 | .bechaml markup language for GUI design 🥣 <!-- (**B**ased and **E**xtra **C**reamy **H**ollandaise **A**pplication **M**arkup **L**anguage) -->| 4 | | 
+| 5 | .bechaml markup language for GUI design 🥣 (**B**eautifully **E**xtended **C**ascading but **H**airbally **A**pplication **M**arkup **L**anguage) | 4 | | 
 | 6 | VS Code extension with project generator/manager | 5 | | 
 | 7 | Aesthetics: Flat Metro, Frutiger Aero (Win Vista/7, Wii, Wii U, Pikmin 3), Frutiger Metro, Y2K Futurism (F-Zero GX), Vaporwave, Outrun/Synthwave, Neumorphism, Glassmorphism/Liquid Glass, Comic/Anime/LoFi, ... | 6 | | 
 | 8 | Android (without Android Studio), MacOS, iOS support | 6 | | 
@@ -30,18 +30,15 @@ The framework is designed for cross-platform use, and its logic can be compiled 
 ### WIP in detail
 - Font Manager
   - Update Windows font support to the new system
+- Input Support for Windows
 - Text
   - Optimizations
 - TextBox
-  - Improve text input
   - suppress text overflow
 - Button
   - suppress text overflow
-- Window
-  - Make WindowBar optional
 - WindowBar
   - Window Icon
-  - Make Buttons and title optional
 
 ### Implemented Features
 <details><summary>CLICK TO EXPAND</summary>

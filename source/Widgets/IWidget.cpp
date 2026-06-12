@@ -1,10 +1,9 @@
 #include "IWidget.hpp"
 
-RetroFuturaGUI::IWidget::IWidget(const IdentityParams& identity, const GeometryParams3D& geometry) 
-    : _name(identity._Name), _parent(identity._Parent), _parentTypeID(identity._ParentTypeID),
-     _projection(const_cast<Projection&>(geometry._Projection)), _position(geometry._Position), _size(geometry._Size), _rotation(geometry._Rotation)
+RetroFuturaGUI::IWidget::IWidget(std::string_view name, Projection* projection, IWidget* parentWidget, const WidgetTypeID parentWidgetTypeID, GLFWwindow* parentWindow)
+    : _name(name), _parentWidget(parentWidget), _parentWidgetTypeID(parentWidgetTypeID), _projection(*projection)
 {
-    _parentWindow = identity._ParentWindow;
+    _parentWindow = parentWindow;
 }
 
 void RetroFuturaGUI::IWidget::Connect_OnEnable(const typename Signal<>::Slot& slot, const bool async)
@@ -88,4 +87,18 @@ void RetroFuturaGUI::IWidget::SetEnabled(const bool enable, [[maybe_unused]] con
 bool RetroFuturaGUI::IWidget::IsEnabled() const
 {
     return _isEnabledFlag;
+}
+
+bool RetroFuturaGUI::IWidget::isPointInside(const glm::vec2& point) const
+{
+    glm::vec2 translatedPoint = point - glm::vec2(_position.x, _position.y);
+    float radians = glm::radians(-_rotation);
+    glm::vec2 rotatedPoint(
+        translatedPoint.x * cos(radians) - translatedPoint.y * sin(radians),
+        translatedPoint.x * sin(radians) + translatedPoint.y * cos(radians)
+    );
+    return (rotatedPoint.x >= -_size.x * 0.5f &&
+            rotatedPoint.x <= _size.x * 0.5f &&
+            rotatedPoint.y >= -_size.y * 0.5f &&
+            rotatedPoint.y <= _size.y * 0.5f);
 }

@@ -1,8 +1,8 @@
 #include "Image2D.hpp"
 #include "ShaderManager.hpp"
 
-RetroFuturaGUI::Image2D::Image2D(const GeometryParams3D &geometry, std::string_view imagePath)
-: _projection(const_cast<Projection&>(geometry._Projection)), _path(imagePath)
+RetroFuturaGUI::Image2D::Image2D(Projection* projection, std::string_view imagePath)
+: _projection(const_cast<Projection&>(*projection)), _path(imagePath)
 {
     glGenVertexArrays(1, &_vao);
     glGenBuffers(1, &_vbo);
@@ -27,13 +27,10 @@ RetroFuturaGUI::Image2D::Image2D(const GeometryParams3D &geometry, std::string_v
     loadTexture();
     glActiveTexture(GL_TEXTURE0);
 
-    _textureAspectRatio = (f32)_imageSize.x / (f32)_imageSize.y; 
-    SetSize(geometry._Size);
-    FitGeometryToTexture();
-    Move(geometry._Position);
-    Rotate(geometry._Rotation);
+    _textureAspectRatio = (f32)_imageSize.x / (f32)_imageSize.y;
 
-    u32 err;
+    u32 err { 0 };
+
     while ((err = glGetError()) != GL_NO_ERROR)
         std::println("OpenGL error: ", err);
 }
@@ -49,12 +46,13 @@ void RetroFuturaGUI::Image2D::SetSize(const glm::vec2& size)
 {
     _quadSize = size;
     _scaleMatrix = glm::scale(glm::mat4(1.0f), glm::vec3(_quadSize, 1.0f));
+    FitGeometryToTexture();
 }
 
-void RetroFuturaGUI::Image2D::Move(const glm::vec2& position)
+void RetroFuturaGUI::Image2D::SetPosition(const glm::vec3& position)
 {
     _position = position;
-    _translationMatrix = glm::translate(glm::mat4(1.0f), glm::vec3(_position, 0.0f));
+    _translationMatrix = glm::translate(glm::mat4(1.0f), _position);
 }
 
 void RetroFuturaGUI::Image2D::Rotate(const f32 rotation)

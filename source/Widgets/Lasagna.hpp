@@ -36,16 +36,18 @@ namespace RetroFuturaGUI
     class Lasagna: public IWidget
     {
     public:
-        Lasagna(const IdentityParams& identity, const GeometryParams3D& geometry, const AxisDefinition& axisDefinition);
+        Lasagna(const std::string& name, Projection* projection, IWidget* parentWidget, const WidgetTypeID parentWidgetTypeID, GLFWwindow* parentWindow, AxisDefinition* _axisDefinition);
+        Lasagna() = delete;
+        Lasagna(const Lasagna&) = delete;
+        Lasagna(Lasagna&&) = delete;
+        ~Lasagna() = default;
+        auto operator =(const Lasagna&) = delete;
+        auto operator =(Lasagna&&) = delete;
         void AttachWidget(const u32 row, const u32 col, const u32 layer, IWidget* widget, const SizingMode sizingMode = SizingMode::FILL);
         void Draw() override {};
         void Draw(const bool alsoDrawDebugLines = false);
         void SetSize(const glm::vec3& size);
         void SetPosition(const glm::vec3& position);
-        void operator =(const Lasagna& other)
-        {
-            *this = other;
-        }
 
     private:
         // Data

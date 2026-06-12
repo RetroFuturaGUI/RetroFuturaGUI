@@ -30,6 +30,7 @@ namespace RetroFuturaGUI
         void SetWindowBorderImageTextureID(const u32 textureID);
         const std::vector<glm::vec4>& GetBorderColor(const ColorState state) const;
         void SetBorderFillType(const FillType fillType);
+        void SetBorderWidth(const f32 borderWidth);
 
     //Border and Background
         void SetCornerRadii(const glm::vec4& radii);
@@ -39,7 +40,7 @@ namespace RetroFuturaGUI
         void drawBackgroundBorder();
 
     //Elements
-        std::unique_ptr<Rectangle> _rectangle;
+        std::unique_ptr<Rectangle> _background;
         std::unique_ptr<Rectangle> _border;
 
     //Style
