@@ -16,8 +16,6 @@ namespace RetroFuturaGUI
         void SetTextColor(const glm::vec4& color, const ColorState state);
         std::vector<glm::vec4> GetTextColor(const ColorState state) const;
         void SetText(std::string_view text);
-        void SetReadOnly(const bool readOnly);
-        bool IsReadOnly() const;
         const std::string& GetText() const;
         virtual void SetFontFamily(std::string_view fontFamily, const f32 fontSize, const PlatformBridge::Fonts::Slant slant, const PlatformBridge::Fonts::Weight fontWeight);
         void SetTextAlignment(const TextAlignment alignment);
@@ -25,7 +23,6 @@ namespace RetroFuturaGUI
 
     protected:
         void setTextColors();
-        void editText();
         void drawText();
 
     //Elements
@@ -35,16 +32,6 @@ namespace RetroFuturaGUI
         Signal<>
             _onTextChange,
             _onTextChangeAsync;
-        bool
-            _textChangedFlag { false },
-            _readOnly { false },
-            _editingEnabled { false },
-            _keyWasReleased { true };
-        u32 _keyHoldFrames { 0 };
-        std::string _keyRepeatText {};
-        std::vector<char> _prevKeyStates {};
-        static constexpr i32 _keyRepeatInitialDelay = 60;
-        static constexpr i32 _keyRepeatInterval = 5;
 
     // Style
         std::vector<glm::vec4>

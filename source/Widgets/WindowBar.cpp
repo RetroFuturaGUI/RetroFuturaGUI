@@ -311,7 +311,7 @@ void RetroFuturaGUI::WindowBar::SetWindowTitle(std::string_view title, std::stri
         if(_windowTitle)
         {
             _windowTitle->SetFontFamily(fontFamily, _windowBarThiccness * 0.5f, PlatformBridge::Fonts::Slant::Roman, PlatformBridge::Fonts::Weight::Normal);
-            _windowTitle->SetText(_title);
+            _windowTitle->SetTextUTF8(_title);
             _windowTitle->SetColor(glm::vec4(1.0f));
             _windowTitle->SetSize(glm::vec3(_windowBarThiccness * 0.7f, _windowBarThiccness * 0.7f, 0.01f));
             _windowTitle->SetTextAlignment(TextAlignment::Left);
@@ -324,7 +324,7 @@ void RetroFuturaGUI::WindowBar::SetWindowTitle(std::string_view title, std::stri
         return;
     }
 
-    _windowTitle->SetText(_title);
+    _windowTitle->SetTextUTF8(_title);
     Resize(); //hotfix for dislocation when Text has been initialized with an empty string
 }
 

@@ -129,7 +129,15 @@ glm::vec4 RetroFuturaGUI::Text::GetColor() const
     return _textColor;
 }
 
-void RetroFuturaGUI::Text::SetText(std::string_view text)
+void RetroFuturaGUI::Text::SetTextUTF8(std::string_view text)
+{
+    _text = text;
+    calculateTextSpan();
+    SetTextAlignment(_textAlignment);
+    updateMesh();
+}
+
+void RetroFuturaGUI::Text::SetTextUTF32(std::u32string_view text)
 {
     _text = text;
     calculateTextSpan();
@@ -361,9 +369,14 @@ void RetroFuturaGUI::Text::calculateTextSpan()
     _textBaseHeight = _glyphSize.y;
 }
 
-const std::string& RetroFuturaGUI::Text::GetText() const
+const std::string& RetroFuturaGUI::Text::GetTextUTF8() const
 {
     return _text.GetUtf8();
+}
+
+const std::u32string& RetroFuturaGUI::Text::GetTextUTF32() const
+{
+    return _text.GetUtf32();
 }
 
 float RetroFuturaGUI::Text::GetGlyphSize() const
@@ -374,4 +387,10 @@ float RetroFuturaGUI::Text::GetGlyphSize() const
 uSize RetroFuturaGUI::Text::GetGlyphCount() const
 {
     return _glyphPositions.size() - 1;
+}
+
+uSize RetroFuturaGUI::Text::GetUtf8Position(uSize const glyphPosition) const
+{
+return glyphPosition;
+    
 }

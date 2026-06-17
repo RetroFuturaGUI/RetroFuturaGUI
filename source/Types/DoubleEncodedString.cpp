@@ -1,9 +1,10 @@
 #include "DoubleEncodedString.hpp"
+#include <algorithm>
 
-RetroFuturaGUI::DoubleEncodedString::DoubleEncodedString(const uSize capacity, std::string_view initialString)
-    : _capacity(capacity)
+RetroFuturaGUI::DoubleEncodedString::DoubleEncodedString(const uSize maxLength, std::string_view initialString)
+    : _capacity(maxLength)
 {
-    if(capacity == 0)
+    if(_capacity == 0)
         return;
 
     if (initialString.empty())
@@ -13,6 +14,18 @@ RetroFuturaGUI::DoubleEncodedString::DoubleEncodedString(const uSize capacity, s
     updateUtf32FromUtf8();
 }
 
+RetroFuturaGUI::DoubleEncodedString::DoubleEncodedString(const uSize maxLength, std::u32string_view initialString)
+    : _capacity(maxLength)
+{
+    if(_capacity == 0)
+        return;
+
+    if (initialString.empty())
+        return;
+
+    _utf32String = std::u32string(initialString);
+    updateUtf8FromUtf32();
+}
 RetroFuturaGUI::DoubleEncodedString::DoubleEncodedString(const DoubleEncodedString& other)
     : _utf8String(other._utf8String)
     , _utf32String(other._utf32String)
@@ -52,6 +65,19 @@ void RetroFuturaGUI::DoubleEncodedString::operator=(std::string_view newString)
         _utf8String = newString;
 
     updateUtf32FromUtf8();
+}
+
+void RetroFuturaGUI::DoubleEncodedString::operator=(std::u32string_view newString)
+{
+    if(_capacity < newString.length())
+    {
+        _capacity = newString.length();
+        _utf32String = std::u32string(newString);
+    }
+    else
+        _utf32String = std::u32string(newString);
+
+    updateUtf8FromUtf32();
 }
 
 const std::string& RetroFuturaGUI::DoubleEncodedString::GetUtf8() const
@@ -97,76 +123,132 @@ void RetroFuturaGUI::DoubleEncodedString::Resize(const uSize capacity)
 
 void RetroFuturaGUI::DoubleEncodedString::updateUtf32FromUtf8()
 {
-    constexpr static const u32 maskSingle = 0;
-    constexpr static const u32 maskDouble = 0b11000000;
-    constexpr static const u32 maskTriple = 0b11100000;
-    constexpr static const u32 maskQuadruple = 0b11110000;
-    constexpr static const u32 maskSequence = 0b10000000;
-    constexpr static const u32 ANDMaskSingle = 0b10000000;
-    constexpr static const u32 ANDMaskDouble = 0b11100000;
-    constexpr static const u32 ANDMaskTriple = 0b11110000;
-    constexpr static const u32 ANDMaskQuadruple = 0b11111000;
-    constexpr static const u32 ANDMaskSequence = 0b11000000;
-    constexpr static const u32 InvMaskDouble = 0b00011111;
-    constexpr static const u32 InvMaskTriple = 0b00001111;
-    constexpr static const u32 InvMaskQuadruple = 0b00000111;
-    constexpr static const u32 InvMaskSequence = 0b00111111;
-    _utf32String.clear();
-    _utf32String.resize(_capacity);
+    _utf32String = Utf8ToUtf32(_utf8String);
+}
+
+void RetroFuturaGUI::DoubleEncodedString::updateUtf8FromUtf32()
+{
+    _utf8String = Utf32ToUtf8(_utf32String);
+}
+
+std::u32string RetroFuturaGUI::DoubleEncodedString::Utf8ToUtf32(std::string_view input)
+{
+    std::u32string utf32;
+    utf32.resize(input.size());
     uSize count { 0 };
     
-    for(size_t i { 0 }; i < _utf8String.size();)
+    for(uSize i { 0 }; i < input.size();)
     {
-        if((_utf8String[i] & ANDMaskDouble) == maskDouble)
+        if((input[i] & _andMaskDouble) == _maskDouble)
         {
-            if(((_utf8String[i+1] & ANDMaskSequence) != maskSequence))
+            if(((input[i+1] & _andMaskSequence) != _maskSequence))
                 break;
             
-            _utf32String[count] = ((_utf8String[i] & InvMaskDouble) << 6);
-            _utf32String[count] |= (_utf8String[i+1] & InvMaskSequence);
+            utf32[count] = ((input[i] & _invMaskDouble) << 6);
+            utf32[count] |= (input[i+1] & _invMaskSequence);
             ++count;
             i += 2;
         }
-        else if(((_utf8String[i] & ANDMaskTriple) == maskTriple))
+        else if(((input[i] & _andMaskTriple) == _maskTriple))
         {
-            if(((_utf8String[i+1] & ANDMaskSequence) != maskSequence))
+            if(((input[i+1] & _andMaskSequence) != _maskSequence))
                 break;
                 
-            if(((_utf8String[i+2] & ANDMaskSequence) != maskSequence))
+            if(((input[i+2] & _andMaskSequence) != _maskSequence))
                 break;
             
-            _utf32String[count] = ((_utf8String[i] & InvMaskTriple) << 12);
-            _utf32String[count] |= (_utf8String[i+1] & InvMaskSequence) << 6;
-            _utf32String[count] |= (_utf8String[i+2] & InvMaskSequence);
+            utf32[count] = ((input[i] & _invMaskTriple) << 12);
+            utf32[count] |= (input[i+1] & _invMaskSequence) << 6;
+            utf32[count] |= (input[i+2] & _invMaskSequence);
             ++count;
             i += 3;
         }
-        else if(((_utf8String[i] & ANDMaskQuadruple) == maskQuadruple))
+        else if(((input[i] & _andMaskQuadruple) == _maskQuadruple))
         {
-            if(((_utf8String[i+1] & ANDMaskSequence) != maskSequence))
+            if(((input[i+1] & _andMaskSequence) != _maskSequence))
                 break;
                 
-            if(((_utf8String[i+2] & ANDMaskSequence) != maskSequence))
+            if(((input[i+2] & _andMaskSequence) != _maskSequence))
                 break;
                 
-            if(((_utf8String[i+3] & ANDMaskSequence) != maskSequence))
+            if(((input[i+3] & _andMaskSequence) != _maskSequence))
                 break;
             
-            _utf32String[count] = ((_utf8String[i] & InvMaskQuadruple) << 18);
-            _utf32String[count] |= (_utf8String[i+1] & InvMaskSequence) << 12;
-            _utf32String[count] |= (_utf8String[i+2] & InvMaskSequence) << 6;
-            _utf32String[count] |= (_utf8String[i+3] & InvMaskSequence);
+            utf32[count] = ((input[i] & _invMaskQuadruple) << 18);
+            utf32[count] |= (input[i+1] & _invMaskSequence) << 12;
+            utf32[count] |= (input[i+2] & _invMaskSequence) << 6;
+            utf32[count] |= (input[i+3] & _invMaskSequence);
             ++count;
             i += 4;
         }
         else
         {
-            if(((_utf8String[i] & ANDMaskSingle) != maskSingle))
+            if(((input[i] & _andMaskSingle) != _maskSingle))
                 break;
                 
-            _utf32String[count] = static_cast<uint32_t>(_utf8String[i]);    
+            utf32[count] = static_cast<u32>(input[i]);    
             ++count;    
             ++i;   
         }
     }
+
+    uSize end { utf32.find_last_not_of(U'\0') };
+    
+    if (end != std::string::npos)
+        utf32.erase(end + 1);
+    else
+        utf32.clear();
+
+    return utf32;
+}
+
+std::string RetroFuturaGUI::DoubleEncodedString::Utf32ToUtf8(std::u32string_view input)
+{
+    std::string utf8;
+    utf8.resize(input.size() * sizeof(u32));
+    size_t count { 0 };
+    
+    for(size_t i { 0 }; i < input.size(); ++i)
+    {
+        if(input[i] == 0)
+            break;
+
+        if(input[i] < 0x80)
+        {
+            utf8[count] = static_cast<char>(input[i]);
+            ++count;
+        }
+        else if(input[i] >= 0x80 && input[i] < 0x800)
+        {
+            utf8[count] = static_cast<char>((input[i] >> 6) | _maskDouble);
+            utf8[count+1] = static_cast<char>((input[i] & _invMaskSequence) | _maskSequence);
+            count += 2;
+        }
+        else if(input[i] >= 0x800 && input[i] < 0x10000)
+        {
+            utf8[count] = static_cast<char>((input[i] >> 12) | _maskTriple);
+            utf8[count+1] = static_cast<char>(((input[i] >> 6) & _invMaskSequence) | _maskSequence);
+            utf8[count+2] = static_cast<char>((input[i] & _invMaskSequence) | _maskSequence);
+            count += 3;
+        }
+        else if(input[i] >= 0x10000 && input[i] < 0x110000)
+        {
+            utf8[count] = static_cast<char>((input[i] >> 18) | _maskQuadruple);
+            utf8[count+1] = static_cast<char>(((input[i] >> 12) & _invMaskSequence) | _maskSequence);
+            utf8[count+2] = static_cast<char>(((input[i] >> 6) & _invMaskSequence) | _maskSequence);
+            utf8[count+3] = static_cast<char>((input[i] & _invMaskSequence) | _maskSequence);
+            count += 4;
+        }
+        else
+            break;
+    }
+
+    uSize end { utf8.find_last_not_of('\0') };
+    
+    if (end != std::string::npos)
+        utf8.erase(end + 1);
+    else
+        utf8.clear();
+
+    return utf8;
 }

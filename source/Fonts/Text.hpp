@@ -45,12 +45,15 @@ namespace RetroFuturaGUI
         void SetColor(const glm::vec4& color);
         void SetParentSize(const glm::vec2 size);
         void SetTextPadding(const f32 padding);
-        void SetText(std::string_view text);
+        void SetTextUTF8(std::string_view text);
+        void SetTextUTF32(std::u32string_view text);
         glm::vec4 GetColor() const;
         float GetGlyphSize() const;
         glm::vec3 GetGlyphPosition(const uSize index, const CaretRelativePosition relativePosition, const f32 caretSize) const;
-        const std::string& GetText() const;
+        const std::string& GetTextUTF8() const;
+        const std::u32string& GetTextUTF32() const;
         uSize GetGlyphCount() const;
+        uSize GetUtf8Position(uSize const glyphPosition) const;
 
     private:
         Projection& _projection;
