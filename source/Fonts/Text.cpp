@@ -177,6 +177,9 @@ void RetroFuturaGUI::Text::updateMesh()
         vertexCount { 0 };
     bool batching { false };
 
+    _glyphPositions.clear();
+    _glyphPositions.push_back(0.0f);
+
     for (const u32 codepoint : _text.GetUtf32())
     {
         if (codepoint == U'\n')
@@ -198,12 +201,6 @@ void RetroFuturaGUI::Text::updateMesh()
 
         const Glyph& glyph { glyphIt->second };
         foundTextureID = blockIterator->second._TextureID;
-
-        if (codepoint == U' ')
-        {
-            currentX += glyph._Advance * scale;
-            continue;
-        }
 
         xPos = currentX + glyph._Bearing[0] * scale;
         yPos = currentY - (glyph._Size[1] - glyph._Bearing[1]) * scale;
@@ -251,6 +248,8 @@ void RetroFuturaGUI::Text::updateMesh()
 
         vertexCount += 6;
         currentX += glyph._Advance * scale;
+        _glyphPositions.push_back(currentX);
+        //_glyphPositions.back() += glyph._Size[0];
     }
     // Flush last batch
     if (batching && vertexCount > 0)
@@ -259,15 +258,39 @@ void RetroFuturaGUI::Text::updateMesh()
     }
 }
 
+glm::vec3 RetroFuturaGUI::Text::GetGlyphPosition(const uSize index, const CaretRelativePosition relativePosition, const f32 caretSize) const
+{
+    f32 
+        x { 0.0f },
+        y { caretSize * 0.25f };
+
+    if(_glyphPositions.size() <= index+1)
+    {
+        if(relativePosition == CaretRelativePosition::Left)
+            x = _glyphPositions[_glyphPositions.size()-2];
+        else
+            x = _glyphPositions.back();
+    }
+    else
+    {
+        if(relativePosition == CaretRelativePosition::Left)
+            x = _glyphPositions[index];
+        else
+            x = _glyphPositions[index+1];
+    }
+
+    return glm::vec3(x, y, 0) + glm::vec3(_positionAligned, 0.0f);
+}
+
 void RetroFuturaGUI::Text::alignPosition()
 {
     switch(_textAlignment)
     {
-        case TextAlignment::CENTER:
+        case TextAlignment::Center:
         {
             _positionAligned = glm::vec2(_position.x - _textSpan.x * 0.5f, _position.y - _textBaseHeight * 0.5f);
         } break;
-        case TextAlignment::RIGHT:
+        case TextAlignment::Right:
         {
             _positionAligned = glm::vec2(_position.x - _textSpan.x + _parentSize.x * 0.5f - _textPadding, _position.y - _textBaseHeight * 0.5f);
         } break;
@@ -341,4 +364,14 @@ void RetroFuturaGUI::Text::calculateTextSpan()
 const std::string& RetroFuturaGUI::Text::GetText() const
 {
     return _text.GetUtf8();
+}
+
+float RetroFuturaGUI::Text::GetGlyphSize() const
+{
+    return _glyphSize.x;
+}
+
+uSize RetroFuturaGUI::Text::GetGlyphCount() const
+{
+    return _glyphPositions.size() - 1;
 }

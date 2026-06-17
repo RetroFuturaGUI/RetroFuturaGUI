@@ -5,6 +5,7 @@
 #include "Signal.hpp"
 #include "Text.hpp"
 #include "IWindowAccessor.hpp"
+#include "Rectangle.hpp"
 
 namespace RetroFuturaGUI
 {
@@ -18,7 +19,7 @@ namespace RetroFuturaGUI
         void SetReadOnly(const bool readOnly);
         bool IsReadOnly() const;
         const std::string& GetText() const;
-        void SetFontFamily(std::string_view fontFamily, const f32 fontSize, const PlatformBridge::Fonts::Slant slant, const PlatformBridge::Fonts::Weight fontWeight);
+        virtual void SetFontFamily(std::string_view fontFamily, const f32 fontSize, const PlatformBridge::Fonts::Slant slant, const PlatformBridge::Fonts::Weight fontWeight);
         void SetTextAlignment(const TextAlignment alignment);
         void SetTextPadding(const f32 padding);
 
@@ -42,6 +43,8 @@ namespace RetroFuturaGUI
         u32 _keyHoldFrames { 0 };
         std::string _keyRepeatText {};
         std::vector<char> _prevKeyStates {};
+        static constexpr i32 _keyRepeatInitialDelay = 60;
+        static constexpr i32 _keyRepeatInterval = 5;
 
     // Style
         std::vector<glm::vec4>
@@ -50,7 +53,7 @@ namespace RetroFuturaGUI
             _textColorClicked { glm::vec4(1.0f) },
             _textColorHover { glm::vec4(1.0f, 1.0f, 1.0f, 1.0f) };
         ColorState _textColorState { ColorState::Enabled };
-        TextAlignment _textAlignment { TextAlignment::LEFT };
+        TextAlignment _textAlignment { TextAlignment::Left };
 
     private:
         void setTextColorElement(std::vector<glm::vec4>& color);

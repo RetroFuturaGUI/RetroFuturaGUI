@@ -63,7 +63,6 @@ namespace RetroFuturaGUI
             _onDisable,
             _onDisableAsync;
 
-    protected:
         bool isPointInside(const glm::vec2& point) const;
 
     private:

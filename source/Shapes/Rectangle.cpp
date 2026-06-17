@@ -435,3 +435,8 @@ void RetroFuturaGUI::Rectangle::SetFillType(const FillType fillType)
 {
     _fillType = fillType;
 }
+
+const glm::vec2 RetroFuturaGUI::Rectangle::GetSize() const
+{
+    return _scale;
+}

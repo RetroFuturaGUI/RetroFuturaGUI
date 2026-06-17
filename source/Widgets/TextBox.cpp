@@ -14,12 +14,20 @@ RetroFuturaGUI::TextBox::TextBox(const std::string& name, Projection* projection
     _background = std::make_unique<Rectangle>(projection);
     _border = std::make_unique<Rectangle>(projection);
     _text = std::make_unique<Text>(projection);
+    _caret = std::make_unique<Rectangle>(projection);
 
     if (_background)
         _background->SetRectangleMode(RectangleMode::Plane);
 
     if (_border)
         _border->SetRectangleMode(RectangleMode::Border);
+
+    if(_caret)
+    {
+        _caret->SetRectangleMode(RectangleMode::Plane);
+        _caret->SetFillType(FillType::SOLID);
+    }
+    _caret->SetColors(std::span<glm::vec4>(_caretColors.data(), _caretColors.size()));
 }
 
 void RetroFuturaGUI::TextBox::Draw()
@@ -27,6 +35,7 @@ void RetroFuturaGUI::TextBox::Draw()
     interact();
     drawBackgroundBorder();
     drawText();
+    drawCaret();
 }
 
 void RetroFuturaGUI::TextBox::Connect_OnTextChange(const typename Signal<>::Slot &slot, const bool async)
@@ -80,6 +89,11 @@ void RetroFuturaGUI::TextBox::SetSize(const glm::vec3& size)
 
     if(_text)
         _text->SetParentSize(glm::vec2(size.x, size.y));
+
+    if(_caret)
+    {
+    _caret->SetSize(glm::vec2(2.0f, _text->GetGlyphSize() * 1.6f));
+    }
 }
 
 void RetroFuturaGUI::TextBox::SetPosition(const glm::vec3& position)
@@ -94,6 +108,9 @@ void RetroFuturaGUI::TextBox::SetPosition(const glm::vec3& position)
 
     if(_text)
         _text->SetPosition(position);
+
+    if(_caret)
+        _caret->SetPosition(position);
 }
 
 void RetroFuturaGUI::TextBox::SetRotation(const float rotation)
@@ -119,9 +136,11 @@ void RetroFuturaGUI::TextBox::interact()
     if(_editingEnabled && !_mouseEnteredFlag && isMouseTextBoxPressed)
     {
         _editingEnabled = false;
+        _showCaret = false;
     }
 
     editText();
+    moveCaret();
 
     if(!_isEnabledFlag || !isMouseInside) //no action and mouse leave
     {
@@ -163,6 +182,9 @@ void RetroFuturaGUI::TextBox::interact()
 #elif defined(TARGET_PLATFORM_WINDOWS)
         PlatformBridge::Keyboard::SetActiveWindow(glfwGetWin32Window(_parentWindow));
 #endif
+        _caretPosition = _text->GetGlyphCount() - 1;
+        _caret->SetPosition(_text->GetGlyphPosition(_caretPosition, CaretRelativePosition::Right, _caret->GetSize().y));
+        _showCaret = true;
     }
     else if(!isMouseTextBoxPressed && _wasClicked) //release
     {
@@ -184,4 +206,20 @@ void RetroFuturaGUI::TextBox::setColors(const ColorState state)
     _textColorState = state;
     setborderBackgroundColors();
     setTextColors();
+}
+
+void RetroFuturaGUI::TextBox::drawCaret()
+{
+    if(!_caret)
+        return;
+
+    if(_showCaret)
+        _caret->Draw();
+}
+
+
+void RetroFuturaGUI::TextBox::SetFontFamily(std::string_view fontFamily, const f32 fontSize, const PlatformBridge::Fonts::Slant slant, const PlatformBridge::Fonts::Weight fontWeight)
+{
+    ITextProperties::SetFontFamily(fontFamily, fontSize, slant, fontWeight);
+    _caret->SetSize(glm::vec2(2.0f, fontSize * 1.6f));
 }

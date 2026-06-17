@@ -39,6 +39,7 @@ namespace RetroFuturaGUI
         void SetBorderWidth(const f32 width);
         void SetRectangleMode(const RectangleMode rectanlgeMode);
         void SetFillType(const FillType fillType);
+        const glm::vec2 GetSize() const;
 
     private:
     //Geometry

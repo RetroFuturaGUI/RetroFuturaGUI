@@ -115,9 +115,6 @@ void RetroFuturaGUI::ITextProperties::editText()
     if(_parentWindow != InputManager::GetFocusedWindow())
         return;
 
-    static constexpr int keyRepeatInitialDelay = 60;
-    static constexpr int keyRepeatInterval = 5;
-
     if(PlatformBridge::Keyboard::GetKeyboardUseState() == PlatformBridge::KeyboardUseState::KeyReleased)
     {
         _keyWasReleased = true;
@@ -137,7 +134,7 @@ void RetroFuturaGUI::ITextProperties::editText()
         if (!_keyRepeatText.empty())
         {
             ++_keyHoldFrames;
-            if (_keyHoldFrames >= keyRepeatInitialDelay && (_keyHoldFrames - keyRepeatInitialDelay) % keyRepeatInterval == 0)
+            if (_keyHoldFrames >= _keyRepeatInitialDelay && (_keyHoldFrames - _keyRepeatInitialDelay) % _keyRepeatInterval == 0)
             {
                 _text->SetText(_text->GetText() + _keyRepeatText);
                 emitChange();
