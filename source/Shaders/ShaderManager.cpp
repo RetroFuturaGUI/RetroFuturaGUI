@@ -47,11 +47,6 @@ RetroFuturaGUI::Shader& RetroFuturaGUI::ShaderManager::GetBorderHueStarGradientS
     return *_borderHueStarGradient;
 }
 
-RetroFuturaGUI::Shader& RetroFuturaGUI::ShaderManager::GetTextFillShader()
-{
-    return *_textFill;
-}
-
 RetroFuturaGUI::Shader& RetroFuturaGUI::ShaderManager::GetFontAtlasFillShader()
 {
     return *_fontAtlasFill;
@@ -123,11 +118,6 @@ void RetroFuturaGUI::ShaderManager::compileShaders()
         std::string(workingDir + "Line.vs").c_str(), 
         std::string(workingDir + "Line.fs").c_str(),
         std::string(workingDir + "Line.gs").c_str()
-    );
-
-    _textFill = std::make_unique<Shader>(
-        std::string(workingDir + "Text.vs").c_str(), 
-        std::string(workingDir + "Text.fs").c_str()
     );
 
     _fontAtlasFill = std::make_unique<Shader>(

@@ -43,10 +43,6 @@ namespace RetroFuturaGUI
         /// @return Reference to the line fill Shader object
         static Shader& GetLineFillShader();
 
-        /// @brief Get the text fill shader
-        /// @return Reference to the text fill Shader object
-        static Shader& GetTextFillShader();
-
         /// @brief Get the font atlas fill shader
         /// @return Reference to the font atlas fill Shader object
         static Shader& GetFontAtlasFillShader();
@@ -63,8 +59,8 @@ namespace RetroFuturaGUI
         ~ShaderManager() = default;
         ShaderManager(const ShaderManager&) = delete;
         ShaderManager(ShaderManager&&) = delete;
-        void operator=(const ShaderManager&) = delete;
-        void operator=(ShaderManager&&) = delete;
+        auto operator=(const ShaderManager&) = delete;
+        auto operator=(ShaderManager&&) = delete;
         static ShaderManager& GetInstance()
         {
             static ShaderManager Instance;
@@ -81,7 +77,6 @@ namespace RetroFuturaGUI
         static inline std::unique_ptr<Shader> _borderRadialGradient;
         static inline std::unique_ptr<Shader> _borderHueStarGradient;
         static inline std::unique_ptr<Shader> _lineFill;
-        static inline std::unique_ptr<Shader> _textFill;
         static inline std::unique_ptr<Shader> _fontAtlasFill;
         static inline std::unique_ptr<Shader> _textureFill;
     };

@@ -4,3 +4,5 @@ source/config.hpp
 FrutigerAero.png
 Line.*
 LineBorder.*
+*.fs.txt
+*.vs.txt
