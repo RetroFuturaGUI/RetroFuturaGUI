@@ -10,6 +10,9 @@ namespace RetroFuturaGUI
     public:
         void SetReadOnly(const bool readOnly);
         bool IsReadOnly() const;
+        void SetCaretColors(std::span<glm::vec4> colors);
+        void SetCaretFillType(const FillType fillType);
+        void SetCaretGradientAnimationSpeed(const f32 speed);
 
     protected:
         void moveCaret();

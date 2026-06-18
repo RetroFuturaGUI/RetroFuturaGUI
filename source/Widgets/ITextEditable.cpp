@@ -94,7 +94,6 @@ void RetroFuturaGUI::ITextEditable::moveCaretImpl()
     std::println("Pos: {}, Relative: {}", _caretPosition, _caretRelativePosition == CaretRelativePosition::Left ? "Left" : "Right");
 }
 
-
 void RetroFuturaGUI::ITextEditable::editText()
 {
     if(!_editingEnabled || !_text)
@@ -145,7 +144,7 @@ void RetroFuturaGUI::ITextEditable::editText()
         {
             std::u32string left { _text->GetTextUTF32().substr(0, cut - 1) };
             std::u32string right { _text->GetTextUTF32().substr(cut) };
-            //std::println("{}🐺{}", DoubleEncodedString::Utf32ToUtf8(left), DoubleEncodedString::Utf32ToUtf8(right));
+            std::println("{}🐺{}", DoubleEncodedString::Utf32ToUtf8(left), DoubleEncodedString::Utf32ToUtf8(right));
 
             _text->SetTextUTF32(left + right);
             --_caretPosition;
@@ -181,4 +180,23 @@ void RetroFuturaGUI::ITextEditable::SetReadOnly(const bool readOnly)
 bool RetroFuturaGUI::ITextEditable::IsReadOnly() const
 {
     return _readOnly;
+}
+
+
+void RetroFuturaGUI::ITextEditable::SetCaretColors(std::span<glm::vec4> colors)
+{
+    if(_caret)
+        _caret->SetColors(colors);
+}
+
+void RetroFuturaGUI::ITextEditable::SetCaretFillType(const FillType fillType)
+{
+    if(_caret)
+        _caret->SetFillType(fillType);
+}
+
+void RetroFuturaGUI::ITextEditable::SetCaretGradientAnimationSpeed(const f32 speed)
+{
+    if(_caret)
+        _caret->SetGradientAnimationSpeed(speed);
 }

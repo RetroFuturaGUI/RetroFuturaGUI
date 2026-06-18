@@ -25,7 +25,6 @@ namespace RetroFuturaGUI
         void Connect_OnTextChange(const typename Signal<>::Slot& slot, const bool async);
         void Disconnect_OnTextChange(const typename Signal<>::Slot& slot);
         void SetEnabled(const bool enable, const bool emitSignal = true);
-        void SetCaretColors(std::span<glm::vec4> colors);
         void SetFontFamily(std::string_view fontFamily, const f32 fontSize, const PlatformBridge::Fonts::Slant slant, const PlatformBridge::Fonts::Weight fontWeight) override;
         void SetCornerRadii(const glm::vec4& radii);
 
