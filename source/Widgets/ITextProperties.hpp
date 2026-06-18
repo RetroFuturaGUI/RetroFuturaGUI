@@ -20,6 +20,8 @@ namespace RetroFuturaGUI
         virtual void SetFontFamily(std::string_view fontFamily, const f32 fontSize, const PlatformBridge::Fonts::Slant slant, const PlatformBridge::Fonts::Weight fontWeight);
         void SetTextAlignment(const TextAlignment alignment);
         void SetTextPadding(const f32 padding);
+        void Connect_OnTextChange(const typename Signal<>::Slot& slot, const bool async);
+        void Disconnect_OnTextChange(const typename Signal<>::Slot& slot);
 
     protected:
         void setTextColors();

@@ -13,6 +13,10 @@ namespace RetroFuturaGUI
         void SetCaretColors(std::span<glm::vec4> colors);
         void SetCaretFillType(const FillType fillType);
         void SetCaretGradientAnimationSpeed(const f32 speed);
+        void Connect_OnEnterPressed(const typename Signal<>::Slot& slot, const bool async);
+        void Connect_OnEnterReleased(const typename Signal<>::Slot& slot, const bool async);
+        void Disconnect_OnEnterPressed(const typename Signal<>::Slot& slot);
+        void Disconnect_OnEnterRelease(const typename Signal<>::Slot& slot);
 
     protected:
         void moveCaret();
@@ -27,16 +31,24 @@ namespace RetroFuturaGUI
             _textChangedFlag { false },
             _readOnly { false },
             _editingEnabled { false },
-            _keyWasReleased { true };
+            _keyWasReleased { true },
+            _enterPressed { false };
         u32 _keyHoldFrames { 0 };
         std::u32string _keyRepeatText {};
         std::vector<char> _prevKeyStates {};
         static constexpr i32 _keyRepeatInitialDelay = 60;
         static constexpr i32 _keyRepeatInterval = 5;
 
+        Signal<>
+            _onEnterPressed,
+            _onEnterPressedAsync,
+            _onEnterReleased,
+            _onEnterReleasedAsync;
+
     private:
         void moveCaretImpl();
-
-
+        void emitEnterRelease();
+        void emitEnterPressed();
+        void emitChange();
     };
 }

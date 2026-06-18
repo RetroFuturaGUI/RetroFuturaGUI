@@ -22,8 +22,6 @@ namespace RetroFuturaGUI
         auto operator =(const TextBox&) = delete;
         auto operator =(TextBox&&) = delete;
         void Draw();
-        void Connect_OnTextChange(const typename Signal<>::Slot& slot, const bool async);
-        void Disconnect_OnTextChange(const typename Signal<>::Slot& slot);
         void SetEnabled(const bool enable, const bool emitSignal = true);
         void SetFontFamily(std::string_view fontFamily, const f32 fontSize, const PlatformBridge::Fonts::Slant slant, const PlatformBridge::Fonts::Weight fontWeight) override;
         void SetCornerRadii(const glm::vec4& radii);

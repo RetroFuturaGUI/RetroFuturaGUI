@@ -102,3 +102,17 @@ void RetroFuturaGUI::ITextProperties::drawText()
     if(_text)
         _text->Draw();
 }
+
+void RetroFuturaGUI::ITextProperties::Connect_OnTextChange(const typename Signal<>::Slot &slot, const bool async)
+{
+    if (async)
+        _onTextChangeAsync.Connect(slot);
+    else
+        _onTextChange.Connect(slot);
+}
+
+void RetroFuturaGUI::ITextProperties::Disconnect_OnTextChange(const typename Signal<>::Slot &slot)
+{
+    _onTextChange.Disconnect(slot);
+    _onTextChangeAsync.Disconnect(slot);
+}

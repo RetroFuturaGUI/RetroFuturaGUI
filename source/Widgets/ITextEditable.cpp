@@ -102,6 +102,12 @@ void RetroFuturaGUI::ITextEditable::editText()
     if(_parentWindow != InputManager::GetFocusedWindow())
         return;
 
+    if(_enterPressed)
+    {
+        emitEnterRelease();
+        _enterPressed = false;
+    }
+
     if(PlatformBridge::Keyboard::GetKeyboardUseState() == PlatformBridge::KeyboardUseState::KeyReleased)
     {
         _keyWasReleased = true;
@@ -109,12 +115,6 @@ void RetroFuturaGUI::ITextEditable::editText()
         _keyRepeatText.clear();
         return;
     }
-
-    auto emitChange = [this]() 
-    {
-        _onTextChangeAsync.EmitAsync();
-        _onTextChange.Emit();
-    };
 
     if(!_keyWasReleased)
     {
@@ -127,6 +127,15 @@ void RetroFuturaGUI::ITextEditable::editText()
                 emitChange();
             }
         }
+        return;
+    }
+
+    if(PlatformBridge::Keyboard::GetKeyPressState(PB_KEY_RETURN) == PlatformBridge::KeyPressState::Press
+        || PlatformBridge::Keyboard::GetKeyPressState(PB_KEY_KP_ENTER) == PlatformBridge::KeyPressState::Press
+        || PlatformBridge::Keyboard::GetKeyPressState(PB_KEY_ISO_ENTER) == PlatformBridge::KeyPressState::Press)
+    {
+        emitEnterPressed();
+        _enterPressed = true;
         return;
     }
 
@@ -144,7 +153,7 @@ void RetroFuturaGUI::ITextEditable::editText()
         {
             std::u32string left { _text->GetTextUTF32().substr(0, cut - 1) };
             std::u32string right { _text->GetTextUTF32().substr(cut) };
-            std::println("{}🐺{}", DoubleEncodedString::Utf32ToUtf8(left), DoubleEncodedString::Utf32ToUtf8(right));
+            //std::println("{}🐺{}", DoubleEncodedString::Utf32ToUtf8(left), DoubleEncodedString::Utf32ToUtf8(right));
 
             _text->SetTextUTF32(left + right);
             --_caretPosition;
@@ -182,7 +191,6 @@ bool RetroFuturaGUI::ITextEditable::IsReadOnly() const
     return _readOnly;
 }
 
-
 void RetroFuturaGUI::ITextEditable::SetCaretColors(std::span<glm::vec4> colors)
 {
     if(_caret)
@@ -199,4 +207,53 @@ void RetroFuturaGUI::ITextEditable::SetCaretGradientAnimationSpeed(const f32 spe
 {
     if(_caret)
         _caret->SetGradientAnimationSpeed(speed);
+}
+
+void RetroFuturaGUI::ITextEditable::Connect_OnEnterPressed(const typename Signal<>::Slot& slot, const bool async)
+{
+    if (async)
+        _onEnterPressedAsync.Connect(slot);
+    else
+        _onEnterPressed.Connect(slot);
+}
+
+void RetroFuturaGUI::ITextEditable::Connect_OnEnterReleased(const typename Signal<>::Slot& slot, const bool async)
+{
+    if (async)
+        _onEnterReleasedAsync.Connect(slot);
+    else
+        _onEnterReleased.Connect(slot);
+}
+
+void RetroFuturaGUI::ITextEditable::Disconnect_OnEnterPressed(const typename Signal<>::Slot& slot)
+{
+    _onEnterPressed.Disconnect(slot);
+    _onEnterPressedAsync.Disconnect(slot);
+}
+
+void RetroFuturaGUI::ITextEditable::Disconnect_OnEnterRelease(const typename Signal<>::Slot& slot)
+{
+    _onEnterReleased.Disconnect(slot);
+    _onEnterReleasedAsync.Disconnect(slot);
+}
+
+void RetroFuturaGUI::ITextEditable::emitEnterRelease()
+{
+    _onEnterReleasedAsync.EmitAsync();
+    _onEnterReleased.Emit();
+}
+
+void RetroFuturaGUI::ITextEditable::emitEnterPressed()
+{
+    _onEnterPressedAsync.EmitAsync();
+    _onEnterPressed.Emit();
+}
+
+void RetroFuturaGUI::ITextEditable::emitChange()
+{
+    if(_enterPressed)
+        return;
+
+    _onTextChangeAsync.EmitAsync();
+    _onTextChange.Emit();
 }

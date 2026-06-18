@@ -39,20 +39,6 @@ void RetroFuturaGUI::TextBox::Draw()
     drawCaret();
 }
 
-void RetroFuturaGUI::TextBox::Connect_OnTextChange(const typename Signal<>::Slot &slot, const bool async)
-{
-    if (async)
-        _onTextChangeAsync.Connect(slot);
-    else
-        _onTextChange.Connect(slot);
-}
-
-void RetroFuturaGUI::TextBox::Disconnect_OnTextChange(const typename Signal<>::Slot &slot)
-{
-    _onTextChange.Disconnect(slot);
-    _onTextChangeAsync.Disconnect(slot);
-}
-
 void RetroFuturaGUI::TextBox::SetEnabled(const bool enable, const bool emitSignal)
 {
     _isEnabledFlag = enable;
