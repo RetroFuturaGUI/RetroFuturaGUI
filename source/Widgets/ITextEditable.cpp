@@ -171,7 +171,19 @@ void RetroFuturaGUI::ITextEditable::editText()
 
     if (!keyText.empty())
     {
-        _text->SetTextUTF32(_text->GetTextUTF32() + keyText);
+        if(_text->GetTextUTF32().size() == 0)
+            return;
+
+        if(_text->GetTextUTF32().front() == 0)
+            return;
+
+        uSize cut { CaretRelativePosition::Left == _caretRelativePosition ? _caretPosition : _caretPosition + 1 };
+        std::u32string left { _text->GetTextUTF32().substr(0, cut) };
+        std::u32string right { _text->GetTextUTF32().substr(cut) };
+        //std::println("{}🐺{}🐺{}", DoubleEncodedString::Utf32ToUtf8(left), DoubleEncodedString::Utf32ToUtf8(keyText), DoubleEncodedString::Utf32ToUtf8(right));
+        _text->SetTextUTF32(left + keyText + right);
+        ++_caretPosition;
+        _caret->SetPosition(_text->GetGlyphPosition(_caretPosition, _caretRelativePosition, _caret->GetSize().y));
         _keyRepeatText = keyText;
         _keyWasReleased = false;
         _keyHoldFrames = 0;

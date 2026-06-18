@@ -23,7 +23,6 @@ namespace RetroFuturaGUI
         void editText();
         
         std::unique_ptr<Rectangle> _caret;
-        bool _showCaret { false };
         uSize _caretPosition { 0 };
         CaretRelativePosition _caretRelativePosition { CaretRelativePosition::Right };
         std::vector<glm::vec4> _caretColors { glm::vec4(1.0f) };
@@ -32,7 +31,8 @@ namespace RetroFuturaGUI
             _readOnly { false },
             _editingEnabled { false },
             _keyWasReleased { true },
-            _enterPressed { false };
+            _enterPressed { false },
+            _showCaret { false };
         u32 _keyHoldFrames { 0 };
         std::u32string _keyRepeatText {};
         std::vector<char> _prevKeyStates {};
