@@ -18,7 +18,8 @@ RetroFuturaGUI::Button::Button(const std::string& name, Projection* projection, 
 void RetroFuturaGUI::Button::Draw()
 {
     interact();
-    drawBackgroundBorder();
+    drawBackground();
+    drawBorder();
     drawText();
 }
 
@@ -148,8 +149,16 @@ void RetroFuturaGUI::Button::interact()
 
 void RetroFuturaGUI::Button::setColors(const ColorState state)
 {
-    _borderBackgroundColorState = state;
+    _backgroundColorState = state;
+    _borderColorState = state;
     _textColorState = state;
-    setborderBackgroundColors();
+    setBackgroundColors();
+    setBorderColors();
     setTextColors();
+}
+
+void RetroFuturaGUI::Button::SetCornerRadii(const glm::vec4& radii)
+{
+    _background->SetCornerRadii(radii);
+    _border->SetCornerRadii(radii);
 }

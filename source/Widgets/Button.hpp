@@ -2,13 +2,14 @@
 #include "Text.hpp"
 #include "IWidget.hpp"
 #include "IClickable.hpp"
-#include "IDesignable.hpp"
+#include "IBackground.hpp"
+#include "IBorder.hpp"
 #include "ITextProperties.hpp"
 
 namespace RetroFuturaGUI
 {
     //A widget that triggers actions
-    class Button : public IWidget, public IClickable, public IDesignable, public ITextProperties
+    class Button : public IWidget, public IClickable, public IBackground, public IBorder, public ITextProperties
     {
     public:
         Button(const std::string& name, Projection* projection, IWidget* parentWidget, const WidgetTypeID parentWidgetTypeID, GLFWwindow* parentWindow);
@@ -23,6 +24,7 @@ namespace RetroFuturaGUI
         void SetSize(const glm::vec3& size) override;
         void SetPosition(const glm::vec3& position) override;
         void SetRotation(const float rotation) override;
+        void SetCornerRadii(const glm::vec4& radii);
 
     private:
         void interact();

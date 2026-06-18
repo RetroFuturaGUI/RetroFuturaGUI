@@ -33,7 +33,8 @@ RetroFuturaGUI::TextBox::TextBox(const std::string& name, Projection* projection
 void RetroFuturaGUI::TextBox::Draw()
 {
     interact();
-    drawBackgroundBorder();
+    drawBackground();
+    drawBorder();
     drawText();
     drawCaret();
 }
@@ -202,9 +203,11 @@ void RetroFuturaGUI::TextBox::interact()
 
 void RetroFuturaGUI::TextBox::setColors(const ColorState state)
 {
-    _borderBackgroundColorState = state;
+    _backgroundColorState = state;
+    _borderColorState = state;
     _textColorState = state;
-    setborderBackgroundColors();
+    setBackgroundColors();
+    setBorderColors();
     setTextColors();
 }
 
@@ -222,4 +225,10 @@ void RetroFuturaGUI::TextBox::SetFontFamily(std::string_view fontFamily, const f
 {
     ITextProperties::SetFontFamily(fontFamily, fontSize, slant, fontWeight);
     _caret->SetSize(glm::vec2(2.0f, fontSize * 1.6f));
+}
+
+void RetroFuturaGUI::TextBox::SetCornerRadii(const glm::vec4& radii)
+{
+    _background->SetCornerRadii(radii);
+    _border->SetCornerRadii(radii);
 }
