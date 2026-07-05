@@ -139,7 +139,8 @@ void RetroFuturaGUI::TextBox::interact()
             setColors(ColorState::Enabled);
         }
 
-        PlatformBridge::Keyboard::SetActiveWindow(0);
+        PlatformBridge::Input::SetActiveDisplay(nullptr); 
+        PlatformBridge::Input::SetActiveWindow(0);
         return;
     }
     
@@ -165,9 +166,10 @@ void RetroFuturaGUI::TextBox::interact()
         setColors(ColorState::Clicked);
         _editingEnabled = true;
 #if defined(TARGET_PLATFORM_LINUX)
-        PlatformBridge::Keyboard::SetActiveWindow(glfwGetX11Window(_parentWindow));
+        PlatformBridge::Input::SetActiveDisplay(glfwGetX11Display());
+        PlatformBridge::Input::SetActiveWindow(glfwGetX11Window(_parentWindow));
 #elif defined(TARGET_PLATFORM_WINDOWS)
-        PlatformBridge::Keyboard::SetActiveWindow(glfwGetWin32Window(_parentWindow));
+        PlatformBridge::Input::SetActiveWindow(glfwGetWin32Window(_parentWindow));
 #endif
         _caretPosition = _text->GetGlyphCount() - 1;
         _caret->SetPosition(_text->GetGlyphPosition(_caretPosition, CaretRelativePosition::Right, _caret->GetSize().y));

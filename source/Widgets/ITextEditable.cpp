@@ -9,7 +9,7 @@ void RetroFuturaGUI::ITextEditable::moveCaret()
     if(_parentWindow != InputManager::GetFocusedWindow())
         return;
 
-    if(PlatformBridge::Keyboard::GetKeyboardUseState() == PlatformBridge::KeyboardUseState::KeyReleased)
+    if(PlatformBridge::Input::GetKeyboardUseState() == PlatformBridge::KeyboardUseState::KeyReleased)
     {
         _keyWasReleased = true;
         _keyHoldFrames = 0;
@@ -35,7 +35,7 @@ void RetroFuturaGUI::ITextEditable::moveCaret()
 
 void RetroFuturaGUI::ITextEditable::moveCaretImpl()
 {
-    if(PlatformBridge::Keyboard::GetKeyPressState(PB_KEY_LEFT) == PlatformBridge::KeyPressState::Press)
+    if(PlatformBridge::Input::GetKeyPressState(PB_KEY_LEFT) == PlatformBridge::KeyPressState::Press)
     {
         if(CaretRelativePosition::Right == _caretRelativePosition)
         {
@@ -58,7 +58,7 @@ void RetroFuturaGUI::ITextEditable::moveCaretImpl()
             _caret->SetPosition(_text->GetGlyphPosition(_caretPosition, _caretRelativePosition, _caret->GetSize().y));
         }
     }
-    else if(PlatformBridge::Keyboard::GetKeyPressState(PB_KEY_RIGHT) == PlatformBridge::KeyPressState::Press)
+    else if(PlatformBridge::Input::GetKeyPressState(PB_KEY_RIGHT) == PlatformBridge::KeyPressState::Press)
     {
 
         if(CaretRelativePosition::Left == _caretRelativePosition)
@@ -108,7 +108,7 @@ void RetroFuturaGUI::ITextEditable::editText()
         _enterPressed = false;
     }
 
-    if(PlatformBridge::Keyboard::GetKeyboardUseState() == PlatformBridge::KeyboardUseState::KeyReleased)
+    if(PlatformBridge::Input::GetKeyboardUseState() == PlatformBridge::KeyboardUseState::KeyReleased)
     {
         _keyWasReleased = true;
         _keyHoldFrames = 0;
@@ -130,16 +130,16 @@ void RetroFuturaGUI::ITextEditable::editText()
         return;
     }
 
-    if(PlatformBridge::Keyboard::GetKeyPressState(PB_KEY_RETURN) == PlatformBridge::KeyPressState::Press
-        || PlatformBridge::Keyboard::GetKeyPressState(PB_KEY_KP_ENTER) == PlatformBridge::KeyPressState::Press
-        || PlatformBridge::Keyboard::GetKeyPressState(PB_KEY_ISO_ENTER) == PlatformBridge::KeyPressState::Press)
+    if(PlatformBridge::Input::GetKeyPressState(PB_KEY_RETURN) == PlatformBridge::KeyPressState::Press
+        || PlatformBridge::Input::GetKeyPressState(PB_KEY_KP_ENTER) == PlatformBridge::KeyPressState::Press
+        || PlatformBridge::Input::GetKeyPressState(PB_KEY_ISO_ENTER) == PlatformBridge::KeyPressState::Press)
     {
         emitEnterPressed();
         _enterPressed = true;
         return;
     }
 
-    if(PlatformBridge::Keyboard::GetKeyPressState(PB_KEY_BACKSPACE) == PlatformBridge::KeyPressState::Press)
+    if(PlatformBridge::Input::GetKeyPressState(PB_KEY_BACKSPACE) == PlatformBridge::KeyPressState::Press)
     {
         if(_text->GetTextUTF32().size() == 0)
             return;
@@ -167,7 +167,7 @@ void RetroFuturaGUI::ITextEditable::editText()
         return;
     }
 
-    const std::u32string keyText = DoubleEncodedString::Utf8ToUtf32(PlatformBridge::Keyboard::GetInputString());
+    const std::u32string keyText = DoubleEncodedString::Utf8ToUtf32(PlatformBridge::Input::GetInputString());
 
     if (!keyText.empty())
     {
