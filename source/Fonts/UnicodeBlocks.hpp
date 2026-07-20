@@ -1,5 +1,6 @@
 #pragma once
 #include "IncludeHelper.hpp"
+#include <array>
 
 #define ControlBlockFirst 0x0U
 #define ControlBlockLast 0x1FU

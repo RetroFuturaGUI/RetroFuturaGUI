@@ -65,7 +65,7 @@ u32 RetroFuturaGUI::FontManager::generateGlyphAtlas(FT_Face face, const u32 code
     FT_Set_Char_Size(face, 0, integralFontSize << 6, 96, 96);
     std::vector<Glyph>& glyphsRef = *glyphs;
     u32 numGlyphs { codePointLast - codePointFirst + 1 },
-        maxGlyphDimension { (u32)(1 + (face->size->metrics.height >> 6)) * (u32)ceilf(sqrtf(numGlyphs)) },
+        maxGlyphDimension { (u32)(1 + (face->size->metrics.height >> 6)) * (u32)ceilf(sqrtf(static_cast<float>(numGlyphs))) },
         atlasWidth { 1 };
     glyphsRef.resize(numGlyphs);
 
@@ -79,7 +79,7 @@ u32 RetroFuturaGUI::FontManager::generateGlyphAtlas(FT_Face face, const u32 code
 
     for(uSize codePoint = codePointFirst; codePoint <= codePointLast; ++codePoint)
     {
-        FT_Load_Char(face, codePoint, FT_LOAD_RENDER | FT_LOAD_FORCE_AUTOHINT | FT_LOAD_TARGET_LIGHT);
+        FT_Load_Char(face, static_cast<FT_ULong>(codePoint), FT_LOAD_RENDER | FT_LOAD_FORCE_AUTOHINT | FT_LOAD_TARGET_LIGHT);
         FT_Bitmap* bitmap = &face->glyph->bitmap;
 
         if(penX + bitmap->width >= atlasWidth){
@@ -91,17 +91,17 @@ u32 RetroFuturaGUI::FontManager::generateGlyphAtlas(FT_Face face, const u32 code
         {
             for(uSize col = 0; col < bitmap->width; ++col)
             {
-                u32 x = penX + col;
-                u32 y = penY + row;
+                u32 x = penX + static_cast<u32>(col);
+                u32 y = penY + static_cast<u32>(row);
                 pixels[y * atlasWidth + x] = bitmap->buffer[row * bitmap->pitch + col];
             }
         }
 
-        glyphsRef[codePoint - codePointFirst]._CodePoint = codePoint;
+        glyphsRef[codePoint - codePointFirst]._CodePoint = static_cast<u32>(codePoint);
         glyphsRef[codePoint - codePointFirst]._OriginX = penX;
         glyphsRef[codePoint - codePointFirst]._OriginY = penY;
-        glyphsRef[codePoint - codePointFirst]._EndX = penX + bitmap->width;
-        glyphsRef[codePoint - codePointFirst]._EndY = penY + bitmap->rows;
+        glyphsRef[codePoint - codePointFirst]._EndX = penX + static_cast<u32>(bitmap->width);
+        glyphsRef[codePoint - codePointFirst]._EndY = penY + static_cast<u32>(bitmap->rows);
         glyphsRef[codePoint - codePointFirst]._BearingX   = face->glyph->bitmap_left;
         glyphsRef[codePoint - codePointFirst]._BearingY   = face->glyph->bitmap_top;
         glyphsRef[codePoint - codePointFirst]._Advance = face->glyph->advance.x >> 6;

@@ -156,7 +156,7 @@ std::string RetroFuturaGUI::Shader::loadShaderFile(const char* shaderPath)
     }
     catch (const std::ifstream::failure& e)
     {
-        std::println("ERROR::SHADER::FILE_NOT_SUCCESFULLY_READ: {0}", shaderPath);
+        std::println("ERROR::SHADER::FILE_NOT_SUCCESFULLY_READ: {}, ({})", shaderPath, e.what());
     }
 
     return shaderCode;
