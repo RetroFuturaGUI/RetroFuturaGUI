@@ -34,6 +34,7 @@ namespace RetroFuturaGUI
         Projection* GetProjection() const;
         WindowBar& GetWindowBar();
         void ShowWindowBar(const bool show);
+        const std::string& GetName() const;
 
     private:
         enum class ResizeEdge : u32

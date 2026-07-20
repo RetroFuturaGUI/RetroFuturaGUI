@@ -3,13 +3,16 @@ using System.Runtime.InteropServices;
 
 public class RetroFuturaGuiBinding
 {
-    public enum WidgetAction : int
+    public enum WidgetAction : Int32
     {
         OnClick,
         OnRelease,
         OnMouseEnter,
         OnMouseLeave,
         WhileHover,
+        OnTextChanged,
+        OnEnterPressed,
+        OnEnterReleased,
         Unknown = -1
     };   
 
@@ -153,5 +156,11 @@ public class RetroFuturaGuiBinding
         IntPtr colors,
         UInt32 colorCount,
         UInt32 colorState
+    );
+    
+    [DllImport(dllName, CallingConvention = CallingConvention.Cdecl)]
+    public static extern void SetText(
+        [MarshalAs(UnmanagedType.LPStr)] string id,
+        [MarshalAs(UnmanagedType.LPStr)] string text
     );
 };

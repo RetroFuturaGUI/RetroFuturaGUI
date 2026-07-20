@@ -479,3 +479,9 @@ void RetroFuturaGUI::Window::ShowWindowBar(const bool show)
 	else
 	    destroyWindowBar();
 }
+
+
+const std::string& RetroFuturaGUI::Window::GetName() const
+{
+	return _name;
+}

@@ -1,6 +1,7 @@
 #include "DynamicLibWidgetManager.hpp"
 #include "Button.hpp"
 #include "Label.hpp"
+#include "TextBox.hpp"
 
 void RetroFuturaGUI::DynamicLibWidgetManager::AddWidget(std::string_view id, IWidget *widgetRef)
 {
@@ -21,9 +22,12 @@ void RetroFuturaGUI::DynamicLibWidgetManager::ConnectSlot(const char *id, Callba
         case WidgetTypeID::Button:
             connectSlotToButton(widget, callback, action, async);
         break;
-        /*case WidgetTypeID::Label:
-            connectSlotFromLabel(widget, callback, action, async);
-        break;*/
+        case WidgetTypeID::Label:
+            connectSlotToLabel(widget, callback, action, async);
+        break;
+        case WidgetTypeID::TextBox:
+            connectSlotToTextBox(widget, callback, action, async);
+        break;
     }
 }
 
@@ -39,11 +43,14 @@ void RetroFuturaGUI::DynamicLibWidgetManager::DisconnectSlot(const char *id, Cal
     switch (widgetTypeID)
     {
         case WidgetTypeID::Button:
-            disconnectSlotToButton(widget, callback, action);
+            disconnectSlotFromButton(widget, callback, action);
         break;
-        /*case WidgetTypeID::Label:
+        case WidgetTypeID::Label:
             disconnectSlotFromLabel(widget, callback, action);
-        break;*/
+        break;
+        case WidgetTypeID::TextBox:
+            disconnectSlotFromTextBox(widget, callback, action);
+        break;
     }
 }
 
@@ -64,7 +71,7 @@ void RetroFuturaGUI::DynamicLibWidgetManager::SetSize(const char *id, const f32 
     if(!widget)
         return;
 
-    widget->SetSize(glm::vec2(width, height));
+    widget->SetSize(glm::vec3(width, height, 0.01f));
 }
 
 void RetroFuturaGUI::DynamicLibWidgetManager::SetEnabled(const char* id, const bool enable)
@@ -338,7 +345,36 @@ void RetroFuturaGUI::DynamicLibWidgetManager::SetTextColors(const char *id, std:
         case WidgetTypeID::Label:
         {
             Label* label = dynamic_cast<Label*>(widget);
-            label->SetTextColors(colors, colorState);
+            label->SetTextColor(colors.front(), colorState);
+        } break;
+    }
+}
+
+void RetroFuturaGUI::DynamicLibWidgetManager::SetText(const char* id, const char* text)
+{
+    IWidget* widget { getWidgetPointer(id) };
+
+    if(!widget)
+        return;
+
+    WidgetTypeID widgetTypeID = widget->GetWidgetTypeID();
+
+    switch(widgetTypeID)
+    {
+        case WidgetTypeID::Button:
+        {
+            Button* button = dynamic_cast<Button*>(widget);
+            button->SetText(text);
+        } break;
+        case WidgetTypeID::Label:
+        {
+            Label* label = dynamic_cast<Label*>(widget);
+            label->SetText(text);
+        } break;
+        case WidgetTypeID::TextBox:
+        {
+            TextBox* textBox = dynamic_cast<TextBox*>(widget);
+            textBox->SetText(text);
         } break;
     }
 }
@@ -383,19 +419,7 @@ void RetroFuturaGUI::DynamicLibWidgetManager::connectSlotToButton(IWidget *widge
     }
 }
 
-/*void RetroFuturaGUI::DynamicLibWidgetManager::connectSlotFromLabel(IWidget *widget, CallbackType callback, const i32 action, const bool async)
-{
-    Label* label = dynamic_cast<Label*>(widget);
-
-    switch(action)
-    {
-        //ToDo
-        default:
-            std::println("Warning: Action type of {0} is not compatible with Labels.", action);
-    }
-}*/
-
-void RetroFuturaGUI::DynamicLibWidgetManager::disconnectSlotToButton(IWidget *widget, CallbackType callback, const i32 action)
+void RetroFuturaGUI::DynamicLibWidgetManager::disconnectSlotFromButton(IWidget *widget, CallbackType callback, const i32 action)
 {
     Button* button = dynamic_cast<Button*>(widget);
 
@@ -421,14 +445,99 @@ void RetroFuturaGUI::DynamicLibWidgetManager::disconnectSlotToButton(IWidget *wi
     }
 }
 
-/*void RetroFuturaGUI::DynamicLibWidgetManager::disconnectSlotFromLabel(IWidget *widget, CallbackType callback, const i32 action)
+void RetroFuturaGUI::DynamicLibWidgetManager::connectSlotToLabel(IWidget *widget, CallbackType callback, const i32 action, const bool async)
 {
     Label* label = dynamic_cast<Label*>(widget);
 
     switch(action)
     {
-        //ToDo
+        case WidgetAction::OnTextChange:
+            label->Connect_OnTextChange(callback, async);
         default:
             std::println("Warning: Action type of {0} is not compatible with Labels.", action);
     }
-}*/
+}
+
+void RetroFuturaGUI::DynamicLibWidgetManager::disconnectSlotFromLabel(IWidget *widget, CallbackType callback, const i32 action)
+{
+    Label* label = dynamic_cast<Label*>(widget);
+
+    switch(action)
+    {
+        case WidgetAction::OnTextChange:
+            label->Disconnect_OnTextChange(callback);
+        break;
+        default:
+            std::println("Warning: Action type of {0} is not compatible with Labels.", action);
+    }
+}
+
+void RetroFuturaGUI::DynamicLibWidgetManager::connectSlotToTextBox(IWidget *widget, CallbackType callback, const i32 action, const bool async)
+{
+    TextBox* textBox = dynamic_cast<TextBox*>(widget);
+
+    switch(action)
+    {
+        case WidgetAction::OnClick:
+            textBox->Connect_OnClick(callback, async);
+        break;
+        case WidgetAction::OnRelease:
+            textBox->Connect_OnRelease(callback, async);
+        break;
+        case WidgetAction::OnMouseEnter:
+            textBox->Connect_OnMouseEnter(callback, async);
+        break;
+        case WidgetAction::OnMouseLeave:
+            textBox->Connect_OnMouseLeave(callback, async);
+        break;
+        case WidgetAction::WhileHover:
+            textBox->Connect_WhileHover(callback, async);
+        break;
+        case WidgetAction::OnTextChange:
+            textBox->Connect_OnTextChange(callback, async);
+        break;
+        case WidgetAction::OnEnterPressed:
+            textBox->Connect_OnEnterPressed(callback, async);
+        break;
+        case WidgetAction::OnEnterReleased:
+            textBox->Connect_OnEnterReleased(callback, async);
+        break;
+        default:
+            std::println("Warning: Action type of {0} is not compatible with textBoxes.", action);
+    }
+}
+
+void RetroFuturaGUI::DynamicLibWidgetManager::disconnectSlotFromTextBox(IWidget *widget, CallbackType callback, const i32 action)
+{
+    TextBox* textBox = dynamic_cast<TextBox*>(widget);
+
+    switch(action)
+    {
+        case WidgetAction::OnClick:
+            textBox->Disconnect_OnClick(callback);
+        break;
+        case WidgetAction::OnRelease:
+            textBox->Disconnect_OnRelease(callback);
+        break;
+        case WidgetAction::OnMouseEnter:
+            textBox->Disconnect_OnMouseEnter(callback);
+        break;
+        case WidgetAction::OnMouseLeave:
+            textBox->Disconnect_OnMouseLeave(callback);
+        break;
+        case WidgetAction::WhileHover:
+            textBox->Disconnect_WhileHover(callback);
+        break;
+        case WidgetAction::OnTextChange:
+            textBox->Disconnect_OnTextChange(callback);
+        break;
+        case WidgetAction::OnEnterPressed:
+            textBox->Disconnect_OnEnterPressed(callback);
+        break;
+        case WidgetAction::OnEnterReleased:
+            textBox->Disconnect_OnEnterReleased(callback);
+        break;
+        default:
+            std::println("Warning: Action type of {0} is not compatible with textBoxes.", action);
+    }
+}

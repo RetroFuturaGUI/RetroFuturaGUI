@@ -16,7 +16,7 @@ namespace RetroFuturaGUI
         void Connect_OnEnterPressed(const typename Signal<>::Slot& slot, const bool async);
         void Connect_OnEnterReleased(const typename Signal<>::Slot& slot, const bool async);
         void Disconnect_OnEnterPressed(const typename Signal<>::Slot& slot);
-        void Disconnect_OnEnterRelease(const typename Signal<>::Slot& slot);
+        void Disconnect_OnEnterReleased(const typename Signal<>::Slot& slot);
 
     protected:
         void moveCaret();

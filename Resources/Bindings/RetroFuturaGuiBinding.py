@@ -13,6 +13,9 @@ class RetroFuturaGuiBinding:
         OnMouseEnter = 2
         OnMouseLeave = 3
         WhileHover = 4
+        OnTextChanged = 5
+        OnEnterPressed = 6
+        OnEnterReleased = 7
         Unknown = -1
 
     class ColorState(Enum):
@@ -89,3 +92,59 @@ class RetroFuturaGuiBinding:
             )
         except Exception as e:
             print(f"Error connecting slot: {e}")
+
+    def DisconnectSlot(self, id, action):
+        try:
+            actionInt = action.value if hasattr(action, 'value') else action
+            self.RetroFuturaGuiDLL.DisconnectSlot(
+                id.encode("utf-8"),
+                actionInt
+            )
+            if id in self.callbacks:
+                del self.callbacks[id]
+        except Exception as e:
+            print(f"Error disconnecting slot: {e}")
+
+    def SetRotation(self, id, rotation):
+        try:
+            self.RetroFuturaGuiDLL.SetRotation(
+                id.encode("utf-8"),
+                rotation
+            )
+        except Exception as e:
+            print(f"Error setting rotation: {e}")
+
+    def SetSize(self, id, width, height):
+        try:
+            self.RetroFuturaGuiDLL.SetSize(
+                id.encode("utf-8"),
+                width,
+                height
+            )
+        except Exception as e:
+            print(f"Error setting size: {e}")
+
+    def SetTextColors(self, id, colors, colorState):
+        try:
+            colorCount = len(colors)
+            colorArrayType = c_float * (colorCount * 4)
+            colorArray = colorArrayType(*[component for color in colors for component in color])
+            self.RetroFuturaGuiDLL.SetTextColors(
+                id.encode("utf-8"),
+                colorArray,
+                colorCount,
+                colorState.value if hasattr(colorState, 'value') else colorState
+            )
+        except Exception as e:
+            print(f"Error setting text colors: {e}")
+
+    def SetText(self, id, text):
+        try:
+            self.RetroFuturaGuiDLL.SetText(
+                id.encode("utf-8"),
+                text.encode("utf-8")
+            )
+        except Exception as e:
+            print(f"Error setting text: {e}")
+
+    

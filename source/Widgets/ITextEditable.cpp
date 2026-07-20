@@ -243,7 +243,7 @@ void RetroFuturaGUI::ITextEditable::Disconnect_OnEnterPressed(const typename Sig
     _onEnterPressedAsync.Disconnect(slot);
 }
 
-void RetroFuturaGUI::ITextEditable::Disconnect_OnEnterRelease(const typename Signal<>::Slot& slot)
+void RetroFuturaGUI::ITextEditable::Disconnect_OnEnterReleased(const typename Signal<>::Slot& slot)
 {
     _onEnterReleased.Disconnect(slot);
     _onEnterReleasedAsync.Disconnect(slot);
