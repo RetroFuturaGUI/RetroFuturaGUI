@@ -5,7 +5,8 @@
 #include <stdexcept>
 
 #ifndef _MSC_VER
-    using std::max;
+    using max;
+    using min;
 #endif
 
 RetroFuturaGUI::Text::Text(Projection* projection)
@@ -215,6 +216,36 @@ void RetroFuturaGUI::Text::updateMesh()
         width = glyph._Size[0] * scale;
         height = glyph._Size[1] * scale;
 
+        // Clipping calculations
+        const float 
+            widgetLeft { _position.x - _parentSize.x * 0.5f },
+            widgetRight { widgetLeft + _parentSize.x },
+            widgetBottom { _position.y - _parentSize.y * 0.5f },
+            widgetTop { widgetBottom + _parentSize.y },
+            glyphWorldLeft { _positionAligned.x + xPos },
+            glyphWorldBottom { _positionAligned.y + yPos },
+            clippedLocalLeft { max(0.0f, widgetLeft - glyphWorldLeft) },
+            clippedLocalRight { min(width, widgetRight - glyphWorldLeft) },
+            clippedLocalBottom { max(0.0f, widgetBottom - glyphWorldBottom) },
+            clippedLocalTop { min(height, widgetTop - glyphWorldBottom) };
+
+        if (clippedLocalRight <= clippedLocalLeft || clippedLocalTop <= clippedLocalBottom)
+        {
+            currentX += glyph._Advance * scale;
+            _glyphPositions.push_back(currentX);
+            continue;
+        }
+
+        const float 
+            clippedWidth { clippedLocalRight - clippedLocalLeft },
+            uSpan { glyph._UV[2] - glyph._UV[0] },
+            vSpan { glyph._UV[3] - glyph._UV[1] },
+            uMin { glyph._UV[0] + (clippedLocalLeft / width) * uSpan },
+            uMax { glyph._UV[0] + (clippedLocalRight / width) * uSpan },
+            vMin { glyph._UV[1] + (clippedLocalBottom / height) * vSpan },
+            vMax { glyph._UV[1] + (clippedLocalTop / height) * vSpan };
+        //clipping calculations done
+
         // If texture changes, flush previous batch
         if (!batching || foundTextureID != lastTextureID)
         {
@@ -224,46 +255,45 @@ void RetroFuturaGUI::Text::updateMesh()
                 vertexStart += vertexCount;
                 vertexCount = 0;
             }
+            
             lastTextureID = foundTextureID;
             batching = true;
         }
 
         _vertices.reserve(_vertices.size() + 24);
-        _vertices.push_back(xPos);
-        _vertices.push_back(yPos + height);
-        _vertices.push_back(glyph._UV[0]);
-        _vertices.push_back(glyph._UV[1]);
-        _vertices.push_back(xPos);
-        _vertices.push_back(yPos);
-        _vertices.push_back(glyph._UV[0]);
-        _vertices.push_back(glyph._UV[3]);
-        _vertices.push_back(xPos + width);
-        _vertices.push_back(yPos);
-        _vertices.push_back(glyph._UV[2]);
-        _vertices.push_back(glyph._UV[3]);
-        _vertices.push_back(xPos);
-        _vertices.push_back(yPos + height);
-        _vertices.push_back(glyph._UV[0]);
-        _vertices.push_back(glyph._UV[1]);
-        _vertices.push_back(xPos + width);
-        _vertices.push_back(yPos);
-        _vertices.push_back(glyph._UV[2]);
-        _vertices.push_back(glyph._UV[3]);
-        _vertices.push_back(xPos + width);
-        _vertices.push_back(yPos + height);
-        _vertices.push_back(glyph._UV[2]);
-        _vertices.push_back(glyph._UV[1]);
+        _vertices.push_back(xPos + clippedLocalLeft);
+        _vertices.push_back(yPos + height - clippedLocalTop);
+        _vertices.push_back(uMin);
+        _vertices.push_back(vMax);
+        _vertices.push_back(xPos + clippedLocalLeft);
+        _vertices.push_back(yPos + height - clippedLocalBottom);
+        _vertices.push_back(uMin);
+        _vertices.push_back(vMin);
+        _vertices.push_back(xPos + clippedLocalLeft + clippedWidth);
+        _vertices.push_back(yPos + height - clippedLocalBottom);
+        _vertices.push_back(uMax);
+        _vertices.push_back(vMin);
+        _vertices.push_back(xPos + clippedLocalLeft);
+        _vertices.push_back(yPos + height - clippedLocalTop);
+        _vertices.push_back(uMin);
+        _vertices.push_back(vMax);
+        _vertices.push_back(xPos + clippedLocalLeft + clippedWidth);
+        _vertices.push_back(yPos + height - clippedLocalBottom);
+        _vertices.push_back(uMax);
+        _vertices.push_back(vMin);
+        _vertices.push_back(xPos + clippedLocalLeft + clippedWidth);
+        _vertices.push_back(yPos + height - clippedLocalTop);
+        _vertices.push_back(uMax);
+        _vertices.push_back(vMax);
 
         vertexCount += 6;
         currentX += glyph._Advance * scale;
         _glyphPositions.push_back(currentX);
-        //_glyphPositions.back() += glyph._Size[0];
     }
+
     // Flush last batch
     if (batching && vertexCount > 0)
-    {
         _glyphDraws.push_back({lastTextureID, vertexStart, vertexCount});
-    }
 }
 
 glm::vec3 RetroFuturaGUI::Text::GetGlyphPosition(const uSize index, const CaretRelativePosition relativePosition, const f32 caretSize) const
