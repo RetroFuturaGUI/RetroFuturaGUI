@@ -2,6 +2,7 @@
 #include "Button.hpp"
 #include "Label.hpp"
 #include "TextBox.hpp"
+#include <utility>
 
 void RetroFuturaGUI::DynamicLibWidgetManager::AddWidget(std::string_view id, IWidget *widgetRef)
 {
@@ -28,6 +29,8 @@ void RetroFuturaGUI::DynamicLibWidgetManager::ConnectSlot(const char *id, Callba
         case WidgetTypeID::TextBox:
             connectSlotToTextBox(widget, callback, action, async);
         break;
+        default:
+            [[unlikely]];
     }
 }
 
@@ -51,6 +54,8 @@ void RetroFuturaGUI::DynamicLibWidgetManager::DisconnectSlot(const char *id, Cal
         case WidgetTypeID::TextBox:
             disconnectSlotFromTextBox(widget, callback, action);
         break;
+        default:
+            [[unlikely]];
     }
 }
 
@@ -95,6 +100,8 @@ void RetroFuturaGUI::DynamicLibWidgetManager::SetEnabled(const char* id, const b
             Label* label = dynamic_cast<Label*>(widget);
             label->SetEnabled(enable);
         } break;
+        default:
+            [[unlikely]];
     }
 }
 
@@ -114,6 +121,8 @@ void RetroFuturaGUI::DynamicLibWidgetManager::SetBackgroundColors(const char* id
             Button* button = dynamic_cast<Button*>(widget);
             button->SetBackgroundColors(colors, colorState);
         } break;
+        default:
+            [[unlikely]];
     }
 }
 
@@ -133,6 +142,8 @@ void RetroFuturaGUI::DynamicLibWidgetManager::SetBackgroundGradientOffset(const 
             Button* button = dynamic_cast<Button*>(widget);
             button->SetBackgroundGradientOffset(gradientOffset);
         } break;
+        default:
+            [[unlikely]];
     }
 }
 
@@ -152,6 +163,8 @@ void RetroFuturaGUI::DynamicLibWidgetManager::SetBackgroundGradientAnimationSpee
             Button* button = dynamic_cast<Button*>(widget);
             button->SetBackgroundGradientAnimationSpeed(animationSpeed);
         } break;
+        default:
+            [[unlikely]];
     }
 }
 
@@ -171,6 +184,8 @@ void RetroFuturaGUI::DynamicLibWidgetManager::SetBackgroundGradientDegree(const 
             Button* button = dynamic_cast<Button*>(widget);
             button->SetBackgroundGradientDegree(degree);
         } break;
+        default:
+            [[unlikely]];
     }
 }
 
@@ -190,6 +205,8 @@ void RetroFuturaGUI::DynamicLibWidgetManager::SetBackgroundGradientRotationSpeed
             Button* button = dynamic_cast<Button*>(widget);
             button->SetBackgroundGradientRotationSpeed(rotationSpeed);
         } break;
+        default:
+            [[unlikely]];
     }
 }
 
@@ -209,6 +226,8 @@ void RetroFuturaGUI::DynamicLibWidgetManager::SetWindowBackgroundImageTextureID(
             Button* button = dynamic_cast<Button*>(widget);
             button->SetWindowBackgroundImageTextureID(textureID);
         } break;
+        default:
+            [[unlikely]];
     }
 }
 
@@ -228,6 +247,8 @@ void RetroFuturaGUI::DynamicLibWidgetManager::SetBorderColors(const char* id, st
             Button* button = dynamic_cast<Button*>(widget);
             button->SetBorderColors(colors, colorState);
         } break;
+        default:
+            [[unlikely]];
     }
 }
 
@@ -247,6 +268,8 @@ void RetroFuturaGUI::DynamicLibWidgetManager::SetBorderGradientOffset(const char
             Button* button = dynamic_cast<Button*>(widget);
             button->SetBorderGradientOffset(gradientOffset);
         } break;
+        default:
+            [[unlikely]];
     }
 }
 
@@ -266,6 +289,8 @@ void RetroFuturaGUI::DynamicLibWidgetManager::SetBorderGradientAnimationSpeed(co
             Button* button = dynamic_cast<Button*>(widget);
             button->SetBorderGradientAnimationSpeed(animationSpeed);
         } break;
+        default:
+            [[unlikely]];
     }
 }
 
@@ -285,6 +310,8 @@ void RetroFuturaGUI::DynamicLibWidgetManager::SetBorderGradientDegree(const char
             Button* button = dynamic_cast<Button*>(widget);
             button->SetBorderGradientDegree(degree);
         } break;
+        default:
+            [[unlikely]];
     }
 }
 
@@ -304,6 +331,8 @@ void RetroFuturaGUI::DynamicLibWidgetManager::SetBorderGradientRotationSpeed(con
             Button* button = dynamic_cast<Button*>(widget);
             button->SetBorderGradientRotationSpeed(rotationSpeed);
         } break;
+        default:
+            [[unlikely]];
     }
 }
 
@@ -323,6 +352,8 @@ void RetroFuturaGUI::DynamicLibWidgetManager::SetWindowBorderImageTextureID(cons
             Button* button = dynamic_cast<Button*>(widget);
             button->SetWindowBorderImageTextureID(textureID);
         } break;
+        default:
+            [[unlikely]];
     }
 }
 
@@ -347,6 +378,8 @@ void RetroFuturaGUI::DynamicLibWidgetManager::SetTextColors(const char *id, std:
             Label* label = dynamic_cast<Label*>(widget);
             label->SetTextColor(colors.front(), colorState);
         } break;
+        default:
+            [[unlikely]];
     }
 }
 
@@ -376,6 +409,8 @@ void RetroFuturaGUI::DynamicLibWidgetManager::SetText(const char* id, const char
             TextBox* textBox = dynamic_cast<TextBox*>(widget);
             textBox->SetText(text);
         } break;
+        default:
+            [[unlikely]];
     }
 }
 
