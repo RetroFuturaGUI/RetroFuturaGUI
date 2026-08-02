@@ -121,9 +121,15 @@ void RetroFuturaGUI::ITextEditable::editText()
         if (!_keyRepeatText.empty())
         {
             ++_keyHoldFrames;
+
             if (_keyHoldFrames >= _keyRepeatInitialDelay && (_keyHoldFrames - _keyRepeatInitialDelay) % _keyRepeatInterval == 0)
             {
-                _text->SetTextUTF32(_text->GetTextUTF32() + _keyRepeatText);
+                const uSize cut { CaretRelativePosition::Left == _caretRelativePosition ? _caretPosition : _caretPosition + 1 };
+                std::u32string left { _text->GetTextUTF32().substr(0, cut) };
+                std::u32string right { _text->GetTextUTF32().substr(cut) };
+                _text->SetTextUTF32(left + _keyRepeatText + right);
+                ++_caretPosition;
+                _caret->SetPosition(_text->GetGlyphPosition(_caretPosition, _caretRelativePosition, _caret->GetSize().y));
                 emitChange();
             }
         }

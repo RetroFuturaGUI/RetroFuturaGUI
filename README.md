@@ -30,7 +30,8 @@ The framework is designed for cross-platform use, and its logic can be compiled 
 ### WIP in detail
 - Font Manager
   - Update Windows font support to the new system
-- Input Support for Windows
+- Update all Input to use PlatformBridge's implementation
+- Test ITextEditable.cpp#L119 on Linux
 - Text
   - Optimizations
 - TextBox
