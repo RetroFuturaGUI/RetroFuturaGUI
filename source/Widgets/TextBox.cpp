@@ -26,8 +26,8 @@ RetroFuturaGUI::TextBox::TextBox(const std::string& name, Projection* projection
     {
         _caret->SetRectangleMode(RectangleMode::Plane);
         _caret->SetFillType(FillType::SOLID);
+        _caret->SetColors(std::span<glm::vec4>(_caretColors.data(), _caretColors.size()));
     }
-    _caret->SetColors(std::span<glm::vec4>(_caretColors.data(), _caretColors.size()));
 }
 
 void RetroFuturaGUI::TextBox::Draw()
@@ -78,9 +78,7 @@ void RetroFuturaGUI::TextBox::SetSize(const glm::vec3& size)
         _text->SetParentSize(glm::vec2(size.x, size.y));
 
     if(_caret)
-    {
-    _caret->SetSize(glm::vec2(2.0f, _text->GetGlyphSize() * 1.6f));
-    }
+        _caret->SetSize(glm::vec2(2.0f, _text->GetGlyphSize() * 1.6f));
 }
 
 void RetroFuturaGUI::TextBox::SetPosition(const glm::vec3& position)
