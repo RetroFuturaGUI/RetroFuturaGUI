@@ -22,7 +22,6 @@ endif()
 set(RetroFuturaGuiSources)
 
 list(APPEND RetroFuturaGuiSources
-    #"${CMAKE_CURRENT_SOURCE_DIR}/source/Borders/LineBorder.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Fonts/FontManager.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Fonts/Text.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/OpenGlHelpers/Projection.cpp"
@@ -119,6 +118,7 @@ else()
     message(FATAL_ERROR "Freetype is not found. Please install Freetype via VCPKG.")
 endif()
 
+# Check for Stb installation
 find_package(Stb REQUIRED COMPONENTS stb_image)
 if(Stb_FOUND)
     message(STATUS "Stb is installed and found: ${Stb_DIR}")
