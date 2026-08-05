@@ -27,6 +27,7 @@ namespace RetroFuturaGUI
         Label,
         Button,
         TextBox,
+        Image,
         Unknown = -1
     };   
 
