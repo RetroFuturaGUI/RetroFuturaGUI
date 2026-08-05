@@ -347,7 +347,7 @@ void RetroFuturaGUI::Window::updateProjection()
 
 	if(_backgroundImage)
 	{
-		_backgroundImage->SetSize(glm::vec2((f32)_width, (f32)_height));
+		_backgroundImage->SetSize(glm::vec3((f32)_width, (f32)_height, _backgroundImage->GetSize().z));
 		_backgroundImage->SetPosition(glm::vec3((f32)_width * 0.5f, (f32)_height * 0.5f, -_projection->GetDepth()));
 	}
 
@@ -413,7 +413,7 @@ void RetroFuturaGUI::Window::SetBackgroundColor(const glm::vec4 &color)
 
 void RetroFuturaGUI::Window::SetBackgroundImage(std::string_view imagePath)
 {
-	_backgroundImage = std::make_unique<Image2D>(&*_projection, imagePath);
+	_backgroundImage = std::make_unique<Image2D>(_name + "/BackgroundImage", &*_projection, nullptr, WidgetTypeID::Window, _window, imagePath);
 	_backgroundImage->SetSize(glm::vec3(_width, _height, 0.01f));
 	_backgroundImage->SetPosition(glm::vec3((f32)_width * 0.5f, (f32)_height * 0.5f, -_projection->GetDepth()));
 
