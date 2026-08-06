@@ -1,8 +1,4 @@
 #include "Text.hpp"
-#include <algorithm>
-#include <print>
-#include <cstdint>
-#include <stdexcept>
 
 #ifndef _MSC_VER
     using max;
@@ -255,7 +251,7 @@ void RetroFuturaGUI::Text::updateMesh()
                 vertexStart += vertexCount;
                 vertexCount = 0;
             }
-            
+
             lastTextureID = foundTextureID;
             batching = true;
         }
