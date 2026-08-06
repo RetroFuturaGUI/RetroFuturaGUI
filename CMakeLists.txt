@@ -41,6 +41,7 @@ list(APPEND RetroFuturaGuiSources
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/IWidget.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/Label.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/Lasagna.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/Model.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/TextBox.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/Window.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/WindowBar.cpp"
@@ -59,6 +60,7 @@ target_include_directories("RetroFuturaGUI" PUBLIC
     "${CMAKE_CURRENT_SOURCE_DIR}/source"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Borders"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Fonts"
+    "${CMAKE_CURRENT_SOURCE_DIR}/source/Mesh"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/Mechanisms"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/OpenGlHelpers"
@@ -128,6 +130,14 @@ else()
     message(FATAL_ERROR "Stb is not found. Please install Stb via VCPKG.")
 endif()
 
+# Check for Assimp installation
+ find_package(assimp CONFIG REQUIRED)
+if(TARGET assimp::assimp)
+    message(STATUS "Assimp is installed and found")
+else()
+    message(FATAL_ERROR "Assimp is not found. Please install Assimp via VCPKG.")
+endif()
+
 target_link_libraries("RetroFuturaGUI" PUBLIC
     OpenGL::GL 
     glfw
@@ -135,6 +145,7 @@ target_link_libraries("RetroFuturaGUI" PUBLIC
     glm::glm-header-only
     GLEW::GLEW
     glad::glad
+    assimp::assimp
     PlatformBridge
 )
 

@@ -104,6 +104,10 @@ The framework is designed for cross-platform use, and its logic can be compiled 
       <li>SetPosition, SetSize, SetRotation</li>
       <li>Supports most image formats</li>
       </ul>
+    <li>Model</li>
+      <ul>
+      <li>SetPosition, SetSize, SetRotation</li>
+      </ul>
     <li>Lasagna (three-dimensional successor of grid)</li>
       <ul>
       <li>Align Widgets in a three dimensional pattern</li>

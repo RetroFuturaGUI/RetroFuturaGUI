@@ -11,6 +11,7 @@
 
 namespace RetroFuturaGUI
 {
+    //Move these Vecs to it's own file later, once another graphics API is implemented
     struct Vec3
     {
         union
