@@ -98,7 +98,7 @@ void RetroFuturaGUI::Text::SetSize(const glm::vec2& glyphSize)
     updateMesh();
 }
 
-void RetroFuturaGUI::Text::SetPosition(const glm::vec2& position)
+void RetroFuturaGUI::Text::SetPosition(const glm::vec3& position)
 {
     _position = position;
     alignPosition();
@@ -313,7 +313,7 @@ glm::vec3 RetroFuturaGUI::Text::GetGlyphPosition(const uSize index, const CaretR
             x = _glyphPositions[index+1];
     }
 
-    return glm::vec3(x, y, 0) + glm::vec3(_positionAligned, 0.0f);
+    return glm::vec3(x, y, 0) + glm::vec3(_positionAligned, _position.z + 0.01f); //+0.01f for the caret
 }
 
 void RetroFuturaGUI::Text::alignPosition()
@@ -334,7 +334,7 @@ void RetroFuturaGUI::Text::alignPosition()
         }
     }
 
-    _translationMatrix = glm::translate(glm::mat4(1.0f), glm::vec3(_positionAligned, 0.0f));
+    _translationMatrix = glm::translate(glm::mat4(1.0f), glm::vec3(_positionAligned, _position.z));
 }
 
 void RetroFuturaGUI::Text::calculateTextSpan()

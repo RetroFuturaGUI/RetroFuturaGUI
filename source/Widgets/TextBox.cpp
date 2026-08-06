@@ -89,13 +89,13 @@ void RetroFuturaGUI::TextBox::SetPosition(const glm::vec3& position)
         _background->SetPosition(position);
 
     if(_border)
-        _border->SetPosition(position);
+        _border->SetPosition(position + glm::vec3(0.0f, 0.0f, 0.1f));
 
     if(_text)
-        _text->SetPosition(position);
+        _text->SetPosition(position + glm::vec3(0.0f, 0.0f, 0.2f));
 
     if(_caret)
-        _caret->SetPosition(position);
+        _caret->SetPosition(position + glm::vec3(0.0f, 0.0f, 0.3f));
 }
 
 void RetroFuturaGUI::TextBox::SetRotation(const float rotation)

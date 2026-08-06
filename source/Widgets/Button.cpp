@@ -61,7 +61,7 @@ void RetroFuturaGUI::Button::SetSize(const glm::vec3& size)
     if(_text)
     {
         _text->SetParentSize(glm::vec2(size.x, size.y));
-        _text->SetPosition(glm::vec2(_position.x, _position.y));
+        _text->SetPosition(_position + glm::vec3(0.0f, 0.0f, 0.02f));
     }
 }
 
@@ -73,10 +73,10 @@ void RetroFuturaGUI::Button::SetPosition(const glm::vec3& position)
         _background->SetPosition(position);
 
     if(_border)
-        _border->SetPosition(position);
+        _border->SetPosition(position + glm::vec3(0.0f, 0.0f, 0.01f));
 
     if(_text)
-        _text->SetPosition(position);
+        _text->SetPosition(position + glm::vec3(0.0f, 0.0f, 0.02f));
 }
 
 void RetroFuturaGUI::Button::SetRotation(const float rotation)

@@ -77,10 +77,10 @@ void RetroFuturaGUI::Rectangle::SetSize(const glm::vec2& size)
     _scalingMatrix = glm::scale(glm::mat4(1.0f), glm::vec3(_scale, 1.0f));
 }
 
-void RetroFuturaGUI::Rectangle::SetPosition(const glm::vec2& position)
+void RetroFuturaGUI::Rectangle::SetPosition(const glm::vec3& position)
 {
     _position = position;
-    _translationMatrix = glm::translate(glm::mat4(1.0f), glm::vec3(_position, 0.0f));
+    _translationMatrix = glm::translate(glm::mat4(1.0f), _position);
 }
 
 void RetroFuturaGUI::Rectangle::SetColors(std::span<glm::vec4> colors)

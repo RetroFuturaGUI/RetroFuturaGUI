@@ -133,7 +133,7 @@ void RetroFuturaGUI::Lasagna::drawDebugLines(const LasagnaCell& cell)
     if(!_debugBorder)
         return;
 
-    _debugBorder->SetPosition(glm::vec2(cell._PositionPixels.x + cell._SizePixels.x * 0.5f, _projection.GetResolution().y - (cell._PositionPixels.y + cell._SizePixels.y * 0.5f)));
+    _debugBorder->SetPosition(glm::vec3(cell._PositionPixels.x + cell._SizePixels.x * 0.5f, _projection.GetResolution().y - (cell._PositionPixels.y + cell._SizePixels.y * 0.5f), cell._PositionPixels.z));
     _debugBorder->SetSize(glm::vec2(cell._SizePixels.x, cell._SizePixels.y));
     _debugBorder->Draw();
 }

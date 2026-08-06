@@ -47,6 +47,7 @@ void RetroFuturaGUI::Window::createWindow()
         return;
     }
 
+	glEnable(GL_DEPTH_TEST);  
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	SetBackgroundColor(_backgroundColor);
@@ -363,7 +364,7 @@ bool RetroFuturaGUI::Window::WindowShouldClose()
 void RetroFuturaGUI::Window::Draw()
 {
 	glClearColor(_backgroundColor.r, _backgroundColor.g, _backgroundColor.b, _backgroundColor.a);
-	glClear(GL_COLOR_BUFFER_BIT);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glfwWindowHint(GLFW_TRANSPARENT_FRAMEBUFFER, GLFW_FALSE);
 	glfwWindowHint(GLFW_ALPHA_BITS, 0); // Disable alpha bits if not needed

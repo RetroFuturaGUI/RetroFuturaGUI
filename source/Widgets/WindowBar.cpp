@@ -198,7 +198,7 @@ glm::vec3 RetroFuturaGUI::WindowBar::calculateElementPosition(const ElementType 
         }
     }
 
-    return glm::vec3(x, y, _position.z);
+    return glm::vec3(x, y, _position.z + 0.1f);
 }
 
 void RetroFuturaGUI::WindowBar::windowShouldCloseCallback()

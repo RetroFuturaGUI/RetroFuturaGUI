@@ -40,7 +40,7 @@ namespace RetroFuturaGUI
         void SetFontFamily(std::string_view fontFamily, const f32 glyphSize, PlatformBridge::Fonts::Slant slant, PlatformBridge::Fonts::Weight weight);
         void SetTextAlignment(TextAlignment textAlignment);
         void SetSize(const glm::vec2& glyphSize);
-        void SetPosition(const glm::vec2& position);
+        void SetPosition(const glm::vec3& position);
         void SetRotation(const f32 rotation);
         void SetColor(const glm::vec4& color);
         void SetParentSize(const glm::vec2 size);
@@ -69,8 +69,8 @@ namespace RetroFuturaGUI
         f32 _textPadding { 0.0f };
 
         // geometry
-        glm::vec2 _position { 0.0f },
-            _positionAligned { 0.0f },
+        glm::vec3 _position { 0.0f };
+        glm::vec2 _positionAligned { 0.0f },
             _parentSize { 0.0f },
             _textSpan { 0.0f };
         f32 _rotation { 0.0f },
@@ -84,7 +84,8 @@ namespace RetroFuturaGUI
         // mesh
         std::vector<f32> _vertices; // x,y,u,v per vertex
         std::vector<GlyphDraw> _glyphDraws;
-        u32 _vao { 0 },
+        u32 
+            _vao { 0 },
             _vbo { 0 };
 
         void updateMesh();
