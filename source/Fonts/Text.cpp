@@ -104,15 +104,20 @@ void RetroFuturaGUI::Text::SetPosition(const glm::vec3& position)
     alignPosition();
 }
 
-void RetroFuturaGUI::Text::SetRotation(const f32 rotation)
+void RetroFuturaGUI::Text::SetRotation(const glm::vec3& rotation)
 {
     f32 
         halfWidth { _textSpan.x * 0.5f },
         halfHeight { _textSpan.y * 0.5f };
     _rotation = rotation;
+    glm::vec3 radians = glm::radians(_rotation);
+    glm::mat4 rotation3D =
+        glm::rotate(glm::mat4(1.0f), radians.z, glm::vec3(0.0f, 0.0f, 1.0f)) *
+        glm::rotate(glm::mat4(1.0f), radians.y, glm::vec3(0.0f, 1.0f, 0.0f)) *
+        glm::rotate(glm::mat4(1.0f), radians.x, glm::vec3(1.0f, 0.0f, 0.0f));
     _rotationMatrix =
         glm::translate(glm::mat4(1.0f), glm::vec3(halfWidth, halfHeight, 0.0f)) *
-        glm::rotate(glm::mat4(1.0f), glm::radians(_rotation), glm::vec3(0.0f, 0.0f, 1.0f)) *
+        rotation3D *
         glm::translate(glm::mat4(1.0f), glm::vec3(-halfWidth, -halfHeight, 0.0f));
 }
 

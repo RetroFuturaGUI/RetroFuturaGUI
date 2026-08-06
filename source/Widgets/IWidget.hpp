@@ -26,8 +26,8 @@ namespace RetroFuturaGUI
         glm::vec3 GetSize() const;
         virtual void SetPosition(const glm::vec3& position);
         glm::vec3 GetPosition() const;
-        virtual void SetRotation(const f32 rotation);
-        f32 GetRotation() const;
+        virtual void SetRotation(const glm::vec3& rotation);
+        glm::vec3 GetRotation() const;
         std::string_view GetName() const;
         void SetName(std::string_view name);
         WidgetTypeID GetWidgetTypeID() const;
@@ -52,7 +52,7 @@ namespace RetroFuturaGUI
         glm::vec3
             _position { 0.0f },
             _size { 0.0f };
-        f32 _rotation { 0.0f };
+        glm::vec3 _rotation { 0.0f };
 
     //Logic
         bool _isEnabledFlag { true };

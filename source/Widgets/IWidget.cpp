@@ -54,12 +54,12 @@ glm::vec3 RetroFuturaGUI::IWidget::GetPosition() const
     return _position;
 }
 
-void RetroFuturaGUI::IWidget::SetRotation(const f32 rotation)
+void RetroFuturaGUI::IWidget::SetRotation(const glm::vec3& rotation)
 {
     _rotation = rotation;
 }
 
-f32 RetroFuturaGUI::IWidget::GetRotation() const
+glm::vec3 RetroFuturaGUI::IWidget::GetRotation() const
 {
     return _rotation;
 }
@@ -91,8 +91,11 @@ bool RetroFuturaGUI::IWidget::IsEnabled() const
 
 bool RetroFuturaGUI::IWidget::isPointInside(const glm::vec2& point) const
 {
+    /* Hit-testing is a 2D point-in-rectangle check, so only the Z-axis (screen-plane)
+       rotation applies here - X/Y rotation tilts the widget in a way this simple test
+       can't represent*/
     glm::vec2 translatedPoint = point - glm::vec2(_position.x, _position.y);
-    float radians = glm::radians(-_rotation);
+    f32 radians = glm::radians(-_rotation.z);
     glm::vec2 rotatedPoint(
         translatedPoint.x * cos(radians) - translatedPoint.y * sin(radians),
         translatedPoint.x * sin(radians) + translatedPoint.y * cos(radians)

@@ -29,7 +29,7 @@ namespace RetroFuturaGUI
     //Geometry
         void SetSize(const glm::vec3& size) override;
         void SetPosition(const glm::vec3& position) override;
-        void SetRotation(const float rotation) override;
+        void SetRotation(const glm::vec3& rotation) override;
 
     private:
         void interact();

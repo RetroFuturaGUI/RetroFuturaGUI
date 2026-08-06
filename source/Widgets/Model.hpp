@@ -21,7 +21,7 @@ namespace RetroFuturaGUI
             void Draw() override;
             void SetSize(const glm::vec3& size) override;
             void SetPosition(const glm::vec3& position) override;
-            void SetRotation(const f32 rotation) override;
+            void SetRotation(const glm::vec3& rotation) override;
 
         private:
             void processNode(aiNode* node, const aiScene* scene);

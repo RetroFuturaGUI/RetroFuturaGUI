@@ -23,7 +23,7 @@ namespace RetroFuturaGUI
         void SetEnabled(const bool enable, const bool emitSignal = true);
         void SetSize(const glm::vec3& size) override;
         void SetPosition(const glm::vec3& position) override;
-        void SetRotation(const float rotation) override;
+        void SetRotation(const glm::vec3& rotation) override;
         void SetCornerRadii(const glm::vec4& radii);
 
     private:

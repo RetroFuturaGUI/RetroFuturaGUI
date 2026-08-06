@@ -58,6 +58,7 @@ void RetroFuturaGUI::DynamicLibWidgetManager::DisconnectSlot(const char *id, Cal
     }
 }
 
+//legacy. chage when updating bindings
 void RetroFuturaGUI::DynamicLibWidgetManager::SetRotation(const char *id, const f32 degree)
 {
     IWidget* widget { getWidgetPointer(id) };
@@ -65,7 +66,7 @@ void RetroFuturaGUI::DynamicLibWidgetManager::SetRotation(const char *id, const 
     if(!widget)
         return;
 
-    widget->SetRotation(degree);
+    widget->SetRotation(glm::vec3(0.0f, 0.0f, degree));
 }
 
 void RetroFuturaGUI::DynamicLibWidgetManager::SetSize(const char *id, const f32 width, const f32 height)

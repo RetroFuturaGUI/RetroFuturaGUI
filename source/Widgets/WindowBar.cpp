@@ -14,7 +14,7 @@ RetroFuturaGUI::WindowBar::WindowBar(const std::string& name, Projection* projec
         _background->SetRectangleMode(RectangleMode::Plane);
         _background->SetPosition(_position);
         _background->SetSize(_size);
-        _background->SetRotation(0.0f);
+        _background->SetRotation(glm::vec3(0.0f));
     }
 }
 
@@ -323,7 +323,7 @@ void RetroFuturaGUI::WindowBar::SetWindowTitle(std::string_view title, std::stri
             _windowTitle->SetTextAlignment(TextAlignment::Left);
             _windowTitle->SetTextPadding(3.0f);
             _windowTitle->SetPosition(glm::vec3(titleAnchor.x + titleParentSize.x * 0.5f, titleAnchor.y, titleAnchor.z));
-            _windowTitle->SetRotation(0.0f);
+            _windowTitle->SetRotation(glm::vec3(0.0f));
         }
 
         Resize(); //hotfix for dislocation when Text has been initialized with an empty string
@@ -389,7 +389,7 @@ void RetroFuturaGUI::WindowBar::EnableElement(const RetroFuturaGUI::WindowBar::E
 
             _close->SetPosition(calculateElementPosition(ElementType::CloseButton));
             _close->SetSize(glm::vec3(_windowBarThiccness - 2.0f, _windowBarThiccness - 2.0f, 0.01f));
-            _close->SetRotation(0.0f);
+            _close->SetRotation(glm::vec3(0.0f));
             _close->SetTextAlignment(RetroFuturaGUI::TextAlignment::Center);
             _close->SetTextPadding(3.0f);
             _close->SetFontFamily("Noto Sans", _windowBarThiccness * 0.5f, PlatformBridge::Fonts::Slant::Roman, PlatformBridge::Fonts::Weight::Normal);
@@ -409,7 +409,7 @@ void RetroFuturaGUI::WindowBar::EnableElement(const RetroFuturaGUI::WindowBar::E
 
             _minimize->SetPosition(calculateElementPosition(ElementType::MinimizeButton));
             _minimize->SetSize(glm::vec3(_windowBarThiccness - 2.0f, _windowBarThiccness - 2.0f, 0.01f));
-            _minimize->SetRotation(0.0f);
+            _minimize->SetRotation(glm::vec3(0.0f));
             _minimize->SetTextAlignment(RetroFuturaGUI::TextAlignment::Center);
             _minimize->SetTextPadding(3.0f);
             _minimize->SetFontFamily("Noto Sans", _windowBarThiccness * 0.5f, PlatformBridge::Fonts::Slant::Roman, PlatformBridge::Fonts::Weight::Normal);
@@ -429,7 +429,7 @@ void RetroFuturaGUI::WindowBar::EnableElement(const RetroFuturaGUI::WindowBar::E
 
             _maximize->SetPosition(calculateElementPosition(ElementType::MaximizeButton));
             _maximize->SetSize(glm::vec3(_windowBarThiccness - 2.0f, _windowBarThiccness - 2.0f, 0.01f));
-            _maximize->SetRotation(0.0f);
+            _maximize->SetRotation(glm::vec3(0.0f));
             _maximize->SetTextAlignment(RetroFuturaGUI::TextAlignment::Center);
             _maximize->SetTextPadding(3.0f);
             _maximize->SetFontFamily("Noto Sans", _windowBarThiccness * 0.5f, PlatformBridge::Fonts::Slant::Roman, PlatformBridge::Fonts::Weight::Normal);
@@ -455,7 +455,7 @@ void RetroFuturaGUI::WindowBar::EnableElement(const RetroFuturaGUI::WindowBar::E
             _windowTitle->SetPosition(calculateElementPosition(ElementType::Title));
             _windowTitle->SetSize(glm::vec3(_windowBarThiccness - 2.0f, _windowBarThiccness - 2.0f, 0.01f));
             _windowTitle->SetParentSize(calculateTitleParentSize());
-            _windowTitle->SetRotation(0.0f);
+            _windowTitle->SetRotation(glm::vec3(0.0f));
             _windowTitle->SetTextAlignment(RetroFuturaGUI::TextAlignment::Center);
             _windowTitle->SetTextPadding(3.0f);
         } return;
@@ -472,7 +472,7 @@ void RetroFuturaGUI::WindowBar::EnableElement(const RetroFuturaGUI::WindowBar::E
             _background->SetRectangleMode(RectangleMode::Plane);
             _background->SetPosition(_position);
             _background->SetSize(_size);
-            _background->SetRotation(0.0f);
+            _background->SetRotation(glm::vec3(0.0f));
         } return;
         default:
         return;

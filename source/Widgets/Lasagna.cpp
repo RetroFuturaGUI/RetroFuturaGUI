@@ -67,7 +67,7 @@ RetroFuturaGUI::Lasagna::Lasagna(const std::string& name, Projection* projection
         _debugBorder->SetRectangleMode(RectangleMode::Border);
         _debugBorder->SetPosition(glm::vec3(0.0f));
         _debugBorder->SetSize(glm::vec3(0.0f));
-        _debugBorder->SetRotation(0.0f);
+        _debugBorder->SetRotation(glm::vec3(0.0f));
         _debugBorder->SetColors(_debugBorderColor);
         _debugBorder->SetBorderWidth(5.0f);
     }

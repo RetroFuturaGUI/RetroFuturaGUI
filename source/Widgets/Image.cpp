@@ -21,10 +21,12 @@ void RetroFuturaGUI::Image::SetPosition(const glm::vec3& position)
     _texture->SetPosition(position);
 }
 
-void RetroFuturaGUI::Image::SetRotation(const f32 rotation)
+void RetroFuturaGUI::Image::SetRotation(const glm::vec3& rotation)
 {
     IWidget::SetRotation(rotation);
-    _texture->SetRotation(rotation);
+
+    if(_texture)
+        _texture->SetRotation(rotation);
 }
 
 void RetroFuturaGUI::Image::FitGeometryToTexture()

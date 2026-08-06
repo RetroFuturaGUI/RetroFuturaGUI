@@ -79,7 +79,7 @@ void RetroFuturaGUI::Button::SetPosition(const glm::vec3& position)
         _text->SetPosition(position + glm::vec3(0.0f, 0.0f, 0.02f));
 }
 
-void RetroFuturaGUI::Button::SetRotation(const float rotation)
+void RetroFuturaGUI::Button::SetRotation(const glm::vec3& rotation)
 {
     _rotation = rotation;
 

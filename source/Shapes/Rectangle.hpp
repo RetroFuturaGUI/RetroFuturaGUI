@@ -27,7 +27,7 @@ namespace RetroFuturaGUI
         void Draw();
         void SetSize(const glm::vec2& size);
         void SetPosition(const glm::vec3& position);
-        void SetRotation(const f32 rotation);
+        void SetRotation(const glm::vec3& rotation);
         void SetColors(std::span<glm::vec4> colors);
         void SetCornerRadii(const glm::vec4& radii);
         void SetGradientOffset(const f32 gradientOffset);
@@ -68,8 +68,9 @@ namespace RetroFuturaGUI
             _translationMatrix { 1.0f },
             _rotationMatrix { 1.0f };
         glm::vec2 _scale { 0.01f };
-        glm::vec3 _position { 0.0f };
-        f32 _rotation { 0.0f };
+        glm::vec3 
+            _position { 0.0f },
+            _rotation { 0.0f };
         glm::vec4 _vertexPosition = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
 
         // Fill

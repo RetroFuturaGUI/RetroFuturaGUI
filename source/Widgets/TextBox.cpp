@@ -98,7 +98,7 @@ void RetroFuturaGUI::TextBox::SetPosition(const glm::vec3& position)
         _caret->SetPosition(position + glm::vec3(0.0f, 0.0f, 0.3f));
 }
 
-void RetroFuturaGUI::TextBox::SetRotation(const float rotation)
+void RetroFuturaGUI::TextBox::SetRotation(const glm::vec3& rotation)
 {
     _rotation = rotation;
 

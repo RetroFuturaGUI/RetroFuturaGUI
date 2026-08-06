@@ -42,10 +42,14 @@ void RetroFuturaGUI::Model::SetPosition(const glm::vec3& position)
     _translationMatrix = glm::translate(glm::mat4(1.0f), position);
 }
 
-void RetroFuturaGUI::Model::SetRotation(const f32 rotation)
+void RetroFuturaGUI::Model::SetRotation(const glm::vec3& rotation)
 {
     IWidget::SetRotation(rotation);
-    _rotationMatrix = glm::rotate(glm::mat4(1.0f), glm::radians(rotation), glm::vec3(0.0f, 0.0f, 1.0f));
+    glm::vec3 radians = glm::radians(rotation);
+    _rotationMatrix =
+        glm::rotate(glm::mat4(1.0f), radians.z, glm::vec3(0.0f, 0.0f, 1.0f)) *
+        glm::rotate(glm::mat4(1.0f), radians.y, glm::vec3(0.0f, 1.0f, 0.0f)) *
+        glm::rotate(glm::mat4(1.0f), radians.x, glm::vec3(1.0f, 0.0f, 0.0f));
 }
 
 RetroFuturaGUI::Mesh RetroFuturaGUI::Model::processMesh(aiMesh* unprocessedMesh, const aiScene* scene)

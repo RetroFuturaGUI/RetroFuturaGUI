@@ -138,10 +138,14 @@ void RetroFuturaGUI::Rectangle::SetWindowBackgroundImageTextureID(const u32 text
     _windowBackgroundTextureID = textureID;
 }
 
-void RetroFuturaGUI::Rectangle::SetRotation(const f32 rotation)
+void RetroFuturaGUI::Rectangle::SetRotation(const glm::vec3& rotation)
 {
     _rotation = rotation;
-    _rotationMatrix = glm::rotate(glm::mat4(1.0f), glm::radians(_rotation), glm::vec3(0.0f, 0.0f, 1.0f));
+    glm::vec3 radians = glm::radians(_rotation);
+    _rotationMatrix =
+        glm::rotate(glm::mat4(1.0f), radians.z, glm::vec3(0.0f, 0.0f, 1.0f)) *
+        glm::rotate(glm::mat4(1.0f), radians.y, glm::vec3(0.0f, 1.0f, 0.0f)) *
+        glm::rotate(glm::mat4(1.0f), radians.x, glm::vec3(1.0f, 0.0f, 0.0f));
 }
 
 void RetroFuturaGUI::Rectangle::setupMesh()

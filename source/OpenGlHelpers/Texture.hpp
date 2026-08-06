@@ -22,7 +22,7 @@ namespace RetroFuturaGUI
         void Draw() const;
         void SetSize(const glm::vec2& size);
         void SetPosition(const glm::vec3& position);
-        void SetRotation(const f32 rotation);
+        void SetRotation(const glm::vec3& rotation);
 
         bool IsTextureVerticallyFlipped() const;
         glm::i32vec2 GetResolution() const;

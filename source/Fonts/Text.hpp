@@ -41,7 +41,7 @@ namespace RetroFuturaGUI
         void SetTextAlignment(TextAlignment textAlignment);
         void SetSize(const glm::vec2& glyphSize);
         void SetPosition(const glm::vec3& position);
-        void SetRotation(const f32 rotation);
+        void SetRotation(const glm::vec3& rotation);
         void SetColor(const glm::vec4& color);
         void SetParentSize(const glm::vec2 size);
         void SetTextPadding(const f32 padding);
@@ -73,8 +73,8 @@ namespace RetroFuturaGUI
         glm::vec2 _positionAligned { 0.0f },
             _parentSize { 0.0f },
             _textSpan { 0.0f };
-        f32 _rotation { 0.0f },
-            _textBaseHeight { 0.0f },
+        glm::vec3 _rotation { 0.0f };
+        f32 _textBaseHeight { 0.0f },
             _lineSpacingFactor { 1.3f };
         glm::mat4 _translationMatrix { 0.0f },
             _rotationMatrix { 0.0f };

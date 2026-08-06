@@ -51,7 +51,7 @@ void RetroFuturaGUI::Label::SetPosition(const glm::vec3& position)
         _text->SetPosition(position);
 }
 
-void RetroFuturaGUI::Label::SetRotation(const float rotation)
+void RetroFuturaGUI::Label::SetRotation(const glm::vec3& rotation)
 {
     _rotation = rotation;
 
