@@ -61,7 +61,7 @@ namespace RetroFuturaGUI
         bool boundTexture = false;
         for (const MeshTexture& meshTexture : _textures)
         {
-            if (meshTexture.type == "texture_diffuse" && meshTexture.texture)
+            if (meshTexture._Type == "texture_diffuse" && meshTexture.texture)
             {
                 meshTexture.texture->Draw();
                 boundTexture = true;

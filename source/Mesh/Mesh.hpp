@@ -68,19 +68,19 @@ namespace RetroFuturaGUI
 
     struct Vertex
     {
-        Vec3 _Position;
-        Vec3 _Normal;
+        Vec3 
+            _Position,
+            _Normal;
         Vec2 _TextureCoordinate;
     };
 
-    // Associates one of a mesh's material slots with a Texture. The Texture itself is owned
-    // elsewhere (Model keeps it alive for as long as any mesh referencing it exists) - this
-    // is a non-owning view used purely to pick which texture to bind when drawing.
+    // non-owning view used purely to pick which texture to bind when drawing
     struct MeshTexture
     {
         Texture* texture { nullptr };
-        std::string type;
-        std::string path;
+        std::string 
+            _Type,
+            _Path;
     };
 
     class Mesh
@@ -96,9 +96,10 @@ namespace RetroFuturaGUI
         void Draw(const glm::mat4& projection, const glm::mat4& position, const glm::mat4& rotation, const glm::mat4& scaling);
 
     private:
-        u32 _vao { 0 };
-        u32 _vbo { 0 };
-        u32 _ebo { 0 };
+        u32 
+            _vao { 0 },
+            _vbo { 0 },
+            _ebo { 0 };
         std::vector<Vertex> _vertices;
         std::vector<u32> _indices;
         std::vector<MeshTexture> _textures;
