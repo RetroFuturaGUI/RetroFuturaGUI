@@ -99,7 +99,7 @@ The framework is designed for cross-platform use, and its logic can be compiled 
       <li>setEnable</li>
       </ul>
     <li>SetPosition, SetSize, SetRotation</li>
-    <li>Image2D</li>
+    <li>Image</li>
       <ul>
       <li>SetPosition, SetSize, SetRotation</li>
       <li>Supports most image formats</li>

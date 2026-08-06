@@ -2,7 +2,7 @@
 #include "ShaderManager.hpp"
 #include "Projection.hpp"
 #include <span>
-#include "Image2D.hpp"
+#include "Image.hpp"
 
 namespace RetroFuturaGUI
 {

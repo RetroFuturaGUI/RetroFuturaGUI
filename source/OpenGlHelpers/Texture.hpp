@@ -11,7 +11,7 @@ namespace RetroFuturaGUI
     {
     public:
         // projection is only needed if this texture will draw itself as a standalone quad
-        // (e.g. Image2D). Textures used purely as material maps (e.g. Mesh) can omit it
+        // (e.g. Image). Textures used purely as material maps (e.g. Mesh) can omit it
         Texture(std::string_view path, const bool flipVertically = true, Projection* projection = nullptr);
         Texture(const Texture&) = delete;
         Texture& operator=(const Texture&) = delete;

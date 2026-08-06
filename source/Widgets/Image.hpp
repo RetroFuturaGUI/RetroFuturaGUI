@@ -4,16 +4,16 @@
 
 namespace RetroFuturaGUI
 {
-    class Image2D : public IWidget
+    class Image : public IWidget
     {
     public:
-        Image2D(const std::string& name, Projection* projection, IWidget* parentWidget, const WidgetTypeID parentWidgetTypeID, GLFWwindow* parentWindow, std::string_view imagePath);
-        Image2D() = delete;
-        Image2D(const Image2D&) = delete;
-        Image2D(Image2D&&) = delete;
-        auto operator =(const Image2D&) = delete;
-        auto operator =(Image2D&&) = delete;
-        ~Image2D() = default;
+        Image(const std::string& name, Projection* projection, IWidget* parentWidget, const WidgetTypeID parentWidgetTypeID, GLFWwindow* parentWindow, std::string_view imagePath);
+        Image() = delete;
+        Image(const Image&) = delete;
+        Image(Image&&) = delete;
+        auto operator =(const Image&) = delete;
+        auto operator =(Image&&) = delete;
+        ~Image() = default;
         
         void Draw() override;
         void SetSize(const glm::vec3& size) override;

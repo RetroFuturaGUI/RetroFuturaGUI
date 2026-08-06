@@ -3,7 +3,7 @@
 #include "InputManager.hpp"
 #include "Label.hpp"
 #include "WindowBar.hpp"
-#include "Image2D.hpp"
+#include "Image.hpp"
 #include "Lasagna.hpp"
 #include <algorithm>
 
@@ -100,7 +100,7 @@ namespace RetroFuturaGUI
 
         // widgets
         std::unique_ptr<WindowBar> _windowBar;
-        std::unique_ptr<Image2D> _backgroundImage;
+        std::unique_ptr<Image> _backgroundImage;
         Lasagna* _lasagna;
 
         void createWindow();
