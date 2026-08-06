@@ -63,8 +63,10 @@ void RetroFuturaGUI::WindowBar::Resize()
 
     if(_windowTitle)
     {
-        glm::vec2 titlePosition = calculateElementPosition(ElementType::Title);
-        _windowTitle->SetPosition(titlePosition);
+        glm::vec2 titleParentSize = calculateTitleParentSize();
+        glm::vec3 titleAnchor = calculateElementPosition(ElementType::Title);
+        _windowTitle->SetPosition(glm::vec3(titleAnchor.x + titleParentSize.x * 0.5f, titleAnchor.y, titleAnchor.z));
+        _windowTitle->SetParentSize(titleParentSize);
     }
 }
 
@@ -310,13 +312,17 @@ void RetroFuturaGUI::WindowBar::SetWindowTitle(std::string_view title, std::stri
 
         if(_windowTitle)
         {
+            glm::vec2 titleParentSize = calculateTitleParentSize();
+            glm::vec3 titleAnchor = calculateElementPosition(ElementType::Title);
+
             _windowTitle->SetFontFamily(fontFamily, _windowBarThiccness * 0.5f, PlatformBridge::Fonts::Slant::Roman, PlatformBridge::Fonts::Weight::Normal);
+            _windowTitle->SetParentSize(titleParentSize);
             _windowTitle->SetTextUTF8(_title);
             _windowTitle->SetColor(glm::vec4(1.0f));
             _windowTitle->SetSize(glm::vec3(_windowBarThiccness * 0.7f, _windowBarThiccness * 0.7f, 0.01f));
             _windowTitle->SetTextAlignment(TextAlignment::Left);
             _windowTitle->SetTextPadding(3.0f);
-            _windowTitle->SetPosition(calculateElementPosition(ElementType::Title));
+            _windowTitle->SetPosition(glm::vec3(titleAnchor.x + titleParentSize.x * 0.5f, titleAnchor.y, titleAnchor.z));
             _windowTitle->SetRotation(0.0f);
         }
 
@@ -326,6 +332,14 @@ void RetroFuturaGUI::WindowBar::SetWindowTitle(std::string_view title, std::stri
 
     _windowTitle->SetTextUTF8(_title);
     Resize(); //hotfix for dislocation when Text has been initialized with an empty string
+}
+
+glm::vec2 RetroFuturaGUI::WindowBar::calculateTitleParentSize()
+{
+    /* Text::alignPosition() treats its position as the center of a box this size, but
+       calculateElementPosition(Title) hands back a left-edge anchor - so callers must
+       shift the x by half of this before handing it to Text::SetPosition.*/
+    return glm::vec2(_windowBarThiccness * 10.0f, _windowBarThiccness);
 }
 
 void RetroFuturaGUI::WindowBar::minimizeWindowCallback(GLFWwindow *window)
@@ -435,8 +449,12 @@ void RetroFuturaGUI::WindowBar::EnableElement(const RetroFuturaGUI::WindowBar::E
             if(!_windowTitle)
                 return;
 
+            /* Center alignment measures off _textSpan, not _parentSize, so the anchor from
+             calculateElementPosition can be used directly here (unlike the Left-aligned
+             case in SetWindowTitle(), which needs the anchor shifted to a box center)*/
             _windowTitle->SetPosition(calculateElementPosition(ElementType::Title));
             _windowTitle->SetSize(glm::vec3(_windowBarThiccness - 2.0f, _windowBarThiccness - 2.0f, 0.01f));
+            _windowTitle->SetParentSize(calculateTitleParentSize());
             _windowTitle->SetRotation(0.0f);
             _windowTitle->SetTextAlignment(RetroFuturaGUI::TextAlignment::Center);
             _windowTitle->SetTextPadding(3.0f);

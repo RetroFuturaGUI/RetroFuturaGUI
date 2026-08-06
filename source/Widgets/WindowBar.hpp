@@ -99,6 +99,7 @@ namespace RetroFuturaGUI
         glm::vec3 calculateWindowBarPosition();
         glm::vec3 calculateWindowBarSize();
         glm::vec3 calculateElementPosition(const ElementType elementType);
+        glm::vec2 calculateTitleParentSize();
         void windowShouldCloseCallback();
         void minimizeWindowCallback(GLFWwindow* window);
     };
