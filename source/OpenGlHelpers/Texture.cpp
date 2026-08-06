@@ -145,6 +145,10 @@ void RetroFuturaGUI::Texture::uploadToGPU()
     u32 format = (_colorChannelCount == 4) ? GL_RGBA : GL_RGB;
     glTexImage2D(GL_TEXTURE_2D, 0, static_cast<i32>(format), _resolution.x, _resolution.y, 0, format, GL_UNSIGNED_BYTE, _texture.data());
     glGenerateMipmap(GL_TEXTURE_2D);
+
+    // The GPU now owns the pixel data; drop the CPU-side copy instead of holding both forever
+    _texture.clear();
+    _texture.shrink_to_fit();
 }
 
 bool RetroFuturaGUI::Texture::IsTextureVerticallyFlipped() const
