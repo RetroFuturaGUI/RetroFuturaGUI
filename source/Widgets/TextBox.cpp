@@ -35,6 +35,7 @@ void RetroFuturaGUI::TextBox::Draw()
     interact();
     drawBackground();
     drawBorder();
+    drawMarkedArea();
     drawText();
     drawCaret();
 }
@@ -114,9 +115,19 @@ void RetroFuturaGUI::TextBox::SetRotation(const glm::vec3& rotation)
 
 void RetroFuturaGUI::TextBox::interact()
 {
-    auto mousePos = InputManager::GetMousePositionInvertedY();
-    bool isMouseTextBoxPressed = InputManager::IsMouseButtonPressed(GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS;
-    bool isMouseInside = isPointInside(glm::vec2(mousePos));
+    i32 mouseX { 0 }, mouseY { 0 };
+    bool hasMousePosition { false };
+
+#if defined(TARGET_PLATFORM_LINUX)
+    hasMousePosition = PlatformBridge::Input::GetMouseWindowPosition(glfwGetX11Window(_parentWindow), mouseX, mouseY);
+#elif defined(TARGET_PLATFORM_WINDOWS)
+    hasMousePosition = PlatformBridge::Input::GetMouseWindowPosition(glfwGetWin32Window(_parentWindow), mouseX, mouseY);
+#endif
+
+    //PlatformBridge reports native (top-down) window coordinates; flip to this library's bottom-up world space here
+    glm::vec2 mousePos { static_cast<f32>(mouseX), _projection.GetResolution().y - static_cast<f32>(mouseY) };
+    bool isMouseTextBoxPressed = PlatformBridge::Input::IsMouseButtonDown(PlatformBridge::MouseButton::Left);
+    bool isMouseInside = hasMousePosition && isPointInside(mousePos);
 
     if(_editingEnabled && !_mouseEnteredFlag && isMouseTextBoxPressed)
     {
@@ -126,6 +137,20 @@ void RetroFuturaGUI::TextBox::interact()
 
     editText();
     moveCaret();
+
+    if(_isMarking) //keep marking going even if the cursor drifts outside the widget bounds mid-drag
+    {
+        if(isMouseTextBoxPressed && hasMousePosition)
+        {
+            _markedPositionLast = _text->GetBoundaryAtPosition(mousePos.x);
+            setCaretFromBoundary(_markedPositionLast);
+            updateMarkedArea();
+        }
+        else
+        {
+            _isMarking = false;
+        }
+    }
 
     if(!_isEnabledFlag || !isMouseInside) //no action and mouse leave
     {
@@ -137,11 +162,11 @@ void RetroFuturaGUI::TextBox::interact()
             setColors(ColorState::Enabled);
         }
 
-        PlatformBridge::Input::SetActiveDisplay(nullptr); 
+        PlatformBridge::Input::SetActiveDisplay(nullptr);
         PlatformBridge::Input::SetActiveWindow(0);
         return;
     }
-    
+
     bool isHovering = _isEnabledFlag && isMouseInside;
     if(isHovering) // hover
     {
@@ -169,8 +194,10 @@ void RetroFuturaGUI::TextBox::interact()
 #elif defined(TARGET_PLATFORM_WINDOWS)
         PlatformBridge::Input::SetActiveWindow(glfwGetWin32Window(_parentWindow));
 #endif
-        _caretPosition = _text->GetGlyphCount() - 1;
-        _caret->SetPosition(_text->GetGlyphPosition(_caretPosition, CaretRelativePosition::Right, _caret->GetSize().y));
+        _isMarking = true;
+        _markedPositionFirst = _markedPositionLast = _text->GetBoundaryAtPosition(mousePos.x);
+        setCaretFromBoundary(_markedPositionFirst);
+        updateMarkedArea();
         _showCaret = true;
     }
     else if(!isMouseTextBoxPressed && _wasClicked) //release
@@ -206,6 +233,86 @@ void RetroFuturaGUI::TextBox::drawCaret()
         _caret->Draw();
 }
 
+void RetroFuturaGUI::TextBox::drawMarkedArea()
+{
+    if(_markedArea)
+        _markedArea->Draw();
+}
+
+void RetroFuturaGUI::TextBox::updateMarkedArea()
+{
+    const uSize
+        left { _markedPositionFirst < _markedPositionLast ? _markedPositionFirst : _markedPositionLast },
+        right { _markedPositionFirst < _markedPositionLast ? _markedPositionLast : _markedPositionFirst };
+
+    if(!_text || left == right) //nothing selected
+    {
+        _markedArea.reset();
+        return;
+    }
+
+    const glm::vec3
+        leftPosition { _text->GetBoundaryPosition(left, _caret->GetSize().y) },
+        rightPosition { _text->GetBoundaryPosition(right, _caret->GetSize().y) };
+    const f32
+        clippedLeftX { clampToTextBounds(leftPosition.x) },
+        clippedRightX { clampToTextBounds(rightPosition.x) },
+        width { clippedRightX - clippedLeftX };
+
+    if(width <= 0.0f) //selection sits entirely outside the visible text area
+    {
+        _markedArea.reset();
+        return;
+    }
+
+    if(!_markedArea)
+    {
+        _markedArea = std::make_unique<Rectangle>(&_projection);
+        _markedArea->SetRectangleMode(RectangleMode::Plane);
+        _markedArea->SetFillType(_markedAreaFillType);
+        _markedArea->SetColors(_markedAreaColors);
+    }
+
+    _markedArea->SetSize(glm::vec2(width, _caret->GetSize().y));
+    _markedArea->SetPosition(glm::vec3(clippedLeftX + width * 0.5f, leftPosition.y, _position.z + 0.15f));
+}
+
+void RetroFuturaGUI::TextBox::setCaretFromBoundary(const uSize boundary)
+{
+    if(boundary == 0)
+    {
+        _caretPosition = 0;
+        _caretRelativePosition = CaretRelativePosition::Left;
+    }
+    else
+    {
+        _caretPosition = boundary - 1;
+        _caretRelativePosition = CaretRelativePosition::Right;
+    }
+
+    glm::vec3 caretPosition { _text->GetGlyphPosition(_caretPosition, _caretRelativePosition, _caret->GetSize().y) };
+    caretPosition.x = clampToTextBounds(caretPosition.x, _caret->GetSize().x * 0.5f);
+    _caret->SetPosition(caretPosition);
+}
+
+f32 RetroFuturaGUI::TextBox::clampToTextBounds(const f32 worldX, const f32 halfExtent) const
+{
+    const f32
+        left { _position.x - _size.x * 0.5f + halfExtent },
+        right { _position.x + _size.x * 0.5f - halfExtent };
+
+    if(left > right) //requested extent is wider than the box itself
+        return _position.x;
+
+    if(worldX < left)
+        return left;
+
+    if(worldX > right)
+        return right;
+
+    return worldX;
+}
+
 
 void RetroFuturaGUI::TextBox::SetFontFamily(std::string_view fontFamily, const f32 fontSize, const PlatformBridge::Fonts::Slant slant, const PlatformBridge::Fonts::Weight fontWeight)
 {
@@ -217,4 +324,20 @@ void RetroFuturaGUI::TextBox::SetCornerRadii(const glm::vec4& radii)
 {
     _background->SetCornerRadii(radii);
     _border->SetCornerRadii(radii);
+}
+
+void RetroFuturaGUI::TextBox::SetMarkedAreaColors(std::span<glm::vec4> colors)
+{
+    _markedAreaColors.assign(colors.begin(), colors.end());
+
+    if(_markedArea)
+        _markedArea->SetColors(_markedAreaColors);
+}
+
+void RetroFuturaGUI::TextBox::SetMarkedAreaFillType(const FillType fillType)
+{
+    _markedAreaFillType = fillType;
+
+    if(_markedArea)
+        _markedArea->SetFillType(_markedAreaFillType);
 }

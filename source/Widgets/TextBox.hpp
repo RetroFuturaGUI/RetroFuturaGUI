@@ -7,6 +7,8 @@
 #include "IBackground.hpp"
 #include "IBorder.hpp"
 #include "ITextEditable.hpp"
+#include <memory>
+#include <span>
 
 namespace RetroFuturaGUI
 {
@@ -21,10 +23,12 @@ namespace RetroFuturaGUI
         ~TextBox() = default;
         auto operator =(const TextBox&) = delete;
         auto operator =(TextBox&&) = delete;
-        void Draw();
+        void Draw() override;
         void SetEnabled(const bool enable, const bool emitSignal = true);
         void SetFontFamily(std::string_view fontFamily, const f32 fontSize, const PlatformBridge::Fonts::Slant slant, const PlatformBridge::Fonts::Weight fontWeight) override;
         void SetCornerRadii(const glm::vec4& radii);
+        void SetMarkedAreaColors(std::span<glm::vec4> colors);
+        void SetMarkedAreaFillType(const FillType fillType);
 
     //Geometry
         void SetSize(const glm::vec3& size) override;
@@ -35,5 +39,17 @@ namespace RetroFuturaGUI
         void interact();
         void setColors(const ColorState state);
         void drawCaret();
+        void drawMarkedArea();
+        void updateMarkedArea();
+        void setCaretFromBoundary(const uSize boundary);
+        f32 clampToTextBounds(const f32 worldX, const f32 halfExtent = 0.0f) const;
+
+        std::unique_ptr<Rectangle> _markedArea;
+        std::vector<glm::vec4> _markedAreaColors { glm::vec4(0.24f, 0.47f, 0.85f, 0.4f) };
+        FillType _markedAreaFillType { FillType::SOLID };
+        uSize
+            _markedPositionFirst { 0 },
+            _markedPositionLast { 0 };
+        bool _isMarking { false };
     };
 }

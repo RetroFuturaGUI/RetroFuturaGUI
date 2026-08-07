@@ -321,6 +321,39 @@ glm::vec3 RetroFuturaGUI::Text::GetGlyphPosition(const uSize index, const CaretR
     return glm::vec3(x, y, 0) + glm::vec3(_positionAligned, _position.z + 0.01f); //+0.01f for the caret
 }
 
+glm::vec3 RetroFuturaGUI::Text::GetBoundaryPosition(const uSize boundary, const f32 caretSize) const
+{
+    f32 x { 0.0f };
+
+    if(!_glyphPositions.empty())
+        x = _glyphPositions[min(boundary, _glyphPositions.size() - 1)];
+
+    return glm::vec3(x, caretSize * 0.25f, 0) + glm::vec3(_positionAligned, _position.z + 0.01f);
+}
+
+uSize RetroFuturaGUI::Text::GetBoundaryAtPosition(const f32 worldX) const
+{
+    if(_glyphPositions.empty())
+        return 0;
+
+    const f32 localX { worldX - _positionAligned.x };
+    uSize closest { 0 };
+    f32 closestDistance { std::abs(_glyphPositions[0] - localX) };
+
+    for(uSize i = 1; i < _glyphPositions.size(); ++i)
+    {
+        const f32 distance { std::abs(_glyphPositions[i] - localX) };
+
+        if(distance < closestDistance)
+        {
+            closestDistance = distance;
+            closest = i;
+        }
+    }
+
+    return closest;
+}
+
 void RetroFuturaGUI::Text::alignPosition()
 {
     switch(_textAlignment)
