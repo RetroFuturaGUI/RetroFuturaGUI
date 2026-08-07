@@ -58,6 +58,9 @@ namespace RetroFuturaGUI
             _showCaret { false };
         u32 _keyHoldFrames { 0 };
         std::u32string _keyRepeatText {};
+        //Mirrors _keyRepeatText's role but for moveCaret(): the direction to replay on repeat, captured once on
+        //the fresh press so repeat frames never need to re-query GetKeyPressState (0 = none, -1 = left, 1 = right).
+        i32 _caretRepeatDirection { 0 };
         std::vector<char> _prevKeyStates {};
         static constexpr i32 _keyRepeatInitialDelay = 60;
         static constexpr i32 _keyRepeatInterval = 5;
@@ -79,7 +82,8 @@ namespace RetroFuturaGUI
             _isSelected { false };
 
     private:
-        void moveCaretImpl();
+        void moveCaretLeft();
+        void moveCaretRight();
         void emitEnterRelease();
         void emitEnterPressed();
         void emitChange();

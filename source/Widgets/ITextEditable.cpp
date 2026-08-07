@@ -13,85 +13,101 @@ void RetroFuturaGUI::ITextEditable::moveCaret()
     {
         _keyWasReleased = true;
         _keyHoldFrames = 0;
-        _keyRepeatText.clear();
+        _caretRepeatDirection = 0;
         return;
     }
 
     if(!_keyWasReleased)
     {
-        ++_keyHoldFrames;
+        if (_caretRepeatDirection != 0)
+        {
+            ++_keyHoldFrames;
 
-        if (_keyHoldFrames >= _keyRepeatInitialDelay && (_keyHoldFrames - _keyRepeatInitialDelay) % _keyRepeatInterval == 0)
-            moveCaretImpl();
-        
+            if (_keyHoldFrames >= _keyRepeatInitialDelay && (_keyHoldFrames - _keyRepeatInitialDelay) % _keyRepeatInterval == 0)
+            {
+                if(_caretRepeatDirection < 0)
+                    moveCaretLeft();
+                else
+                    moveCaretRight();
+            }
+        }
+
         return;
     }
 
-    moveCaretImpl();
+    if(PlatformBridge::Input::GetKeyPressState(PB_KEY_LEFT) == PlatformBridge::KeyPressState::Press)
+    {
+        moveCaretLeft();
+        _caretRepeatDirection = -1;
+    }
+    else if(PlatformBridge::Input::GetKeyPressState(PB_KEY_RIGHT) == PlatformBridge::KeyPressState::Press)
+    {
+        moveCaretRight();
+        _caretRepeatDirection = 1;
+    }
 
     _keyWasReleased = false;
     _keyHoldFrames = 0;
 }
 
-void RetroFuturaGUI::ITextEditable::moveCaretImpl()
+void RetroFuturaGUI::ITextEditable::moveCaretLeft()
 {
-    if(PlatformBridge::Input::GetKeyPressState(PB_KEY_LEFT) == PlatformBridge::KeyPressState::Press)
-    {
-        deselect();
+    deselect();
 
-        if(CaretRelativePosition::Right == _caretRelativePosition)
-        {
-            _caretRelativePosition = CaretRelativePosition::Left;
-            updateCaretPosition();
-        }
-        else if(_caretPosition >= _text->GetGlyphCount())
-        {
-            _caretPosition = _text->GetGlyphCount() - 1;
-        }
-        else if(_caretPosition != 0)
-        {
-            --_caretPosition;
-            _caretRelativePosition = CaretRelativePosition::Left;
-            updateCaretPosition();
-        }
-        else if(_caretPosition == 0)
-        {
-            _caretRelativePosition = CaretRelativePosition::Left;
-            updateCaretPosition();
-        }
+    if(CaretRelativePosition::Right == _caretRelativePosition)
+    {
+        _caretRelativePosition = CaretRelativePosition::Left;
+        updateCaretPosition();
     }
-    else if(PlatformBridge::Input::GetKeyPressState(PB_KEY_RIGHT) == PlatformBridge::KeyPressState::Press)
+    else if(_caretPosition >= _text->GetGlyphCount())
     {
-        deselect();
+        _caretPosition = _text->GetGlyphCount() - 1;
+    }
+    else if(_caretPosition != 0)
+    {
+        --_caretPosition;
+        _caretRelativePosition = CaretRelativePosition::Left;
+        updateCaretPosition();
+    }
+    else if(_caretPosition == 0)
+    {
+        _caretRelativePosition = CaretRelativePosition::Left;
+        updateCaretPosition();
+    }
 
-        if(CaretRelativePosition::Left == _caretRelativePosition)
-        {
-            _caretRelativePosition = CaretRelativePosition::Right;
-            updateCaretPosition();
-        }
-        else if(_caretPosition < _text->GetGlyphCount() -1)
-        {
+    std::println("Pos: {}, Relative: {}", _caretPosition, _caretRelativePosition == CaretRelativePosition::Left ? "Left" : "Right");
+}
 
-            ++_caretPosition;
-            _caretRelativePosition = CaretRelativePosition::Right;
-            updateCaretPosition();
-        }
-        else if(_caretPosition >= _text->GetGlyphCount() - 1)
-        {
-            _caretPosition = _text->GetGlyphCount() -1;
-            _caretRelativePosition = CaretRelativePosition::Right;
-            updateCaretPosition();
-        }
-        else if(_caretPosition == 0 && _caretRelativePosition == CaretRelativePosition::Left)
-        {
-            _caretRelativePosition = CaretRelativePosition::Right;
-            updateCaretPosition();
-        }
-        else if(_caretPosition == 0 && _caretRelativePosition == CaretRelativePosition::Right)
-        {
-            ++_caretPosition;
-            updateCaretPosition();
-        }
+void RetroFuturaGUI::ITextEditable::moveCaretRight()
+{
+    deselect();
+
+    if(CaretRelativePosition::Left == _caretRelativePosition)
+    {
+        _caretRelativePosition = CaretRelativePosition::Right;
+        updateCaretPosition();
+    }
+    else if(_caretPosition < _text->GetGlyphCount() -1)
+    {
+        ++_caretPosition;
+        _caretRelativePosition = CaretRelativePosition::Right;
+        updateCaretPosition();
+    }
+    else if(_caretPosition >= _text->GetGlyphCount() - 1)
+    {
+        _caretPosition = _text->GetGlyphCount() -1;
+        _caretRelativePosition = CaretRelativePosition::Right;
+        updateCaretPosition();
+    }
+    else if(_caretPosition == 0 && _caretRelativePosition == CaretRelativePosition::Left)
+    {
+        _caretRelativePosition = CaretRelativePosition::Right;
+        updateCaretPosition();
+    }
+    else if(_caretPosition == 0 && _caretRelativePosition == CaretRelativePosition::Right)
+    {
+        ++_caretPosition;
+        updateCaretPosition();
     }
 
     std::println("Pos: {}, Relative: {}", _caretPosition, _caretRelativePosition == CaretRelativePosition::Left ? "Left" : "Right");
