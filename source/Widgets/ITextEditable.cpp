@@ -97,7 +97,7 @@ void RetroFuturaGUI::ITextEditable::moveCaretImpl()
 void RetroFuturaGUI::ITextEditable::updateCaretPosition()
 {
     glm::vec3 caretPosition { _text->GetGlyphPosition(_caretPosition, _caretRelativePosition, _caret->GetSize().y) };
-    caretPosition.x = clampToTextBounds(caretPosition.x, _caret->GetSize().x * 0.5f);
+    caretPosition.x = keepCaretVisible(caretPosition.x, _caret->GetSize().x * 0.5f);
     _caret->SetPosition(caretPosition);
 }
 

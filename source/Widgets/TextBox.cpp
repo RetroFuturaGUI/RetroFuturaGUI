@@ -300,7 +300,7 @@ void RetroFuturaGUI::TextBox::setCaretFromBoundary(const uSize boundary)
     }
 
     glm::vec3 caretPosition { _text->GetGlyphPosition(_caretPosition, _caretRelativePosition, _caret->GetSize().y) };
-    caretPosition.x = clampToTextBounds(caretPosition.x, _caret->GetSize().x * 0.5f);
+    caretPosition.x = keepCaretVisible(caretPosition.x, _caret->GetSize().x * 0.5f);
     _caret->SetPosition(caretPosition);
 }
 
@@ -320,6 +320,34 @@ f32 RetroFuturaGUI::TextBox::clampToTextBounds(const f32 worldX, const f32 halfE
         return right;
 
     return worldX;
+}
+
+f32 RetroFuturaGUI::TextBox::keepCaretVisible(const f32 worldX, const f32 halfExtent)
+{
+    const f32
+        left { _position.x - _size.x * 0.5f + halfExtent },
+        right { _position.x + _size.x * 0.5f - halfExtent };
+
+    if(left > right) //requested extent is wider than the box itself
+        return _position.x;
+
+    if(worldX > right) //scroll the view left so the caret lands exactly on the edge
+    {
+        _scrollOffsetX += worldX - right;
+        _text->SetScrollOffset(_scrollOffsetX);
+        return right;
+    }
+
+    if(worldX < left && _scrollOffsetX > 0.0f) //scroll the view right, as far as there's room to
+    {
+        const f32 newScrollOffsetX { (_scrollOffsetX + worldX - left) > 0.0f ? (_scrollOffsetX + worldX - left) : 0.0f };
+        const f32 delta { newScrollOffsetX - _scrollOffsetX };
+        _scrollOffsetX = newScrollOffsetX;
+        _text->SetScrollOffset(_scrollOffsetX);
+        return worldX - delta; //shift the reported position by the same amount the view scrolled
+    }
+
+    return clampToTextBounds(worldX, halfExtent); //nothing left to scroll; fall back to a hard clamp
 }
 
 void RetroFuturaGUI::TextBox::SetFontFamily(std::string_view fontFamily, const f32 fontSize, const PlatformBridge::Fonts::Slant slant, const PlatformBridge::Fonts::Weight fontWeight)

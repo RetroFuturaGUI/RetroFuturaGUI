@@ -48,12 +48,14 @@ namespace RetroFuturaGUI
         void updateSelectedArea();
         void setCaretFromBoundary(const uSize boundary);
         f32 clampToTextBounds(const f32 worldX, const f32 halfExtent = 0.0f) const override;
+        f32 keepCaretVisible(const f32 worldX, const f32 halfExtent = 0.0f) override;
 
         std::unique_ptr<Rectangle> _selectedArea;
         std::vector<glm::vec4> _selectedAreaColors { glm::vec4(0.24f, 0.47f, 0.85f, 0.4f) };
         uSize
             _markedPositionFirst { 0 },
             _markedPositionLast { 0 };
+        f32 _scrollOffsetX { 0.0f };
         bool
             _isMarking { false },
             _isSelected { false };

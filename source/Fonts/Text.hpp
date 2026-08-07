@@ -47,6 +47,8 @@ namespace RetroFuturaGUI
         void SetTextPadding(const f32 padding);
         void SetTextUTF8(std::string_view text);
         void SetTextUTF32(std::u32string_view text);
+        void SetScrollOffset(const f32 offset);
+        f32 GetScrollOffset() const;
         glm::vec4 GetColor() const;
         float GetGlyphSize() const;
         glm::vec3 GetGlyphPosition(const uSize index, const CaretRelativePosition relativePosition, const f32 caretSize) const;
@@ -69,6 +71,7 @@ namespace RetroFuturaGUI
         glm::vec4 _textColor { 1.0f };
         TextAlignment _textAlignment { TextAlignment::Left };
         f32 _textPadding { 0.0f };
+        f32 _scrollOffset { 0.0f };
 
         // geometry
         glm::vec3 _position { 0.0f };

@@ -23,8 +23,14 @@ namespace RetroFuturaGUI
         void editText();
 
         //Lets widgets with fixed geometry (e.g. TextBox) keep the caret from rendering past their own edges.
-        //Default is a no-op so ITextEditable stays usable by widgets without such bounds.
+        //Default is a no-op so ITextEditable stays usable by widgets without such bounds. Pure/side-effect-free -
+        //used for one-off clipping (e.g. the selection highlight), where the view itself must NOT be scrolled.
         virtual f32 clampToTextBounds(const f32 worldX, const f32 = 0.0f) const { return worldX; }
+
+        //Called only when the caret itself moves. Unlike clampToTextBounds, this may scroll the text into view
+        //(mutating state) so the caret stays visible instead of just being pinned to the edge. Default falls
+        //back to the pure clamp above, for widgets without scrolling support.
+        virtual f32 keepCaretVisible(const f32 worldX, const f32 halfExtent = 0.0f) { return clampToTextBounds(worldX, halfExtent); }
 
         std::unique_ptr<Rectangle> _caret;
         uSize _caretPosition { 0 };

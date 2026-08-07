@@ -67,6 +67,21 @@ void RetroFuturaGUI::Text::SetParentSize(const glm::vec2 size)
     alignPosition();
 }
 
+void RetroFuturaGUI::Text::SetScrollOffset(const f32 offset)
+{
+    if(_scrollOffset == offset)
+        return;
+
+    _scrollOffset = offset;
+    alignPosition();
+    updateMesh(); //glyph clipping is baked into vertex data at mesh-build time, so it must be redone for the new view
+}
+
+f32 RetroFuturaGUI::Text::GetScrollOffset() const
+{
+    return _scrollOffset;
+}
+
 void RetroFuturaGUI::Text::SetFontFamily(std::string_view fontFamily, const f32 glyphSize, PlatformBridge::Fonts::Slant slant, PlatformBridge::Fonts::Weight weight)
 {
     _glyphSize = glm::vec2(glyphSize);
@@ -371,6 +386,8 @@ void RetroFuturaGUI::Text::alignPosition()
             _positionAligned = glm::vec2(_position.x - _parentSize.x * 0.5f + _textPadding, _position.y - _textBaseHeight * 0.5f);
         }
     }
+
+    _positionAligned.x -= _scrollOffset;
 
     _translationMatrix = glm::translate(glm::mat4(1.0f), glm::vec3(_positionAligned, _position.z));
 }
