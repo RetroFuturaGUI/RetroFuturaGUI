@@ -33,6 +33,7 @@ namespace RetroFuturaGUI
         void SetSelectedAreaGradientOffset(const f32 gradientOffset);
         void SetSelectedAreaGradientDegree(const f32 degree);
         void SetSelectedAreaGradientRotationSpeed(const f32 rotationSpeed);
+        void SetSelectedAreaCornerRadii(const glm::vec4& radii);
 
     //Geometry
         void SetSize(const glm::vec3& size) override;
@@ -46,7 +47,7 @@ namespace RetroFuturaGUI
         void drawSelectedArea();
         void updateSelectedArea();
         void setCaretFromBoundary(const uSize boundary);
-        f32 clampToTextBounds(const f32 worldX, const f32 halfExtent = 0.0f) const;
+        f32 clampToTextBounds(const f32 worldX, const f32 halfExtent = 0.0f) const override;
 
         std::unique_ptr<Rectangle> _selectedArea;
         std::vector<glm::vec4> _selectedAreaColors { glm::vec4(0.24f, 0.47f, 0.85f, 0.4f) };

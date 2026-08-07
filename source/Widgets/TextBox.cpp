@@ -140,7 +140,7 @@ void RetroFuturaGUI::TextBox::interact()
     bool isMouseTextBoxPressed = PlatformBridge::Input::IsMouseButtonDown(PlatformBridge::MouseButton::Left);
     bool isMouseInside = hasMousePosition && isPointInside(mousePos);
 
-    if(_editingEnabled && !_mouseEnteredFlag && isMouseTextBoxPressed)
+    if(_editingEnabled && !_mouseEnteredFlag && !_isMarking && isMouseTextBoxPressed)
     {
         _editingEnabled = false;
         _showCaret = false;
@@ -153,7 +153,9 @@ void RetroFuturaGUI::TextBox::interact()
     {
         if(isMouseTextBoxPressed && hasMousePosition)
         {
-            _markedPositionLast = _text->GetBoundaryAtPosition(mousePos.x);
+            //clamp before the hit-test, not after, so dragging past the edge lands on the last rendered
+            //glyph's boundary instead of a boundary that may be clipped out of view (e.g. on overflowing text)
+            _markedPositionLast = _text->GetBoundaryAtPosition(clampToTextBounds(mousePos.x));
             setCaretFromBoundary(_markedPositionLast);
             updateSelectedArea();
         }
@@ -206,7 +208,7 @@ void RetroFuturaGUI::TextBox::interact()
         PlatformBridge::Input::SetActiveWindow(glfwGetWin32Window(_parentWindow));
 #endif
         _isMarking = true;
-        _markedPositionFirst = _markedPositionLast = _text->GetBoundaryAtPosition(mousePos.x);
+        _markedPositionFirst = _markedPositionLast = _text->GetBoundaryAtPosition(clampToTextBounds(mousePos.x));
         setCaretFromBoundary(_markedPositionFirst);
         updateSelectedArea();
         _showCaret = true;
@@ -320,7 +322,6 @@ f32 RetroFuturaGUI::TextBox::clampToTextBounds(const f32 worldX, const f32 halfE
     return worldX;
 }
 
-
 void RetroFuturaGUI::TextBox::SetFontFamily(std::string_view fontFamily, const f32 fontSize, const PlatformBridge::Fonts::Slant slant, const PlatformBridge::Fonts::Weight fontWeight)
 {
     ITextProperties::SetFontFamily(fontFamily, fontSize, slant, fontWeight);
@@ -368,4 +369,10 @@ void RetroFuturaGUI::TextBox::SetSelectedAreaGradientRotationSpeed(const f32 rot
 {
     if(_selectedArea)
         _selectedArea->SetGradientRotationSpeed(rotationSpeed);
+}
+
+void RetroFuturaGUI::TextBox::SetSelectedAreaCornerRadii(const glm::vec4& radii)
+{
+    if(_selectedArea)
+        _selectedArea->SetCornerRadii(radii);
 }

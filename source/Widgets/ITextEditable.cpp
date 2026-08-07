@@ -40,7 +40,7 @@ void RetroFuturaGUI::ITextEditable::moveCaretImpl()
         if(CaretRelativePosition::Right == _caretRelativePosition)
         {
             _caretRelativePosition = CaretRelativePosition::Left;
-            _caret->SetPosition(_text->GetGlyphPosition(_caretPosition, _caretRelativePosition, _caret->GetSize().y));
+            updateCaretPosition();
         }
         else if(_caretPosition >= _text->GetGlyphCount())
         {
@@ -50,12 +50,12 @@ void RetroFuturaGUI::ITextEditable::moveCaretImpl()
         {
             --_caretPosition;
             _caretRelativePosition = CaretRelativePosition::Left;
-            _caret->SetPosition(_text->GetGlyphPosition(_caretPosition, _caretRelativePosition, _caret->GetSize().y));
+            updateCaretPosition();
         }
         else if(_caretPosition == 0)
         {
             _caretRelativePosition = CaretRelativePosition::Left;
-            _caret->SetPosition(_text->GetGlyphPosition(_caretPosition, _caretRelativePosition, _caret->GetSize().y));
+            updateCaretPosition();
         }
     }
     else if(PlatformBridge::Input::GetKeyPressState(PB_KEY_RIGHT) == PlatformBridge::KeyPressState::Press)
@@ -64,34 +64,41 @@ void RetroFuturaGUI::ITextEditable::moveCaretImpl()
         if(CaretRelativePosition::Left == _caretRelativePosition)
         {
             _caretRelativePosition = CaretRelativePosition::Right;
-            _caret->SetPosition(_text->GetGlyphPosition(_caretPosition, _caretRelativePosition, _caret->GetSize().y));
+            updateCaretPosition();
         }
         else if(_caretPosition < _text->GetGlyphCount() -1)
         {
 
             ++_caretPosition;
             _caretRelativePosition = CaretRelativePosition::Right;
-            _caret->SetPosition(_text->GetGlyphPosition(_caretPosition, _caretRelativePosition, _caret->GetSize().y));
+            updateCaretPosition();
         }
         else if(_caretPosition >= _text->GetGlyphCount() - 1)
         {
             _caretPosition = _text->GetGlyphCount() -1;
             _caretRelativePosition = CaretRelativePosition::Right;
-            _caret->SetPosition(_text->GetGlyphPosition(_caretPosition, CaretRelativePosition::Right, _caret->GetSize().y));
+            updateCaretPosition();
         }
         else if(_caretPosition == 0 && _caretRelativePosition == CaretRelativePosition::Left)
         {
             _caretRelativePosition = CaretRelativePosition::Right;
-            _caret->SetPosition(_text->GetGlyphPosition(_caretPosition, _caretRelativePosition, _caret->GetSize().y));
+            updateCaretPosition();
         }
         else if(_caretPosition == 0 && _caretRelativePosition == CaretRelativePosition::Right)
         {
             ++_caretPosition;
-            _caret->SetPosition(_text->GetGlyphPosition(_caretPosition, CaretRelativePosition::Right, _caret->GetSize().y));
+            updateCaretPosition();
         }
     }
 
     std::println("Pos: {}, Relative: {}", _caretPosition, _caretRelativePosition == CaretRelativePosition::Left ? "Left" : "Right");
+}
+
+void RetroFuturaGUI::ITextEditable::updateCaretPosition()
+{
+    glm::vec3 caretPosition { _text->GetGlyphPosition(_caretPosition, _caretRelativePosition, _caret->GetSize().y) };
+    caretPosition.x = clampToTextBounds(caretPosition.x, _caret->GetSize().x * 0.5f);
+    _caret->SetPosition(caretPosition);
 }
 
 void RetroFuturaGUI::ITextEditable::editText()
@@ -129,7 +136,7 @@ void RetroFuturaGUI::ITextEditable::editText()
                 std::u32string right { _text->GetTextUTF32().substr(cut) };
                 _text->SetTextUTF32(left + _keyRepeatText + right);
                 ++_caretPosition;
-                _caret->SetPosition(_text->GetGlyphPosition(_caretPosition, _caretRelativePosition, _caret->GetSize().y));
+                updateCaretPosition();
                 emitChange();
             }
         }
@@ -163,7 +170,7 @@ void RetroFuturaGUI::ITextEditable::editText()
 
             _text->SetTextUTF32(left + right);
             --_caretPosition;
-            _caret->SetPosition(_text->GetGlyphPosition(_caretPosition, _caretRelativePosition, _caret->GetSize().y));
+            updateCaretPosition();
             _keyWasReleased = false;
             _keyHoldFrames = 0;
             _keyRepeatText.clear();
@@ -189,7 +196,7 @@ void RetroFuturaGUI::ITextEditable::editText()
         //std::println("{}🐺{}🐺{}", DoubleEncodedString::Utf32ToUtf8(left), DoubleEncodedString::Utf32ToUtf8(keyText), DoubleEncodedString::Utf32ToUtf8(right));
         _text->SetTextUTF32(left + keyText + right);
         ++_caretPosition;
-        _caret->SetPosition(_text->GetGlyphPosition(_caretPosition, _caretRelativePosition, _caret->GetSize().y));
+        updateCaretPosition();
         _keyRepeatText = keyText;
         _keyWasReleased = false;
         _keyHoldFrames = 0;

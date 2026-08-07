@@ -21,7 +21,11 @@ namespace RetroFuturaGUI
     protected:
         void moveCaret();
         void editText();
-        
+
+        //Lets widgets with fixed geometry (e.g. TextBox) keep the caret from rendering past their own edges.
+        //Default is a no-op so ITextEditable stays usable by widgets without such bounds.
+        virtual f32 clampToTextBounds(const f32 worldX, const f32 = 0.0f) const { return worldX; }
+
         std::unique_ptr<Rectangle> _caret;
         uSize _caretPosition { 0 };
         CaretRelativePosition _caretRelativePosition { CaretRelativePosition::Right };
@@ -50,5 +54,6 @@ namespace RetroFuturaGUI
         void emitEnterRelease();
         void emitEnterPressed();
         void emitChange();
+        void updateCaretPosition();
     };
 }
