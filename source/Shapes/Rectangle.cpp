@@ -444,3 +444,8 @@ const glm::vec2 RetroFuturaGUI::Rectangle::GetSize() const
 {
     return _scale;
 }
+
+const glm::vec3 RetroFuturaGUI::Rectangle::GetPosition() const
+{
+    return _position;
+}

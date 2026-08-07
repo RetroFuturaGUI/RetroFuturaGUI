@@ -13,6 +13,13 @@ namespace RetroFuturaGUI
         void SetCaretColors(std::span<glm::vec4> colors);
         void SetCaretFillType(const FillType fillType);
         void SetCaretGradientAnimationSpeed(const f32 speed);
+        void SetSelectedAreaColors(std::span<glm::vec4> colors);
+        void SetSelectedAreaFillType(const FillType fillType);
+        void SetSelectedAreaGradientAnimationSpeed(const f32 speed);
+        void SetSelectedAreaGradientOffset(const f32 gradientOffset);
+        void SetSelectedAreaGradientDegree(const f32 degree);
+        void SetSelectedAreaGradientRotationSpeed(const f32 rotationSpeed);
+        void SetSelectedAreaCornerRadii(const glm::vec4& radii);
         void Connect_OnEnterPressed(const typename Signal<>::Slot& slot, const bool async);
         void Connect_OnEnterReleased(const typename Signal<>::Slot& slot, const bool async);
         void Disconnect_OnEnterPressed(const typename Signal<>::Slot& slot);
@@ -21,6 +28,12 @@ namespace RetroFuturaGUI
     protected:
         void moveCaret();
         void editText();
+        void drawSelectedArea();
+        void updateSelectedArea();
+        void setCaretFromBoundary(const uSize boundary);
+
+        //Clears any active/completed selection, e.g. once the caret moves or the text changes underneath it.
+        void deselect();
 
         //Lets widgets with fixed geometry (e.g. TextBox) keep the caret from rendering past their own edges.
         //Default is a no-op so ITextEditable stays usable by widgets without such bounds. Pure/side-effect-free -
@@ -54,6 +67,16 @@ namespace RetroFuturaGUI
             _onEnterPressedAsync,
             _onEnterReleased,
             _onEnterReleasedAsync;
+
+        //Selection ("marking")
+        std::unique_ptr<Rectangle> _selectedArea;
+        std::vector<glm::vec4> _selectedAreaColors { glm::vec4(0.24f, 0.47f, 0.85f, 0.4f) };
+        uSize
+            _markedPositionFirst { 0 },
+            _markedPositionLast { 0 };
+        bool
+            _isMarking { false },
+            _isSelected { false };
 
     private:
         void moveCaretImpl();

@@ -246,64 +246,6 @@ void RetroFuturaGUI::TextBox::drawCaret()
         _caret->Draw();
 }
 
-void RetroFuturaGUI::TextBox::drawSelectedArea()
-{
-    if(!_selectedArea)
-        return;
-
-    if(_isSelected)
-        _selectedArea->Draw();
-}
-
-void RetroFuturaGUI::TextBox::updateSelectedArea()
-{
-    const uSize
-        left { _markedPositionFirst < _markedPositionLast ? _markedPositionFirst : _markedPositionLast },
-        right { _markedPositionFirst < _markedPositionLast ? _markedPositionLast : _markedPositionFirst };
-
-    if(!_text || !_selectedArea || left == right) //nothing selected
-    {
-        _isSelected = false;
-        return;
-    }
-
-    const glm::vec3
-        leftPosition { _text->GetBoundaryPosition(left, _caret->GetSize().y) },
-        rightPosition { _text->GetBoundaryPosition(right, _caret->GetSize().y) };
-    const f32
-        clippedLeftX { clampToTextBounds(leftPosition.x) },
-        clippedRightX { clampToTextBounds(rightPosition.x) },
-        width { clippedRightX - clippedLeftX };
-
-    if(width <= 0.0f) //selection sits entirely outside the visible text area
-    {
-        _isSelected = false;
-        return;
-    }
-
-    _selectedArea->SetSize(glm::vec2(width, _caret->GetSize().y));
-    _selectedArea->SetPosition(glm::vec3(clippedLeftX + width * 0.5f, leftPosition.y, _position.z + 0.1f));
-    _isSelected = true;
-}
-
-void RetroFuturaGUI::TextBox::setCaretFromBoundary(const uSize boundary)
-{
-    if(boundary == 0)
-    {
-        _caretPosition = 0;
-        _caretRelativePosition = CaretRelativePosition::Left;
-    }
-    else
-    {
-        _caretPosition = boundary - 1;
-        _caretRelativePosition = CaretRelativePosition::Right;
-    }
-
-    glm::vec3 caretPosition { _text->GetGlyphPosition(_caretPosition, _caretRelativePosition, _caret->GetSize().y) };
-    caretPosition.x = keepCaretVisible(caretPosition.x, _caret->GetSize().x * 0.5f);
-    _caret->SetPosition(caretPosition);
-}
-
 f32 RetroFuturaGUI::TextBox::clampToTextBounds(const f32 worldX, const f32 halfExtent) const
 {
     const f32
@@ -360,47 +302,4 @@ void RetroFuturaGUI::TextBox::SetCornerRadii(const glm::vec4& radii)
 {
     _background->SetCornerRadii(radii);
     _border->SetCornerRadii(radii);
-}
-
-void RetroFuturaGUI::TextBox::SetSelectedAreaColors(std::span<glm::vec4> colors)
-{
-    _selectedAreaColors.assign(colors.begin(), colors.end());
-
-    if(_selectedArea)
-        _selectedArea->SetColors(_selectedAreaColors);
-}
-
-void RetroFuturaGUI::TextBox::SetSelectedAreaFillType(const FillType fillType)
-{
-    if(_selectedArea)
-        _selectedArea->SetFillType(fillType);
-}
-void RetroFuturaGUI::TextBox::SetSelectedAreaGradientAnimationSpeed(const f32 speed)
-{
-    if(_selectedArea)
-        _selectedArea->SetGradientAnimationSpeed(speed);
-}
-
-void RetroFuturaGUI::TextBox::SetSelectedAreaGradientOffset(const f32 gradientOffset)
-{
-    if(_selectedArea)
-        _selectedArea->SetGradientOffset(gradientOffset);
-}
-
-void RetroFuturaGUI::TextBox::SetSelectedAreaGradientDegree(const f32 degree)
-{
-    if(_selectedArea)
-        _selectedArea->SetGradientDegree(degree);
-}
-
-void RetroFuturaGUI::TextBox::SetSelectedAreaGradientRotationSpeed(const f32 rotationSpeed)
-{
-    if(_selectedArea)
-        _selectedArea->SetGradientRotationSpeed(rotationSpeed);
-}
-
-void RetroFuturaGUI::TextBox::SetSelectedAreaCornerRadii(const glm::vec4& radii)
-{
-    if(_selectedArea)
-        _selectedArea->SetCornerRadii(radii);
 }
