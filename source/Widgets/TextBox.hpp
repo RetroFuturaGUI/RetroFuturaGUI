@@ -27,8 +27,12 @@ namespace RetroFuturaGUI
         void SetEnabled(const bool enable, const bool emitSignal = true);
         void SetFontFamily(std::string_view fontFamily, const f32 fontSize, const PlatformBridge::Fonts::Slant slant, const PlatformBridge::Fonts::Weight fontWeight) override;
         void SetCornerRadii(const glm::vec4& radii);
-        void SetMarkedAreaColors(std::span<glm::vec4> colors);
-        void SetMarkedAreaFillType(const FillType fillType);
+        void SetSelectedAreaColors(std::span<glm::vec4> colors);
+        void SetSelectedAreaFillType(const FillType fillType);
+        void SetSelectedAreaGradientAnimationSpeed(const f32 speed);
+        void SetSelectedAreaGradientOffset(const f32 gradientOffset);
+        void SetSelectedAreaGradientDegree(const f32 degree);
+        void SetSelectedAreaGradientRotationSpeed(const f32 rotationSpeed);
 
     //Geometry
         void SetSize(const glm::vec3& size) override;
@@ -39,17 +43,18 @@ namespace RetroFuturaGUI
         void interact();
         void setColors(const ColorState state);
         void drawCaret();
-        void drawMarkedArea();
-        void updateMarkedArea();
+        void drawSelectedArea();
+        void updateSelectedArea();
         void setCaretFromBoundary(const uSize boundary);
         f32 clampToTextBounds(const f32 worldX, const f32 halfExtent = 0.0f) const;
 
-        std::unique_ptr<Rectangle> _markedArea;
-        std::vector<glm::vec4> _markedAreaColors { glm::vec4(0.24f, 0.47f, 0.85f, 0.4f) };
-        FillType _markedAreaFillType { FillType::SOLID };
+        std::unique_ptr<Rectangle> _selectedArea;
+        std::vector<glm::vec4> _selectedAreaColors { glm::vec4(0.24f, 0.47f, 0.85f, 0.4f) };
         uSize
             _markedPositionFirst { 0 },
             _markedPositionLast { 0 };
-        bool _isMarking { false };
+        bool
+            _isMarking { false },
+            _isSelected { false };
     };
 }

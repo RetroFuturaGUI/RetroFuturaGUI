@@ -15,6 +15,7 @@ RetroFuturaGUI::TextBox::TextBox(const std::string& name, Projection* projection
     _border = std::make_unique<Rectangle>(projection);
     _text = std::make_unique<Text>(projection);
     _caret = std::make_unique<Rectangle>(projection);
+    _selectedArea = std::make_unique<Rectangle>(projection);
 
     if (_background)
         _background->SetRectangleMode(RectangleMode::Plane);
@@ -28,6 +29,13 @@ RetroFuturaGUI::TextBox::TextBox(const std::string& name, Projection* projection
         _caret->SetFillType(FillType::SOLID);
         _caret->SetColors(std::span<glm::vec4>(_caretColors.data(), _caretColors.size()));
     }
+
+    if(_selectedArea)
+    {
+        _selectedArea->SetRectangleMode(RectangleMode::Plane);
+        _selectedArea->SetFillType(FillType::SOLID);
+        _selectedArea->SetColors(_selectedAreaColors);
+    }
 }
 
 void RetroFuturaGUI::TextBox::Draw()
@@ -35,7 +43,7 @@ void RetroFuturaGUI::TextBox::Draw()
     interact();
     drawBackground();
     drawBorder();
-    drawMarkedArea();
+    drawSelectedArea();
     drawText();
     drawCaret();
 }
@@ -89,14 +97,17 @@ void RetroFuturaGUI::TextBox::SetPosition(const glm::vec3& position)
     if(_background)
         _background->SetPosition(position);
 
+    if(_selectedArea)
+        _selectedArea->SetPosition(position + glm::vec3(0.0f, 0.0f, 0.1f));
+
     if(_border)
-        _border->SetPosition(position + glm::vec3(0.0f, 0.0f, 0.1f));
+        _border->SetPosition(position + glm::vec3(0.0f, 0.0f, 0.2f));
 
     if(_text)
-        _text->SetPosition(position + glm::vec3(0.0f, 0.0f, 0.2f));
+        _text->SetPosition(position + glm::vec3(0.0f, 0.0f, 0.3f));
 
     if(_caret)
-        _caret->SetPosition(position + glm::vec3(0.0f, 0.0f, 0.3f));
+        _caret->SetPosition(position + glm::vec3(0.0f, 0.0f, 0.5f));
 }
 
 void RetroFuturaGUI::TextBox::SetRotation(const glm::vec3& rotation)
@@ -144,7 +155,7 @@ void RetroFuturaGUI::TextBox::interact()
         {
             _markedPositionLast = _text->GetBoundaryAtPosition(mousePos.x);
             setCaretFromBoundary(_markedPositionLast);
-            updateMarkedArea();
+            updateSelectedArea();
         }
         else
         {
@@ -197,7 +208,7 @@ void RetroFuturaGUI::TextBox::interact()
         _isMarking = true;
         _markedPositionFirst = _markedPositionLast = _text->GetBoundaryAtPosition(mousePos.x);
         setCaretFromBoundary(_markedPositionFirst);
-        updateMarkedArea();
+        updateSelectedArea();
         _showCaret = true;
     }
     else if(!isMouseTextBoxPressed && _wasClicked) //release
@@ -233,21 +244,24 @@ void RetroFuturaGUI::TextBox::drawCaret()
         _caret->Draw();
 }
 
-void RetroFuturaGUI::TextBox::drawMarkedArea()
+void RetroFuturaGUI::TextBox::drawSelectedArea()
 {
-    if(_markedArea)
-        _markedArea->Draw();
+    if(!_selectedArea)
+        return;
+
+    if(_isSelected)
+        _selectedArea->Draw();
 }
 
-void RetroFuturaGUI::TextBox::updateMarkedArea()
+void RetroFuturaGUI::TextBox::updateSelectedArea()
 {
     const uSize
         left { _markedPositionFirst < _markedPositionLast ? _markedPositionFirst : _markedPositionLast },
         right { _markedPositionFirst < _markedPositionLast ? _markedPositionLast : _markedPositionFirst };
 
-    if(!_text || left == right) //nothing selected
+    if(!_text || !_selectedArea || left == right) //nothing selected
     {
-        _markedArea.reset();
+        _isSelected = false;
         return;
     }
 
@@ -261,20 +275,13 @@ void RetroFuturaGUI::TextBox::updateMarkedArea()
 
     if(width <= 0.0f) //selection sits entirely outside the visible text area
     {
-        _markedArea.reset();
+        _isSelected = false;
         return;
     }
 
-    if(!_markedArea)
-    {
-        _markedArea = std::make_unique<Rectangle>(&_projection);
-        _markedArea->SetRectangleMode(RectangleMode::Plane);
-        _markedArea->SetFillType(_markedAreaFillType);
-        _markedArea->SetColors(_markedAreaColors);
-    }
-
-    _markedArea->SetSize(glm::vec2(width, _caret->GetSize().y));
-    _markedArea->SetPosition(glm::vec3(clippedLeftX + width * 0.5f, leftPosition.y, _position.z + 0.15f));
+    _selectedArea->SetSize(glm::vec2(width, _caret->GetSize().y));
+    _selectedArea->SetPosition(glm::vec3(clippedLeftX + width * 0.5f, leftPosition.y, _position.z + 0.1f));
+    _isSelected = true;
 }
 
 void RetroFuturaGUI::TextBox::setCaretFromBoundary(const uSize boundary)
@@ -326,18 +333,39 @@ void RetroFuturaGUI::TextBox::SetCornerRadii(const glm::vec4& radii)
     _border->SetCornerRadii(radii);
 }
 
-void RetroFuturaGUI::TextBox::SetMarkedAreaColors(std::span<glm::vec4> colors)
+void RetroFuturaGUI::TextBox::SetSelectedAreaColors(std::span<glm::vec4> colors)
 {
-    _markedAreaColors.assign(colors.begin(), colors.end());
+    _selectedAreaColors.assign(colors.begin(), colors.end());
 
-    if(_markedArea)
-        _markedArea->SetColors(_markedAreaColors);
+    if(_selectedArea)
+        _selectedArea->SetColors(_selectedAreaColors);
 }
 
-void RetroFuturaGUI::TextBox::SetMarkedAreaFillType(const FillType fillType)
+void RetroFuturaGUI::TextBox::SetSelectedAreaFillType(const FillType fillType)
 {
-    _markedAreaFillType = fillType;
+    if(_selectedArea)
+        _selectedArea->SetFillType(fillType);
+}
+void RetroFuturaGUI::TextBox::SetSelectedAreaGradientAnimationSpeed(const f32 speed)
+{
+    if(_selectedArea)
+        _selectedArea->SetGradientAnimationSpeed(speed);
+}
 
-    if(_markedArea)
-        _markedArea->SetFillType(_markedAreaFillType);
+void RetroFuturaGUI::TextBox::SetSelectedAreaGradientOffset(const f32 gradientOffset)
+{
+    if(_selectedArea)
+        _selectedArea->SetGradientOffset(gradientOffset);
+}
+
+void RetroFuturaGUI::TextBox::SetSelectedAreaGradientDegree(const f32 degree)
+{
+    if(_selectedArea)
+        _selectedArea->SetGradientDegree(degree);
+}
+
+void RetroFuturaGUI::TextBox::SetSelectedAreaGradientRotationSpeed(const f32 rotationSpeed)
+{
+    if(_selectedArea)
+        _selectedArea->SetGradientRotationSpeed(rotationSpeed);
 }
