@@ -142,7 +142,7 @@ std::vector<RetroFuturaGUI::MeshTexture> RetroFuturaGUI::Model::loadMaterialText
 
         if(!texture)
         {
-            _loadedTextures.push_back(std::make_unique<Texture>(fullPath, false));
+            _loadedTextures.push_back(std::make_unique<Texture>(fullPath, true));
             texture = _loadedTextures.back().get();
         }
 
