@@ -186,14 +186,9 @@ void RetroFuturaGUI::ITextEditable::updateSelectedArea()
     _isSelected = true;
 }
 
-void RetroFuturaGUI::ITextEditable::editText()
+
+bool RetroFuturaGUI::ITextEditable::checkForTextCopy()
 {
-    if(!_text)
-        return;
-
-    if(_parentWindow != InputManager::GetFocusedWindow())
-        return;
-
     if((PlatformBridge::Input::IsKeyDown(PB_KEY_CONTROL_L) || PlatformBridge::Input::IsKeyDown(PB_KEY_CONTROL_R))
         && (PlatformBridge::Input::GetKeyPressState(PB_KEY_C) == PlatformBridge::KeyPressState::Press))
     {
@@ -207,19 +202,23 @@ void RetroFuturaGUI::ITextEditable::editText()
             PlatformBridge::Clipboard::CopyToClipboard(PlatformBridge::Clipboard::ClipboardDatatype::Text, static_cast<void*>(tempCopy.data()), tempCopy.size() * sizeof(char32_t));
             _textCopied = true;
             emitCopy();
-            return;
+            return true;
         }
     }
-    else
-        _textCopied = false;
+    
+    _textCopied = false;
+    return false;
+}
 
+bool RetroFuturaGUI::ITextEditable::checkForTextCut()
+{
     if((PlatformBridge::Input::IsKeyDown(PB_KEY_CONTROL_L) || PlatformBridge::Input::IsKeyDown(PB_KEY_CONTROL_R))
         && (PlatformBridge::Input::GetKeyPressState(PB_KEY_X) == PlatformBridge::KeyPressState::Press))
     {
         if(!_textCopied)
         {
             if(!_isSelected)
-                return;
+                return true;
 
             const uSize
                 selectionStart { _selectedPositionFirst < _selectedPositionLast ? _selectedPositionFirst : _selectedPositionLast },
@@ -236,13 +235,17 @@ void RetroFuturaGUI::ITextEditable::editText()
             setCaretFromBoundary(selectionStart);
             emitCopy();
             emitChange();
-            return;
+            return true;
         }
     }
-    else
-        _textCopied = false;
 
-    if((PlatformBridge::Input::IsKeyDown(PB_KEY_CONTROL_L) || PlatformBridge::Input::IsKeyDown(PB_KEY_CONTROL_R))
+     _textCopied = false;
+     return false;
+}
+
+bool RetroFuturaGUI::ITextEditable::checkForTextPaste()
+{
+if((PlatformBridge::Input::IsKeyDown(PB_KEY_CONTROL_L) || PlatformBridge::Input::IsKeyDown(PB_KEY_CONTROL_R))
         && (PlatformBridge::Input::GetKeyPressState(PB_KEY_V) == PlatformBridge::KeyPressState::Press))
     {
         if(!_textPasted)
@@ -285,14 +288,18 @@ void RetroFuturaGUI::ITextEditable::editText()
             _textPasted = true;
             emitPaste();
             emitChange();
-            return;
+            return true;
         }
     }
-    else
-        _textPasted = false;
+    
+    _textPasted = false;
+    return false;
+}
 
+bool RetroFuturaGUI::ITextEditable::checkForSelectAllText()
+{
     if((PlatformBridge::Input::IsKeyDown(PB_KEY_CONTROL_L) || PlatformBridge::Input::IsKeyDown(PB_KEY_CONTROL_R))
-        && (PlatformBridge::Input::GetKeyPressState(PB_KEY_A) == PlatformBridge::KeyPressState::Press))
+            && (PlatformBridge::Input::GetKeyPressState(PB_KEY_A) == PlatformBridge::KeyPressState::Press))
     {
         if(_selectedPositionFirst != 0 || _selectedPositionLast != _text->GetGlyphCount())
         {
@@ -300,29 +307,28 @@ void RetroFuturaGUI::ITextEditable::editText()
             _selectedPositionLast = _text->GetGlyphCount();
             setCaretFromBoundary(_selectedPositionLast);
             updateSelectedArea();
+            return true;
         }
     }
 
-    if(!_editingEnabled)
-        return;
+    return false;
+}
 
-    if(_parentWindow != InputManager::GetFocusedWindow())
-        return;
-
-    if(_enterPressed)
-    {
-        emitEnterRelease();
-        _enterPressed = false;
-    }
-
+bool RetroFuturaGUI::ITextEditable::checkForKeyRelease()
+{
     if(PlatformBridge::Input::GetKeyboardUseState() == PlatformBridge::KeyboardUseState::KeyReleased)
     {
         _keyWasReleased = true;
         _keyHoldFrames = 0;
         _keyRepeatText.clear();
-        return;
+        return true;;
     }
 
+    return false;
+}
+
+bool RetroFuturaGUI::ITextEditable::checkForKeyRepeat()
+{
     if(!_keyWasReleased)
     {
         if (!_keyRepeatText.empty())
@@ -341,25 +347,35 @@ void RetroFuturaGUI::ITextEditable::editText()
                 emitChange();
             }
         }
-        return;
+        return true;
     }
 
+    return false;
+}
+
+bool RetroFuturaGUI::ITextEditable::checkForEnterPress()
+{
     if(PlatformBridge::Input::GetKeyPressState(PB_KEY_RETURN) == PlatformBridge::KeyPressState::Press
         || PlatformBridge::Input::GetKeyPressState(PB_KEY_KP_ENTER) == PlatformBridge::KeyPressState::Press
         || PlatformBridge::Input::GetKeyPressState(PB_KEY_ISO_ENTER) == PlatformBridge::KeyPressState::Press)
     {
         emitEnterPressed();
         _enterPressed = true;
-        return;
+        return true;
     }
 
+    return false;
+}
+
+bool RetroFuturaGUI::ITextEditable::checkForBackspacePress()
+{
     if(PlatformBridge::Input::GetKeyPressState(PB_KEY_BACKSPACE) == PlatformBridge::KeyPressState::Press)
     {
         if(_text->GetTextUTF32().size() == 0)
-            return;
+            return true;
 
         if(_text->GetTextUTF32().front() == 0)
-            return;
+            return true;
 
         if(_isSelected)
         {
@@ -373,39 +389,46 @@ void RetroFuturaGUI::ITextEditable::editText()
             updateSelectedArea();
             setCaretFromBoundary(selectionStart);
             emitChange();
-            return;
+            return true;
         }
-        
-        uSize cut { CaretRelativePosition::Left == _caretRelativePosition ? _caretPosition : _caretPosition + 1 };
-    
-        if(0 < cut)
+        else
         {
-            std::u32string left { _text->GetTextUTF32().substr(0, cut - 1) };
-            std::u32string right { _text->GetTextUTF32().substr(cut) };
-            //std::println("{}🐺{}", DoubleEncodedString::Utf32ToUtf8(left), DoubleEncodedString::Utf32ToUtf8(right));
+            uSize cut { CaretRelativePosition::Left == _caretRelativePosition ? _caretPosition : _caretPosition + 1 };
+        
+            if(0 < cut)
+            {
+                std::u32string left { _text->GetTextUTF32().substr(0, cut - 1) };
+                std::u32string right { _text->GetTextUTF32().substr(cut) };
+                //std::println("{}🐺{}", DoubleEncodedString::Utf32ToUtf8(left), DoubleEncodedString::Utf32ToUtf8(right));
 
-            _text->SetTextUTF32(left + right);
-            --_caretPosition;
-            deselect();
-            updateCaretPosition();
-            _keyWasReleased = false;
-            _keyHoldFrames = 0;
-            _keyRepeatText.clear();
-            emitChange();
+                _text->SetTextUTF32(left + right);
+                --_caretPosition;
+                deselect();
+                updateCaretPosition();
+                _keyWasReleased = false;
+                _keyHoldFrames = 0;
+                _keyRepeatText.clear();
+            }
         }
 
-        return;
+        emitChange();
+        return true;
     }
 
+    return false;
+}
+
+bool RetroFuturaGUI::ITextEditable::checkForTextInput()
+{
     const std::u32string keyText = DoubleEncodedString::Utf8ToUtf32(PlatformBridge::Input::GetInputString());
 
     if (!keyText.empty())
     {
         if(_text->GetTextUTF32().size() == 0)
-            return;
+            return true;
 
         if(_text->GetTextUTF32().front() == 0)
-            return;
+            return true;
 
         if(_isSelected)
         {
@@ -418,25 +441,75 @@ void RetroFuturaGUI::ITextEditable::editText()
             _isSelected = false;
             updateSelectedArea();
             setCaretFromBoundary(selectionStart + 1);
-            emitChange();
-            return;
         }
-
-        uSize cut { CaretRelativePosition::Left == _caretRelativePosition ? _caretPosition : _caretPosition + 1 };
-        std::u32string left { _text->GetTextUTF32().substr(0, cut) };
-        std::u32string right { _text->GetTextUTF32().substr(cut) };
-        //std::println("{}🐺{}🐺{}", DoubleEncodedString::Utf32ToUtf8(left), DoubleEncodedString::Utf32ToUtf8(keyText), DoubleEncodedString::Utf32ToUtf8(right));
-        _text->SetTextUTF32(left + keyText + right);
-        ++_caretPosition;
-        deselect();
-        updateCaretPosition();
-        _keyRepeatText = keyText;
-        _keyWasReleased = false;
-        _keyHoldFrames = 0;
+        else
+        {
+            uSize cut { CaretRelativePosition::Left == _caretRelativePosition ? _caretPosition : _caretPosition + 1 };
+            std::u32string left { _text->GetTextUTF32().substr(0, cut) };
+            std::u32string right { _text->GetTextUTF32().substr(cut) };
+            //std::println("{}🐺{}🐺{}", DoubleEncodedString::Utf32ToUtf8(left), DoubleEncodedString::Utf32ToUtf8(keyText), DoubleEncodedString::Utf32ToUtf8(right));
+            _text->SetTextUTF32(left + keyText + right);
+            ++_caretPosition;
+            deselect();
+            updateCaretPosition();
+            _keyRepeatText = keyText;
+            _keyWasReleased = false;
+            _keyHoldFrames = 0;
+        }
+        
         emitChange();
+        return true;
     }
 
-    return;
+    return false;
+}
+
+void RetroFuturaGUI::ITextEditable::editText()
+{
+    if(!_text)
+        return;
+
+    if(_parentWindow != InputManager::GetFocusedWindow())
+        return;
+
+    if(checkForTextCopy())
+        return;
+
+    if(checkForTextCut())
+        return;
+    
+    if(checkForTextPaste())
+        return;
+
+    if(checkForSelectAllText())
+        return;
+
+    if(!_editingEnabled)
+        return;
+
+    if(_parentWindow != InputManager::GetFocusedWindow())
+        return;
+
+    if(_enterPressed)
+    {
+        emitEnterRelease();
+        _enterPressed = false;
+    }
+
+    if(checkForKeyRelease())
+        return;
+
+    if(checkForKeyRepeat())
+        return;
+
+    if(checkForEnterPress())
+        return;
+
+    if(checkForBackspacePress())
+        return;
+
+    if(checkForTextInput())
+        return;
 }
 
 void RetroFuturaGUI::ITextEditable::SetReadOnly(const bool readOnly)

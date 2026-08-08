@@ -102,5 +102,14 @@ namespace RetroFuturaGUI
         void emitCopy();
         void emitPaste();
         void updateCaretPosition();
+        bool checkForTextCopy();
+        bool checkForTextCut();
+        bool checkForTextPaste();
+        bool checkForSelectAllText();
+        bool checkForKeyRelease();
+        bool checkForKeyRepeat();
+        bool checkForEnterPress();
+        bool checkForBackspacePress();
+        bool checkForTextInput();
     };
 }
