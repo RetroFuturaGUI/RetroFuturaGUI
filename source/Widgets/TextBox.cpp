@@ -149,14 +149,13 @@ void RetroFuturaGUI::TextBox::interact()
     editText();
     moveCaret();
 
-    if(_isMarking) //keep marking going even if the cursor drifts outside the widget bounds mid-drag
+    if(_isMarking)
     {
         if(isMouseTextBoxPressed && hasMousePosition)
         {
-            //clamp before the hit-test, not after, so dragging past the edge lands on the last rendered
-            //glyph's boundary instead of a boundary that may be clipped out of view (e.g. on overflowing text)
-            _markedPositionLast = _text->GetBoundaryAtPosition(clampToTextBounds(mousePos.x));
-            setCaretFromBoundary(_markedPositionLast);
+            //clamp before the hit-test, so the selection doesn't extend outside the visible text area
+            _selectedPositionLast = _text->GetBoundaryAtPosition(clampToTextBounds(mousePos.x));
+            setCaretFromBoundary(_selectedPositionLast);
             updateSelectedArea();
         }
         else
@@ -208,8 +207,8 @@ void RetroFuturaGUI::TextBox::interact()
         PlatformBridge::Input::SetActiveWindow(glfwGetWin32Window(_parentWindow));
 #endif
         _isMarking = true;
-        _markedPositionFirst = _markedPositionLast = _text->GetBoundaryAtPosition(clampToTextBounds(mousePos.x));
-        setCaretFromBoundary(_markedPositionFirst);
+        _selectedPositionFirst = _selectedPositionLast = _text->GetBoundaryAtPosition(clampToTextBounds(mousePos.x));
+        setCaretFromBoundary(_selectedPositionFirst);
         updateSelectedArea();
         _showCaret = true;
     }

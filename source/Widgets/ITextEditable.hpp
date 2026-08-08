@@ -22,8 +22,11 @@ namespace RetroFuturaGUI
         void SetSelectedAreaCornerRadii(const glm::vec4& radii);
         void Connect_OnEnterPressed(const typename Signal<>::Slot& slot, const bool async);
         void Connect_OnEnterReleased(const typename Signal<>::Slot& slot, const bool async);
+        void Connect_OnCopy(const typename Signal<>::Slot& slot, const bool async);
         void Disconnect_OnEnterPressed(const typename Signal<>::Slot& slot);
         void Disconnect_OnEnterReleased(const typename Signal<>::Slot& slot);
+        void Disconnect_OnCopy(const typename Signal<>::Slot& slot);
+        const std::string& GetCopiedText() const;
 
     protected:
         void moveCaret();
@@ -55,6 +58,7 @@ namespace RetroFuturaGUI
             _editingEnabled { false },
             _keyWasReleased { true },
             _enterPressed { false },
+            _textCopied { false },
             _showCaret { false };
         u32 _keyHoldFrames { 0 };
         std::u32string _keyRepeatText {};
@@ -69,17 +73,20 @@ namespace RetroFuturaGUI
             _onEnterPressed,
             _onEnterPressedAsync,
             _onEnterReleased,
-            _onEnterReleasedAsync;
+            _onEnterReleasedAsync,
+            _onCopy,
+            _onCopyAsync;
 
-        //Selection ("marking")
+        //Selection
         std::unique_ptr<Rectangle> _selectedArea;
         std::vector<glm::vec4> _selectedAreaColors { glm::vec4(0.24f, 0.47f, 0.85f, 0.4f) };
         uSize
-            _markedPositionFirst { 0 },
-            _markedPositionLast { 0 };
+            _selectedPositionFirst { 0 },
+            _selectedPositionLast { 0 };
         bool
             _isMarking { false },
             _isSelected { false };
+        std::string _copiedText {};
 
     private:
         void moveCaretLeft();
@@ -87,6 +94,7 @@ namespace RetroFuturaGUI
         void emitEnterRelease();
         void emitEnterPressed();
         void emitChange();
+        void emitCopy();
         void updateCaretPosition();
     };
 }

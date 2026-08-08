@@ -1,5 +1,6 @@
 #include "ITextEditable.hpp"
 #include "InputManager.hpp"
+#include "PlatformBridge.hpp"
 
 void RetroFuturaGUI::ITextEditable::moveCaret()
 {
@@ -156,8 +157,8 @@ void RetroFuturaGUI::ITextEditable::drawSelectedArea()
 void RetroFuturaGUI::ITextEditable::updateSelectedArea()
 {
     const uSize
-        left { _markedPositionFirst < _markedPositionLast ? _markedPositionFirst : _markedPositionLast },
-        right { _markedPositionFirst < _markedPositionLast ? _markedPositionLast : _markedPositionFirst };
+        left { _selectedPositionFirst < _selectedPositionLast ? _selectedPositionFirst : _selectedPositionLast },
+        right { _selectedPositionFirst < _selectedPositionLast ? _selectedPositionLast : _selectedPositionFirst };
 
     if(!_text || !_selectedArea || left == right) //nothing selected
     {
@@ -189,7 +190,32 @@ void RetroFuturaGUI::ITextEditable::updateSelectedArea()
 
 void RetroFuturaGUI::ITextEditable::editText()
 {
-    if(!_editingEnabled || !_text)
+    if(!_text)
+        return;
+
+    if(_parentWindow != InputManager::GetFocusedWindow())
+        return;
+
+    if((PlatformBridge::Input::IsKeyDown(PB_KEY_CONTROL_L) || PlatformBridge::Input::IsKeyDown(PB_KEY_CONTROL_R))
+        && (PlatformBridge::Input::GetKeyPressState(PB_KEY_C) == PlatformBridge::KeyPressState::Press))
+    {
+        if(_isSelected && !_textCopied)
+        {
+            const uSize
+                selectionStart { _selectedPositionFirst < _selectedPositionLast ? _selectedPositionFirst : _selectedPositionLast },
+                selectionEnd { _selectedPositionFirst < _selectedPositionLast ? _selectedPositionLast : _selectedPositionFirst };
+            std::u32string tempCopy = _text->GetTextUTF32().substr(selectionStart, selectionEnd - selectionStart);
+            _copiedText = DoubleEncodedString::Utf32ToUtf8(tempCopy);
+            PlatformBridge::Clipboard::CopyToClipboard(PlatformBridge::Clipboard::ClipboardDatatype::Text, static_cast<void*>(tempCopy.data()), tempCopy.size() * sizeof(char32_t));
+            _textCopied = true;
+            emitCopy();
+            return;
+        }
+    }
+    else
+        _textCopied = false;
+
+    if(!_editingEnabled)
         return;
 
     if(_parentWindow != InputManager::GetFocusedWindow())
@@ -383,6 +409,14 @@ void RetroFuturaGUI::ITextEditable::Connect_OnEnterReleased(const typename Signa
         _onEnterReleased.Connect(slot);
 }
 
+void RetroFuturaGUI::ITextEditable::Connect_OnCopy(const typename Signal<>::Slot& slot, const bool async)
+{
+    if (async)
+        _onCopyAsync.Connect(slot);
+    else
+        _onCopy.Connect(slot);
+}
+
 void RetroFuturaGUI::ITextEditable::Disconnect_OnEnterPressed(const typename Signal<>::Slot& slot)
 {
     _onEnterPressed.Disconnect(slot);
@@ -393,6 +427,17 @@ void RetroFuturaGUI::ITextEditable::Disconnect_OnEnterReleased(const typename Si
 {
     _onEnterReleased.Disconnect(slot);
     _onEnterReleasedAsync.Disconnect(slot);
+}
+
+void RetroFuturaGUI::ITextEditable::Disconnect_OnCopy(const typename Signal<>::Slot& slot)
+{
+    _onCopy.Disconnect(slot);
+    _onCopyAsync.Disconnect(slot);
+}
+
+const std::string& RetroFuturaGUI::ITextEditable::GetCopiedText() const
+{
+    return _copiedText;
 }
 
 void RetroFuturaGUI::ITextEditable::emitEnterRelease()
@@ -414,4 +459,10 @@ void RetroFuturaGUI::ITextEditable::emitChange()
 
     _onTextChangeAsync.EmitAsync();
     _onTextChange.Emit();
+}
+
+void RetroFuturaGUI::ITextEditable::emitCopy()
+{
+    _onCopyAsync.EmitAsync();
+    _onCopy.Emit();
 }

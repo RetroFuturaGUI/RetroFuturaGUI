@@ -211,6 +211,7 @@ void RetroFuturaGUI::Text::updateMesh()
         {
             currentY -= _glyphSize.y * _lineSpacingFactor;
             currentX = 0.0f;
+            _glyphPositions.push_back(currentX); //Every codepoint must occupy exactly one _glyphPosition
             continue;
         }
 
@@ -218,11 +219,18 @@ void RetroFuturaGUI::Text::updateMesh()
         auto blockIterator { _fontInfo->_Atlasses[_fontIndex]._GlyphBlocks.find(blockKey) };
 
         if (blockIterator == _fontInfo->_Atlasses[_fontIndex]._GlyphBlocks.end())
+        {
+            //No block covers this codepoint (font doesn't support it) - still needs a slot for making text processable
+            _glyphPositions.push_back(currentX);
             continue;
+        }
 
         auto glyphIt { blockIterator->second._Glyphs.find(codepoint) };
         if (glyphIt == blockIterator->second._Glyphs.end())
+        {
+            _glyphPositions.push_back(currentX); //Block found but this specific codepoint has no glyph in it
             continue;
+        }
 
         const Glyph& glyph { glyphIt->second };
         foundTextureID = blockIterator->second._TextureID;
