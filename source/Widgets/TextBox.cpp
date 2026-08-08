@@ -154,7 +154,8 @@ void RetroFuturaGUI::TextBox::interact()
         if(isMouseTextBoxPressed && hasMousePosition)
         {
             //clamp before the hit-test, so the selection doesn't extend outside the visible text area
-            _selectedPositionLast = _text->GetBoundaryAtPosition(clampToTextBounds(mousePos.x));
+            //also consider scrolling when marking goes out of bounds
+            _selectedPositionLast = _text->GetBoundaryAtPosition(mousePos.x); 
             setCaretFromBoundary(_selectedPositionLast);
             updateSelectedArea();
         }
