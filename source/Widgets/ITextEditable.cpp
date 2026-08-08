@@ -361,6 +361,21 @@ void RetroFuturaGUI::ITextEditable::editText()
         if(_text->GetTextUTF32().front() == 0)
             return;
 
+        if(_isSelected)
+        {
+            const uSize
+                selectionStart { _selectedPositionFirst < _selectedPositionLast ? _selectedPositionFirst : _selectedPositionLast },
+                selectionEnd { _selectedPositionFirst < _selectedPositionLast ? _selectedPositionLast : _selectedPositionFirst };
+            _text->SetTextUTF32(_text->GetTextUTF32().substr(0, selectionStart) + _text->GetTextUTF32().substr(selectionEnd));
+            _selectedPositionFirst = 0;
+            _selectedPositionLast = 0;
+            updateSelectedArea();
+            _isSelected = false;
+            setCaretFromBoundary(selectionStart);
+            emitChange();
+            return;
+        }
+        
         uSize cut { CaretRelativePosition::Left == _caretRelativePosition ? _caretPosition : _caretPosition + 1 };
     
         if(0 < cut)
