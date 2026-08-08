@@ -180,9 +180,6 @@ void RetroFuturaGUI::ITextEditable::updateSelectedArea()
         return;
     }
 
-    //Z depth is deliberately left untouched here - it's the owning widget's job (set via its own SetPosition
-    //override) to place _selectedArea at the right depth relative to its other elements; this only updates
-    //where the highlight spans horizontally.
     _selectedArea->SetSize(glm::vec2(width, _caret->GetSize().y));
     _selectedArea->SetPosition(glm::vec3(clippedLeftX + width * 0.5f, leftPosition.y, _selectedArea->GetPosition().z));
     _isSelected = true;
@@ -214,6 +211,18 @@ void RetroFuturaGUI::ITextEditable::editText()
     }
     else
         _textCopied = false;
+
+    if((PlatformBridge::Input::IsKeyDown(PB_KEY_CONTROL_L) || PlatformBridge::Input::IsKeyDown(PB_KEY_CONTROL_R))
+        && (PlatformBridge::Input::GetKeyPressState(PB_KEY_A) == PlatformBridge::KeyPressState::Press))
+    {
+        if(_selectedPositionFirst != 0 || _selectedPositionLast != _text->GetGlyphCount())
+        {
+            _selectedPositionFirst = 0;
+            _selectedPositionLast = _text->GetGlyphCount();
+            setCaretFromBoundary(_selectedPositionLast);
+            updateSelectedArea();
+        }
+    }
 
     if(!_editingEnabled)
         return;
