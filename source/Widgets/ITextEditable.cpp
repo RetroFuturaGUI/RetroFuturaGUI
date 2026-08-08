@@ -214,6 +214,35 @@ void RetroFuturaGUI::ITextEditable::editText()
         _textCopied = false;
 
     if((PlatformBridge::Input::IsKeyDown(PB_KEY_CONTROL_L) || PlatformBridge::Input::IsKeyDown(PB_KEY_CONTROL_R))
+        && (PlatformBridge::Input::GetKeyPressState(PB_KEY_X) == PlatformBridge::KeyPressState::Press))
+    {
+        if(!_textCopied)
+        {
+            if(!_isSelected)
+                return;
+
+            const uSize
+                selectionStart { _selectedPositionFirst < _selectedPositionLast ? _selectedPositionFirst : _selectedPositionLast },
+                selectionEnd { _selectedPositionFirst < _selectedPositionLast ? _selectedPositionLast : _selectedPositionFirst };
+            std::u32string tempCopy = _text->GetTextUTF32().substr(selectionStart, selectionEnd - selectionStart);
+            _copiedText = DoubleEncodedString::Utf32ToUtf8(tempCopy);
+            PlatformBridge::Clipboard::CopyToClipboard(PlatformBridge::Clipboard::ClipboardDatatype::Text, static_cast<void*>(tempCopy.data()), tempCopy.size() * sizeof(char32_t));
+            _textCopied = true;
+            _text->SetTextUTF32(_text->GetTextUTF32().substr(0, selectionStart) + _text->GetTextUTF32().substr(selectionEnd));
+            _selectedPositionFirst = 0;
+            _selectedPositionLast = 0;
+            updateSelectedArea();
+            _isSelected = false;
+            setCaretFromBoundary(selectionStart);
+            emitCopy();
+            emitChange();
+            return;
+        }
+    }
+    else
+        _textCopied = false;
+
+    if((PlatformBridge::Input::IsKeyDown(PB_KEY_CONTROL_L) || PlatformBridge::Input::IsKeyDown(PB_KEY_CONTROL_R))
         && (PlatformBridge::Input::GetKeyPressState(PB_KEY_V) == PlatformBridge::KeyPressState::Press))
     {
         if(!_textPasted)
