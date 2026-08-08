@@ -23,9 +23,11 @@ namespace RetroFuturaGUI
         void Connect_OnEnterPressed(const typename Signal<>::Slot& slot, const bool async);
         void Connect_OnEnterReleased(const typename Signal<>::Slot& slot, const bool async);
         void Connect_OnCopy(const typename Signal<>::Slot& slot, const bool async);
+        void Connect_OnPaste(const typename Signal<>::Slot& slot, const bool async);
         void Disconnect_OnEnterPressed(const typename Signal<>::Slot& slot);
         void Disconnect_OnEnterReleased(const typename Signal<>::Slot& slot);
         void Disconnect_OnCopy(const typename Signal<>::Slot& slot);
+        void Disconnect_OnPaste(const typename Signal<>::Slot& slot);
         const std::string& GetCopiedText() const;
 
     protected:
@@ -59,6 +61,7 @@ namespace RetroFuturaGUI
             _keyWasReleased { true },
             _enterPressed { false },
             _textCopied { false },
+            _textPasted { false },
             _showCaret { false };
         u32 _keyHoldFrames { 0 };
         std::u32string _keyRepeatText {};
@@ -75,7 +78,9 @@ namespace RetroFuturaGUI
             _onEnterReleased,
             _onEnterReleasedAsync,
             _onCopy,
-            _onCopyAsync;
+            _onCopyAsync,
+            _onPaste,
+            _onPasteAsync;
 
         //Selection
         std::unique_ptr<Rectangle> _selectedArea;
@@ -95,6 +100,7 @@ namespace RetroFuturaGUI
         void emitEnterPressed();
         void emitChange();
         void emitCopy();
+        void emitPaste();
         void updateCaretPosition();
     };
 }

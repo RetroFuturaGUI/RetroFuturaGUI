@@ -1,4 +1,5 @@
 #include "ITextEditable.hpp"
+#include "Clipboard.hpp"
 #include "InputManager.hpp"
 #include "PlatformBridge.hpp"
 
@@ -211,6 +212,55 @@ void RetroFuturaGUI::ITextEditable::editText()
     }
     else
         _textCopied = false;
+
+    if((PlatformBridge::Input::IsKeyDown(PB_KEY_CONTROL_L) || PlatformBridge::Input::IsKeyDown(PB_KEY_CONTROL_R))
+        && (PlatformBridge::Input::GetKeyPressState(PB_KEY_V) == PlatformBridge::KeyPressState::Press))
+    {
+        if(!_textPasted)
+        {
+            const uSize
+                selectionStart { _selectedPositionFirst < _selectedPositionLast ? _selectedPositionFirst : _selectedPositionLast },
+                selectionEnd { _selectedPositionFirst < _selectedPositionLast ? _selectedPositionLast : _selectedPositionFirst };
+            std::u32string 
+                middlePart {},
+                rightPart {},
+                completeText {};
+            void* dataPtr = nullptr;
+            uSize dataSize = 0;
+            PlatformBridge::Clipboard::PasteFromClipboard(PlatformBridge::Clipboard::ClipboardDatatype::Text, dataPtr, &dataSize);
+            middlePart = std::u32string(reinterpret_cast<char32_t*>(dataPtr), dataSize / sizeof(char32_t));
+
+            if(_isSelected)
+            {
+                completeText = _text->GetTextUTF32().substr(0, selectionStart);
+                rightPart = _text->GetTextUTF32().substr(selectionEnd);
+                completeText += middlePart + rightPart;
+                _isSelected = false;
+                _text->SetTextUTF32(completeText);
+                setCaretFromBoundary(_selectedPositionLast);
+                _selectedPositionFirst = 0;
+                _selectedPositionLast = 0;
+                updateSelectedArea();
+            }
+            else //insert at caret position
+            {
+                uSize caretPositionAbsolute = _caretRelativePosition == CaretRelativePosition::Left ? _caretPosition : _caretPosition + 1;
+                completeText = _text->GetTextUTF32().substr(0, caretPositionAbsolute);
+                rightPart = _text->GetTextUTF32().substr(caretPositionAbsolute);
+                completeText += middlePart + rightPart;
+                _text->SetTextUTF32(completeText);
+                setCaretFromBoundary(caretPositionAbsolute + middlePart.size());
+            }
+
+            PlatformBridge::Clipboard::ClearClipboardDataBuffer();
+            _textPasted = true;
+            emitPaste();
+            emitChange();
+            return;
+        }
+    }
+    else
+        _textPasted = false;
 
     if((PlatformBridge::Input::IsKeyDown(PB_KEY_CONTROL_L) || PlatformBridge::Input::IsKeyDown(PB_KEY_CONTROL_R))
         && (PlatformBridge::Input::GetKeyPressState(PB_KEY_A) == PlatformBridge::KeyPressState::Press))
@@ -426,6 +476,14 @@ void RetroFuturaGUI::ITextEditable::Connect_OnCopy(const typename Signal<>::Slot
         _onCopy.Connect(slot);
 }
 
+void RetroFuturaGUI::ITextEditable::Connect_OnPaste(const typename Signal<>::Slot& slot, const bool async)
+{
+    if (async)
+        _onPasteAsync.Connect(slot);
+    else
+        _onPaste.Connect(slot);
+}
+
 void RetroFuturaGUI::ITextEditable::Disconnect_OnEnterPressed(const typename Signal<>::Slot& slot)
 {
     _onEnterPressed.Disconnect(slot);
@@ -442,6 +500,12 @@ void RetroFuturaGUI::ITextEditable::Disconnect_OnCopy(const typename Signal<>::S
 {
     _onCopy.Disconnect(slot);
     _onCopyAsync.Disconnect(slot);
+}
+
+void RetroFuturaGUI::ITextEditable::Disconnect_OnPaste(const typename Signal<>::Slot& slot)
+{
+    _onPaste.Disconnect(slot);
+    _onPasteAsync.Disconnect(slot);
 }
 
 const std::string& RetroFuturaGUI::ITextEditable::GetCopiedText() const
@@ -474,4 +538,10 @@ void RetroFuturaGUI::ITextEditable::emitCopy()
 {
     _onCopyAsync.EmitAsync();
     _onCopy.Emit();
+}
+
+void RetroFuturaGUI::ITextEditable::emitPaste()
+{
+    _onPasteAsync.EmitAsync();
+    _onPaste.Emit();
 }
