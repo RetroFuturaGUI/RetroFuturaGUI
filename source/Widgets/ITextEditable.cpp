@@ -424,12 +424,6 @@ bool RetroFuturaGUI::ITextEditable::checkForTextInput()
 
     if (!keyText.empty())
     {
-        if(_text->GetTextUTF32().size() == 0)
-            return true;
-
-        if(_text->GetTextUTF32().front() == 0)
-            return true;
-
         if(_isSelected)
         {
             const uSize
