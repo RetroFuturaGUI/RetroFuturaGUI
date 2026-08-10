@@ -43,133 +43,109 @@ The framework is designed for cross-platform use, and its logic can be compiled 
 
 ### Implemented Features
 <details><summary>CLICK TO EXPAND</summary>
-  <ul>
-<li>Widgets</li>
-  <ul>
-  <li>Label</li>
-    <ul>
-    <li>Render text</li>
-    <li>Align Text</li>
-      <ul>
-        <li>Left</li>
-        <li>Right</li>
-        <li>Center</li>
-    </ul>
-  <li>Button</li>
-      <ul>
-        <li>Slots</li>
-        <ul>
-          <li>OnClick</li>
-          <li>OnRelease</li>
-          <li>OnMouseEnter</li>
-          <li>OnMouseLeave</li>
-          <li>WhileHover</li>
-          <li>SetEnabled</li>
-        </ul>
-        <li>Background</li>
-        <ul>
-          <li>Solid Fill</li>
-          <li>Linear Gradient</li>
-          <li>Radial Gradient</li>
-        </ul>
-        <li>Borders</li>
-        <ul>
-          <li>Solid Fill</li>
-          <li>Linear Gradient</li>
-          <li>Radial Gradient</li>
-          <li>Set Corner Radii</li>
-          <li>Set Corner Width</li>
-        </ul>
-      </ul>
-  <li>TextBox</li>
-    <ul>
-      <li>Text Input</li>
-      <li>OnTextChange Signal</li>
-    </ul>
-  </ul>
-    <li>Shadered background and borders (solid, animated gradients)</li>
-    <li>Corner Radii</li>
-    <li>Signals</li>
-      <ul>
-      <li>onClick</li>
-      <li>whileHover</li>
-      <li>onMouseEnter</li>
-      <li>onMouseLeave</li>
-      <li>onRelease</li>
-      <li>setEnable</li>
-      </ul>
-    <li>SetPosition, SetSize, SetRotation</li>
-    <li>Image</li>
-      <ul>
-      <li>SetPosition, SetSize, SetRotation</li>
-      <li>Supports most image formats</li>
-      </ul>
-    <li>Model</li>
-      <ul>
-      <li>SetPosition, SetSize, SetRotation</li>
-      </ul>
-    <li>Lasagna (three-dimensional successor of grid)</li>
-      <ul>
-      <li>Align Widgets in a three dimensional pattern</li>
-      <li>Widget Size Policies (const size, expand X, Y, Z)</li>
-      <li>Debug Lines</li>
-      <li>Row Definitions</li>
-      <li>Column Defitions</li>
-      <li>Layer Defitions</li>
-      </ul>
-  <li>WindowBar</li>
-    <ul>
-    <li>Top, Bottom Position</li>
-    <li>Close, Minimize, Maximize (all shadered)</li>
-    <li>Window Title</li>
-    <li>Shadered background</li>
-    </ul>
-  <li>Window</li>
-    <ul></ul>
-    <li>Background image</li>
-    <ul>
-      <li>Background image ID can be used to create glass effects on widgets</li>
-      <li>Resizeable</li>
-      <li>Movable</li>
-  </ul>
-</ul>
-<li>Shaders</li>
-  <ul>
-  <li>Solid Fill</li>
-    <ul>
-    <li>Glass Effect</li>
-    <li>Rounded corners</li>
-    </ul>
-  <li>Linear Gradient</li>
-  <ul>
-    <li>Animated (rotation, motion)</li>
-    <li>up to 256 colors (RGBA)</li>
-    <li>Glass Effect</li>
-    <li>Rounded corners</li>
-  </ul>
-  <li>Radiant Gradient</li>
-  <ul>
-    <li>Animated (rotation, motion)</li>
-    <li>up to 256 colors (RGBA)</li>
-    <li>Glass Effect</li>
-    <li>Rounded corners</li>
-  </ul>
-  <li>Texture</li>
-  <li>Shader Manager</li>
-  </ul>
-<li>Input Manager</li>
-<li>Cross Language Capabilities</li>
-  <ul>
-  <li>Widget ID Manager</li>
-  <li>C#</li>
-  <li>Python</li>
-  </ul>
-<li>Text Renderer</li>
-<ul>
-  <li>Basic Text Renderer (ASCII)</li>
-  <li>Solid color fill</li>
-</ul>
-</ul>
+
+- Widgets
+  - Label
+    - Render text
+    - Text Alignment (Left, Right, Center)
+    - Text Padding
+    - Per-state text color (Enabled, Disabled, Clicked, Hover)
+    - SetEnabled, SetPosition, SetSize, SetRotation
+  - Button
+    - Signals: OnClick, OnRelease, OnMouseEnter, OnMouseLeave, WhileHover
+    - SetEnabled
+    - Background: Solid Fill, Linear Gradient, Radial Gradient, HueStar Gradient
+    - Border: Solid Fill, Linear Gradient, Radial Gradient, HueStar Gradient, Corner Radii, Border Width
+    - Label text (shares Label's text properties)
+    - SetPosition, SetSize, SetRotation
+  - TextBox
+    - Text input & editing (insert, backspace, key repeat)
+    - Read-only mode
+    - Caret: blinking with configurable blink time, colors, Solid/Linear/Radial/HueStar Gradient fill, gradient animation speed
+    - Text selection: mouse-drag selection, colors, Solid/Linear/Radial/HueStar Gradient fill, gradient offset/degree/rotation speed, corner radii
+    - Copy / Cut / Paste (via PlatformBridge's Clipboard)
+    - Signals: OnTextChange, OnEnterPressed, OnEnterReleased, OnCopy, OnPaste
+    - Background & Border (same options as Button)
+    - SetPosition, SetSize, SetRotation
+  - Image
+    - Supports most image formats
+    - Fit widget geometry to the texture's native aspect ratio
+    - SetPosition, SetSize, SetRotation
+  - Model
+    - Load 3D models and their material textures (Assimp)
+    - Multiple meshes per model
+    - SetPosition, SetSize, SetRotation
+  - Lasagna (three-dimensional successor of Grid)
+    - Align widgets in a three-dimensional pattern
+    - Widget sizing policies (fixed size, expand X, Y, Z, XY)
+    - Row, Column and Layer definitions
+    - Debug lines
+  - WindowBar
+    - Top, Bottom Position
+    - Close, Minimize, Maximize buttons (all shadered)
+    - Toggleable elements (buttons, title, background, no-docking-drag zone)
+    - Window Title
+    - Shadered background
+    - Per-button styling (background/border colors, gradients, corner radii, border width)
+    - Maximize callback
+  - Window
+    - Background color or image
+      - Background image ID can be used to create glass effects on widgets
+    - Resizeable
+    - Movable
+    - Toggleable WindowBar
+- Shaders
+  - Solid Fill
+    - Glass Effect
+    - Rounded corners
+  - Linear Gradient
+    - Animated (rotation, motion)
+    - up to 256 colors (RGBA)
+    - Glass Effect
+    - Rounded corners
+  - Radial Gradient
+    - Animated (rotation, motion)
+    - up to 256 colors (RGBA)
+    - Glass Effect
+    - Rounded corners
+  - HueStar Gradient
+    - Animated (rotation, motion)
+    - Glass Effect
+    - Rounded corners
+  - Dedicated Border variants of the above (Solid, Linear, Radial, HueStar)
+  - Line Fill
+  - Font Atlas Fill (used by the Text Renderer)
+  - Texture
+  - Shader Manager (compiles and caches all shaders once)
+- Text Renderer
+  - Full Unicode codepoint range support via configurable glyph atlasses (FreeType)
+  - Multiple font families, weights and slants, resolved from installed system fonts
+  - Fallback/extended fontsets for filling in missing glyph ranges
+  - Dual UTF-8 / UTF-32 string encoding (DoubleEncodedString), always kept in sync
+  - Text Alignment (Left, Right, Center)
+  - Text Padding & horizontal scroll offset for overflowing text
+  - Glyph boundary lookup (used for caret positioning & selection)
+- Signals
+  - Thread-safe Connect/Disconnect
+  - Synchronous (Emit) and asynchronous, threaded (EmitAsync) dispatch
+- Input Manager
+  - Per-window mouse position & button state
+  - Focused/hovered window tracking
+- PlatformBridge (cross-platform system layer)
+  - Windows & Linux support
+  - Clipboard (copy/paste of text and bitmap data)
+  - System font enumeration (family, weight, slant, Unicode ranges)
+  - Keyboard input, held-key tracking, per-window key capture
+  - Mouse button state & window-relative cursor position
+  - Monitor enumeration (Windows)
+  - Executable path & working directory utilities
+- Cross Language Capabilities
+  - dll/so/dylib compilation
+  - Widget ID Manager (DynamicLibWidgetManager) addressing widgets by string ID
+  - Signal connection via C callbacks (OnClick, OnRelease, OnMouseEnter, OnMouseLeave, WhileHover, OnTextChange, OnEnterPressed, OnEnterReleased)
+  - C#
+  - Python
+
 </details>
   
 
