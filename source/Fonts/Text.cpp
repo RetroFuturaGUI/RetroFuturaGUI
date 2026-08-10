@@ -182,7 +182,10 @@ void RetroFuturaGUI::Text::updateMesh()
         return;
 
     if(_text.GetUtf32().empty())
+    {
+        _glyphPositions.clear();
         return;
+    }
 
     f32 
         nativeSize { _fontInfo->_Atlasses[_fontIndex]._FontSize },
@@ -320,30 +323,6 @@ void RetroFuturaGUI::Text::updateMesh()
         _glyphDraws.push_back({lastTextureID, vertexStart, vertexCount});
 }
 
-glm::vec3 RetroFuturaGUI::Text::GetGlyphPosition(const uSize index, const CaretRelativePosition relativePosition, const f32 caretSize) const
-{
-    f32 
-        x { 0.0f },
-        y { caretSize * 0.25f };
-
-    if(_glyphPositions.size() <= index+1)
-    {
-        if(relativePosition == CaretRelativePosition::Left)
-            x = _glyphPositions[_glyphPositions.size()-2];
-        else
-            x = _glyphPositions.back();
-    }
-    else
-    {
-        if(relativePosition == CaretRelativePosition::Left)
-            x = _glyphPositions[index];
-        else
-            x = _glyphPositions[index+1];
-    }
-
-    return glm::vec3(x, y, 0) + glm::vec3(_positionAligned, _position.z + 0.01f); //+0.01f for the caret
-}
-
 glm::vec3 RetroFuturaGUI::Text::GetBoundaryPosition(const uSize boundary, const f32 caretSize) const
 {
     f32 x { 0.0f };
@@ -475,7 +454,7 @@ float RetroFuturaGUI::Text::GetGlyphSize() const
 
 uSize RetroFuturaGUI::Text::GetGlyphCount() const
 {
-    return _glyphPositions.size() - 1;
+    return _glyphPositions.empty() ? 0 : _glyphPositions.size() - 1;
 }
 
 uSize RetroFuturaGUI::Text::GetUtf8Position(uSize const glyphPosition) const

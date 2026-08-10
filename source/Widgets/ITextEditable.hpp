@@ -36,23 +36,12 @@ namespace RetroFuturaGUI
         void drawSelectedArea();
         void updateSelectedArea();
         void setCaretFromBoundary(const uSize boundary);
-
-        //Clears any active/completed selection, e.g. once the caret moves or the text changes underneath it.
         void deselect();
-
-        //Lets widgets with fixed geometry (e.g. TextBox) keep the caret from rendering past their own edges.
-        //Default is a no-op so ITextEditable stays usable by widgets without such bounds. Pure/side-effect-free -
-        //used for one-off clipping (e.g. the selection highlight), where the view itself must NOT be scrolled.
         virtual f32 clampToTextBounds(const f32 worldX, const f32 = 0.0f) const { return worldX; }
-
-        //Called only when the caret itself moves. Unlike clampToTextBounds, this may scroll the text into view
-        //(mutating state) so the caret stays visible instead of just being pinned to the edge. Default falls
-        //back to the pure clamp above, for widgets without scrolling support.
         virtual f32 keepCaretVisible(const f32 worldX, const f32 halfExtent = 0.0f) { return clampToTextBounds(worldX, halfExtent); }
 
         std::unique_ptr<Rectangle> _caret;
         uSize _caretPosition { 0 };
-        CaretRelativePosition _caretRelativePosition { CaretRelativePosition::Right };
         std::vector<glm::vec4> _caretColors { glm::vec4(1.0f) };
         bool
             _textChangedFlag { false },
@@ -66,8 +55,6 @@ namespace RetroFuturaGUI
             _showCaret { false };
         u32 _keyHoldFrames { 0 };
         std::u32string _keyRepeatText {};
-        //Mirrors _keyRepeatText's role but for moveCaret(): the direction to replay on repeat, captured once on
-        //the fresh press so repeat frames never need to re-query GetKeyPressState (0 = none, -1 = left, 1 = right).
         i32 _caretRepeatDirection { 0 };
         std::vector<char> _prevKeyStates {};
         static constexpr i32 _keyRepeatInitialDelay = 60;

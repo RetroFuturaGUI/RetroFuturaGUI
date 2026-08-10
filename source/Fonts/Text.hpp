@@ -24,12 +24,6 @@ namespace RetroFuturaGUI
             _VertexCount { 0 };
     };
 
-    enum CaretRelativePosition : u32
-    {
-        Left,
-        Right
-    };
-
     class Text
     {
     public:
@@ -51,7 +45,6 @@ namespace RetroFuturaGUI
         f32 GetScrollOffset() const;
         glm::vec4 GetColor() const;
         float GetGlyphSize() const;
-        glm::vec3 GetGlyphPosition(const uSize index, const CaretRelativePosition relativePosition, const f32 caretSize) const;
         glm::vec3 GetBoundaryPosition(const uSize boundary, const f32 caretSize) const;
         uSize GetBoundaryAtPosition(const f32 worldX) const;
         const std::string& GetTextUTF8() const;
