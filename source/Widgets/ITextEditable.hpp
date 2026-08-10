@@ -1,6 +1,7 @@
 
 #pragma once
 #include "ITextProperties.hpp"
+#include <chrono>
 
 namespace RetroFuturaGUI
 {
@@ -13,6 +14,7 @@ namespace RetroFuturaGUI
         void SetCaretColors(std::span<glm::vec4> colors);
         void SetCaretFillType(const FillType fillType);
         void SetCaretGradientAnimationSpeed(const f32 speed);
+        void SetCaretBlinkTime(const f64 milliseconds);
         void SetSelectedAreaColors(std::span<glm::vec4> colors);
         void SetSelectedAreaFillType(const FillType fillType);
         void SetSelectedAreaGradientAnimationSpeed(const f32 speed);
@@ -33,6 +35,7 @@ namespace RetroFuturaGUI
     protected:
         void moveCaret();
         void editText();
+        void updateCaretBlink();
         void drawSelectedArea();
         void updateSelectedArea();
         void setCaretFromBoundary(const uSize boundary);
@@ -40,22 +43,29 @@ namespace RetroFuturaGUI
         virtual f32 clampToTextBounds(const f32 worldX, const f32 = 0.0f) const { return worldX; }
         virtual f32 keepCaretVisible(const f32 worldX, const f32 halfExtent = 0.0f) { return clampToTextBounds(worldX, halfExtent); }
 
+        //Caret
         std::unique_ptr<Rectangle> _caret;
-        uSize _caretPosition { 0 };
         std::vector<glm::vec4> _caretColors { glm::vec4(1.0f) };
         bool
-            _textChangedFlag { false },
+            _showCaret { false },
+            _caretBlinkState { true },
+            _caretNeverBlinks { false };
+        f64 _blinkForMilliseconds { 650.0 };
+        std::chrono::high_resolution_clock::time_point _millisecondsPassed { std::chrono::high_resolution_clock::now() };
+        uSize _caretPosition { 0 };
+        i32 _caretRepeatDirection { 0 };
+
+
+        bool
             _readOnly { false },
             _editingEnabled { false },
             _keyWasReleased { true },
             _enterPressed { false },
             _textCopied { false },
             _textCut { false },
-            _textPasted { false },
-            _showCaret { false };
+            _textPasted { false };
         u32 _keyHoldFrames { 0 };
         std::u32string _keyRepeatText {};
-        i32 _caretRepeatDirection { 0 };
         std::vector<char> _prevKeyStates {};
         static constexpr i32 _keyRepeatInitialDelay = 60;
         static constexpr i32 _keyRepeatInterval = 5;
@@ -90,6 +100,7 @@ namespace RetroFuturaGUI
         void emitCopy();
         void emitPaste();
         void updateCaretPosition();
+        void resetCaretBlink();
         bool checkForTextCopy();
         bool checkForTextCut();
         bool checkForTextPaste();

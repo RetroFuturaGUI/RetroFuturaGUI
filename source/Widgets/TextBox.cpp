@@ -149,6 +149,9 @@ void RetroFuturaGUI::TextBox::interact()
     editText();
     moveCaret();
 
+    if(!_caretNeverBlinks)
+        updateCaretBlink();
+
     if(_isMarking)
     {
         if(isMouseTextBoxPressed && hasMousePosition)
@@ -242,7 +245,10 @@ void RetroFuturaGUI::TextBox::drawCaret()
     if(!_caret)
         return;
 
-    if(_showCaret)
+    if(!_showCaret)
+        return;
+
+    if(_caretNeverBlinks || _caretBlinkState)
         _caret->Draw();
 }
 

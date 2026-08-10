@@ -77,6 +77,30 @@ void RetroFuturaGUI::ITextEditable::updateCaretPosition()
     glm::vec3 caretPosition { _text->GetBoundaryPosition(_caretPosition, _caret->GetSize().y) };
     caretPosition.x = keepCaretVisible(caretPosition.x, _caret->GetSize().x * 0.5f);
     _caret->SetPosition(caretPosition);
+    resetCaretBlink();
+}
+
+void RetroFuturaGUI::ITextEditable::updateCaretBlink()
+{
+    if(!_showCaret)
+    {
+        resetCaretBlink();
+        return;
+    }
+
+    const f64 elapsedMilliseconds { std::chrono::duration<f64, std::milli>(std::chrono::high_resolution_clock::now() - _millisecondsPassed).count() };
+
+    if(elapsedMilliseconds < _blinkForMilliseconds)
+        return;
+
+    _caretBlinkState = !_caretBlinkState;
+    _millisecondsPassed = std::chrono::high_resolution_clock::now();
+}
+
+void RetroFuturaGUI::ITextEditable::resetCaretBlink()
+{
+    _caretBlinkState = true;
+    _millisecondsPassed = std::chrono::high_resolution_clock::now();
 }
 
 void RetroFuturaGUI::ITextEditable::setCaretFromBoundary(const uSize boundary)
@@ -621,4 +645,16 @@ void RetroFuturaGUI::ITextEditable::emitPaste()
 {
     _onPasteAsync.EmitAsync();
     _onPaste.Emit();
+}
+
+void RetroFuturaGUI::ITextEditable::SetCaretBlinkTime(const f64 milliseconds)
+{
+    if(milliseconds <= 16.0)
+    {
+        _caretNeverBlinks = true;
+        return;
+    }
+
+    _blinkForMilliseconds = milliseconds;
+    _caretNeverBlinks = false;
 }
