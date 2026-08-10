@@ -8,12 +8,20 @@ namespace RetroFuturaGUI
     class Projection
     {
     public:
+        /// @brief Constructs an orthographic projection for the given resolution.
         Projection(const f32 width, const f32 height);
         ~Projection() = default;
 
+        /// @brief Returns the current projection matrix.
         const glm::mat4& GetProjectionMatrix() const;
+
+        /// @brief Recomputes the projection matrix for a new resolution.
         void UpdateProjectionMatrix(const f32 width, const f32 height);
+
+        /// @brief Returns the resolution the projection was last computed for.
         const glm::vec2& GetResolution() const;
+
+        /// @brief Returns the depth used for the projection.
         const float& GetDepth() const { return _depth; }
 
     private:

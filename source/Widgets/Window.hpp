@@ -12,6 +12,7 @@ namespace RetroFuturaGUI
     class Window// : public IWidget
     {
     public:
+        /// @brief Creates a native GLFW window with the given title and size.
         Window(std::string_view name, const i32 width, const i32 height);
         Window() = delete;
         Window(const Window&) = delete;
@@ -19,21 +20,51 @@ namespace RetroFuturaGUI
         auto operator =(const Window&) = delete;
         auto operator =(Window&&) = delete;
         ~Window() = default;
+
+        /// @brief Returns whether the user has requested the window be closed.
         bool WindowShouldClose();
+
+        /// @brief Handles input, resizing/dragging and draws the window's background, bar and layout.
         void Draw();
+
+        /// @brief Sets the window's width and height.
         void SetWindowSize(i32 width, i32 height);
+
+        /// @brief Sets the window's width.
         void SetWidth(i32 width);
+
+        /// @brief Sets the window's height.
         void SetHeight(i32 height);
+
+        /// @brief Sets the window bar's title text and font family.
         void SetWindowTitle(std::string_view title, std::string_view fontFamily);
         //void SetWindowTitleFont(std::string_view fontPath); separate later when fallback fonts are implemented
+
+        /// @brief Sets the window's background color.
         void SetBackgroundColor(const glm::vec4& color);
+
+        /// @brief Sets the window's background image, replacing any background color.
         void SetBackgroundImage(std::string_view imagePath);
+
+        /// @brief Sets the Lasagna grid used to lay out the window's content.
         void SetLasagna(Lasagna* lasagna);
+
+        /// @brief Returns the OpenGL texture ID of the background image, if one is set.
         i32 GetBackgroundImageId() const;
+
+        /// @brief Returns the underlying GLFW window handle.
         GLFWwindow* GetGlfwWindow() const;
+
+        /// @brief Returns the window's projection.
         Projection* GetProjection() const;
+
+        /// @brief Returns the window's title bar.
         WindowBar& GetWindowBar();
+
+        /// @brief Shows or hides the window's title bar.
         void ShowWindowBar(const bool show);
+
+        /// @brief Returns the window's name.
         const std::string& GetName() const;
 
     private:

@@ -14,26 +14,62 @@ namespace RetroFuturaGUI
     class IWidget : virtual public IWindowAccessor 
     {
     public:
+        /// @brief Constructs a widget with the given name, under the given parent widget/window.
         IWidget(std::string_view name, Projection* projection, IWidget* parentWidget, const WidgetTypeID parentWidgetTypeID, GLFWwindow* parentWindow);
         IWidget() = delete;
         virtual ~IWidget() = default;
+
+        /// @brief Draws the widget.
         virtual void Draw() = 0;
+
+        /// @brief Connects a slot to be called when the widget is enabled.
+        /// @param async If true, the slot is invoked asynchronously.
         void Connect_OnEnable(const typename Signal<>::Slot& slot, const bool async);
+
+        /// @brief Connects a slot to be called when the widget is disabled.
+        /// @param async If true, the slot is invoked asynchronously.
         void Connect_OnDisable(const typename Signal<>::Slot& slot, const bool async);
+
+        /// @brief Disconnects a previously connected OnEnable slot.
         void Disconnect_OnEnable(const typename Signal<>::Slot& slot);
+
+        /// @brief Disconnects a previously connected OnDisable slot.
         void Disconnect_OnDisable(const typename Signal<>::Slot& slot);
+
+        /// @brief Sets the size of the widget.
         virtual void SetSize(const glm::vec3& size);
+
+        /// @brief Returns the current size of the widget.
         glm::vec3 GetSize() const;
+
+        /// @brief Sets the world position of the widget.
         virtual void SetPosition(const glm::vec3& position);
+
+        /// @brief Returns the current world position of the widget.
         glm::vec3 GetPosition() const;
+
+        /// @brief Sets the rotation of the widget.
         virtual void SetRotation(const glm::vec3& rotation);
+
+        /// @brief Returns the current rotation of the widget.
         glm::vec3 GetRotation() const;
+
+        /// @brief Returns the widget's name.
         std::string_view GetName() const;
+
+        /// @brief Sets the widget's name.
         void SetName(std::string_view name);
+
+        /// @brief Returns the widget's type ID.
         WidgetTypeID GetWidgetTypeID() const;
+
+        /// @brief Enables or disables the widget, optionally emitting the associated signal.
         void SetEnabled(const bool enable, const bool emitSignal = true);
+
+        /// @brief Returns whether the widget is currently enabled.
         bool IsEnabled() const;
 
+        /// @brief Returns the parent widget, cast to the given type.
         template<typename T> T* GetParentWidget() const
         {
             return static_cast<T*>(_parentWidget);

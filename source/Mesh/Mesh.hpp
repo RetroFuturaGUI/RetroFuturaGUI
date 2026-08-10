@@ -87,6 +87,7 @@ namespace RetroFuturaGUI
     class Mesh
     {
     public:
+        /// @brief Constructs a Mesh from vertex, index and texture data, uploading it to the GPU.
         Mesh(std::vector<Vertex> vertices, std::vector<u32> indices, std::vector<MeshTexture> textures);
         Mesh(const Mesh&) = delete;
         Mesh& operator=(const Mesh&) = delete;
@@ -94,6 +95,7 @@ namespace RetroFuturaGUI
         Mesh& operator=(Mesh&& other) noexcept;
         ~Mesh();
 
+        /// @brief Draws the mesh using the given projection, translation, rotation and scaling matrices.
         void Draw(const glm::mat4& projection, const glm::mat4& position, const glm::mat4& rotation, const glm::mat4& scaling);
 
     private:

@@ -9,27 +9,74 @@ namespace RetroFuturaGUI
     class ITextEditable : virtual public IWindowAccessor, public ITextProperties
     {
     public:
+        /// @brief Sets whether the widget rejects text input/editing while still allowing selection and copy.
         void SetReadOnly(const bool readOnly);
+
+        /// @brief Returns whether the widget is currently read-only.
         bool IsReadOnly() const;
+
+        /// @brief Sets the caret color(s).
         void SetCaretColors(std::span<glm::vec4> colors);
+
+        /// @brief Sets the caret fill type (solid, linear/radial/huestar gradient).
         void SetCaretFillType(const FillType fillType);
+
+        /// @brief Sets the speed at which the caret's gradient animates over time.
         void SetCaretGradientAnimationSpeed(const f32 speed);
+
+        /// @brief Sets how long, in milliseconds, the caret stays visible/hidden per blink cycle.
         void SetCaretBlinkTime(const f64 milliseconds);
+
+        /// @brief Sets the selection highlight color(s).
         void SetSelectedAreaColors(std::span<glm::vec4> colors);
+
+        /// @brief Sets the selection highlight fill type (solid, linear/radial/huestar gradient).
         void SetSelectedAreaFillType(const FillType fillType);
+
+        /// @brief Sets the speed at which the selection highlight's gradient animates over time.
         void SetSelectedAreaGradientAnimationSpeed(const f32 speed);
+
+        /// @brief Sets the offset applied to the selection highlight gradient's start position.
         void SetSelectedAreaGradientOffset(const f32 gradientOffset);
+
+        /// @brief Sets the angle of the selection highlight's linear gradient, in degrees.
         void SetSelectedAreaGradientDegree(const f32 degree);
+
+        /// @brief Sets the speed at which the selection highlight's gradient rotates over time.
         void SetSelectedAreaGradientRotationSpeed(const f32 rotationSpeed);
+
+        /// @brief Sets the corner rounding radii of the selection highlight.
         void SetSelectedAreaCornerRadii(const glm::vec4& radii);
+
+        /// @brief Connects a slot to be called when the Enter key is pressed.
+        /// @param async If true, the slot is invoked asynchronously.
         void Connect_OnEnterPressed(const typename Signal<>::Slot& slot, const bool async);
+
+        /// @brief Connects a slot to be called when the Enter key is released.
+        /// @param async If true, the slot is invoked asynchronously.
         void Connect_OnEnterReleased(const typename Signal<>::Slot& slot, const bool async);
+
+        /// @brief Connects a slot to be called when text is copied from the widget.
+        /// @param async If true, the slot is invoked asynchronously.
         void Connect_OnCopy(const typename Signal<>::Slot& slot, const bool async);
+
+        /// @brief Connects a slot to be called when text is pasted into the widget.
+        /// @param async If true, the slot is invoked asynchronously.
         void Connect_OnPaste(const typename Signal<>::Slot& slot, const bool async);
+
+        /// @brief Disconnects a previously connected OnEnterPressed slot.
         void Disconnect_OnEnterPressed(const typename Signal<>::Slot& slot);
+
+        /// @brief Disconnects a previously connected OnEnterReleased slot.
         void Disconnect_OnEnterReleased(const typename Signal<>::Slot& slot);
+
+        /// @brief Disconnects a previously connected OnCopy slot.
         void Disconnect_OnCopy(const typename Signal<>::Slot& slot);
+
+        /// @brief Disconnects a previously connected OnPaste slot.
         void Disconnect_OnPaste(const typename Signal<>::Slot& slot);
+
+        /// @brief Returns the text most recently copied or cut from the widget.
         const std::string& GetCopiedText() const;
 
     protected:

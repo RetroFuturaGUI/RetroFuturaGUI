@@ -10,6 +10,7 @@ namespace RetroFuturaGUI
     class Model : public IWidget
     {
         public:
+            /// @brief Constructs an empty Model widget under the given parent widget/window. Call LoadModel to populate it.
             Model(const std::string& name, Projection* projection, IWidget* parentWidget, const WidgetTypeID parentWidgetTypeID, GLFWwindow* parentWindow);
             Model(const Model&) = delete;
             Model(Model&&) = delete;
@@ -17,10 +18,19 @@ namespace RetroFuturaGUI
             auto operator =(Model&&) = delete;
             ~Model() override = default;
 
+            /// @brief Loads a 3D model file via Assimp, replacing any previously loaded meshes.
             void LoadModel(std::string_view path);
+
+            /// @brief Draws all meshes of the loaded model.
             void Draw() override;
+
+            /// @brief Sets the size (scale) of the model.
             void SetSize(const glm::vec3& size) override;
+
+            /// @brief Sets the world position of the model.
             void SetPosition(const glm::vec3& position) override;
+
+            /// @brief Sets the rotation of the model.
             void SetRotation(const glm::vec3& rotation) override;
 
         private:

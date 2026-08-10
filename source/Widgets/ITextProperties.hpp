@@ -13,14 +13,32 @@ namespace RetroFuturaGUI
     class ITextProperties : virtual public IWindowAccessor
     {
     public:
+        /// @brief Sets the text color for the given color state.
         void SetTextColor(const glm::vec4& color, const ColorState state);
+
+        /// @brief Returns the text color configured for the given color state.
         std::vector<glm::vec4> GetTextColor(const ColorState state) const;
+
+        /// @brief Sets the text content, in UTF-8.
         void SetText(std::string_view text);
+
+        /// @brief Returns the text content, in UTF-8.
         const std::string& GetText() const;
+
+        /// @brief Sets the font family, size and style used to render the text, loading it if necessary.
         virtual void SetFontFamily(std::string_view fontFamily, const f32 fontSize, const PlatformBridge::Fonts::Slant slant, const PlatformBridge::Fonts::Weight fontWeight);
+
+        /// @brief Sets the horizontal alignment of the text.
         void SetTextAlignment(const TextAlignment alignment);
+
+        /// @brief Sets the padding applied around the text.
         void SetTextPadding(const f32 padding);
+
+        /// @brief Connects a slot to be called when the text content changes.
+        /// @param async If true, the slot is invoked asynchronously.
         void Connect_OnTextChange(const typename Signal<>::Slot& slot, const bool async);
+
+        /// @brief Disconnects a previously connected OnTextChange slot.
         void Disconnect_OnTextChange(const typename Signal<>::Slot& slot);
 
     protected:

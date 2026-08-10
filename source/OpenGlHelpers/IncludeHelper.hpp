@@ -1,3 +1,6 @@
+/* Shared OpenGL includes and the common enums (fill type, widget type ID, sizing
+    mode, color state) used across the rendering and widget headers.
+*/
 #pragma once
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>

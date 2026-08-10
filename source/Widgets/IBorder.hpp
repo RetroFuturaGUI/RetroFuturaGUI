@@ -6,18 +6,38 @@
 
 namespace RetroFuturaGUI
 {
+    /// @brief Mixin providing a filled/gradient border rectangle for widgets that inherit from it.
     class IBorder
     {
     public:
+        /// @brief Sets a single border color for the given color state.
         void SetBorderColor(const glm::vec4& color, const ColorState state);
+
+        /// @brief Sets multiple border colors (e.g. gradient stops) for the given color state.
         void SetBorderColors(std::span<glm::vec4> colors, const ColorState state);
+
+        /// @brief Sets the offset applied to the border gradient's start position.
         void SetBorderGradientOffset(const f32 gradientOffset);
+
+        /// @brief Sets the speed at which the border gradient animates over time.
         void SetBorderGradientAnimationSpeed(const f32 animationSpeed);
+
+        /// @brief Sets the angle of the border's linear gradient, in degrees.
         void SetBorderGradientDegree(const f32 degree);
+
+        /// @brief Sets the speed at which the border gradient rotates over time.
         void SetBorderGradientRotationSpeed(const f32 rotationSpeed);
+
+        /// @brief Sets the texture ID sampled for the border's glass-effect-with-image shader feature.
         void SetWindowBorderImageTextureID(const u32 textureID);
+
+        /// @brief Returns the border colors configured for the given color state.
         const std::vector<glm::vec4>& GetBorderColor(const ColorState state) const;
+
+        /// @brief Sets the border fill type (solid, linear/radial/huestar gradient).
         void SetBorderFillType(const FillType fillType);
+
+        /// @brief Sets the border width.
         void SetBorderWidth(const f32 borderWidth);
 
     protected:

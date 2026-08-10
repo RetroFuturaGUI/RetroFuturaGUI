@@ -69,13 +69,35 @@ namespace RetroFuturaGUI
         };
 
     public:
+        /// @brief Initializes the FontManager and the underlying FreeType library.
+        /// @return 0 on success, or a non-zero FreeType error code.
         static i32 Init();
+
+        /// @brief Loads a font face for the given family, size and style, generating glyph atlasses for the given codepoint range.
+        /// @param extendMode If true, glyphs are added to an already-loaded font instead of failing with FontAlreadyLoaded.
+        /// @return A LoadFontResult describing the outcome.
         static LoadFontResult LoadFont(std::string_view fontFamily, const f32 size, const PlatformBridge::Fonts::Slant slant, const PlatformBridge::Fonts::Weight weight, const u32 codePointFirst, const u32 codePointLast, const bool extendMode = false);
+
+        /// @brief Returns all currently loaded fonts.
+        /// @return A constant reference to the list of loaded FontInfo entries.
         static const std::list<FontInfo>& GetFonts();
+
+        /// @brief Finds the loaded FontInfo matching the given family, size and style.
+        /// @return A shared_ptr to the matching FontInfo, or nullptr if no such font is loaded.
         static std::shared_ptr<FontInfo> GetFontInfo(std::string_view fontFamily, const f32 size, const PlatformBridge::Fonts::Slant slant, const PlatformBridge::Fonts::Weight weight);
+
+        /// @brief Sets the font used when no explicit font is specified, loading it if necessary.
         static void SetDefaultFont(std::string_view fontFamily, const f32 size = 16.0f, const PlatformBridge::Fonts::Slant slant = PlatformBridge::Fonts::Slant::Roman, const PlatformBridge::Fonts::Weight weight = PlatformBridge::Fonts::Weight::Normal, const u32 codePointFirst = BasicLatinFirst, const u32 codePointLast = BasicLatinLast);
+
+        /// @brief Converts a floating point font size to the integral key used to index glyph atlasses.
+        /// @return The integral font size.
         static u32 FontSizeToIntegral(const f32 size);
+
+        /// @brief Looks up the glyph for the given codepoint within a glyph atlas.
+        /// @return A pointer to the Glyph, or nullptr if the codepoint is not present in the atlas.
         static const Glyph* GetGlyph(const GlyphAtlas& atlas, const u32 codePoint);
+
+        /// @brief Extends an already-loaded fontset by loading glyphs for the given codepoint range from a fallback font family.
         static void ExtendFontset(std::string_view fontFamily, std::string_view fontFamilyExtension, const f32 size, const PlatformBridge::Fonts::Slant slant, const PlatformBridge::Fonts::Weight weight, const u32 codePointFirst, const u32 codePointLast);
 
     private:

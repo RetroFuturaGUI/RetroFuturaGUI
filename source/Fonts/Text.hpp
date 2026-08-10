@@ -27,29 +27,77 @@ namespace RetroFuturaGUI
     class Text
     {
     public:
+        /// @brief Constructs a Text object that renders using the given projection.
         Text(Projection* projection);
         Text() = delete;
         ~Text();
+
+        /// @brief Draws the text.
         void Draw();
+
+        /// @brief Sets the font family, size and style used to render the text, loading it if necessary.
         void SetFontFamily(std::string_view fontFamily, const f32 glyphSize, PlatformBridge::Fonts::Slant slant, PlatformBridge::Fonts::Weight weight);
+
+        /// @brief Sets the horizontal alignment of the text within its parent.
         void SetTextAlignment(TextAlignment textAlignment);
+
+        /// @brief Sets the glyph size.
         void SetSize(const glm::vec2& glyphSize);
+
+        /// @brief Sets the world position of the text.
         void SetPosition(const glm::vec3& position);
+
+        /// @brief Sets the rotation of the text.
         void SetRotation(const glm::vec3& rotation);
+
+        /// @brief Sets the text color.
         void SetColor(const glm::vec4& color);
+
+        /// @brief Sets the size of the parent widget, used for alignment.
         void SetParentSize(const glm::vec2 size);
+
+        /// @brief Sets the padding applied around the text when aligning.
         void SetTextPadding(const f32 padding);
+
+        /// @brief Sets the text content from a UTF-8 encoded string.
         void SetTextUTF8(std::string_view text);
+
+        /// @brief Sets the text content from a UTF-32 encoded string.
         void SetTextUTF32(std::u32string_view text);
+
+        /// @brief Sets the horizontal scroll offset, used when the text overflows its parent.
         void SetScrollOffset(const f32 offset);
+
+        /// @brief Returns the current horizontal scroll offset.
         f32 GetScrollOffset() const;
+
+        /// @brief Returns the text color.
         glm::vec4 GetColor() const;
+
+        /// @brief Returns the glyph size.
         float GetGlyphSize() const;
+
+        /// @brief Returns the world position of the given glyph boundary, useful for placing a caret.
+        /// @param boundary The glyph boundary index.
+        /// @param caretSize The width to offset by so the caret sits on the correct side of the boundary.
+        /// @return The world position of the boundary.
         glm::vec3 GetBoundaryPosition(const uSize boundary, const f32 caretSize) const;
+
+        /// @brief Returns the glyph boundary closest to the given world X position.
+        /// @return The glyph boundary index.
         uSize GetBoundaryAtPosition(const f32 worldX) const;
+
+        /// @brief Returns the text content as a UTF-8 encoded string.
         const std::string& GetTextUTF8() const;
+
+        /// @brief Returns the text content as a UTF-32 encoded string.
         const std::u32string& GetTextUTF32() const;
+
+        /// @brief Returns the number of glyphs in the text.
         uSize GetGlyphCount() const;
+
+        /// @brief Converts a glyph index to its corresponding byte position within the UTF-8 string.
+        /// @return The UTF-8 byte position.
         uSize GetUtf8Position(uSize const glyphPosition) const;
 
     private:

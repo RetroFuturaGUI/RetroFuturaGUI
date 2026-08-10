@@ -6,6 +6,8 @@ namespace RetroFuturaGUI
 {
     static inline constinit bool GlfwInitialized { false };
 
+    /// @brief Initializes GLFW. Safe to call only once per process.
+    /// @return 0 on success, or -1 if GLFW was already initialized or failed to start.
     static i32 GlfwInit()
     {
         if(GlfwInitialized)
@@ -24,6 +26,7 @@ namespace RetroFuturaGUI
         return 0;
     }
 
+    /// @brief Terminates GLFW, releasing all windows and resources it owns.
     static void GlfwTerminate()
     {
         glfwTerminate();

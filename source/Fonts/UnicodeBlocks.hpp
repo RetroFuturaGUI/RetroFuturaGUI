@@ -1,3 +1,6 @@
+/* First/last codepoint bounds for each Unicode block, used to request glyph
+    ranges from FontManager without hardcoding magic numbers at call sites.
+*/
 #pragma once
 #include "IncludeHelper.hpp"
 #include <array>

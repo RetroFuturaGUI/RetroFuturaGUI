@@ -8,38 +8,45 @@ namespace RetroFuturaGUI
     class InputManager
     {
     public:
+        /// @brief Resets the focused and hovered window state.
         static inline void Init()
         {
             _focusedWindow = nullptr;
             _hoveredWindow = nullptr;
         }
 
+        /// @brief Sets the window currently holding input focus.
         static inline void SetFocusedWindow(GLFWwindow* window)
         {
             _focusedWindow = window;
         }
 
+        /// @brief Returns the window currently holding input focus.
         static inline GLFWwindow* GetFocusedWindow()
         {
             return _focusedWindow;
         }
 
+        /// @brief Sets the window currently under the mouse cursor.
         static inline void SetHoveredWindow(GLFWwindow* window)
         {
             _hoveredWindow = window;
         }
 
+        /// @brief Returns the window currently under the mouse cursor.
         static inline GLFWwindow* GetHoveredWindow()
         {
             return _hoveredWindow;
         }
 
-        static inline void SetMouseButtonState(i32 button, bool state) 
+        /// @brief Sets the pressed state of a mouse button.
+        static inline void SetMouseButtonState(i32 button, bool state)
         {
             GetInstance()._mouseButtons[button] = state;
         }
 
-        static inline void SetMousePositionInvertedY(f64 x, f64 y) 
+        /// @brief Sets the mouse cursor position, storing it with Y inverted relative to the hovered window's height.
+        static inline void SetMousePositionInvertedY(f64 x, f64 y)
         {
             i32 
                 width { 0 }, 
@@ -51,7 +58,8 @@ namespace RetroFuturaGUI
             GetInstance()._mousePositionInvertedY = glm::dvec2(x, (f64)height - y); //adjust Y to inverted coordinate system
         }
 
-        static inline void SetMousePosition(f64 x, f64 y) 
+        /// @brief Sets the mouse cursor position, in the native top-left-origin coordinate system.
+        static inline void SetMousePosition(f64 x, f64 y)
         {
             i32 width, height;
 
@@ -61,21 +69,25 @@ namespace RetroFuturaGUI
             GetInstance()._mousePosition = glm::dvec2(x, y);
         }
 
-        static inline bool IsMouseButtonPressed(i32 button) 
+        /// @brief Returns whether the given mouse button is currently pressed.
+        static inline bool IsMouseButtonPressed(i32 button)
         {
             return _mouseButtons[button];
         }
 
-        static inline glm::dvec2 GetMousePositionInvertedY() 
+        /// @brief Returns the mouse cursor position with Y inverted relative to the hovered window's height.
+        static inline glm::dvec2 GetMousePositionInvertedY()
         {
             return GetInstance()._mousePositionInvertedY;
         }
 
-        static inline glm::dvec2 GetMousePosition() 
+        /// @brief Returns the mouse cursor position in the native top-left-origin coordinate system.
+        static inline glm::dvec2 GetMousePosition()
         {
             return GetInstance()._mousePosition;
         }
 
+        /// @brief Returns whether any mouse button is currently pressed.
         static inline bool AnyMouseButtonPressed()
         {
             return std::ranges::find(_mouseButtons, _mouseButtons + 8, true)  != (_mouseButtons + 8);

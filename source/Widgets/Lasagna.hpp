@@ -36,6 +36,7 @@ namespace RetroFuturaGUI
     class Lasagna: public IWidget
     {
     public:
+        /// @brief Constructs a Lasagna grid layout container with the given row/column/layer definitions.
         Lasagna(const std::string& name, Projection* projection, IWidget* parentWidget, const WidgetTypeID parentWidgetTypeID, GLFWwindow* parentWindow, AxisDefinition* _axisDefinition);
         Lasagna() = delete;
         Lasagna(const Lasagna&) = delete;
@@ -43,10 +44,18 @@ namespace RetroFuturaGUI
         ~Lasagna() = default;
         auto operator =(const Lasagna&) = delete;
         auto operator =(Lasagna&&) = delete;
+
+        /// @brief Places a widget into the grid at the given row, column and layer, spanning a single cell.
         void AttachWidget(const u32 row, const u32 col, const u32 layer, IWidget* widget, const SizingMode sizingMode = SizingMode::FILL);
         void Draw() override {};
+
+        /// @brief Lays out and draws all attached widgets, optionally overlaying cell debug borders.
         void Draw(const bool alsoDrawDebugLines = false);
+
+        /// @brief Sets the size of the grid, resizing and repositioning all attached widgets.
         void SetSize(const glm::vec3& size);
+
+        /// @brief Sets the world position of the grid, repositioning all attached widgets.
         void SetPosition(const glm::vec3& position);
 
     private:
