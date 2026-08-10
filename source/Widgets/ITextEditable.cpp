@@ -467,8 +467,10 @@ bool RetroFuturaGUI::ITextEditable::IsReadOnly() const
 
 void RetroFuturaGUI::ITextEditable::SetCaretColors(std::span<glm::vec4> colors)
 {
+    _caretColors.assign(colors.begin(), colors.end());
+
     if(_caret)
-        _caret->SetColors(colors);
+        _caret->SetColors(_caretColors);
 }
 
 void RetroFuturaGUI::ITextEditable::SetCaretFillType(const FillType fillType)
