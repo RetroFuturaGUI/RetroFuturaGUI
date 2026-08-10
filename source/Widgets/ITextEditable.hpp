@@ -61,6 +61,7 @@ namespace RetroFuturaGUI
             _keyWasReleased { true },
             _enterPressed { false },
             _textCopied { false },
+            _textCut { false },
             _textPasted { false },
             _showCaret { false };
         u32 _keyHoldFrames { 0 };

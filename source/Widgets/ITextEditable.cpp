@@ -204,8 +204,10 @@ bool RetroFuturaGUI::ITextEditable::checkForTextCopy()
             emitCopy();
             return true;
         }
+
+        return false;
     }
-    
+
     _textCopied = false;
     return false;
 }
@@ -215,7 +217,7 @@ bool RetroFuturaGUI::ITextEditable::checkForTextCut()
     if((PlatformBridge::Input::IsKeyDown(PB_KEY_CONTROL_L) || PlatformBridge::Input::IsKeyDown(PB_KEY_CONTROL_R))
         && (PlatformBridge::Input::GetKeyPressState(PB_KEY_X) == PlatformBridge::KeyPressState::Press))
     {
-        if(!_textCopied)
+        if(!_textCut)
         {
             if(!_isSelected)
                 return true;
@@ -226,7 +228,7 @@ bool RetroFuturaGUI::ITextEditable::checkForTextCut()
             std::u32string tempCopy = _text->GetTextUTF32().substr(selectionStart, selectionEnd - selectionStart);
             _copiedText = DoubleEncodedString::Utf32ToUtf8(tempCopy);
             PlatformBridge::Clipboard::CopyToClipboard(PlatformBridge::Clipboard::ClipboardDatatype::Text, static_cast<void*>(tempCopy.data()), tempCopy.size() * sizeof(char32_t));
-            _textCopied = true;
+            _textCut = true;
             _text->SetTextUTF32(_text->GetTextUTF32().substr(0, selectionStart) + _text->GetTextUTF32().substr(selectionEnd));
             _selectedPositionFirst = 0;
             _selectedPositionLast = 0;
@@ -237,9 +239,11 @@ bool RetroFuturaGUI::ITextEditable::checkForTextCut()
             emitChange();
             return true;
         }
+
+        return false;
     }
 
-     _textCopied = false;
+     _textCut = false;
      return false;
 }
 
@@ -262,6 +266,9 @@ if((PlatformBridge::Input::IsKeyDown(PB_KEY_CONTROL_L) || PlatformBridge::Input:
             PlatformBridge::Clipboard::PasteFromClipboard(PlatformBridge::Clipboard::ClipboardDatatype::Text, dataPtr, &dataSize);
             middlePart = std::u32string(reinterpret_cast<char32_t*>(dataPtr), dataSize / sizeof(char32_t));
 
+            if(dataSize == 0)
+                return true;
+            
             if(_isSelected)
             {
                 completeText = _text->GetTextUTF32().substr(0, selectionStart);
@@ -290,8 +297,10 @@ if((PlatformBridge::Input::IsKeyDown(PB_KEY_CONTROL_L) || PlatformBridge::Input:
             emitChange();
             return true;
         }
+
+        return false;
     }
-    
+
     _textPasted = false;
     return false;
 }
