@@ -63,6 +63,7 @@ The framework is designed for cross-platform use, and its logic can be compiled 
     - Read-only mode
     - Caret: blinking with configurable blink time, colors, Solid/Linear/Radial/HueStar Gradient fill, gradient animation speed
     - Text selection: mouse-drag selection, colors, Solid/Linear/Radial/HueStar Gradient fill, gradient offset/degree/rotation speed, corner radii
+    - Placerholder Text
     - Copy / Cut / Paste (via PlatformBridge's Clipboard)
     - Signals: OnTextChange, OnEnterPressed, OnEnterReleased, OnCopy, OnPaste
     - Background & Border (same options as Button)

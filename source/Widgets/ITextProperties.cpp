@@ -47,6 +47,9 @@ void RetroFuturaGUI::ITextProperties::SetText(std::string_view text)
 
 const std::string& RetroFuturaGUI::ITextProperties::GetText() const
 {
+    if(!_text)
+        return _dummy;
+    
     return _text->GetTextUTF8();
 }
 

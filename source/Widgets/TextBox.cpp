@@ -16,12 +16,16 @@ RetroFuturaGUI::TextBox::TextBox(const std::string& name, Projection* projection
     _text = std::make_unique<Text>(projection);
     _caret = std::make_unique<Rectangle>(projection);
     _selectedArea = std::make_unique<Rectangle>(projection);
+    _placeholderText = std::make_unique<Text>(projection);
 
     if (_background)
         _background->SetRectangleMode(RectangleMode::Plane);
 
     if (_border)
         _border->SetRectangleMode(RectangleMode::Border);
+
+    if(_placeholderText)
+        _placeholderText->SetColor(_placeholderTextColors[0]);
 
     if(_caret)
     {
@@ -44,7 +48,17 @@ void RetroFuturaGUI::TextBox::Draw()
     drawBackground();
     drawBorder();
     drawSelectedArea();
-    drawText();
+    
+    if(_text && !_text->GetTextUTF32().empty())
+    {
+        drawText();
+        drawCaret();
+        return;
+    }
+
+    if(_placeholderText)
+        _placeholderText->Draw();
+
     drawCaret();
 }
 
@@ -86,6 +100,9 @@ void RetroFuturaGUI::TextBox::SetSize(const glm::vec3& size)
     if(_text)
         _text->SetParentSize(glm::vec2(size.x, size.y));
 
+    if(_placeholderText)
+        _placeholderText->SetParentSize(glm::vec2(size.x, size.y));
+
     if(_caret)
         _caret->SetSize(glm::vec2(2.0f, _text->GetGlyphSize() * 1.6f));
 }
@@ -106,6 +123,9 @@ void RetroFuturaGUI::TextBox::SetPosition(const glm::vec3& position)
     if(_text)
         _text->SetPosition(position + glm::vec3(0.0f, 0.0f, 0.3f));
 
+    if(_placeholderText)
+        _placeholderText->SetPosition(position + glm::vec3(0.0f, 0.0f, 0.3f));
+
     if(_caret)
         _caret->SetPosition(position + glm::vec3(0.0f, 0.0f, 0.5f));
 }
@@ -122,6 +142,9 @@ void RetroFuturaGUI::TextBox::SetRotation(const glm::vec3& rotation)
 
     if(_text)
         _text->SetRotation(rotation);
+
+    if(_placeholderText)
+        _placeholderText->SetRotation(rotation);
 }
 
 void RetroFuturaGUI::TextBox::interact()
@@ -300,7 +323,7 @@ f32 RetroFuturaGUI::TextBox::keepCaretVisible(const f32 worldX, const f32 halfEx
 
 void RetroFuturaGUI::TextBox::SetFontFamily(std::string_view fontFamily, const f32 fontSize, const PlatformBridge::Fonts::Slant slant, const PlatformBridge::Fonts::Weight fontWeight)
 {
-    ITextProperties::SetFontFamily(fontFamily, fontSize, slant, fontWeight);
+    ITextEditable::SetFontFamily(fontFamily, fontSize, slant, fontWeight);
     _caret->SetSize(glm::vec2(2.0f, fontSize * 1.6f));
 }
 

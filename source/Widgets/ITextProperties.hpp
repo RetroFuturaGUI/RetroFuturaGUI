@@ -29,10 +29,10 @@ namespace RetroFuturaGUI
         virtual void SetFontFamily(std::string_view fontFamily, const f32 fontSize, const PlatformBridge::Fonts::Slant slant, const PlatformBridge::Fonts::Weight fontWeight);
 
         /// @brief Sets the horizontal alignment of the text.
-        void SetTextAlignment(const TextAlignment alignment);
+        virtual void SetTextAlignment(const TextAlignment alignment);
 
         /// @brief Sets the padding applied around the text.
-        void SetTextPadding(const f32 padding);
+        virtual void SetTextPadding(const f32 padding);
 
         /// @brief Connects a slot to be called when the text content changes.
         /// @param async If true, the slot is invoked asynchronously.
@@ -47,6 +47,7 @@ namespace RetroFuturaGUI
 
     //Elements
         std::unique_ptr<Text> _text;
+        inline static const std::string _dummy {};
 
     //Logic
         Signal<>

@@ -2,6 +2,7 @@
 #pragma once
 #include "ITextProperties.hpp"
 #include <chrono>
+#include <memory>
 
 namespace RetroFuturaGUI
 {
@@ -79,6 +80,25 @@ namespace RetroFuturaGUI
         /// @brief Returns the text most recently copied or cut from the widget.
         const std::string& GetCopiedText() const;
 
+        /// @brief Sets the placeholder text color for the given color state.
+        void SetPlaceholderTextColor(const glm::vec4& color);
+
+        /// @brief Sets the placeholder text content, in UTF-8.
+        void SetPlaceholderText(std::string_view text);
+
+        /// @brief Returns the placeholder text content, in UTF-8.
+        const std::string& GetPlaceholderText() const;
+
+        /// @brief Sets the font family, size and style used to render the text and placeholder text, loading it if necessary.
+        void SetFontFamily(std::string_view fontFamily, const f32 fontSize, const PlatformBridge::Fonts::Slant slant, const PlatformBridge::Fonts::Weight fontWeight) override;
+
+        /// @brief Sets the horizontal alignment of the text and placeholder text.
+        void SetTextAlignment(const TextAlignment alignment) override;
+
+        /// @brief Sets the padding applied around the text and placeholder text.
+        void SetTextPadding(const f32 padding) override;
+
+
     protected:
         void moveCaret();
         void editText();
@@ -102,7 +122,7 @@ namespace RetroFuturaGUI
         uSize _caretPosition { 0 };
         i32 _caretRepeatDirection { 0 };
 
-
+        //input logic
         bool
             _readOnly { false },
             _editingEnabled { false },
@@ -114,8 +134,8 @@ namespace RetroFuturaGUI
         u32 _keyHoldFrames { 0 };
         std::u32string _keyRepeatText {};
         std::vector<char> _prevKeyStates {};
-        static constexpr i32 _keyRepeatInitialDelay = 60;
-        static constexpr i32 _keyRepeatInterval = 5;
+        static constexpr i32 _keyRepeatInitialDelay { 60 };
+        static constexpr i32 _keyRepeatInterval { 5 };
 
         Signal<>
             _onEnterPressed,
@@ -137,6 +157,10 @@ namespace RetroFuturaGUI
             _isMarking { false },
             _isSelected { false };
         std::string _copiedText {};
+
+        //Placeholder Text
+        std::unique_ptr<Text> _placeholderText { nullptr };
+        std::vector<glm::vec4> _placeholderTextColors { glm::vec4(0.5f, 0.5f, 0.5f, 1.0f) };
 
     private:
         void moveCaretLeft();
