@@ -40,3 +40,21 @@ void RetroFuturaGUI::SvgImage::Draw()
     if (_svgTexture)
         _svgTexture->Draw();
 }
+
+void RetroFuturaGUI::SvgImage::SetPathFill(std::string_view name, const SvgPathFill& fill)
+{
+    if (_svgTexture)
+        _svgTexture->SetPathFill(name, fill);
+}
+
+void RetroFuturaGUI::SvgImage::ClearPathFill(std::string_view name)
+{
+    if (_svgTexture)
+        _svgTexture->ClearPathFill(name);
+}
+
+const std::vector<RetroFuturaGUI::SvgPathInfo>& RetroFuturaGUI::SvgImage::GetNamedPaths() const
+{
+    static const std::vector<SvgPathInfo> empty;
+    return _svgTexture ? _svgTexture->GetNamedPaths() : empty;
+}

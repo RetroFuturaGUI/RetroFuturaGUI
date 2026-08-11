@@ -31,6 +31,15 @@ namespace RetroFuturaGUI
         /// @brief Resizes the widget geometry to match the texture's native aspect ratio.
         void FitGeometryToTexture();
 
+        /// @brief Sets or replaces a color-effect override (solid/gradient) for a named SVG path.
+        void SetPathFill(std::string_view name, const SvgPathFill& fill);
+
+        /// @brief Clears a named path's color override, reverting it to its authored SVG color.
+        void ClearPathFill(std::string_view name);
+
+        /// @brief Returns every named (id-bearing) path/shape discovered in the SVG.
+        const std::vector<SvgPathInfo>& GetNamedPaths() const;
+
     private:
         glm::vec2 _quadSize { 1.0f };
         f32 _svgTextureAspectRatio { 0.0f };

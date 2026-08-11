@@ -3,6 +3,7 @@
 #include <cstring>
 #include <functional>
 #include <print>
+#include <utility>
 
 RetroFuturaGUI::SvgTexture::SvgTexture(std::string_view path, const bool flipVertically, Projection* projection,
                                         glm::i32vec2 initialResolution)
@@ -104,11 +105,20 @@ void RetroFuturaGUI::SvgTexture::Draw()
     glBindTexture(GL_TEXTURE_2D, _baseLayerTextureId);
 
     glBindVertexArray(_vao);
+
+    // The base layer and every masked overlay share the exact same transform, so they land at
+    // identical depth. With the default GL_LESS depth func, anything after the first draw would
+    // fail the depth test and be silently discarded before blending - depth testing is meaningless
+    // between coplanar passes of the same widget, so it's disabled for the duration of this call.
+    glDisable(GL_DEPTH_TEST);
+
     glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
 
     for (PathLayer& layer : _layers)
         if (layer.hasActiveOverride && layer.maskTextureId != 0)
             drawMaskedLayer(layer);
+
+    glEnable(GL_DEPTH_TEST);
 
     glBindVertexArray(0);
 }
@@ -336,8 +346,37 @@ void RetroFuturaGUI::SvgTexture::materializeMask(PathLayer& layer, glm::i32vec2 
     if (bitmap.isNull())
         return;
 
+    // Element::render() renders in the element's own local coordinate space and does not
+    // resolve the document's viewBox-to-width/height scale the way Document::render() does,
+    // so isolating the element and rendering it through the (already-correct) document path
+    // is what keeps a mask aligned with the base layer for any SVG where viewBox != width/height.
+    std::vector<lunasvg::Element> ancestorChain;
+    for (lunasvg::Element current = layer.element; !current.isNull(); current = current.parentElement())
+        ancestorChain.push_back(current);
+
+    std::vector<std::pair<lunasvg::Element, std::string>> hiddenSiblings;
+    for (uSize i = 0; i + 1 < ancestorChain.size(); ++i)
+    {
+        for (const lunasvg::Node& child : ancestorChain[i + 1].children())
+        {
+            if (!child.isElement())
+                continue;
+
+            lunasvg::Element childElement = child.toElement();
+            if (childElement == ancestorChain[i])
+                continue;
+
+            hiddenSiblings.push_back({ childElement,
+                childElement.hasAttribute("display") ? childElement.getAttribute("display") : std::string() });
+            childElement.setAttribute("display", "none");
+        }
+    }
+
     bitmap.clear(0x00000000);
-    layer.element.render(bitmap, computeScaleMatrix(targetResolution));
+    _document->render(bitmap, computeScaleMatrix(targetResolution));
+
+    for (auto& [element, originalDisplay] : hiddenSiblings)
+        element.setAttribute("display", originalDisplay.empty() ? "inline" : originalDisplay);
 
     const uSize srcStride = static_cast<uSize>(bitmap.stride());
     const uSize width = static_cast<uSize>(targetResolution.x);
