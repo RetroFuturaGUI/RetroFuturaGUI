@@ -77,23 +77,44 @@ RetroFuturaGUI::Lasagna::Lasagna(const std::string& name, Projection* projection
 
 }
 
-void RetroFuturaGUI::Lasagna::AttachWidget(const u32 row, const u32 col, const u32 layer, IWidget* widget, const SizingMode sizingMode)
+void RetroFuturaGUI::Lasagna::AttachWidget(const u32 row, const u32 col, const u32 layer, IWidget* widget, const SizingMode sizingMode, const u32 rowSpan, const u32 colSpan, const u32 layerSpan)
 {
-    if(_axisdefinition._RowDefinition.size() < row
-    || _axisdefinition._ColumnDefinition.size() < col
-    || _axisdefinition._LayerDefinition.size() < layer)
-        return;
-        
-    if(_lasagna[row][col][layer]._SpanOccupied)
+    const u32
+        rowSpanClamped = rowSpan == 0 ? 1 : rowSpan,
+        colSpanClamped = colSpan == 0 ? 1 : colSpan,
+        layerSpanClamped = layerSpan == 0 ? 1 : layerSpan;
+
+    if(_axisdefinition._RowDefinition.size() < row + rowSpanClamped
+    || _axisdefinition._ColumnDefinition.size() < col + colSpanClamped
+    || _axisdefinition._LayerDefinition.size() < layer + layerSpanClamped)
         return;
 
-    _lasagna[row][col][layer]._Widget = widget;
-    _lasagna[row][col][layer]._Widget->SetPosition(glm::vec3(_lasagna[row][col][layer]._PositionPixels.x + _lasagna[row][col][layer]._SizePixels.x * 0.5f,
-                                                            _projection.GetResolution().y - _lasagna[row][col][layer]._PositionPixels.y - _lasagna[row][col][layer]._SizePixels.y * 0.5f,
-                                                            _lasagna[row][col][layer]._PositionPixels.z + _lasagna[row][col][layer]._SizePixels.z * 0.5f
-                                                        ));
-    _lasagna[row][col][layer]._SizingMode = sizingMode;
-    resizeWidget(_lasagna[row][col][layer]);
+    for(u32 r = row; r < row + rowSpanClamped; ++r)
+        for(u32 c = col; c < col + colSpanClamped; ++c)
+            for(u32 l = layer; l < layer + layerSpanClamped; ++l)
+                if(_lasagna[r][c][l]._SpanOccupied || _lasagna[r][c][l]._Widget != nullptr)
+                    return;
+
+    LasagnaCell& origin = _lasagna[row][col][layer];
+    origin._RowSpan = rowSpanClamped;
+    origin._ColSpan = colSpanClamped;
+    origin._LayerSpan = layerSpanClamped;
+    origin._SizingMode = sizingMode;
+    origin._Widget = widget;
+
+    for(u32 r = row; r < row + rowSpanClamped; ++r)
+        for(u32 c = col; c < col + colSpanClamped; ++c)
+            for(u32 l = layer; l < layer + layerSpanClamped; ++l)
+                if(r != row || c != col || l != layer)
+                    _lasagna[r][c][l]._SpanOccupied = true;
+
+    updateSpanSize(origin, row, col, layer);
+
+    origin._Widget->SetPosition(glm::vec3(origin._PositionPixels.x + origin._SizePixels.x * 0.5f,
+                                          _projection.GetResolution().y - origin._PositionPixels.y - origin._SizePixels.y * 0.5f,
+                                          origin._PositionPixels.z + origin._SizePixels.z * 0.5f
+                                        ));
+    resizeWidget(origin);
 }
 
 void RetroFuturaGUI::Lasagna::Draw(const bool alsoDrawDebugLines)
@@ -141,6 +162,34 @@ void RetroFuturaGUI::Lasagna::drawDebugLines(const LasagnaCell& cell)
     _debugBorder->Draw();
 }
 
+void RetroFuturaGUI::Lasagna::updateSpanSize(LasagnaCell& originCell, const uSize row, const uSize column, const uSize layer)
+{
+    glm::vec3
+        sizePixels { 0.0f },
+        sizeNormalized { 0.0f };
+
+    for(u32 r = 0; r < originCell._RowSpan; ++r)
+    {
+        sizePixels.x += _lasagna[row + r][column][layer]._SizePixels.x;
+        sizeNormalized.x += _lasagna[row + r][column][layer]._SizeNormalized.x;
+    }
+
+    for(u32 c = 0; c < originCell._ColSpan; ++c)
+    {
+        sizePixels.y += _lasagna[row][column + c][layer]._SizePixels.y;
+        sizeNormalized.y += _lasagna[row][column + c][layer]._SizeNormalized.y;
+    }
+
+    for(u32 l = 0; l < originCell._LayerSpan; ++l)
+    {
+        sizePixels.z += _lasagna[row][column][layer + l]._SizePixels.z;
+        sizeNormalized.z += _lasagna[row][column][layer + l]._SizeNormalized.z;
+    }
+
+    originCell._SizePixels = sizePixels;
+    originCell._SizeNormalized = sizeNormalized;
+}
+
 void RetroFuturaGUI::Lasagna::resizeCells()
 {
     for(uSize row = 0; row < _axisdefinition._RowDefinition.size(); ++row)
@@ -149,8 +198,8 @@ void RetroFuturaGUI::Lasagna::resizeCells()
         {
             for(uSize layer = 0; layer < _axisdefinition._LayerDefinition.size(); ++layer)
             {
-                f32 
-                    posX { 0.0f }, 
+                f32
+                    posX { 0.0f },
                     posY { 0.0f },
                     posZ { 0.0f };
 
@@ -169,6 +218,22 @@ void RetroFuturaGUI::Lasagna::resizeCells()
                 _lasagna[row][column][layer]._PositionNormalized = glm::vec3(posX / _size.x, posY / _size.y, posZ / _size.z);
                 _lasagna[row][column][layer]._SizePixels = glm::vec3(_axisdefinition._RowDefinition[row] * _size.x, _axisdefinition._ColumnDefinition[column] * _size.y, _axisdefinition._LayerDefinition[layer] * _size.z);
                 _lasagna[row][column][layer]._SizeNormalized = glm::vec3(_axisdefinition._RowDefinition[row], _axisdefinition._ColumnDefinition[column], _axisdefinition._LayerDefinition[layer]);
+            }
+        }
+    }
+
+    // Cells that were attached with a span merge their base sizes across the spanned range,
+    // so this must run after every cell above has its up-to-date single-cell size.
+    for(uSize row = 0; row < _axisdefinition._RowDefinition.size(); ++row)
+    {
+        for(uSize column = 0; column < _axisdefinition._ColumnDefinition.size(); ++column)
+        {
+            for(uSize layer = 0; layer < _axisdefinition._LayerDefinition.size(); ++layer)
+            {
+                LasagnaCell& cell = _lasagna[row][column][layer];
+
+                if(cell._RowSpan > 1 || cell._ColSpan > 1 || cell._LayerSpan > 1)
+                    updateSpanSize(cell, row, column, layer);
             }
         }
     }

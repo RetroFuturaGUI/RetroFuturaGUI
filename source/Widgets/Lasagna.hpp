@@ -45,18 +45,18 @@ namespace RetroFuturaGUI
         auto operator =(const Lasagna&) = delete;
         auto operator =(Lasagna&&) = delete;
 
-        /// @brief Places a widget into the grid at the given row, column and layer, spanning a single cell.
-        void AttachWidget(const u32 row, const u32 col, const u32 layer, IWidget* widget, const SizingMode sizingMode = SizingMode::FILL);
+        /// @brief Places a widget into the grid at the given row, column and layer, optionally spanning multiple cells along any axis.
+        void AttachWidget(const u32 row, const u32 col, const u32 layer, IWidget* widget, const SizingMode sizingMode = SizingMode::FILL, const u32 rowSpan = 1, const u32 colSpan = 1, const u32 layerSpan = 1);
         void Draw() override {};
 
         /// @brief Lays out and draws all attached widgets, optionally overlaying cell debug borders.
         void Draw(const bool alsoDrawDebugLines = false);
 
         /// @brief Sets the size of the grid, resizing and repositioning all attached widgets.
-        void SetSize(const glm::vec3& size);
+        void SetSize(const glm::vec3& size) override;
 
         /// @brief Sets the world position of the grid, repositioning all attached widgets.
-        void SetPosition(const glm::vec3& position);
+        void SetPosition(const glm::vec3& position) override;
 
     private:
         // Data
@@ -68,6 +68,7 @@ namespace RetroFuturaGUI
         std::vector<glm::vec4> _debugBorderColor { glm::vec4(1.0f) };
 
         void drawDebugLines(const LasagnaCell& cell);
+        void updateSpanSize(LasagnaCell& originCell, const uSize row, const uSize column, const uSize layer);
         void resizeCells();
         void resizeWidget(const LasagnaCell& cell);
         void resizeAllWidgets();
