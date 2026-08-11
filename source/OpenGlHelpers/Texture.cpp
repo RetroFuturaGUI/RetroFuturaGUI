@@ -1,8 +1,10 @@
+#include <algorithm>
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
 #include "Texture.hpp"
 #include "ShaderManager.hpp"
 #include <print>
+#include <lunasvg.h>
 
 RetroFuturaGUI::Texture::Texture(std::string_view path, const bool flipVertically, Projection* projection)
     : _verticallyFlipped(flipVertically), _projection(projection)
@@ -183,16 +185,98 @@ std::vector<u8>* RetroFuturaGUI::Texture::GetTextureData()
 void RetroFuturaGUI::Texture::loadTexture(std::string_view path)
 {
     _path = path;
+    std::string extension { path.substr(path.find_last_of('.') + 1) };
+    std::transform(extension.begin(), extension.end(), extension.begin(), [](uChar c) { return std::tolower(c); });
+
+    if (extension == "svg")
+        _format = ImageFormat::SVG;
+    else if (extension == "png")
+        _format = ImageFormat::PNG;
+    else if (extension == "jpg" || extension == "jpeg")
+        _format = ImageFormat::JPG;
+    else
+        _format = ImageFormat::Unknown;
+
+    switch(_format)
+    {
+        case ImageFormat::SVG:
+            loadSVG(_path);
+            break;
+        case ImageFormat::PNG:
+        case ImageFormat::JPG:
+            loadRasterImage(_path);
+            break;
+        default:
+            std::println("Unsupported image format: {}", extension);
+            break;
+    }
+}
+
+void RetroFuturaGUI::Texture::loadRasterImage(std::string_view path)
+{
     stbi_set_flip_vertically_on_load(_verticallyFlipped);
-    u8* tempData = stbi_load(_path.data(), &_resolution.x, &_resolution.y, &_colorChannelCount, 0);
+    u8* tempData = stbi_load(path.data(), &_resolution.x, &_resolution.y, &_colorChannelCount, 0);
 
     if (tempData)
         _texture = std::vector<u8>(tempData, tempData + _resolution.x * _resolution.y * _colorChannelCount);
     else
-        std::println("Error loading image.");
+        std::println("Error loading image: {}", path);
 
     if(tempData)
         stbi_image_free(tempData);
+}
+
+void RetroFuturaGUI::Texture::loadSVG(std::string_view path)
+{
+    std::unique_ptr<lunasvg::Document> document = lunasvg::Document::loadFromFile(path.data());
+    if (!document)
+    {
+        std::println("Error loading SVG: {}", path);
+        return;
+    }
+
+    _resolution.x = static_cast<i32>(document->width());
+    _resolution.y = static_cast<i32>(document->height());
+    _colorChannelCount = 4;
+    lunasvg::Bitmap bitmap { document->renderToBitmap() };
+
+    if(bitmap.isNull())
+        return;
+
+    const u32 width = static_cast<u32>(bitmap.width());
+    const u32 height = static_cast<u32>(bitmap.height());
+    const uSize srcStride = static_cast<uSize>(bitmap.stride());
+    const uSize rowBytes = static_cast<uSize>(width) * _colorChannelCount;
+    std::vector<u8> pixelData(rowBytes * height);
+
+    for (u32 row = 0; row < height; ++row)
+    {
+        const u8* srcRow = bitmap.data() + row * srcStride;
+        u8* dstRow = pixelData.data() + (_verticallyFlipped ? (height - 1 - row) : row) * rowBytes;
+
+        for (u32 col = 0; col < width; ++col)
+        {
+            const u8* srcPixel = srcRow + col * _colorChannelCount;
+            u8* dstPixel = dstRow + col * _colorChannelCount;
+
+            const u8 b = srcPixel[0];
+            const u8 g = srcPixel[1];
+            const u8 r = srcPixel[2];
+            const u8 a = srcPixel[3];
+
+            if (a == 0)
+                dstPixel[0] = dstPixel[1] = dstPixel[2] = dstPixel[3] = 0;
+            else
+            {
+                dstPixel[0] = static_cast<u8>(std::min(255, r * 255 / a));
+                dstPixel[1] = static_cast<u8>(std::min(255, g * 255 / a));
+                dstPixel[2] = static_cast<u8>(std::min(255, b * 255 / a));
+                dstPixel[3] = a;
+            }
+        }
+    }
+
+    _texture = std::move(pixelData);
 }
 
 std::string_view RetroFuturaGUI::Texture::GetPath() const

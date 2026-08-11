@@ -1,12 +1,22 @@
 #pragma once
 #include "IncludeHelper.hpp"
 #include "Projection.hpp"
+#include "config.hpp"
 #include <string>
 #include <string_view>
 #include <vector>
 
 namespace RetroFuturaGUI
 {
+    enum ImageFormat : i32
+    {
+        Unknown = -1,
+        PNG = 0,
+        JPG,
+        JPEG = JPG,
+        SVG
+    };
+
     class Texture
     {
     public:
@@ -61,10 +71,13 @@ namespace RetroFuturaGUI
 
     private:
         void loadTexture(std::string_view path);
+        void loadSVG(std::string_view path);
+        void loadRasterImage(std::string_view path);
         void uploadToGPU();
         void setupQuad();
 
         u32 _id = 0;
+        ImageFormat _format { ImageFormat::Unknown };
         bool _verticallyFlipped = false;
         f32 _aspectRatio = 0.0f;
         glm::i32vec2 _resolution = glm::u32vec2(0);
