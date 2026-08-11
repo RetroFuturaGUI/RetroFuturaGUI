@@ -3,6 +3,7 @@
 RetroFuturaGUI::Lasagna::Lasagna(const std::string& name, Projection* projection, IWidget* parentWidget, const WidgetTypeID parentWidgetTypeID, GLFWwindow* parentWindow, AxisDefinition* _axisDefinition)
     : IWidget(name, projection, parentWidget, parentWidgetTypeID, parentWindow), _axisdefinition(*_axisDefinition)
 {
+    _size.z = _projection.GetDepth(); // keeps feeding a real depth back in, instead of latching to 0 on the first resize.
     _lasagna.reserve(_maxCountPerAxis);
 
     for(uSize row = 0; row < _maxCountPerAxis; ++row)
@@ -36,6 +37,8 @@ RetroFuturaGUI::Lasagna::Lasagna(const std::string& name, Projection* projection
 
                 for(uSize i = 0; i < layer; ++i)
                     posZ += _axisdefinition._LayerDefinition[i];
+
+                posZ = -posZ; // Higher layer indices sit further from the camera (behind lower layers),
 
                 _lasagna[row][column].push_back(LasagnaCell
                     {
@@ -159,6 +162,8 @@ void RetroFuturaGUI::Lasagna::resizeCells()
 
                 for(uSize i = 0; i < layer; ++i)
                     posZ += _axisdefinition._LayerDefinition[i] * _size.z;
+
+                posZ = -posZ; // Higher layer indices sit further from the camera (behind lower layers),
 
                 _lasagna[row][column][layer]._PositionPixels = glm::vec3(posX, posY, posZ);
                 _lasagna[row][column][layer]._PositionNormalized = glm::vec3(posX / _size.x, posY / _size.y, posZ / _size.z);
