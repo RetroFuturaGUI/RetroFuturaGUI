@@ -72,6 +72,11 @@ The framework is designed for cross-platform use, and its logic can be compiled 
     - Supports most image formats
     - Fit widget geometry to the texture's native aspect ratio
     - SetPosition, SetSize, SetRotation
+  - SvgImage
+    - Loads and rasterizes SVG vector graphics (lunasvg)
+    - Fit widget geometry to the SVG's intrinsic aspect ratio
+    - Per-path runtime recoloring of named SVG paths (Solid, Linear, Radial, HueStar Gradient) without re-rasterizing
+    - SetPosition, SetSize, SetRotation
   - Model
     - Load 3D models and their material textures (Assimp)
     - Multiple meshes per model
@@ -80,6 +85,7 @@ The framework is designed for cross-platform use, and its logic can be compiled 
     - Align widgets in a three-dimensional pattern
     - Widget sizing policies (fixed size, expand X, Y, Z, XY)
     - Row, Column and Layer definitions
+    - Row, Column and Layer spanning (a widget can occupy multiple cells along any axis)
     - Debug lines
   - WindowBar
     - Top, Bottom Position
