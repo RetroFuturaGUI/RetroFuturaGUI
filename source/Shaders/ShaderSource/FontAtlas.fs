@@ -9,5 +9,9 @@ uniform vec3 textColor;
 void main()
 {
     float alpha = texture(uTexture, TexCoord).r;
+
+    if (alpha <= 0.0)
+        discard;
+
     FragColor = vec4(textColor, alpha);
 }
