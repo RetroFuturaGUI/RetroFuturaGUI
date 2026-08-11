@@ -51,6 +51,22 @@ namespace RetroFuturaGUI
         /// @return Reference to the texture fill Shader object
         static Shader& GetTextureFillShader();
 
+        /// @brief Get the SVG mask solid fill shader
+        /// @return Reference to the SVG mask solid fill Shader object
+        static Shader& GetSvgMaskSolidFillShader();
+
+        /// @brief Get the SVG mask linear gradient shader
+        /// @return Reference to the SVG mask linear gradient Shader object
+        static Shader& GetSvgMaskLinearGradientShader();
+
+        /// @brief Get the SVG mask radial gradient shader
+        /// @return Reference to the SVG mask radial gradient Shader object
+        static Shader& GetSvgMaskRadialGradientShader();
+
+        /// @brief Get the SVG mask hue star gradient shader
+        /// @return Reference to the SVG mask hue star gradient Shader object
+        static Shader& GetSvgMaskHueStarGradientShader();
+
         /// @brief Initialize the ShaderManager and compile all shaders
         static void Init();
 
@@ -79,5 +95,9 @@ namespace RetroFuturaGUI
         static inline std::unique_ptr<Shader> _lineFill;
         static inline std::unique_ptr<Shader> _fontAtlasFill;
         static inline std::unique_ptr<Shader> _textureFill;
+        static inline std::unique_ptr<Shader> _svgMaskSolidFill;
+        static inline std::unique_ptr<Shader> _svgMaskLinearGradient;
+        static inline std::unique_ptr<Shader> _svgMaskRadialGradient;
+        static inline std::unique_ptr<Shader> _svgMaskHueStarGradient;
     };
 }

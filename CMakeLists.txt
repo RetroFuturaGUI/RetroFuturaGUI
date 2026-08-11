@@ -26,6 +26,7 @@ list(APPEND RetroFuturaGuiSources
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Fonts/Text.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Mesh/Mesh.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/OpenGlHelpers/Projection.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/source/OpenGlHelpers/SvgTexture.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/OpenGlHelpers/Texture.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Shaders/Shader.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Shaders/ShaderManager.cpp"
@@ -42,6 +43,7 @@ list(APPEND RetroFuturaGuiSources
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/Label.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/Lasagna.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/Model.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/SvgImage.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/TextBox.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/Window.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/WindowBar.cpp"
@@ -131,11 +133,19 @@ else()
 endif()
 
 # Check for Assimp installation
- find_package(assimp CONFIG REQUIRED)
+find_package(assimp CONFIG REQUIRED)
 if(TARGET assimp::assimp)
     message(STATUS "Assimp is installed and found")
 else()
     message(FATAL_ERROR "Assimp is not found. Please install Assimp via VCPKG.")
+endif()
+
+# checl for lunasvg
+find_package(lunasvg CONFIG REQUIRED)
+if(TARGET lunasvg::lunasvg)
+    message(STATUS "lunasvg is installed and found")
+else()
+    message(FATAL_ERROR "lunasvg is not found. Please install lunasvg via VCPKG.")
 endif()
 
 target_link_libraries("RetroFuturaGUI" PUBLIC
@@ -146,6 +156,7 @@ target_link_libraries("RetroFuturaGUI" PUBLIC
     GLEW::GLEW
     glad::glad
     assimp::assimp
+    lunasvg::lunasvg
     PlatformBridge
 )
 

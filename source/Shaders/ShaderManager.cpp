@@ -57,6 +57,26 @@ RetroFuturaGUI::Shader& RetroFuturaGUI::ShaderManager::GetTextureFillShader()
     return *_textureFill;
 }
 
+RetroFuturaGUI::Shader& RetroFuturaGUI::ShaderManager::GetSvgMaskSolidFillShader()
+{
+    return *_svgMaskSolidFill;
+}
+
+RetroFuturaGUI::Shader& RetroFuturaGUI::ShaderManager::GetSvgMaskLinearGradientShader()
+{
+    return *_svgMaskLinearGradient;
+}
+
+RetroFuturaGUI::Shader& RetroFuturaGUI::ShaderManager::GetSvgMaskRadialGradientShader()
+{
+    return *_svgMaskRadialGradient;
+}
+
+RetroFuturaGUI::Shader& RetroFuturaGUI::ShaderManager::GetSvgMaskHueStarGradientShader()
+{
+    return *_svgMaskHueStarGradient;
+}
+
 void RetroFuturaGUI::ShaderManager::Init()
 {
     std::println("Compiling shaders...");
@@ -126,7 +146,27 @@ void RetroFuturaGUI::ShaderManager::compileShaders()
     );
 
     _textureFill = std::make_unique<Shader>(
-        std::string(workingDir + "Texture.vs").c_str(), 
+        std::string(workingDir + "Texture.vs").c_str(),
         std::string(workingDir + "Texture.fs").c_str()
+    );
+
+    _svgMaskSolidFill = std::make_unique<Shader>(
+        std::string(workingDir + "SvgMask.vs").c_str(),
+        std::string(workingDir + "SvgMaskSolidFill.fs").c_str()
+    );
+
+    _svgMaskLinearGradient = std::make_unique<Shader>(
+        std::string(workingDir + "SvgMask.vs").c_str(),
+        std::string(workingDir + "SvgMaskLinearGradient.fs").c_str()
+    );
+
+    _svgMaskRadialGradient = std::make_unique<Shader>(
+        std::string(workingDir + "SvgMask.vs").c_str(),
+        std::string(workingDir + "SvgMaskRadialGradient.fs").c_str()
+    );
+
+    _svgMaskHueStarGradient = std::make_unique<Shader>(
+        std::string(workingDir + "SvgMask.vs").c_str(),
+        std::string(workingDir + "SvgMaskHueStarGradient.fs").c_str()
     );
 }

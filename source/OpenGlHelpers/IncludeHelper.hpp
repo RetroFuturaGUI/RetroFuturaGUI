@@ -32,6 +32,7 @@ namespace RetroFuturaGUI
         TextBox,
         Model,
         Image,
+        SvgImage,
         Unknown = -1
     };   
 
