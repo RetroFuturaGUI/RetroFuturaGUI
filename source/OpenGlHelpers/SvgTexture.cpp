@@ -1,7 +1,6 @@
 #include "SvgTexture.hpp"
 #include "ShaderManager.hpp"
 #include <cstring>
-#include <functional>
 #include <print>
 #include <utility>
 
@@ -275,28 +274,23 @@ void RetroFuturaGUI::SvgTexture::loadDocument(std::string_view path)
 
 void RetroFuturaGUI::SvgTexture::discoverNamedPaths()
 {
-    std::function<void(const lunasvg::Element&)> walk = [&](const lunasvg::Element& element)
+    // Restricted to <path> elements specifically (via a CSS tag selector, since lunasvg's Element
+    // has no tagName() accessor to filter on directly) rather than walking every id-bearing node.
+    // Structural/metadata elements (<svg>, <defs>, <g> layer wrappers, <image>, etc.) commonly
+    // carry ids too - especially in Inkscape output - and aren't meaningful "named paths" to expose.
+    for (const lunasvg::Element& element : _document->querySelectorAll("path"))
     {
-        if (element.isNull())
-            return;
+        if (!element.hasAttribute("id"))
+            continue;
 
-        if (element.hasAttribute("id"))
-        {
-            const std::string& id = element.getAttribute("id");
-            if (!id.empty())
-            {
-                lunasvg::Box bounds = element.getGlobalBoundingBox();
-                _layers.push_back(PathLayer{ id, element });
-                _pathInfoCache.push_back(SvgPathInfo{ id, glm::vec4(bounds.x, bounds.y, bounds.w, bounds.h) });
-            }
-        }
+        const std::string& id = element.getAttribute("id");
+        if (id.empty())
+            continue;
 
-        for (const lunasvg::Node& child : element.children())
-            if (child.isElement())
-                walk(child.toElement());
-    };
-
-    walk(_document->documentElement());
+        lunasvg::Box bounds = element.getGlobalBoundingBox();
+        _layers.push_back(PathLayer{ id, element });
+        _pathInfoCache.push_back(SvgPathInfo{ id, glm::vec4(bounds.x, bounds.y, bounds.w, bounds.h) });
+    }
 }
 
 lunasvg::Matrix RetroFuturaGUI::SvgTexture::computeScaleMatrix(glm::i32vec2 targetResolution) const
