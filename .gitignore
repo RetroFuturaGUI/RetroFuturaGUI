@@ -7,4 +7,5 @@ LineBorder.*
 *.fs.txt
 *.vs.txt
 Resources/backpack
+Resources/cat
 Resources/img/cat.svg

@@ -106,28 +106,36 @@ The framework is designed for cross-platform use, and its logic can be compiled 
     - Glass Effect
     - Rounded corners
     - Dotted Pattern
+    - Fog Effect
   - Linear Gradient
     - Animated (rotation, motion)
     - up to 256 colors (RGBA)
     - Glass Effect
     - Rounded corners
     - Dotted Pattern
+    - Fog Effect
   - Radial Gradient
     - Animated (rotation, motion)
     - up to 256 colors (RGBA)
     - Glass Effect
     - Rounded corners
     - Dotted Pattern
+    - Fog Effect
   - HueStar Gradient
     - Animated (rotation, motion)
     - Glass Effect
     - Rounded corners
     - Dotted Pattern
+    - Fog Effect
   - Dotted Pattern (combinable overlay, works on every fill and border shader above)
     - Per-dot radius sampled from a growable/shrinkable curve along a configurable direction
     - Seamless, endless scrolling animation along that direction
     - Configurable dot color, spacing, and opacity falloff (hard edge to soft center-only glow)
     - Alpha-blends over whatever the fill/border/glass effect already rendered; clipped by rounded corners
+  - Fog Effect (combinable overlay, works on Solid Fill and Linear/Radial/HueStar Gradient; not the Border variants)
+    - Dynamic, irregular cloud-like density from a multi-octave fractal noise field
+    - Configurable overall opacity, drift speed, per-octave density/weight curve, and clearing threshold (how much clear/fog-free area shows through)
+    - Alpha-blends over whatever the fill/dotted pattern already rendered; clipped by rounded corners
   - Dedicated Border variants of the above (Solid, Linear, Radial, HueStar), including Dotted Pattern
   - Line Fill
   - Font Atlas Fill (used by the Text Renderer)
@@ -180,7 +188,6 @@ The framework is designed for cross-platform use, and its logic can be compiled 
 <li>Shaders</li>
   <ul>
   <li>shadow</li>
-  <li>glow fog</li>
   <li>cut corners</li>
   <li>rename gradient fill to linear shift</li>
   <li>radial shift</li>
