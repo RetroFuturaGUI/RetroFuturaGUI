@@ -22,7 +22,7 @@ namespace RetroFuturaGUI
         ~Button() = default;
 
         /// @brief Draws the button, including its background, border and label text.
-        void Draw();
+        void Draw() override;
 
         /// @brief Enables or disables the button, optionally emitting the associated signal.
         void SetEnabled(const bool enable, const bool emitSignal = true);

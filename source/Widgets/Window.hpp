@@ -5,11 +5,12 @@
 #include "WindowBar.hpp"
 #include "Image.hpp"
 #include "Lasagna.hpp"
+#include "IBackground.hpp"
 #include <algorithm>
 
 namespace RetroFuturaGUI
 {
-    class Window// : public IWidget
+    class Window : public IBackground//, public IWidget
     {
     public:
         /// @brief Creates a native GLFW window with the given title and size.
@@ -40,11 +41,8 @@ namespace RetroFuturaGUI
         void SetWindowTitle(std::string_view title, std::string_view fontFamily);
         //void SetWindowTitleFont(std::string_view fontPath); separate later when fallback fonts are implemented
 
-        /// @brief Sets the window's background color.
-        void SetBackgroundColor(const glm::vec4& color);
-
-        /// @brief Sets the window's background image, replacing any background color.
-        void SetBackgroundImage(std::string_view imagePath);
+        /// @brief Loads an image and applies it as the window's glass-effect background texture, propagating it to the window bar elements.
+        void SetBackgroundImage(std::string_view imagePath) override;
 
         /// @brief Sets the Lasagna grid used to lay out the window's content.
         void SetLasagna(Lasagna* lasagna);
@@ -98,7 +96,6 @@ namespace RetroFuturaGUI
             _absoluteCursorPosX { 0.0 },
             _absoluteCursorPosY { 0.0 },
             _boundaryThreshold { 10.0 };
-        glm::vec4 _backgroundColor { 0.086f, 0.086f, 0.1137f, 1.0f };
         std::unique_ptr<Projection> _projection;
         bool _windowBarOverlapsBG { false };
         MaximizeState _maximizeState { MaximizeState::RESTORE };
@@ -131,7 +128,6 @@ namespace RetroFuturaGUI
 
         // widgets
         std::unique_ptr<WindowBar> _windowBar;
-        std::unique_ptr<Image> _backgroundImage;
         Lasagna* _lasagna;
 
         void createWindow();

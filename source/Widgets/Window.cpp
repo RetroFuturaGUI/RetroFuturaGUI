@@ -50,7 +50,6 @@ void RetroFuturaGUI::Window::createWindow()
 	glEnable(GL_DEPTH_TEST);
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	SetBackgroundColor(_backgroundColor);
 	glViewport(0, 0, _width, _height);
 
 	if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
@@ -72,6 +71,18 @@ void RetroFuturaGUI::Window::createWindow()
 	}
 
 	_projection = std::make_unique<Projection>((float)_width, (float)_height);
+
+	_background = std::make_unique<Rectangle>(_projection.get());
+
+	if(_background)
+	{
+		_background->SetRectangleMode(RectangleMode::Plane);
+		_background->SetPosition(glm::vec3((f32)_width * 0.5f, (f32)_height * 0.5f, -1.0f));
+		_background->SetSize(glm::vec2((f32)_width, (f32)_height));
+		_background->SetRotation(glm::vec3(0.0f));
+	}
+
+	SetBackgroundColor(glm::vec4(0.086f, 0.086f, 0.1137f, 1.0f), ColorState::Enabled);
 	//setupWindowBar();
 }
 
@@ -346,10 +357,10 @@ void RetroFuturaGUI::Window::updateProjection()
 	if (_lasagna) 
 		_lasagna->SetSize(glm::vec3((f32)_width, (f32)_height, _lasagna->GetSize().z));
 
-	if(_backgroundImage)
+	if(_background)
 	{
-		_backgroundImage->SetSize(glm::vec3((f32)_width, (f32)_height, _backgroundImage->GetSize().z));
-		_backgroundImage->SetPosition(glm::vec3((f32)_width * 0.5f, (f32)_height * 0.5f, -_projection->GetDepth()));
+		_background->SetSize(glm::vec2((f32)_width, (f32)_height));
+		_background->SetPosition(glm::vec3((f32)_width * 0.5f, (f32)_height * 0.5f, -1.0f));
 	}
 
 	_lastSize = { _width, _height };
@@ -363,7 +374,6 @@ bool RetroFuturaGUI::Window::WindowShouldClose()
 
 void RetroFuturaGUI::Window::Draw()
 {
-	glClearColor(_backgroundColor.r, _backgroundColor.g, _backgroundColor.b, _backgroundColor.a);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glfwWindowHint(GLFW_TRANSPARENT_FRAMEBUFFER, GLFW_FALSE);
@@ -372,8 +382,7 @@ void RetroFuturaGUI::Window::Draw()
 	if(_windowSizeChanged)
 		updateProjection();
 
-	if(_backgroundImage)
-		_backgroundImage->Draw();
+	drawBackground();
 
 	if(_lasagna)
 		_lasagna->Draw(false);
@@ -406,25 +415,17 @@ void RetroFuturaGUI::Window::SetHeight(i32 height)
 	glfwSetWindowSize(_window, _width, _height);
 }
 
-void RetroFuturaGUI::Window::SetBackgroundColor(const glm::vec4 &color)
-{
-	_backgroundColor = color;
-	glClearColor(_backgroundColor.r, _backgroundColor.g, _backgroundColor.b, _backgroundColor.a);
-}
-
 void RetroFuturaGUI::Window::SetBackgroundImage(std::string_view imagePath)
 {
-	_backgroundImage = std::make_unique<Image>(_name + "/BackgroundImage", &*_projection, nullptr, WidgetTypeID::Window, _window, imagePath);
-	_backgroundImage->SetSize(glm::vec3(_width, _height, 0.01f));
-	_backgroundImage->SetPosition(glm::vec3((f32)_width * 0.5f, (f32)_height * 0.5f, -_projection->GetDepth()));
-
+	IBackground::SetBackgroundImage(imagePath);
+/*
 	if(!_windowBar)
 		return;
 
-	_windowBar->SetElementBackgroundImageTextureID(_backgroundImage->GetTextureID(), WindowBar::ElementType::Title);
-	_windowBar->SetElementBackgroundImageTextureID(_backgroundImage->GetTextureID(), WindowBar::ElementType::CloseButton);
-	_windowBar->SetElementBackgroundImageTextureID(_backgroundImage->GetTextureID(), WindowBar::ElementType::MaximizeButton);
-	_windowBar->SetElementBackgroundImageTextureID(_backgroundImage->GetTextureID(), WindowBar::ElementType::MinimizeButton);
+	_windowBar->SetElementBackgroundImageTextureID(_backgroundImage->GetID(), WindowBar::ElementType::Title);
+	_windowBar->SetElementBackgroundImageTextureID(_backgroundImage->GetID(), WindowBar::ElementType::CloseButton);
+	_windowBar->SetElementBackgroundImageTextureID(_backgroundImage->GetID(), WindowBar::ElementType::MaximizeButton);
+	_windowBar->SetElementBackgroundImageTextureID(_backgroundImage->GetID(), WindowBar::ElementType::MinimizeButton);*/
 }
 
 void RetroFuturaGUI::Window::SetLasagna(Lasagna* lasagna)
@@ -435,7 +436,7 @@ void RetroFuturaGUI::Window::SetLasagna(Lasagna* lasagna)
 i32 RetroFuturaGUI::Window::GetBackgroundImageId() const
 {
 	if(_backgroundImage)
-    	return _backgroundImage->GetTextureID();
+    	return _backgroundImage->GetID();
 
 	return -1;
 }

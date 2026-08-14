@@ -97,6 +97,11 @@ void RetroFuturaGUI::IBackground::SetWindowBackgroundImageTextureID(const u32 te
         _background->SetWindowBackgroundImageTextureID(textureID);
 }
 
+void RetroFuturaGUI::IBackground::SetBackgroundImage(std::string_view imagePath)
+{
+    _backgroundImage = std::make_unique<Texture>(imagePath);
+}
+
 void RetroFuturaGUI::IBackground::setBackgroundCornerRadii(const glm::vec4& radii)
 {
     if(_background)

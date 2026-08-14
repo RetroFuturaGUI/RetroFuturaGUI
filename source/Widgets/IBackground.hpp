@@ -3,6 +3,7 @@
 #include <memory>
 #include <span>
 #include "Rectangle.hpp"
+#include "Texture.hpp"
 
 namespace RetroFuturaGUI
 {
@@ -31,6 +32,9 @@ namespace RetroFuturaGUI
         /// @brief Sets the texture ID sampled for the background's glass-effect-with-image shader feature.
         void SetWindowBackgroundImageTextureID(const u32 textureID);
 
+        /// @brief Loads an image from disk and applies it as the background's glass-effect-with-image texture.
+        virtual void SetBackgroundImage(std::string_view imagePath);
+
         /// @brief Returns the background colors configured for the given color state.
         const std::vector<glm::vec4>& GetBackgroundColors(const ColorState state) const;
 
@@ -43,7 +47,8 @@ namespace RetroFuturaGUI
         void setBackgroundCornerRadii(const glm::vec4& radii);
 
     //Elements
-        std::unique_ptr<Rectangle> _background;
+        std::unique_ptr<Rectangle> _background { nullptr };
+        std::unique_ptr<Texture> _backgroundImage { nullptr };
 
     //Style
         std::vector<glm::vec4> 
