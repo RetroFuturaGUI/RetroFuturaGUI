@@ -228,13 +228,18 @@ void RetroFuturaGUI::SvgTexture::SetPathFill(std::string_view name, const SvgPat
 
     if (layer->maskTextureId == 0)
         materializeMask(*layer, _resolution);
+
+    rasterizeBaseLayer(_resolution); //enabled alpha-blending
 }
 
 void RetroFuturaGUI::SvgTexture::ClearPathFill(std::string_view name)
 {
     PathLayer* layer = findLayer(name);
     if (layer)
+    {
         layer->hasActiveOverride = false;
+        rasterizeBaseLayer(_resolution);//enabled alpha-blending
+    }
 }
 
 glm::i32vec2 RetroFuturaGUI::SvgTexture::GetResolution() const
@@ -312,8 +317,24 @@ void RetroFuturaGUI::SvgTexture::rasterizeBaseLayer(glm::i32vec2 targetResolutio
         return;
     }
 
+    std::vector<std::pair<lunasvg::Element, std::string>> hiddenOverrides;
+
+    for (PathLayer& layer : _layers) //apply alpha-blending
+    {
+        if (!layer.hasActiveOverride)
+            continue;
+
+        hiddenOverrides.push_back({ layer.element,
+            layer.element.hasAttribute("display") ? layer.element.getAttribute("display") : std::string() });
+        layer.element.setAttribute("display", "none");
+    }
+
     bitmap.clear(0x00000000);
     _document->render(bitmap, computeScaleMatrix(targetResolution));
+
+    for (auto& [element, originalDisplay] : hiddenOverrides)
+        element.setAttribute("display", originalDisplay.empty() ? "inline" : originalDisplay);
+
     bitmap.convertToRGBA();
 
     const uSize rowBytes = static_cast<uSize>(targetResolution.x) * 4;
