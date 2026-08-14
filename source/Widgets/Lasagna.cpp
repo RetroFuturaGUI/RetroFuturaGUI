@@ -29,11 +29,11 @@ RetroFuturaGUI::Lasagna::Lasagna(const std::string& name, Projection* projection
                     posY { 0.0f },
                     posZ { 0.0f };
 
-                for(uSize i = 0; i < row; ++i)
-                    posX += _axisdefinition._RowDefinition[i];
-
                 for(uSize i = 0; i < column; ++i)
-                    posY += _axisdefinition._ColumnDefinition[i];
+                    posX += _axisdefinition._ColumnDefinition[i];
+
+                for(uSize i = 0; i < row; ++i)
+                    posY += _axisdefinition._RowDefinition[i];
 
                 for(uSize i = 0; i < layer; ++i)
                     posZ += _axisdefinition._LayerDefinition[i];
@@ -44,11 +44,11 @@ RetroFuturaGUI::Lasagna::Lasagna(const std::string& name, Projection* projection
                     {
                         ._PositionPixels = glm::vec3(_projection.GetResolution().x * posX, _projection.GetResolution().y * posY, _projection.GetDepth() * posZ),
                         ._PositionNormalized = glm::vec3(posX, posY, posZ),
-                        ._SizePixels = glm::vec3(_projection.GetResolution().x * _axisdefinition._RowDefinition[row],
-                                                 _projection.GetResolution().y * _axisdefinition._ColumnDefinition[column],
+                        ._SizePixels = glm::vec3(_projection.GetResolution().x * _axisdefinition._ColumnDefinition[column],
+                                                 _projection.GetResolution().y * _axisdefinition._RowDefinition[row],
                                                  _projection.GetDepth() * _axisdefinition._LayerDefinition[layer]
                                                 ),
-                        ._SizeNormalized = glm::vec3(_axisdefinition._RowDefinition[row], _axisdefinition._RowDefinition[column], _axisdefinition._LayerDefinition[layer]),
+                        ._SizeNormalized = glm::vec3(_axisdefinition._ColumnDefinition[column], _axisdefinition._RowDefinition[row], _axisdefinition._LayerDefinition[layer]),
                         ._PaddingPixels = glm::vec3(0.0f),
                         ._PaddingNormalized = glm::vec3(0.0f),
                         ._RowSpan = 1,
@@ -170,14 +170,14 @@ void RetroFuturaGUI::Lasagna::updateSpanSize(LasagnaCell& originCell, const uSiz
 
     for(u32 r = 0; r < originCell._RowSpan; ++r)
     {
-        sizePixels.x += _lasagna[row + r][column][layer]._SizePixels.x;
-        sizeNormalized.x += _lasagna[row + r][column][layer]._SizeNormalized.x;
+        sizePixels.y += _lasagna[row + r][column][layer]._SizePixels.y;
+        sizeNormalized.y += _lasagna[row + r][column][layer]._SizeNormalized.y;
     }
 
     for(u32 c = 0; c < originCell._ColSpan; ++c)
     {
-        sizePixels.y += _lasagna[row][column + c][layer]._SizePixels.y;
-        sizeNormalized.y += _lasagna[row][column + c][layer]._SizeNormalized.y;
+        sizePixels.x += _lasagna[row][column + c][layer]._SizePixels.x;
+        sizeNormalized.x += _lasagna[row][column + c][layer]._SizeNormalized.x;
     }
 
     for(u32 l = 0; l < originCell._LayerSpan; ++l)
@@ -203,11 +203,11 @@ void RetroFuturaGUI::Lasagna::resizeCells()
                     posY { 0.0f },
                     posZ { 0.0f };
 
-                for(uSize i = 0; i < row; ++i)
-                    posX += _axisdefinition._RowDefinition[i] * _size.x;
-
                 for(uSize i = 0; i < column; ++i)
-                    posY += _axisdefinition._ColumnDefinition[i] * _size.y;
+                    posX += _axisdefinition._ColumnDefinition[i] * _size.x;
+
+                for(uSize i = 0; i < row; ++i)
+                    posY += _axisdefinition._RowDefinition[i] * _size.y;
 
                 for(uSize i = 0; i < layer; ++i)
                     posZ += _axisdefinition._LayerDefinition[i] * _size.z;
@@ -216,8 +216,8 @@ void RetroFuturaGUI::Lasagna::resizeCells()
 
                 _lasagna[row][column][layer]._PositionPixels = glm::vec3(posX, posY, posZ);
                 _lasagna[row][column][layer]._PositionNormalized = glm::vec3(posX / _size.x, posY / _size.y, posZ / _size.z);
-                _lasagna[row][column][layer]._SizePixels = glm::vec3(_axisdefinition._RowDefinition[row] * _size.x, _axisdefinition._ColumnDefinition[column] * _size.y, _axisdefinition._LayerDefinition[layer] * _size.z);
-                _lasagna[row][column][layer]._SizeNormalized = glm::vec3(_axisdefinition._RowDefinition[row], _axisdefinition._ColumnDefinition[column], _axisdefinition._LayerDefinition[layer]);
+                _lasagna[row][column][layer]._SizePixels = glm::vec3(_axisdefinition._ColumnDefinition[column] * _size.x, _axisdefinition._RowDefinition[row] * _size.y, _axisdefinition._LayerDefinition[layer] * _size.z);
+                _lasagna[row][column][layer]._SizeNormalized = glm::vec3(_axisdefinition._ColumnDefinition[column], _axisdefinition._RowDefinition[row], _axisdefinition._LayerDefinition[layer]);
             }
         }
     }
