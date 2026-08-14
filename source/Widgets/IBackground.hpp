@@ -32,6 +32,24 @@ namespace RetroFuturaGUI
         /// @brief Sets the texture ID sampled for the background's glass-effect-with-image shader feature.
         void SetWindowBackgroundImageTextureID(const u32 textureID);
 
+        /// @brief Sets the dot color used for the background's DottedPattern shader feature.
+        void SetBackgroundDotColor(const glm::vec4& color);
+
+        /// @brief Sets the spacing between dot centers, in pixels, for the background's DottedPattern shader feature.
+        void SetBackgroundDotDistance(const f32 distance);
+
+        /// @brief Sets the direction, in degrees, along which the background's dot radii/animation transfer.
+        void SetBackgroundDotSizeTransferDegree(const f32 degree);
+
+        /// @brief Sets the per-position dot radius curve, in pixels, for the background's DottedPattern shader feature. Enables the feature when non-empty.
+        void SetBackgroundDotRadiusTransfer(std::span<f32> radiusTransfer);
+
+        /// @brief Sets how far each background dot's opacity reaches from its center before fading to transparent.
+        void SetBackgroundDotTransparencyTransfer(const f32 transparencyTransfer);
+
+        /// @brief Sets the speed at which the background's dotted pattern animates.
+        void SetBackgroundDotAnimationSpeed(const f32 animationSpeed);
+
         /// @brief Loads an image from disk and applies it as the background's glass-effect-with-image texture.
         virtual void SetBackgroundImage(std::string_view imagePath);
 
@@ -58,6 +76,7 @@ namespace RetroFuturaGUI
             _backgroundColorHover { glm::vec4(0.55f, 0.55f, 0.55f, 1.0f) };
         FillType _backgroundFillType { FillType::SOLID };
         ColorState _backgroundColorState { ColorState::Enabled };
+        std::vector<f32> _backgroundDotRadiusTransfer;
 
     private:
         void setBackgroundColorElement(std::vector<glm::vec4>& color);

@@ -105,21 +105,30 @@ The framework is designed for cross-platform use, and its logic can be compiled 
   - Solid Fill
     - Glass Effect
     - Rounded corners
+    - Dotted Pattern
   - Linear Gradient
     - Animated (rotation, motion)
     - up to 256 colors (RGBA)
     - Glass Effect
     - Rounded corners
+    - Dotted Pattern
   - Radial Gradient
     - Animated (rotation, motion)
     - up to 256 colors (RGBA)
     - Glass Effect
     - Rounded corners
+    - Dotted Pattern
   - HueStar Gradient
     - Animated (rotation, motion)
     - Glass Effect
     - Rounded corners
-  - Dedicated Border variants of the above (Solid, Linear, Radial, HueStar)
+    - Dotted Pattern
+  - Dotted Pattern (combinable overlay, works on every fill and border shader above)
+    - Per-dot radius sampled from a growable/shrinkable curve along a configurable direction
+    - Seamless, endless scrolling animation along that direction
+    - Configurable dot color, spacing, and opacity falloff (hard edge to soft center-only glow)
+    - Alpha-blends over whatever the fill/border/glass effect already rendered; clipped by rounded corners
+  - Dedicated Border variants of the above (Solid, Linear, Radial, HueStar), including Dotted Pattern
   - Line Fill
   - Font Atlas Fill (used by the Text Renderer)
   - Texture

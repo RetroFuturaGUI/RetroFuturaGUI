@@ -97,6 +97,42 @@ void RetroFuturaGUI::IBorder::SetWindowBorderImageTextureID(const u32 textureID)
         _border->SetWindowBackgroundImageTextureID(textureID);
 }
 
+void RetroFuturaGUI::IBorder::SetBorderDotColor(const glm::vec4& color)
+{
+    if(_border)
+        _border->SetDotColor(color);
+}
+
+void RetroFuturaGUI::IBorder::SetBorderDotDistance(const f32 distance)
+{
+    if(_border)
+        _border->SetDotDistance(distance);
+}
+
+void RetroFuturaGUI::IBorder::SetBorderDotSizeTransferDegree(const f32 degree)
+{
+    if(_border)
+        _border->SetDotSizeTransferDegree(degree);
+}
+
+void RetroFuturaGUI::IBorder::SetBorderDotRadiusTransfer(std::span<f32> radiusTransfer)
+{
+    if(_border)
+        _border->SetDotRadiusTransfer(radiusTransfer);
+}
+
+void RetroFuturaGUI::IBorder::SetBorderDotTransparencyTransfer(const f32 transparencyTransfer)
+{
+    if(_border)
+        _border->SetDotTransparencyTransfer(transparencyTransfer);
+}
+
+void RetroFuturaGUI::IBorder::SetBorderDotAnimationSpeed(const f32 animationSpeed)
+{
+    if(_border)
+        _border->SetDotAnimationSpeed(animationSpeed);
+}
+
 void RetroFuturaGUI::IBorder::drawBorder()
 {
     if(_border)

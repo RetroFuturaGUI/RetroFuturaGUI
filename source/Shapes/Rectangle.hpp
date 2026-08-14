@@ -10,7 +10,8 @@ namespace RetroFuturaGUI
     {
         RoundedCorners = 1,
         GlassEffect = 1 << 1,
-        GlassEffectWithImage = GlassEffect + (1 << 2)
+        GlassEffectWithImage = GlassEffect + (1 << 2),
+        DottedPattern = 1 << 3
     };
 
     enum class RectangleMode : u32
@@ -55,6 +56,24 @@ namespace RetroFuturaGUI
 
         /// @brief Sets the speed at which the gradient rotates over time.
         void SetGradientRotationSpeed(const f32 rotationSpeed);
+
+        /// @brief Sets the dot color used for the DottedPattern shader feature. Alpha blends the dots over whatever the shader has already drawn.
+        void SetDotColor(const glm::vec4& color);
+
+        /// @brief Sets the spacing between dot centers, in pixels, for the DottedPattern shader feature.
+        void SetDotDistance(const f32 distance);
+
+        /// @brief Sets the direction, in degrees, along which dot radii are sampled from DotRadiusTransfer and along which the pattern animates.
+        void SetDotSizeTransferDegree(const f32 degree);
+
+        /// @brief Sets the per-position dot radius curve, in pixels, sampled along the DotSizeTransferDegree direction across the rectangle. Enables the DottedPattern shader feature when non-empty.
+        void SetDotRadiusTransfer(std::span<f32> radiusTransfer);
+
+        /// @brief Sets how far each dot's opacity reaches from its center before fading to transparent. 1.0 = fully opaque disc, 0.5 = opaque inner half then fades out, 0.0 = only the center pixel is opaque.
+        void SetDotTransparencyTransfer(const f32 transparencyTransfer);
+
+        /// @brief Sets the speed at which the dotted pattern animates along the DotSizeTransferDegree direction.
+        void SetDotAnimationSpeed(const f32 animationSpeed);
 
         /// @brief Sets the enabled ShaderFeatures bitmask.
         /// @param reset If true, replaces the current feature set; if false, ORs the given features in.
@@ -123,10 +142,22 @@ namespace RetroFuturaGUI
         u32 _shaderFeatureDIP { 0 };
         u32 _windowBackgroundTextureID { 0 };
         f32 _borderWidth { 5.0f };
+
+        // Dotted pattern (ShaderFeatures::DottedPattern)
+        std::span<f32> _dotRadiusTransfer;
+        i32 _dotRadiusTransferCount { 0 };
+        glm::vec4 _dotColor { 1.0f };
+        f32
+            _dotDistance { 15.0f },
+            _dotSizeTransferDegree { 45.0f },
+            _dotTransparencyTransfer { 1.0f },
+            _dotAnimationSpeed { 0.0f },
+            _dotAnimationOffset { 0.0f };
         RectangleMode _rectangleMode { RectangleMode::Plane };
         
         void setupMesh();
         void initColors(std::span<glm::vec4> colors);
+        void uploadDotUniforms(Shader& shader);
         void drawWithSolidFill();
         void drawRadialGradientFill();
         void drawHueStarGradientFill();

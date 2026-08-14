@@ -23,6 +23,9 @@ namespace RetroFuturaGUI
         /// @brief Sets a float uniform.
         void SetUniformFloat(const std::string& name, float value) const;
 
+        /// @brief Sets a float array uniform from raw float data.
+        void SetUniformFloat(const std::string& name, const f32* values, const u32 count) const;
+
         /// @brief Sets a vec2 uniform.
         void SetUniformVec2(const std::string& name, const glm::vec2& value) const;
 

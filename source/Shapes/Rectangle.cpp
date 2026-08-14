@@ -1,4 +1,5 @@
 #include "Rectangle.hpp"
+#include <algorithm>
 
 RetroFuturaGUI::Rectangle::Rectangle(Projection* projection)
     : _projection(*projection)
@@ -124,6 +125,42 @@ void RetroFuturaGUI::Rectangle::SetGradientRotationSpeed(const f32 rotationSpeed
     _gradientRotationSpeed = rotationSpeed;
 }
 
+void RetroFuturaGUI::Rectangle::SetDotColor(const glm::vec4& color)
+{
+    _dotColor = color;
+}
+
+void RetroFuturaGUI::Rectangle::SetDotDistance(const f32 distance)
+{
+    _dotDistance = distance;
+}
+
+void RetroFuturaGUI::Rectangle::SetDotSizeTransferDegree(const f32 degree)
+{
+    _dotSizeTransferDegree = degree;
+}
+
+void RetroFuturaGUI::Rectangle::SetDotRadiusTransfer(std::span<f32> radiusTransfer)
+{
+    _dotRadiusTransfer = radiusTransfer;
+    _dotRadiusTransferCount = static_cast<i32>(std::min<size_t>(_dotRadiusTransfer.size(), 255));
+
+    if(_dotRadiusTransferCount > 0)
+        _shaderFeatureDIP |= ShaderFeatures::DottedPattern;
+    else
+        _shaderFeatureDIP &= ~ShaderFeatures::DottedPattern;
+}
+
+void RetroFuturaGUI::Rectangle::SetDotTransparencyTransfer(const f32 transparencyTransfer)
+{
+    _dotTransparencyTransfer = transparencyTransfer;
+}
+
+void RetroFuturaGUI::Rectangle::SetDotAnimationSpeed(const f32 animationSpeed)
+{
+    _dotAnimationSpeed = animationSpeed;
+}
+
 void RetroFuturaGUI::Rectangle::SetShaderFeatures(const u32 features, const bool reset)
 {
     if(reset)
@@ -173,6 +210,21 @@ void RetroFuturaGUI::Rectangle::initColors(std::span<glm::vec4> colors)
     _colorCount = static_cast<i32>(_colors.size());
 }
 
+void RetroFuturaGUI::Rectangle::uploadDotUniforms(Shader& shader)
+{
+    _dotAnimationOffset += _dotAnimationSpeed;
+
+    shader.SetUniformVec4("uDotColor", _dotColor);
+    shader.SetUniformFloat("uDotDistance", _dotDistance);
+    shader.SetUniformFloat("uDotSizeTransferDegree", _dotSizeTransferDegree);
+    shader.SetUniformFloat("uDotTransparencyTransfer", _dotTransparencyTransfer);
+    shader.SetUniformFloat("uDotAnimationOffset", _dotAnimationOffset);
+    shader.SetUniformInt("uDotRadiusTransferCount", _dotRadiusTransferCount);
+
+    if(_dotRadiusTransferCount > 0)
+        shader.SetUniformFloat("uDotRadiusTransfer", _dotRadiusTransfer.data(), static_cast<u32>(_dotRadiusTransferCount));
+}
+
 void RetroFuturaGUI::Rectangle::drawWithSolidFill()
 {
     ShaderManager::GetSolidFillShader().UseProgram();
@@ -184,10 +236,13 @@ void RetroFuturaGUI::Rectangle::drawWithSolidFill()
     ShaderManager::GetSolidFillShader().SetUniformVec4("uColor", _colors[0]);
 
     if(_shaderFeatureDIP & ShaderFeatures::RoundedCorners)
-    {
         ShaderManager::GetSolidFillShader().SetUniformVec4("uCornerRadii", _cornerRadii);
+
+    if(_shaderFeatureDIP & (ShaderFeatures::RoundedCorners | ShaderFeatures::DottedPattern))
         ShaderManager::GetSolidFillShader().SetUniformVec2("uScale", _scale);
-    }
+
+    if(_shaderFeatureDIP & ShaderFeatures::DottedPattern)
+        uploadDotUniforms(ShaderManager::GetSolidFillShader());
 
     if(_shaderFeatureDIP & ShaderFeatures::GlassEffectWithImage)
     {
@@ -220,10 +275,13 @@ void RetroFuturaGUI::Rectangle::drawLinearGradientFill()
     ShaderManager::GetLinearGradientShader().SetUniformFloat("uDegree", _gradientDegree);
 
     if(_shaderFeatureDIP & ShaderFeatures::RoundedCorners)
-    {
         ShaderManager::GetLinearGradientShader().SetUniformVec4("uCornerRadii", _cornerRadii);
+
+    if(_shaderFeatureDIP & (ShaderFeatures::RoundedCorners | ShaderFeatures::DottedPattern))
         ShaderManager::GetLinearGradientShader().SetUniformVec2("uScale", _scale);
-    }
+
+    if(_shaderFeatureDIP & ShaderFeatures::DottedPattern)
+        uploadDotUniforms(ShaderManager::GetLinearGradientShader());
 
     if(_shaderFeatureDIP & ShaderFeatures::GlassEffectWithImage)
     {
@@ -256,10 +314,13 @@ void RetroFuturaGUI::Rectangle::drawRadialGradientFill()
     ShaderManager::GetRadialGradientShader().SetUniformFloat("uDegree", _gradientDegree);
 
     if(_shaderFeatureDIP & ShaderFeatures::RoundedCorners)
-    {
         ShaderManager::GetRadialGradientShader().SetUniformVec4("uCornerRadii", _cornerRadii);
+
+    if(_shaderFeatureDIP & (ShaderFeatures::RoundedCorners | ShaderFeatures::DottedPattern))
         ShaderManager::GetRadialGradientShader().SetUniformVec2("uScale", _scale);
-    }
+
+    if(_shaderFeatureDIP & ShaderFeatures::DottedPattern)
+        uploadDotUniforms(ShaderManager::GetRadialGradientShader());
 
     if(_shaderFeatureDIP & ShaderFeatures::GlassEffectWithImage)
     {
@@ -292,10 +353,13 @@ void RetroFuturaGUI::Rectangle::drawHueStarGradientFill()
     ShaderManager::GetHueStarGradientShader().SetUniformFloat("uDegree", _gradientDegree);
 
     if(_shaderFeatureDIP & ShaderFeatures::RoundedCorners)
-    {
         ShaderManager::GetHueStarGradientShader().SetUniformVec4("uCornerRadii", _cornerRadii);
+
+    if(_shaderFeatureDIP & (ShaderFeatures::RoundedCorners | ShaderFeatures::DottedPattern))
         ShaderManager::GetHueStarGradientShader().SetUniformVec2("uScale", _scale);
-    }
+
+    if(_shaderFeatureDIP & ShaderFeatures::DottedPattern)
+        uploadDotUniforms(ShaderManager::GetHueStarGradientShader());
 
     if(_shaderFeatureDIP & ShaderFeatures::GlassEffectWithImage)
     {
@@ -317,6 +381,9 @@ void RetroFuturaGUI::Rectangle::drawSolidBorder()
     ShaderManager::GetBorderSolidFillShader().SetUniformFloat("uBorderWidth", _borderWidth);
     ShaderManager::GetBorderSolidFillShader().SetUniformVec4("uCornerRadii", _cornerRadii);
     ShaderManager::GetBorderSolidFillShader().SetUniformVec2("uScale", _scale);
+
+    if(_shaderFeatureDIP & ShaderFeatures::DottedPattern)
+        uploadDotUniforms(ShaderManager::GetBorderSolidFillShader());
 
     if(_shaderFeatureDIP & ShaderFeatures::GlassEffectWithImage)
     {
@@ -351,6 +418,9 @@ void RetroFuturaGUI::Rectangle::drawLinearGradientBorder()
     ShaderManager::GetBorderLinearGradientShader().SetUniformVec2("uScale", _scale);
     ShaderManager::GetBorderLinearGradientShader().SetUniformFloat("uBorderWidth", _borderWidth);
 
+    if(_shaderFeatureDIP & ShaderFeatures::DottedPattern)
+        uploadDotUniforms(ShaderManager::GetBorderLinearGradientShader());
+
     if(_shaderFeatureDIP & ShaderFeatures::GlassEffectWithImage)
     {
         ShaderManager::GetBorderLinearGradientShader().SetUniformInt("uBackgroundTexture", 0);
@@ -384,6 +454,9 @@ void RetroFuturaGUI::Rectangle::drawRadialGradientBorder()
     ShaderManager::GetBorderRadialGradientShader().SetUniformVec2("uScale", _scale);
     ShaderManager::GetBorderRadialGradientShader().SetUniformFloat("uBorderWidth", _borderWidth);
 
+    if(_shaderFeatureDIP & ShaderFeatures::DottedPattern)
+        uploadDotUniforms(ShaderManager::GetBorderRadialGradientShader());
+
     if(_shaderFeatureDIP & ShaderFeatures::GlassEffectWithImage)
     {
         ShaderManager::GetBorderRadialGradientShader().SetUniformInt("uBackgroundTexture", 0);
@@ -416,6 +489,9 @@ void RetroFuturaGUI::Rectangle::drawHueStarGradientBorder()
     ShaderManager::GetBorderHueStarGradientShader().SetUniformVec4("uCornerRadii", _cornerRadii);
     ShaderManager::GetBorderHueStarGradientShader().SetUniformVec2("uScale", _scale);
     ShaderManager::GetBorderHueStarGradientShader().SetUniformFloat("uBorderWidth", _borderWidth);
+
+    if(_shaderFeatureDIP & ShaderFeatures::DottedPattern)
+        uploadDotUniforms(ShaderManager::GetBorderHueStarGradientShader());
 
     if(_shaderFeatureDIP & ShaderFeatures::GlassEffectWithImage)
     {

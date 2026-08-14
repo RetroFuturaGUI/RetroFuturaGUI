@@ -97,6 +97,44 @@ void RetroFuturaGUI::IBackground::SetWindowBackgroundImageTextureID(const u32 te
         _background->SetWindowBackgroundImageTextureID(textureID);
 }
 
+void RetroFuturaGUI::IBackground::SetBackgroundDotColor(const glm::vec4& color)
+{
+    if(_background)
+        _background->SetDotColor(color);
+}
+
+void RetroFuturaGUI::IBackground::SetBackgroundDotDistance(const f32 distance)
+{
+    if(_background)
+        _background->SetDotDistance(distance);
+}
+
+void RetroFuturaGUI::IBackground::SetBackgroundDotSizeTransferDegree(const f32 degree)
+{
+    if(_background)
+        _background->SetDotSizeTransferDegree(degree);
+}
+
+void RetroFuturaGUI::IBackground::SetBackgroundDotRadiusTransfer(std::span<f32> radiusTransfer)
+{
+    _backgroundDotRadiusTransfer.assign(radiusTransfer.begin(), radiusTransfer.end());
+
+    if(_background)
+        _background->SetDotRadiusTransfer(_backgroundDotRadiusTransfer);
+}
+
+void RetroFuturaGUI::IBackground::SetBackgroundDotTransparencyTransfer(const f32 transparencyTransfer)
+{
+    if(_background)
+        _background->SetDotTransparencyTransfer(transparencyTransfer);
+}
+
+void RetroFuturaGUI::IBackground::SetBackgroundDotAnimationSpeed(const f32 animationSpeed)
+{
+    if(_background)
+        _background->SetDotAnimationSpeed(animationSpeed);
+}
+
 void RetroFuturaGUI::IBackground::SetBackgroundImage(std::string_view imagePath)
 {
     _backgroundImage = std::make_unique<Texture>(imagePath);

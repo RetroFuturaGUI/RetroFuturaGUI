@@ -31,6 +31,24 @@ namespace RetroFuturaGUI
         /// @brief Sets the texture ID sampled for the border's glass-effect-with-image shader feature.
         void SetWindowBorderImageTextureID(const u32 textureID);
 
+        /// @brief Sets the dot color used for the border's DottedPattern shader feature.
+        void SetBorderDotColor(const glm::vec4& color);
+
+        /// @brief Sets the spacing between dot centers, in pixels, for the border's DottedPattern shader feature.
+        void SetBorderDotDistance(const f32 distance);
+
+        /// @brief Sets the direction, in degrees, along which the border's dot radii/animation transfer.
+        void SetBorderDotSizeTransferDegree(const f32 degree);
+
+        /// @brief Sets the per-position dot radius curve, in pixels, for the border's DottedPattern shader feature. Enables the feature when non-empty.
+        void SetBorderDotRadiusTransfer(std::span<f32> radiusTransfer);
+
+        /// @brief Sets how far each border dot's opacity reaches from its center before fading to transparent.
+        void SetBorderDotTransparencyTransfer(const f32 transparencyTransfer);
+
+        /// @brief Sets the speed at which the border's dotted pattern animates.
+        void SetBorderDotAnimationSpeed(const f32 animationSpeed);
+
         /// @brief Returns the border colors configured for the given color state.
         const std::vector<glm::vec4>& GetBorderColor(const ColorState state) const;
 
