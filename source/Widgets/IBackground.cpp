@@ -135,6 +135,32 @@ void RetroFuturaGUI::IBackground::SetBackgroundDotAnimationSpeed(const f32 anima
         _background->SetDotAnimationSpeed(animationSpeed);
 }
 
+void RetroFuturaGUI::IBackground::SetBackgroundFogAlpha(const f32 alpha)
+{
+    if(_background)
+        _background->SetFogAlpha(alpha);
+}
+
+void RetroFuturaGUI::IBackground::SetBackgroundFogSpeed(const f32 speed)
+{
+    if(_background)
+        _background->SetFogSpeed(speed);
+}
+
+void RetroFuturaGUI::IBackground::SetBackgroundFogDensity(std::span<f32> density)
+{
+    _backgroundFogDensity.assign(density.begin(), density.end());
+
+    if(_background)
+        _background->SetFogDensity(_backgroundFogDensity);
+}
+
+void RetroFuturaGUI::IBackground::SetBackgroundFogClearing(const f32 clearing)
+{
+    if(_background)
+        _background->SetFogClearing(clearing);
+}
+
 void RetroFuturaGUI::IBackground::SetBackgroundImage(std::string_view imagePath)
 {
     _backgroundImage = std::make_unique<Texture>(imagePath);

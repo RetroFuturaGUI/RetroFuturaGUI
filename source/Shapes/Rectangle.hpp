@@ -11,7 +11,8 @@ namespace RetroFuturaGUI
         RoundedCorners = 1,
         GlassEffect = 1 << 1,
         GlassEffectWithImage = GlassEffect + (1 << 2),
-        DottedPattern = 1 << 3
+        DottedPattern = 1 << 3,
+        FogEffect = 1 << 4
     };
 
     enum class RectangleMode : u32
@@ -74,6 +75,18 @@ namespace RetroFuturaGUI
 
         /// @brief Sets the speed at which the dotted pattern animates along the DotSizeTransferDegree direction.
         void SetDotAnimationSpeed(const f32 animationSpeed);
+
+        /// @brief Sets the overall opacity of the FogEffect shader feature.
+        void SetFogAlpha(const f32 alpha);
+
+        /// @brief Sets the speed at which the fog drifts over time.
+        void SetFogSpeed(const f32 speed);
+
+        /// @brief Sets the per-octave density/weight curve driving the fog's fractal noise. Enables the FogEffect shader feature when non-empty.
+        void SetFogDensity(std::span<f32> density);
+
+        /// @brief Sets the coverage threshold above which fog appears; higher values carve larger clear (fog-free) gaps out of the cloud.
+        void SetFogClearing(const f32 clearing);
 
         /// @brief Sets the enabled ShaderFeatures bitmask.
         /// @param reset If true, replaces the current feature set; if false, ORs the given features in.
@@ -154,10 +167,20 @@ namespace RetroFuturaGUI
             _dotAnimationSpeed { 0.0f },
             _dotAnimationOffset { 0.0f };
         RectangleMode _rectangleMode { RectangleMode::Plane };
-        
+
+        // Fog (ShaderFeatures::FogEffect)
+        std::span<f32> _fogDensity;
+        i32 _fogDensityCount { 0 };
+        f32
+            _fogAlpha { 0.0f },
+            _fogSpeed { 0.0f },
+            _fogClearing { 0.5f },
+            _fogAnimationOffset { 0.0f };
+
         void setupMesh();
         void initColors(std::span<glm::vec4> colors);
         void uploadDotUniforms(Shader& shader);
+        void uploadFogUniforms(Shader& shader);
         void drawWithSolidFill();
         void drawRadialGradientFill();
         void drawHueStarGradientFill();

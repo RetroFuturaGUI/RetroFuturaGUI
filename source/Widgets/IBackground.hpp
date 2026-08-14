@@ -50,6 +50,18 @@ namespace RetroFuturaGUI
         /// @brief Sets the speed at which the background's dotted pattern animates.
         void SetBackgroundDotAnimationSpeed(const f32 animationSpeed);
 
+        /// @brief Sets the overall opacity of the background's FogEffect shader feature.
+        void SetBackgroundFogAlpha(const f32 alpha);
+
+        /// @brief Sets the speed at which the background's fog drifts over time.
+        void SetBackgroundFogSpeed(const f32 speed);
+
+        /// @brief Sets the per-octave density/weight curve driving the background's fog. Enables the FogEffect shader feature when non-empty.
+        void SetBackgroundFogDensity(std::span<f32> density);
+
+        /// @brief Sets the coverage threshold above which the background's fog appears; higher values carve larger clear gaps out of the cloud.
+        void SetBackgroundFogClearing(const f32 clearing);
+
         /// @brief Loads an image from disk and applies it as the background's glass-effect-with-image texture.
         virtual void SetBackgroundImage(std::string_view imagePath);
 
@@ -77,6 +89,7 @@ namespace RetroFuturaGUI
         FillType _backgroundFillType { FillType::SOLID };
         ColorState _backgroundColorState { ColorState::Enabled };
         std::vector<f32> _backgroundDotRadiusTransfer;
+        std::vector<f32> _backgroundFogDensity;
 
     private:
         void setBackgroundColorElement(std::vector<glm::vec4>& color);
