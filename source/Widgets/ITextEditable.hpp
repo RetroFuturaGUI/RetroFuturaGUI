@@ -121,18 +121,24 @@ namespace RetroFuturaGUI
         std::chrono::high_resolution_clock::time_point _millisecondsPassed { std::chrono::high_resolution_clock::now() };
         uSize _caretPosition { 0 };
         i32 _caretRepeatDirection { 0 };
+        bool _caretKeyWasReleased { true };
+        u32 _caretKeyHoldFrames { 0 };
 
         //input logic
         bool
             _readOnly { false },
             _editingEnabled { false },
-            _keyWasReleased { true },
             _enterPressed { false },
             _textCopied { false },
             _textCut { false },
             _textPasted { false };
         u32 _keyHoldFrames { 0 };
         std::u32string _keyRepeatText {};
+        u32 
+            _repeatKeySym { 0 },
+            _repeatKeyPressCountSeen { 0 },
+            _backspaceKeyHoldFrames { 0 },
+            _backspacePressCountSeen { 0 };
         std::vector<char> _prevKeyStates {};
         static constexpr i32 _keyRepeatInitialDelay { 60 };
         static constexpr i32 _keyRepeatInterval { 5 };

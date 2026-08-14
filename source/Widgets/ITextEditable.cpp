@@ -13,19 +13,19 @@ void RetroFuturaGUI::ITextEditable::moveCaret()
 
     if(PlatformBridge::Input::GetKeyboardUseState() == PlatformBridge::KeyboardUseState::KeyReleased)
     {
-        _keyWasReleased = true;
-        _keyHoldFrames = 0;
+        _caretKeyWasReleased = true;
+        _caretKeyHoldFrames = 0;
         _caretRepeatDirection = 0;
         return;
     }
 
-    if(!_keyWasReleased)
+    if(!_caretKeyWasReleased)
     {
         if (_caretRepeatDirection != 0)
         {
-            ++_keyHoldFrames;
+            ++_caretKeyHoldFrames;
 
-            if (_keyHoldFrames >= _keyRepeatInitialDelay && (_keyHoldFrames - _keyRepeatInitialDelay) % _keyRepeatInterval == 0)
+            if (_caretKeyHoldFrames >= _keyRepeatInitialDelay && (_caretKeyHoldFrames - _keyRepeatInitialDelay) % _keyRepeatInterval == 0)
             {
                 if(_caretRepeatDirection < 0)
                     moveCaretLeft();
@@ -47,9 +47,13 @@ void RetroFuturaGUI::ITextEditable::moveCaret()
         moveCaretRight();
         _caretRepeatDirection = 1;
     }
+    else
+    {
+        return;
+    }
 
-    _keyWasReleased = false;
-    _keyHoldFrames = 0;
+    _caretKeyWasReleased = false;
+    _caretKeyHoldFrames = 0;
 }
 
 void RetroFuturaGUI::ITextEditable::moveCaretLeft()
@@ -174,7 +178,7 @@ bool RetroFuturaGUI::ITextEditable::checkForTextCopy()
             return true;
         }
 
-        return false;
+        return true;
     }
 
     _textCopied = false;
@@ -209,7 +213,7 @@ bool RetroFuturaGUI::ITextEditable::checkForTextCut()
             return true;
         }
 
-        return false;
+        return true;
     }
 
      _textCut = false;
@@ -266,7 +270,7 @@ if((PlatformBridge::Input::IsKeyDown(PB_KEY_CONTROL_L) || PlatformBridge::Input:
             return true;
         }
 
-        return false;
+        return true;
     }
 
     _textPasted = false;
@@ -284,8 +288,9 @@ bool RetroFuturaGUI::ITextEditable::checkForSelectAllText()
             _selectedPositionLast = _text->GetGlyphCount();
             setCaretFromBoundary(_selectedPositionLast);
             updateSelectedArea();
-            return true;
         }
+
+        return true;
     }
 
     return false;
@@ -295,7 +300,6 @@ bool RetroFuturaGUI::ITextEditable::checkForKeyRelease()
 {
     if(PlatformBridge::Input::GetKeyboardUseState() == PlatformBridge::KeyboardUseState::KeyReleased)
     {
-        _keyWasReleased = true;
         _keyHoldFrames = 0;
         _keyRepeatText.clear();
         return true;;
@@ -306,27 +310,35 @@ bool RetroFuturaGUI::ITextEditable::checkForKeyRelease()
 
 bool RetroFuturaGUI::ITextEditable::checkForKeyRepeat()
 {
-    if(!_keyWasReleased)
-    {
-        if (!_keyRepeatText.empty())
-        {
-            ++_keyHoldFrames;
+    if(_keyRepeatText.empty())
+        return false;
 
-            if (_keyHoldFrames >= _keyRepeatInitialDelay && (_keyHoldFrames - _keyRepeatInitialDelay) % _keyRepeatInterval == 0)
-            {
-                std::u32string left { _text->GetTextUTF32().substr(0, _caretPosition) };
-                std::u32string right { _text->GetTextUTF32().substr(_caretPosition) };
-                _text->SetTextUTF32(left + _keyRepeatText + right);
-                ++_caretPosition;
-                deselect();
-                updateCaretPosition();
-                emitChange();
-            }
-        }
-        return true;
+    const bool stillSameKeyPress {
+        PlatformBridge::Input::GetKeyPressState(_repeatKeySym) != PlatformBridge::KeyPressState::Release
+        && PlatformBridge::Input::GetKeyPressCount(_repeatKeySym) == _repeatKeyPressCountSeen
+    };
+
+    if(!stillSameKeyPress)
+    {
+        _keyRepeatText.clear();
+        _keyHoldFrames = 0;
+        return false;
     }
 
-    return false;
+    ++_keyHoldFrames;
+
+    if (_keyHoldFrames >= _keyRepeatInitialDelay && (_keyHoldFrames - _keyRepeatInitialDelay) % _keyRepeatInterval == 0)
+    {
+        std::u32string left { _text->GetTextUTF32().substr(0, _caretPosition) };
+        std::u32string right { _text->GetTextUTF32().substr(_caretPosition) };
+        _text->SetTextUTF32(left + _keyRepeatText + right);
+        ++_caretPosition;
+        deselect();
+        updateCaretPosition();
+        emitChange();
+    }
+
+    return true;
 }
 
 bool RetroFuturaGUI::ITextEditable::checkForEnterPress()
@@ -345,7 +357,28 @@ bool RetroFuturaGUI::ITextEditable::checkForEnterPress()
 
 bool RetroFuturaGUI::ITextEditable::checkForBackspacePress()
 {
-    if(PlatformBridge::Input::GetKeyPressState(PB_KEY_BACKSPACE) == PlatformBridge::KeyPressState::Press)
+    if(!PlatformBridge::Input::IsKeyDown(PB_KEY_BACKSPACE))
+    {
+        _backspaceKeyHoldFrames = 0;
+        _backspacePressCountSeen = PlatformBridge::Input::GetKeyPressCount(PB_KEY_BACKSPACE);
+        return false;
+    }
+
+    const u32 currentPressCount { PlatformBridge::Input::GetKeyPressCount(PB_KEY_BACKSPACE) };
+    bool shouldDelete { currentPressCount != _backspacePressCountSeen };
+
+    if(shouldDelete)
+    {
+        _backspacePressCountSeen = currentPressCount;
+        _backspaceKeyHoldFrames = 0;
+    }
+    else
+    {
+        ++_backspaceKeyHoldFrames;
+        shouldDelete = _backspaceKeyHoldFrames >= _keyRepeatInitialDelay && (_backspaceKeyHoldFrames - _keyRepeatInitialDelay) % _keyRepeatInterval == 0;
+    }
+
+    if(shouldDelete)
     {
         if(_text->GetTextUTF32().size() == 0)
             return true;
@@ -379,9 +412,6 @@ bool RetroFuturaGUI::ITextEditable::checkForBackspacePress()
                 --_caretPosition;
                 deselect();
                 updateCaretPosition();
-                _keyWasReleased = false;
-                _keyHoldFrames = 0;
-                _keyRepeatText.clear();
             }
         }
 
@@ -389,7 +419,7 @@ bool RetroFuturaGUI::ITextEditable::checkForBackspacePress()
         return true;
     }
 
-    return false;
+    return true;
 }
 
 bool RetroFuturaGUI::ITextEditable::checkForTextInput()
@@ -420,7 +450,8 @@ bool RetroFuturaGUI::ITextEditable::checkForTextInput()
             deselect();
             updateCaretPosition();
             _keyRepeatText = keyText;
-            _keyWasReleased = false;
+            _repeatKeySym = PlatformBridge::Input::GetLastKeySym();
+            _repeatKeyPressCountSeen = PlatformBridge::Input::GetKeyPressCount(_repeatKeySym);
             _keyHoldFrames = 0;
         }
         
