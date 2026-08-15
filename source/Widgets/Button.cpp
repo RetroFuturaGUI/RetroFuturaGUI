@@ -1,4 +1,12 @@
 #include "Button.hpp"
+#include "PlatformBridge.hpp"
+
+#if defined(TARGET_PLATFORM_LINUX)
+    #define GLFW_EXPOSE_NATIVE_X11
+#elif defined(TARGET_PLATFORM_WINDOWS)
+    #define GLFW_EXPOSE_NATIVE_WIN32
+#endif
+#include <GLFW/glfw3native.h>
 
 RetroFuturaGUI::Button::Button(const std::string& name, Projection* projection, IWidget* parentWidget, const WidgetTypeID parentWidgetTypeID, GLFWwindow* parentWindow)
    : IWidget(name, projection, parentWidget, parentWidgetTypeID, parentWindow)
@@ -95,9 +103,18 @@ void RetroFuturaGUI::Button::SetRotation(const glm::vec3& rotation)
 
 void RetroFuturaGUI::Button::interact()
 {
-    auto mousePos = InputManager::GetMousePositionInvertedY();
-    bool isMouseButtonPressed = InputManager::IsMouseButtonPressed(GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS;
-    bool isMouseInside = isPointInside(glm::vec2(mousePos));
+    i32 mouseX { 0 }, mouseY { 0 };
+    bool hasMousePosition { false };
+
+#if defined(TARGET_PLATFORM_LINUX)
+    hasMousePosition = PlatformBridge::Input::GetMouseWindowPosition(glfwGetX11Window(_parentWindow), mouseX, mouseY);
+#elif defined(TARGET_PLATFORM_WINDOWS)
+    hasMousePosition = PlatformBridge::Input::GetMouseWindowPosition(glfwGetWin32Window(_parentWindow), mouseX, mouseY);
+#endif
+
+    glm::vec2 mousePos { static_cast<f32>(mouseX), _projection.GetResolution().y - static_cast<f32>(mouseY) };
+    bool isMouseButtonPressed = PlatformBridge::Input::IsMouseButtonDown(PlatformBridge::MouseButton::Left);
+    bool isMouseInside = hasMousePosition && isPointInside(mousePos);
 
     if(!_isEnabledFlag || !isMouseInside) //no action and mouse leave
     {

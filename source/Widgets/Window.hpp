@@ -1,6 +1,5 @@
 #pragma once
 #include "IncludeHelper.hpp"
-#include "InputManager.hpp"
 #include "Label.hpp"
 #include "WindowBar.hpp"
 #include "Image.hpp"
@@ -108,9 +107,10 @@ namespace RetroFuturaGUI
 
         // Window Actions
         ResizeEdge _resizeEdge { ResizeEdge::None };
-        bool 
+        bool
             _isResizing { false },
-            _isDragging { false };
+            _isDragging { false },
+            _wasMouseButtonDown { false };
         glm::vec2 
             _dragStartPos { 0.0f },
             _windowDragStartPos { 0.0f };
@@ -131,14 +131,13 @@ namespace RetroFuturaGUI
         Lasagna* _lasagna;
 
         void createWindow();
-        static void cursorPositionCallback(GLFWwindow* window, f64 xpos, f64 ypos);
+        void pollInput();
+        bool getCursorPosition(i32& x, i32& y) const;
         void setCursorPosition();
         void setCursorIcon();
-        static void mouseButtonClickedCallback(GLFWwindow* window, i32 button, i32 action, [[maybe_unused]] i32 mods);
         void setResizeState(i32 button, i32 action, [[maybe_unused]] i32 mods);
         void resize();
         void drag();
-        static void windowFocusCallback(GLFWwindow* window, i32 focused);
         void moveWindow(const i32 posX, const i32 posY);
         static void setAbsoluteCursorPosition(Window* self);
         void toggleMaximize();

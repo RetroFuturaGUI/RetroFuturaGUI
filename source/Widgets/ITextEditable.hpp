@@ -187,5 +187,6 @@ namespace RetroFuturaGUI
         bool checkForEnterPress();
         bool checkForBackspacePress();
         bool checkForTextInput();
+        bool hasInputFocus() const;
     };
 }

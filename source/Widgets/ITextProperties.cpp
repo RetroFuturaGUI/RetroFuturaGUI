@@ -1,5 +1,4 @@
 #include "ITextProperties.hpp"
-#include "InputManager.hpp"
 
 void RetroFuturaGUI::ITextProperties::SetTextColor(const glm::vec4& color, const ColorState state)
 {

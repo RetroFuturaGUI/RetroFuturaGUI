@@ -1,6 +1,5 @@
 #pragma once
 #include "IncludeHelper.hpp"
-#include "InputManager.hpp"
 #include "Signal.hpp"
 
 namespace RetroFuturaGUI

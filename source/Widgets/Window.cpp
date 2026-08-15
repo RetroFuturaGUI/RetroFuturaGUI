@@ -1,6 +1,14 @@
 #include "Window.hpp"
+#include "PlatformBridge.hpp"
 #include <glm/gtc/type_ptr.hpp>
 #include <print>
+
+#if defined(TARGET_PLATFORM_LINUX)
+    #define GLFW_EXPOSE_NATIVE_X11
+#elif defined(TARGET_PLATFORM_WINDOWS)
+    #define GLFW_EXPOSE_NATIVE_WIN32
+#endif
+#include <GLFW/glfw3native.h>
 
 RetroFuturaGUI::Window::Window(std::string_view name, const i32 width, const i32 height)
 : _width(width), _height(height), _name(name)
@@ -58,11 +66,6 @@ void RetroFuturaGUI::Window::createWindow()
         return;
     }
 
-	glfwSetCursorPosCallback(_window, cursorPositionCallback);
-	glfwSetMouseButtonCallback(_window, mouseButtonClickedCallback);
-	glfwSetWindowFocusCallback(_window, windowFocusCallback);
-	glfwSetWindowUserPointer(_window, this);
-
 	static bool shadersInitialized = false;
 	if (!shadersInitialized)		
 	{
@@ -95,26 +98,54 @@ void RetroFuturaGUI::Window::SetWindowTitle(std::string_view title, std::string_
 		_windowBar->SetWindowTitle(_windowTitle, fontFamily);
 }
 
-void RetroFuturaGUI::Window::cursorPositionCallback(GLFWwindow *window, f64 xpos, f64 ypos)
+bool RetroFuturaGUI::Window::getCursorPosition(i32& x, i32& y) const
 {
-	InputManager::SetHoveredWindow(window);
-	InputManager::SetMousePositionInvertedY(xpos, ypos);
-	InputManager::SetMousePosition(xpos, ypos);
+#if defined(TARGET_PLATFORM_LINUX)
+	return PlatformBridge::Input::GetMouseWindowPosition(glfwGetX11Window(_window), x, y);
+#elif defined(TARGET_PLATFORM_WINDOWS)
+	return PlatformBridge::Input::GetMouseWindowPosition(glfwGetWin32Window(_window), x, y);
+#else
+	return false;
+#endif
+}
 
-	Window* self = static_cast<Window*>(glfwGetWindowUserPointer(window));
+void RetroFuturaGUI::Window::pollInput()
+{
+	setCursorPosition();
+	setCursorIcon();
 
-	if (self) 
+	const bool isMouseButtonDown { PlatformBridge::Input::IsMouseButtonDown(PlatformBridge::MouseButton::Left) };
+
+	if (isMouseButtonDown && !_wasMouseButtonDown) //press
 	{
-		self->setCursorPosition();
-		self->setCursorIcon();
-		self->resize();
-		self->drag();
+		setResizeState(GLFW_MOUSE_BUTTON_LEFT, GLFW_PRESS, 0);
+
+		if (_windowBar && _windowBar->IsPointInside(static_cast<f32>(_cursorPosX), static_cast<f32>(_cursorPosY)))
+		{
+			_isDragging = true;
+			setAbsoluteCursorPosition(this);
+			_dragStartPos = glm::vec2(_absoluteCursorPosX, _absoluteCursorPosY);
+			_windowDragStartPos = glm::vec2(_windowPosX, _windowPosY);
+		}
 	}
+	else if (!isMouseButtonDown && _wasMouseButtonDown) //release
+	{
+		_isDragging = false;
+		setResizeState(GLFW_MOUSE_BUTTON_LEFT, GLFW_RELEASE, 0);
+	}
+
+	_wasMouseButtonDown = isMouseButtonDown;
+
+	resize();
+	drag();
 }
 
 void RetroFuturaGUI::Window::setCursorPosition()
 {
-	glfwGetCursorPos(_window, &_cursorPosX, &_cursorPosY);
+	i32 x { 0 }, y { 0 };
+	getCursorPosition(x, y);
+	_cursorPosX = x;
+	_cursorPosY = y;
 }
 
 void RetroFuturaGUI::Window::setCursorIcon() // clean up this abomination
@@ -133,46 +164,17 @@ void RetroFuturaGUI::Window::setCursorIcon() // clean up this abomination
 		glfwSetCursor(_window, _defaultCursor);
 }
 
-void RetroFuturaGUI::Window::mouseButtonClickedCallback(GLFWwindow *window, i32 button, i32 action, i32 mods)
-{
-	Window* self = static_cast<Window*>(glfwGetWindowUserPointer(window));
-
-	if (action == GLFW_PRESS) 
-	{
-		InputManager::SetFocusedWindow(window);
-	}
-	else if (action == GLFW_RELEASE) 
-	{
-		//std::println("mouse released: {}", button);
-		self->_isDragging = false;
-	}
-	
-	InputManager::SetMouseButtonState(button, action == GLFW_PRESS);
-
-	if (self)
-		self->setResizeState(button, action, mods);
-
-	if (self->_windowBar && self->_windowBar->IsPointInside(static_cast<f32>(self->_cursorPosX), static_cast<f32>(self->_cursorPosY)))
-	{
-		if (action == GLFW_PRESS)
-		{
-			self->_isDragging = true;
-			setAbsoluteCursorPosition(self);
-			self->_dragStartPos = glm::vec2(self->_absoluteCursorPosX, self->_absoluteCursorPosY);
-			self->_windowDragStartPos = glm::vec2(self->_windowPosX, self->_windowPosY);
-		}
-	}
-}
-
 void RetroFuturaGUI::Window::setResizeState(i32 button, i32 action, [[maybe_unused]] i32 mods)
 {
 	if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS)
 	{
-        glfwGetCursorPos(_window, &_absoluteCursorPosX, &_absoluteCursorPosY);
+        i32 x { 0 }, y { 0 };
+        getCursorPosition(x, y);
         glfwGetWindowPos(_window, &_windowPosX, &_windowPosY);
-		glfwGetCursorPos(_window, &_cursorPosX, &_cursorPosY);
-        _absoluteCursorPosX += _windowPosX;
-        _absoluteCursorPosY += _windowPosY;
+        _absoluteCursorPosX = x + _windowPosX;
+        _absoluteCursorPosY = y + _windowPosY;
+        _cursorPosX = x;
+        _cursorPosY = y;
         _prevResizeX = _absoluteCursorPosX;
         _prevResizeY = _absoluteCursorPosY;
 
@@ -210,12 +212,13 @@ void RetroFuturaGUI::Window::resize()
 	if (!_isResizing) 
 		return;
 
-    glfwGetCursorPos(_window, &_absoluteCursorPosX, &_absoluteCursorPosY);
+    i32 rx { 0 }, ry { 0 };
+    getCursorPosition(rx, ry);
     glfwGetWindowPos(_window, &_windowPosX, &_windowPosY);
-    _absoluteCursorPosX += _windowPosX;
-    _absoluteCursorPosY += _windowPosY;
+    _absoluteCursorPosX = rx + _windowPosX;
+    _absoluteCursorPosY = ry + _windowPosY;
 
-    f64 
+    f64
 		deltaX { _absoluteCursorPosX - _prevResizeX },
      	deltaY { _absoluteCursorPosY - _prevResizeY };
     i32
@@ -288,20 +291,6 @@ void RetroFuturaGUI::Window::drag()
 	moveWindow(newPosX, newPosY);
 }
 
-void RetroFuturaGUI::Window::windowFocusCallback(GLFWwindow *window, i32 focused)
-{
-	if (focused)
-	{
-		InputManager::SetFocusedWindow(window);
-		//std::println("focused");
-	} 
-	else if (InputManager::GetFocusedWindow() == window)
-	{
-		InputManager::SetFocusedWindow(nullptr);
-		//std::println("unfocused");
-	}
-}
-
 void RetroFuturaGUI::Window::moveWindow(const i32 posX, const i32 posY)
 {
 	glfwSetWindowPos(_window, posX, posY);
@@ -314,10 +303,11 @@ void RetroFuturaGUI::Window::setAbsoluteCursorPosition(Window *self)
 	if(!self)
 		return;
 
-	glfwGetCursorPos(self->_window, &self->_absoluteCursorPosX, &self->_absoluteCursorPosY);
+	i32 x { 0 }, y { 0 };
+	self->getCursorPosition(x, y);
 	glfwGetWindowPos(self->_window, &self->_windowPosX, &self->_windowPosY);
-	self->_absoluteCursorPosX += self->_windowPosX;
-	self->_absoluteCursorPosY += self->_windowPosY;
+	self->_absoluteCursorPosX = x + self->_windowPosX;
+	self->_absoluteCursorPosY = y + self->_windowPosY;
 }
 
 void RetroFuturaGUI::Window::toggleMaximize()
@@ -374,6 +364,8 @@ bool RetroFuturaGUI::Window::WindowShouldClose()
 
 void RetroFuturaGUI::Window::Draw()
 {
+	pollInput();
+
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glfwWindowHint(GLFW_TRANSPARENT_FRAMEBUFFER, GLFW_FALSE);

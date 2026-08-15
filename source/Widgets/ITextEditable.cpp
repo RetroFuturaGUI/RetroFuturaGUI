@@ -1,14 +1,33 @@
 #include "ITextEditable.hpp"
 #include "Clipboard.hpp"
-#include "InputManager.hpp"
 #include "PlatformBridge.hpp"
+
+#if defined(TARGET_PLATFORM_LINUX)
+    #define GLFW_EXPOSE_NATIVE_X11
+#elif defined(TARGET_PLATFORM_WINDOWS)
+    #define GLFW_EXPOSE_NATIVE_WIN32
+#endif
+#include <GLFW/glfw3native.h>
+
+bool RetroFuturaGUI::ITextEditable::hasInputFocus() const
+{
+    const uint64_t activeWindowId { PlatformBridge::Input::GetActiveWindowID() };
+
+#if defined(TARGET_PLATFORM_LINUX)
+    return activeWindowId == static_cast<uint64_t>(glfwGetX11Window(_parentWindow));
+#elif defined(TARGET_PLATFORM_WINDOWS)
+    return activeWindowId == reinterpret_cast<uint64_t>(glfwGetWin32Window(_parentWindow));
+#else
+    return false;
+#endif
+}
 
 void RetroFuturaGUI::ITextEditable::moveCaret()
 {
     if(!_editingEnabled || !_text)
         return;
 
-    if(_parentWindow != InputManager::GetFocusedWindow())
+    if(!hasInputFocus())
         return;
 
     if(PlatformBridge::Input::GetKeyboardUseState() == PlatformBridge::KeyboardUseState::KeyReleased)
@@ -467,7 +486,7 @@ void RetroFuturaGUI::ITextEditable::editText()
     if(!_text)
         return;
 
-    if(_parentWindow != InputManager::GetFocusedWindow())
+    if(!hasInputFocus())
         return;
 
     if(checkForTextCopy())
@@ -485,8 +504,6 @@ void RetroFuturaGUI::ITextEditable::editText()
     if(!_editingEnabled)
         return;
 
-    if(_parentWindow != InputManager::GetFocusedWindow())
-        return;
 
     if(_enterPressed)
     {
