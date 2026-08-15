@@ -33,6 +33,7 @@ namespace RetroFuturaGUI
         Model,
         Image,
         SvgImage,
+        CheckBox,
         Unknown = -1
     };   
 

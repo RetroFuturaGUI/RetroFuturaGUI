@@ -34,6 +34,7 @@ list(APPEND RetroFuturaGuiSources
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Shapes/Rectangle.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Types/DoubleEncodedString.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/Button.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/CheckBox.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/IBackground.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/IBorder.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/IClickable.cpp"
