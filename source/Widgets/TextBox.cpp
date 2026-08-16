@@ -201,8 +201,12 @@ void RetroFuturaGUI::TextBox::interact()
             setColors(ColorState::Enabled);
         }
 
-        PlatformBridge::Input::SetActiveDisplay(nullptr);
-        PlatformBridge::Input::SetActiveWindow(0);
+        if(!_editingEnabled)
+        {
+            PlatformBridge::Input::SetActiveDisplay(nullptr);
+            PlatformBridge::Input::SetActiveWindow(0);
+        }
+
         return;
     }
 
