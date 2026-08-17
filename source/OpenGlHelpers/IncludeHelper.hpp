@@ -8,6 +8,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include <string_view>
+#include "RadioButtonGroup.hpp"
 #include "config.hpp"
 #include "Projection.hpp"
 
@@ -34,6 +35,8 @@ namespace RetroFuturaGUI
         Image,
         SvgImage,
         CheckBox,
+        RadioButton,
+        RadioButtonGroup,
         Unknown = -1
     };   
 
