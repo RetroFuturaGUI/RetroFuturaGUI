@@ -110,6 +110,9 @@ namespace RetroFuturaGUI
         /// @brief Returns the current world position of the rectangle.
         const glm::vec3 GetPosition() const;
 
+        /// @brief Returns the border width.
+        f32 GetBorderWidth() const;
+
     private:
     //Geometry
         f32 _vertices[3 * 4] = 

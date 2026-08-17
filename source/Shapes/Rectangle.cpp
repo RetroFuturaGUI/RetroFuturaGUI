@@ -576,3 +576,8 @@ const glm::vec3 RetroFuturaGUI::Rectangle::GetPosition() const
 {
     return _position;
 }
+
+f32 RetroFuturaGUI::Rectangle::GetBorderWidth() const
+{
+    return _borderWidth;
+}

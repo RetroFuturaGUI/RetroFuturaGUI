@@ -34,12 +34,10 @@ namespace RetroFuturaGUI
     class SvgTexture
     {
     public:
-        /// @brief Loads an SVG from disk and rasterizes it.
-        /// @param projection Only needed if this texture will draw itself as a standalone quad.
-        /// @param initialResolution Target pixel size for the initial rasterization; {0,0} uses
-        /// the SVG's intrinsic size.
-        SvgTexture(std::string_view path, const bool flipVertically = true, Projection* projection = nullptr,
-                    glm::i32vec2 initialResolution = glm::i32vec2(0));
+        /// @brief Loads an SVG
+        /// @param projection Only needed if this texture will draw itself as a standalone quad. Call SetProjection() later if there is no projection available yet
+        /// @param initialResolution Target pixel size for the initial rasterization; {0,0} uses the SVG's intrinsic size.
+        SvgTexture(std::string_view path, const bool flipVertically, Projection* projection, glm::i32vec2 initialResolution = glm::i32vec2(0));
         SvgTexture(const SvgTexture&) = delete;
         SvgTexture& operator=(const SvgTexture&) = delete;
         SvgTexture(SvgTexture&& other) noexcept;
@@ -48,6 +46,9 @@ namespace RetroFuturaGUI
 
         /// @brief Draws the base layer plus any actively-overridden named path layers.
         void Draw();
+
+        /// @brief Sets the desired Projection
+        void SetProjection(Projection* projection);
 
         /// @brief Sets the size of the standalone quad. Pure GPU-side transform; never re-rasterizes.
         void SetSize(const glm::vec2& size);

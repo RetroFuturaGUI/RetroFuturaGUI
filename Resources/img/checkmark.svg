@@ -7,8 +7,8 @@
    viewBox="0 0 67.733332 67.733333"
    version="1.1"
    id="svg5"
-   inkscape:version="1.2.2 (732a01da63, 2022-12-09)"
    sodipodi:docname="checkmark.svg"
+   inkscape:version="1.2.2 (732a01da63, 2022-12-09)"
    xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
    xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
    xmlns="http://www.w3.org/2000/svg"
@@ -25,9 +25,9 @@
      inkscape:document-units="px"
      showgrid="false"
      showguides="true"
-     inkscape:zoom="3.1251122"
-     inkscape:cx="112.63595"
-     inkscape:cy="108.4761"
+     inkscape:zoom="1.5625561"
+     inkscape:cx="88.316828"
+     inkscape:cy="175.99368"
      inkscape:window-width="1920"
      inkscape:window-height="1057"
      inkscape:window-x="-8"
@@ -48,15 +48,56 @@
        inkscape:locked="false" />
   </sodipodi:namedview>
   <defs
-     id="defs2" />
+     id="defs2">
+    <marker
+       markerWidth="0.52499998"
+       markerHeight="0.99999994"
+       refX="0"
+       refY="0"
+       orient="auto-start-reverse"
+       id="marker2430"
+       viewBox="0 0 0.525 1"
+       inkscape:stockid="pin"
+       style="overflow:visible"
+       preserveAspectRatio="xMidYMid"
+       inkscape:isstock="true"
+       inkscape:collect="always">
+      <path
+         id="path2428"
+         style="fill:context-stroke;stroke-linecap:butt"
+         d="M 0,-1 1,0 0,1 -0.05,0 Z"
+         sodipodi:nodetypes="sssssscsss"
+         transform="scale(0.5)" />
+    </marker>
+    <marker
+       markerWidth="0.52499998"
+       markerHeight="0.99999994"
+       refX="0"
+       refY="0"
+       orient="auto-start-reverse"
+       id="CapTriangle"
+       viewBox="0 0 0.525 1"
+       inkscape:stockid="pin"
+       style="overflow:visible"
+       preserveAspectRatio="xMidYMid"
+       inkscape:isstock="true"
+       inkscape:collect="always">
+      <path
+         id="path7813"
+         style="fill:context-stroke;stroke-linecap:butt"
+         d="M 0,-1 1,0 0,1 -0.05,0 Z"
+         sodipodi:nodetypes="sssssscsss"
+         transform="scale(0.5)" />
+    </marker>
+  </defs>
   <g
      inkscape:label="Layer 1"
      inkscape:groupmode="layer"
      id="layer1">
     <path
+       style="opacity:1;fill:none;fill-opacity:1;stroke:#ffffff;stroke-width:6.79076;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:none;stroke-opacity:1;marker-start:url(#marker2430);marker-end:url(#CapTriangle);paint-order:normal"
+       d="M 3.3953777,37.861235 30.992017,56.929745 64.337955,10.743705"
        id="CheckmarkPath"
-       style="color:#000000;fill:#ffffff;stroke-linejoin:round;-inkscape-stroke:none"
-       d="M 63.166169 13.662215 L 32.867244 53.34558 L 9.6485066 37.302632 L 7.9628214 39.742277 L 32.345829 56.589827 A 1.4826482 1.4826482 0 0 0 34.367411 56.269433 L 65.523648 15.461072 L 63.166169 13.662215 z "
-       inkscape:label="CheckmarkPath" />
+       sodipodi:nodetypes="ccc" />
   </g>
 </svg>

@@ -1,13 +1,22 @@
 #include "CheckBox.hpp"
 #include "IncludeHelper.hpp"
 #include "ResourceManager.hpp"
+#include "PlatformBridge.hpp"
 #include <memory>
+
+#if defined(TARGET_PLATFORM_LINUX)
+    #define GLFW_EXPOSE_NATIVE_X11
+#elif defined(TARGET_PLATFORM_WINDOWS)
+    #define GLFW_EXPOSE_NATIVE_WIN32
+#endif
+#include <GLFW/glfw3native.h>
 
 RetroFuturaGUI::CheckBox::CheckBox(const std::string& name, Projection* projection, IWidget* parentWidget, const WidgetTypeID parentWidgetTypeID, GLFWwindow* parentWindow)
     : IWidget(name, projection, parentWidget, parentWidgetTypeID, parentWindow)
 {
     _widgetTypeID = WidgetTypeID::CheckBox;
     _checkmark = ResourceManager::GetCheckmarkIcon();
+    _checkmark->SetProjection(projection);
     _inherietFill = std::make_unique<Rectangle>(projection);
     _background = std::make_unique<Rectangle>(projection);
     _border = std::make_unique<Rectangle>(projection);
@@ -21,6 +30,7 @@ RetroFuturaGUI::CheckBox::CheckBox(const std::string& name, Projection* projecti
 
 void RetroFuturaGUI::CheckBox::Draw()
 {
+    interact();
     drawBackground();
     drawBorder();
 
@@ -73,10 +83,10 @@ void RetroFuturaGUI::CheckBox::SetSize(const glm::vec3& size)
         _border->SetSize(size);
 
     if(_inherietFill)
-        _inherietFill->SetSize(size);
+        _inherietFill->SetSize(size - glm::vec3(_border->GetBorderWidth() - _innerPadding * 0.5f, _border->GetBorderWidth() - _innerPadding * 0.5f, 0.0f));
 
     if(_checkmark)
-        _checkmark->SetSize(size);
+        _checkmark->SetSize(size - glm::vec3(_border->GetBorderWidth() - _innerPadding * 0.5f, _border->GetBorderWidth() - _innerPadding * 0.5f, 0.0f));
 }
 
 void RetroFuturaGUI::CheckBox::SetPosition(const glm::vec3& position)
@@ -189,6 +199,9 @@ void RetroFuturaGUI::CheckBox::SetCornerRadii(const glm::vec4& radii)
     if(_background)
         _background->SetCornerRadii(radii);
 
+    if(_border)
+        _border->SetCornerRadii(radii);
+
     if(_inherietFill)
         _inherietFill->SetCornerRadii(radii);
 }
@@ -293,4 +306,92 @@ void RetroFuturaGUI::CheckBox::setInherietFillColors()
         default: //Disabled
             _inherietFill->SetColors(_inherietFillColorsDisabled);
     }
+}
+
+void RetroFuturaGUI::CheckBox::interact()
+{
+    i32 
+        mouseX { 0 }, 
+        mouseY { 0 };
+    bool hasMousePosition { false };
+
+#if defined(TARGET_PLATFORM_LINUX)
+    hasMousePosition = PlatformBridge::Input::GetMouseWindowPosition(glfwGetX11Window(_parentWindow), mouseX, mouseY);
+#elif defined(TARGET_PLATFORM_WINDOWS)
+    hasMousePosition = PlatformBridge::Input::GetMouseWindowPosition(glfwGetWin32Window(_parentWindow), mouseX, mouseY);
+#endif
+
+    glm::vec2 mousePos { static_cast<f32>(mouseX), _projection.GetResolution().y - static_cast<f32>(mouseY) };
+    bool isMouseButtonPressed = PlatformBridge::Input::IsMouseButtonDown(PlatformBridge::MouseButton::Left);
+    bool isMouseInside = hasMousePosition && isPointInside(mousePos);
+
+    if(!_isEnabledFlag || !isMouseInside) //no action and mouse leave
+    {
+        if(_mouseEnteredFlag)
+        {
+            _mouseEnteredFlag = false;
+            _onMouseLeaveAsync.EmitAsync();
+            _onMouseLeave.Emit();
+        setColors(ColorState::Enabled);
+        }
+
+        return;
+    }
+    
+    bool isHovering = _isEnabledFlag && isMouseInside;
+
+    if(isHovering) // hover
+    {
+        _whileHoverAsync.EmitAsync();
+        _whileHover.Emit();
+    }
+
+    if (isHovering && !_mouseLeftFlag && !_mouseEnteredFlag) //enter
+    {
+        _mouseEnteredFlag = true;
+        _onMouseEnterAsync.EmitAsync();
+        _onMouseEnter.Emit();
+        setColors(ColorState::Hover);
+    }
+
+    if (isMouseButtonPressed && !_wasClicked) //click
+    {
+        _onClickAsync.EmitAsync();
+        _onClick.Emit();
+        _isChecked = !_isChecked;
+        _onValueChangedAsync.EmitAsync();
+        _onValueChanged.Emit();
+        setColors(ColorState::Clicked);
+    }
+    else if(!isMouseButtonPressed && _wasClicked) //release
+    {
+        _onReleaseAsync.EmitAsync();
+        _onRelease.Emit();
+
+        if(isHovering)
+            setColors(ColorState::Hover);
+        else
+            setColors(ColorState::Enabled);
+    }
+
+    _wasClicked = isMouseButtonPressed;
+}
+
+void RetroFuturaGUI::CheckBox::UseInherietedValue(const bool useInheriet)
+{
+    _useInherietValue = useInheriet;
+}
+
+void RetroFuturaGUI::CheckBox::SetInnerPadding(const f32 pixels)
+{
+    _innerPadding = pixels;
+    glm::vec3 size { _size - glm::vec3(_border->GetBorderWidth(), _border->GetBorderWidth(), 0.0f) };
+
+    if(_inherietFill)
+        _inherietFill->SetSize(size);
+
+    size -= glm::vec3( _innerPadding * 0.5f,  _innerPadding * 0.5f, 0.0f);
+
+    if(_checkmark)
+        _checkmark->SetSize(size);
 }

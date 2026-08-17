@@ -59,10 +59,19 @@ namespace RetroFuturaGUI
         /// @brief Sets the speed at which the inheriet state fill gradient rotates over time.
         void SetInherietGradientRotationSpeed(const f32 rotationSpeed);
 
+        /// @brief Sets whether an inherieted value should be used.
+        /// @param a boolean value whether to use an inherieted value
+        void UseInherietedValue(const bool useInheriet);
+
+        /// @brief Sets the distance between the border and checkmark in pixels
+        /// @param a float extressing the distance in pixels
+        void SetInnerPadding(const f32 pixels);
+
     private:
         void setColors(const ColorState state);
         void setCheckmarkColors();
         void setInherietFillColors();
+        void interact();
 
         std::unique_ptr<Rectangle> _inherietFill { nullptr };
         std::shared_ptr<SvgTexture> _checkmark { nullptr };
@@ -70,6 +79,7 @@ namespace RetroFuturaGUI
         bool
             _useInherietValue { false },
             _isChecked { false };
+        f32 _innerPadding { 2.0f };
         ColorState
             _checkmarkColorState { ColorState::Enabled },
             _inherietFillColorState { ColorState::Enabled };

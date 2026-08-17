@@ -122,6 +122,14 @@ void RetroFuturaGUI::SvgTexture::Draw()
     glBindVertexArray(0);
 }
 
+void RetroFuturaGUI::SvgTexture::SetProjection(Projection* projection)
+{
+    _projection = projection;
+
+    if (_projection && _vao == 0)
+        setupQuad();
+}
+
 void RetroFuturaGUI::SvgTexture::drawMaskedLayer(PathLayer& layer)
 {
     if (layer.fill.colors.empty())

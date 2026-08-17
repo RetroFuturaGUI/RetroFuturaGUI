@@ -1,14 +1,20 @@
 #include "ResourceManager.hpp"
+#include "PlatformBridge.hpp"
 
 RetroFuturaGUI::ResourceManager::ResourceManager()
 {
-    _checkmark = std::make_shared<SvgTexture>(R"(\Resources\img\checkmark.svg)");
+    std::filesystem::path checkmarkPath = PlatformBridge::Paths::GetExecutablePathFSPath().parent_path();
+    checkmarkPath /= "Resources";
+    checkmarkPath /= "img";
+    checkmarkPath /= "checkmark.svg";
+
+    _checkmark = std::make_shared<SvgTexture>(checkmarkPath.string());
 }
 
 std::shared_ptr<RetroFuturaGUI::SvgTexture> RetroFuturaGUI::ResourceManager::GetCheckmarkIcon()
 {
-    if(!_checkmark)
+    if(!GetInstance()._checkmark)
         return nullptr;
 
-    return _checkmark;
+    return GetInstance()._checkmark;
 }
