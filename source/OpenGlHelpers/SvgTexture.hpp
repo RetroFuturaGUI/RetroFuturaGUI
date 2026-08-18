@@ -37,7 +37,7 @@ namespace RetroFuturaGUI
         /// @brief Loads an SVG
         /// @param projection Only needed if this texture will draw itself as a standalone quad. Call SetProjection() later if there is no projection available yet
         /// @param initialResolution Target pixel size for the initial rasterization; {0,0} uses the SVG's intrinsic size.
-        SvgTexture(std::string_view path, const bool flipVertically, Projection* projection, glm::i32vec2 initialResolution = glm::i32vec2(0));
+        SvgTexture(std::string_view path, const bool flipVertically = false, Projection* projection = nullptr, glm::i32vec2 initialResolution = glm::i32vec2(0));
         SvgTexture(const SvgTexture&) = delete;
         SvgTexture& operator=(const SvgTexture&) = delete;
         SvgTexture(SvgTexture&& other) noexcept;

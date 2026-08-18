@@ -82,11 +82,7 @@ void RetroFuturaGUI::CheckBox::SetSize(const glm::vec3& size)
     if(_border)
         _border->SetSize(size);
 
-    if(_inherietFill)
-        _inherietFill->SetSize(size - glm::vec3(_border->GetBorderWidth() - _innerPadding * 0.5f, _border->GetBorderWidth() - _innerPadding * 0.5f, 0.0f));
-
-    if(_checkmark)
-        _checkmark->SetSize(size - glm::vec3(_border->GetBorderWidth() - _innerPadding * 0.5f, _border->GetBorderWidth() - _innerPadding * 0.5f, 0.0f));
+    SetInnerPadding(_innerPadding);
 }
 
 void RetroFuturaGUI::CheckBox::SetPosition(const glm::vec3& position)
@@ -385,12 +381,12 @@ void RetroFuturaGUI::CheckBox::UseInherietedValue(const bool useInheriet)
 void RetroFuturaGUI::CheckBox::SetInnerPadding(const f32 pixels)
 {
     _innerPadding = pixels;
-    glm::vec3 size { _size - glm::vec3(_border->GetBorderWidth(), _border->GetBorderWidth(), 0.0f) };
+    glm::vec3 size { _size - glm::vec3(_border->GetBorderWidth() * 2.0f, _border->GetBorderWidth() * 2.0f, 0.0f) };
 
     if(_inherietFill)
         _inherietFill->SetSize(size);
 
-    size -= glm::vec3( _innerPadding * 0.5f,  _innerPadding * 0.5f, 0.0f);
+    size -= glm::vec3( _innerPadding * 2.0f,  _innerPadding * 2.0f, 0.0f);
 
     if(_checkmark)
         _checkmark->SetSize(size);

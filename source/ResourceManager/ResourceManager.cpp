@@ -8,7 +8,7 @@ RetroFuturaGUI::ResourceManager::ResourceManager()
     checkmarkPath /= "img";
     checkmarkPath /= "checkmark.svg";
 
-    _checkmark = std::make_shared<SvgTexture>(checkmarkPath.string());
+    _checkmark = std::make_shared<SvgTexture>(checkmarkPath.string(), true);
 }
 
 std::shared_ptr<RetroFuturaGUI::SvgTexture> RetroFuturaGUI::ResourceManager::GetCheckmarkIcon()
