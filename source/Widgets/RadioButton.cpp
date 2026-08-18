@@ -1,4 +1,5 @@
 #include "RadioButton.hpp"
+#include "RadioButtonGroup.hpp"
 #include "IncludeHelper.hpp"
 #include "PlatformBridge.hpp"
 #include <memory>
@@ -77,8 +78,7 @@ void RetroFuturaGUI::RadioButton::SetSize(const glm::vec3& size)
     if(_border)
         _border->SetSize(size);
 
-    if(_indicator)
-        _indicator->SetSize(size - glm::vec3(_border->GetBorderWidth() - _indicatorPadding * 0.5f, _border->GetBorderWidth() - _indicatorPadding * 0.5f, 0.0f));
+    SetIndicatorPadding(_indicatorPadding);
 }
 
 void RetroFuturaGUI::RadioButton::SetPosition(const glm::vec3& position)
@@ -296,8 +296,8 @@ void RetroFuturaGUI::RadioButton::interact()
 void RetroFuturaGUI::RadioButton::SetIndicatorPadding(const f32 pixels)
 {
     _indicatorPadding = pixels;
-    glm::vec3 size { _size - glm::vec3(_border->GetBorderWidth(), _border->GetBorderWidth(), 0.0f) };
-    size -= glm::vec3( _indicatorPadding * 0.5f,  _indicatorPadding * 0.5f, 0.0f);
+    glm::vec3 size { _size - glm::vec3(_border->GetBorderWidth() * 2, _border->GetBorderWidth() * 2, 0.0f) };
+    size -= glm::vec3(_indicatorPadding * 2,  _indicatorPadding * 2, 0.0f);
 
     if(_indicator)
         _indicator->SetSize(size);

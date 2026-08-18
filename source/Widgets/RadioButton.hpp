@@ -10,6 +10,8 @@
 
 namespace RetroFuturaGUI
 {
+    class RadioButtonGroup;
+
     // A radiobutton
     class RadioButton : public IWidget, public IClickable, public IBackground, public IBorder
     {
