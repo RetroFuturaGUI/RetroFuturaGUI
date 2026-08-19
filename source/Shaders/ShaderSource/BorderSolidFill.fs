@@ -4,6 +4,7 @@
 #define GlassEffectWithImage 6
 #define DOTTED_PATTERN 8
 #define MAX_DOT_RADIUS_TRANSFER 255
+#define MAX_BORDER_GAPS 255
 
 layout(location = 0) out vec4 Color;
 uniform vec4 uColor;
@@ -19,6 +20,8 @@ uniform float uDotTransparencyTransfer;
 uniform float uDotAnimationOffset;
 uniform int uDotRadiusTransferCount;
 uniform float uDotRadiusTransfer[MAX_DOT_RADIUS_TRANSFER];
+uniform int uBorderGapCount;
+uniform vec4 uBorderGaps[MAX_BORDER_GAPS]; // per gap: (edge + anchorFarCorner*4, offsetPx, lengthPx, repeat)
 
 in vec2 vLocalPos;
 in vec2 vUV;
@@ -50,6 +53,68 @@ float roundedRectSDF(vec2 p, vec2 halfSize, float radius)
 {
     vec2 d = abs(p) - halfSize + vec2(radius);
     return length(max(d, 0.0)) + min(max(d.x, d.y), 0.0) - radius;
+}
+
+/* Tests distance d (pixels from a gap's anchor corner, along its edge) against a periodic
+   ###offset___length###offset___length### pattern, where '#' is solid border and '_' is gap.
+   repeat selects how many gap segments to draw: 0 disables the gap entirely, 1 reproduces a
+   single gap at [offset, offset+length), >1 draws that many gaps and then stops even if more
+   would fit, and <0 keeps tiling for as long as the edge is - since d is derived from the live
+   rectangle size every frame, this automatically grows/shrinks the dash count as it resizes. */
+bool isInPeriodicGap(float d, float gapOffset, float gapLength, int repeat)
+{
+    if (repeat == 0 || gapLength <= 0.0 || d < 0.0)
+        return false;
+
+    float period = gapOffset + gapLength;
+    if (period <= 0.0)
+        return false;
+
+    if (repeat > 0 && d >= float(repeat) * period)
+        return false;
+
+    return mod(d, period) >= gapOffset;
+}
+
+/* Tests scaledPos (pixels, local to the rectangle, origin at center) against the configured
+   border gaps. Each gap is defined in absolute pixels relative to one corner of its edge, so it
+   keeps a fixed size and a fixed distance from that corner regardless of how the rectangle is
+   resized - unlike a UV-based test, which would stretch with the rectangle. */
+bool isInBorderGap(vec2 scaledPos, vec2 halfSize, vec2 innerHalfSize)
+{
+    for (int i = 0; i < uBorderGapCount; ++i)
+    {
+        vec4 gap = uBorderGaps[i];
+        int packedEdge = int(gap.x + 0.5); // edge in bits 0-1, anchorFarCorner in bit 2
+        int edge = packedEdge & 3;
+        bool anchorFar = (packedEdge & 4) != 0;
+        float gapOffset = gap.y;
+        float gapLength = gap.z;
+        int repeat = int(gap.w);
+
+        if (edge == 0 || edge == 2) // Top / Bottom: gap runs along X
+        {
+            bool inStripe = (edge == 0) ? (scaledPos.y > innerHalfSize.y) : (scaledPos.y < -innerHalfSize.y);
+            if (!inStripe)
+                continue;
+
+            float d = anchorFar ? (halfSize.x - scaledPos.x) : (scaledPos.x + halfSize.x);
+            if (isInPeriodicGap(d, gapOffset, gapLength, repeat))
+                return true;
+        }
+        else // Left / Right: gap runs along Y
+        {
+            bool inStripe = (edge == 1) ? (scaledPos.x > innerHalfSize.x) : (scaledPos.x < -innerHalfSize.x);
+            if (!inStripe)
+                continue;
+
+            float d = anchorFar ? (scaledPos.y + halfSize.y) : (halfSize.y - scaledPos.y);
+            if (isInPeriodicGap(d, gapOffset, gapLength, repeat))
+                return true;
+        }
+    }
+
+    return false;
 }
 
 /* Blends a dot-grid pattern over baseColor. Dot centers sit on a uDotDistance grid (in px, local
@@ -116,8 +181,8 @@ void main()
     
     float outerDist = roundedRectSDF(scaledPos, halfSize, cornerRadius);
     float innerDist = roundedRectSDF(scaledPos, innerHalfSize, innerRadius);
-    
-    if (outerDist > 0.0 || innerDist <= 0.0)
+
+    if (outerDist > 0.0 || innerDist <= 0.0 || isInBorderGap(scaledPos, halfSize, innerHalfSize))
     {
         discard;
     }

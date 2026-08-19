@@ -171,6 +171,12 @@ void RetroFuturaGUI::IBorder::SetBorderWidth(const f32 borderWidth)
 
 void RetroFuturaGUI::IBorder::setBorderCornerRadii(const glm::vec4& radii)
 {
-    if(_border)    
+    if(_border)
         _border->SetCornerRadii(radii);
+}
+
+void RetroFuturaGUI::IBorder::SetBorderGaps(std::span<BorderGap> gaps)
+{
+    if(_border)
+        _border->SetBorderGaps(gaps);
 }

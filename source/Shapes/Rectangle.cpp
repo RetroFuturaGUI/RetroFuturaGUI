@@ -432,6 +432,10 @@ void RetroFuturaGUI::Rectangle::drawSolidBorder()
     ShaderManager::GetBorderSolidFillShader().SetUniformFloat("uBorderWidth", _borderWidth);
     ShaderManager::GetBorderSolidFillShader().SetUniformVec4("uCornerRadii", _cornerRadii);
     ShaderManager::GetBorderSolidFillShader().SetUniformVec2("uScale", _scale);
+    ShaderManager::GetBorderSolidFillShader().SetUniformInt("uBorderGapCount", _borderGapCount);
+
+    if(_borderGapCount > 0)
+        ShaderManager::GetBorderSolidFillShader().SetUniformVec4("uBorderGaps", &_borderGapData[0][0], static_cast<u32>(_borderGapCount));
 
     if(_shaderFeatureDIP & ShaderFeatures::DottedPattern)
         uploadDotUniforms(ShaderManager::GetBorderSolidFillShader());
@@ -468,6 +472,10 @@ void RetroFuturaGUI::Rectangle::drawLinearGradientBorder()
     ShaderManager::GetBorderLinearGradientShader().SetUniformVec4("uCornerRadii", _cornerRadii);
     ShaderManager::GetBorderLinearGradientShader().SetUniformVec2("uScale", _scale);
     ShaderManager::GetBorderLinearGradientShader().SetUniformFloat("uBorderWidth", _borderWidth);
+    ShaderManager::GetBorderLinearGradientShader().SetUniformInt("uBorderGapCount", _borderGapCount);
+
+    if(_borderGapCount > 0)
+        ShaderManager::GetBorderLinearGradientShader().SetUniformVec4("uBorderGaps", &_borderGapData[0][0], static_cast<u32>(_borderGapCount));
 
     if(_shaderFeatureDIP & ShaderFeatures::DottedPattern)
         uploadDotUniforms(ShaderManager::GetBorderLinearGradientShader());
@@ -504,6 +512,10 @@ void RetroFuturaGUI::Rectangle::drawRadialGradientBorder()
     ShaderManager::GetBorderRadialGradientShader().SetUniformVec4("uCornerRadii", _cornerRadii);
     ShaderManager::GetBorderRadialGradientShader().SetUniformVec2("uScale", _scale);
     ShaderManager::GetBorderRadialGradientShader().SetUniformFloat("uBorderWidth", _borderWidth);
+    ShaderManager::GetBorderRadialGradientShader().SetUniformInt("uBorderGapCount", _borderGapCount);
+
+    if(_borderGapCount > 0)
+        ShaderManager::GetBorderRadialGradientShader().SetUniformVec4("uBorderGaps", &_borderGapData[0][0], static_cast<u32>(_borderGapCount));
 
     if(_shaderFeatureDIP & ShaderFeatures::DottedPattern)
         uploadDotUniforms(ShaderManager::GetBorderRadialGradientShader());
@@ -540,6 +552,10 @@ void RetroFuturaGUI::Rectangle::drawHueStarGradientBorder()
     ShaderManager::GetBorderHueStarGradientShader().SetUniformVec4("uCornerRadii", _cornerRadii);
     ShaderManager::GetBorderHueStarGradientShader().SetUniformVec2("uScale", _scale);
     ShaderManager::GetBorderHueStarGradientShader().SetUniformFloat("uBorderWidth", _borderWidth);
+    ShaderManager::GetBorderHueStarGradientShader().SetUniformInt("uBorderGapCount", _borderGapCount);
+
+    if(_borderGapCount > 0)
+        ShaderManager::GetBorderHueStarGradientShader().SetUniformVec4("uBorderGaps", &_borderGapData[0][0], static_cast<u32>(_borderGapCount));
 
     if(_shaderFeatureDIP & ShaderFeatures::DottedPattern)
         uploadDotUniforms(ShaderManager::GetBorderHueStarGradientShader());
@@ -555,6 +571,24 @@ void RetroFuturaGUI::Rectangle::drawHueStarGradientBorder()
 void RetroFuturaGUI::Rectangle::SetBorderWidth(const f32 width)
 {
     _borderWidth = width;
+}
+
+void RetroFuturaGUI::Rectangle::SetBorderGaps(std::span<BorderGap> gaps)
+{
+    _borderGapCount = static_cast<i32>(std::min<size_t>(gaps.size(), kMaxBorderGaps));
+    _borderGapData.resize(static_cast<size_t>(_borderGapCount));
+
+    for(i32 i = 0; i < _borderGapCount; ++i)
+    {
+        const BorderGap& gap = gaps[i];
+        f32 packedEdge = static_cast<f32>(gap.edge) + (gap.anchorFarCorner ? 4.0f : 0.0f);
+        _borderGapData[i] = glm::vec4(
+            packedEdge,
+            gap.offset,
+            gap.length,
+            static_cast<f32>(gap.repeat)
+        );
+    }
 }
 
 void RetroFuturaGUI::Rectangle::SetRectangleMode(const RectangleMode rectanlgeMode)

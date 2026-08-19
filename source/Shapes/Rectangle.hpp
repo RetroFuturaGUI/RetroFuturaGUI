@@ -2,6 +2,7 @@
 #include "ShaderManager.hpp"
 #include "Projection.hpp"
 #include <span>
+#include <vector>
 #include "Image.hpp"
 
 namespace RetroFuturaGUI
@@ -19,6 +20,30 @@ namespace RetroFuturaGUI
     {
         Plane,
         Border
+    };
+
+    /// @brief Identifies which side of a Border-mode rectangle a BorderGap sits on.
+    enum class BorderEdge : u32
+    {
+        Top = 0,
+        Right = 1,
+        Bottom = 2,
+        Left = 3
+    };
+
+    /// @brief Describes a section of a Border-mode rectangle's outline to skip drawing.
+    /// offset/length are absolute pixel values measured along the edge from an anchor corner,
+    /// so the gap keeps a fixed size and a fixed distance from that corner as the rectangle resizes.
+    struct BorderGap
+    {
+        BorderEdge edge { BorderEdge::Top };
+        f32 offset { 0.0f };             // width of each solid segment
+        f32 length { 0.0f };             // width of each gap segment
+        bool anchorFarCorner { false };  // false: measure from the top/left corner of the edge. true: from the bottom/right corner
+        i32 repeat { 1 };                /* 0: no gap at all (solid border)
+                                            1: a single gap
+                                            >1: amount of gaps in a repeating pattern (dashed/dotted lines)
+                                            <0: the same repeating pattern, but tiled for the whole edge*/
     };
 
     class Rectangle
@@ -98,6 +123,9 @@ namespace RetroFuturaGUI
         /// @brief Sets the border width, used when RectangleMode::Border is active.
         void SetBorderWidth(const f32 width);
 
+        /// @brief Sets sections of the border to be drawn with gaps. One element expresses the pattern for one edge at a time. RectangleMode::Border must be active is active.
+        void SetBorderGaps(std::span<BorderGap> gaps);
+
         /// @brief Sets whether the rectangle draws a filled plane or just its border.
         void SetRectangleMode(const RectangleMode rectanlgeMode);
 
@@ -170,6 +198,10 @@ namespace RetroFuturaGUI
             _dotAnimationSpeed { 0.0f },
             _dotAnimationOffset { 0.0f };
         RectangleMode _rectangleMode { RectangleMode::Plane };
+
+        static constexpr const i32 kMaxBorderGaps = 255;
+        std::vector<glm::vec4> _borderGapData;
+        i32 _borderGapCount { 0 };
 
         // Fog (ShaderFeatures::FogEffect)
         std::span<f32> _fogDensity;
