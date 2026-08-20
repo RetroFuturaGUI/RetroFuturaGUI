@@ -59,7 +59,7 @@ namespace RetroFuturaGUI
         void SetBorderWidth(const f32 borderWidth);
 
         /// @brief Sets sections of the border to skip drawing; see Rectangle::SetBorderGaps.
-        void SetBorderGaps(std::span<BorderGap> gaps);
+        virtual void SetBorderGaps(std::span<BorderGap> gaps);
 
     protected:
         void drawBorder();

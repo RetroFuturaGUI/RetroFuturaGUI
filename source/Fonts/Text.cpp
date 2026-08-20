@@ -459,6 +459,20 @@ uSize RetroFuturaGUI::Text::GetGlyphCount() const
 
 uSize RetroFuturaGUI::Text::GetUtf8Position(uSize const glyphPosition) const
 {
-return glyphPosition;
-    
+    return glyphPosition;
+}
+
+f32 RetroFuturaGUI::Text::GetHeight() const
+{
+    return _textBaseHeight;
+}
+
+f32 RetroFuturaGUI::Text::GetWidth() const
+{
+    return _textSpan.x;
+}
+
+f32 RetroFuturaGUI::Text::GetPadding() const
+{
+    return _textPadding;
 }

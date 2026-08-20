@@ -42,8 +42,16 @@ namespace RetroFuturaGUI
         /// @param a pointer to the RadioButton to be unregistered
         void UnregisterRadioButton(RadioButton* obsoleteRadioButton);
 
-    private:
-        std::vector<RadioButton*> _radioButtonRefs {};
+        /// @brief Sets the text content, in UTF-8.
+        void SetText(std::string_view text) override;
 
+        /// @brief Sets sections of the border to skip drawing; see Rectangle::SetBorderGaps.
+        void SetBorderGaps(std::span<BorderGap> gaps) override;
+
+    private:
+        void updateLabelLayout();
+
+        std::vector<RadioButton*> _radioButtonRefs {};
+        f32 _textLeftPadding { 0.0f };
     };
 }

@@ -77,6 +77,15 @@ namespace RetroFuturaGUI
         /// @brief Returns the glyph size.
         float GetGlyphSize() const;
 
+        /// @brief Returns the glyph height.
+        float GetHeight() const;
+
+        /// @brief Returns the width of the rendered text span.
+        float GetWidth() const;
+
+        /// @brief Returns the padding
+        float GetPadding() const;
+
         /// @brief Returns the world position of the given glyph boundary, useful for placing a caret.
         /// @param boundary The glyph boundary index.
         /// @param caretSize The width to offset by so the caret sits on the correct side of the boundary.
@@ -122,8 +131,8 @@ namespace RetroFuturaGUI
         glm::vec3 _rotation { 0.0f };
         f32 _textBaseHeight { 0.0f },
             _lineSpacingFactor { 1.3f };
-        glm::mat4 _translationMatrix { 0.0f },
-            _rotationMatrix { 0.0f };
+        glm::mat4 _translationMatrix { 1.0f },
+            _rotationMatrix { 1.0f };
         static inline constinit const f32 _1emFraction { 0.00390625f };
         std::vector<f32> _glyphPositions {};
 
