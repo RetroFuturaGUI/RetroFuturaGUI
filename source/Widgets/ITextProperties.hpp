@@ -34,6 +34,12 @@ namespace RetroFuturaGUI
         /// @brief Sets the padding applied around the text.
         virtual void SetTextPadding(const f32 padding);
 
+        /// @brief Returns the padding applied around the text.
+        f32 GetTextPadding() const;
+
+        /// @brief Returns the rendered width of the text content, in pixels.
+        f32 GetTextWidth() const;
+
         /// @brief Connects a slot to be called when the text content changes.
         /// @param async If true, the slot is invoked asynchronously.
         void Connect_OnTextChange(const typename Signal<>::Slot& slot, const bool async);

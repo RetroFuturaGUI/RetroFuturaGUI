@@ -58,6 +58,34 @@ The framework is designed for cross-platform use, and its logic can be compiled 
     - Border: Solid Fill, Linear Gradient, Radial Gradient, HueStar Gradient, Corner Radii, Border Width
     - Label text (shares Label's text properties)
     - SetPosition, SetSize, SetRotation
+  - CheckBox
+    - Represents a boolean value
+    - Signals: OnClick, OnRelease, OnMouseEnter, OnMouseLeave, WhileHover
+    - SetEnabled, SetValue, GetValue
+    - Checkmark (SVG) with per-state colors (Enabled, Disabled, Hover, Clicked), Solid/Linear/Radial/HueStar Gradient fill
+    - Inner fill field with per-state colors, Solid/Linear/Radial/HueStar Gradient fill, gradient offset/degree/animation & rotation speed
+    - Optional binding to an external bool (UseInherietedValue + SetInheritValueReference) so the CheckBox mirrors a value owned elsewhere
+    - Inner padding (distance between border and checkmark)
+    - Background & Border (same options as Button)
+    - Corner radii
+    - SetPosition, SetSize, SetRotation
+  - RadioButton
+    - A single option belonging to a RadioButtonGroup
+    - Signals: OnClick, OnRelease, OnMouseEnter, OnMouseLeave, WhileHover
+    - SetEnabled, SetValue, GetValue
+    - Indicator field with per-state colors (Enabled, Disabled, Hover, Clicked), Solid/Linear/Radial/HueStar Gradient fill, gradient offset/degree/animation & rotation speed
+    - Indicator padding (distance between border and indicator)
+    - Background & Border (same options as Button)
+    - Corner radii
+    - SetPosition, SetSize, SetRotation
+  - RadioButtonGroup
+    - Owns a set of RadioButtons and enforces mutual exclusivity, deselecting all others when one is selected
+    - Register/Unregister RadioButtons dynamically, each paired with a Label
+    - Grid layout: row/column axis definitions, with each cell holding a RadioButton + Label pair
+    - Per-cell content alignment (Left, Right, Center) and content padding
+    - Group text label (shares Label's text properties via ITextProperties)
+    - Border (same options as Button), with configurable border gaps
+    - SetPosition, SetSize, SetRotation
   - TextBox
     - Text input & editing (insert, backspace, key repeat)
     - Read-only mode

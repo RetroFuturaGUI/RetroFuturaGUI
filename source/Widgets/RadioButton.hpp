@@ -38,8 +38,18 @@ namespace RetroFuturaGUI
 
         /// @brief Sets the rotation of the button.
         void SetRotation(const glm::vec3& rotation) override;
+
+        /// @brief Sets the RadioButton's value
+        /// @param value (const bool): the value set the RadioButton should represent
+        /// @param emitSignal (const bool): whether the onSetValue signal should be emitted
         void SetValue(const bool value, const bool emitSignal = true);
-        void SetParentGroup(std::shared_ptr<RadioButtonGroup> parentGroup);
+
+        /// @brief Sets the parent RadioButtonGroup
+        /// @param parentGroup (RadioButtonGroup*): A pointer to the parent RadioButtonGroup
+        void SetParentGroup(RadioButtonGroup* parentGroup);
+
+        /// @brief Returns the current value
+        /// @return a boolean value representing the RadioButton's current state
         bool GetValue() const;
         
         /// @brief Sets the corner rounding radii of the RadioButton' background, Indicator field and border.

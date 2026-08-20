@@ -1,7 +1,10 @@
 #pragma once
 #include "ITextProperties.hpp"
+#include "Lasagna.hpp"
 #include "RadioButton.hpp"
-#include "Text.hpp"
+#include "Label.hpp"
+#include "config.hpp"
+#include <glm/ext/vector_int2_sized.hpp>
 #include <memory>
 
 namespace RetroFuturaGUI
@@ -36,7 +39,7 @@ namespace RetroFuturaGUI
 
         /// @brief registers a new RadioButton
         /// @param a pointer to the new RadioButton
-        void RegisterRadioButton(RadioButton* newRadioButton);
+        void RegisterRadioButton(RadioButton* newRadioButton, Label* label, const glm::i64vec2& index);
 
         /// @brief unregisters a RadioButton
         /// @param a pointer to the RadioButton to be unregistered
@@ -48,10 +51,35 @@ namespace RetroFuturaGUI
         /// @brief Sets sections of the border to skip drawing; see Rectangle::SetBorderGaps.
         void SetBorderGaps(std::span<BorderGap> gaps) override;
 
-    private:
-        void updateLabelLayout();
+        /// @brief Sets the Grid according to the axis definitions
+        void SetAxisDefinitions(std::span<f32> rowDefinitions, std::span<f32> columnDefinitions);
 
-        std::vector<RadioButton*> _radioButtonRefs {};
-        f32 _textLeftPadding { 0.0f };
+        /// @brief Sets how each cell's radio button + label pair is aligned within the cell's width.
+        void SetGridContentAlignment(const TextAlignment alignment);
+
+        /// @brief Sets how much each cell's RadioButton + Label should be away from the border's inner edge
+        /// @param pixels (const f32): Distance in pixels
+        void SetGridContentPadding(const f32 pixels);
+
+    private:
+        struct GridCell
+        {
+            glm::vec2 _Position {};
+            glm::vec2 _Size {};
+            RadioButton* _RadioButton { nullptr };
+            Label* _Label { nullptr };
+        };
+
+        void updateLabelLayout();
+        void updateGridLayout();
+
+        f32 
+            _textLeftPadding { 0.0f },
+            _borderPadding { 0.0f };
+        TextAlignment _gridContentAlignment { TextAlignment::Center };
+        std::vector<f32>
+            _rowDefinitions {},
+            _columnDefinitions {};
+        std::vector<std::vector<GridCell>> _grid {};
     };
 }

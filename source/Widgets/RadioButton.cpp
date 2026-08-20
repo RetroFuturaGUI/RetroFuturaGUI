@@ -20,9 +20,6 @@ RetroFuturaGUI::RadioButton::RadioButton(const std::string& name, Projection* pr
     _border = std::make_unique<Rectangle>(projection);
     _parentGroup = parentGroup;
 
-    if(_parentGroup)
-        parentGroup->RegisterRadioButton(this);
-
     if (_background)
         _background->SetRectangleMode(RectangleMode::Plane);
 
@@ -159,14 +156,18 @@ void RetroFuturaGUI::RadioButton::SetIndicatorColors(std::span<glm::vec4> colors
         
 void RetroFuturaGUI::RadioButton::SetCornerRadii(const glm::vec4& radii)
 {
-    if(_background)
-        _background->SetCornerRadii(radii);
+    if(!_background)
+        return;
 
-    if(_border)
-        _border->SetCornerRadii(radii);
+    _background->SetCornerRadii(radii);
+
+    if(!_border)
+        return;
+
+    _border->SetCornerRadii(radii);
 
     if(_indicator)
-        _indicator->SetCornerRadii(radii);
+        _indicator->SetCornerRadii(radii - _border->GetBorderWidth() - _indicatorPadding);
 }
 
 void RetroFuturaGUI::RadioButton::SetIndicatorGradientOffset(const f32 gradientOffset)
@@ -274,9 +275,10 @@ void RetroFuturaGUI::RadioButton::interact()
     {
         _onClickAsync.EmitAsync();
         _onClick.Emit();
-        _isChecked = !_isChecked;
-        _onValueChangedAsync.EmitAsync();
-        _onValueChanged.Emit();
+
+        if(!_isChecked)
+            SetValue(!_isChecked, true);
+
         setColors(ColorState::Clicked);
     }
     else if(!isMouseButtonPressed && _wasClicked) //release
@@ -301,4 +303,9 @@ void RetroFuturaGUI::RadioButton::SetIndicatorPadding(const f32 pixels)
 
     if(_indicator)
         _indicator->SetSize(size);
+}
+
+void RetroFuturaGUI::RadioButton::SetParentGroup(RadioButtonGroup* parentGroup)
+{
+    _parentGroup = parentGroup;
 }

@@ -70,6 +70,16 @@ void RetroFuturaGUI::ITextProperties::SetTextPadding(const f32 padding)
         _text->SetTextPadding(padding);
 }
 
+f32 RetroFuturaGUI::ITextProperties::GetTextPadding() const
+{
+    return _text ? _text->GetPadding() : 0.0f;
+}
+
+f32 RetroFuturaGUI::ITextProperties::GetTextWidth() const
+{
+    return _text ? _text->GetWidth() : 0.0f;
+}
+
 void RetroFuturaGUI::ITextProperties::setTextColorElement(std::vector<glm::vec4>& color)
 {
     if(_text) 
