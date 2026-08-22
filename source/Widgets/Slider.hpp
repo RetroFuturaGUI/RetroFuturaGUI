@@ -52,6 +52,102 @@ namespace RetroFuturaGUI
 
         void SetGrabBorderColors(std::span<glm::vec4> colors, const ColorState state);
 
+        /// @brief Sets the corner rounding radii of the Slider's track background and border.
+        void SetCornerRadii(const glm::vec4& radii);
+
+        /// @brief Sets the corner rounding radii of the Slider's grab background and border.
+        void SetGrabCornerRadii(const glm::vec4& radii);
+
+        /// @brief Sets the grab background fill type (solid, linear/radial/huestar gradient).
+        void SetGrabBackgroundFillType(const FillType fillType);
+
+        /// @brief Sets the offset applied to the grab background gradient's start position.
+        void SetGrabBackgroundGradientOffset(const f32 gradientOffset);
+
+        /// @brief Sets the speed at which the grab background gradient animates over time.
+        void SetGrabBackgroundGradientAnimationSpeed(const f32 animationSpeed);
+
+        /// @brief Sets the angle of the grab background's linear gradient, in degrees.
+        void SetGrabBackgroundGradientDegree(const f32 degree);
+
+        /// @brief Sets the speed at which the grab background gradient rotates over time.
+        void SetGrabBackgroundGradientRotationSpeed(const f32 rotationSpeed);
+
+        /// @brief Sets the texture ID sampled for the grab background's glass-effect-with-image shader feature.
+        void SetGrabWindowBackgroundImageTextureID(const u32 textureID);
+
+        /// @brief Sets the dot color used for the grab background's DottedPattern shader feature.
+        void SetGrabBackgroundDotColor(const glm::vec4& color);
+
+        /// @brief Sets the spacing between dot centers, in pixels, for the grab background's DottedPattern shader feature.
+        void SetGrabBackgroundDotDistance(const f32 distance);
+
+        /// @brief Sets the direction, in degrees, along which the grab background's dot radii/animation transfer.
+        void SetGrabBackgroundDotSizeTransferDegree(const f32 degree);
+
+        /// @brief Sets the per-position dot radius curve, in pixels, for the grab background's DottedPattern shader feature. Enables the feature when non-empty.
+        void SetGrabBackgroundDotRadiusTransfer(std::span<f32> radiusTransfer);
+
+        /// @brief Sets how far each grab background dot's opacity reaches from its center before fading to transparent.
+        void SetGrabBackgroundDotTransparencyTransfer(const f32 transparencyTransfer);
+
+        /// @brief Sets the speed at which the grab background's dotted pattern animates.
+        void SetGrabBackgroundDotAnimationSpeed(const f32 animationSpeed);
+
+        /// @brief Sets the overall opacity of the grab background's FogEffect shader feature.
+        void SetGrabBackgroundFogAlpha(const f32 alpha);
+
+        /// @brief Sets the speed at which the grab background's fog drifts over time.
+        void SetGrabBackgroundFogSpeed(const f32 speed);
+
+        /// @brief Sets the per-octave density/weight curve driving the grab background's fog. Enables the FogEffect shader feature when non-empty.
+        void SetGrabBackgroundFogDensity(std::span<f32> density);
+
+        /// @brief Sets the coverage threshold above which the grab background's fog appears; higher values carve larger clear gaps out of the cloud.
+        void SetGrabBackgroundFogClearing(const f32 clearing);
+
+        /// @brief Sets the grab border fill type (solid, linear/radial/huestar gradient).
+        void SetGrabBorderFillType(const FillType fillType);
+
+        /// @brief Sets the offset applied to the grab border gradient's start position.
+        void SetGrabBorderGradientOffset(const f32 gradientOffset);
+
+        /// @brief Sets the speed at which the grab border gradient animates over time.
+        void SetGrabBorderGradientAnimationSpeed(const f32 animationSpeed);
+
+        /// @brief Sets the angle of the grab border's linear gradient, in degrees.
+        void SetGrabBorderGradientDegree(const f32 degree);
+
+        /// @brief Sets the speed at which the grab border gradient rotates over time.
+        void SetGrabBorderGradientRotationSpeed(const f32 rotationSpeed);
+
+        /// @brief Sets the texture ID sampled for the grab border's glass-effect-with-image shader feature.
+        void SetGrabWindowBorderImageTextureID(const u32 textureID);
+
+        /// @brief Sets the dot color used for the grab border's DottedPattern shader feature.
+        void SetGrabBorderDotColor(const glm::vec4& color);
+
+        /// @brief Sets the spacing between dot centers, in pixels, for the grab border's DottedPattern shader feature.
+        void SetGrabBorderDotDistance(const f32 distance);
+
+        /// @brief Sets the direction, in degrees, along which the grab border's dot radii/animation transfer.
+        void SetGrabBorderDotSizeTransferDegree(const f32 degree);
+
+        /// @brief Sets the per-position dot radius curve, in pixels, for the grab border's DottedPattern shader feature. Enables the feature when non-empty.
+        void SetGrabBorderDotRadiusTransfer(std::span<f32> radiusTransfer);
+
+        /// @brief Sets how far each grab border dot's opacity reaches from its center before fading to transparent.
+        void SetGrabBorderDotTransparencyTransfer(const f32 transparencyTransfer);
+
+        /// @brief Sets the speed at which the grab border's dotted pattern animates.
+        void SetGrabBorderDotAnimationSpeed(const f32 animationSpeed);
+
+        /// @brief Sets the grab's border width.
+        void SetGrabBorderWidth(const f32 borderWidth);
+
+        /// @brief Sets sections of the grab's border to skip drawing; see Rectangle::SetBorderGaps.
+        void SetGrabBorderGaps(std::span<BorderGap> gaps);
+
         void EnableSliderButtons(const bool value);
 
         /// @brief Connects a slot to be called when the value has changed
@@ -493,6 +589,10 @@ namespace RetroFuturaGUI
         ColorState
             _grabBackgroundColorState { ColorState::Enabled },
             _grabBorderColorState { ColorState::Enabled };
+        std::vector<f32>
+            _grabBackgroundDotRadiusTransfer,
+            _grabBackgroundFogDensity,
+            _grabBorderDotRadiusTransfer;
 
         Signal<>
             _onValueChanged,
