@@ -100,6 +100,7 @@ namespace RetroFuturaGUI
             _onDisableAsync;
 
         bool isPointInside(const glm::vec2& point) const;
+        bool isPointInsideRect(const glm::vec2& point, const glm::vec3& size, const glm::vec3& position, const glm::vec3& rotation) const;
 
     private:
 

@@ -601,14 +601,19 @@ void RetroFuturaGUI::Rectangle::SetFillType(const FillType fillType)
     _fillType = fillType;
 }
 
-const glm::vec2 RetroFuturaGUI::Rectangle::GetSize() const
+const glm::vec2& RetroFuturaGUI::Rectangle::GetSize() const
 {
     return _scale;
 }
 
-const glm::vec3 RetroFuturaGUI::Rectangle::GetPosition() const
+const glm::vec3& RetroFuturaGUI::Rectangle::GetPosition() const
 {
     return _position;
+}
+
+const glm::vec3& RetroFuturaGUI::Rectangle::GetRotation() const
+{
+    return _rotation;
 }
 
 f32 RetroFuturaGUI::Rectangle::GetBorderWidth() const

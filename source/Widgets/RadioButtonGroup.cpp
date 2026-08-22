@@ -98,9 +98,9 @@ void RetroFuturaGUI::RadioButtonGroup::UnregisterRadioButton(RadioButton* obsole
             }
 }
 
-void RetroFuturaGUI::RadioButtonGroup::SetText(std::string_view text)
+void RetroFuturaGUI::RadioButtonGroup::SetText(std::string_view text, const bool emitSignal)
 {
-    ITextProperties::SetText(text);
+    ITextProperties::SetText(text, emitSignal);
     updateLabelLayout();
 }
 

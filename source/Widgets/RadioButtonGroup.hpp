@@ -46,7 +46,7 @@ namespace RetroFuturaGUI
         void UnregisterRadioButton(RadioButton* obsoleteRadioButton);
 
         /// @brief Sets the text content, in UTF-8.
-        void SetText(std::string_view text) override;
+        void SetText(std::string_view text, const bool emitSignal) override;
 
         /// @brief Sets sections of the border to skip drawing; see Rectangle::SetBorderGaps.
         void SetBorderGaps(std::span<BorderGap> gaps) override;

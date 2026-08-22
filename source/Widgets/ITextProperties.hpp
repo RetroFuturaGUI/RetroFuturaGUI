@@ -20,7 +20,7 @@ namespace RetroFuturaGUI
         std::vector<glm::vec4> GetTextColor(const ColorState state) const;
 
         /// @brief Sets the text content, in UTF-8.
-        virtual void SetText(std::string_view text);
+        virtual void SetText(std::string_view text, const bool emitSignal = true);
 
         /// @brief Returns the text content, in UTF-8.
         const std::string& GetText() const;

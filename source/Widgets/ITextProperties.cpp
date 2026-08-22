@@ -35,11 +35,14 @@ std::vector<glm::vec4> RetroFuturaGUI::ITextProperties::GetTextColor(const Color
     }
 }
 
-void RetroFuturaGUI::ITextProperties::SetText(std::string_view text)
+void RetroFuturaGUI::ITextProperties::SetText(std::string_view text, const bool emitSignal)
 {
     if(_text)
         _text->SetTextUTF8(text);
 
+    if(!emitSignal)
+        return;
+    
     _onTextChangeAsync.EmitAsync();
     _onTextChange.Emit();
 }

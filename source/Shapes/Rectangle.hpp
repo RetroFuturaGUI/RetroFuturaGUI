@@ -133,10 +133,13 @@ namespace RetroFuturaGUI
         void SetFillType(const FillType fillType);
 
         /// @brief Returns the current size of the rectangle.
-        const glm::vec2 GetSize() const;
+        const glm::vec2& GetSize() const;
 
         /// @brief Returns the current world position of the rectangle.
-        const glm::vec3 GetPosition() const;
+        const glm::vec3& GetPosition() const;
+        
+        /// @brief Returns the current world rotation of the rectangle.
+        const glm::vec3& GetRotation() const;
 
         /// @brief Returns the border width.
         f32 GetBorderWidth() const;

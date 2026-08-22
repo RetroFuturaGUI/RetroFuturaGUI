@@ -47,6 +47,7 @@ list(APPEND RetroFuturaGuiSources
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/Model.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/RadioButton.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/RadioButtonGroup.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/Slider.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/SvgImage.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/TextBox.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/Window.cpp"

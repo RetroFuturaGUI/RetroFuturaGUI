@@ -36,6 +36,7 @@ namespace RetroFuturaGUI
         CheckBox,
         RadioButton,
         RadioButtonGroup,
+        Slider,
         Unknown = -1
     };   
 
