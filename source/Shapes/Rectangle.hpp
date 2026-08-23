@@ -13,7 +13,8 @@ namespace RetroFuturaGUI
         GlassEffect = 1 << 1,
         GlassEffectWithImage = GlassEffect + (1 << 2),
         DottedPattern = 1 << 3,
-        FogEffect = 1 << 4
+        FogEffect = 1 << 4,
+        Wave = 1 << 5
     };
 
     enum class RectangleMode : u32
@@ -113,9 +114,21 @@ namespace RetroFuturaGUI
         /// @brief Sets the coverage threshold above which fog appears; higher values carve larger clear (fog-free) gaps out of the cloud.
         void SetFogClearing(const f32 clearing);
 
+        /// @brief Sets the thickness of the wave line, in pixels, used by the Wave shader feature.
+        void SetWaveThickness(const f32 thiccness);
+
+        /// @brief Sets the amplitude (peak-to-center height) of the wave, in pixels, used by the Wave shader feature.
+        void SetWaveHeight(const f32 height);
+
+        /// @brief Sets the horizontal distance between wave peaks, in pixels, used by the Wave shader feature.
+        void SetWaveLength(const f32 length);
+
         /// @brief Sets the enabled ShaderFeatures bitmask.
         /// @param reset If true, replaces the current feature set; if false, ORs the given features in.
         void SetShaderFeatures(const u32 features, const bool reset = true);
+
+        /// @brief Returns the currently enabled ShaderFeatures bitmask.
+        u32 GetShaderFeatures() const;
 
         /// @brief Sets the texture ID sampled for the GlassEffectWithImage shader feature.
         void SetWindowBackgroundImageTextureID(const u32 textureID);
@@ -215,10 +228,17 @@ namespace RetroFuturaGUI
             _fogClearing { 0.5f },
             _fogAnimationOffset { 0.0f };
 
+        // Wave (ShaderFeatures::Wave)
+        f32
+            _waveThiccness { 3.0f },
+            _waveHeight { 6.0f },
+            _waveLength { 40.0f };
+
         void setupMesh();
         void initColors(std::span<glm::vec4> colors);
         void uploadDotUniforms(Shader& shader);
         void uploadFogUniforms(Shader& shader);
+        void uploadWaveUniforms(Shader& shader);
         void drawWithSolidFill();
         void drawRadialGradientFill();
         void drawHueStarGradientFill();

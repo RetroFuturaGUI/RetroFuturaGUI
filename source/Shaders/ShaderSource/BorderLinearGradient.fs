@@ -5,6 +5,7 @@
 #define DOTTED_PATTERN 8
 #define MAX_DOT_RADIUS_TRANSFER 255
 #define MAX_BORDER_GAPS 255
+#define WAVE 32
 
 in vec2 vTexCoord;
 out vec4 fragColor;
@@ -29,6 +30,9 @@ uniform int uDotRadiusTransferCount;
 uniform float uDotRadiusTransfer[MAX_DOT_RADIUS_TRANSFER];
 uniform int uBorderGapCount;
 uniform vec4 uBorderGaps[MAX_BORDER_GAPS]; // per gap: (edge + anchorFarCorner*4, offsetPx, lengthPx, repeat)
+uniform float uWaveThickness;
+uniform float uWaveHeight;
+uniform float uWaveLength;
 
 float random(vec2 st)
 {
@@ -173,6 +177,20 @@ vec4 applyDottedPattern(vec4 baseColor, vec2 localPos)
     return result;
 }
 
+/* Signed-distance-style test for a horizontal sine wave running through the rectangle's vertical
+   center: y = sin(x / uWaveLength * TAU) * uWaveHeight. A pixel counts as outside the line once
+   its vertical distance to the curve clears half of uWaveThickness; fwidth widens that boundary
+   by about a screen pixel so the discard edge doesn't alias into jagged steps. */
+bool isOutsideWaveLine(vec2 localPos)
+{
+    vec2 pixelPos = localPos * uScale;
+    float waveLength = max(uWaveLength, 1.0);
+    float waveY = sin(pixelPos.x / waveLength * 6.28318530718) * uWaveHeight;
+    float dist = abs(pixelPos.y - waveY);
+    float halfThickness = max(uWaveThickness, 0.0) * 0.5;
+    return dist > halfThickness + max(fwidth(dist), 1e-4);
+}
+
 void main()
 {
     vec4 finalColor;
@@ -273,6 +291,9 @@ void main()
             if (dist > 0.0)
                 discard;
         }
+
+        if((uDIP & WAVE) != 0 && isOutsideWaveLine(vLocalPos))
+            discard;
 
         finalColor = mix(color1, color2, interpolation);
     }

@@ -121,7 +121,15 @@ void RetroFuturaGUI::ProgressBar::SetRotation(const glm::vec3& rotation)
 void RetroFuturaGUI::ProgressBar::SetGraphMode(const GraphMode mode)
 {
     _graphMode = mode;
-    // TODO: GraphMode::Wave has no distinct rendering path yet; see Draw().
+
+    if(!_graph)
+        return;
+
+    const u32 features = _graphMode == GraphMode::Wave
+        ? (_graph->GetShaderFeatures() | Wave)
+        : (_graph->GetShaderFeatures() & ~Wave);
+
+    _graph->SetShaderFeatures(features);
 }
 
 void RetroFuturaGUI::ProgressBar::SetGraphWidth(const f32 width)
