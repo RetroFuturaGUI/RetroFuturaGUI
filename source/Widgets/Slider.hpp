@@ -166,12 +166,6 @@ namespace RetroFuturaGUI
 
         template <typename T> void SetValue(T value, const bool emitSignal = true)
         {
-            if(emitSignal)
-            {
-                _onValueChanged.Emit();
-                _onValueChangedAsync.EmitAsync();
-            }
-
             if constexpr (std::is_same_v<T, i8>)
             {
                 _value.Int8 = value < _minValue.Int8 ? _minValue.Int8 : value;
@@ -236,6 +230,12 @@ namespace RetroFuturaGUI
             {
                 _value.Bool = value;
                 _valueType = SliderValueType::Bool;
+            }
+
+            if(emitSignal)
+            {
+                _onValueChanged.Emit();
+                _onValueChangedAsync.EmitAsync();
             }
 
             setGrabPosition();
@@ -402,6 +402,33 @@ namespace RetroFuturaGUI
             return getValueByType<T>();
         }
 
+        /// @brief Sets the amount the value changes by each time a slider button is clicked
+        template <typename T> void SetButtonIncrement(T value)
+        {
+            if constexpr (std::is_same_v<T, i8>)
+                _buttonIncrement.Int8 = value;
+            else if constexpr (std::is_same_v<T, i16>)
+                _buttonIncrement.Int16 = value;
+            else if constexpr (std::is_same_v<T, i32>)
+                _buttonIncrement.Int32 = value;
+            else if constexpr (std::is_same_v<T, i64>)
+                _buttonIncrement.Int64 = value;
+            else if constexpr (std::is_same_v<T, u8>)
+                _buttonIncrement.UInt8 = value;
+            else if constexpr (std::is_same_v<T, u16>)
+                _buttonIncrement.UInt16 = value;
+            else if constexpr (std::is_same_v<T, u32>)
+                _buttonIncrement.UInt32 = value;
+            else if constexpr (std::is_same_v<T, u64>)
+                _buttonIncrement.UInt64 = value;
+            else if constexpr (std::is_same_v<T, f32>)
+                _buttonIncrement.Float32 = value;
+            else if constexpr (std::is_same_v<T, f64>)
+                _buttonIncrement.Float64 = value;
+            else
+                _buttonIncrement.Bool = value;
+        }
+
     private:
         void interact();
         bool isInsideGrab(const glm::vec2& mousePos);
@@ -409,6 +436,9 @@ namespace RetroFuturaGUI
         void setGrabBorderColors();
         void setGrabSize();
         void setGrabPosition();
+        void setButtonSizes();
+        void setButtonPositions();
+        void stepValue(const bool increase);
         void calculateGrabSliderPosition();
         void setValueFromMousePosition(const glm::vec2& mousePos);
         void setColors(const ColorState state);
@@ -558,13 +588,28 @@ namespace RetroFuturaGUI
             f64 Float64;
         } _maxValue { .UInt64 = 0 };
 
+        union
+        {
+            bool Bool;
+            i8 Int8;
+            i16 Int16;
+            i32 Int32;
+            i64 Int64;
+            u8 UInt8;
+            u16 UInt16;
+            u32 UInt32;
+            u64 UInt64;
+            f32 Float32;
+            f64 Float64;
+        } _buttonIncrement { .UInt64 = 1 };
+
         // Elements
         std::unique_ptr<Rectangle> 
             _grabBackground { nullptr },
             _grabBorder { nullptr };
-        /*std::unique_ptr<Button>
+        std::unique_ptr<Button>
             _buttonLower { nullptr },
-            _buttonHigher { nullptr };*/
+            _buttonHigher { nullptr };
         
         // Settings
         SliderValueType _valueType { SliderValueType::Int32 };

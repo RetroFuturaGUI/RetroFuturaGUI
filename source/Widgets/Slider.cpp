@@ -62,16 +62,37 @@ void RetroFuturaGUI::Slider::Disconnect_OnValueSet(const typename Signal<>::Slot
     _onValueSetAsync.Disconnect(slot);
 }
 
-/*void RetroFuturaGUI::Slider::EnableSliderButtons(const bool value)
+void RetroFuturaGUI::Slider::EnableSliderButtons(const bool value)
 {
     _useSliderButtons = value;
 
-    if(!_buttonLower && _useSliderButtons)
-        _buttonLower = std::make_unique<Button>(_name + "/ButtonLower", &_projection, this, _widgetTypeID, _parentWindow);
+    if(_useSliderButtons)
+    {
+        if(!_buttonLower)
+        {
+            _buttonLower = std::make_unique<Button>(_name + "/ButtonLower", &_projection, this, _widgetTypeID, _parentWindow);
+            _buttonLower->SetBackgroundColor(glm::vec4(0.2f, 0.2f, 0.2f, 1.0f), ColorState::Enabled);
+            _buttonLower->SetBackgroundColor(glm::vec4(0.3f, 0.3f, 0.3f, 1.0f), ColorState::Hover);
+            _buttonLower->SetBackgroundColor(glm::vec4(0.4f, 0.4f, 0.4f, 1.0f), ColorState::Clicked);
+            _buttonLower->SetBackgroundColor(glm::vec4(0.1f, 0.1f, 0.1f, 1.0f), ColorState::Disabled);
+            _buttonLower->SetBackgroundFillType(FillType::SOLID);
+            _buttonLower->Connect_OnClick([this]() { stepValue(false); }, false);
+        }
+
+        if(!_buttonHigher)
+        {
+            _buttonHigher = std::make_unique<Button>(_name + "/ButtonHigher", &_projection, this, _widgetTypeID, _parentWindow);
+            _buttonHigher->SetBackgroundColor(glm::vec4(0.2f, 0.2f, 0.2f, 1.0f), ColorState::Enabled);
+            _buttonHigher->SetBackgroundColor(glm::vec4(0.3f, 0.3f, 0.3f, 1.0f), ColorState::Hover);
+            _buttonHigher->SetBackgroundColor(glm::vec4(0.4f, 0.4f, 0.4f, 1.0f), ColorState::Clicked);
+            _buttonHigher->SetBackgroundColor(glm::vec4(0.1f, 0.1f, 0.1f, 1.0f), ColorState::Disabled);
+            _buttonHigher->SetBackgroundFillType(FillType::SOLID);
+            _buttonHigher->Connect_OnClick([this]() { stepValue(true); }, false);
+        }
+    }
     
-    if(!_buttonHigher && _useSliderButtons)
-        _buttonHigher = std::make_unique<Button>(_name + "/ButtonHigher", &_projection, this, _widgetTypeID, _parentWindow);
-}*/
+    SetSize(_size);
+}
 
 void  RetroFuturaGUI::Slider::Draw()
 {
@@ -92,11 +113,11 @@ void  RetroFuturaGUI::Slider::Draw()
     if(!_useSliderButtons)
         return;
 
-    /*if(_buttonLower)
+    if(_buttonLower)
         _buttonLower->Draw();
 
     if(_buttonHigher)
-        _buttonHigher->Draw();*/
+        _buttonHigher->Draw();
 }
 
 void RetroFuturaGUI::Slider::SetPosition(const glm::vec3& position)
@@ -110,20 +131,31 @@ void RetroFuturaGUI::Slider::SetPosition(const glm::vec3& position)
         _border->SetPosition(position + glm::vec3(0.0f, 0.0f, 0.01f));
 
     setGrabPosition();
+    setButtonPositions();
 }
 
 void RetroFuturaGUI::Slider::SetSize(const glm::vec3& size)
 {
     IWidget::SetSize(size);
 
+    // Each button is a square with an edge length of _background's y size. Each button must be clamped within the Widget's space
+    f32 trackWidth { size.x };
+
+    if(_useSliderButtons)
+        trackWidth = size.x - 2.0f * size.y > 0.0f ? size.x - 2.0f * size.y : 0.0f;
+
+    const glm::vec3 trackSize(trackWidth, size.y, size.z);
+
     if (_background)
-        _background->SetSize(size);
+        _background->SetSize(trackSize);
 
     if (_border)
-        _border->SetSize(size);
+        _border->SetSize(trackSize);
 
     setGrabSize();
     setGrabPosition();
+    setButtonSizes();
+    setButtonPositions();
 }
 
 void RetroFuturaGUI::Slider::SetRotation(const glm::vec3& rotation)
@@ -137,6 +169,7 @@ void RetroFuturaGUI::Slider::SetRotation(const glm::vec3& rotation)
         _border->SetRotation(rotation);
 
     setGrabPosition();
+    setButtonPositions();
 }
 
 void RetroFuturaGUI::Slider::SetGrabSize(const f32 size, const ElementSizing sizingMode)
@@ -196,6 +229,143 @@ void RetroFuturaGUI::Slider::setGrabPosition()
     {
         _grabBorder->SetPosition(position + glm::vec3(0.0f, 0.0f, 0.01f));
         _grabBorder->SetRotation(_rotation);
+    }
+}
+
+void RetroFuturaGUI::Slider::setButtonSizes()
+{
+    if(!_background)
+        return;
+
+    const glm::vec3 size(_background->GetSize().y, _background->GetSize().y, 0.0f);
+
+    if(_buttonLower)
+        _buttonLower->SetSize(size);
+
+    if(_buttonHigher)
+        _buttonHigher->SetSize(size);
+}
+
+void RetroFuturaGUI::Slider::setButtonPositions()
+{
+    if(!_background)
+        return;
+
+    // The buttons flank the track along its local x-axis, just like the grab; rotate that local offset into world space the same way setGrabPosition does.
+    const f32
+        buttonEdgeLength { _background->GetSize().y },
+        trackHalfLength { _background->GetSize().x * 0.5f },
+        radians { glm::radians(_rotation.z) };
+
+    if(_buttonLower)
+    {
+        const f32 localOffset { -(trackHalfLength + buttonEdgeLength * 0.5f) };
+
+        _buttonLower->SetPosition(glm::vec3
+        (
+            _background->GetPosition().x + localOffset * cos(radians),
+            _background->GetPosition().y + localOffset * sin(radians),
+            _background->GetPosition().z
+        ));
+        _buttonLower->SetRotation(_rotation);
+    }
+
+    if(_buttonHigher)
+    {
+        const f32 localOffset { trackHalfLength + buttonEdgeLength * 0.5f };
+
+        _buttonHigher->SetPosition(glm::vec3
+        (
+            _background->GetPosition().x + localOffset * cos(radians),
+            _background->GetPosition().y + localOffset * sin(radians),
+            _background->GetPosition().z
+        ));
+        _buttonHigher->SetRotation(_rotation);
+    }
+}
+
+void RetroFuturaGUI::Slider::stepValue(const bool increase)
+{
+    union
+    {
+        bool Bool;
+        i8 Int8;
+        i16 Int16;
+        i32 Int32;
+        i64 Int64;
+        u8 UInt8;
+        u16 UInt16;
+        u32 UInt32;
+        u64 UInt64;
+        f32 Float32;
+        f64 Float64;
+    } clamped { .UInt64 = 0 };
+
+    switch(_valueType)
+    {
+        case SliderValueType::Int8:
+            clamped.Int8 = increase
+                ? (_maxValue.Int8 - _value.Int8 < _buttonIncrement.Int8 ? _maxValue.Int8 : _value.Int8 + _buttonIncrement.Int8)
+                : (_value.Int8 - _minValue.Int8 < _buttonIncrement.Int8 ? _minValue.Int8 : _value.Int8 - _buttonIncrement.Int8);
+            SetValue<i8>(clamped.Int8);
+        break;
+        case SliderValueType::Int16:
+            clamped.Int16 = increase
+                ? (_maxValue.Int16 - _value.Int16 < _buttonIncrement.Int16 ? _maxValue.Int16 : _value.Int16 + _buttonIncrement.Int16)
+                : (_value.Int16 - _minValue.Int16 < _buttonIncrement.Int16 ? _minValue.Int16 : _value.Int16 - _buttonIncrement.Int16);
+            SetValue<i16>(clamped.Int16);
+        break;
+        case SliderValueType::Int32:
+            clamped.Int32 = increase
+                ? (_maxValue.Int32 - _value.Int32 < _buttonIncrement.Int32 ? _maxValue.Int32 : _value.Int32 + _buttonIncrement.Int32)
+                : (_value.Int32 - _minValue.Int32 < _buttonIncrement.Int32 ? _minValue.Int32 : _value.Int32 - _buttonIncrement.Int32);
+            SetValue<i32>(clamped.Int32);
+        break;
+        case SliderValueType::Int64:
+            clamped.Int64 = increase
+                ? (_maxValue.Int64 - _value.Int64 < _buttonIncrement.Int64 ? _maxValue.Int64 : _value.Int64 + _buttonIncrement.Int64)
+                : (_value.Int64 - _minValue.Int64 < _buttonIncrement.Int64 ? _minValue.Int64 : _value.Int64 - _buttonIncrement.Int64);
+            SetValue<i64>(clamped.Int64);
+        break;
+        case SliderValueType::UInt8:
+            clamped.UInt8 = increase
+                ? (_maxValue.UInt8 - _value.UInt8 < _buttonIncrement.UInt8 ? _maxValue.UInt8 : _value.UInt8 + _buttonIncrement.UInt8)
+                : (_value.UInt8 - _minValue.UInt8 < _buttonIncrement.UInt8 ? _minValue.UInt8 : _value.UInt8 - _buttonIncrement.UInt8);
+            SetValue<u8>(clamped.UInt8);
+        break;
+        case SliderValueType::UInt16:
+            clamped.UInt16 = increase
+                ? (_maxValue.UInt16 - _value.UInt16 < _buttonIncrement.UInt16 ? _maxValue.UInt16 : _value.UInt16 + _buttonIncrement.UInt16)
+                : (_value.UInt16 - _minValue.UInt16 < _buttonIncrement.UInt16 ? _minValue.UInt16 : _value.UInt16 - _buttonIncrement.UInt16);
+            SetValue<u16>(clamped.UInt16);
+        break;
+        case SliderValueType::UInt32:
+            clamped.UInt32 = increase
+                ? (_maxValue.UInt32 - _value.UInt32 < _buttonIncrement.UInt32 ? _maxValue.UInt32 : _value.UInt32 + _buttonIncrement.UInt32)
+                : (_value.UInt32 - _minValue.UInt32 < _buttonIncrement.UInt32 ? _minValue.UInt32 : _value.UInt32 - _buttonIncrement.UInt32);
+            SetValue<u32>(clamped.UInt32);
+        break;
+        case SliderValueType::UInt64:
+            clamped.UInt64 = increase
+                ? (_maxValue.UInt64 - _value.UInt64 < _buttonIncrement.UInt64 ? _maxValue.UInt64 : _value.UInt64 + _buttonIncrement.UInt64)
+                : (_value.UInt64 - _minValue.UInt64 < _buttonIncrement.UInt64 ? _minValue.UInt64 : _value.UInt64 - _buttonIncrement.UInt64);
+            SetValue<u64>(clamped.UInt64);
+        break;
+        case SliderValueType::Float32:
+            clamped.Float32 = increase
+                ? (_maxValue.Float32 - _value.Float32 < _buttonIncrement.Float32 ? _maxValue.Float32 : _value.Float32 + _buttonIncrement.Float32)
+                : (_value.Float32 - _minValue.Float32 < _buttonIncrement.Float32 ? _minValue.Float32 : _value.Float32 - _buttonIncrement.Float32);
+            SetValue<f32>(clamped.Float32);
+        break;
+        case SliderValueType::Float64:
+            clamped.Float64 = increase
+                ? (_maxValue.Float64 - _value.Float64 < _buttonIncrement.Float64 ? _maxValue.Float64 : _value.Float64 + _buttonIncrement.Float64)
+                : (_value.Float64 - _minValue.Float64 < _buttonIncrement.Float64 ? _minValue.Float64 : _value.Float64 - _buttonIncrement.Float64);
+            SetValue<f64>(clamped.Float64);
+        break;
+        default:
+            SetValue<bool>(increase);
+        break;
     }
 }
 
@@ -335,9 +505,6 @@ void RetroFuturaGUI::Slider::setValueFromMousePosition(const glm::vec2& mousePos
             _value.Bool = fraction >= 0.5f;
         break;
     }
-
-    _onValueChanged.Emit();
-    _onValueChangedAsync.EmitAsync();
 
     setGrabPosition();
 }
@@ -665,6 +832,8 @@ void RetroFuturaGUI::Slider::interact()
     bool isMouseButtonPressed = PlatformBridge::Input::IsMouseButtonDown(PlatformBridge::MouseButton::Left);
     bool isMouseInside = hasMousePosition && isPointInside(mousePos);
     bool isMouseInsideGrab = isPointInsideRect(mousePos, glm::vec3(_grabBackground->GetSize(), 0.0f), _grabBackground->GetPosition(), _grabBackground->GetRotation());
+    bool isMouseInsideButtonLower = _useSliderButtons && _buttonLower && isPointInsideRect(mousePos, _buttonLower->GetSize(), _buttonLower->GetPosition(), _buttonLower->GetRotation());
+    bool isMouseInsideButtonHigher = _useSliderButtons && _buttonHigher && isPointInsideRect(mousePos, _buttonHigher->GetSize(), _buttonHigher->GetPosition(), _buttonHigher->GetRotation());
 
     if(!_isEnabledFlag || !isMouseInside) //no action and mouse leave
     {
@@ -710,9 +879,9 @@ void RetroFuturaGUI::Slider::interact()
             setGrabColors(ColorState::Clicked);
             _isDraggingGrab = true;
         }
-        else
+        else if(!isMouseInsideButtonLower && !isMouseInsideButtonHigher)
         {
-            setValueFromMousePosition(mousePos);   
+            setValueFromMousePosition(mousePos);
             _onValueChanged.Emit();
             _onValueChangedAsync.EmitAsync();
         }
