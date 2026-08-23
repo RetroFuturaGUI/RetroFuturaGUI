@@ -414,7 +414,7 @@ void RetroFuturaGUI::ProgressBar::SetIndicatorType(const IndicatorType type)
     setIndicatorShape();
 }
 
-void RetroFuturaGUI::ProgressBar::SetIndicatorSize(const f32 size)
+void RetroFuturaGUI::ProgressBar::SetIndicatorSize(const glm::vec2& size)
 {
     _indicatorSize = size;
     setIndicatorShape();
@@ -481,11 +481,19 @@ void RetroFuturaGUI::ProgressBar::setIndicatorPosition()
         return;
 
     const f32
-        trackWidth { _background->GetSize().x },
+        trackHalfWidth { _background->GetSize().x * 0.5f },
+        indicatorHalfSize { _indicator->GetSize().x * 0.5f },
+        borderWidth { _border ? _border->GetBorderWidth() : 0.0f },
         graphWidth { _graph->GetSize().x };
 
-    // The indicator sits on the graph's current leading (right) edge and travels with it.
-    const glm::vec2 localOffset(graphWidth - trackWidth * 0.5f, 0.0f);
+    // _indicator sits on the graph's current leading (right) edge and travels with it.
+    // it's clamped so it stops right where it would touch the track's border.
+    const f32
+        maxLocalX { trackHalfWidth - borderWidth - indicatorHalfSize > 0.0f ? trackHalfWidth - borderWidth - indicatorHalfSize : 0.0f },
+        rawLocalX { graphWidth - trackHalfWidth },
+        clampedLocalX { rawLocalX < -maxLocalX ? -maxLocalX : (rawLocalX > maxLocalX ? maxLocalX : rawLocalX) };
+
+    const glm::vec2 localOffset(clampedLocalX, 0.0f);
     const f32 radians = glm::radians(_rotation.z);
     const glm::vec2 rotatedOffset
     (
@@ -509,12 +517,12 @@ void RetroFuturaGUI::ProgressBar::setIndicatorShape()
     if(!_indicator)
         return;
 
-    _indicator->SetSize(glm::vec2(_indicatorSize, _indicatorSize));
+    _indicator->SetSize(_indicatorSize);
 
     if(_indicatorType == IndicatorType::Circle)
     {
         _indicator->SetShaderFeatures(RoundedCorners);
-        _indicator->SetCornerRadii(glm::vec4(_indicatorSize * 0.5f));
+        _indicator->SetCornerRadii(glm::vec4(_indicatorSize.x * 0.5f));
     }
     else
     {
@@ -636,4 +644,12 @@ void RetroFuturaGUI::ProgressBar::interact()
     }
 
     _wasClicked = isMouseButtonPressed;
+}
+
+void RetroFuturaGUI::ProgressBar::SetIndicatorCornerRadii(const glm::vec4& radii)
+{
+    if(!_useIndicator || !_indicator)
+        return;
+  
+    _indicator->SetCornerRadii(radii);
 }

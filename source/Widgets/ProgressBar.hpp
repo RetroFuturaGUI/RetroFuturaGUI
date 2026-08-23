@@ -126,9 +126,11 @@ namespace RetroFuturaGUI
         void SetIndicatorType(const IndicatorType type);
 
         /// @brief Sets the indicator's side length, in pixels.
-        void SetIndicatorSize(const f32 size);
+        void SetIndicatorSize(const glm::vec2& size);
 
         void SetIndicatorColors(std::span<glm::vec4> colors, const ColorState state);
+
+        void SetIndicatorCornerRadii(const glm::vec4& radii);
 
         /// @brief Connects a slot to be called when the value has changed
         /// @param async If true, the slot is invoked asynchronously.
@@ -552,7 +554,7 @@ namespace RetroFuturaGUI
         f32 _graphWidth { 0.0f };         // graph thickness; 0 matches the track's height
         bool _useIndicator { false };
         IndicatorType _indicatorType { IndicatorType::None };
-        f32 _indicatorSize { 12.0f };
+        glm::vec2 _indicatorSize { 8.0f, 12.0f };
 
         //Design
         //std::unique_ptr<Texture> _graphImage { nullptr };
