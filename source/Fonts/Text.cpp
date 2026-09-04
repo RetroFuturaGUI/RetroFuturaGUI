@@ -187,8 +187,10 @@ void RetroFuturaGUI::Text::updateMesh()
         return;
     }
 
-    f32 
-        nativeSize { _fontInfo->_Atlasses[_fontIndex]._FontSize },
+    const GlyphAtlas& _atlas { _fontInfo->_Atlasses.at(_fontIndex) };
+
+    f32
+        nativeSize { _atlas._FontSize },
         scale { _glyphSize.y / nativeSize },
         currentX { 0.0f },
         currentY { 0.0f },
@@ -219,9 +221,9 @@ void RetroFuturaGUI::Text::updateMesh()
         }
 
         blockKey = findGlyphBlockKey(codepoint);
-        auto blockIterator { _fontInfo->_Atlasses[_fontIndex]._GlyphBlocks.find(blockKey) };
+        auto blockIterator { _atlas._GlyphBlocks.find(blockKey) };
 
-        if (blockIterator == _fontInfo->_Atlasses[_fontIndex]._GlyphBlocks.end())
+        if (blockIterator == _atlas._GlyphBlocks.end())
         {
             //No block covers this codepoint (font doesn't support it) - still needs a slot for making text processable
             _glyphPositions.push_back(currentX);
@@ -384,8 +386,10 @@ void RetroFuturaGUI::Text::calculateTextSpan()
     if(!_fontInfo)
         return;
 
-    f32 
-        nativeSize { _fontInfo->_Atlasses[_fontIndex]._FontSize > 0 ? static_cast<f32>(_fontInfo->_Atlasses[_fontIndex]._FontSize) : 1.0f },
+    const GlyphAtlas& _atlas { _fontInfo->_Atlasses.at(_fontIndex) };
+
+    f32
+        nativeSize { _atlas._FontSize > 0 ? static_cast<f32>(_atlas._FontSize) : 1.0f },
         scale { _glyphSize.y / nativeSize },
         maxLineWidth { 0.0f },
         totalHeight { 0.0f },
@@ -409,8 +413,9 @@ void RetroFuturaGUI::Text::calculateTextSpan()
         }
 
         u32 blockKey = findGlyphBlockKey(codepoint);
-        auto blockIterator = _fontInfo->_Atlasses[_fontIndex]._GlyphBlocks.find(blockKey);
-        if (blockIterator == _fontInfo->_Atlasses[_fontIndex]._GlyphBlocks.end())
+        auto blockIterator = _atlas._GlyphBlocks.find(blockKey);
+        
+        if (blockIterator == _atlas._GlyphBlocks.end())
             continue;
 
         auto glyphIt = blockIterator->second._Glyphs.find(codepoint);

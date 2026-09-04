@@ -223,7 +223,7 @@ i32 RetroFuturaGUI::FontManager::initFreeTypeLibrary()
     return -1;
 }
 
-std::shared_ptr<RetroFuturaGUI::FontInfo> RetroFuturaGUI::FontManager::GetFontInfo(std::string_view fontFamily, const f32 size, const PlatformBridge::Fonts::Slant slant, const PlatformBridge::Fonts::Weight weight)
+const RetroFuturaGUI::FontInfo* RetroFuturaGUI::FontManager::GetFontInfo(std::string_view fontFamily, const f32 size, const PlatformBridge::Fonts::Slant slant, const PlatformBridge::Fonts::Weight weight)
 {
     u32 fontIndex = FontSizeToIntegral(size);
 
@@ -234,7 +234,7 @@ std::shared_ptr<RetroFuturaGUI::FontInfo> RetroFuturaGUI::FontManager::GetFontIn
             && font._FontProperty._Slant == slant
             && font._FontProperty._Weight == weight)
         {
-            return std::make_shared<FontInfo>(font);
+            return &font;
         }
     }
 
@@ -243,7 +243,7 @@ std::shared_ptr<RetroFuturaGUI::FontInfo> RetroFuturaGUI::FontManager::GetFontIn
     {
         for (const auto& font : _fonts)
             if (font._FontProperty._Name == fontFamily && font._Atlasses.count(fontIndex) > 0)
-                return std::make_shared<FontInfo>(font);
+                return &font;
     }
 
     return nullptr;

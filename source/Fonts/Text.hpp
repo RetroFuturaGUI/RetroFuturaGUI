@@ -116,7 +116,7 @@ namespace RetroFuturaGUI
         PlatformBridge::Fonts::Slant _fontSlant { PlatformBridge::Fonts::Slant::Roman };
         PlatformBridge::Fonts::Weight _fontWeight { PlatformBridge::Fonts::Weight::Normal };
         u32 _fontIndex { 0 };
-        std::shared_ptr<FontInfo> _fontInfo;
+        const FontInfo* _fontInfo { nullptr };
         DoubleEncodedString _text;
         glm::vec4 _textColor { 1.0f };
         TextAlignment _textAlignment { TextAlignment::Left };

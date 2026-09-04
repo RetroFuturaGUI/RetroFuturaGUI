@@ -83,8 +83,8 @@ namespace RetroFuturaGUI
         static const std::list<FontInfo>& GetFonts();
 
         /// @brief Finds the loaded FontInfo matching the given family, size and style.
-        /// @return A shared_ptr to the matching FontInfo, or nullptr if no such font is loaded.
-        static std::shared_ptr<FontInfo> GetFontInfo(std::string_view fontFamily, const f32 size, const PlatformBridge::Fonts::Slant slant, const PlatformBridge::Fonts::Weight weight);
+        /// @return A pointer to the matching FontInfo, or nullptr if no such font is loaded.
+        static const FontInfo* GetFontInfo(std::string_view fontFamily, const f32 size, const PlatformBridge::Fonts::Slant slant, const PlatformBridge::Fonts::Weight weight);
 
         /// @brief Sets the font used when no explicit font is specified, loading it if necessary.
         static void SetDefaultFont(std::string_view fontFamily, const f32 size = 16.0f, const PlatformBridge::Fonts::Slant slant = PlatformBridge::Fonts::Slant::Roman, const PlatformBridge::Fonts::Weight weight = PlatformBridge::Fonts::Weight::Normal, const u32 codePointFirst = BasicLatinFirst, const u32 codePointLast = BasicLatinLast);
