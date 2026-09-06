@@ -44,6 +44,9 @@ namespace RetroFuturaGUI
         /// @brief Sets the Slider's Rotation
         void SetRotation(const glm::vec3& rotation) override;
 
+        /// @brief Sets whether the Slider runs horizontally or vertically at 0° rotation.
+        void SetOrientation(const Orientation orientation) override;
+
         /// @brief Sets the Slider's indicator's size along the slider's length
         /// @param size (f32): slider's length
         /// @param sizingMode (ElementSizing): Whether the size is set in pixelsize (abolute) or in percent (relative to the Slider's total length)

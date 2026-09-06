@@ -33,6 +33,12 @@ namespace RetroFuturaGUI
             Circle
         };
 
+        enum class Orientation : u32
+        {
+            Horizontal,
+            Vertical
+        };
+
         /// @brief Connects a slot to be called when the value has changed
         /// @param async If true, the slot is invoked asynchronously.
         void Connect_OnValueChanged(const typename Signal<>::Slot& slot, const bool async);
@@ -533,10 +539,18 @@ namespace RetroFuturaGUI
         /// @brief Sets the coverage threshold above which the graph's fog appears; higher values carve larger clear gaps out of the cloud.
         void SetGraphFogClearing(const f32 clearing);
 
+        /// @brief Sets the orientation of the ranged value
+        /// @param orientation The orientation to set (Horizontal or Vertical)
+        virtual void SetOrientation(const Orientation orientation);
+
     protected:
         // Non-owning aliases that derive from the widgets. This avoids the inclusion of IWidget
         Rectangle* _track { nullptr };
         Projection* _elementProjection { nullptr };
+
+        /// @brief Folds the orientation into the widget's own rotation.
+        /// @return The given rotation for Horizontal, or that rotation turned a quarter turn counter-clockwise for Vertical.
+        glm::vec3 orientedRotation(const glm::vec3& rotation) const;
 
         void setIndicatorPosition();
         void setGraphSize();
@@ -621,6 +635,7 @@ namespace RetroFuturaGUI
         IndicatorType _indicatorType { IndicatorType::None };
         GraphMode _graphMode { GraphMode::Bar };
         f32 _graphWidth { 0.0f }; // graph thickness; 0 matches the track's height
+        Orientation _orientation { Orientation::Horizontal };
 
         // Design
         std::vector<glm::vec4>

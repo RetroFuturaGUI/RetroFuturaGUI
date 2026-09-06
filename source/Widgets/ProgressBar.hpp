@@ -37,6 +37,9 @@ namespace RetroFuturaGUI
         /// @brief Sets the ProgressBar's Rotation
         void SetRotation(const glm::vec3& rotation) override;
 
+        /// @brief Sets whether the ProgressBar runs horizontally or vertically at 0° rotation.
+        void SetOrientation(const Orientation orientation) override;
+
         /// @brief Sets the corner rounding radii of the ProgressBar's track background and border.
         void SetCornerRadii(const glm::vec4& radii);
 

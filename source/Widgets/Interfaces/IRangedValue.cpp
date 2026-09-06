@@ -544,6 +544,18 @@ void RetroFuturaGUI::IRangedValue::SetGraphFogClearing(const f32 clearing)
         _graph->SetFogClearing(clearing);
 }
 
+void RetroFuturaGUI::IRangedValue::SetOrientation(const Orientation orientation)
+{
+    _orientation = orientation;
+}
+
+glm::vec3 RetroFuturaGUI::IRangedValue::orientedRotation(const glm::vec3& rotation) const
+{
+    return _orientation == Orientation::Vertical
+        ? rotation + glm::vec3(0.0f, 0.0f, -90.0f)
+        : rotation;
+}
+
 void RetroFuturaGUI::IRangedValue::setIndicatorPosition()
 {
     if(!_track || !_indicatorBackground)

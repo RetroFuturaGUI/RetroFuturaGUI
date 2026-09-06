@@ -136,16 +136,23 @@ void RetroFuturaGUI::Slider::SetSize(const glm::vec3& size)
 void RetroFuturaGUI::Slider::SetRotation(const glm::vec3& rotation)
 {
     IWidget::SetRotation(rotation);
+    const glm::vec3 trackRotation { orientedRotation(rotation) }; //use track's orientation
 
     if (_background)
-        _background->SetRotation(rotation);
+        _background->SetRotation(trackRotation);
 
     if (_border)
-        _border->SetRotation(rotation);
+        _border->SetRotation(trackRotation);
 
     setIndicatorPosition();
     setGraphPosition();
     setButtonPositions();
+}
+
+void RetroFuturaGUI::Slider::SetOrientation(const Orientation orientation)
+{
+    IRangedValue::SetOrientation(orientation);
+    SetRotation(_rotation);
 }
 
 void RetroFuturaGUI::Slider::SetIndicatorSize(const f32 size, const ElementSizing sizingMode)
@@ -194,10 +201,11 @@ void RetroFuturaGUI::Slider::setButtonPositions()
         return;
 
     // The buttons flank the track along its local x-axis, just like the indicator; rotate that local offset into world space the same way setIndicatorPosition does.
+    const glm::vec3 trackRotation { orientedRotation(_rotation) };
     const f32
         buttonEdgeLength { _background->GetSize().y },
         trackHalfLength { _background->GetSize().x * 0.5f },
-        radians { glm::radians(_rotation.z) };
+        radians { glm::radians(trackRotation.z) };
 
     if(_buttonLower)
     {
@@ -209,7 +217,7 @@ void RetroFuturaGUI::Slider::setButtonPositions()
             _background->GetPosition().y + localOffset * sin(radians),
             _background->GetPosition().z
         ));
-        _buttonLower->SetRotation(_rotation);
+        _buttonLower->SetRotation(trackRotation);
     }
 
     if(_buttonHigher)
@@ -222,7 +230,7 @@ void RetroFuturaGUI::Slider::setButtonPositions()
             _background->GetPosition().y + localOffset * sin(radians),
             _background->GetPosition().z
         ));
-        _buttonHigher->SetRotation(_rotation);
+        _buttonHigher->SetRotation(trackRotation);
     }
 }
 
@@ -348,7 +356,7 @@ void RetroFuturaGUI::Slider::interact()
 
     glm::vec2 mousePos { static_cast<f32>(mouseX), _projection.GetResolution().y - static_cast<f32>(mouseY) };
     bool isMouseButtonPressed = PlatformBridge::Input::IsMouseButtonDown(PlatformBridge::MouseButton::Left);
-    bool isMouseInside = hasMousePosition && isPointInside(mousePos);
+    bool isMouseInside = hasMousePosition && isPointInsideRect(mousePos, _size, _position, orientedRotation(_rotation));
     bool isMouseInsideIndicator = isPointInsideRect(mousePos, glm::vec3(_indicatorBackground->GetSize(), 0.0f), _indicatorBackground->GetPosition(), _indicatorBackground->GetRotation());
     bool isMouseInsideButtonLower = _useSliderButtons && _buttonLower && isPointInsideRect(mousePos, _buttonLower->GetSize(), _buttonLower->GetPosition(), _buttonLower->GetRotation());
     bool isMouseInsideButtonHigher = _useSliderButtons && _buttonHigher && isPointInsideRect(mousePos, _buttonHigher->GetSize(), _buttonHigher->GetPosition(), _buttonHigher->GetRotation());

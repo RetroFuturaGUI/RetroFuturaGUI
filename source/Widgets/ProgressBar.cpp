@@ -79,15 +79,22 @@ void RetroFuturaGUI::ProgressBar::SetSize(const glm::vec3& size)
 void RetroFuturaGUI::ProgressBar::SetRotation(const glm::vec3& rotation)
 {
     IWidget::SetRotation(rotation);
+    const glm::vec3 trackRotation { orientedRotation(rotation) };
 
     if (_background)
-        _background->SetRotation(rotation);
+        _background->SetRotation(trackRotation);
 
     if (_border)
-        _border->SetRotation(rotation);
+        _border->SetRotation(trackRotation);
 
     setGraphPosition();
     setIndicatorPosition();
+}
+
+void RetroFuturaGUI::ProgressBar::SetOrientation(const Orientation orientation)
+{
+    IRangedValue::SetOrientation(orientation);
+    SetRotation(_rotation);
 }
 
 void RetroFuturaGUI::ProgressBar::SetCornerRadii(const glm::vec4& radii)
@@ -136,7 +143,7 @@ void RetroFuturaGUI::ProgressBar::interact()
 
     glm::vec2 mousePos { static_cast<f32>(mouseX), _projection.GetResolution().y - static_cast<f32>(mouseY) };
     bool isMouseButtonPressed = PlatformBridge::Input::IsMouseButtonDown(PlatformBridge::MouseButton::Left);
-    bool isMouseInside = hasMousePosition && isPointInside(mousePos);
+    bool isMouseInside = hasMousePosition && isPointInsideRect(mousePos, _size, _position, orientedRotation(_rotation));
     bool isMouseInsideGraph = isPointInsideRect(mousePos, glm::vec3(_graph->GetSize(), 0.0f), _graph->GetPosition(), _graph->GetRotation());
 
     if(!_isEnabledFlag || !isMouseInside) //no action and mouse leave
