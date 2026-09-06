@@ -39,15 +39,25 @@ void RetroFuturaGUI::Table::Draw()
 {
     drawBorder();
 
-    for(const auto& row : _tableCells)
-        for(const TableCell& cell : row)
+    if(_nthAxisColors.empty())
+        return;
+
+    const uSize variantCount { _nthAxisColors.size() };
+
+    for(uSize row = 0; row < _tableCells.size(); ++row)
+    {
+        for(uSize column = 0; column < _tableCells[row].size(); ++column)
         {
+            const TableCell& cell { _tableCells[row][column] };
+
             if(!cell._TableWidget)
                 continue;
 
-            if(_axisColoringOverlay && !_nthAxisColors.empty())
+            const uSize index { (_tableOrientation == TableOrientation::Row ? row : column) % variantCount };
+            AxisColoring& coloring { _nthAxisColors[index] };
+
+            if(_axisColoringOverlay)
             {
-                AxisColoring& coloring { _nthAxisColors[0] };
                 _axisColoringOverlay->SetSize(cell._SizePixels);
                 _axisColoringOverlay->SetPosition(cell._PositionPixels - glm::vec3(0.0f, 0.0f, _widgetZOffset));
                 _axisColoringOverlay->SetColors(coloring._BackgroundColorEnabled);
@@ -56,15 +66,18 @@ void RetroFuturaGUI::Table::Draw()
 
             if(_innerBorder)
             {
-                AxisColoring& coloring { _nthAxisColors[0] };
                 _innerBorder->SetSize(cell._SizePixels);
                 _innerBorder->SetPosition(cell._PositionPixels - glm::vec3(0.0f, 0.0f, _widgetZOffset - 0.01f));
                 _innerBorder->SetColors(coloring._InnerBorderColorEnabled);
                 _innerBorder->Draw();
             }
 
+            if(cell._TableWidgetTypeID == ITableWidget::TableWidgetTypeID::TableText)
+                static_cast<TableText*>(cell._TableWidget.get())->SetTextColors(coloring._TextColorEnabled, ColorState::Enabled);
+
             cell._TableWidget->Draw();
         }
+    }
 }
 
 void RetroFuturaGUI::Table::SetSize(const glm::vec3& size)
@@ -169,12 +182,15 @@ void RetroFuturaGUI::Table::Disconnect_OnTextChange(const typename Signal<>::Slo
     _onTextChangeAsync.Disconnect(slot);
 }
 
-void RetroFuturaGUI::Table::SetTextColors(std::span<glm::vec4> colors, const ColorState state)
+void RetroFuturaGUI::Table::SetTextColors(std::span<glm::vec4> colors, const ColorState state, const uSize nthIndex)
 {
     if(_nthAxisColors.empty())
         _nthAxisColors.resize(1);
 
-    AxisColoring& coloring { _nthAxisColors[0] };
+    if(nthIndex >= _nthAxisColors.size())
+        return;
+
+    AxisColoring& coloring { _nthAxisColors[nthIndex] };
     std::vector<glm::vec4>* target { nullptr };
 
     switch(state)
@@ -290,12 +306,15 @@ void RetroFuturaGUI::Table::SetTextPadding(const f32 padding)
         }
 }
 
-void RetroFuturaGUI::Table::SetAxisBackgroundColors(std::span<glm::vec4> colors, const ColorState state, [[maybe_unused]] const uSize rowNthIndex)
+void RetroFuturaGUI::Table::SetAxisBackgroundColors(std::span<glm::vec4> colors, const ColorState state, const uSize nthIndex)
 {
     if(_nthAxisColors.empty())
         return;
 
-    AxisColoring& coloring { _nthAxisColors[0] };
+    if(nthIndex >= _nthAxisColors.size())
+        return;
+
+    AxisColoring& coloring { _nthAxisColors[nthIndex] };
 
     switch(state)
     {
@@ -314,12 +333,15 @@ void RetroFuturaGUI::Table::SetAxisBackgroundColors(std::span<glm::vec4> colors,
     }
 }
 
-void RetroFuturaGUI::Table::SetAxisBorderColors(std::span<glm::vec4> colors, const ColorState state, [[maybe_unused]] const uSize axisNthIndex)
+void RetroFuturaGUI::Table::SetAxisBorderColors(std::span<glm::vec4> colors, const ColorState state, const uSize nthIndex)
 {
     if(_nthAxisColors.empty())
         return;
 
-    AxisColoring& coloring { _nthAxisColors[0] };
+    if(nthIndex >= _nthAxisColors.size())
+        return;
+
+    AxisColoring& coloring { _nthAxisColors[nthIndex] };
 
     switch(state)
     {
@@ -342,4 +364,14 @@ void RetroFuturaGUI::Table::SetInnerBorderWidth(const f32 width)
 {
     if(_innerBorder)
         _innerBorder->SetBorderWidth(width);
+}
+
+void RetroFuturaGUI::Table::SetTableOrientation(const TableOrientation orientation)
+{
+    _tableOrientation = orientation;
+}
+
+void RetroFuturaGUI::Table::SetAxisAlternatingColorCount(const uSize variantCount)
+{
+    _nthAxisColors.resize(variantCount);
 }

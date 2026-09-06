@@ -21,21 +21,23 @@ namespace RetroFuturaGUI
     class Table : public IWidget, public IClickable, public IBackground, public IBorder
     {
     public:
+        enum class TableOrientation : u32
+        {
+            Row,
+            Column
+        };
+
         Table(const std::string& name, Projection* projection, IWidget* parentWidget, const WidgetTypeID parentWidgetTypeID, GLFWwindow* parentWindow);
         Table(const Table&) = delete;
         Table(Table&&) = delete;
         auto operator =(const Table&) = delete;
         auto operator =(Table&&) = delete;
         void SetBackgroundColors(std::span<glm::vec4> colors, const ColorState state) = delete;
-        void SetAxisBackgroundColors(std::span<glm::vec4> colors, const ColorState state, const uSize rowNthIndex);
-        void SetAxisBorderColors(std::span<glm::vec4> colors, const ColorState state, const uSize axisNthIndex);
+        void SetAxisBackgroundColors(std::span<glm::vec4> colors, const ColorState state, const uSize nthIndex);
+        void SetAxisBorderColors(std::span<glm::vec4> colors, const ColorState state, const uSize nthIndex);
         void SetInnerBorderWidth(const f32 width);
-
-        enum class TableOrientation : u32
-        {
-            Row,
-            Column
-        };
+        void SetTableOrientation(const TableOrientation orientation);
+        void SetAxisAlternatingColorCount(const uSize variantCount);
 
         struct TableCell
         {
@@ -142,7 +144,7 @@ namespace RetroFuturaGUI
         void Disconnect_OnTextChange(const typename Signal<>::Slot& slot);
 
         /// @brief Sets the text color for the given color state.
-        void SetTextColors(std::span<glm::vec4> colors, const ColorState state);
+        void SetTextColors(std::span<glm::vec4> colors, const ColorState state, const uSize nthIndex);
 
         /// @brief Returns the text color configured for the given color state.
         std::vector<glm::vec4> GetTextColor(const ColorState state) const;
@@ -222,7 +224,6 @@ namespace RetroFuturaGUI
 
     // Design
         std::vector<AxisColoring> _nthAxisColors {};
-        uSize _rowColoringVariantCount { 1 };
         static constexpr f32 _widgetZOffset { 0.05f };
 
     // Logic
