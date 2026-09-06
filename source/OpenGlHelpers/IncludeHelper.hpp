@@ -38,6 +38,7 @@ namespace RetroFuturaGUI
         RadioButtonGroup,
         Slider,
         ProgressBar,
+        Table,
         Unknown = -1
     };   
 

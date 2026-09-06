@@ -54,6 +54,10 @@ list(APPEND RetroFuturaGuiSources
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/Interfaces/IBackground.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/Interfaces/IBorder.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/Interfaces/IClickable.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/Table/Table.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/Table/ITableWidget.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/Table/ITableTextProperties.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/Table/TableText.cpp"
 )
 
 if(DEFINED DYNLIB_MODE AND DYNLIB_MODE)
@@ -75,6 +79,7 @@ target_include_directories("RetroFuturaGUI" PUBLIC
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/Containers"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/Interfaces"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/Mechanisms"
+    "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/Table"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/OpenGlHelpers"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Shapes"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Shaders"
