@@ -24,10 +24,10 @@ RetroFuturaGUI::Table::Table(const std::string& name, Projection* projection, IW
     if(_highlightedCellBorder)
         _highlightedCellBorder->SetRectangleMode(RectangleMode::Border);
 
-    _axisColoringOverlay = std::make_unique<Rectangle>(projection);
+    _trackColoringOverlay = std::make_unique<Rectangle>(projection);
 
-    if(_axisColoringOverlay)
-        _axisColoringOverlay->SetRectangleMode(RectangleMode::Plane);
+    if(_trackColoringOverlay)
+        _trackColoringOverlay->SetRectangleMode(RectangleMode::Plane);
     
     _innerBorder = std::make_unique<Rectangle>(projection);
 
@@ -39,14 +39,46 @@ void RetroFuturaGUI::Table::Draw()
 {
     drawBorder();
 
-    if(_nthAxisColors.empty())
+    if(_nthTrackColors.empty())
         return;
 
-    const uSize variantCount { _nthAxisColors.size() };
+    const uSize variantCount { _nthTrackColors.size() };
 
-    for(uSize row = 0; row < _tableCells.size(); ++row)
+    // Clip the table's content to its own bounds by intersecting the current scissor box with the table's own rectangle
+    i32
+        clipLeft { static_cast<i32>(_position.x - _size.x * 0.5f) },
+        clipBottom { static_cast<i32>(_position.y - _size.y * 0.5f) },
+        clipRight { clipLeft + static_cast<i32>(_size.x) },
+        clipTop { clipBottom + static_cast<i32>(_size.y) },
+        previousScissor[4] { 0, 0, 0, 0 };
+
+    const bool scissorWasEnabled { static_cast<bool>(glIsEnabled(GL_SCISSOR_TEST)) };
+    glGetIntegerv(GL_SCISSOR_BOX, previousScissor);
+
+    if(scissorWasEnabled) // Whoever clipped us first still wins; intersect instead of escaping it.
     {
-        for(uSize column = 0; column < _tableCells[row].size(); ++column)
+        const i32
+            previousRight { previousScissor[0] + previousScissor[2] },
+            previousTop { previousScissor[1] + previousScissor[3] };
+        clipLeft = clipLeft > previousScissor[0] ? clipLeft : previousScissor[0];
+        clipBottom = clipBottom > previousScissor[1] ? clipBottom : previousScissor[1];
+        clipRight = clipRight < previousRight ? clipRight : previousRight;
+        clipTop = clipTop < previousTop ? clipTop : previousTop;
+    }
+
+    glEnable(GL_SCISSOR_TEST);
+    glScissor(clipLeft, clipBottom,
+              clipRight > clipLeft ? clipRight - clipLeft : 0,
+              clipTop > clipBottom ? clipTop - clipBottom : 0);
+
+    // only draw cells overlapping the viewport
+    const uSize rowEnd { _displayedRows[1] < _tableCells.size() ? _displayedRows[1] : _tableCells.size() };
+
+    for(uSize row = _displayedRows[0]; row < rowEnd; ++row)
+    {
+        const uSize columnEnd { _displayedColumns[1] < _tableCells[row].size() ? _displayedColumns[1] : _tableCells[row].size() };
+
+        for(uSize column = _displayedColumns[0]; column < columnEnd; ++column)
         {
             const TableCell& cell { _tableCells[row][column] };
 
@@ -54,14 +86,14 @@ void RetroFuturaGUI::Table::Draw()
                 continue;
 
             const uSize index { (_tableOrientation == TableOrientation::Row ? row : column) % variantCount };
-            AxisColoring& coloring { _nthAxisColors[index] };
+            TrackColoring& coloring { _nthTrackColors[index] };
 
-            if(_axisColoringOverlay)
+            if(_trackColoringOverlay)
             {
-                _axisColoringOverlay->SetSize(cell._SizePixels);
-                _axisColoringOverlay->SetPosition(cell._PositionPixels - glm::vec3(0.0f, 0.0f, _widgetZOffset));
-                _axisColoringOverlay->SetColors(coloring._BackgroundColorEnabled);
-                _axisColoringOverlay->Draw();
+                _trackColoringOverlay->SetSize(cell._SizePixels);
+                _trackColoringOverlay->SetPosition(cell._PositionPixels - glm::vec3(0.0f, 0.0f, _widgetZOffset));
+                _trackColoringOverlay->SetColors(coloring._BackgroundColorEnabled);
+                _trackColoringOverlay->Draw();
             }
 
             if(_innerBorder)
@@ -78,6 +110,11 @@ void RetroFuturaGUI::Table::Draw()
             cell._TableWidget->Draw();
         }
     }
+
+    if(scissorWasEnabled)
+        glScissor(previousScissor[0], previousScissor[1], previousScissor[2], previousScissor[3]);
+    else
+        glDisable(GL_SCISSOR_TEST);
 }
 
 void RetroFuturaGUI::Table::SetSize(const glm::vec3& size)
@@ -117,7 +154,24 @@ void RetroFuturaGUI::Table::SetRotation(const glm::vec3& rotation)
         _border->SetRotation(rotation);
 }
 
-void RetroFuturaGUI::Table::SetAxisDefinitions(const std::vector<f32>& rowDefinition, const std::vector<f32>& columnDefinition)
+void RetroFuturaGUI::Table::SetTrackDefinitions(const std::vector<f32>& rowDefinition, const std::vector<f32>& columnDefinition)
+{
+    std::vector<TrackDefinition>
+        rowTracks {},
+        columnTracks {};
+    rowTracks.reserve(rowDefinition.size());
+    columnTracks.reserve(columnDefinition.size());
+
+    for(const f32 weight : rowDefinition)
+        rowTracks.push_back({ TrackSizing::Star, weight });
+
+    for(const f32 weight : columnDefinition)
+        columnTracks.push_back({ TrackSizing::Star, weight });
+
+    SetTrackDefinitions(rowTracks, columnTracks);
+}
+
+void RetroFuturaGUI::Table::SetTrackDefinitions(const std::vector<TrackDefinition>& rowDefinition, const std::vector<TrackDefinition>& columnDefinition)
 {
     _rowDefinition = rowDefinition;
     _columnDefinition = columnDefinition;
@@ -129,31 +183,150 @@ void RetroFuturaGUI::Table::SetAxisDefinitions(const std::vector<f32>& rowDefini
     layoutCells();
 }
 
+void RetroFuturaGUI::Table::SetScrollPosition(const glm::vec2& scrollPosition)
+{
+    _scrollPosition = scrollPosition;
+    layoutCells(); // clamps the new position against the current content extent
+}
+
+void RetroFuturaGUI::Table::SetHorizontalScrollPosition(const f32 scrollPosition)
+{
+    SetScrollPosition(glm::vec2(scrollPosition, _scrollPosition.y));
+}
+
+void RetroFuturaGUI::Table::SetVerticalScrollPosition(const f32 scrollPosition)
+{
+    SetScrollPosition(glm::vec2(_scrollPosition.x, scrollPosition));
+}
+
+glm::vec2 RetroFuturaGUI::Table::GetScrollPosition() const
+{
+    return _scrollPosition;
+}
+
+f32 RetroFuturaGUI::Table::GetHorizontalScrollPosition() const
+{
+    return _scrollPosition.x;
+}
+
+f32 RetroFuturaGUI::Table::GetVerticalScrollPosition() const
+{
+    return _scrollPosition.y;
+}
+
+glm::vec2 RetroFuturaGUI::Table::GetMaxScroll() const
+{
+    return glm::vec2(_contentExtent.x > _size.x ? _contentExtent.x - _size.x : 0.0f,
+                     _contentExtent.y > _size.y ? _contentExtent.y - _size.y : 0.0f);
+}
+
+void RetroFuturaGUI::Table::resolveTrackSizes(const std::vector<TrackDefinition>& tracks, const f32 viewportExtent, std::vector<f32>& outSizes)
+{
+    outSizes.assign(tracks.size(), 0.0f);
+
+    f32
+        fixedTotal { 0.0f },
+        starWeightTotal { 0.0f };
+
+    for(const TrackDefinition& track : tracks)
+    {
+        const f32 value { track._Value > 0.0f ? track._Value : 0.0f };
+
+        if(track._Sizing == TrackSizing::Star)
+            starWeightTotal += value;
+        else
+            fixedTotal += value; // Auto resolves like Fixed until content measurement lands
+    }
+
+    // Star tracks only divide what the fixed ones left behind, so they can never push the content past the viewport
+    const f32 leftover { viewportExtent > fixedTotal ? viewportExtent - fixedTotal : 0.0f };
+
+    for(uSize track = 0; track < tracks.size(); ++track)
+    {
+        const f32 value { tracks[track]._Value > 0.0f ? tracks[track]._Value : 0.0f };
+
+        if(tracks[track]._Sizing != TrackSizing::Star)
+        {
+            outSizes[track] = value;
+            continue;
+        }
+
+        outSizes[track] = starWeightTotal > 0.0f ? leftover * (value / starWeightTotal) : 0.0f;
+    }
+}
+
+void RetroFuturaGUI::Table::resolveVisibleRange(const std::vector<f32>& sizes, const f32 scroll, const f32 viewportExtent, uSize& outFirst, uSize& outEnd)
+{
+    outFirst = 0;
+    outEnd = 0;
+    bool foundFirst { false };
+    f32 offset { 0.0f };
+
+    for(uSize track = 0; track < sizes.size(); ++track)
+    {
+        // Visible while the track's band in content space overlaps the scrolled viewport's band
+        if(offset + sizes[track] > scroll && offset < scroll + viewportExtent)
+        {
+            if(!foundFirst)
+            {
+                outFirst = track;
+                foundFirst = true;
+            }
+
+            outEnd = track + 1;
+        }
+
+        offset += sizes[track];
+    }
+}
+
 void RetroFuturaGUI::Table::layoutCells()
 {
     if(_rowDefinition.empty() || _columnDefinition.empty())
         return;
 
+    // size every track on its own
+    resolveTrackSizes(_rowDefinition, _size.y, _resolvedRowSizes);
+    resolveTrackSizes(_columnDefinition, _size.x, _resolvedColumnSizes);
+
+    _contentExtent = glm::vec2(0.0f);
+
+    for(const f32 width : _resolvedColumnSizes)
+        _contentExtent.x += width;
+
+    for(const f32 height : _resolvedRowSizes)
+        _contentExtent.y += height;
+
+    const glm::vec2 maxScroll { GetMaxScroll() };
+    _scrollPosition.x = _scrollPosition.x < 0.0f ? 0.0f : (_scrollPosition.x > maxScroll.x ? maxScroll.x : _scrollPosition.x);
+    _scrollPosition.y = _scrollPosition.y < 0.0f ? 0.0f : (_scrollPosition.y > maxScroll.y ? maxScroll.y : _scrollPosition.y);
+
+    resolveVisibleRange(_resolvedRowSizes, _scrollPosition.y, _size.y, _displayedRows[0], _displayedRows[1]);
+    resolveVisibleRange(_resolvedColumnSizes, _scrollPosition.x, _size.x, _displayedColumns[0], _displayedColumns[1]);
+
+    // place the cells at their track offsets
     const f32
-        tableLeftX { _position.x - _size.x * 0.5f },
-        tableTopY { _position.y + _size.y * 0.5f };
+        originX { _position.x - _size.x * 0.5f - _scrollPosition.x },
+        originY { _position.y + _size.y * 0.5f + _scrollPosition.y };
     f32 accumY { 0.0f };
 
-    for(uSize row = 0; row < _rowDefinition.size() && row < _tableCells.size(); ++row)
+    for(uSize row = 0; row < _resolvedRowSizes.size() && row < _tableCells.size(); ++row)
     {
-        const f32 cellSizeY { _rowDefinition[row] * _size.y };
+        const f32 cellSizeY { _resolvedRowSizes[row] };
         f32 accumX { 0.0f };
 
-        for(uSize column = 0; column < _columnDefinition.size() && column < _tableCells[row].size(); ++column)
+        for(uSize column = 0; column < _resolvedColumnSizes.size() && column < _tableCells[row].size(); ++column)
         {
-            const f32 cellSizeX { _columnDefinition[column] * _size.x };
+            const f32 cellSizeX { _resolvedColumnSizes[column] };
             TableCell& cell { _tableCells[row][column] };
 
-            cell._SizeNormalized = glm::vec3(_columnDefinition[column], _rowDefinition[row], 1.0f);
+            cell._SizeNormalized = glm::vec3(_contentExtent.x > 0.0f ? cellSizeX / _contentExtent.x : 0.0f,
+                                             _contentExtent.y > 0.0f ? cellSizeY / _contentExtent.y : 0.0f,
+                                             1.0f);
             cell._SizePixels = glm::vec3(cellSizeX, cellSizeY, _size.z);
-            cell._PositionPixels = glm::vec3(tableLeftX + accumX + cellSizeX * 0.5f,
-                                              tableTopY - accumY - cellSizeY * 0.5f,
-                                              _position.z + _widgetZOffset);
+            cell._PositionPixels = glm::vec3(originX + accumX + cellSizeX * 0.5f,
+                                             originY - accumY - cellSizeY * 0.5f,
+                                             _position.z + _widgetZOffset);
 
             if(cell._TableWidget)
             {
@@ -184,13 +357,13 @@ void RetroFuturaGUI::Table::Disconnect_OnTextChange(const typename Signal<>::Slo
 
 void RetroFuturaGUI::Table::SetTextColors(std::span<glm::vec4> colors, const ColorState state, const uSize nthIndex)
 {
-    if(_nthAxisColors.empty())
-        _nthAxisColors.resize(1);
+    if(_nthTrackColors.empty())
+        _nthTrackColors.resize(1);
 
-    if(nthIndex >= _nthAxisColors.size())
+    if(nthIndex >= _nthTrackColors.size())
         return;
 
-    AxisColoring& coloring { _nthAxisColors[nthIndex] };
+    TrackColoring& coloring { _nthTrackColors[nthIndex] };
     std::vector<glm::vec4>* target { nullptr };
 
     switch(state)
@@ -222,10 +395,10 @@ void RetroFuturaGUI::Table::SetTextColors(std::span<glm::vec4> colors, const Col
 
 std::vector<glm::vec4> RetroFuturaGUI::Table::GetTextColor(const ColorState state) const
 {
-    if(_nthAxisColors.empty())
+    if(_nthTrackColors.empty())
         return {};
 
-    const AxisColoring& coloring { _nthAxisColors[0] };
+    const TrackColoring& coloring { _nthTrackColors[0] };
 
     switch(state)
     {
@@ -306,15 +479,15 @@ void RetroFuturaGUI::Table::SetTextPadding(const f32 padding)
         }
 }
 
-void RetroFuturaGUI::Table::SetAxisBackgroundColors(std::span<glm::vec4> colors, const ColorState state, const uSize nthIndex)
+void RetroFuturaGUI::Table::SetTrackBackgroundColors(std::span<glm::vec4> colors, const ColorState state, const uSize nthIndex)
 {
-    if(_nthAxisColors.empty())
+    if(_nthTrackColors.empty())
         return;
 
-    if(nthIndex >= _nthAxisColors.size())
+    if(nthIndex >= _nthTrackColors.size())
         return;
 
-    AxisColoring& coloring { _nthAxisColors[nthIndex] };
+    TrackColoring& coloring { _nthTrackColors[nthIndex] };
 
     switch(state)
     {
@@ -333,15 +506,15 @@ void RetroFuturaGUI::Table::SetAxisBackgroundColors(std::span<glm::vec4> colors,
     }
 }
 
-void RetroFuturaGUI::Table::SetAxisBorderColors(std::span<glm::vec4> colors, const ColorState state, const uSize nthIndex)
+void RetroFuturaGUI::Table::SetTrackBorderColors(std::span<glm::vec4> colors, const ColorState state, const uSize nthIndex)
 {
-    if(_nthAxisColors.empty())
+    if(_nthTrackColors.empty())
         return;
 
-    if(nthIndex >= _nthAxisColors.size())
+    if(nthIndex >= _nthTrackColors.size())
         return;
 
-    AxisColoring& coloring { _nthAxisColors[nthIndex] };
+    TrackColoring& coloring { _nthTrackColors[nthIndex] };
 
     switch(state)
     {
@@ -371,7 +544,12 @@ void RetroFuturaGUI::Table::SetTableOrientation(const TableOrientation orientati
     _tableOrientation = orientation;
 }
 
-void RetroFuturaGUI::Table::SetAxisAlternatingColorCount(const uSize variantCount)
+void RetroFuturaGUI::Table::SetTrackAlternatingColorCount(const uSize variantCount)
 {
-    _nthAxisColors.resize(variantCount);
+    _nthTrackColors.resize(variantCount);
+}
+
+void RetroFuturaGUI::Table::SetRowWidgetTypes(const std::vector<ITableWidget::TableWidgetTypeID>& rowWidgetTypes)
+{
+    _rowWidgetTypes = rowWidgetTypes;
 }

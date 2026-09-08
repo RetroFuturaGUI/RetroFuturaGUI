@@ -27,17 +27,31 @@ namespace RetroFuturaGUI
             Column
         };
 
+        enum class TrackSizing : u32
+        {
+            Star,  // takes a share of whatever viewport space the Fixed/Auto tracks left over
+            Fixed, // absolute pixel size
+            Auto   // sized to the track's content
+        };
+
+        /// @brief Sizing policy for one row or column.
+        struct TrackDefinition
+        {
+            TrackSizing _Sizing { TrackSizing::Star };
+            f32 _Value { 1.0f }; // Star: a relative weight. Fixed/Auto: pixels.
+        };
+
         Table(const std::string& name, Projection* projection, IWidget* parentWidget, const WidgetTypeID parentWidgetTypeID, GLFWwindow* parentWindow);
         Table(const Table&) = delete;
         Table(Table&&) = delete;
         auto operator =(const Table&) = delete;
         auto operator =(Table&&) = delete;
         void SetBackgroundColors(std::span<glm::vec4> colors, const ColorState state) = delete;
-        void SetAxisBackgroundColors(std::span<glm::vec4> colors, const ColorState state, const uSize nthIndex);
-        void SetAxisBorderColors(std::span<glm::vec4> colors, const ColorState state, const uSize nthIndex);
+        void SetTrackBackgroundColors(std::span<glm::vec4> colors, const ColorState state, const uSize nthIndex);
+        void SetTrackBorderColors(std::span<glm::vec4> colors, const ColorState state, const uSize nthIndex);
         void SetInnerBorderWidth(const f32 width);
         void SetTableOrientation(const TableOrientation orientation);
-        void SetAxisAlternatingColorCount(const uSize variantCount);
+        void SetTrackAlternatingColorCount(const uSize variantCount);
 
         struct TableCell
         {
@@ -58,7 +72,7 @@ namespace RetroFuturaGUI
             Table* _ParentTable { nullptr };
         };
 
-        struct AxisColoring
+        struct TrackColoring
         {
             std::vector<glm::vec4>
                 _BackgroundColorEnabled {{ ResourceManager::_Eigengrau }},
@@ -120,9 +134,9 @@ namespace RetroFuturaGUI
                 textWidget->SetTextAlignment(_textDefaults._Alignment);
                 textWidget->SetTextPadding(_textDefaults._Padding);
 
-                if(!_nthAxisColors.empty())
+                if(!_nthTrackColors.empty())
                 {
-                    AxisColoring& coloring { _nthAxisColors[0] };
+                    TrackColoring& coloring { _nthTrackColors[0] };
                     textWidget->SetTextColors(coloring._TextColorEnabled, ColorState::Enabled);
                     textWidget->SetTextColors(coloring._TextColorDisabled, ColorState::Disabled);
                     textWidget->SetTextColors(coloring._TextColorClicked, ColorState::Clicked);
@@ -176,7 +190,30 @@ namespace RetroFuturaGUI
             _onTextChange.Emit();
         }
 
-        void SetAxisDefinitions(const std::vector<f32>& rowDefinition, const std::vector<f32>& columnDefinition);
+        /// @brief Sets the row/column tracks as Star weights, for callers that just want plain proportions.
+        void SetTrackDefinitions(const std::vector<f32>& rowDefinition, const std::vector<f32>& columnDefinition);
+
+        /// @brief Sets the row/column tracks with explicit sizing policies. Fixed/Auto tracks are what let the content outgrow the table and become scrollable.
+        void SetTrackDefinitions(const std::vector<TrackDefinition>& rowDefinition, const std::vector<TrackDefinition>& columnDefinition);
+
+        /// @brief Scrolls the content, in pixels from its top-left, clamped to the scrollable extent.
+        void SetScrollPosition(const glm::vec2& scrollPosition);
+
+        void SetHorizontalScrollPosition(const f32 scrollPosition);
+
+        void SetVerticalScrollPosition(const f32 scrollPosition);
+
+        glm::vec2 GetScrollPosition() const;
+
+        f32 GetHorizontalScrollPosition() const;
+
+        f32 GetVerticalScrollPosition() const;
+
+        /// @brief Returns the total size of all tracks laid end to end, which may exceed the table's own size.
+        glm::vec2 GetContentExtent() const;
+
+        /// @brief Returns how far the content can scroll on each track before its far edge meets the viewport's; zero when it fits.
+        glm::vec2 GetMaxScroll() const;
 
         /// @brief Returns the text content, in UTF-8.
         const std::string& GetText(const uSize xIndex, const uSize yIndex) const;
@@ -190,13 +227,16 @@ namespace RetroFuturaGUI
         /// @brief Sets the padding applied around the text.
         virtual void SetTextPadding(const f32 padding);
 
-        void SetRowWidgetTypes(const std::vector<ITableWidget::TableWidgetTypeID>& rowWidgetTypes)
-        {
-            _rowWidgetTypes = rowWidgetTypes;
-        }
+        void SetRowWidgetTypes(const std::vector<ITableWidget::TableWidgetTypeID>& rowWidgetTypes);
 
     private:
         void layoutCells();
+
+        /// @brief Resolves each track to a pixel size: Fixed/Auto take their own value, Star tracks divide what the viewport has left.
+        static void resolveTrackSizes(const std::vector<TrackDefinition>& tracks, const f32 viewportExtent, std::vector<f32>& outSizes);
+
+        /// @brief Finds the half-open [first, end) range of tracks overlapping the scrolled viewport.
+        static void resolveVisibleRange(const std::vector<f32>& sizes, const f32 scroll, const f32 viewportExtent, uSize& outFirst, uSize& outEnd);
 
         struct TextDefaults
         {
@@ -212,28 +252,32 @@ namespace RetroFuturaGUI
     //Elements
         std::vector<std::vector<TableCell>> _tableCells {};
         TextDefaults _textDefaults {};
-        std::unique_ptr<Slider>
+        /*std::unique_ptr<Slider>
             _horizontalScrollbar { nullptr },
-            _verticalScrollbar { nullptr };
+            _verticalScrollbar { nullptr };*/
         std::unique_ptr<Rectangle>
             _highlightedBackgroundCell { nullptr },
-            _highlightedCellBorder { nullptr };
+            _highlightedCellBorder { nullptr },
+            _trackColoringOverlay { nullptr },
+            _innerBorder { nullptr };
         std::vector<ITableWidget::TableWidgetTypeID> _rowWidgetTypes {};
-        std::unique_ptr<Rectangle> _axisColoringOverlay { nullptr };
-        std::unique_ptr<Rectangle> _innerBorder { nullptr };
 
     // Design
-        std::vector<AxisColoring> _nthAxisColors {};
+        std::vector<TrackColoring> _nthTrackColors {};
         static constexpr f32 _widgetZOffset { 0.05f };
 
     // Logic
-        std::vector<f32> 
+        std::vector<TrackDefinition>
             _rowDefinition {},
             _columnDefinition {};
+        std::vector<f32>
+            _resolvedRowSizes {},
+            _resolvedColumnSizes {};
+        glm::vec2 _contentExtent { 0.0f };
         TableOrientation _tableOrientation { TableOrientation::Row };
-        bool
+        /*bool
             _useHorizontalScrollbar { false },
-            _useVerticalScrollbar { false };
+            _useVerticalScrollbar { false };*/
         glm::vec2 _scrollPosition { 0.0f, 0.0f };
         uSize
             _displayedRows[2] { 0, 0 },
