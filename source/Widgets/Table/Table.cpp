@@ -44,32 +44,9 @@ void RetroFuturaGUI::Table::Draw()
 
     const uSize variantCount { _nthTrackColors.size() };
 
-    // Clip the table's content to its own bounds by intersecting the current scissor box with the table's own rectangle
-    i32
-        clipLeft { static_cast<i32>(_position.x - _size.x * 0.5f) },
-        clipBottom { static_cast<i32>(_position.y - _size.y * 0.5f) },
-        clipRight { clipLeft + static_cast<i32>(_size.x) },
-        clipTop { clipBottom + static_cast<i32>(_size.y) },
-        previousScissor[4] { 0, 0, 0, 0 };
-
-    const bool scissorWasEnabled { static_cast<bool>(glIsEnabled(GL_SCISSOR_TEST)) };
-    glGetIntegerv(GL_SCISSOR_BOX, previousScissor);
-
-    if(scissorWasEnabled) // Whoever clipped us first still wins; intersect instead of escaping it.
-    {
-        const i32
-            previousRight { previousScissor[0] + previousScissor[2] },
-            previousTop { previousScissor[1] + previousScissor[3] };
-        clipLeft = clipLeft > previousScissor[0] ? clipLeft : previousScissor[0];
-        clipBottom = clipBottom > previousScissor[1] ? clipBottom : previousScissor[1];
-        clipRight = clipRight < previousRight ? clipRight : previousRight;
-        clipTop = clipTop < previousTop ? clipTop : previousTop;
-    }
-
-    glEnable(GL_SCISSOR_TEST);
-    glScissor(clipLeft, clipBottom,
-              clipRight > clipLeft ? clipRight - clipLeft : 0,
-              clipTop > clipBottom ? clipTop - clipBottom : 0);
+    // clamp contents to viewport
+    const glm::vec2 contentOrigin { contentTopLeft() };
+    const ScissorState contentScissor { pushScissor(contentOrigin.x, contentOrigin.y - _innerSize.y, _innerSize.x, _innerSize.y) };
 
     // only draw cells overlapping the viewport
     const uSize rowEnd { _displayedRows[1] < _tableCells.size() ? _displayedRows[1] : _tableCells.size() };
@@ -111,8 +88,98 @@ void RetroFuturaGUI::Table::Draw()
         }
     }
 
-    if(scissorWasEnabled)
-        glScissor(previousScissor[0], previousScissor[1], previousScissor[2], previousScissor[3]);
+    popScissor(contentScissor);
+
+    const f32
+        tableLeft { _position.x - _size.x * 0.5f },
+        tableBottom { _position.y - _size.y * 0.5f };
+
+    if(_displayHorizontalHeader)
+    {
+        const uSize columnEnd { _horizontalHeaderCells.size() < _displayedColumns[1] ? _horizontalHeaderCells.size() : _displayedColumns[1] };
+        const ScissorState headerScissor { pushScissor(contentOrigin.x, tableBottom, _innerSize.x, _size.y) };
+        drawHeaderBand(_horizontalHeaderCells, _displayedColumns[0], columnEnd);
+        popScissor(headerScissor);
+    }
+
+    if(_displayVerticalHeader)
+    {
+        const uSize rowEnd2 { _verticalHeaderCells.size() < _displayedRows[1] ? _verticalHeaderCells.size() : _displayedRows[1] };
+        const ScissorState headerScissor { pushScissor(tableLeft, contentOrigin.y - _innerSize.y, _size.x, _innerSize.y) };
+        drawHeaderBand(_verticalHeaderCells, _displayedRows[0], rowEnd2);
+        popScissor(headerScissor);
+    }
+}
+
+void RetroFuturaGUI::Table::drawHeaderBand(std::vector<TableCell>& cells, const uSize first, const uSize end)
+{
+    for(uSize index = first; index < end && index < cells.size(); ++index)
+    {
+        TableCell& cell { cells[index] };
+
+        if(!cell._TableWidget)
+            continue;
+
+        if(_trackColoringOverlay)
+        {
+            _trackColoringOverlay->SetSize(cell._SizePixels);
+            _trackColoringOverlay->SetPosition(cell._PositionPixels - glm::vec3(0.0f, 0.0f, _widgetZOffset));
+            _trackColoringOverlay->SetColors(_headerBackgroundColorsEnabled);
+            _trackColoringOverlay->Draw();
+        }
+
+        if(_innerBorder)
+        {
+            _innerBorder->SetBorderWidth(_headerInnerBorderWidth);
+            _innerBorder->SetSize(cell._SizePixels);
+            _innerBorder->SetPosition(cell._PositionPixels - glm::vec3(0.0f, 0.0f, _widgetZOffset - 0.01f));
+            _innerBorder->SetColors(_headerBorderColorsEnabled);
+            _innerBorder->Draw();
+        }
+
+        if(cell._TableWidgetTypeID == ITableWidget::TableWidgetTypeID::TableText)
+            static_cast<TableText*>(cell._TableWidget.get())->SetTextColors(_headerTextColorsEnabled, ColorState::Enabled);
+
+        cell._TableWidget->Draw();
+    }
+}
+
+RetroFuturaGUI::Table::ScissorState RetroFuturaGUI::Table::pushScissor(const f32 left, const f32 bottom, const f32 width, const f32 height)
+{
+    // axis-aligned scissor box. breaks when rotation is applied
+    ScissorState state {};
+    state._WasEnabled = static_cast<bool>(glIsEnabled(GL_SCISSOR_TEST));
+    glGetIntegerv(GL_SCISSOR_BOX, state._Previous);
+
+    i32
+        clipLeft { static_cast<i32>(left) },
+        clipBottom { static_cast<i32>(bottom) },
+        clipRight { clipLeft + static_cast<i32>(width) },
+        clipTop { clipBottom + static_cast<i32>(height) };
+
+    if(state._WasEnabled)
+    {
+        const i32
+            previousRight { state._Previous[0] + state._Previous[2] },
+            previousTop { state._Previous[1] + state._Previous[3] };
+        clipLeft = clipLeft > state._Previous[0] ? clipLeft : state._Previous[0];
+        clipBottom = clipBottom > state._Previous[1] ? clipBottom : state._Previous[1];
+        clipRight = clipRight < previousRight ? clipRight : previousRight;
+        clipTop = clipTop < previousTop ? clipTop : previousTop;
+    }
+
+    glEnable(GL_SCISSOR_TEST);
+    glScissor(clipLeft, clipBottom,
+              clipRight > clipLeft ? clipRight - clipLeft : 0,
+              clipTop > clipBottom ? clipTop - clipBottom : 0);
+    return state;
+}
+
+void RetroFuturaGUI::Table::popScissor(const ScissorState& state)
+{
+    // Scissor state is global, so hand it back exactly as it was found
+    if(state._WasEnabled)
+        glScissor(state._Previous[0], state._Previous[1], state._Previous[2], state._Previous[3]);
     else
         glDisable(GL_SCISSOR_TEST);
 }
@@ -180,6 +247,7 @@ void RetroFuturaGUI::Table::SetTrackDefinitions(const std::vector<TrackDefinitio
     for(auto& row : _tableCells)
         row.resize(_columnDefinition.size());
 
+    resizeHeaders();
     layoutCells();
 }
 
@@ -216,8 +284,24 @@ f32 RetroFuturaGUI::Table::GetVerticalScrollPosition() const
 
 glm::vec2 RetroFuturaGUI::Table::GetMaxScroll() const
 {
-    return glm::vec2(_contentExtent.x > _size.x ? _contentExtent.x - _size.x : 0.0f,
-                     _contentExtent.y > _size.y ? _contentExtent.y - _size.y : 0.0f);
+    // Measured against the viewport left over after the headers, not the table's full size
+    return glm::vec2(_contentExtent.x > _innerSize.x ? _contentExtent.x - _innerSize.x : 0.0f,
+                     _contentExtent.y > _innerSize.y ? _contentExtent.y - _innerSize.y : 0.0f);
+}
+
+glm::vec2 RetroFuturaGUI::Table::headerExtents() const
+{
+    return glm::vec2(_displayVerticalHeader ? _verticalHeaderWidth : 0.0f,
+                     _displayHorizontalHeader ? _horizontalHeaderHeight : 0.0f);
+}
+
+glm::vec2 RetroFuturaGUI::Table::contentTopLeft() const
+{
+    const glm::vec2 headers { headerExtents() };
+
+    // Only a header sitting on that edge pushes the content inwards; Bottom/Right ones take their space off the far side
+    return glm::vec2(_position.x - _size.x * 0.5f + (_verticalHeaderPosition == HeaderPosition::Left ? headers.x : 0.0f),
+                     _position.y + _size.y * 0.5f - (_horizontalHeaderPosition == HeaderPosition::Top ? headers.y : 0.0f));
 }
 
 void RetroFuturaGUI::Table::resolveTrackSizes(const std::vector<TrackDefinition>& tracks, const f32 viewportExtent, std::vector<f32>& outSizes)
@@ -285,9 +369,14 @@ void RetroFuturaGUI::Table::layoutCells()
     if(_rowDefinition.empty() || _columnDefinition.empty())
         return;
 
+    const glm::vec2 headers { headerExtents() };
+    _innerSize = glm::vec3(_size.x > headers.x ? _size.x - headers.x : 0.0f,
+                           _size.y > headers.y ? _size.y - headers.y : 0.0f,
+                           _size.z);
+
     // size every track on its own
-    resolveTrackSizes(_rowDefinition, _size.y, _resolvedRowSizes);
-    resolveTrackSizes(_columnDefinition, _size.x, _resolvedColumnSizes);
+    resolveTrackSizes(_rowDefinition, _innerSize.y, _resolvedRowSizes);
+    resolveTrackSizes(_columnDefinition, _innerSize.x, _resolvedColumnSizes);
 
     _contentExtent = glm::vec2(0.0f);
 
@@ -301,13 +390,14 @@ void RetroFuturaGUI::Table::layoutCells()
     _scrollPosition.x = _scrollPosition.x < 0.0f ? 0.0f : (_scrollPosition.x > maxScroll.x ? maxScroll.x : _scrollPosition.x);
     _scrollPosition.y = _scrollPosition.y < 0.0f ? 0.0f : (_scrollPosition.y > maxScroll.y ? maxScroll.y : _scrollPosition.y);
 
-    resolveVisibleRange(_resolvedRowSizes, _scrollPosition.y, _size.y, _displayedRows[0], _displayedRows[1]);
-    resolveVisibleRange(_resolvedColumnSizes, _scrollPosition.x, _size.x, _displayedColumns[0], _displayedColumns[1]);
+    resolveVisibleRange(_resolvedRowSizes, _scrollPosition.y, _innerSize.y, _displayedRows[0], _displayedRows[1]);
+    resolveVisibleRange(_resolvedColumnSizes, _scrollPosition.x, _innerSize.x, _displayedColumns[0], _displayedColumns[1]);
 
     // place the cells at their track offsets
+    const glm::vec2 contentOrigin { contentTopLeft() };
     const f32
-        originX { _position.x - _size.x * 0.5f - _scrollPosition.x },
-        originY { _position.y + _size.y * 0.5f + _scrollPosition.y };
+        originX { contentOrigin.x - _scrollPosition.x },
+        originY { contentOrigin.y + _scrollPosition.y };
     f32 accumY { 0.0f };
 
     for(uSize row = 0; row < _resolvedRowSizes.size() && row < _tableCells.size(); ++row)
@@ -339,6 +429,255 @@ void RetroFuturaGUI::Table::layoutCells()
 
         accumY += cellSizeY;
     }
+
+    layoutHeaders();
+}
+
+void RetroFuturaGUI::Table::layoutHeaders()
+{
+    const glm::vec2
+        headers { headerExtents() },
+        contentOrigin { contentTopLeft() };
+    const f32
+        tableLeft { _position.x - _size.x * 0.5f },
+        tableRight { tableLeft + _size.x },
+        tableBottom { _position.y - _size.y * 0.5f },
+        tableTop { tableBottom + _size.y };
+
+    if(_displayHorizontalHeader)
+    {
+        const f32 bandCentreY { _horizontalHeaderPosition == HeaderPosition::Bottom
+            ? tableBottom + headers.y * 0.5f
+            : tableTop - headers.y * 0.5f };
+        f32 accumX { 0.0f };
+
+        for(uSize column = 0; column < _horizontalHeaderCells.size() && column < _resolvedColumnSizes.size(); ++column)
+        {
+            const f32 cellSizeX { _resolvedColumnSizes[column] };
+            TableCell& cell { _horizontalHeaderCells[column] };
+
+            cell._SizePixels = glm::vec3(cellSizeX, headers.y, _size.z);
+            cell._PositionPixels = glm::vec3(contentOrigin.x - _scrollPosition.x + accumX + cellSizeX * 0.5f,
+                                             bandCentreY,
+                                             _position.z + _widgetZOffset);
+
+            if(cell._TableWidget)
+            {
+                cell._TableWidget->SetSize(cell._SizePixels);
+                cell._TableWidget->SetPosition(cell._PositionPixels);
+            }
+
+            accumX += cellSizeX;
+        }
+    }
+
+    if(_displayVerticalHeader)
+    {
+        const f32 bandCentreX { _verticalHeaderPosition == HeaderPosition::Right
+            ? tableRight - headers.x * 0.5f
+            : tableLeft + headers.x * 0.5f };
+        f32 accumY { 0.0f };
+
+        for(uSize row = 0; row < _verticalHeaderCells.size() && row < _resolvedRowSizes.size(); ++row)
+        {
+            const f32 cellSizeY { _resolvedRowSizes[row] };
+            TableCell& cell { _verticalHeaderCells[row] };
+
+            cell._SizePixels = glm::vec3(headers.x, cellSizeY, _size.z);
+            cell._PositionPixels = glm::vec3(bandCentreX,
+                                             contentOrigin.y + _scrollPosition.y - accumY - cellSizeY * 0.5f,
+                                             _position.z + _widgetZOffset);
+
+            if(cell._TableWidget)
+            {
+                cell._TableWidget->SetSize(cell._SizePixels);
+                cell._TableWidget->SetPosition(cell._PositionPixels);
+            }
+
+            accumY += cellSizeY;
+        }
+    }
+}
+
+void RetroFuturaGUI::Table::ensureHeaderWidget(TableCell& cell)
+{
+    if(cell._TableWidget)
+        return;
+
+    auto textWidget { std::make_unique<TableText>(this, &_projection) };
+
+    if(_headerTextDefaults._HasFont)
+        textWidget->SetFontFamily(_headerTextDefaults._FontFamily, _headerTextDefaults._FontSize, _headerTextDefaults._Slant, _headerTextDefaults._Weight);
+
+    textWidget->SetTextAlignment(_headerTextDefaults._Alignment);
+    textWidget->SetTextPadding(_headerTextDefaults._Padding);
+    textWidget->SetTextColors(_headerTextColorsEnabled, ColorState::Enabled);
+    textWidget->SetTextColors(_headerTextColorsDisabled, ColorState::Disabled);
+
+    cell._TableWidget = std::move(textWidget);
+    cell._TableWidgetTypeID = ITableWidget::TableWidgetTypeID::TableText;
+    cell._ParentTable = this;
+}
+
+void RetroFuturaGUI::Table::resizeHeaders()
+{
+    _horizontalHeaderCells.resize(_columnDefinition.size());
+    _verticalHeaderCells.resize(_rowDefinition.size());
+}
+
+void RetroFuturaGUI::Table::ShowHorizontalHeader(const bool show)
+{
+    _displayHorizontalHeader = show;
+    layoutCells(); // the band changes the viewport, so everything downstream has to be re-resolved
+}
+
+void RetroFuturaGUI::Table::ShowVerticalHeader(const bool show)
+{
+    _displayVerticalHeader = show;
+    layoutCells();
+}
+
+void RetroFuturaGUI::Table::SetHorizontalHeaderPosition(const HeaderPosition position)
+{
+    if(position == HeaderPosition::Left || position == HeaderPosition::Right)
+        return;
+
+    if(position == HeaderPosition::None)
+    {
+        ShowHorizontalHeader(false);
+        return;
+    }
+
+    _horizontalHeaderPosition = position;
+    layoutCells();
+}
+
+void RetroFuturaGUI::Table::SetVerticalHeaderPosition(const HeaderPosition position)
+{
+    if(position == HeaderPosition::Top || position == HeaderPosition::Bottom)
+        return;
+
+    if(position == HeaderPosition::None)
+    {
+        ShowVerticalHeader(false);
+        return;
+    }
+
+    _verticalHeaderPosition = position;
+    layoutCells();
+}
+
+void RetroFuturaGUI::Table::SetHorizontalHeaderTexts(const std::vector<std::string>& texts)
+{
+    for(uSize column = 0; column < texts.size(); ++column)
+        SetHorizontalHeaderText(texts[column], column);
+}
+
+void RetroFuturaGUI::Table::SetHorizontalHeaderText(std::string_view text, const uSize columnIndex)
+{
+    if(columnIndex >= _horizontalHeaderCells.size())
+        return;
+
+    TableCell& cell { _horizontalHeaderCells[columnIndex] };
+    ensureHeaderWidget(cell);
+    layoutHeaders();
+    static_cast<TableText*>(cell._TableWidget.get())->SetText(text);
+}
+
+void RetroFuturaGUI::Table::SetVerticalHeaderTexts(const std::vector<std::string>& texts)
+{
+    for(uSize row = 0; row < texts.size(); ++row)
+        SetVerticalHeaderText(texts[row], row);
+}
+
+void RetroFuturaGUI::Table::SetVerticalHeaderText(std::string_view text, const uSize rowIndex)
+{
+    if(rowIndex >= _verticalHeaderCells.size())
+        return;
+
+    TableCell& cell { _verticalHeaderCells[rowIndex] };
+    ensureHeaderWidget(cell);
+    layoutHeaders();
+    static_cast<TableText*>(cell._TableWidget.get())->SetText(text);
+}
+
+void RetroFuturaGUI::Table::SetHeaderFontFamily(std::string_view fontFamily, const f32 fontSize, const PlatformBridge::Fonts::Slant slant, const PlatformBridge::Fonts::Weight fontWeight)
+{
+    _headerTextDefaults._HasFont = true;
+    _headerTextDefaults._FontFamily = fontFamily;
+    _headerTextDefaults._FontSize = fontSize;
+    _headerTextDefaults._Slant = slant;
+    _headerTextDefaults._Weight = fontWeight;
+
+    for(std::vector<TableCell>* band : { &_horizontalHeaderCells, &_verticalHeaderCells })
+        for(TableCell& cell : *band)
+            if(cell._TableWidgetTypeID == ITableWidget::TableWidgetTypeID::TableText)
+                static_cast<TableText*>(cell._TableWidget.get())->SetFontFamily(fontFamily, fontSize, slant, fontWeight);
+}
+
+void RetroFuturaGUI::Table::SetHeaderTextAlignment(const TextAlignment alignment)
+{
+    _headerTextDefaults._Alignment = alignment;
+
+    for(std::vector<TableCell>* band : { &_horizontalHeaderCells, &_verticalHeaderCells })
+        for(TableCell& cell : *band)
+            if(cell._TableWidgetTypeID == ITableWidget::TableWidgetTypeID::TableText)
+                static_cast<TableText*>(cell._TableWidget.get())->SetTextAlignment(alignment);
+}
+
+void RetroFuturaGUI::Table::SetHeaderTextPadding(const f32 padding)
+{
+    _headerTextDefaults._Padding = padding;
+
+    for(std::vector<TableCell>* band : { &_horizontalHeaderCells, &_verticalHeaderCells })
+        for(TableCell& cell : *band)
+            if(cell._TableWidgetTypeID == ITableWidget::TableWidgetTypeID::TableText)
+                static_cast<TableText*>(cell._TableWidget.get())->SetTextPadding(padding);
+}
+
+void RetroFuturaGUI::Table::SetHeaderTextColors(std::span<glm::vec4> colors, const ColorState state)
+{
+    std::vector<glm::vec4>& target { state == ColorState::Disabled ? _headerTextColorsDisabled : _headerTextColorsEnabled };
+    target.assign(colors.begin(), colors.end());
+
+    for(std::vector<TableCell>* band : { &_horizontalHeaderCells, &_verticalHeaderCells })
+        for(TableCell& cell : *band)
+            if(cell._TableWidgetTypeID == ITableWidget::TableWidgetTypeID::TableText)
+                static_cast<TableText*>(cell._TableWidget.get())->SetTextColors(target, state);
+}
+
+void RetroFuturaGUI::Table::SetHeaderInnerBorderWidth(const f32 width)
+{
+    _headerInnerBorderWidth = width;
+}
+
+void RetroFuturaGUI::Table::SetHeaderOuterBorderWidth(const f32 width)
+{
+    _headerOuterBorderWidth = width;
+}
+
+void RetroFuturaGUI::Table::SetHeaderInnerBorderColors(std::span<glm::vec4> colors, const ColorState state)
+{
+    std::vector<glm::vec4>& target { state == ColorState::Disabled ? _headerBorderColorsDisabled : _headerBorderColorsEnabled };
+    target.assign(colors.begin(), colors.end());
+}
+
+void RetroFuturaGUI::Table::SetHeaderOuterBorderColors(std::span<glm::vec4> colors, const ColorState state)
+{
+    std::vector<glm::vec4>& target { state == ColorState::Disabled ? _headerOuterBorderColorsDisabled : _headerOuterBorderColorsEnabled };
+    target.assign(colors.begin(), colors.end());
+}
+
+void RetroFuturaGUI::Table::SetHorizontalHeaderSize(const f32 size)
+{
+    _horizontalHeaderHeight = size > 0.0f ? size : 0.0f;
+    layoutCells();
+}
+
+void RetroFuturaGUI::Table::SetVerticalHeaderSize(const f32 size)
+{
+    _verticalHeaderWidth = size > 0.0f ? size : 0.0f;
+    layoutCells();
 }
 
 void RetroFuturaGUI::Table::Connect_OnTextChange(const typename Signal<>::Slot& slot, const bool async)
@@ -552,4 +891,12 @@ void RetroFuturaGUI::Table::SetTrackAlternatingColorCount(const uSize variantCou
 void RetroFuturaGUI::Table::SetRowWidgetTypes(const std::vector<ITableWidget::TableWidgetTypeID>& rowWidgetTypes)
 {
     _rowWidgetTypes = rowWidgetTypes;
+}
+
+void RetroFuturaGUI::Table::SetHeaderBackgroundColors(std::span<glm::vec4> colors, const ColorState state)
+{
+    if(state == ColorState::Disabled)
+        _headerBackgroundColorsDisabled = std::vector<glm::vec4>(colors.begin(), colors.end());
+    else
+        _headerBackgroundColorsEnabled = std::vector<glm::vec4>(colors.begin(), colors.end());
 }

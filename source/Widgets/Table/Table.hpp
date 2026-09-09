@@ -34,6 +34,15 @@ namespace RetroFuturaGUI
             Auto   // sized to the track's content
         };
 
+        enum class HeaderPosition : u32
+        {
+            None,
+            Top,
+            Bottom,
+            Left,
+            Right
+        };
+
         /// @brief Sizing policy for one row or column.
         struct TrackDefinition
         {
@@ -229,8 +238,75 @@ namespace RetroFuturaGUI
 
         void SetRowWidgetTypes(const std::vector<ITableWidget::TableWidgetTypeID>& rowWidgetTypes);
 
+        void ShowHorizontalHeader(const bool show);
+
+        void ShowVerticalHeader(const bool show);
+
+        void SetHorizontalHeaderPosition(const HeaderPosition position);
+
+        void SetVerticalHeaderPosition(const HeaderPosition position);
+
+        void SetHorizontalHeaderTexts(const std::vector<std::string>& texts);
+
+        void SetHorizontalHeaderText(std::string_view text, const uSize columnIndex);
+
+        void SetVerticalHeaderTexts(const std::vector<std::string>& texts);
+
+        void SetVerticalHeaderText(std::string_view text, const uSize rowIndex);
+
+        void SetHeaderFontFamily(std::string_view fontFamily, const f32 fontSize, const PlatformBridge::Fonts::Slant slant, const PlatformBridge::Fonts::Weight fontWeight);
+
+        void SetHeaderTextAlignment(const TextAlignment alignment);
+
+        void SetHeaderTextPadding(const f32 padding);
+
+        void SetHeaderTextColors(std::span<glm::vec4> colors, const ColorState state);
+
+        void SetHeaderInnerBorderWidth(const f32 width);
+
+        void SetHeaderOuterBorderWidth(const f32 width);
+
+        void SetHeaderInnerBorderColors(std::span<glm::vec4> colors, const ColorState state);
+
+        void SetHeaderOuterBorderColors(std::span<glm::vec4> colors, const ColorState state);
+
+        void SetHeaderBackgroundColors(std::span<glm::vec4> colors, const ColorState state);
+
+        /// @brief Sets the height of the column header band, in pixels. Taken out of the content viewport.
+        void SetHorizontalHeaderSize(const f32 size);
+
+        /// @brief Sets the width of the row header band, in pixels. Taken out of the content viewport.
+        void SetVerticalHeaderSize(const f32 size);
+
+
     private:
         void layoutCells();
+        void layoutHeaders();
+        void resizeHeaders();
+
+        /// @brief Creates the cell's TableText if it has none yet, styled from the header defaults.
+        void ensureHeaderWidget(TableCell& cell);
+
+        /// @brief Returns the top-left world corner of the content viewport, i.e. the table's corner pushed in by any header bands.
+        glm::vec2 contentTopLeft() const;
+
+        /// @brief Returns the space each header band takes out of the table: x for the row header's width, y for the column header's height.
+        glm::vec2 headerExtents() const;
+
+        /// @brief Draws one header band's cells, with the band's own backgrounds and borders.
+        void drawHeaderBand(std::vector<TableCell>& cells, const uSize first, const uSize end);
+
+        struct ScissorState
+        {
+            bool _WasEnabled { false };
+            i32 _Previous[4] { 0, 0, 0, 0 };
+        };
+
+        /// @brief Clips to the given rect, intersected with whatever clip is already active, and returns the state to restore.
+        static ScissorState pushScissor(const f32 left, const f32 bottom, const f32 width, const f32 height);
+
+        /// @brief Restores the clip state captured by pushScissor.
+        static void popScissor(const ScissorState& state);
 
         /// @brief Resolves each track to a pixel size: Fixed/Auto take their own value, Star tracks divide what the viewport has left.
         static void resolveTrackSizes(const std::vector<TrackDefinition>& tracks, const f32 viewportExtent, std::vector<f32>& outSizes);
@@ -251,10 +327,10 @@ namespace RetroFuturaGUI
 
     //Elements
         std::vector<std::vector<TableCell>> _tableCells {};
+        std::vector<TableCell>    
+            _horizontalHeaderCells {},
+            _verticalHeaderCells {};
         TextDefaults _textDefaults {};
-        /*std::unique_ptr<Slider>
-            _horizontalScrollbar { nullptr },
-            _verticalScrollbar { nullptr };*/
         std::unique_ptr<Rectangle>
             _highlightedBackgroundCell { nullptr },
             _highlightedCellBorder { nullptr },
@@ -262,23 +338,44 @@ namespace RetroFuturaGUI
             _innerBorder { nullptr };
         std::vector<ITableWidget::TableWidgetTypeID> _rowWidgetTypes {};
 
+    //Geommetry
+        glm::vec3 _innerSize { 0.0f }; // the content viewport: the table's size minus whatever the enabled header bands take out of it
+        std::vector<f32>
+            _resolvedRowSizes {},
+            _resolvedColumnSizes {};
+        glm::vec2 _contentExtent { 0.0f };
+        glm::vec2 _scrollPosition { 0.0f, 0.0f };
+
     // Design
         std::vector<TrackColoring> _nthTrackColors {};
+        std::vector<glm::vec4>
+            _headerBackgroundColorsEnabled {{ ResourceManager::_Eigengrau }},
+            _headerBackgroundColorsDisabled {{ ResourceManager::_Eigengrau }},
+            _headerBorderColorsEnabled {{ 0.4f, 0.4f, 0.4f, 1.0f }},
+            _headerBorderColorsDisabled {{ 0.2f, 0.2f, 0.2f, 1.0f }},
+            _headerOuterBorderColorsEnabled {{ 0.4f, 0.4f, 0.4f, 1.0f }},
+            _headerOuterBorderColorsDisabled {{ 0.2f, 0.2f, 0.2f, 1.0f }},
+            _headerTextColorsEnabled {{ 1.0f, 1.0f, 1.0f, 1.0f }},
+            _headerTextColorsDisabled {{ 0.5f, 0.5f, 0.5f, 1.0f }};
+        TextDefaults _headerTextDefaults {};
+        f32
+            _headerInnerBorderWidth { 1.0f },
+            _headerOuterBorderWidth { 1.0f },
+            _horizontalHeaderHeight { 30.0f },
+            _verticalHeaderWidth { 60.0f };
         static constexpr f32 _widgetZOffset { 0.05f };
 
     // Logic
         std::vector<TrackDefinition>
             _rowDefinition {},
             _columnDefinition {};
-        std::vector<f32>
-            _resolvedRowSizes {},
-            _resolvedColumnSizes {};
-        glm::vec2 _contentExtent { 0.0f };
+        bool
+            _displayHorizontalHeader { false },
+            _displayVerticalHeader { false };
+        HeaderPosition
+            _horizontalHeaderPosition { HeaderPosition::Top },
+            _verticalHeaderPosition { HeaderPosition::Left };
         TableOrientation _tableOrientation { TableOrientation::Row };
-        /*bool
-            _useHorizontalScrollbar { false },
-            _useVerticalScrollbar { false };*/
-        glm::vec2 _scrollPosition { 0.0f, 0.0f };
         uSize
             _displayedRows[2] { 0, 0 },
             _displayedColumns[2] { 0, 0 };    
