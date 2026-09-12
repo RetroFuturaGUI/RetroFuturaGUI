@@ -8,8 +8,12 @@
 
 namespace RetroFuturaGUI
 {
+    class Table;
+
     class ITableTextProperties
     {
+        friend class Table;
+
     public:
         virtual void SetText(std::string_view text) = 0;
         const std::string& GetText() const;

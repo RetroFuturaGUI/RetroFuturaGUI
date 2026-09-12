@@ -15,6 +15,7 @@
 #include "config.hpp"
 #include "TableText.hpp"
 #include <memory>
+#include <chrono>
 
 namespace RetroFuturaGUI
 {
@@ -96,10 +97,6 @@ namespace RetroFuturaGUI
                 _TextColorDisabled {{ 0.5f, 0.5f, 0.5f, 1.0f }},
                 _TextColorClicked {{ 1.0f, 1.0f, 1.0f, 1.0f }},
                 _TextColorHover {{ 1.0f, 1.0f, 1.0f, 1.0f }},
-                _SelectedTextColorEnabled {{ 1.0f, 1.0f, 1.0f, 1.0f }},
-                _SelectedTextColorDisabled {{ 0.5f, 0.5f, 0.5f, 1.0f }},
-                _SelectedTextColorClicked {{ 1.0f, 1.0f, 1.0f, 1.0f }},
-                _SelectedTextColorHover {{ 1.0f, 1.0f, 1.0f, 1.0f }},
                 _IconColorEnabled {{ 1.0f, 1.0f, 1.0f, 1.0f }},
                 _IconColorDisabled {{ 0.5f, 0.5f, 0.5f, 1.0f }},
                 _IconColorClicked {{ 1.0f, 1.0f, 1.0f, 1.0f }},
@@ -278,11 +275,46 @@ namespace RetroFuturaGUI
         /// @brief Sets the width of the row header band, in pixels. Taken out of the content viewport.
         void SetVerticalHeaderSize(const f32 size);
 
+    //Text interaction
+        void SetTrackReadOnly(const uSize trackIndex, const bool readOnly);
+
+        bool IsTrackReadOnly(const uSize trackIndex) const;
+
+        /// @brief Sets the caret colour(s). One caret is shared by every cell, so this is table-wide.
+        void SetCaretColors(std::span<glm::vec4> colors);
+
+        /// @brief Sets how long, in milliseconds, the caret stays visible/hidden per blink cycle.
+        void SetCaretBlinkTime(const f64 milliseconds);
+
+        /// @brief Sets the caret's width and height, in pixels.
+        void SetCaretSize(const glm::vec2& size);
+
+        /// @brief Sets the selection highlight colour(s), shared the same way the caret is.
+        void SetSelectedAreaColors(std::span<glm::vec4> colors);
+
+        /// @brief Returns the cell currently being edited, or false when no cell has focus.
+        bool GetEditedCell(uSize& outRow, uSize& outColumn) const;
+
+        /// @brief Gives up editing focus, hiding the caret and dropping any selection.
+        void EndEdit();
+
+        /// @brief Returns the text most recently copied or cut out of a cell.
+        const std::string& GetCopiedText() const;
+
+        void Connect_OnEnterPressed(const typename Signal<>::Slot& slot, const bool async);
+        void Connect_OnEnterReleased(const typename Signal<>::Slot& slot, const bool async);
+        void Connect_OnCopy(const typename Signal<>::Slot& slot, const bool async);
+        void Connect_OnPaste(const typename Signal<>::Slot& slot, const bool async);
+        void Disconnect_OnEnterPressed(const typename Signal<>::Slot& slot);
+        void Disconnect_OnEnterReleased(const typename Signal<>::Slot& slot);
+        void Disconnect_OnCopy(const typename Signal<>::Slot& slot);
+        void Disconnect_OnPaste(const typename Signal<>::Slot& slot);
 
     private:
         void layoutCells();
         void layoutHeaders();
         void resizeHeaders();
+        void interact();
 
         /// @brief Creates the cell's TableText if it has none yet, styled from the header defaults.
         void ensureHeaderWidget(TableCell& cell);
@@ -314,6 +346,44 @@ namespace RetroFuturaGUI
         /// @brief Finds the half-open [first, end) range of tracks overlapping the scrolled viewport.
         static void resolveVisibleRange(const std::vector<f32>& sizes, const f32 scroll, const f32 viewportExtent, uSize& outFirst, uSize& outEnd);
 
+        void resizeTrackReadOnlyFlags();
+
+        Text* activeText() const;
+        bool hasInputFocus() const;
+        bool isEditedTrackReadOnly() const;
+        void beginEdit(const uSize row, const uSize column, const f32 worldX);
+        void moveCaret();
+        void moveCaretLeft();
+        void moveCaretRight();
+        void updateCaretPosition();
+        void updateCaretBlink();
+        void resetCaretBlink();
+        void setCaretFromBoundary(const uSize boundary);
+        void deselect();
+        void drawCaretAndSelection();
+        void updateSelectedArea();
+        void editText();
+        bool checkForTextCopy();
+        bool checkForTextCut();
+        bool checkForTextPaste();
+        bool checkForSelectAllText();
+        bool checkForKeyRelease();
+        bool checkForKeyRepeat();
+        bool checkForEnterPress();
+        bool checkForBackspacePress();
+        bool checkForTextInput();
+        void emitEnterPressed();
+        void emitEnterRelease();
+        void emitCopy();
+        void emitPaste();
+        void emitChange();
+
+        /// @brief Clamps a world x to the edited cell's horizontal bounds, so a caret or selection edge can't escape its cell.
+        f32 clampToCellBounds(const f32 worldX, const f32 halfExtent = 0.0f) const;
+
+        /// @brief Scrolls the edited cell's text just far enough to keep the caret inside the cell, falling back to a hard clamp.
+        f32 keepCaretVisible(const f32 worldX, const f32 halfExtent = 0.0f);
+
         struct TextDefaults
         {
             bool _HasFont { false };
@@ -335,7 +405,9 @@ namespace RetroFuturaGUI
             _highlightedBackgroundCell { nullptr },
             _highlightedCellBorder { nullptr },
             _trackColoringOverlay { nullptr },
-            _innerBorder { nullptr };
+            _innerBorder { nullptr },
+            _textSelectedArea { nullptr },
+            _caret { nullptr };
         std::vector<ITableWidget::TableWidgetTypeID> _rowWidgetTypes {};
 
     //Geommetry
@@ -356,7 +428,8 @@ namespace RetroFuturaGUI
             _headerOuterBorderColorsEnabled {{ 0.4f, 0.4f, 0.4f, 1.0f }},
             _headerOuterBorderColorsDisabled {{ 0.2f, 0.2f, 0.2f, 1.0f }},
             _headerTextColorsEnabled {{ 1.0f, 1.0f, 1.0f, 1.0f }},
-            _headerTextColorsDisabled {{ 0.5f, 0.5f, 0.5f, 1.0f }};
+            _headerTextColorsDisabled {{ 0.5f, 0.5f, 0.5f, 1.0f }},
+            _selectedTextColors {{ 1.0f, 1.0f, 1.0f, 1.0f }};
         TextDefaults _headerTextDefaults {};
         f32
             _headerInnerBorderWidth { 1.0f },
@@ -378,9 +451,66 @@ namespace RetroFuturaGUI
         TableOrientation _tableOrientation { TableOrientation::Row };
         uSize
             _displayedRows[2] { 0, 0 },
-            _displayedColumns[2] { 0, 0 };    
+            _displayedColumns[2] { 0, 0 };   
+        std::vector<bool> _trackReadOnlyFlags {};
+
+    // Text interaction
+        uSize
+            _editRow { 0 },
+            _editColumn { 0 };
+        bool _hasEditCell { false };
+        std::vector<glm::vec4>
+            _caretColors {{ 1.0f, 1.0f, 1.0f, 1.0f }},
+            _selectedAreaColors {{ 0.24f, 0.47f, 0.85f, 0.4f }};
+
+        // Caret
+        uSize _caretPosition { 0 };
+        bool
+            _showCaret { false },
+            _caretBlinkState { true },
+            _caretNeverBlinks { false };
+        f64 _blinkForMilliseconds { 650.0 };
+        std::chrono::high_resolution_clock::time_point _millisecondsPassed { std::chrono::high_resolution_clock::now() };
+        i32 _caretRepeatDirection { 0 };
+        bool _caretKeyWasReleased { true };
+        u32 _caretKeyHoldFrames { 0 };
+
+        // Input logic
+        bool
+            _editingEnabled { false },
+            _enterPressed { false },
+            _textCopied { false },
+            _textCut { false },
+            _textPasted { false };
+        u32 _keyHoldFrames { 0 };
+        std::u32string _keyRepeatText {};
+        u32
+            _repeatKeySym { 0 },
+            _repeatKeyPressCountSeen { 0 },
+            _backspaceKeyHoldFrames { 0 },
+            _backspacePressCountSeen { 0 };
+        static constexpr i32 _keyRepeatInitialDelay { 60 };
+        static constexpr i32 _keyRepeatInterval { 5 };
+
+        // Selection
+        uSize
+            _selectedPositionFirst { 0 },
+            _selectedPositionLast { 0 };
+        bool
+            _isMarking { false },
+            _isSelected { false };
+        std::string _copiedText {};
+
         Signal<>
             _onTextChange,
-            _onTextChangeAsync;
+            _onTextChangeAsync,
+            _onEnterPressed,
+            _onEnterPressedAsync,
+            _onEnterReleased,
+            _onEnterReleasedAsync,
+            _onCopy,
+            _onCopyAsync,
+            _onPaste,
+            _onPasteAsync;
     };
 }

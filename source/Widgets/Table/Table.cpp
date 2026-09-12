@@ -1,4 +1,12 @@
 #include "Table.hpp"
+#include "PlatformBridge.hpp"
+
+#if defined(TARGET_PLATFORM_LINUX)
+    #define GLFW_EXPOSE_NATIVE_X11
+#elif defined(TARGET_PLATFORM_WINDOWS)
+    #define GLFW_EXPOSE_NATIVE_WIN32
+#endif
+#include <GLFW/glfw3native.h>
 
 RetroFuturaGUI::Table::Table(const std::string& name, Projection* projection, IWidget* parentWidget, const WidgetTypeID parentWidgetTypeID, GLFWwindow* parentWindow)
     : IWidget(name, projection, parentWidget, parentWidgetTypeID, parentWindow)
@@ -33,10 +41,30 @@ RetroFuturaGUI::Table::Table(const std::string& name, Projection* projection, IW
 
     if(_innerBorder)
         _innerBorder->SetRectangleMode(RectangleMode::Border);
+
+    _caret = std::make_unique<Rectangle>(projection);
+
+    if(_caret)
+    {
+        _caret->SetRectangleMode(RectangleMode::Plane);
+        _caret->SetFillType(FillType::SOLID);
+        _caret->SetSize(glm::vec2(2.0f, _textDefaults._FontSize * 1.6f));
+        _caret->SetColors(_caretColors);
+    }
+
+    _textSelectedArea = std::make_unique<Rectangle>(projection);
+
+    if(_textSelectedArea)
+    {
+        _textSelectedArea->SetRectangleMode(RectangleMode::Plane);
+        _textSelectedArea->SetFillType(FillType::SOLID);
+        _textSelectedArea->SetColors(_selectedAreaColors);
+    }
 }
 
 void RetroFuturaGUI::Table::Draw()
 {
+    interact();
     drawBorder();
 
     if(_nthTrackColors.empty())
@@ -87,6 +115,8 @@ void RetroFuturaGUI::Table::Draw()
             cell._TableWidget->Draw();
         }
     }
+
+    drawCaretAndSelection();
 
     popScissor(contentScissor);
 
@@ -249,6 +279,15 @@ void RetroFuturaGUI::Table::SetTrackDefinitions(const std::vector<TrackDefinitio
 
     resizeHeaders();
     layoutCells();
+    resizeTrackReadOnlyFlags();
+}
+
+void RetroFuturaGUI::Table::resizeTrackReadOnlyFlags()
+{
+    if(_tableOrientation == TableOrientation::Row)
+        _trackReadOnlyFlags.resize(_columnDefinition.size());
+    else
+        _trackReadOnlyFlags.resize(_rowDefinition.size());
 }
 
 void RetroFuturaGUI::Table::SetScrollPosition(const glm::vec2& scrollPosition)
@@ -680,6 +719,498 @@ void RetroFuturaGUI::Table::SetVerticalHeaderSize(const f32 size)
     layoutCells();
 }
 
+void RetroFuturaGUI::Table::editText()
+{
+    Text* text { activeText() };
+
+    if(!text)
+        return;
+
+    if(!hasInputFocus())
+        return;
+
+    if(checkForTextCopy())
+        return;
+
+    if(checkForSelectAllText())
+        return;
+
+    const bool readOnly { isEditedTrackReadOnly() };
+
+    if(!readOnly && checkForTextCut())
+        return;
+
+    if(!readOnly && checkForTextPaste())
+        return;
+
+    if(!_editingEnabled || readOnly)
+        return;
+
+    if(_enterPressed)
+    {
+        emitEnterRelease();
+        _enterPressed = false;
+    }
+
+    if(checkForKeyRelease())
+        return;
+
+    if(checkForKeyRepeat())
+        return;
+
+    if(checkForEnterPress())
+        return;
+
+    if(checkForBackspacePress())
+        return;
+
+    if(checkForTextInput())
+        return;
+}
+
+bool RetroFuturaGUI::Table::checkForTextCopy()
+{
+    Text* text { activeText() };
+
+    if((PlatformBridge::Input::IsKeyDown(PB_KEY_CONTROL_L) || PlatformBridge::Input::IsKeyDown(PB_KEY_CONTROL_R))
+        && (PlatformBridge::Input::GetKeyPressState(PB_KEY_C) == PlatformBridge::KeyPressState::Press))
+    {
+        if(_isSelected && !_textCopied && text)
+        {
+            const uSize
+                selectionStart { _selectedPositionFirst < _selectedPositionLast ? _selectedPositionFirst : _selectedPositionLast },
+                selectionEnd { _selectedPositionFirst < _selectedPositionLast ? _selectedPositionLast : _selectedPositionFirst };
+            std::u32string tempCopy { text->GetTextUTF32().substr(selectionStart, selectionEnd - selectionStart) };
+            _copiedText = DoubleEncodedString::Utf32ToUtf8(tempCopy);
+            PlatformBridge::Clipboard::CopyToClipboard(PlatformBridge::Clipboard::ClipboardDatatype::Text, static_cast<void*>(tempCopy.data()), tempCopy.size() * sizeof(char32_t));
+            _textCopied = true;
+            emitCopy();
+        }
+
+        return true;
+    }
+
+    _textCopied = false;
+    return false;
+}
+
+bool RetroFuturaGUI::Table::checkForTextCut()
+{
+    Text* text { activeText() };
+
+    if((PlatformBridge::Input::IsKeyDown(PB_KEY_CONTROL_L) || PlatformBridge::Input::IsKeyDown(PB_KEY_CONTROL_R))
+        && (PlatformBridge::Input::GetKeyPressState(PB_KEY_X) == PlatformBridge::KeyPressState::Press))
+    {
+        if(!_textCut)
+        {
+            if(!_isSelected || !text)
+                return true;
+
+            const uSize
+                selectionStart { _selectedPositionFirst < _selectedPositionLast ? _selectedPositionFirst : _selectedPositionLast },
+                selectionEnd { _selectedPositionFirst < _selectedPositionLast ? _selectedPositionLast : _selectedPositionFirst };
+            std::u32string tempCopy { text->GetTextUTF32().substr(selectionStart, selectionEnd - selectionStart) };
+            _copiedText = DoubleEncodedString::Utf32ToUtf8(tempCopy);
+            PlatformBridge::Clipboard::CopyToClipboard(PlatformBridge::Clipboard::ClipboardDatatype::Text, static_cast<void*>(tempCopy.data()), tempCopy.size() * sizeof(char32_t));
+            _textCut = true;
+            text->SetTextUTF32(text->GetTextUTF32().substr(0, selectionStart) + text->GetTextUTF32().substr(selectionEnd));
+            _selectedPositionFirst = 0;
+            _selectedPositionLast = 0;
+            updateSelectedArea();
+            _isSelected = false;
+            setCaretFromBoundary(selectionStart);
+            emitCopy();
+            emitChange();
+        }
+
+        return true;
+    }
+
+    _textCut = false;
+    return false;
+}
+
+bool RetroFuturaGUI::Table::checkForTextPaste()
+{
+    Text* text { activeText() };
+
+    if((PlatformBridge::Input::IsKeyDown(PB_KEY_CONTROL_L) || PlatformBridge::Input::IsKeyDown(PB_KEY_CONTROL_R))
+        && (PlatformBridge::Input::GetKeyPressState(PB_KEY_V) == PlatformBridge::KeyPressState::Press))
+    {
+        if(!_textPasted && text)
+        {
+            const uSize
+                selectionStart { _selectedPositionFirst < _selectedPositionLast ? _selectedPositionFirst : _selectedPositionLast },
+                selectionEnd { _selectedPositionFirst < _selectedPositionLast ? _selectedPositionLast : _selectedPositionFirst };
+            std::u32string
+                middlePart {},
+                rightPart {},
+                completeText {};
+            void* dataPtr { nullptr };
+            uSize dataSize { 0 };
+            PlatformBridge::Clipboard::PasteFromClipboard(PlatformBridge::Clipboard::ClipboardDatatype::Text, dataPtr, &dataSize);
+
+            if(dataSize == 0)
+                return true;
+
+            middlePart = std::u32string(reinterpret_cast<char32_t*>(dataPtr), dataSize / sizeof(char32_t));
+
+            if(_isSelected)
+            {
+                completeText = text->GetTextUTF32().substr(0, selectionStart);
+                rightPart = text->GetTextUTF32().substr(selectionEnd);
+                completeText += middlePart + rightPart;
+                _isSelected = false;
+                text->SetTextUTF32(completeText);
+                setCaretFromBoundary(selectionStart + middlePart.size());
+                _selectedPositionFirst = 0;
+                _selectedPositionLast = 0;
+                updateSelectedArea();
+            }
+            else // insert at the caret
+            {
+                completeText = text->GetTextUTF32().substr(0, _caretPosition);
+                rightPart = text->GetTextUTF32().substr(_caretPosition);
+                completeText += middlePart + rightPart;
+                text->SetTextUTF32(completeText);
+                setCaretFromBoundary(_caretPosition + middlePart.size());
+            }
+
+            PlatformBridge::Clipboard::ClearClipboardDataBuffer();
+            _textPasted = true;
+            emitPaste();
+            emitChange();
+        }
+
+        return true;
+    }
+
+    _textPasted = false;
+    return false;
+}
+
+bool RetroFuturaGUI::Table::checkForSelectAllText()
+{
+    Text* text { activeText() };
+
+    if((PlatformBridge::Input::IsKeyDown(PB_KEY_CONTROL_L) || PlatformBridge::Input::IsKeyDown(PB_KEY_CONTROL_R))
+        && (PlatformBridge::Input::GetKeyPressState(PB_KEY_A) == PlatformBridge::KeyPressState::Press))
+    {
+        if(text && (_selectedPositionFirst != 0 || _selectedPositionLast != text->GetGlyphCount()))
+        {
+            _selectedPositionFirst = 0;
+            _selectedPositionLast = text->GetGlyphCount();
+            setCaretFromBoundary(_selectedPositionLast);
+            updateSelectedArea();
+        }
+
+        return true;
+    }
+
+    return false;
+}
+
+bool RetroFuturaGUI::Table::checkForKeyRelease()
+{
+    if(PlatformBridge::Input::GetKeyboardUseState() == PlatformBridge::KeyboardUseState::KeyReleased)
+    {
+        _keyHoldFrames = 0;
+        _keyRepeatText.clear();
+        return true;
+    }
+
+    return false;
+}
+
+bool RetroFuturaGUI::Table::checkForKeyRepeat()
+{
+    Text* text { activeText() };
+
+    if(_keyRepeatText.empty() || !text)
+        return false;
+
+    const bool stillSameKeyPress {
+        PlatformBridge::Input::GetKeyPressState(_repeatKeySym) != PlatformBridge::KeyPressState::Release
+        && PlatformBridge::Input::GetKeyPressCount(_repeatKeySym) == _repeatKeyPressCountSeen
+    };
+
+    if(!stillSameKeyPress)
+    {
+        _keyRepeatText.clear();
+        _keyHoldFrames = 0;
+        return false;
+    }
+
+    ++_keyHoldFrames;
+
+    if(_keyHoldFrames >= _keyRepeatInitialDelay && (_keyHoldFrames - _keyRepeatInitialDelay) % _keyRepeatInterval == 0)
+    {
+        const std::u32string
+            left { text->GetTextUTF32().substr(0, _caretPosition) },
+            right { text->GetTextUTF32().substr(_caretPosition) };
+        text->SetTextUTF32(left + _keyRepeatText + right);
+        ++_caretPosition;
+        deselect();
+        updateCaretPosition();
+        emitChange();
+    }
+
+    return true;
+}
+
+bool RetroFuturaGUI::Table::checkForEnterPress()
+{
+    if(PlatformBridge::Input::GetKeyPressState(PB_KEY_RETURN) == PlatformBridge::KeyPressState::Press
+        || PlatformBridge::Input::GetKeyPressState(PB_KEY_KP_ENTER) == PlatformBridge::KeyPressState::Press
+        || PlatformBridge::Input::GetKeyPressState(PB_KEY_ISO_ENTER) == PlatformBridge::KeyPressState::Press)
+    {
+        emitEnterPressed();
+        _enterPressed = true;
+        return true;
+    }
+
+    return false;
+}
+
+bool RetroFuturaGUI::Table::checkForBackspacePress()
+{
+    Text* text { activeText() };
+
+    if(!PlatformBridge::Input::IsKeyDown(PB_KEY_BACKSPACE))
+    {
+        _backspaceKeyHoldFrames = 0;
+        _backspacePressCountSeen = PlatformBridge::Input::GetKeyPressCount(PB_KEY_BACKSPACE);
+        return false;
+    }
+
+    const u32 currentPressCount { PlatformBridge::Input::GetKeyPressCount(PB_KEY_BACKSPACE) };
+    bool shouldDelete { currentPressCount != _backspacePressCountSeen };
+
+    if(shouldDelete)
+    {
+        _backspacePressCountSeen = currentPressCount;
+        _backspaceKeyHoldFrames = 0;
+    }
+    else
+    {
+        ++_backspaceKeyHoldFrames;
+        shouldDelete = _backspaceKeyHoldFrames >= _keyRepeatInitialDelay && (_backspaceKeyHoldFrames - _keyRepeatInitialDelay) % _keyRepeatInterval == 0;
+    }
+
+    if(shouldDelete && text && !text->GetTextUTF32().empty())
+    {
+        if(_isSelected)
+        {
+            const uSize
+                selectionStart { _selectedPositionFirst < _selectedPositionLast ? _selectedPositionFirst : _selectedPositionLast },
+                selectionEnd { _selectedPositionFirst < _selectedPositionLast ? _selectedPositionLast : _selectedPositionFirst };
+            text->SetTextUTF32(text->GetTextUTF32().substr(0, selectionStart) + text->GetTextUTF32().substr(selectionEnd));
+            _selectedPositionFirst = 0;
+            _selectedPositionLast = 0;
+            _isSelected = false;
+            updateSelectedArea();
+            setCaretFromBoundary(selectionStart);
+            emitChange();
+            return true;
+        }
+
+        if(0 < _caretPosition)
+        {
+            const std::u32string
+                left { text->GetTextUTF32().substr(0, _caretPosition - 1) },
+                right { text->GetTextUTF32().substr(_caretPosition) };
+            text->SetTextUTF32(left + right);
+            --_caretPosition;
+            deselect();
+            updateCaretPosition();
+            emitChange();
+        }
+    }
+
+    return true;
+}
+
+bool RetroFuturaGUI::Table::checkForTextInput()
+{
+    Text* text { activeText() };
+    const std::u32string keyText { DoubleEncodedString::Utf8ToUtf32(PlatformBridge::Input::GetInputString()) };
+
+    if(keyText.empty() || !text)
+        return false;
+
+    if(_isSelected)
+    {
+        const uSize
+            selectionStart { _selectedPositionFirst < _selectedPositionLast ? _selectedPositionFirst : _selectedPositionLast },
+            selectionEnd { _selectedPositionFirst < _selectedPositionLast ? _selectedPositionLast : _selectedPositionFirst };
+        text->SetTextUTF32(text->GetTextUTF32().substr(0, selectionStart) + keyText + text->GetTextUTF32().substr(selectionEnd));
+        _selectedPositionFirst = 0;
+        _selectedPositionLast = 0;
+        _isSelected = false;
+        updateSelectedArea();
+        setCaretFromBoundary(selectionStart + keyText.size());
+    }
+    else
+    {
+        const std::u32string
+            left { text->GetTextUTF32().substr(0, _caretPosition) },
+            right { text->GetTextUTF32().substr(_caretPosition) };
+        text->SetTextUTF32(left + keyText + right);
+        ++_caretPosition;
+        deselect();
+        updateCaretPosition();
+        _keyRepeatText = keyText;
+        _repeatKeySym = PlatformBridge::Input::GetLastKeySym();
+        _repeatKeyPressCountSeen = PlatformBridge::Input::GetKeyPressCount(_repeatKeySym);
+        _keyHoldFrames = 0;
+    }
+
+    emitChange();
+    return true;
+}
+
+void RetroFuturaGUI::Table::SetTrackReadOnly(const uSize trackIndex, const bool readOnly)
+{
+    resizeTrackReadOnlyFlags();
+
+    if(trackIndex >= _trackReadOnlyFlags.size())
+        return;
+
+    _trackReadOnlyFlags[trackIndex] = readOnly;
+}
+
+bool RetroFuturaGUI::Table::IsTrackReadOnly(const uSize trackIndex) const
+{
+    return trackIndex < _trackReadOnlyFlags.size() ? _trackReadOnlyFlags[trackIndex] : false;
+}
+
+void RetroFuturaGUI::Table::SetCaretColors(std::span<glm::vec4> colors)
+{
+    _caretColors.assign(colors.begin(), colors.end());
+
+    if(_caret)
+        _caret->SetColors(_caretColors);
+}
+
+void RetroFuturaGUI::Table::SetCaretBlinkTime(const f64 milliseconds)
+{
+    _caretNeverBlinks = milliseconds <= 0.0;
+    _blinkForMilliseconds = milliseconds;
+    resetCaretBlink();
+}
+
+void RetroFuturaGUI::Table::SetCaretSize(const glm::vec2& size)
+{
+    if(_caret)
+        _caret->SetSize(size);
+}
+
+void RetroFuturaGUI::Table::SetSelectedAreaColors(std::span<glm::vec4> colors)
+{
+    _selectedAreaColors.assign(colors.begin(), colors.end());
+
+    if(_textSelectedArea)
+        _textSelectedArea->SetColors(_selectedAreaColors);
+}
+
+bool RetroFuturaGUI::Table::GetEditedCell(uSize& outRow, uSize& outColumn) const
+{
+    outRow = _editRow;
+    outColumn = _editColumn;
+    return _hasEditCell;
+}
+
+const std::string& RetroFuturaGUI::Table::GetCopiedText() const
+{
+    return _copiedText;
+}
+
+void RetroFuturaGUI::Table::emitEnterPressed()
+{
+    _onEnterPressedAsync.EmitAsync();
+    _onEnterPressed.Emit();
+}
+
+void RetroFuturaGUI::Table::emitEnterRelease()
+{
+    _onEnterReleasedAsync.EmitAsync();
+    _onEnterReleased.Emit();
+}
+
+void RetroFuturaGUI::Table::emitCopy()
+{
+    _onCopyAsync.EmitAsync();
+    _onCopy.Emit();
+}
+
+void RetroFuturaGUI::Table::emitPaste()
+{
+    _onPasteAsync.EmitAsync();
+    _onPaste.Emit();
+}
+
+void RetroFuturaGUI::Table::emitChange()
+{
+    _onTextChangeAsync.EmitAsync();
+    _onTextChange.Emit();
+}
+
+void RetroFuturaGUI::Table::Connect_OnEnterPressed(const typename Signal<>::Slot& slot, const bool async)
+{
+    if(async)
+        _onEnterPressedAsync.Connect(slot);
+    else
+        _onEnterPressed.Connect(slot);
+}
+
+void RetroFuturaGUI::Table::Connect_OnEnterReleased(const typename Signal<>::Slot& slot, const bool async)
+{
+    if(async)
+        _onEnterReleasedAsync.Connect(slot);
+    else
+        _onEnterReleased.Connect(slot);
+}
+
+void RetroFuturaGUI::Table::Connect_OnCopy(const typename Signal<>::Slot& slot, const bool async)
+{
+    if(async)
+        _onCopyAsync.Connect(slot);
+    else
+        _onCopy.Connect(slot);
+}
+
+void RetroFuturaGUI::Table::Connect_OnPaste(const typename Signal<>::Slot& slot, const bool async)
+{
+    if(async)
+        _onPasteAsync.Connect(slot);
+    else
+        _onPaste.Connect(slot);
+}
+
+void RetroFuturaGUI::Table::Disconnect_OnEnterPressed(const typename Signal<>::Slot& slot)
+{
+    _onEnterPressed.Disconnect(slot);
+    _onEnterPressedAsync.Disconnect(slot);
+}
+
+void RetroFuturaGUI::Table::Disconnect_OnEnterReleased(const typename Signal<>::Slot& slot)
+{
+    _onEnterReleased.Disconnect(slot);
+    _onEnterReleasedAsync.Disconnect(slot);
+}
+
+void RetroFuturaGUI::Table::Disconnect_OnCopy(const typename Signal<>::Slot& slot)
+{
+    _onCopy.Disconnect(slot);
+    _onCopyAsync.Disconnect(slot);
+}
+
+void RetroFuturaGUI::Table::Disconnect_OnPaste(const typename Signal<>::Slot& slot)
+{
+    _onPaste.Disconnect(slot);
+    _onPasteAsync.Disconnect(slot);
+}
+
 void RetroFuturaGUI::Table::Connect_OnTextChange(const typename Signal<>::Slot& slot, const bool async)
 {
     if(async)
@@ -788,6 +1319,8 @@ void RetroFuturaGUI::Table::SetFontFamily(std::string_view fontFamily, const f32
 
             static_cast<TableText*>(cell._TableWidget.get())->SetFontFamily(fontFamily, fontSize, slant, fontWeight);
         }
+
+    _caret->SetSize({ 2.0f, _textDefaults._FontSize * 1.6f });
 }
 
 void RetroFuturaGUI::Table::SetTextAlignment(const TextAlignment alignment)
@@ -881,6 +1414,7 @@ void RetroFuturaGUI::Table::SetInnerBorderWidth(const f32 width)
 void RetroFuturaGUI::Table::SetTableOrientation(const TableOrientation orientation)
 {
     _tableOrientation = orientation;
+    resizeTrackReadOnlyFlags();
 }
 
 void RetroFuturaGUI::Table::SetTrackAlternatingColorCount(const uSize variantCount)
@@ -899,4 +1433,409 @@ void RetroFuturaGUI::Table::SetHeaderBackgroundColors(std::span<glm::vec4> color
         _headerBackgroundColorsDisabled = std::vector<glm::vec4>(colors.begin(), colors.end());
     else
         _headerBackgroundColorsEnabled = std::vector<glm::vec4>(colors.begin(), colors.end());
+}
+
+RetroFuturaGUI::Text* RetroFuturaGUI::Table::activeText() const
+{
+    if(!_hasEditCell || _editRow >= _tableCells.size() || _editColumn >= _tableCells[_editRow].size())
+        return nullptr;
+
+    const TableCell& cell { _tableCells[_editRow][_editColumn] };
+
+    if(cell._TableWidgetTypeID != ITableWidget::TableWidgetTypeID::TableText || !cell._TableWidget)
+        return nullptr;
+
+    return static_cast<TableText*>(cell._TableWidget.get())->_text.get();
+}
+
+bool RetroFuturaGUI::Table::hasInputFocus() const
+{
+    const uint64_t activeWindowId { PlatformBridge::Input::GetActiveWindowID() };
+
+#if defined(TARGET_PLATFORM_LINUX)
+    return activeWindowId == static_cast<uint64_t>(glfwGetX11Window(_parentWindow));
+#elif defined(TARGET_PLATFORM_WINDOWS)
+    return activeWindowId == reinterpret_cast<uint64_t>(glfwGetWin32Window(_parentWindow));
+#else
+    return false;
+#endif
+}
+
+bool RetroFuturaGUI::Table::isEditedTrackReadOnly() const
+{
+    if(!_hasEditCell)
+        return true;
+
+    // resizeTrackReadOnlyFlags() sizes the flags across the axis the orientation doesn't band along
+    const uSize track { _tableOrientation == TableOrientation::Row ? _editColumn : _editRow };
+    return track < _trackReadOnlyFlags.size() ? _trackReadOnlyFlags[track] : false;
+}
+
+f32 RetroFuturaGUI::Table::clampToCellBounds(const f32 worldX, const f32 halfExtent) const
+{
+    if(!_hasEditCell || _editRow >= _tableCells.size() || _editColumn >= _tableCells[_editRow].size())
+        return worldX;
+
+    const TableCell& cell { _tableCells[_editRow][_editColumn] };
+    const f32
+        left { cell._PositionPixels.x - cell._SizePixels.x * 0.5f + halfExtent },
+        right { cell._PositionPixels.x + cell._SizePixels.x * 0.5f - halfExtent };
+
+    if(left > right) // the requested extent is wider than the cell itself
+        return cell._PositionPixels.x;
+
+    return worldX < left ? left : (worldX > right ? right : worldX);
+}
+
+f32 RetroFuturaGUI::Table::keepCaretVisible(const f32 worldX, const f32 halfExtent)
+{
+    Text* text { activeText() };
+
+    if(!text || !_hasEditCell || _editRow >= _tableCells.size() || _editColumn >= _tableCells[_editRow].size())
+        return worldX;
+
+    const TableCell& cell { _tableCells[_editRow][_editColumn] };
+    const f32
+        left { cell._PositionPixels.x - cell._SizePixels.x * 0.5f + halfExtent },
+        right { cell._PositionPixels.x + cell._SizePixels.x * 0.5f - halfExtent };
+
+    if(left > right)
+        return cell._PositionPixels.x;
+
+    f32 scrollOffset { text->GetScrollOffset() };
+
+    if(worldX > right) // scroll the cell's text left so the caret lands exactly on the edge
+    {
+        scrollOffset += worldX - right;
+        text->SetScrollOffset(scrollOffset);
+        return right;
+    }
+
+    if(worldX < left && scrollOffset > 0.0f) // scroll back right, as far as there's room to
+    {
+        const f32
+            newScrollOffset { (scrollOffset + worldX - left) > 0.0f ? (scrollOffset + worldX - left) : 0.0f },
+            delta { newScrollOffset - scrollOffset };
+        text->SetScrollOffset(newScrollOffset);
+        return worldX - delta;
+    }
+
+    return clampToCellBounds(worldX, halfExtent);
+}
+
+void RetroFuturaGUI::Table::beginEdit(const uSize row, const uSize column, const f32 worldX)
+{
+    if(_hasEditCell && (_editRow != row || _editColumn != column))
+        EndEdit(); // leaving a cell resets its horizontal text scroll
+
+    _editRow = row;
+    _editColumn = column;
+    _hasEditCell = true;
+    _editingEnabled = true;
+    _showCaret = true;
+
+#if defined(TARGET_PLATFORM_LINUX)
+    PlatformBridge::Input::SetActiveDisplay(glfwGetX11Display());
+    PlatformBridge::Input::SetActiveWindow(glfwGetX11Window(_parentWindow));
+#elif defined(TARGET_PLATFORM_WINDOWS)
+    PlatformBridge::Input::SetActiveWindow(glfwGetWin32Window(_parentWindow));
+#endif
+
+    Text* text { activeText() };
+
+    if(!text)
+        return;
+
+    _selectedPositionFirst = _selectedPositionLast = text->GetBoundaryAtPosition(clampToCellBounds(worldX));
+    setCaretFromBoundary(_selectedPositionFirst);
+    updateSelectedArea();
+    _isMarking = true;
+}
+
+void RetroFuturaGUI::Table::EndEdit()
+{
+    if(Text* text { activeText() })
+        text->SetScrollOffset(0.0f); // show the cell from its start again once it loses focus
+
+    _hasEditCell = false;
+    _editingEnabled = false;
+    _showCaret = false;
+    _selectedPositionFirst = 0;
+    _selectedPositionLast = 0;
+    deselect();
+}
+
+void RetroFuturaGUI::Table::interact()
+{
+    i32
+        mouseX { 0 },
+        mouseY { 0 };
+    bool hasMousePosition { false };
+
+#if defined(TARGET_PLATFORM_LINUX)
+    hasMousePosition = PlatformBridge::Input::GetMouseWindowPosition(glfwGetX11Window(_parentWindow), mouseX, mouseY);
+#elif defined(TARGET_PLATFORM_WINDOWS)
+    hasMousePosition = PlatformBridge::Input::GetMouseWindowPosition(glfwGetWin32Window(_parentWindow), mouseX, mouseY);
+#endif
+
+    //PlatformBridge reports native (top-down) window coordinates; flip to this library's bottom-up world space here
+    const glm::vec2 mousePos { static_cast<f32>(mouseX), _projection.GetResolution().y - static_cast<f32>(mouseY) };
+    const bool
+        isMousePressed { PlatformBridge::Input::IsMouseButtonDown(PlatformBridge::MouseButton::Left) },
+        isMouseInside { hasMousePosition && isPointInside(mousePos) };
+
+    // Dragging extends the selection within the cell that already has focus
+    if(_isMarking)
+    {
+        if(isMousePressed && hasMousePosition)
+        {
+            if(Text* text { activeText() })
+            {
+                _selectedPositionLast = text->GetBoundaryAtPosition(clampToCellBounds(mousePos.x));
+                setCaretFromBoundary(_selectedPositionLast);
+                updateSelectedArea();
+            }
+        }
+        else
+        {
+            _isMarking = false;
+        }
+    }
+
+    if(isMousePressed && !_wasClicked) // a fresh press decides which cell, if any, takes focus
+    {
+        bool hitACell { false };
+
+        if(isMouseInside)
+        {
+            const uSize rowEnd { _displayedRows[1] < _tableCells.size() ? _displayedRows[1] : _tableCells.size() };
+
+            for(uSize row = _displayedRows[0]; row < rowEnd && !hitACell; ++row)
+            {
+                const uSize columnEnd { _displayedColumns[1] < _tableCells[row].size() ? _displayedColumns[1] : _tableCells[row].size() };
+
+                for(uSize column = _displayedColumns[0]; column < columnEnd; ++column)
+                {
+                    const TableCell& cell { _tableCells[row][column] };
+
+                    if(cell._TableWidgetTypeID != ITableWidget::TableWidgetTypeID::TableText)
+                        continue;
+
+                    if(!isPointInsideRect(mousePos, cell._SizePixels, cell._PositionPixels, _rotation))
+                        continue;
+
+                    beginEdit(row, column, mousePos.x);
+                    _onClickAsync.EmitAsync();
+                    _onClick.Emit();
+                    hitACell = true;
+                    break;
+                }
+            }
+        }
+
+        if(!hitACell) // clicking a gap, a header or anything outside gives up focus
+            EndEdit();
+    }
+    else if(!isMousePressed && _wasClicked)
+    {
+        _onReleaseAsync.EmitAsync();
+        _onRelease.Emit();
+    }
+
+    _wasClicked = isMousePressed;
+
+    if(_editingEnabled)
+    {
+#if defined(TARGET_PLATFORM_LINUX)
+        PlatformBridge::Input::SetActiveDisplay(glfwGetX11Display());
+        PlatformBridge::Input::SetActiveWindow(glfwGetX11Window(_parentWindow));
+#elif defined(TARGET_PLATFORM_WINDOWS)
+        PlatformBridge::Input::SetActiveWindow(glfwGetWin32Window(_parentWindow));
+#endif
+    }
+
+    editText();
+    moveCaret();
+
+    if(!_caretNeverBlinks)
+        updateCaretBlink();
+}
+
+void RetroFuturaGUI::Table::moveCaret()
+{
+    if(!_editingEnabled || !activeText())
+        return;
+
+    if(!hasInputFocus())
+        return;
+
+    if(PlatformBridge::Input::GetKeyboardUseState() == PlatformBridge::KeyboardUseState::KeyReleased)
+    {
+        _caretKeyWasReleased = true;
+        _caretKeyHoldFrames = 0;
+        _caretRepeatDirection = 0;
+        return;
+    }
+
+    if(!_caretKeyWasReleased)
+    {
+        if(_caretRepeatDirection != 0)
+        {
+            ++_caretKeyHoldFrames;
+
+            if(_caretKeyHoldFrames >= _keyRepeatInitialDelay && (_caretKeyHoldFrames - _keyRepeatInitialDelay) % _keyRepeatInterval == 0)
+            {
+                if(_caretRepeatDirection < 0)
+                    moveCaretLeft();
+                else
+                    moveCaretRight();
+            }
+        }
+
+        return;
+    }
+
+    if(PlatformBridge::Input::GetKeyPressState(PB_KEY_LEFT) == PlatformBridge::KeyPressState::Press)
+    {
+        moveCaretLeft();
+        _caretRepeatDirection = -1;
+    }
+    else if(PlatformBridge::Input::GetKeyPressState(PB_KEY_RIGHT) == PlatformBridge::KeyPressState::Press)
+    {
+        moveCaretRight();
+        _caretRepeatDirection = 1;
+    }
+    else
+    {
+        return;
+    }
+
+    _caretKeyWasReleased = false;
+    _caretKeyHoldFrames = 0;
+}
+
+void RetroFuturaGUI::Table::moveCaretLeft()
+{
+    deselect();
+
+    if(_caretPosition > 0)
+        --_caretPosition;
+
+    updateCaretPosition();
+}
+
+void RetroFuturaGUI::Table::moveCaretRight()
+{
+    Text* text { activeText() };
+
+    if(!text)
+        return;
+
+    deselect();
+
+    if(_caretPosition < text->GetGlyphCount())
+        ++_caretPosition;
+
+    updateCaretPosition();
+}
+
+void RetroFuturaGUI::Table::updateCaretPosition()
+{
+    Text* text { activeText() };
+
+    if(!text || !_caret)
+        return;
+
+    glm::vec3 caretPosition { text->GetBoundaryPosition(_caretPosition, _caret->GetSize().y) };
+    caretPosition.x = keepCaretVisible(caretPosition.x, _caret->GetSize().x * 0.5f);
+    caretPosition.z = _position.z + _widgetZOffset + 0.02f; // in front of the cell's own text
+    _caret->SetPosition(caretPosition);
+    resetCaretBlink();
+}
+
+void RetroFuturaGUI::Table::updateCaretBlink()
+{
+    if(!_showCaret)
+    {
+        resetCaretBlink();
+        return;
+    }
+
+    const f64 elapsedMilliseconds { std::chrono::duration<f64, std::milli>(std::chrono::high_resolution_clock::now() - _millisecondsPassed).count() };
+
+    if(elapsedMilliseconds < _blinkForMilliseconds)
+        return;
+
+    _caretBlinkState = !_caretBlinkState;
+    _millisecondsPassed = std::chrono::high_resolution_clock::now();
+}
+
+void RetroFuturaGUI::Table::resetCaretBlink()
+{
+    _caretBlinkState = true;
+    _millisecondsPassed = std::chrono::high_resolution_clock::now();
+}
+
+void RetroFuturaGUI::Table::setCaretFromBoundary(const uSize boundary)
+{
+    _caretPosition = boundary;
+    updateCaretPosition();
+}
+
+void RetroFuturaGUI::Table::deselect()
+{
+    _isMarking = false;
+    _isSelected = false;
+}
+
+void RetroFuturaGUI::Table::updateSelectedArea()
+{
+    Text* text { activeText() };
+    const uSize
+        left { _selectedPositionFirst < _selectedPositionLast ? _selectedPositionFirst : _selectedPositionLast },
+        right { _selectedPositionFirst < _selectedPositionLast ? _selectedPositionLast : _selectedPositionFirst };
+
+    if(!text || !_textSelectedArea || !_caret || left == right) // nothing selected
+    {
+        _isSelected = false;
+        return;
+    }
+
+    const glm::vec3
+        leftPosition { text->GetBoundaryPosition(left, _caret->GetSize().y) },
+        rightPosition { text->GetBoundaryPosition(right, _caret->GetSize().y) };
+    const f32
+        clippedLeftX { clampToCellBounds(leftPosition.x) },
+        clippedRightX { clampToCellBounds(rightPosition.x) },
+        width { clippedRightX - clippedLeftX };
+
+    if(width <= 0.0f) // the selection sits entirely outside the visible part of the cell
+    {
+        _isSelected = false;
+        return;
+    }
+
+    _textSelectedArea->SetSize(glm::vec2(width, _caret->GetSize().y));
+    _textSelectedArea->SetPosition(glm::vec3(clippedLeftX + width * 0.5f,
+                                             leftPosition.y,
+                                             _position.z + _widgetZOffset - 0.01f)); // behind the text it highlights
+    _isSelected = true;
+}
+
+void RetroFuturaGUI::Table::drawCaretAndSelection()
+{
+    if(!_hasEditCell)
+        return;
+
+    if(_textSelectedArea && _isSelected)
+    {
+        _textSelectedArea->SetColors(_selectedAreaColors);
+        _textSelectedArea->Draw();
+    }
+
+    if(_caret && _showCaret && (_caretNeverBlinks || _caretBlinkState))
+    {
+        _caret->SetColors(_caretColors);
+        _caret->Draw();
+    }
 }
