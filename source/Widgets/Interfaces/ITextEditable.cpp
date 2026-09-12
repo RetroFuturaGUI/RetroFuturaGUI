@@ -489,19 +489,19 @@ void RetroFuturaGUI::ITextEditable::editText()
     if(!hasInputFocus())
         return;
 
+    if(!_editingEnabled)
+        return;
+
     if(checkForTextCopy())
         return;
 
     if(checkForTextCut())
         return;
-    
+
     if(checkForTextPaste())
         return;
 
     if(checkForSelectAllText())
-        return;
-
-    if(!_editingEnabled)
         return;
 
 
