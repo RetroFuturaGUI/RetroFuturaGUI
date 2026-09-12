@@ -55,9 +55,10 @@ list(APPEND RetroFuturaGuiSources
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/Interfaces/IBackground.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/Interfaces/IBorder.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/Interfaces/IClickable.cpp"
-    "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/Table/Table.cpp"
-    "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/Table/ITableWidget.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/Table/ITableTextProperties.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/Table/ITableWidget.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/Table/Table.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/Table/TableColor.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/Table/TableText.cpp"
 )
 

@@ -40,6 +40,8 @@ The framework is designed for cross-platform use, and its logic can be compiled 
 - Button
   - suppress text overflow
 - Table
+  - More cell types (TableImage, TableCheckBox, TableProgressBar); TableText and TableColor exist so far
+  - Connect_/Disconnect_OnColorChange: the signal is emitted when a cell's color changes but has no public connector yet
   - Auto track sizing (measure a track against its content); currently resolves like Fixed
   - Row/column spanning (the cells carry the spans already, the layout doesn't apply them yet)
   - Draw the header band's outer border (the width and colors are configurable but unused)
@@ -120,7 +122,9 @@ The framework is designed for cross-platform use, and its logic can be compiled 
     - Background & Border (same options as Button)
     - SetPosition, SetSize, SetRotation, corner radii
   - Table
-    - Grid of text cells, each created on demand the first time text is assigned to it
+    - Grid of typed cells, each created on demand the first time a value is assigned to it. The cell type follows from which SetTableWidget overload is called: a string makes a TableText, a color makes a TableColor
+    - TableText cells: editable text, one Text mesh per cell (see the text interaction entry below)
+    - TableColor cells: a solid color swatch. The cell stores only its color value and draws through a single rectangle shared by the whole table, so a color column costs one set of GL buffers no matter how many rows it has
     - Per-track sizing policies: Star (divides whatever viewport space the fixed tracks left over) and Fixed (absolute pixels, the mode that lets content outgrow the table and become scrollable)
     - Scrolling on both axes, with content extent, maximum scroll and scroll position exposed so an external Slider can drive it through the signal/slot mechanism
     - Only the tracks overlapping the viewport are drawn; partially visible ones are clipped by a scissor that intersects with whatever clip is already active, so a half-scrolled row can't spill past the border

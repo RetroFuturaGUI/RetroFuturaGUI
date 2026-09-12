@@ -52,6 +52,14 @@ RetroFuturaGUI::Table::Table(const std::string& name, Projection* projection, IW
         _caret->SetColors(_caretColors);
     }
 
+    _cellColorPlane = std::make_unique<Rectangle>(projection);
+
+    if(_cellColorPlane)
+    {
+        _cellColorPlane->SetRectangleMode(RectangleMode::Plane);
+        _cellColorPlane->SetFillType(FillType::SOLID);
+    }
+
     _textSelectedArea = std::make_unique<Rectangle>(projection);
 
     if(_textSelectedArea)
@@ -103,6 +111,7 @@ void RetroFuturaGUI::Table::Draw()
 
             if(_innerBorder)
             {
+                _innerBorder->SetBorderWidth(_innerBorderWidth);
                 _innerBorder->SetSize(cell._SizePixels);
                 _innerBorder->SetPosition(cell._PositionPixels - glm::vec3(0.0f, 0.0f, _widgetZOffset - 0.01f));
                 _innerBorder->SetColors(coloring._InnerBorderColorEnabled);
@@ -1407,8 +1416,7 @@ void RetroFuturaGUI::Table::SetTrackBorderColors(std::span<glm::vec4> colors, co
 
 void RetroFuturaGUI::Table::SetInnerBorderWidth(const f32 width)
 {
-    if(_innerBorder)
-        _innerBorder->SetBorderWidth(width);
+    _innerBorderWidth = width;
 }
 
 void RetroFuturaGUI::Table::SetTableOrientation(const TableOrientation orientation)
@@ -1796,4 +1804,54 @@ void RetroFuturaGUI::Table::drawCaretAndSelection()
         _caret->SetColors(_caretColors);
         _caret->Draw();
     }
+}
+
+void  RetroFuturaGUI::Table::SetTableWidget(std::string_view text, const uSize xIndex, const uSize yIndex, const bool emitSignal)
+{
+    if(_tableCells.size() <= xIndex)
+        return;
+
+    if(_tableCells[xIndex].size() <= yIndex)
+        return;
+
+    TableCell& tableCell { _tableCells[xIndex][yIndex] };
+
+    if(!tableCell._TableWidget)
+        setWidget<TableText>(xIndex, yIndex, this);
+
+    TableText* textWidget { dynamic_cast<TableText*>(tableCell._TableWidget.get()) };
+    textWidget->SetText(text);
+
+    if(!emitSignal)
+        return;
+    
+    _onTextChangeAsync.EmitAsync();
+    _onTextChange.Emit();
+}
+
+void  RetroFuturaGUI::Table::SetTableWidget(const glm::vec4 color, const uSize xIndex, const uSize yIndex, const bool emitSignal)
+{
+    if(_tableCells.size() <= xIndex)
+        return;
+
+    if(_tableCells[xIndex].size() <= yIndex)
+        return;
+
+    TableCell& tableCell { _tableCells[xIndex][yIndex] };
+
+    if(!tableCell._TableWidget)
+        setWidget<TableColor>(xIndex, yIndex, this);
+
+    TableColor* colorWidget { dynamic_cast<TableColor*>(tableCell._TableWidget.get()) };
+
+    if(!colorWidget)
+        return;
+
+    colorWidget->SetColor(color);
+
+    if(!emitSignal)
+        return;
+    
+    _onColorChangeAsync.EmitAsync();
+    _onColorChange.Emit();
 }

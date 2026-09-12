@@ -15,6 +15,7 @@
 #include "config.hpp"
 #include "TableText.hpp"
 #include "ITextInteraction.hpp"
+#include "TableColor.hpp"
 #include <memory>
 
 namespace RetroFuturaGUI
@@ -119,43 +120,7 @@ namespace RetroFuturaGUI
         void SetSize(const glm::vec3& size) override;
         void SetPosition(const glm::vec3& position) override;
         void SetRotation(const glm::vec3& rotation) override;
-        template <typename T> void SetWidget(const uSize xIndex, const uSize yIndex, Table* parentTable)
-        {
-            if(_tableCells.size() <= xIndex)
-             return;
-
-            if(_tableCells.front().size() <= yIndex)
-                return;
-
-            TableCell& tableCell = _tableCells[xIndex][yIndex];
-            tableCell._ParentTable = parentTable;
-
-            if constexpr (std::is_same_v<T, TableText>)
-            {
-                auto textWidget { std::make_unique<TableText>(parentTable, &_projection) };
-
-                if(_textDefaults._HasFont)
-                    textWidget->SetFontFamily(_textDefaults._FontFamily, _textDefaults._FontSize, _textDefaults._Slant, _textDefaults._Weight);
-
-                textWidget->SetTextAlignment(_textDefaults._Alignment);
-                textWidget->SetTextPadding(_textDefaults._Padding);
-
-                if(!_nthTrackColors.empty())
-                {
-                    TrackColoring& coloring { _nthTrackColors[0] };
-                    textWidget->SetTextColors(coloring._TextColorEnabled, ColorState::Enabled);
-                    textWidget->SetTextColors(coloring._TextColorDisabled, ColorState::Disabled);
-                    textWidget->SetTextColors(coloring._TextColorClicked, ColorState::Clicked);
-                    textWidget->SetTextColors(coloring._TextColorHover, ColorState::Hover);
-                }
-
-                tableCell._TableWidget = std::move(textWidget);
-                tableCell._TableWidgetTypeID = ITableWidget::TableWidgetTypeID::TableText;
-                layoutCells();
-            }
-        }
-
-        
+                
         /// @brief Connects a slot to be called when the text content changes.
         /// @param async If true, the slot is invoked asynchronously.
         void Connect_OnTextChange(const typename Signal<>::Slot& slot, const bool async);
@@ -169,32 +134,11 @@ namespace RetroFuturaGUI
         /// @brief Returns the text color configured for the given color state.
         std::vector<glm::vec4> GetTextColor(const ColorState state) const;
 
-        /// @brief Sets the text contents in UTF-8.
-        template<typename T> void SetText(std::string_view text, const uSize xIndex, const uSize yIndex, const bool emitSignal)
-        {
-            if(_tableCells.size() <= xIndex)
-                return;
+        /// @brief Sets the TableWidget contents in UTF-8.
+        void SetTableWidget(std::string_view text, const uSize xIndex, const uSize yIndex, const bool emitSignal);
 
-            if(_tableCells[xIndex].size() <= yIndex)
-                return;
-
-            if constexpr (!std::is_same_v<T, TableText>)
-                return;
-
-            TableCell& tableCell { _tableCells[xIndex][yIndex] };
-
-            if(!tableCell._TableWidget)
-                SetWidget<T>(xIndex, yIndex, this);
-
-            TableText* textWidget { dynamic_cast<TableText*>(tableCell._TableWidget.get()) };
-            textWidget->SetText(text);
-
-            if(!emitSignal)
-                return;
-            
-            _onTextChangeAsync.EmitAsync();
-            _onTextChange.Emit();
-        }
+        /// @brief Sets the TableWidget contents in color.
+        void SetTableWidget(const glm::vec4 color, const uSize xIndex, const uSize yIndex, const bool emitSignal);
 
         /// @brief Sets the row/column tracks as Star weights, for callers that just want plain proportions.
         void SetTrackDefinitions(const std::vector<f32>& rowDefinition, const std::vector<f32>& columnDefinition);
@@ -225,13 +169,13 @@ namespace RetroFuturaGUI
         const std::string& GetText(const uSize xIndex, const uSize yIndex) const;
 
         /// @brief Sets the font family, size and style used to render the text, loading it if necessary.
-        virtual void SetFontFamily(std::string_view fontFamily, const f32 fontSize, const PlatformBridge::Fonts::Slant slant, const PlatformBridge::Fonts::Weight fontWeight);
+        void SetFontFamily(std::string_view fontFamily, const f32 fontSize, const PlatformBridge::Fonts::Slant slant, const PlatformBridge::Fonts::Weight fontWeight);
 
         /// @brief Sets the horizontal alignment of the text.
-        virtual void SetTextAlignment(const TextAlignment alignment);
+        void SetTextAlignment(const TextAlignment alignment);
 
         /// @brief Sets the padding applied around the text.
-        virtual void SetTextPadding(const f32 padding);
+        void SetTextPadding(const f32 padding);
 
         void SetRowWidgetTypes(const std::vector<ITableWidget::TableWidgetTypeID>& rowWidgetTypes);
 
@@ -346,6 +290,48 @@ namespace RetroFuturaGUI
         /// @brief Finds the half-open [first, end) range of tracks overlapping the scrolled viewport.
         static void resolveVisibleRange(const std::vector<f32>& sizes, const f32 scroll, const f32 viewportExtent, uSize& outFirst, uSize& outEnd);
 
+        template <typename T> void setWidget(const uSize xIndex, const uSize yIndex, Table* parentTable)
+        {
+            if(_tableCells.size() <= xIndex)
+             return;
+
+            if(_tableCells.front().size() <= yIndex)
+                return;
+
+            TableCell& tableCell = _tableCells[xIndex][yIndex];
+            tableCell._ParentTable = parentTable;
+
+            if constexpr (std::is_same_v<T, TableText>)
+            {
+                auto textWidget { std::make_unique<TableText>(parentTable, &_projection) };
+
+                if(_textDefaults._HasFont)
+                    textWidget->SetFontFamily(_textDefaults._FontFamily, _textDefaults._FontSize, _textDefaults._Slant, _textDefaults._Weight);
+
+                textWidget->SetTextAlignment(_textDefaults._Alignment);
+                textWidget->SetTextPadding(_textDefaults._Padding);
+
+                if(!_nthTrackColors.empty())
+                {
+                    TrackColoring& coloring { _nthTrackColors[0] };
+                    textWidget->SetTextColors(coloring._TextColorEnabled, ColorState::Enabled);
+                    textWidget->SetTextColors(coloring._TextColorDisabled, ColorState::Disabled);
+                    textWidget->SetTextColors(coloring._TextColorClicked, ColorState::Clicked);
+                    textWidget->SetTextColors(coloring._TextColorHover, ColorState::Hover);
+                }
+
+                tableCell._TableWidget = std::move(textWidget);
+                tableCell._TableWidgetTypeID = ITableWidget::TableWidgetTypeID::TableText;
+            }
+            else if constexpr (std::is_same_v<T, TableColor>)
+            {
+                tableCell._TableWidget = std::make_unique<TableColor>(parentTable, &_projection, _cellColorPlane.get());
+                tableCell._TableWidgetTypeID = ITableWidget::TableWidgetTypeID::TableColor;
+            }
+
+            layoutCells();
+        }
+
         void resizeTrackReadOnlyFlags();
 
         Text* activeText() const;
@@ -403,7 +389,8 @@ namespace RetroFuturaGUI
             _trackColoringOverlay { nullptr },
             _innerBorder { nullptr },
             _textSelectedArea { nullptr },
-            _caret { nullptr };
+            _caret { nullptr },
+            _cellColorPlane { nullptr };
         std::vector<ITableWidget::TableWidgetTypeID> _rowWidgetTypes {};
 
     //Geommetry
@@ -428,6 +415,7 @@ namespace RetroFuturaGUI
             _selectedTextColors {{ 1.0f, 1.0f, 1.0f, 1.0f }};
         TextDefaults _headerTextDefaults {};
         f32
+            _innerBorderWidth { 1.0f },
             _headerInnerBorderWidth { 1.0f },
             _headerOuterBorderWidth { 1.0f },
             _horizontalHeaderHeight { 30.0f },
@@ -486,6 +474,8 @@ namespace RetroFuturaGUI
         Signal<>
             _onTextChange,
             _onTextChangeAsync,
+            _onColorChange,
+            _onColorChangeAsync,
             _onEnterPressed,
             _onEnterPressedAsync,
             _onEnterReleased,

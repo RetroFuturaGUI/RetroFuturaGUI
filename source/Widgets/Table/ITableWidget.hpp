@@ -27,6 +27,7 @@ namespace RetroFuturaGUI
         {
             None,
             TableText,
+            TableColor
         };
 
     protected:
