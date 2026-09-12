@@ -49,6 +49,7 @@ list(APPEND RetroFuturaGuiSources
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/Containers/RadioButtonGroup.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/Interfaces/IRangedValue.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/Interfaces/ITextEditable.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/Interfaces/ITextInteraction.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/Interfaces/ITextProperties.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/Interfaces/IWidget.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/Interfaces/IBackground.cpp"

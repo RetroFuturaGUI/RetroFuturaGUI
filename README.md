@@ -34,10 +34,17 @@ The framework is designed for cross-platform use, and its logic can be compiled 
 - Test ITextEditable.cpp#L119 on Linux
 - Text
   - Optimizations
+  - SetParentSize doesn't rebuild the mesh, so glyph clipping goes stale when a widget is resized after its text was set
 - TextBox
   - suppress text overflow
 - Button
   - suppress text overflow
+- Table
+  - Auto track sizing (measure a track against its content); currently resolves like Fixed
+  - Row/column spanning (the cells carry the spans already, the layout doesn't apply them yet)
+  - Draw the header band's outer border (the width and colors are configurable but unused)
+  - Keyboard traversal between cells (Tab); the arrow keys move the caret within a cell
+  - Clipping is an axis-aligned scissor, so it stops being exact once the table carries a rotation
 - WindowBar
   - Window Icon
 
@@ -93,6 +100,35 @@ The framework is designed for cross-platform use, and its logic can be compiled 
     - Text selection: mouse-drag selection, colors, Solid/Linear/Radial/HueStar Gradient fill, gradient offset/degree/rotation speed, corner radii
     - Placerholder Text
     - Copy / Cut / Paste (via PlatformBridge's Clipboard)
+    - Signals: OnTextChange, OnEnterPressed, OnEnterReleased, OnCopy, OnPaste
+    - Background & Border (same options as Button)
+    - SetPosition, SetSize, SetRotation
+  - Slider
+    - Represents a numeric value of any type (Bool, Int8-64, UInt8-64, Float32/64) with configurable min/max
+    - Horizontal and Vertical orientation: the value always runs along the track's local x-axis, so a vertical slider is a horizontal one turned a quarter turn, while its own rotation stays at whatever the caller set
+    - Drag the indicator or click anywhere on the track to set the value
+    - Indicator: Stroke or Circle type, sized in pixels or percent of the track, per-state colors (Enabled, Disabled, Clicked, Hover), Solid/Linear/Radial/HueStar Gradient fill, Dotted Pattern, Fog Effect, corner radii, border width and border gaps
+    - Graph (the filled part of the track): Bar or Wave mode, per-state colors, width, all fill types, corner radii
+    - Optional increment/decrement buttons with a configurable step size
+    - Signals: OnValueChanged, OnValueSet
+    - Background & Border (same options as Button)
+    - SetPosition, SetSize, SetRotation, corner radii
+  - ProgressBar
+    - Shares the Slider's value, indicator and graph machinery (IRangedValue) without the dragging and buttons
+    - Horizontal and Vertical orientation
+    - Signals: OnValueChanged, OnValueSet
+    - Background & Border (same options as Button)
+    - SetPosition, SetSize, SetRotation, corner radii
+  - Table
+    - Grid of text cells, each created on demand the first time text is assigned to it
+    - Per-track sizing policies: Star (divides whatever viewport space the fixed tracks left over) and Fixed (absolute pixels, the mode that lets content outgrow the table and become scrollable)
+    - Scrolling on both axes, with content extent, maximum scroll and scroll position exposed so an external Slider can drive it through the signal/slot mechanism
+    - Only the tracks overlapping the viewport are drawn; partially visible ones are clipped by a scissor that intersects with whatever clip is already active, so a half-scrolled row can't spill past the border
+    - Alternating track coloring with any number of color variants, banding by row or by column (TableOrientation)
+    - Per-variant background, inner border and text colors
+    - Column and row headers, placeable Top/Bottom and Left/Right, with their own font, alignment, padding, colors and border widths. The band is taken out of the content viewport and stays pinned while the content scrolls underneath it
+    - Text interaction per cell: click to place the caret, drag to mark, arrow keys with key repeat, select all, copy / cut / paste, backspace. One caret and one selection highlight are shared by every cell, reused by whichever one currently has focus
+    - Read-only tracks: marking and copying still work, only the edits are rejected
     - Signals: OnTextChange, OnEnterPressed, OnEnterReleased, OnCopy, OnPaste
     - Background & Border (same options as Button)
     - SetPosition, SetSize, SetRotation

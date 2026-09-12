@@ -9,19 +9,6 @@
 #endif
 #include <GLFW/glfw3native.h>
 
-bool RetroFuturaGUI::ITextEditable::hasInputFocus() const
-{
-    const uint64_t activeWindowId { PlatformBridge::Input::GetActiveWindowID() };
-
-#if defined(TARGET_PLATFORM_LINUX)
-    return activeWindowId == static_cast<uint64_t>(glfwGetX11Window(_parentWindow));
-#elif defined(TARGET_PLATFORM_WINDOWS)
-    return activeWindowId == reinterpret_cast<uint64_t>(glfwGetWin32Window(_parentWindow));
-#else
-    return false;
-#endif
-}
-
 void RetroFuturaGUI::ITextEditable::moveCaret()
 {
     if(!_editingEnabled || !_text)
@@ -44,7 +31,7 @@ void RetroFuturaGUI::ITextEditable::moveCaret()
         {
             ++_caretKeyHoldFrames;
 
-            if (_caretKeyHoldFrames >= _keyRepeatInitialDelay && (_caretKeyHoldFrames - _keyRepeatInitialDelay) % _keyRepeatInterval == 0)
+            if(shouldRepeat(_caretKeyHoldFrames))
             {
                 if(_caretRepeatDirection < 0)
                     moveCaretLeft();
@@ -103,39 +90,10 @@ void RetroFuturaGUI::ITextEditable::updateCaretPosition()
     resetCaretBlink();
 }
 
-void RetroFuturaGUI::ITextEditable::updateCaretBlink()
-{
-    if(!_showCaret)
-    {
-        resetCaretBlink();
-        return;
-    }
-
-    const f64 elapsedMilliseconds { std::chrono::duration<f64, std::milli>(std::chrono::high_resolution_clock::now() - _millisecondsPassed).count() };
-
-    if(elapsedMilliseconds < _blinkForMilliseconds)
-        return;
-
-    _caretBlinkState = !_caretBlinkState;
-    _millisecondsPassed = std::chrono::high_resolution_clock::now();
-}
-
-void RetroFuturaGUI::ITextEditable::resetCaretBlink()
-{
-    _caretBlinkState = true;
-    _millisecondsPassed = std::chrono::high_resolution_clock::now();
-}
-
 void RetroFuturaGUI::ITextEditable::setCaretFromBoundary(const uSize boundary)
 {
     _caretPosition = boundary;
     updateCaretPosition();
-}
-
-void RetroFuturaGUI::ITextEditable::deselect()
-{
-    _isMarking = false;
-    _isSelected = false;
 }
 
 void RetroFuturaGUI::ITextEditable::drawSelectedArea()
@@ -150,8 +108,8 @@ void RetroFuturaGUI::ITextEditable::drawSelectedArea()
 void RetroFuturaGUI::ITextEditable::updateSelectedArea()
 {
     const uSize
-        left { _selectedPositionFirst < _selectedPositionLast ? _selectedPositionFirst : _selectedPositionLast },
-        right { _selectedPositionFirst < _selectedPositionLast ? _selectedPositionLast : _selectedPositionFirst };
+        left { markedStart() },
+        right { markedEnd() };
 
     if(!_text || !_selectedArea || left == right) //nothing selected
     {
@@ -187,8 +145,8 @@ bool RetroFuturaGUI::ITextEditable::checkForTextCopy()
         if(_isSelected && !_textCopied)
         {
             const uSize
-                selectionStart { _selectedPositionFirst < _selectedPositionLast ? _selectedPositionFirst : _selectedPositionLast },
-                selectionEnd { _selectedPositionFirst < _selectedPositionLast ? _selectedPositionLast : _selectedPositionFirst };
+                selectionStart { markedStart() },
+                selectionEnd { markedEnd() };
             std::u32string tempCopy = _text->GetTextUTF32().substr(selectionStart, selectionEnd - selectionStart);
             _copiedText = DoubleEncodedString::Utf32ToUtf8(tempCopy);
             PlatformBridge::Clipboard::CopyToClipboard(PlatformBridge::Clipboard::ClipboardDatatype::Text, static_cast<void*>(tempCopy.data()), tempCopy.size() * sizeof(char32_t));
@@ -215,8 +173,8 @@ bool RetroFuturaGUI::ITextEditable::checkForTextCut()
                 return true;
 
             const uSize
-                selectionStart { _selectedPositionFirst < _selectedPositionLast ? _selectedPositionFirst : _selectedPositionLast },
-                selectionEnd { _selectedPositionFirst < _selectedPositionLast ? _selectedPositionLast : _selectedPositionFirst };
+                selectionStart { markedStart() },
+                selectionEnd { markedEnd() };
             std::u32string tempCopy = _text->GetTextUTF32().substr(selectionStart, selectionEnd - selectionStart);
             _copiedText = DoubleEncodedString::Utf32ToUtf8(tempCopy);
             PlatformBridge::Clipboard::CopyToClipboard(PlatformBridge::Clipboard::ClipboardDatatype::Text, static_cast<void*>(tempCopy.data()), tempCopy.size() * sizeof(char32_t));
@@ -247,8 +205,8 @@ if((PlatformBridge::Input::IsKeyDown(PB_KEY_CONTROL_L) || PlatformBridge::Input:
         if(!_textPasted)
         {
             const uSize
-                selectionStart { _selectedPositionFirst < _selectedPositionLast ? _selectedPositionFirst : _selectedPositionLast },
-                selectionEnd { _selectedPositionFirst < _selectedPositionLast ? _selectedPositionLast : _selectedPositionFirst };
+                selectionStart { markedStart() },
+                selectionEnd { markedEnd() };
             std::u32string 
                 middlePart {},
                 rightPart {},
@@ -346,7 +304,7 @@ bool RetroFuturaGUI::ITextEditable::checkForKeyRepeat()
 
     ++_keyHoldFrames;
 
-    if (_keyHoldFrames >= _keyRepeatInitialDelay && (_keyHoldFrames - _keyRepeatInitialDelay) % _keyRepeatInterval == 0)
+    if(shouldRepeat(_keyHoldFrames))
     {
         std::u32string left { _text->GetTextUTF32().substr(0, _caretPosition) };
         std::u32string right { _text->GetTextUTF32().substr(_caretPosition) };
@@ -394,7 +352,7 @@ bool RetroFuturaGUI::ITextEditable::checkForBackspacePress()
     else
     {
         ++_backspaceKeyHoldFrames;
-        shouldDelete = _backspaceKeyHoldFrames >= _keyRepeatInitialDelay && (_backspaceKeyHoldFrames - _keyRepeatInitialDelay) % _keyRepeatInterval == 0;
+        shouldDelete = shouldRepeat(_backspaceKeyHoldFrames);
     }
 
     if(shouldDelete)
@@ -408,8 +366,8 @@ bool RetroFuturaGUI::ITextEditable::checkForBackspacePress()
         if(_isSelected)
         {
             const uSize
-                selectionStart { _selectedPositionFirst < _selectedPositionLast ? _selectedPositionFirst : _selectedPositionLast },
-                selectionEnd { _selectedPositionFirst < _selectedPositionLast ? _selectedPositionLast : _selectedPositionFirst };
+                selectionStart { markedStart() },
+                selectionEnd { markedEnd() };
             _text->SetTextUTF32(_text->GetTextUTF32().substr(0, selectionStart) + _text->GetTextUTF32().substr(selectionEnd));
             _selectedPositionFirst = 0;
             _selectedPositionLast = 0;
@@ -450,8 +408,8 @@ bool RetroFuturaGUI::ITextEditable::checkForTextInput()
         if(_isSelected)
         {
             const uSize
-                selectionStart { _selectedPositionFirst < _selectedPositionLast ? _selectedPositionFirst : _selectedPositionLast },
-                selectionEnd { _selectedPositionFirst < _selectedPositionLast ? _selectedPositionLast : _selectedPositionFirst };
+                selectionStart { markedStart() },
+                selectionEnd { markedEnd() };
             _text->SetTextUTF32(_text->GetTextUTF32().substr(0, selectionStart) + keyText + _text->GetTextUTF32().substr(selectionEnd));
             _selectedPositionFirst = 0;
             _selectedPositionLast = 0;

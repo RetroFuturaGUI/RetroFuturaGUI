@@ -1,13 +1,13 @@
 
 #pragma once
 #include "ITextProperties.hpp"
-#include <chrono>
+#include "ITextInteraction.hpp"
 #include <memory>
 
 namespace RetroFuturaGUI
 {
     //An interface to specialize a widget with editable text capabilities.
-    class ITextEditable : virtual public IWindowAccessor, public ITextProperties
+    class ITextEditable : virtual public IWindowAccessor, public ITextProperties, public ITextInteraction
     {
     public:
         /// @brief Sets whether the widget rejects text input/editing while still allowing selection and copy.
@@ -102,23 +102,15 @@ namespace RetroFuturaGUI
     protected:
         void moveCaret();
         void editText();
-        void updateCaretBlink();
         void drawSelectedArea();
         void updateSelectedArea();
         void setCaretFromBoundary(const uSize boundary);
-        void deselect();
         virtual f32 clampToTextBounds(const f32 worldX, const f32 = 0.0f) const { return worldX; }
         virtual f32 keepCaretVisible(const f32 worldX, const f32 halfExtent = 0.0f) { return clampToTextBounds(worldX, halfExtent); }
 
         //Caret
         std::unique_ptr<Rectangle> _caret;
         std::vector<glm::vec4> _caretColors { glm::vec4(1.0f) };
-        bool
-            _showCaret { false },
-            _caretBlinkState { true },
-            _caretNeverBlinks { false };
-        f64 _blinkForMilliseconds { 650.0 };
-        std::chrono::high_resolution_clock::time_point _millisecondsPassed { std::chrono::high_resolution_clock::now() };
         uSize _caretPosition { 0 };
         i32 _caretRepeatDirection { 0 };
         bool _caretKeyWasReleased { true };
@@ -140,8 +132,6 @@ namespace RetroFuturaGUI
             _backspaceKeyHoldFrames { 0 },
             _backspacePressCountSeen { 0 };
         std::vector<char> _prevKeyStates {};
-        static constexpr i32 _keyRepeatInitialDelay { 60 };
-        static constexpr i32 _keyRepeatInterval { 5 };
 
         Signal<>
             _onEnterPressed,
@@ -156,12 +146,6 @@ namespace RetroFuturaGUI
         //Selection
         std::unique_ptr<Rectangle> _selectedArea;
         std::vector<glm::vec4> _selectedAreaColors { glm::vec4(0.24f, 0.47f, 0.85f, 0.4f) };
-        uSize
-            _selectedPositionFirst { 0 },
-            _selectedPositionLast { 0 };
-        bool
-            _isMarking { false },
-            _isSelected { false };
         std::string _copiedText {};
 
         //Placeholder Text
@@ -177,7 +161,6 @@ namespace RetroFuturaGUI
         void emitCopy();
         void emitPaste();
         void updateCaretPosition();
-        void resetCaretBlink();
         bool checkForTextCopy();
         bool checkForTextCut();
         bool checkForTextPaste();
@@ -187,6 +170,5 @@ namespace RetroFuturaGUI
         bool checkForEnterPress();
         bool checkForBackspacePress();
         bool checkForTextInput();
-        bool hasInputFocus() const;
     };
 }

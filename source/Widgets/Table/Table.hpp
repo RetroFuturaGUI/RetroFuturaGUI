@@ -14,12 +14,12 @@
 #include "Lasagna.hpp"
 #include "config.hpp"
 #include "TableText.hpp"
+#include "ITextInteraction.hpp"
 #include <memory>
-#include <chrono>
 
 namespace RetroFuturaGUI
 {
-    class Table : public IWidget, public IClickable, public IBackground, public IBorder
+    class Table final : public IWidget, public IClickable, public IBackground, public IBorder, public ITextInteraction
     {
     public:
         enum class TableOrientation : u32
@@ -349,17 +349,13 @@ namespace RetroFuturaGUI
         void resizeTrackReadOnlyFlags();
 
         Text* activeText() const;
-        bool hasInputFocus() const;
         bool isEditedTrackReadOnly() const;
         void beginEdit(const uSize row, const uSize column, const f32 worldX);
         void moveCaret();
         void moveCaretLeft();
         void moveCaretRight();
         void updateCaretPosition();
-        void updateCaretBlink();
-        void resetCaretBlink();
         void setCaretFromBoundary(const uSize boundary);
-        void deselect();
         void drawCaretAndSelection();
         void updateSelectedArea();
         void editText();
@@ -465,12 +461,6 @@ namespace RetroFuturaGUI
 
         // Caret
         uSize _caretPosition { 0 };
-        bool
-            _showCaret { false },
-            _caretBlinkState { true },
-            _caretNeverBlinks { false };
-        f64 _blinkForMilliseconds { 650.0 };
-        std::chrono::high_resolution_clock::time_point _millisecondsPassed { std::chrono::high_resolution_clock::now() };
         i32 _caretRepeatDirection { 0 };
         bool _caretKeyWasReleased { true };
         u32 _caretKeyHoldFrames { 0 };
@@ -489,16 +479,8 @@ namespace RetroFuturaGUI
             _repeatKeyPressCountSeen { 0 },
             _backspaceKeyHoldFrames { 0 },
             _backspacePressCountSeen { 0 };
-        static constexpr i32 _keyRepeatInitialDelay { 60 };
-        static constexpr i32 _keyRepeatInterval { 5 };
 
         // Selection
-        uSize
-            _selectedPositionFirst { 0 },
-            _selectedPositionLast { 0 };
-        bool
-            _isMarking { false },
-            _isSelected { false };
         std::string _copiedText {};
 
         Signal<>

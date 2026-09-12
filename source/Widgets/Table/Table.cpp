@@ -778,8 +778,8 @@ bool RetroFuturaGUI::Table::checkForTextCopy()
         if(_isSelected && !_textCopied && text)
         {
             const uSize
-                selectionStart { _selectedPositionFirst < _selectedPositionLast ? _selectedPositionFirst : _selectedPositionLast },
-                selectionEnd { _selectedPositionFirst < _selectedPositionLast ? _selectedPositionLast : _selectedPositionFirst };
+                selectionStart { markedStart() },
+                selectionEnd { markedEnd() };
             std::u32string tempCopy { text->GetTextUTF32().substr(selectionStart, selectionEnd - selectionStart) };
             _copiedText = DoubleEncodedString::Utf32ToUtf8(tempCopy);
             PlatformBridge::Clipboard::CopyToClipboard(PlatformBridge::Clipboard::ClipboardDatatype::Text, static_cast<void*>(tempCopy.data()), tempCopy.size() * sizeof(char32_t));
@@ -807,8 +807,8 @@ bool RetroFuturaGUI::Table::checkForTextCut()
                 return true;
 
             const uSize
-                selectionStart { _selectedPositionFirst < _selectedPositionLast ? _selectedPositionFirst : _selectedPositionLast },
-                selectionEnd { _selectedPositionFirst < _selectedPositionLast ? _selectedPositionLast : _selectedPositionFirst };
+                selectionStart { markedStart() },
+                selectionEnd { markedEnd() };
             std::u32string tempCopy { text->GetTextUTF32().substr(selectionStart, selectionEnd - selectionStart) };
             _copiedText = DoubleEncodedString::Utf32ToUtf8(tempCopy);
             PlatformBridge::Clipboard::CopyToClipboard(PlatformBridge::Clipboard::ClipboardDatatype::Text, static_cast<void*>(tempCopy.data()), tempCopy.size() * sizeof(char32_t));
@@ -840,8 +840,8 @@ bool RetroFuturaGUI::Table::checkForTextPaste()
         if(!_textPasted && text)
         {
             const uSize
-                selectionStart { _selectedPositionFirst < _selectedPositionLast ? _selectedPositionFirst : _selectedPositionLast },
-                selectionEnd { _selectedPositionFirst < _selectedPositionLast ? _selectedPositionLast : _selectedPositionFirst };
+                selectionStart { markedStart() },
+                selectionEnd { markedEnd() };
             std::u32string
                 middlePart {},
                 rightPart {},
@@ -943,7 +943,7 @@ bool RetroFuturaGUI::Table::checkForKeyRepeat()
 
     ++_keyHoldFrames;
 
-    if(_keyHoldFrames >= _keyRepeatInitialDelay && (_keyHoldFrames - _keyRepeatInitialDelay) % _keyRepeatInterval == 0)
+    if(shouldRepeat(_keyHoldFrames))
     {
         const std::u32string
             left { text->GetTextUTF32().substr(0, _caretPosition) },
@@ -994,7 +994,7 @@ bool RetroFuturaGUI::Table::checkForBackspacePress()
     else
     {
         ++_backspaceKeyHoldFrames;
-        shouldDelete = _backspaceKeyHoldFrames >= _keyRepeatInitialDelay && (_backspaceKeyHoldFrames - _keyRepeatInitialDelay) % _keyRepeatInterval == 0;
+        shouldDelete = shouldRepeat(_backspaceKeyHoldFrames);
     }
 
     if(shouldDelete && text && !text->GetTextUTF32().empty())
@@ -1002,8 +1002,8 @@ bool RetroFuturaGUI::Table::checkForBackspacePress()
         if(_isSelected)
         {
             const uSize
-                selectionStart { _selectedPositionFirst < _selectedPositionLast ? _selectedPositionFirst : _selectedPositionLast },
-                selectionEnd { _selectedPositionFirst < _selectedPositionLast ? _selectedPositionLast : _selectedPositionFirst };
+                selectionStart { markedStart() },
+                selectionEnd { markedEnd() };
             text->SetTextUTF32(text->GetTextUTF32().substr(0, selectionStart) + text->GetTextUTF32().substr(selectionEnd));
             _selectedPositionFirst = 0;
             _selectedPositionLast = 0;
@@ -1448,19 +1448,6 @@ RetroFuturaGUI::Text* RetroFuturaGUI::Table::activeText() const
     return static_cast<TableText*>(cell._TableWidget.get())->_text.get();
 }
 
-bool RetroFuturaGUI::Table::hasInputFocus() const
-{
-    const uint64_t activeWindowId { PlatformBridge::Input::GetActiveWindowID() };
-
-#if defined(TARGET_PLATFORM_LINUX)
-    return activeWindowId == static_cast<uint64_t>(glfwGetX11Window(_parentWindow));
-#elif defined(TARGET_PLATFORM_WINDOWS)
-    return activeWindowId == reinterpret_cast<uint64_t>(glfwGetWin32Window(_parentWindow));
-#else
-    return false;
-#endif
-}
-
 bool RetroFuturaGUI::Table::isEditedTrackReadOnly() const
 {
     if(!_hasEditCell)
@@ -1683,7 +1670,7 @@ void RetroFuturaGUI::Table::moveCaret()
         {
             ++_caretKeyHoldFrames;
 
-            if(_caretKeyHoldFrames >= _keyRepeatInitialDelay && (_caretKeyHoldFrames - _keyRepeatInitialDelay) % _keyRepeatInterval == 0)
+            if(shouldRepeat(_caretKeyHoldFrames))
             {
                 if(_caretRepeatDirection < 0)
                     moveCaretLeft();
@@ -1753,47 +1740,18 @@ void RetroFuturaGUI::Table::updateCaretPosition()
     resetCaretBlink();
 }
 
-void RetroFuturaGUI::Table::updateCaretBlink()
-{
-    if(!_showCaret)
-    {
-        resetCaretBlink();
-        return;
-    }
-
-    const f64 elapsedMilliseconds { std::chrono::duration<f64, std::milli>(std::chrono::high_resolution_clock::now() - _millisecondsPassed).count() };
-
-    if(elapsedMilliseconds < _blinkForMilliseconds)
-        return;
-
-    _caretBlinkState = !_caretBlinkState;
-    _millisecondsPassed = std::chrono::high_resolution_clock::now();
-}
-
-void RetroFuturaGUI::Table::resetCaretBlink()
-{
-    _caretBlinkState = true;
-    _millisecondsPassed = std::chrono::high_resolution_clock::now();
-}
-
 void RetroFuturaGUI::Table::setCaretFromBoundary(const uSize boundary)
 {
     _caretPosition = boundary;
     updateCaretPosition();
 }
 
-void RetroFuturaGUI::Table::deselect()
-{
-    _isMarking = false;
-    _isSelected = false;
-}
-
 void RetroFuturaGUI::Table::updateSelectedArea()
 {
     Text* text { activeText() };
     const uSize
-        left { _selectedPositionFirst < _selectedPositionLast ? _selectedPositionFirst : _selectedPositionLast },
-        right { _selectedPositionFirst < _selectedPositionLast ? _selectedPositionLast : _selectedPositionFirst };
+        left { markedStart() },
+        right { markedEnd() };
 
     if(!text || !_textSelectedArea || !_caret || left == right) // nothing selected
     {
