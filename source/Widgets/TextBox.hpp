@@ -9,7 +9,7 @@
 namespace RetroFuturaGUI
 {
     //A single-line text input widget
-    class TextBox : public IWidget, public IClickable, public IBackground, public IBorder, public ITextEditable
+    class TextBox final : public IWidget, public IClickable, public IBackground, public IBorder, public ITextEditable
     {
     public:
         /// @brief Constructs a TextBox widget under the given parent widget/window.

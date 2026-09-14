@@ -4,6 +4,7 @@
 #include "IBorder.hpp"
 #include "IClickable.hpp"
 #include "ITextProperties.hpp"
+#include "ITextTypes.hpp"
 #include "IWidget.hpp"
 #include "IncludeHelper.hpp"
 #include "Rectangle.hpp"
@@ -134,11 +135,37 @@ namespace RetroFuturaGUI
         /// @brief Returns the text color configured for the given color state.
         std::vector<glm::vec4> GetTextColor(const ColorState state) const;
 
-        /// @brief Sets the TableWidget contents in UTF-8.
-        void SetTableWidget(std::string_view text, const uSize xIndex, const uSize yIndex, const bool emitSignal);
+        /// @brief Sets the cell's contents in UTF-8. Does not give the cell a value store.
+        void SetValue(std::string_view text, const uSize xIndex, const uSize yIndex, const bool emitSignal);
+
+        /// @brief Sets the cell's value, rendered in the cell's numeric base and precision.
+        template<NumericValueType T>
+        void SetValue(const T value, const uSize xIndex, const uSize yIndex, const bool emitSignal)
+        {
+            if(_tableCells.size() <= xIndex)
+                return;
+
+            if(_tableCells[xIndex].size() <= yIndex)
+                return;
+
+            TableCell& cell { _tableCells[xIndex][yIndex] };
+
+            if(cell._TableWidgetTypeID != ITableWidget::TableWidgetTypeID::TableText || !cell._TableWidget)
+                return;
+
+            static_cast<TableText*>(cell._TableWidget.get())->SetValue(value);
+
+            if(!emitSignal)
+                return;
+
+            _onTextChangeAsync.EmitAsync();
+            _onTextChange.Emit();
+        }
 
         /// @brief Sets the TableWidget contents in color.
         void SetTableWidget(const glm::vec4 color, const uSize xIndex, const uSize yIndex, const bool emitSignal);
+
+
 
         /// @brief Sets the row/column tracks as Star weights, for callers that just want plain proportions.
         void SetTrackDefinitions(const std::vector<f32>& rowDefinition, const std::vector<f32>& columnDefinition);
@@ -158,6 +185,24 @@ namespace RetroFuturaGUI
         f32 GetHorizontalScrollPosition() const;
 
         f32 GetVerticalScrollPosition() const;
+
+        /// @brief Returns the value of the cell at (xIndex, yIndex) converted to T.
+        template<NumericValueType T>
+        T GetValue(const uSize xIndex, const uSize yIndex) const
+        {
+            if(_tableCells.size() <= xIndex)
+                return T {};
+
+            if(_tableCells[xIndex].size() <= yIndex)
+                return T {};
+
+            const TableCell& cell { _tableCells[xIndex][yIndex] };
+
+            if(cell._TableWidgetTypeID != ITableWidget::TableWidgetTypeID::TableText || !cell._TableWidget)
+                return T {};
+
+            return static_cast<TableText*>(cell._TableWidget.get())->GetValue<T>();
+        }
 
         /// @brief Returns the total size of all tracks laid end to end, which may exceed the table's own size.
         glm::vec2 GetContentExtent() const;
@@ -242,17 +287,7 @@ namespace RetroFuturaGUI
         /// @brief Gives up editing focus, hiding the caret and dropping any selection.
         void EndEdit();
 
-        /// @brief Returns the text most recently copied or cut out of a cell.
-        const std::string& GetCopiedText() const;
-
-        void Connect_OnEnterPressed(const typename Signal<>::Slot& slot, const bool async);
-        void Connect_OnEnterReleased(const typename Signal<>::Slot& slot, const bool async);
-        void Connect_OnCopy(const typename Signal<>::Slot& slot, const bool async);
-        void Connect_OnPaste(const typename Signal<>::Slot& slot, const bool async);
-        void Disconnect_OnEnterPressed(const typename Signal<>::Slot& slot);
-        void Disconnect_OnEnterReleased(const typename Signal<>::Slot& slot);
-        void Disconnect_OnCopy(const typename Signal<>::Slot& slot);
-        void Disconnect_OnPaste(const typename Signal<>::Slot& slot);
+        //GetCopiedText and the Enter/Copy/Paste Connect_/Disconnect_ API come from ITextInteraction.
 
     private:
         void layoutCells();
@@ -334,31 +369,19 @@ namespace RetroFuturaGUI
 
         void resizeTrackReadOnlyFlags();
 
-        Text* activeText() const;
-        bool isEditedTrackReadOnly() const;
+        /// @brief Returns the TableText of the cell currently being edited, or nullptr when no text cell is.
+        TableText* activeTableText() const;
         void beginEdit(const uSize row, const uSize column, const f32 worldX);
-        void moveCaret();
-        void moveCaretLeft();
-        void moveCaretRight();
-        void updateCaretPosition();
-        void setCaretFromBoundary(const uSize boundary);
         void drawCaretAndSelection();
-        void updateSelectedArea();
-        void editText();
-        bool checkForTextCopy();
-        bool checkForTextCut();
-        bool checkForTextPaste();
-        bool checkForSelectAllText();
-        bool checkForKeyRelease();
-        bool checkForKeyRepeat();
-        bool checkForEnterPress();
-        bool checkForBackspacePress();
-        bool checkForTextInput();
-        void emitEnterPressed();
-        void emitEnterRelease();
-        void emitCopy();
-        void emitPaste();
-        void emitChange();
+
+        //ITextInteraction hooks: edits apply to whichever cell is active, and read-only is per track.
+        Text* activeText() const override;
+        void updateCaretPosition() override;
+        void updateSelectedArea() override;
+        void emitChange() override;
+        bool isTextReadOnly() const override { return isEditedTrackReadOnly(); }
+
+        bool isEditedTrackReadOnly() const;
 
         /// @brief Clamps a world x to the edited cell's horizontal bounds, so a caret or selection edge can't escape its cell.
         f32 clampToCellBounds(const f32 worldX, const f32 halfExtent = 0.0f) const;
@@ -447,42 +470,11 @@ namespace RetroFuturaGUI
             _caretColors {{ 1.0f, 1.0f, 1.0f, 1.0f }},
             _selectedAreaColors {{ 0.24f, 0.47f, 0.85f, 0.4f }};
 
-        // Caret
-        uSize _caretPosition { 0 };
-        i32 _caretRepeatDirection { 0 };
-        bool _caretKeyWasReleased { true };
-        u32 _caretKeyHoldFrames { 0 };
-
-        // Input logic
-        bool
-            _editingEnabled { false },
-            _enterPressed { false },
-            _textCopied { false },
-            _textCut { false },
-            _textPasted { false };
-        u32 _keyHoldFrames { 0 };
-        std::u32string _keyRepeatText {};
-        u32
-            _repeatKeySym { 0 },
-            _repeatKeyPressCountSeen { 0 },
-            _backspaceKeyHoldFrames { 0 },
-            _backspacePressCountSeen { 0 };
-
-        // Selection
-        std::string _copiedText {};
 
         Signal<>
             _onTextChange,
             _onTextChangeAsync,
             _onColorChange,
-            _onColorChangeAsync,
-            _onEnterPressed,
-            _onEnterPressedAsync,
-            _onEnterReleased,
-            _onEnterReleasedAsync,
-            _onCopy,
-            _onCopyAsync,
-            _onPaste,
-            _onPasteAsync;
+            _onColorChangeAsync;
     };
 }

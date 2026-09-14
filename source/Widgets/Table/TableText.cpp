@@ -39,10 +39,54 @@ void RetroFuturaGUI::TableText::SetRotation(const glm::vec3& rotation)
         _text->SetRotation(rotation);
 }
 
-void RetroFuturaGUI::TableText::SetText(std::string_view text)
+void RetroFuturaGUI::TableText::setRenderedText(std::string_view text)
 {
     if(_text)
         _text->SetTextUTF8(text);
+}
+
+void RetroFuturaGUI::TableText::SetText(std::string_view text)
+{
+    setRenderedText(text);
+
+    if(_valueStore)
+        _valueStore->SetValue(text);
+}
+
+void RetroFuturaGUI::TableText::ensureValueStore()
+{
+    if(!_valueStore)
+        _valueStore = std::make_unique<ITextTypes>();
+}
+
+void RetroFuturaGUI::TableText::SetNumericBase(const u32 base)
+{
+    ensureValueStore();
+    _valueStore->SetNumericBase(base);
+    setRenderedText(_valueStore->GetValueText());
+}
+
+void RetroFuturaGUI::TableText::SetDecimalPrecision(const i32 precision)
+{
+    ensureValueStore();
+    _valueStore->SetDecimalPrecision(precision);
+    setRenderedText(_valueStore->GetValueText());
+}
+
+void RetroFuturaGUI::TableText::ChangeType(const ITextTypes::DataTypeID id)
+{
+    ensureValueStore();
+    _valueStore->ChangeType(id);
+    setRenderedText(_valueStore->GetValueText());
+}
+
+void RetroFuturaGUI::TableText::syncValueFromText()
+{
+    if(!_text)
+        return;
+
+    ensureValueStore();
+    _valueStore->SetValue(std::string_view(_text->GetTextUTF8()));
 }
 
 void RetroFuturaGUI::TableText::SetTextColors(std::span<glm::vec4> colors, const ColorState colorState)

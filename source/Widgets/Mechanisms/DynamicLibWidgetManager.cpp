@@ -407,7 +407,7 @@ void RetroFuturaGUI::DynamicLibWidgetManager::SetText(const char* id, const char
         case WidgetTypeID::TextBox:
         {
             TextBox* textBox = dynamic_cast<TextBox*>(widget);
-            textBox->SetText(text);
+            textBox->SetValue(std::string_view(text));
         } break;
         default:
             [[unlikely]];
