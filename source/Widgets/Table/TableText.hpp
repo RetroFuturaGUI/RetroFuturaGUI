@@ -7,7 +7,7 @@
 
 namespace RetroFuturaGUI
 {
-    class TableText : public ITableWidget, public ITableTextProperties
+    class TableText final : public ITableWidget, public ITableTextProperties
     {
         public:
             TableText(Table* parentTable, Projection* projection);

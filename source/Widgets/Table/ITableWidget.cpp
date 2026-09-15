@@ -20,3 +20,18 @@ void RetroFuturaGUI::ITableWidget::SetRotation(const glm::vec3& rotation)
 {
     _rotation = rotation;
 }
+
+glm::vec3 RetroFuturaGUI::ITableWidget::GetSize() const
+{
+    return _size;
+}
+
+glm::vec3 RetroFuturaGUI::ITableWidget::GetPosition() const
+{
+    return _position;
+}
+
+glm::vec3 RetroFuturaGUI::ITableWidget::GetRotation() const
+{
+    return _rotation;
+}

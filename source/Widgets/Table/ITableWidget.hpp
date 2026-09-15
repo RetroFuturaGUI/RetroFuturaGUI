@@ -23,11 +23,21 @@ namespace RetroFuturaGUI
         /// @brief Sets the rotation of the table widget.
         virtual void SetRotation(const glm::vec3& rotation);
 
+        /// @brief Returns the widget's own size, which can be smaller than the cell holding it.
+        glm::vec3 GetSize() const;
+
+        /// @brief Returns the widget's own world position.
+        glm::vec3 GetPosition() const;
+
+        /// @brief Returns the widget's own rotation.
+        glm::vec3 GetRotation() const;
+
         enum class TableWidgetTypeID : u32
         {
             None,
             TableText,
-            TableColor
+            TableColor,
+            TableCheckBox
         };
 
     protected:

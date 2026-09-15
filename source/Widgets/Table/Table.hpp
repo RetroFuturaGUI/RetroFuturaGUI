@@ -3,12 +3,15 @@
 #include "IBackground.hpp"
 #include "IBorder.hpp"
 #include "IClickable.hpp"
+#include "ITableWidget.hpp"
 #include "ITextProperties.hpp"
 #include "ITextTypes.hpp"
 #include "IWidget.hpp"
 #include "IncludeHelper.hpp"
+#include "Projection.hpp"
 #include "Rectangle.hpp"
 #include "ResourceManager.hpp"
+#include "SvgTexture.hpp"
 #include "TextBox.hpp"
 #include "Label.hpp"
 #include "Slider.hpp"
@@ -17,6 +20,7 @@
 #include "TableText.hpp"
 #include "ITextInteraction.hpp"
 #include "TableColor.hpp"
+#include "TableCheckBox.hpp"
 #include <memory>
 
 namespace RetroFuturaGUI
@@ -61,6 +65,12 @@ namespace RetroFuturaGUI
         void SetBackgroundColors(std::span<glm::vec4> colors, const ColorState state) = delete;
         void SetTrackBackgroundColors(std::span<glm::vec4> colors, const ColorState state, const uSize nthIndex);
         void SetTrackBorderColors(std::span<glm::vec4> colors, const ColorState state, const uSize nthIndex);
+        void SetCheckBoxBackgroundColors(std::span<glm::vec4> colors, const ColorState state);
+        void SetCheckBoxBorderColors(std::span<glm::vec4> colors, const ColorState state);
+        void SetCheckBoxCheckmarkColors(std::span<glm::vec4> colors, const ColorState state);
+
+        /// @brief Sets the gap between a cell's edge and the checkbox drawn in it, in pixels. The box stays the largest centered square that fits.
+        void SetCheckBoxCellMargin(const f32 margin);
         void SetInnerBorderWidth(const f32 width);
         void SetTableOrientation(const TableOrientation orientation);
         void SetTrackAlternatingColorCount(const uSize variantCount);
@@ -138,6 +148,9 @@ namespace RetroFuturaGUI
         /// @brief Sets the cell's contents in UTF-8. Does not give the cell a value store.
         void SetValue(std::string_view text, const uSize xIndex, const uSize yIndex, const bool emitSignal);
 
+        /// @brief Sets the cell's contents bool (checkbox)
+        void SetValue(const bool value, const uSize xIndex, const uSize yIndex, const bool emitSignal);
+
         /// @brief Sets the cell's value, rendered in the cell's numeric base and precision.
         template<NumericValueType T>
         void SetValue(const T value, const uSize xIndex, const uSize yIndex, const bool emitSignal)
@@ -164,8 +177,6 @@ namespace RetroFuturaGUI
 
         /// @brief Sets the TableWidget contents in color.
         void SetTableWidget(const glm::vec4 color, const uSize xIndex, const uSize yIndex, const bool emitSignal);
-
-
 
         /// @brief Sets the row/column tracks as Star weights, for callers that just want plain proportions.
         void SetTrackDefinitions(const std::vector<f32>& rowDefinition, const std::vector<f32>& columnDefinition);
@@ -203,6 +214,8 @@ namespace RetroFuturaGUI
 
             return static_cast<TableText*>(cell._TableWidget.get())->GetValue<T>();
         }
+
+        bool GetValue(const uSize xIndex, const uSize yIndex) const;
 
         /// @brief Returns the total size of all tracks laid end to end, which may exceed the table's own size.
         glm::vec2 GetContentExtent() const;
@@ -287,13 +300,40 @@ namespace RetroFuturaGUI
         /// @brief Gives up editing focus, hiding the caret and dropping any selection.
         void EndEdit();
 
-        //GetCopiedText and the Enter/Copy/Paste Connect_/Disconnect_ API come from ITextInteraction.
+        void SetCheckBoxCornerRadii(const glm::vec4& radii);
+        void SetCheckBoxSize(const glm::vec3& size);
+        void SetCheckBoxBorderWidth(const f32 width);
+
 
     private:
+        struct MouseState
+        {
+            glm::vec2 _Position { 0.0f };
+            bool
+                _HasPosition { false },
+                _IsInside { false },
+                _IsPressed { false },
+                _PressedThisFrame { false };
+        };
+
         void layoutCells();
         void layoutHeaders();
         void resizeHeaders();
         void interact();
+        void interactTableText(const MouseState& mouse);
+        void interactTableCheckBox(const MouseState& mouse);
+
+        /// @brief Finds the visible cell of the given kind under a world-space point.
+        bool findCellAt(const glm::vec2& point, const ITableWidget::TableWidgetTypeID typeID, uSize& outRow, uSize& outColumn) const;
+
+        /// @brief Returns the TableCheckBox at the given cell, or nullptr when that cell holds something else.
+        TableCheckBox* checkBoxAt(const uSize row, const uSize column) const;
+
+        /// @brief Resolves which color state a checkbox cell draws in, from the hover/press state interact() recorded.
+        ColorState checkBoxColorState(const uSize row, const uSize column) const;
+
+        /// @brief Pushes the given state's colors onto the checkbox background/border/checkmark every cell shares.
+        void setCheckBoxColors(const ColorState state);
 
         /// @brief Creates the cell's TableText if it has none yet, styled from the header defaults.
         void ensureHeaderWidget(TableCell& cell);
@@ -363,6 +403,13 @@ namespace RetroFuturaGUI
                 tableCell._TableWidget = std::make_unique<TableColor>(parentTable, &_projection, _cellColorPlane.get());
                 tableCell._TableWidgetTypeID = ITableWidget::TableWidgetTypeID::TableColor;
             }
+            else if constexpr (std::is_same_v<T, TableCheckBox>)
+            {
+                auto checkBoxWidget { std::make_unique<TableCheckBox>(parentTable, &_projection, _checkBoxBackground.get(), _checkBoxBorder.get(), _checkmark.get()) };
+                checkBoxWidget->SetCellMargin(_checkBoxCellMargin);
+                tableCell._TableWidget = std::move(checkBoxWidget);
+                tableCell._TableWidgetTypeID = ITableWidget::TableWidgetTypeID::TableCheckBox;
+            }
 
             layoutCells();
         }
@@ -413,7 +460,10 @@ namespace RetroFuturaGUI
             _innerBorder { nullptr },
             _textSelectedArea { nullptr },
             _caret { nullptr },
-            _cellColorPlane { nullptr };
+            _cellColorPlane { nullptr },
+            _checkBoxBackground { nullptr },
+            _checkBoxBorder { nullptr };
+        std::shared_ptr<SvgTexture> _checkmark { nullptr };
         std::vector<ITableWidget::TableWidgetTypeID> _rowWidgetTypes {};
 
     //Geommetry
@@ -423,6 +473,7 @@ namespace RetroFuturaGUI
             _resolvedColumnSizes {};
         glm::vec2 _contentExtent { 0.0f };
         glm::vec2 _scrollPosition { 0.0f, 0.0f };
+        glm::vec3 _checkBoxSize { _innerSize };
 
     // Design
         std::vector<TrackColoring> _nthTrackColors {};
@@ -435,15 +486,38 @@ namespace RetroFuturaGUI
             _headerOuterBorderColorsDisabled {{ 0.2f, 0.2f, 0.2f, 1.0f }},
             _headerTextColorsEnabled {{ 1.0f, 1.0f, 1.0f, 1.0f }},
             _headerTextColorsDisabled {{ 0.5f, 0.5f, 0.5f, 1.0f }},
-            _selectedTextColors {{ 1.0f, 1.0f, 1.0f, 1.0f }};
+            _selectedTextColors {{ 1.0f, 1.0f, 1.0f, 1.0f }},
+            _checkBoxBackgroundColorEnabled {{ 1.0f, 1.0f, 1.0f, 1.0f }},
+            _checkBoxBackgroundColorHover {{ 1.0f, 1.0f, 1.0f, 1.0f }},
+            _checkBoxBackgroundColorClicked {{ 1.0f, 1.0f, 1.0f, 1.0f }},
+            _checkBoxBackgroundColorDisabled {{ 1.0f, 1.0f, 1.0f, 1.0f }},
+            _checkBoxBorderColorEnabled {{ 1.0f, 1.0f, 1.0f, 1.0f }},
+            _checkBoxBorderColorHover {{ 1.0f, 1.0f, 1.0f, 1.0f }},
+            _checkBoxBorderColorClicked {{ 1.0f, 1.0f, 1.0f, 1.0f }},
+            _checkBoxBorderColorDisabled {{ 1.0f, 1.0f, 1.0f, 1.0f }},
+            _checkBoxCheckmarkColorEnabled {{ 1.0f, 1.0f, 1.0f, 1.0f }},
+            _checkBoxCheckmarkColorHover {{ 1.0f, 1.0f, 1.0f, 1.0f }},
+            _checkBoxCheckmarkColorClicked {{ 1.0f, 1.0f, 1.0f, 1.0f }},
+            _checkBoxCheckmarkColorDisabled {{ 1.0f, 1.0f, 1.0f, 1.0f }};
         TextDefaults _headerTextDefaults {};
         f32
             _innerBorderWidth { 1.0f },
             _headerInnerBorderWidth { 1.0f },
             _headerOuterBorderWidth { 1.0f },
             _horizontalHeaderHeight { 30.0f },
-            _verticalHeaderWidth { 60.0f };
+            _verticalHeaderWidth { 60.0f },
+            _checkBoxInnerPadding { 5.0f }, // box border -> checkmark
+            _checkBoxCellMargin { 4.0f };   // cell edge -> box edge 
         static constexpr f32 _widgetZOffset { 0.05f };
+        SvgPathFill _checkmarkFill
+        {
+            .fillType =  FillType::SOLID,
+            .colors {{ 1.0f, 1.0f, 1.0f, 1.0f }},
+            .gradientDegree = 0.0f,
+            .gradientOffset = 0.0f,
+            .gradientAnimationSpeed = 0.0f,
+            .gradientRotationSpeed = 0.0f
+        };
 
     // Logic
         std::vector<TrackDefinition>
@@ -460,6 +534,21 @@ namespace RetroFuturaGUI
             _displayedRows[2] { 0, 0 },
             _displayedColumns[2] { 0, 0 };   
         std::vector<bool> _trackReadOnlyFlags {};
+        Signal<>
+            _onTextChange,
+            _onTextChangeAsync,
+            _onColorChange,
+            _onColorChangeAsync,
+            _onCheckBoxChange,
+            _onCheckBoxChangeAsync;
+
+    // CheckBox interaction
+        uSize
+            _hoveredCheckBoxRow { 0 },
+            _hoveredCheckBoxColumn { 0 };
+        bool
+            _hasHoveredCheckBox { false },
+            _isHoveredCheckBoxHeld { false }; // the hovered box is being pressed, i.e. it draws in its Clicked colors
 
     // Text interaction
         uSize
@@ -469,12 +558,5 @@ namespace RetroFuturaGUI
         std::vector<glm::vec4>
             _caretColors {{ 1.0f, 1.0f, 1.0f, 1.0f }},
             _selectedAreaColors {{ 0.24f, 0.47f, 0.85f, 0.4f }};
-
-
-        Signal<>
-            _onTextChange,
-            _onTextChangeAsync,
-            _onColorChange,
-            _onColorChangeAsync;
     };
 }

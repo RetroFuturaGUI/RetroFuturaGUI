@@ -1,5 +1,11 @@
 #include "Table.hpp"
+#include "ITableWidget.hpp"
+#include "IncludeHelper.hpp"
 #include "PlatformBridge.hpp"
+#include "SvgImage.hpp"
+#include "SvgTexture.hpp"
+#include "TableCheckBox.hpp"
+#include <memory>
 
 #if defined(TARGET_PLATFORM_LINUX)
     #define GLFW_EXPOSE_NATIVE_X11
@@ -68,6 +74,100 @@ RetroFuturaGUI::Table::Table(const std::string& name, Projection* projection, IW
         _textSelectedArea->SetFillType(FillType::SOLID);
         _textSelectedArea->SetColors(_selectedAreaColors);
     }
+
+    _checkBoxBackground = std::make_unique<Rectangle>(projection);
+
+    if(_checkBoxBackground)
+    {
+        _checkBoxBackground->SetRectangleMode(RectangleMode::Plane);
+        _checkBoxBackground->SetFillType(FillType::SOLID);
+        _checkBoxBackground->SetColors(_checkBoxBackgroundColorEnabled);
+    }
+
+    _checkBoxBorder = std::make_unique<Rectangle>(projection);
+
+    if(_checkBoxBorder)
+    {
+        _checkBoxBorder->SetRectangleMode(RectangleMode::Border);
+        _checkBoxBorder->SetFillType(FillType::SOLID);
+        _checkBoxBorder->SetColors(_checkBoxBorderColorEnabled);
+    }
+
+    _checkmark = ResourceManager::GetCheckmarkIcon();
+
+    if(_checkmark)
+        _checkmark->SetProjection(projection);
+}
+
+
+void RetroFuturaGUI::Table::SetCheckBoxBackgroundColors(std::span<glm::vec4> colors, const ColorState state)
+{
+    switch(state)
+    {
+        case ColorState::Enabled:
+            _checkBoxBackgroundColorEnabled.assign(colors.begin(), colors.end());
+        break;
+        case ColorState::Hover:
+            _checkBoxBackgroundColorHover.assign(colors.begin(), colors.end());
+        break;
+        case ColorState::Clicked:
+            _checkBoxBackgroundColorClicked.assign(colors.begin(), colors.end());
+        break;
+        default: //disabled
+            _checkBoxBackgroundColorDisabled.assign(colors.begin(), colors.end());
+    }
+}
+
+void RetroFuturaGUI::Table::SetCheckBoxBorderColors(std::span<glm::vec4> colors, const ColorState state)
+{
+    switch(state)
+    {
+        case ColorState::Enabled:
+            _checkBoxBorderColorEnabled.assign(colors.begin(), colors.end());
+        break;
+        case ColorState::Hover:
+            _checkBoxBorderColorHover.assign(colors.begin(), colors.end());
+        break;
+        case ColorState::Clicked:
+            _checkBoxBorderColorClicked.assign(colors.begin(), colors.end());
+        break;
+        default: //disabled
+            _checkBoxBorderColorDisabled.assign(colors.begin(), colors.end());
+    }
+}
+
+void RetroFuturaGUI::Table::SetCheckBoxCheckmarkColors(std::span<glm::vec4> colors, const ColorState state)
+{
+    switch(state)
+    {
+        case ColorState::Enabled:
+            _checkBoxCheckmarkColorEnabled.assign(colors.begin(), colors.end());
+        break;
+        case ColorState::Hover:
+            _checkBoxCheckmarkColorHover.assign(colors.begin(), colors.end());
+        break;
+        case ColorState::Clicked:
+            _checkBoxCheckmarkColorClicked.assign(colors.begin(), colors.end());
+        break;
+        default: //disabled
+            _checkBoxCheckmarkColorDisabled.assign(colors.begin(), colors.end());
+    }
+}
+
+void RetroFuturaGUI::Table::SetCheckBoxCellMargin(const f32 margin)
+{
+    _checkBoxCellMargin = margin;
+
+    for(auto& row : _tableCells)
+        for(TableCell& cell : row)
+        {
+            if(cell._TableWidgetTypeID != ITableWidget::TableWidgetTypeID::TableCheckBox)
+                continue;
+
+            static_cast<TableCheckBox*>(cell._TableWidget.get())->SetCellMargin(margin);
+        }
+
+    layoutCells(); // hands every cell its full rect again, so the squares re-fit to the new margin
 }
 
 void RetroFuturaGUI::Table::Draw()
@@ -120,6 +220,8 @@ void RetroFuturaGUI::Table::Draw()
 
             if(cell._TableWidgetTypeID == ITableWidget::TableWidgetTypeID::TableText)
                 static_cast<TableText*>(cell._TableWidget.get())->SetTextColors(coloring._TextColorEnabled, ColorState::Enabled);
+            else if(cell._TableWidgetTypeID == ITableWidget::TableWidgetTypeID::TableCheckBox)
+                setCheckBoxColors(checkBoxColorState(row, column)); // the boxes share one background/border/checkmark, so each cell is colored just before it draws
 
             cell._TableWidget->Draw();
         }
@@ -1134,6 +1236,103 @@ void RetroFuturaGUI::Table::EndEdit()
     deselect();
 }
 
+bool RetroFuturaGUI::Table::findCellAt(const glm::vec2& point, const ITableWidget::TableWidgetTypeID typeID, uSize& outRow, uSize& outColumn) const
+{
+    // only the cells overlapping the viewport can be hit, the rest are scrolled out of sight
+    const uSize rowEnd { _displayedRows[1] < _tableCells.size() ? _displayedRows[1] : _tableCells.size() };
+
+    for(uSize row = _displayedRows[0]; row < rowEnd; ++row)
+    {
+        const uSize columnEnd { _displayedColumns[1] < _tableCells[row].size() ? _displayedColumns[1] : _tableCells[row].size() };
+
+        for(uSize column = _displayedColumns[0]; column < columnEnd; ++column)
+        {
+            const TableCell& cell { _tableCells[row][column] };
+
+            if(cell._TableWidgetTypeID != typeID || !cell._TableWidget)
+                continue;
+
+            if(!isPointInsideRect(point, cell._SizePixels, cell._PositionPixels, _rotation))
+                continue;
+
+            outRow = row;
+            outColumn = column;
+            return true;
+        }
+    }
+
+    return false;
+}
+
+RetroFuturaGUI::TableCheckBox* RetroFuturaGUI::Table::checkBoxAt(const uSize row, const uSize column) const
+{
+    if(row >= _tableCells.size() || column >= _tableCells[row].size())
+        return nullptr;
+
+    const TableCell& cell { _tableCells[row][column] };
+
+    if(cell._TableWidgetTypeID != ITableWidget::TableWidgetTypeID::TableCheckBox || !cell._TableWidget)
+        return nullptr;
+
+    return static_cast<TableCheckBox*>(cell._TableWidget.get());
+}
+
+RetroFuturaGUI::ColorState RetroFuturaGUI::Table::checkBoxColorState(const uSize row, const uSize column) const
+{
+    // resizeTrackReadOnlyFlags() sizes the flags across the axis the orientation doesn't band along
+    const uSize track { _tableOrientation == TableOrientation::Row ? column : row };
+
+    if(!_isEnabledFlag || IsTrackReadOnly(track))
+        return ColorState::Disabled;
+
+    if(!_hasHoveredCheckBox || _hoveredCheckBoxRow != row || _hoveredCheckBoxColumn != column)
+        return ColorState::Enabled;
+
+    return _isHoveredCheckBoxHeld ? ColorState::Clicked : ColorState::Hover;
+}
+
+void RetroFuturaGUI::Table::setCheckBoxColors(const ColorState state)
+{
+    std::vector<glm::vec4>
+        *background { &_checkBoxBackgroundColorEnabled },
+        *border { &_checkBoxBorderColorEnabled },
+        *checkmark { &_checkBoxCheckmarkColorEnabled };
+
+    switch(state)
+    {
+        case ColorState::Hover:
+            background = &_checkBoxBackgroundColorHover;
+            border = &_checkBoxBorderColorHover;
+            checkmark = &_checkBoxCheckmarkColorHover;
+        break;
+        case ColorState::Clicked:
+            background = &_checkBoxBackgroundColorClicked;
+            border = &_checkBoxBorderColorClicked;
+            checkmark = &_checkBoxCheckmarkColorClicked;
+        break;
+        case ColorState::Disabled:
+            background = &_checkBoxBackgroundColorDisabled;
+            border = &_checkBoxBorderColorDisabled;
+            checkmark = &_checkBoxCheckmarkColorDisabled;
+        break;
+        default: //Enabled
+        break;
+    }
+
+    if(_checkBoxBackground)
+        _checkBoxBackground->SetColors(*background);
+
+    if(_checkBoxBorder)
+        _checkBoxBorder->SetColors(*border);
+
+    // SetPathFill re-rasterizes the whole SVG, so only touch it when the fill actually changed
+    if(_checkmark && _checkmarkFill.colors != *checkmark)
+    {
+        _checkmarkFill.colors = *checkmark;
+        _checkmark->SetPathFill("CheckmarkPath", _checkmarkFill);
+    }
+}
+
 void RetroFuturaGUI::Table::interact()
 {
     i32
@@ -1149,18 +1348,139 @@ void RetroFuturaGUI::Table::interact()
 
     //PlatformBridge reports native (top-down) window coordinates; flip to this library's bottom-up world space here
     const glm::vec2 mousePos { static_cast<f32>(mouseX), _projection.GetResolution().y - static_cast<f32>(mouseY) };
-    const bool
-        isMousePressed { PlatformBridge::Input::IsMouseButtonDown(PlatformBridge::MouseButton::Left) },
-        isMouseInside { hasMousePosition && isPointInside(mousePos) };
+    const bool isMousePressed { PlatformBridge::Input::IsMouseButtonDown(PlatformBridge::MouseButton::Left) };
 
+    const MouseState mouse
+    {
+        ._Position = mousePos,
+        ._HasPosition = hasMousePosition,
+        ._IsInside = hasMousePosition && isPointInside(mousePos),
+        ._IsPressed = isMousePressed,
+        ._PressedThisFrame = isMousePressed && !_wasClicked // every cell kind shares IClickable's _wasClicked, so the press edge is resolved here, once
+    };
+
+    const bool
+        wasReleasedThisFrame { !isMousePressed && _wasClicked },
+        isHovering { _isEnabledFlag && mouse._IsInside };
+    _wasClicked = isMousePressed;
+
+    if(isHovering)
+    {
+        _whileHoverAsync.EmitAsync();
+        _whileHover.Emit();
+    }
+
+    if(isHovering && !_mouseEnteredFlag) // enter
+    {
+        _mouseEnteredFlag = true;
+        _onMouseEnterAsync.EmitAsync();
+        _onMouseEnter.Emit();
+    }
+    else if(!isHovering && _mouseEnteredFlag) // leave
+    {
+        _mouseEnteredFlag = false;
+        _onMouseLeaveAsync.EmitAsync();
+        _onMouseLeave.Emit();
+    }
+
+    interactTableText(mouse);
+    interactTableCheckBox(mouse);
+
+    if(wasReleasedThisFrame) // a release belongs to the table, not to whichever cell kind happens to run last
+    {
+        _onReleaseAsync.EmitAsync();
+        _onRelease.Emit();
+    }
+}
+
+void RetroFuturaGUI::Table::interactTableCheckBox(const MouseState& mouse)
+{
+    uSize
+        row { 0 },
+        column { 0 };
+    TableCheckBox* hoveredCheckBox { nullptr };
+
+    // consider the TableCheckBox size might be smaller than the surrounding cell
+    if(_isEnabledFlag && mouse._IsInside && findCellAt(mouse._Position, ITableWidget::TableWidgetTypeID::TableCheckBox, row, column))
+    {
+        TableCheckBox* checkBox { checkBoxAt(row, column) };
+
+        if(checkBox && isPointInsideRect(mouse._Position, checkBox->GetSize(), checkBox->GetPosition(), _rotation))
+            hoveredCheckBox = checkBox;
+    }
+
+    _hasHoveredCheckBox = hoveredCheckBox != nullptr;
+    _hoveredCheckBoxRow = row;
+    _hoveredCheckBoxColumn = column;
+
+    const uSize track { _tableOrientation == TableOrientation::Row ? column : row };
+    const bool isInteractive { _hasHoveredCheckBox && !IsTrackReadOnly(track) }; // a read-only box still shows its value, it just doesn't take the click
+
+    _isHoveredCheckBoxHeld = isInteractive && mouse._IsPressed;
+
+    if(!isInteractive || !mouse._PressedThisFrame)
+        return;
+
+    hoveredCheckBox->SetValue(!hoveredCheckBox->GetValue());
+    _onClickAsync.EmitAsync();
+    _onClick.Emit();
+    _onCheckBoxChangeAsync.EmitAsync();
+    _onCheckBoxChange.Emit();
+}
+
+bool RetroFuturaGUI::Table::GetValue(const uSize xIndex, const uSize yIndex) const
+{
+    if(_tableCells.size() <= xIndex)
+        return false;
+
+    if(_tableCells.front().size() <= yIndex)
+        return false;
+
+    TableCell* tableCell = const_cast<TableCell*>(&_tableCells[xIndex][yIndex]);
+    
+    if(tableCell->_TableWidgetTypeID != ITableWidget::TableWidgetTypeID::TableCheckBox)
+        return false;
+
+    return dynamic_cast<TableCheckBox*>(tableCell->_TableWidget.get())->GetValue();
+}
+
+void RetroFuturaGUI::Table::SetCheckBoxCornerRadii(const glm::vec4& radii)
+{
+    if(_checkBoxBackground)
+        _checkBoxBackground->SetCornerRadii(radii);
+    
+    if(_checkBoxBorder)
+        _checkBoxBorder->SetCornerRadii(radii);
+}
+
+void RetroFuturaGUI::Table::SetCheckBoxSize(const glm::vec3& size)
+{
+    if(_checkBoxBackground)
+        _checkBoxBackground->SetSize(size);
+    
+    if(_checkBoxBorder)
+        _checkBoxBorder->SetSize(size);
+        
+    if(_checkmark)
+        _checkmark->SetSize(size);
+}
+
+void RetroFuturaGUI::Table::SetCheckBoxBorderWidth(const f32 width)
+{
+    if(_checkBoxBorder)
+        _checkBoxBorder->SetBorderWidth(width);
+}
+
+void RetroFuturaGUI::Table::interactTableText(const MouseState& mouse)
+{
     // Dragging extends the selection within the cell that already has focus
     if(_isMarking)
     {
-        if(isMousePressed && hasMousePosition)
+        if(mouse._IsPressed && mouse._HasPosition)
         {
             if(Text* text { activeText() })
             {
-                _selectedPositionLast = text->GetBoundaryAtPosition(clampToCellBounds(mousePos.x));
+                _selectedPositionLast = text->GetBoundaryAtPosition(clampToCellBounds(mouse._Position.x));
                 setCaretFromBoundary(_selectedPositionLast);
                 updateSelectedArea();
             }
@@ -1171,47 +1491,23 @@ void RetroFuturaGUI::Table::interact()
         }
     }
 
-    if(isMousePressed && !_wasClicked) // a fresh press decides which cell, if any, takes focus
+    if(mouse._PressedThisFrame) // a fresh press decides which cell, if any, takes focus
     {
-        bool hitACell { false };
+        uSize
+            row { 0 },
+            column { 0 };
 
-        if(isMouseInside)
+        if(mouse._IsInside && findCellAt(mouse._Position, ITableWidget::TableWidgetTypeID::TableText, row, column))
         {
-            const uSize rowEnd { _displayedRows[1] < _tableCells.size() ? _displayedRows[1] : _tableCells.size() };
-
-            for(uSize row = _displayedRows[0]; row < rowEnd && !hitACell; ++row)
-            {
-                const uSize columnEnd { _displayedColumns[1] < _tableCells[row].size() ? _displayedColumns[1] : _tableCells[row].size() };
-
-                for(uSize column = _displayedColumns[0]; column < columnEnd; ++column)
-                {
-                    const TableCell& cell { _tableCells[row][column] };
-
-                    if(cell._TableWidgetTypeID != ITableWidget::TableWidgetTypeID::TableText)
-                        continue;
-
-                    if(!isPointInsideRect(mousePos, cell._SizePixels, cell._PositionPixels, _rotation))
-                        continue;
-
-                    beginEdit(row, column, mousePos.x);
-                    _onClickAsync.EmitAsync();
-                    _onClick.Emit();
-                    hitACell = true;
-                    break;
-                }
-            }
+            beginEdit(row, column, mouse._Position.x);
+            _onClickAsync.EmitAsync();
+            _onClick.Emit();
         }
-
-        if(!hitACell) // clicking a gap, a header or anything outside gives up focus
+        else // clicking a gap, a checkbox, a header or anything outside gives up focus
+        {
             EndEdit();
+        }
     }
-    else if(!isMousePressed && _wasClicked)
-    {
-        _onReleaseAsync.EmitAsync();
-        _onRelease.Emit();
-    }
-
-    _wasClicked = isMousePressed;
 
     if(_editingEnabled)
     {
@@ -1296,6 +1592,28 @@ void RetroFuturaGUI::Table::drawCaretAndSelection()
     }
 }
 
+void RetroFuturaGUI::Table::SetValue(const bool value, const uSize xIndex, const uSize yIndex, const bool emitSignal)
+{
+    if(_tableCells.size() <= xIndex)
+        return;
+
+    if(_tableCells[xIndex].size() <= yIndex)
+        return;
+
+    TableCell& tableCell { _tableCells[xIndex][yIndex] };
+
+    // typemismatch causes conversion
+    if(!tableCell._TableWidget || tableCell._TableWidgetTypeID != ITableWidget::TableWidgetTypeID::TableCheckBox)
+        setWidget<TableCheckBox>(xIndex, yIndex, this);
+
+    static_cast<TableCheckBox*>(tableCell._TableWidget.get())->SetValue(value);
+
+    if(!emitSignal)
+        return;
+
+    _onCheckBoxChangeAsync.EmitAsync();
+    _onCheckBoxChange.Emit();
+}
 
 void RetroFuturaGUI::Table::SetValue(std::string_view text, const uSize xIndex, const uSize yIndex, const bool emitSignal)
 {
