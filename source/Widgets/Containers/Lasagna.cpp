@@ -4,18 +4,24 @@ RetroFuturaGUI::Lasagna::Lasagna(const std::string& name, Projection* projection
     : IWidget(name, projection, parentWidget, parentWidgetTypeID, parentWindow), _axisdefinition(*_axisDefinition)
 {
     _size.z = _projection.GetDepth(); // keeps feeding a real depth back in, instead of latching to 0 on the first resize.
-    _lasagna.reserve(_maxCountPerAxis);
 
-    for(uSize row = 0; row < _maxCountPerAxis; ++row)
+    if(_axisdefinition._RowDefinition.size() > _maxCountPerAxis)
+        _axisdefinition._RowDefinition.resize(_maxCountPerAxis);
+
+    if(_axisdefinition._ColumnDefinition.size() > _maxCountPerAxis)
+        _axisdefinition._ColumnDefinition.resize(_maxCountPerAxis);
+
+    if(_axisdefinition._LayerDefinition.size() > _maxCountPerAxis)
+        _axisdefinition._LayerDefinition.resize(_maxCountPerAxis);
+
+    _lasagna.resize(_axisdefinition._RowDefinition.size());
+
+    for(std::vector<std::vector<LasagnaCell>>& _row : _lasagna)
     {
-        _lasagna.emplace_back();
-        _lasagna.back().reserve(_maxCountPerAxis);
+        _row.resize(_axisdefinition._ColumnDefinition.size());
 
-        for(uSize column = 0; column < _maxCountPerAxis; ++column)
-        {
-            _lasagna.back().emplace_back();
-            _lasagna.back().back().reserve(_maxCountPerAxis);
-        }
+        for(std::vector<LasagnaCell>& _column : _row)
+            _column.reserve(_axisdefinition._LayerDefinition.size());
     }
 
     for(uSize row = 0; row < _axisdefinition._RowDefinition.size(); ++row)
