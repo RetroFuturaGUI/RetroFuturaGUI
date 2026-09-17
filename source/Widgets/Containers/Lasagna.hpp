@@ -47,10 +47,11 @@ namespace RetroFuturaGUI
 
         /// @brief Places a widget into the grid at the given row, column and layer, optionally spanning multiple cells along any axis.
         void AttachWidget(const u32 row, const u32 col, const u32 layer, IWidget* widget, const SizingMode sizingMode = SizingMode::FILL, const u32 rowSpan = 1, const u32 colSpan = 1, const u32 layerSpan = 1);
-        void Draw() override {};
+        /// @brief Lays out and draws all attached widgets
+        void Draw() override;
 
-        /// @brief Lays out and draws all attached widgets, optionally overlaying cell debug borders.
-        void Draw(const bool alsoDrawDebugLines = false);
+        /// @brief Sets whether the cell debug borders
+        void ShowDebugLines(const bool show);
 
         /// @brief Sets the size of the grid, resizing and repositioning all attached widgets.
         void SetSize(const glm::vec3& size) override;
@@ -66,6 +67,10 @@ namespace RetroFuturaGUI
         AxisDefinition _axisdefinition;
         std::unique_ptr<Rectangle> _debugBorder;
         std::vector<glm::vec4> _debugBorderColor { glm::vec4(1.0f) };
+
+        /// @brief Returns the grid's top-left corner in world space. Cell offsets are grid-local, so every
+        /// placement measures from here rather than from the window.
+        glm::vec3 gridOrigin() const;
 
         void drawDebugLines(const LasagnaCell& cell);
         void updateSpanSize(LasagnaCell& originCell, const uSize row, const uSize column, const uSize layer);
