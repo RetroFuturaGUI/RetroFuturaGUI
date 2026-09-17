@@ -1,6 +1,6 @@
 #include "IWidget.hpp"
 
-RetroFuturaGUI::IWidget::IWidget(std::string_view name, Projection* projection, IWidget* parentWidget, const WidgetTypeID parentWidgetTypeID, GLFWwindow* parentWindow)
+RetroFuturaGUI::IWidget::IWidget(std::string_view name, Projection* projection, IHierarchyNode* parentWidget, const WidgetTypeID parentWidgetTypeID, GLFWwindow* parentWindow)
     : _name(name), _parentWidget(parentWidget), _parentWidgetTypeID(parentWidgetTypeID), _projection(*projection)
 {
     _parentWindow = parentWindow;
@@ -64,9 +64,14 @@ glm::vec3 RetroFuturaGUI::IWidget::GetRotation() const
     return _rotation;
 }
 
-std::string_view RetroFuturaGUI::IWidget::GetName() const
+const std::string& RetroFuturaGUI::IWidget::GetName() const
 {
     return _name;
+}
+
+const RetroFuturaGUI::IHierarchyNode* RetroFuturaGUI::IWidget::GetParent() const
+{
+    return _parentWidget;
 }
 
 void RetroFuturaGUI::IWidget::SetName(std::string_view name)

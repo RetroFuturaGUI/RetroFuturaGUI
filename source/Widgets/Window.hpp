@@ -5,11 +5,12 @@
 #include "Image.hpp"
 #include "Lasagna.hpp"
 #include "IBackground.hpp"
+#include "IHierarchyNode.hpp"
 #include <algorithm>
 
 namespace RetroFuturaGUI
 {
-    class Window : public IBackground//, public IWidget
+    class Window final : public IBackground, public IHierarchyNode
     {
     public:
         /// @brief Creates a native GLFW window with the given title and size.
@@ -62,7 +63,10 @@ namespace RetroFuturaGUI
         void ShowWindowBar(const bool show);
 
         /// @brief Returns the window's name.
-        const std::string& GetName() const;
+        const std::string& GetName() const override;
+
+        /// @brief Returns nullptr: a window is always the root of its path.
+        const IHierarchyNode* GetParent() const override;
 
     private:
         enum class ResizeEdge : u32

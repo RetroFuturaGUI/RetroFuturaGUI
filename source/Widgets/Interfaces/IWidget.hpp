@@ -7,15 +7,16 @@
 #include <string_view>
 #include "Signal.hpp"
 #include "IWindowAccessor.hpp"
+#include "IHierarchyNode.hpp"
 
 namespace RetroFuturaGUI
 {
     //An interface with properties that all Widgets must implement.
-    class IWidget : virtual public IWindowAccessor 
+    class IWidget : virtual public IWindowAccessor, public IHierarchyNode
     {
     public:
         /// @brief Constructs a widget with the given name, under the given parent widget/window.
-        IWidget(std::string_view name, Projection* projection, IWidget* parentWidget, const WidgetTypeID parentWidgetTypeID, GLFWwindow* parentWindow);
+        IWidget(std::string_view name, Projection* projection, IHierarchyNode* parentWidget, const WidgetTypeID parentWidgetTypeID, GLFWwindow* parentWindow);
         IWidget() = delete;
         virtual ~IWidget() = default;
 
@@ -55,7 +56,10 @@ namespace RetroFuturaGUI
         glm::vec3 GetRotation() const;
 
         /// @brief Returns the widget's name.
-        std::string_view GetName() const;
+        const std::string& GetName() const override;
+
+        /// @brief Returns the widget this one is parented to, or nullptr when it hangs directly off a window.
+        const IHierarchyNode* GetParent() const override;
 
         /// @brief Sets the widget's name.
         void SetName(std::string_view name);
@@ -78,7 +82,7 @@ namespace RetroFuturaGUI
     protected:
     //Identity
         std::string _name;
-        IWidget* _parentWidget { nullptr };
+        IHierarchyNode* _parentWidget { nullptr };
         WidgetTypeID 
             _parentWidgetTypeID { WidgetTypeID::None },
             _widgetTypeID { WidgetTypeID::None };

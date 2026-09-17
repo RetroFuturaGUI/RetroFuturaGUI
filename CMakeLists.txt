@@ -47,6 +47,7 @@ list(APPEND RetroFuturaGuiSources
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/WindowBar.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/Containers/Lasagna.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/Containers/RadioButtonGroup.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/Interfaces/IHierarchyNode.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/Interfaces/IRangedValue.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/Interfaces/ITextEditable.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/Interfaces/ITextInteraction.cpp"

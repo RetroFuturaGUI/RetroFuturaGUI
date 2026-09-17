@@ -479,3 +479,8 @@ const std::string& RetroFuturaGUI::Window::GetName() const
 {
 	return _name;
 }
+
+const RetroFuturaGUI::IHierarchyNode* RetroFuturaGUI::Window::GetParent() const
+{
+	return nullptr;
+}
