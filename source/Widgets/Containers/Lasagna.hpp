@@ -4,6 +4,7 @@
 #include <string>
 #include <vector>
 #include "Rectangle.hpp"
+#include "TrackIndex.hpp"
 
 namespace RetroFuturaGUI
 {
@@ -33,9 +34,12 @@ namespace RetroFuturaGUI
             _LayerDefinition {};
     };
 
-    class Lasagna: public IWidget
+    class Lasagna final: public IWidget
     {
     public:
+        using TrackIndex = RetroFuturaGUI::TrackIndex;
+        using AxisIndex = RetroFuturaGUI::AxisIndex;
+
         /// @brief Constructs a Lasagna grid layout container with the given row/column/layer definitions.
         Lasagna(const std::string& name, Projection* projection, IWidget* parentWidget, const WidgetTypeID parentWidgetTypeID, GLFWwindow* parentWindow, AxisDefinition* _axisDefinition);
         Lasagna() = delete;
