@@ -21,6 +21,7 @@
 #include "ITextInteraction.hpp"
 #include "TableColor.hpp"
 #include "TableCheckBox.hpp"
+#include "TrackIndex.hpp"
 #include <memory>
 
 namespace RetroFuturaGUI
@@ -146,22 +147,22 @@ namespace RetroFuturaGUI
         std::vector<glm::vec4> GetTextColor(const ColorState state) const;
 
         /// @brief Sets the cell's contents in UTF-8. Does not give the cell a value store.
-        void SetValue(std::string_view text, const uSize xIndex, const uSize yIndex, const bool emitSignal);
+        void SetValue(std::string_view text, const TrackIndex& index, const bool emitSignal);
 
         /// @brief Sets the cell's contents bool (checkbox)
-        void SetValue(const bool value, const uSize xIndex, const uSize yIndex, const bool emitSignal);
+        void SetValue(const bool value, const TrackIndex& index, const bool emitSignal);
 
         /// @brief Sets the cell's value, rendered in the cell's numeric base and precision.
         template<NumericValueType T>
-        void SetValue(const T value, const uSize xIndex, const uSize yIndex, const bool emitSignal)
+        void SetValue(const T value, const TrackIndex& index, const bool emitSignal)
         {
-            if(_tableCells.size() <= xIndex)
+            if(_tableCells.size() <= index._Row)
                 return;
 
-            if(_tableCells[xIndex].size() <= yIndex)
+            if(_tableCells[index._Row].size() <= index._Column)
                 return;
 
-            TableCell& cell { _tableCells[xIndex][yIndex] };
+            TableCell& cell { _tableCells[index._Row][index._Column] };
 
             if(cell._TableWidgetTypeID != ITableWidget::TableWidgetTypeID::TableText || !cell._TableWidget)
                 return;
@@ -176,7 +177,7 @@ namespace RetroFuturaGUI
         }
 
         /// @brief Sets the TableWidget contents in color.
-        void SetTableWidget(const glm::vec4 color, const uSize xIndex, const uSize yIndex, const bool emitSignal);
+        void SetTableWidget(const glm::vec4 color, const TrackIndex& index, const bool emitSignal);
 
         /// @brief Sets the row/column tracks as Star weights, for callers that just want plain proportions.
         void SetTrackDefinitions(const std::vector<f32>& rowDefinition, const std::vector<f32>& columnDefinition);
@@ -197,17 +198,17 @@ namespace RetroFuturaGUI
 
         f32 GetVerticalScrollPosition() const;
 
-        /// @brief Returns the value of the cell at (xIndex, yIndex) converted to T.
+        /// @brief Returns the value of the cell at the given index, converted to T.
         template<NumericValueType T>
-        T GetValue(const uSize xIndex, const uSize yIndex) const
+        T GetValue(const TrackIndex& index) const
         {
-            if(_tableCells.size() <= xIndex)
+            if(_tableCells.size() <= index._Row)
                 return T {};
 
-            if(_tableCells[xIndex].size() <= yIndex)
+            if(_tableCells[index._Row].size() <= index._Column)
                 return T {};
 
-            const TableCell& cell { _tableCells[xIndex][yIndex] };
+            const TableCell& cell { _tableCells[index._Row][index._Column] };
 
             if(cell._TableWidgetTypeID != ITableWidget::TableWidgetTypeID::TableText || !cell._TableWidget)
                 return T {};
@@ -215,7 +216,7 @@ namespace RetroFuturaGUI
             return static_cast<TableText*>(cell._TableWidget.get())->GetValue<T>();
         }
 
-        bool GetValue(const uSize xIndex, const uSize yIndex) const;
+        bool GetValue(const TrackIndex& index) const;
 
         /// @brief Returns the total size of all tracks laid end to end, which may exceed the table's own size.
         glm::vec2 GetContentExtent() const;
@@ -224,7 +225,7 @@ namespace RetroFuturaGUI
         glm::vec2 GetMaxScroll() const;
 
         /// @brief Returns the text content, in UTF-8.
-        const std::string& GetText(const uSize xIndex, const uSize yIndex) const;
+        const std::string& GetText(const TrackIndex& index) const;
 
         /// @brief Sets the font family, size and style used to render the text, loading it if necessary.
         void SetFontFamily(std::string_view fontFamily, const f32 fontSize, const PlatformBridge::Fonts::Slant slant, const PlatformBridge::Fonts::Weight fontWeight);
@@ -365,15 +366,15 @@ namespace RetroFuturaGUI
         /// @brief Finds the half-open [first, end) range of tracks overlapping the scrolled viewport.
         static void resolveVisibleRange(const std::vector<f32>& sizes, const f32 scroll, const f32 viewportExtent, uSize& outFirst, uSize& outEnd);
 
-        template <typename T> void setWidget(const uSize xIndex, const uSize yIndex, Table* parentTable)
+        template <typename T> void setWidget(const TrackIndex& index, Table* parentTable)
         {
-            if(_tableCells.size() <= xIndex)
+            if(_tableCells.size() <= index._Row)
              return;
 
-            if(_tableCells.front().size() <= yIndex)
+            if(_tableCells[index._Row].size() <= index._Column)
                 return;
 
-            TableCell& tableCell = _tableCells[xIndex][yIndex];
+            TableCell& tableCell = _tableCells[index._Row][index._Column];
             tableCell._ParentTable = parentTable;
 
             if constexpr (std::is_same_v<T, TableText>)

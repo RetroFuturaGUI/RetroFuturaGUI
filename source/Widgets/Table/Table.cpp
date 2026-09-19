@@ -962,17 +962,17 @@ std::vector<glm::vec4> RetroFuturaGUI::Table::GetTextColor(const ColorState stat
     }
 }
 
-const std::string& RetroFuturaGUI::Table::GetText(const uSize xIndex, const uSize yIndex) const
+const std::string& RetroFuturaGUI::Table::GetText(const TrackIndex& index) const
 {
     static const std::string dummy {};
 
-    if(_tableCells.size() <= xIndex)
+    if(_tableCells.size() <= index._Row)
         return dummy;
 
-    if(_tableCells[xIndex].size() <= yIndex)
+    if(_tableCells[index._Row].size() <= index._Column)
         return dummy;
 
-    const TableCell& cell { _tableCells[xIndex][yIndex] };
+    const TableCell& cell { _tableCells[index._Row][index._Column] };
 
     if(cell._TableWidgetTypeID != ITableWidget::TableWidgetTypeID::TableText)
         return dummy;
@@ -1428,15 +1428,15 @@ void RetroFuturaGUI::Table::interactTableCheckBox(const MouseState& mouse)
     _onCheckBoxChange.Emit();
 }
 
-bool RetroFuturaGUI::Table::GetValue(const uSize xIndex, const uSize yIndex) const
+bool RetroFuturaGUI::Table::GetValue(const TrackIndex& index) const
 {
-    if(_tableCells.size() <= xIndex)
+    if(_tableCells.size() <= index._Row)
         return false;
 
-    if(_tableCells.front().size() <= yIndex)
+    if(_tableCells[index._Row].size() <= index._Column)
         return false;
 
-    TableCell* tableCell = const_cast<TableCell*>(&_tableCells[xIndex][yIndex]);
+    TableCell* tableCell = const_cast<TableCell*>(&_tableCells[index._Row][index._Column]);
     
     if(tableCell->_TableWidgetTypeID != ITableWidget::TableWidgetTypeID::TableCheckBox)
         return false;
@@ -1592,19 +1592,19 @@ void RetroFuturaGUI::Table::drawCaretAndSelection()
     }
 }
 
-void RetroFuturaGUI::Table::SetValue(const bool value, const uSize xIndex, const uSize yIndex, const bool emitSignal)
+void RetroFuturaGUI::Table::SetValue(const bool value, const TrackIndex& index, const bool emitSignal)
 {
-    if(_tableCells.size() <= xIndex)
+    if(_tableCells.size() <= index._Row)
         return;
 
-    if(_tableCells[xIndex].size() <= yIndex)
+    if(_tableCells[index._Row].size() <= index._Column)
         return;
 
-    TableCell& tableCell { _tableCells[xIndex][yIndex] };
+    TableCell& tableCell { _tableCells[index._Row][index._Column] };
 
     // typemismatch causes conversion
     if(!tableCell._TableWidget || tableCell._TableWidgetTypeID != ITableWidget::TableWidgetTypeID::TableCheckBox)
-        setWidget<TableCheckBox>(xIndex, yIndex, this);
+        setWidget<TableCheckBox>(index, this);
 
     static_cast<TableCheckBox*>(tableCell._TableWidget.get())->SetValue(value);
 
@@ -1615,19 +1615,19 @@ void RetroFuturaGUI::Table::SetValue(const bool value, const uSize xIndex, const
     _onCheckBoxChange.Emit();
 }
 
-void RetroFuturaGUI::Table::SetValue(std::string_view text, const uSize xIndex, const uSize yIndex, const bool emitSignal)
+void RetroFuturaGUI::Table::SetValue(std::string_view text, const TrackIndex& index, const bool emitSignal)
 {
-    if(_tableCells.size() <= xIndex)
+    if(_tableCells.size() <= index._Row)
         return;
 
-    if(_tableCells[xIndex].size() <= yIndex)
+    if(_tableCells[index._Row].size() <= index._Column)
         return;
 
-    TableCell& tableCell { _tableCells[xIndex][yIndex] };
+    TableCell& tableCell { _tableCells[index._Row][index._Column] };
 
     // typemismatch causes conversion
     if(!tableCell._TableWidget || tableCell._TableWidgetTypeID != ITableWidget::TableWidgetTypeID::TableText)
-        setWidget<TableText>(xIndex, yIndex, this);
+        setWidget<TableText>(index, this);
 
     static_cast<TableText*>(tableCell._TableWidget.get())->SetText(text);
 
@@ -1638,18 +1638,18 @@ void RetroFuturaGUI::Table::SetValue(std::string_view text, const uSize xIndex, 
     _onTextChange.Emit();
 }
 
-void  RetroFuturaGUI::Table::SetTableWidget(const glm::vec4 color, const uSize xIndex, const uSize yIndex, const bool emitSignal)
+void  RetroFuturaGUI::Table::SetTableWidget(const glm::vec4 color, const TrackIndex& index, const bool emitSignal)
 {
-    if(_tableCells.size() <= xIndex)
+    if(_tableCells.size() <= index._Row)
         return;
 
-    if(_tableCells[xIndex].size() <= yIndex)
+    if(_tableCells[index._Row].size() <= index._Column)
         return;
 
-    TableCell& tableCell { _tableCells[xIndex][yIndex] };
+    TableCell& tableCell { _tableCells[index._Row][index._Column] };
 
     if(!tableCell._TableWidget)
-        setWidget<TableColor>(xIndex, yIndex, this);
+        setWidget<TableColor>(index, this);
 
     TableColor* colorWidget { dynamic_cast<TableColor*>(tableCell._TableWidget.get()) };
 
