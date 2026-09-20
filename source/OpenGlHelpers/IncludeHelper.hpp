@@ -10,9 +10,27 @@
 #include <string_view>
 #include "config.hpp"
 #include "Projection.hpp"
+#include <concepts>
 
 namespace RetroFuturaGUI
 {
+    class Window;
+    class WindowBar;
+    class Lasagna;
+    class Label;
+    class Button;
+    class TextBox;
+    class Model;
+    class Image;
+    class SvgImage;
+    class CheckBox;
+    class RadioButton;
+    class RadioButtonGroup;
+    class Slider;
+    class ProgressBar;
+    class Table;
+    class Prefab;
+
     enum class FillType: u32
     {
         SOLID,
@@ -20,6 +38,15 @@ namespace RetroFuturaGUI
         RADIAL_GRADIENT,
         HUESTAR_GRADIENT
     };
+
+    template<typename T>
+    concept WidgetTypes =
+           std::same_as<T, Window> || std::same_as<T, Label>  || std::same_as<T, Button> 
+        || std::same_as<T, WindowBar> || std::same_as<T, Lasagna> || std::same_as<T, TextBox>
+        || std::same_as<T, Model> || std::same_as<T, Image> || std::same_as<T, SvgImage> 
+        || std::same_as<T, CheckBox> || std::same_as<T, RadioButton> || std::same_as<T, RadioButtonGroup>
+        || std::same_as<T, Slider> || std::same_as<T, ProgressBar> || std::same_as<T, Table>
+        || std::same_as<T, Prefab>;
 
     enum class WidgetTypeID : i32
     {
@@ -39,6 +66,7 @@ namespace RetroFuturaGUI
         Slider,
         ProgressBar,
         Table,
+        Prefab,
         Unknown = -1
     };   
 
