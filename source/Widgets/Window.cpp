@@ -344,8 +344,11 @@ void RetroFuturaGUI::Window::updateProjection()
 	if (_windowBar)
 		_windowBar->Resize();
 
-	if (_lasagna) 
+	if (_lasagna)
+	{
+		_lasagna->SetPosition(glm::vec3((f32)_width * 0.5f, (f32)_height * 0.5f, _lasagna->GetPosition().z));
 		_lasagna->SetSize(glm::vec3((f32)_width, (f32)_height, _lasagna->GetSize().z));
+	}
 
 	if(_background)
 	{
@@ -377,7 +380,7 @@ void RetroFuturaGUI::Window::Draw()
 	drawBackground();
 
 	if(_lasagna)
-		_lasagna->Draw(false);
+		_lasagna->Draw();
 
 	if(_windowBar)
 		_windowBar->Draw();
