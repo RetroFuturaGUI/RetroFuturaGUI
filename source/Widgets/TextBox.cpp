@@ -10,7 +10,7 @@
 RetroFuturaGUI::TextBox::TextBox(const std::string& name, Projection* projection, IWidget* parentWidget, const WidgetTypeID parentWidgetTypeID, GLFWwindow* parentWindow)
    : IWidget(name, projection, parentWidget, parentWidgetTypeID, parentWindow)
 {
-    _widgetTypeID = WidgetTypeID::Button;
+    _widgetTypeID = WidgetTypeID::TextBox;
     _background = std::make_unique<Rectangle>(projection);
     _border = std::make_unique<Rectangle>(projection);
     _text = std::make_unique<Text>(projection);
