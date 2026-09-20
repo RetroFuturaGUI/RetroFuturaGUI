@@ -40,13 +40,20 @@ The framework is designed for cross-platform use, and its logic can be compiled 
 - Button
   - suppress text overflow
 - Table
-  - More cell types (TableImage, TableCheckBox, TableProgressBar); TableText and TableColor exist so far
-  - Connect_/Disconnect_OnColorChange: the signal is emitted when a cell's color changes but has no public connector yet
+  - More cell types (TableImage, TableProgressBar); TableText, TableColor and TableCheckBox exist so far
+  - Connect_/Disconnect_OnColorChange and OnCheckBoxChange: both signals are emitted when a cell's value changes but have no public connector yet
+  - Checkbox inner padding (the gap between the box' border and its checkmark) is stored but not applied yet, so the checkmark fills the whole box
   - Auto track sizing (measure a track against its content); currently resolves like Fixed
   - Row/column spanning (the cells carry the spans already, the layout doesn't apply them yet)
   - Draw the header band's outer border (the width and colors are configurable but unused)
   - Keyboard traversal between cells (Tab); the arrow keys move the caret within a cell
   - Clipping is an axis-aligned scissor, so it stops being exact once the table carries a rotation
+- Slider / ProgressBar
+  - The graph doesn't account for the track's border width, so an enabled graph paints over the frame; the indicator does account for it
+  - A Circle indicator takes its corner radius from the indicator's x size alone, so it draws as a rounded rectangle whenever the two axes differ
+- Prefab
+  - Children aren't registered with the DynamicLibWidgetManager, so a binding can't address them by string ID yet. That needs a deregistration path as well, or destroying a prefab would leave the manager holding freed pointers
+  - The grid is fixed at construction; a prefab keeps whatever AxisDefinition it was built with
 - WindowBar
   - Window Icon
 
@@ -107,24 +114,27 @@ The framework is designed for cross-platform use, and its logic can be compiled 
     - SetPosition, SetSize, SetRotation
   - Slider
     - Represents a numeric value of any type (Bool, Int8-64, UInt8-64, Float32/64) with configurable min/max
-    - Horizontal and Vertical orientation: the value always runs along the track's local x-axis, so a vertical slider is a horizontal one turned a quarter turn, while its own rotation stays at whatever the caller set
+    - Horizontal and Vertical orientation: the value always runs along the track's local x-axis, so a vertical slider is a horizontal one turned a quarter turn, while its own rotation stays at whatever the caller set. SetSize takes the on-screen footprint either way, so a layout container can size a vertical slider without knowing about the turn
+    - Track direction (Normal/Inverted) chooses which end of the track holds the minimum, for values that count the opposite way to the track - a scrollbar's offset, for instance. Affects where the indicator and graph are drawn, not the value
     - Drag the indicator or click anywhere on the track to set the value
-    - Indicator: Stroke or Circle type, sized in pixels or percent of the track, per-state colors (Enabled, Disabled, Clicked, Hover), Solid/Linear/Radial/HueStar Gradient fill, Dotted Pattern, Fog Effect, corner radii, border width and border gaps
+    - Step the value by a configurable step size, in whatever type the value currently holds
+    - Indicator: Stroke or Circle type, sized per axis in pixels or percent of the track, per-state colors (Enabled, Disabled, Clicked, Hover), Solid/Linear/Radial/HueStar Gradient fill, Dotted Pattern, Fog Effect, corner radii, border width and border gaps. Sized and positioned inside the track's border rather than over it
     - Graph (the filled part of the track): Bar or Wave mode, per-state colors, width, all fill types, corner radii
-    - Optional increment/decrement buttons with a configurable step size
     - Signals: OnValueChanged, OnValueSet
     - Background & Border (same options as Button)
     - SetPosition, SetSize, SetRotation, corner radii
   - ProgressBar
-    - Shares the Slider's value, indicator and graph machinery (IRangedValue) without the dragging and buttons
-    - Horizontal and Vertical orientation
+    - Shares the Slider's value, indicator, graph and stepping machinery (IRangedValue) without the dragging
+    - Horizontal and Vertical orientation, Normal or Inverted track direction
     - Signals: OnValueChanged, OnValueSet
     - Background & Border (same options as Button)
     - SetPosition, SetSize, SetRotation, corner radii
   - Table
-    - Grid of typed cells, each created on demand the first time a value is assigned to it. The cell type follows from which SetTableWidget overload is called: a string makes a TableText, a color makes a TableColor
+    - Grid of typed cells, each created on demand the first time a value is assigned to it. The cell type follows from what is assigned: a string or a number makes a TableText, a color makes a TableColor, a bool makes a TableCheckBox
     - TableText cells: editable text, one Text mesh per cell (see the text interaction entry below)
     - TableColor cells: a solid color swatch. The cell stores only its color value and draws through a single rectangle shared by the whole table, so a color column costs one set of GL buffers no matter how many rows it has
+    - TableCheckBox cells: a checkbox sized as the largest centered square that fits the cell minus a configurable margin, so it keeps its shape as the tracks resize. The cell stores only its checked state and draws through one background rectangle, one border rectangle and one SVG checkmark shared by the whole table, so a checkbox column costs one set of GL buffers regardless of row count
+    - Checkbox interaction: the click target is the box itself rather than the surrounding cell, with hover and pressed states tracked per cell. Per-state colors (Enabled, Disabled, Hover, Clicked) for background, border and checkmark, plus corner radii and border width
     - Per-track sizing policies: Star (divides whatever viewport space the fixed tracks left over) and Fixed (absolute pixels, the mode that lets content outgrow the table and become scrollable)
     - Scrolling on both axes, with content extent, maximum scroll and scroll position exposed so an external Slider can drive it through the signal/slot mechanism
     - Only the tracks overlapping the viewport are drawn; partially visible ones are clipped by a scissor that intersects with whatever clip is already active, so a half-scrolled row can't spill past the border
@@ -132,7 +142,7 @@ The framework is designed for cross-platform use, and its logic can be compiled 
     - Per-variant background, inner border and text colors
     - Column and row headers, placeable Top/Bottom and Left/Right, with their own font, alignment, padding, colors and border widths. The band is taken out of the content viewport and stays pinned while the content scrolls underneath it
     - Text interaction per cell: click to place the caret, drag to mark, arrow keys with key repeat, select all, copy / cut / paste, backspace. One caret and one selection highlight are shared by every cell, reused by whichever one currently has focus
-    - Read-only tracks: marking and copying still work, only the edits are rejected
+    - Read-only tracks: marking and copying still work, only the edits are rejected. A checkbox in a read-only track still shows its value but won't toggle
     - Signals: OnTextChange, OnEnterPressed, OnEnterReleased, OnCopy, OnPaste
     - Background & Border (same options as Button)
     - SetPosition, SetSize, SetRotation
@@ -152,9 +162,17 @@ The framework is designed for cross-platform use, and its logic can be compiled 
   - Lasagna (three-dimensional successor of Grid)
     - Align widgets in a three-dimensional pattern
     - Widget sizing policies (fixed size, expand X, Y, Z, XY)
-    - Row, Column and Layer definitions
+    - Row, Column and Layer definitions, checkable before a grid is built from them (non-empty, positive track sizes, within the per-axis track limit) - which matters for definitions arriving from another language
     - Row, Column and Layer spanning (a widget can occupy multiple cells along any axis)
+    - AttachWidget reports whether the placement succeeded, so an out-of-range or already-occupied cell fails visibly instead of silently
+    - Cell lookup by TrackIndex, and the current track count per axis
     - Debug lines
+  - Prefab
+    - A group of widgets laid out in its own Lasagna and treated as a single widget by whatever contains it
+    - Composed, not subclassed: children are added with AttachWidget&lt;T&gt;(name, placement), so a prefab is a tree of widgets rather than a new C++ type per kind. A subclass per kind would have to expose its children through the C ABI, which addresses widgets by string and cannot hand back a pointer, so every prefab would grow the binding surface
+    - Children are reached by name afterwards: GetChildWidget&lt;T&gt;, ShowChildWidget, IsChildWidgetShown
+    - Owns its children; refuses a name that is already taken, and a cell that is out of range or occupied, without keeping the widget it was asked to build
+    - SetPosition, SetSize, SetRotation, forwarded to its grid
   - WindowBar
     - Top, Bottom Position
     - Close, Minimize, Maximize buttons (all shadered)
@@ -306,3 +324,5 @@ RetroFuturaGUI aims to break these barriers!
 ### Known Bugs
 - Window.hpp/.cpp
   - glfwWindowHint(GLFW_TRANSPARENT_FRAMEBUFFER, GLFW_TRUE()) causes objects with transparency to show what's behind the window even if the background is completely opaque
+- TextBox.cpp
+  - A TextBox reports WidgetTypeID::Button, so DynamicLibWidgetManager::SetText and ConnectSlot take the Button branch, dynamic_cast to Button* yields null and is then dereferenced. The WidgetTypeID::TextBox branches are unreachable as a result

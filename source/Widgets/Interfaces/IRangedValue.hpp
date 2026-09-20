@@ -6,13 +6,24 @@
 #include <memory>
 #include <span>
 #include <vector>
+#include "IBackground.hpp"
+#include "IBorder.hpp"
+#include "IClickable.hpp"
+#include "IWidget.hpp"
+#include "IncludeHelper.hpp"
 
 namespace RetroFuturaGUI
 {
     /// @brief Shared value/indicator/graph for widgets that visualize a min/max-bounded value (Slider, ProgressBar, ...)
-    class IRangedValue
+    class IRangedValue : public IWidget, public IClickable, public IBackground, public IBorder
     {
     public:
+        enum class ElementSizing : u32
+        {
+            Pixels,
+            Percent
+        };
+
         enum class GraphMode : u32
         {
             Bar,
@@ -38,6 +49,38 @@ namespace RetroFuturaGUI
             Horizontal,
             Vertical
         };
+
+        /// @brief Which end of the track the minimum value sits at.
+        enum class TrackDirection : u32
+        {
+            Normal,
+            Inverted
+        };
+
+        IRangedValue(std::string_view name, Projection* projection, IHierarchyNode* parentWidget, const WidgetTypeID parentWidgetTypeID, GLFWwindow* parentWindow);
+
+        /// @brief Sets the position
+        void SetPosition(const glm::vec3& position) override final;
+
+        /// @brief Sets the size
+        void SetSize(const glm::vec3& size) override final;
+
+        /// @brief Sets the rotation
+        void SetRotation(const glm::vec3& rotation) override final;
+
+        /// @brief Sets whether the track runs horizontally or vertically at 0° rotation.
+        void SetOrientation(const Orientation orientation);
+
+        /// @brief Sets which end of the track holds the minimum value
+        void SetTrackDirection(const TrackDirection direction);
+
+        /// @brief Sets the indicator's size along the track's length
+        /// @param size (glm::vec2): indicator's size
+        /// @param sizingMode (ElementSizing): Whether the size is set in pixelsize (abolute) or in percent (relative to the track's total length)
+        void SetIndicatorSize(const glm::vec2& size, const ElementSizing sizingMode);
+
+        /// @brief Sets the corner rounding radii of the track's track background and border.
+        void SetCornerRadii(const glm::vec4& radii);
 
         /// @brief Connects a slot to be called when the value has changed
         /// @param async If true, the slot is invoked asynchronously.
@@ -287,6 +330,36 @@ namespace RetroFuturaGUI
 
             setIndicatorPosition();
             setGraphPosition();
+        }
+
+        /// @brief Moves the value one step toward the max (increase) or the min, clamped to the range.
+        void StepValue(const bool increase);
+
+        /// @brief Sets the amount StepValue moves the value by.
+        template <typename T> void SetStepSize(T value)
+        {
+            if constexpr (std::is_same_v<T, i8>)
+                _stepSize.Int8 = value;
+            else if constexpr (std::is_same_v<T, i16>)
+                _stepSize.Int16 = value;
+            else if constexpr (std::is_same_v<T, i32>)
+                _stepSize.Int32 = value;
+            else if constexpr (std::is_same_v<T, i64>)
+                _stepSize.Int64 = value;
+            else if constexpr (std::is_same_v<T, u8>)
+                _stepSize.UInt8 = value;
+            else if constexpr (std::is_same_v<T, u16>)
+                _stepSize.UInt16 = value;
+            else if constexpr (std::is_same_v<T, u32>)
+                _stepSize.UInt32 = value;
+            else if constexpr (std::is_same_v<T, u64>)
+                _stepSize.UInt64 = value;
+            else if constexpr (std::is_same_v<T, f32>)
+                _stepSize.Float32 = value;
+            else if constexpr (std::is_same_v<T, f64>)
+                _stepSize.Float64 = value;
+            else
+                _stepSize.Bool = value;
         }
 
         template <typename T> const T GetValue() const
@@ -539,10 +612,6 @@ namespace RetroFuturaGUI
         /// @brief Sets the coverage threshold above which the graph's fog appears; higher values carve larger clear gaps out of the cloud.
         void SetGraphFogClearing(const f32 clearing);
 
-        /// @brief Sets the orientation of the ranged value
-        /// @param orientation The orientation to set (Horizontal or Vertical)
-        virtual void SetOrientation(const Orientation orientation);
-
     protected:
         // Non-owning aliases that derive from the widgets. This avoids the inclusion of IWidget
         Rectangle* _track { nullptr };
@@ -621,6 +690,21 @@ namespace RetroFuturaGUI
             f64 Float64;
         } _maxValue { .UInt64 = 0 };
 
+        union
+        {
+            bool Bool;
+            i8 Int8;
+            i16 Int16;
+            i32 Int32;
+            i64 Int64;
+            u8 UInt8;
+            u16 UInt16;
+            u32 UInt32;
+            u64 UInt64;
+            f32 Float32;
+            f64 Float64;
+        } _stepSize { .UInt64 = 1 };
+
         ValueType _valueType { ValueType::Int32 };
 
         // Elements
@@ -628,6 +712,7 @@ namespace RetroFuturaGUI
             _indicatorBackground { nullptr },
             _indicatorBorder { nullptr },
             _graph { nullptr };
+        ElementSizing _indicatorSizingMode { ElementSizing::Percent };
 
         // Settings
         bool _useIndicator { false };
@@ -636,6 +721,9 @@ namespace RetroFuturaGUI
         GraphMode _graphMode { GraphMode::Bar };
         f32 _graphWidth { 0.0f }; // graph thickness; 0 matches the track's height
         Orientation _orientation { Orientation::Horizontal };
+        TrackDirection _trackDirection { TrackDirection::Normal };
+        glm::i32vec2 _previousIndicatorPosition { glm::i32vec2(0) };
+        glm::vec2 _indicatorSize { 25.0f, 100.0f };
 
         // Design
         std::vector<glm::vec4>
@@ -669,9 +757,14 @@ namespace RetroFuturaGUI
             _onValueSetAsync;
 
     private:
+        /// @brief Where the value sits in its range, 0 at the minimum. Independent of how the track is drawn.
         f32 getValueFraction() const;
+
+        /// @brief Where along the track that value is drawn, 0 at the track's start. The same as getValueFraction unless the track direction is Inverted. Positioning uses this; nothing else should.
+        f32 getTrackFraction() const;
         void setIndicatorBackgroundColors();
         void setIndicatorBorderColors();
         void setGraphColorsApply();
+        void setIndicatorSize();
     };
 }
