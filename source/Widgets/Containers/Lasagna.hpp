@@ -22,9 +22,13 @@ namespace RetroFuturaGUI
             _ColSpan { 1 },
             _LayerSpan { 1 };
         IWidget* _Widget = nullptr;
-        bool _SpanOccupied = false;
         SizingMode _SizingMode { SizingMode::FILL };
+        bool
+            _SpanOccupied { false },
+            _Show { true };
     };
+
+    inline constexpr uSize MaxTracksPerAxis { 64 };
 
     struct AxisDefinition
     {
@@ -32,7 +36,28 @@ namespace RetroFuturaGUI
             _RowDefinition {},
             _ColumnDefinition {},
             _LayerDefinition {};
+
+        /// @brief True when every axis defines between one and MaxTracksPerAxis tracks, all of positive size
+        bool IsValid() const
+        {
+            const auto axisIsValid = [](const std::vector<f32>& axis)
+            {
+                if(axis.empty() || axis.size() > MaxTracksPerAxis)
+                    return false;
+
+                for(const f32 track : axis)
+                    if(track <= 0.0f)
+                        return false;
+
+                return true;
+            };
+
+            return axisIsValid(_RowDefinition) && axisIsValid(_ColumnDefinition) && axisIsValid(_LayerDefinition);
+        }
     };
+
+    /// @brief One full-size cell on every axis - what a Prefab starts with when no grid is given.
+    inline const AxisDefinition SingleCellAxis { ._RowDefinition = { 1.0f }, ._ColumnDefinition = { 1.0f }, ._LayerDefinition = { 1.0f } };
 
     class Lasagna final: public IWidget
     {
@@ -41,7 +66,8 @@ namespace RetroFuturaGUI
         using AxisIndex = RetroFuturaGUI::AxisIndex;
 
         /// @brief Constructs a Lasagna grid layout container with the given row/column/layer definitions.
-        Lasagna(const std::string& name, Projection* projection, IWidget* parentWidget, const WidgetTypeID parentWidgetTypeID, GLFWwindow* parentWindow, AxisDefinition* _axisDefinition);
+        ///        The definition is copied, so callers need not keep theirs alive; this grid is its owner from here on.
+        Lasagna(const std::string& name, Projection* projection, IWidget* parentWidget, const WidgetTypeID parentWidgetTypeID, GLFWwindow* parentWindow, const AxisDefinition& axisDefinition);
         Lasagna() = delete;
         Lasagna(const Lasagna&) = delete;
         Lasagna(Lasagna&&) = delete;
@@ -50,7 +76,16 @@ namespace RetroFuturaGUI
         auto operator =(Lasagna&&) = delete;
 
         /// @brief Places a widget into the grid at the given row, column and layer, optionally spanning multiple cells along any axis.
-        void AttachWidget(const u32 row, const u32 col, const u32 layer, IWidget* widget, const SizingMode sizingMode = SizingMode::FILL, const u32 rowSpan = 1, const u32 colSpan = 1, const u32 layerSpan = 1);
+        /// @return false when the placement is out of range or overlaps an occupied cell, in which case nothing is changed.
+        bool AttachWidget(const u32 row, const u32 col, const u32 layer, IWidget* widget, const SizingMode sizingMode = SizingMode::FILL, const u32 rowSpan = 1, const u32 colSpan = 1, const u32 layerSpan = 1);
+
+        /// @brief Returns the cell at the given index, or nullptr when the index is outside the current grid.
+        /// @warning Only valid until the grid is rebuilt
+        LasagnaCell* GetCell(const TrackIndex& index);
+        const LasagnaCell* GetCell(const TrackIndex& index) const;
+
+        /// @brief The number of tracks currently defined on each axis.
+        TrackIndex GetTrackCounts() const;
         /// @brief Lays out and draws all attached widgets
         void Draw() override;
 
@@ -64,16 +99,15 @@ namespace RetroFuturaGUI
         void SetPosition(const glm::vec3& position) override;
 
     private:
-        // Data
-        std::vector<std::vector<std::vector<LasagnaCell>>> _lasagna;
-        static constinit const u32 _maxCountPerAxis = 64;
-        bool _drawDebugLines = false;
-        AxisDefinition _axisdefinition;
-        std::unique_ptr<Rectangle> _debugBorder;
+    // Data
+        std::vector<std::vector<std::vector<LasagnaCell>>> _lasagna {};
+        static constinit const u32 _maxCountPerAxis { MaxTracksPerAxis };
+        AxisDefinition _axisdefinition {};
+        std::unique_ptr<Rectangle> _debugBorder { nullptr };
         std::vector<glm::vec4> _debugBorderColor { glm::vec4(1.0f) };
+        bool _drawDebugLines { false };
 
-        /// @brief Returns the grid's top-left corner in world space. Cell offsets are grid-local, so every
-        /// placement measures from here rather than from the window.
+        /// @brief Returns the grid's top-left corner in world space. Cell offsets are grid-local, so every placement measures from here rather than from the window.
         glm::vec3 gridOrigin() const;
 
         void drawDebugLines(const LasagnaCell& cell);
