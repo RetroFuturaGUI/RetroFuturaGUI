@@ -26,7 +26,7 @@ void RetroFuturaGUI::IBorder::SetBorderColor(const glm::vec4 & color, const Colo
 
 void RetroFuturaGUI::IBorder::SetBorderColors(std::span<glm::vec4> colors, const ColorState state)
 {
-        switch(state)
+    switch(state)
     {
         case ColorState::Clicked:
             _borderColorClicked.assign(colors.begin(), colors.end());
