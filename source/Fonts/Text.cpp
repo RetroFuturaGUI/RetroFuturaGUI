@@ -63,8 +63,12 @@ void RetroFuturaGUI::Text::SetTextPadding(const f32 padding)
 
 void RetroFuturaGUI::Text::SetParentSize(const glm::vec2 size)
 {
+    const bool parentSizeChanged { _parentSize != size };
     _parentSize = size;
     alignPosition();
+
+    if(parentSizeChanged)
+        updateMesh();
 }
 
 void RetroFuturaGUI::Text::SetScrollOffset(const f32 offset)
