@@ -67,6 +67,7 @@ namespace RetroFuturaGUI
         ProgressBar,
         Table,
         Prefab,
+        ComboBox,
         Unknown = -1
     };   
 

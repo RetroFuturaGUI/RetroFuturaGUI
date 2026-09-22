@@ -13,7 +13,7 @@ The framework is designed for cross-platform use, and its logic can be compiled 
 | 1 | Button, Label, Window, MainWindow, Image, Grid2D, WindowBar with Buttons |  | ✅ |
 | 2 | dll/so/dylib compilation for C# and Python support, Widget ID manager | 1 | ✅ | 
 | 3 | Linux Support, Font Manager | 2 | ✅ | 
-| 4 | More Widgets (TextBox, Table, VideoPlayer, AudioPlayer, 3D Model, Slider, CheckBox, DropdownBox, RadioButton, Tabs, 3D Scene, Lights, change Grid2d to "Lasagna" and add a 3rd dimension, Color Pickers, MenuBar) | 1 | WIP | 
+| 4 | More Widgets (TextBox ✅, Table ✅, VideoPlayer, AudioPlayer, 3D Model ✅, Slider ✅, CheckBox ✅, ComboBox ✅, RadioButton ✅, RadioButtonGroup ✅, Tabs, 3D Scene, Lights, change Grid2d to "Lasagna" and add a 3rd dimension ✅, Color Pickers, MenuBar) | 1 | WIP | 
 | 5 | .bechaml markup language for GUI design 🥣 (**B**eautifully **E**xtended **C**ascading but **H**airbally **A**pplication **M**arkup **L**anguage) | 4 | | 
 | 6 | VS Code extension with project generator/manager | 5 | | 
 | 7 | Pre-built Prefabs (StepperSlider, SpinBox, Table with Sliders, Carousel, Extended Color Pickers) | 6 |
@@ -36,7 +36,6 @@ The framework is designed for cross-platform use, and its logic can be compiled 
 - Test ITextEditable.cpp#L119 on Linux
 - Text
   - Optimizations
-  - SetParentSize doesn't rebuild the mesh, so glyph clipping goes stale when a widget is resized after its text was set
 - TextBox
   - suppress text overflow
 - Button
@@ -53,6 +52,15 @@ The framework is designed for cross-platform use, and its logic can be compiled 
 - Slider / ProgressBar
   - The graph doesn't account for the track's border width, so an enabled graph paints over the frame; the indicator does account for it
   - A Circle indicator takes its corner radius from the indicator's x size alone, so it draws as a rounded rectangle whenever the two axes differ
+- ComboBox
+  - Scrolling past the visible row cap; the list shows the first rows only, up to the cap
+  - SetIndex neither clamps to the item count nor emits OnIndexChanged - only picking a row does
+  - No SetEnabled override, so the disabled colors it carries never reach the elements
+  - RemoveItem doesn't range-check its index and leaves the selected index pointing at whatever moved into that slot
+  - The per-row border (_dropDownItemBorder) is declared but never built or drawn
+  - Only the drop-down's corner radii are exposed (SetDropDownCornerRadii); the closed box has no public setter, and neither the panel's nor the arrow's fill type can be chosen, so their gradient fills are out of reach
+  - The visible row cap is fixed at 8 with no setter
+  - In the closed box the selected item's text can run under the arrow icon; only the border width is kept clear of it
 - Prefab
   - Children aren't registered with the DynamicLibWidgetManager, so a binding can't address them by string ID yet. That needs a deregistration path as well, or destroying a prefab would leave the manager holding freed pointers
   - The grid is fixed at construction; a prefab keeps whatever AxisDefinition it was built with
@@ -104,6 +112,16 @@ The framework is designed for cross-platform use, and its logic can be compiled 
     - Group text label (shares Label's text properties via ITextProperties)
     - Border (same options as Button), with configurable border gaps
     - SetPosition, SetSize, SetRotation
+  - ComboBox
+    - Picks one entry out of a list of text items: AddItem, RemoveItem, GetItemCount, SetIndex, GetSelectedIndex, GetSelectedText
+    - Drop-down panel hanging off the bottom edge of the closed box, as tall as the item count up to a cap of visible rows, with its own per-state background and border colors and corner radii
+    - Clicking the box opens and closes the list, clicking a row selects it and closes it, a click anywhere outside puts it away
+    - The row under the cursor is highlighted, and the hit test walks the same row rectangles the renderer places, so what lights up is what gets picked
+    - Arrow icon (shared SVG) with per-state colors, fitted to the icon's own aspect ratio inside the right edge of the box
+    - Item text: font family, size, slant and weight, alignment and padding, inset by the border width so the frame never crosses a glyph
+    - Signals: OnItemClicked, OnIndexChanged, OnClick, OnRelease, OnMouseEnter, OnMouseLeave, WhileHover
+    - Background & Border (same options as Button)
+    - SetPosition, SetSize, SetRotation: every part sits around the widget's center and its offset is rotated with the widget, so the open list stays attached to a rotated box
   - TextBox
     - Text input & editing (insert, backspace, key repeat)
     - Read-only mode
@@ -326,5 +344,7 @@ RetroFuturaGUI aims to break these barriers!
 ### Known Bugs
 - Window.hpp/.cpp
   - glfwWindowHint(GLFW_TRANSPARENT_FRAMEBUFFER, GLFW_TRUE()) causes objects with transparency to show what's behind the window even if the background is completely opaque
+- SvgTexture.cpp
+  - Draw() switches the depth test off for its whole draw so that its coplanar mask passes can blend over the base layer. That also lets any SVG drawn later in the frame paint over whatever is already there, whatever the z - an open ComboBox drop-down is covered by an SvgImage sitting in a later Lasagna cell, for instance. Keeping the test on and using GL_LEQUAL for the mask passes would keep the blending and respect depth
 - TextBox.cpp
   - A TextBox reports WidgetTypeID::Button, so DynamicLibWidgetManager::SetText and ConnectSlot take the Button branch, dynamic_cast to Button* yields null and is then dereferenced. The WidgetTypeID::TextBox branches are unreachable as a result

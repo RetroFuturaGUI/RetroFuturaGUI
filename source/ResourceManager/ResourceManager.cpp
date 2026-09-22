@@ -3,12 +3,15 @@
 
 RetroFuturaGUI::ResourceManager::ResourceManager()
 {
-    std::filesystem::path checkmarkPath = PlatformBridge::Paths::GetExecutablePathFSPath().parent_path();
-    checkmarkPath /= "Resources";
-    checkmarkPath /= "img";
-    checkmarkPath /= "checkmark.svg";
+    std::filesystem::path imgPath = PlatformBridge::Paths::GetExecutablePathFSPath().parent_path();
+    imgPath /= "Resources";
+    imgPath /= "img";
 
+    std::filesystem::path checkmarkPath = imgPath / "checkmark.svg";
     _checkmark = std::make_shared<SvgTexture>(checkmarkPath.string(), true);
+
+    std::filesystem::path arrowDownPath = imgPath / "arrowDown.svg";
+    _arrowDown = std::make_shared<SvgTexture>(arrowDownPath.string(), true);
 }
 
 std::shared_ptr<RetroFuturaGUI::SvgTexture> RetroFuturaGUI::ResourceManager::GetCheckmarkIcon()
@@ -17,4 +20,12 @@ std::shared_ptr<RetroFuturaGUI::SvgTexture> RetroFuturaGUI::ResourceManager::Get
         return nullptr;
 
     return GetInstance()._checkmark;
+}
+
+std::shared_ptr<RetroFuturaGUI::SvgTexture> RetroFuturaGUI::ResourceManager::GetArrowDownIcon()
+{
+    if(!GetInstance()._arrowDown)
+        return nullptr;
+
+    return GetInstance()._arrowDown;
 }
