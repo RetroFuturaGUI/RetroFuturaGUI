@@ -394,7 +394,7 @@ void RetroFuturaGUI::WindowBar::EnableElement(const RetroFuturaGUI::WindowBar::E
             _close->SetTextPadding(3.0f);
             _close->SetFontFamily("Noto Sans", _windowBarThiccness * 0.5f, PlatformBridge::Fonts::Slant::Roman, PlatformBridge::Fonts::Weight::Normal);
             _close->SetBorderWidth(2.0f);
-            _close->SetText("X");
+            _close->SetText("X", false);
             _close->Connect_OnClick([this]() { windowShouldCloseCallback(); }, false);
         } return;
         case ElementType::MinimizeButton:
@@ -414,7 +414,7 @@ void RetroFuturaGUI::WindowBar::EnableElement(const RetroFuturaGUI::WindowBar::E
             _minimize->SetTextPadding(3.0f);
             _minimize->SetFontFamily("Noto Sans", _windowBarThiccness * 0.5f, PlatformBridge::Fonts::Slant::Roman, PlatformBridge::Fonts::Weight::Normal);
             _minimize->SetBorderWidth(2.0f);
-            _minimize->SetText("_");
+            _minimize->SetText("_", false);
             _minimize->Connect_OnClick([this]() { minimizeWindowCallback(_parentWindow); }, false);
         } return;
         case ElementType::MaximizeButton:
@@ -434,7 +434,7 @@ void RetroFuturaGUI::WindowBar::EnableElement(const RetroFuturaGUI::WindowBar::E
             _maximize->SetTextPadding(3.0f);
             _maximize->SetFontFamily("Noto Sans", _windowBarThiccness * 0.5f, PlatformBridge::Fonts::Slant::Roman, PlatformBridge::Fonts::Weight::Normal);
             _maximize->SetBorderWidth(2.0f);
-            _maximize->SetText("M");
+            _maximize->SetText("M", false);
 
             if(_maximizeCallback)
                 _maximize->Connect_OnClick(_maximizeCallback, false);
