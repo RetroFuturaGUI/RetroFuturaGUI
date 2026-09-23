@@ -13,7 +13,7 @@ The framework is designed for cross-platform use, and its logic can be compiled 
 | 1 | Button, Label, Window, MainWindow, Image, Grid2D, WindowBar with Buttons |  | ✅ |
 | 2 | dll/so/dylib compilation for C# and Python support, Widget ID manager | 1 | ✅ | 
 | 3 | Linux Support, Font Manager | 2 | ✅ | 
-| 4 | More Widgets (TextBox ✅, Table ✅, VideoPlayer, AudioPlayer, 3D Model ✅, Slider ✅, CheckBox ✅, ComboBox ✅, RadioButton ✅, RadioButtonGroup ✅, Tabs, 3D Scene, Lights, change Grid2d to "Lasagna" and add a 3rd dimension ✅, Color Pickers, MenuBar) | 1 | WIP | 
+| 4 | More Widgets (TextBox ✅, Table ✅, VideoPlayer, AudioPlayer, 3D Model ✅, Slider ✅, CheckBox ✅, ComboBox ✅, ExtendedComoBox, RadioButton ✅, RadioButtonGroup ✅, Tabs, Lights, change Grid2d to "Lasagna" and add a 3rd dimension ✅, Color Pickers, MenuBar, Environment), Scene, HUD  | 1 | WIP | 
 | 5 | .bechaml markup language for GUI design 🥣 (**B**eautifully **E**xtended **C**ascading but **H**airbally **A**pplication **M**arkup **L**anguage) | 4 | | 
 | 6 | VS Code extension with project generator/manager | 5 | | 
 | 7 | Pre-built Prefabs (StepperSlider, SpinBox, Table with Sliders, Carousel, Extended Color Pickers) | 6 |
@@ -52,18 +52,22 @@ The framework is designed for cross-platform use, and its logic can be compiled 
 - Slider / ProgressBar
   - The graph doesn't account for the track's border width, so an enabled graph paints over the frame; the indicator does account for it
   - A Circle indicator takes its corner radius from the indicator's x size alone, so it draws as a rounded rectangle whenever the two axes differ
+- IDropDown (shared base of ComboBox and ExtendedComboBox)
+  - _borderColorsEnabled/Disabled/Hover/Clicked and _backgroundColorsEnabled/Disabled/Hover/Clicked are never read or written. The colors that actually reach the closed box come from IBorder's _borderColorEnabled and IBackground's _backgroundColorEnabled - one letter apart - so assigning the IDropDown ones looks right and changes nothing
+  - The per-row border (_dropDownItemBorder) is declared but never built or drawn
+  - Most of the protected surface is only touched inside IDropDown.cpp and could be private: setDropDownArrowColors, setDropDownBackgroundColors, setDropDownBorderColors, dropDownCenter, rotateLocalOffset, the three per-state drop-down color sets, _highLightColor, _dropDownArrowPathFill, the three ColorState fields, _zOffset, _arrowPadding and _maxItemsToDraw - subclasses reach all of them through the public setters and setColors
+  - _dropDownBackgroundColorSate and _dropDownBorderColorSate are missing a t
 - ComboBox
   - Scrolling past the visible row cap; the list shows the first rows only, up to the cap
   - SetIndex neither clamps to the item count nor emits OnIndexChanged - only picking a row does
   - No SetEnabled override, so the disabled colors it carries never reach the elements
   - RemoveItem doesn't range-check its index and leaves the selected index pointing at whatever moved into that slot
-  - The per-row border (_dropDownItemBorder) is declared but never built or drawn
   - Only the drop-down's corner radii are exposed (SetDropDownCornerRadii); the closed box has no public setter, and neither the panel's nor the arrow's fill type can be chosen, so their gradient fills are out of reach
   - The visible row cap is fixed at 8 with no setter
   - In the closed box the selected item's text can run under the arrow icon; only the border width is kept clear of it
 - Prefab
   - Children aren't registered with the DynamicLibWidgetManager, so a binding can't address them by string ID yet. That needs a deregistration path as well, or destroying a prefab would leave the manager holding freed pointers
-  - The grid is fixed at construction; a prefab keeps whatever AxisDefinition it was built with
+  - The Lasagna is fixed at construction; a prefab keeps whatever AxisDefinition it was built with
 - WindowBar
   - Window Icon
 
@@ -182,7 +186,7 @@ The framework is designed for cross-platform use, and its logic can be compiled 
   - Lasagna (three-dimensional successor of Grid)
     - Align widgets in a three-dimensional pattern
     - Widget sizing policies (fixed size, expand X, Y, Z, XY)
-    - Row, Column and Layer definitions, checkable before a grid is built from them (non-empty, positive track sizes, within the per-axis track limit) - which matters for definitions arriving from another language
+    - Row, Column and Layer definitions, checkable before a Lasagna is built from them (non-empty, positive track sizes, within the per-axis track limit) - which matters for definitions arriving from another language
     - Row, Column and Layer spanning (a widget can occupy multiple cells along any axis)
     - AttachWidget reports whether the placement succeeded, so an out-of-range or already-occupied cell fails visibly instead of silently
     - Cell lookup by TrackIndex, and the current track count per axis
@@ -192,7 +196,7 @@ The framework is designed for cross-platform use, and its logic can be compiled 
     - Composed, not subclassed: children are added with AttachWidget&lt;T&gt;(name, placement), so a prefab is a tree of widgets rather than a new C++ type per kind. A subclass per kind would have to expose its children through the C ABI, which addresses widgets by string and cannot hand back a pointer, so every prefab would grow the binding surface
     - Children are reached by name afterwards: GetChildWidget&lt;T&gt;, ShowChildWidget, IsChildWidgetShown
     - Owns its children; refuses a name that is already taken, and a cell that is out of range or occupied, without keeping the widget it was asked to build
-    - SetPosition, SetSize, SetRotation, forwarded to its grid
+    - SetPosition, SetSize, SetRotation, forwarded to its Lasagna
   - WindowBar
     - Top, Bottom Position
     - Close, Minimize, Maximize buttons (all shadered)

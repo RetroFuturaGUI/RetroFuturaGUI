@@ -46,6 +46,7 @@ list(APPEND RetroFuturaGuiSources
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/TextBox.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/Window.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/WindowBar.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/Containers/ExtendedComboBox.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/Containers/Lasagna.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/Containers/Prefab.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/Containers/RadioButtonGroup.cpp"

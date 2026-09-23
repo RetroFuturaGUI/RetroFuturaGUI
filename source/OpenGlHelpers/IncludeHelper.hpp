@@ -68,6 +68,7 @@ namespace RetroFuturaGUI
         Table,
         Prefab,
         ComboBox,
+        ExtendedComboBox,
         Unknown = -1
     };   
 
@@ -79,6 +80,9 @@ namespace RetroFuturaGUI
         FILL_Y,
         FILL_Z,
         FILL_XY,
+        FILL_XZ,
+        FILL_YZ,
+        FILL_XYZ
     };
 
     enum ColorState : u32
@@ -86,6 +90,7 @@ namespace RetroFuturaGUI
         Enabled,
         Disabled,
         Clicked,
-        Hover
+        Hover,
+        Selected
     };
 }
