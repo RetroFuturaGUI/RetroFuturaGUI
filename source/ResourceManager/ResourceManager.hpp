@@ -8,7 +8,7 @@ namespace RetroFuturaGUI
     {
     public:
         static std::shared_ptr<SvgTexture> GetCheckmarkIcon();
-        static std::shared_ptr<SvgTexture> GetArrowDownIcon();
+        static std::shared_ptr<SvgTexture> GetDropDownArrowIcon();
         static constexpr const glm::vec4 _Eigengrau { 0.086f, 0.086f, 0.114f, 1.0f };
     
     private:

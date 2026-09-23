@@ -10,7 +10,7 @@ RetroFuturaGUI::ResourceManager::ResourceManager()
     std::filesystem::path checkmarkPath = imgPath / "checkmark.svg";
     _checkmark = std::make_shared<SvgTexture>(checkmarkPath.string(), true);
 
-    std::filesystem::path arrowDownPath = imgPath / "arrowDown.svg";
+    std::filesystem::path arrowDownPath = imgPath / "DropDownArrow.svg";
     _arrowDown = std::make_shared<SvgTexture>(arrowDownPath.string(), true);
 }
 
@@ -22,7 +22,7 @@ std::shared_ptr<RetroFuturaGUI::SvgTexture> RetroFuturaGUI::ResourceManager::Get
     return GetInstance()._checkmark;
 }
 
-std::shared_ptr<RetroFuturaGUI::SvgTexture> RetroFuturaGUI::ResourceManager::GetArrowDownIcon()
+std::shared_ptr<RetroFuturaGUI::SvgTexture> RetroFuturaGUI::ResourceManager::GetDropDownArrowIcon()
 {
     if(!GetInstance()._arrowDown)
         return nullptr;
