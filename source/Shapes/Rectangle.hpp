@@ -33,8 +33,6 @@ namespace RetroFuturaGUI
     };
 
     /// @brief Describes a section of a Border-mode rectangle's outline to skip drawing.
-    /// offset/length are absolute pixel values measured along the edge from an anchor corner,
-    /// so the gap keeps a fixed size and a fixed distance from that corner as the rectangle resizes.
     struct BorderGap
     {
         BorderEdge edge { BorderEdge::Top };
@@ -47,11 +45,7 @@ namespace RetroFuturaGUI
                                             <0: the same repeating pattern, but tiled for the whole edge*/
     };
 
-    /// @brief Describes sections of a Plane-mode rectangle's fill to skip drawing.
-    /// The pattern runs along X, rotated by _Degree. offset/length are absolute pixel values
-    /// measured along that axis from the edge the pattern starts at, so each segment keeps a fixed
-    /// size and a fixed distance from that edge as the rectangle resizes. A background is a single
-    /// element, so - unlike BorderGap, which describes one edge at a time - one of these covers it.
+    /// @brief Describes sections of a Plane-mode rectangle's fill to skip drawing
     struct BackgroundGap
     {
         f32

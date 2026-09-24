@@ -69,6 +69,7 @@ namespace RetroFuturaGUI
         Prefab,
         ComboBox,
         ExtendedComboBox,
+        SeparatorLine,
         Unknown = -1
     };   
 

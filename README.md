@@ -13,7 +13,7 @@ The framework is designed for cross-platform use, and its logic can be compiled 
 | 1 | Button, Label, Window, MainWindow, Image, Grid2D, WindowBar with Buttons |  | ✅ |
 | 2 | dll/so/dylib compilation for C# and Python support, Widget ID manager | 1 | ✅ | 
 | 3 | Linux Support, Font Manager | 2 | ✅ | 
-| 4 | More Widgets (TextBox ✅, Table ✅, VideoPlayer, AudioPlayer, 3D Model ✅, Slider ✅, CheckBox ✅, ComboBox ✅, ExtendedComoBox, RadioButton ✅, RadioButtonGroup ✅, Tabs, Lights, change Grid2d to "Lasagna" and add a 3rd dimension ✅, Color Pickers, MenuBar, Environment), Scene, HUD  | 1 | WIP | 
+| 4 | More Widgets (TextBox ✅, Table ✅, VideoPlayer, AudioPlayer, 3D Model ✅, Slider ✅, CheckBox ✅, ComboBox ✅, ExtendedComoBox ✅, RadioButton ✅, RadioButtonGroup ✅, SeparatorLine ✅, Tabs, Lights, change Grid2d to "Lasagna" and add a 3rd dimension ✅, Color Pickers, MenuBar, Environment), Scene, HUD  | 1 | WIP | 
 | 5 | .bechaml markup language for GUI design 🥣 (**B**eautifully **E**xtended **C**ascading but **H**airbally **A**pplication **M**arkup **L**anguage) | 4 | | 
 | 6 | VS Code extension with project generator/manager | 5 | | 
 | 7 | Pre-built Prefabs (StepperSlider, SpinBox, Table with Sliders, Carousel, Extended Color Pickers) | 6 |
@@ -68,6 +68,9 @@ The framework is designed for cross-platform use, and its logic can be compiled 
 - Prefab
   - Children aren't registered with the DynamicLibWidgetManager, so a binding can't address them by string ID yet. That needs a deregistration path as well, or destroying a prefab would leave the manager holding freed pointers
   - The Lasagna is fixed at construction; a prefab keeps whatever AxisDefinition it was built with
+- SeparatorLine
+  - The caption's left padding isn't clamped to the line's width, so a long caption or a large padding runs the gap and its text off the right end
+  - The gap always starts from the left edge, so centering or right-aligning a caption means working out the padding by hand. SetTextAlignment doesn't do it either: the caption is always centered inside its own gap, and the alignment passed in is overwritten the next time the layout runs
 - WindowBar
   - Window Icon
 
@@ -81,6 +84,13 @@ The framework is designed for cross-platform use, and its logic can be compiled 
     - Text Padding
     - Per-state text color (Enabled, Disabled, Clicked, Hover)
     - SetEnabled, SetPosition, SetSize, SetRotation
+  - SeparatorLine
+    - A rule for dividing content, with an optional caption set into it
+    - Caption: font family, size, slant and weight, text padding, and distance from the line's left edge (SetTextLeftPadding), shown or hidden with ShowText
+    - While the caption is shown the line carries a background gap sized to hold it, so the rule breaks around the text rather than running underneath it. Hiding the caption or clearing its text closes the gap again
+    - The caption is clipped to whichever is taller, the line or the text itself, so a rule only a few pixels thick still draws its glyphs in full
+    - Background (same options as Button)
+    - SetPosition, SetSize, SetRotation
   - Button
     - Signals: OnClick, OnRelease, OnMouseEnter, OnMouseLeave, WhileHover
     - SetEnabled
@@ -246,6 +256,11 @@ The framework is designed for cross-platform use, and its logic can be compiled 
     - Dynamic, irregular cloud-like density from a multi-octave fractal noise field
     - Configurable overall opacity, drift speed, per-octave density/weight curve, and clearing threshold (how much clear/fog-free area shows through)
     - Alpha-blends over whatever the fill/dotted pattern already rendered; clipped by rounded corners
+  - Background Gaps (combinable, works on Solid Fill and Linear/Radial/HueStar Gradient; the Border variants carry their own Border Gaps instead)
+    - Skips sections of the fill in a repeating solid/gap pattern: no gap, a single one, a set number of them, or tiled across the whole element
+    - Offset and length are absolute pixels measured from the edge the pattern starts at, so each segment keeps its size and its distance from that edge as the element resizes, rather than stretching with it
+    - The pattern runs along X and can be rotated to any angle, so the same definition gives vertical stripes, horizontal bands or anything between
+    - A background is one element rather than four edges, so a single definition covers it - unlike Border Gaps, which describe one edge at a time
   - Dedicated Border variants of the above (Solid, Linear, Radial, HueStar), including Dotted Pattern
   - Line Fill
   - Font Atlas Fill (used by the Text Renderer)
