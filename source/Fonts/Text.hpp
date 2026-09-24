@@ -83,6 +83,9 @@ namespace RetroFuturaGUI
         /// @brief Returns the width of the rendered text span.
         float GetWidth() const;
 
+        /// @brief Returns the height of the rendered text span, line spacing included (covering ascenders and decenders).
+        float GetSpanHeight() const;
+
         /// @brief Returns the padding
         float GetPadding() const;
 

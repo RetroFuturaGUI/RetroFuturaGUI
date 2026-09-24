@@ -481,6 +481,11 @@ f32 RetroFuturaGUI::Text::GetWidth() const
     return _textSpan.x;
 }
 
+f32 RetroFuturaGUI::Text::GetSpanHeight() const
+{
+    return _textSpan.y;
+}
+
 f32 RetroFuturaGUI::Text::GetPadding() const
 {
     return _textPadding;
