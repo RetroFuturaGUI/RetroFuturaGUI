@@ -91,6 +91,12 @@ void RetroFuturaGUI::IBackground::SetBackgroundFillType(const FillType fillType)
         _background->SetFillType(fillType);
 }
 
+void RetroFuturaGUI::IBackground::SetBackgroundGaps(const BackgroundGap& gap)
+{
+    if(_background)
+        _background->SetBackgroundGaps(gap);
+}
+
 void RetroFuturaGUI::IBackground::SetWindowBackgroundImageTextureID(const u32 textureID)
 {
     if(_background)

@@ -304,8 +304,10 @@ void RetroFuturaGUI::Rectangle::drawWithSolidFill()
     if(_shaderFeatureDIP & ShaderFeatures::RoundedCorners)
         ShaderManager::GetSolidFillShader().SetUniformVec4("uCornerRadii", _cornerRadii);
 
-    if(_shaderFeatureDIP & (ShaderFeatures::RoundedCorners | ShaderFeatures::DottedPattern | ShaderFeatures::FogEffect | ShaderFeatures::Wave))
+    if((_shaderFeatureDIP & (ShaderFeatures::RoundedCorners | ShaderFeatures::DottedPattern | ShaderFeatures::FogEffect | ShaderFeatures::Wave)) || hasBackgroundGap())
         ShaderManager::GetSolidFillShader().SetUniformVec2("uScale", _scale);
+
+    ShaderManager::GetSolidFillShader().SetUniformVec4("uBackgroundGap", _backgroundGapData);
 
     if(_shaderFeatureDIP & ShaderFeatures::DottedPattern)
         uploadDotUniforms(ShaderManager::GetSolidFillShader());
@@ -349,8 +351,10 @@ void RetroFuturaGUI::Rectangle::drawLinearGradientFill()
     if(_shaderFeatureDIP & ShaderFeatures::RoundedCorners)
         ShaderManager::GetLinearGradientShader().SetUniformVec4("uCornerRadii", _cornerRadii);
 
-    if(_shaderFeatureDIP & (ShaderFeatures::RoundedCorners | ShaderFeatures::DottedPattern | ShaderFeatures::FogEffect | ShaderFeatures::Wave))
+    if((_shaderFeatureDIP & (ShaderFeatures::RoundedCorners | ShaderFeatures::DottedPattern | ShaderFeatures::FogEffect | ShaderFeatures::Wave)) || hasBackgroundGap())
         ShaderManager::GetLinearGradientShader().SetUniformVec2("uScale", _scale);
+
+    ShaderManager::GetLinearGradientShader().SetUniformVec4("uBackgroundGap", _backgroundGapData);
 
     if(_shaderFeatureDIP & ShaderFeatures::DottedPattern)
         uploadDotUniforms(ShaderManager::GetLinearGradientShader());
@@ -394,8 +398,10 @@ void RetroFuturaGUI::Rectangle::drawRadialGradientFill()
     if(_shaderFeatureDIP & ShaderFeatures::RoundedCorners)
         ShaderManager::GetRadialGradientShader().SetUniformVec4("uCornerRadii", _cornerRadii);
 
-    if(_shaderFeatureDIP & (ShaderFeatures::RoundedCorners | ShaderFeatures::DottedPattern | ShaderFeatures::FogEffect | ShaderFeatures::Wave))
+    if((_shaderFeatureDIP & (ShaderFeatures::RoundedCorners | ShaderFeatures::DottedPattern | ShaderFeatures::FogEffect | ShaderFeatures::Wave)) || hasBackgroundGap())
         ShaderManager::GetRadialGradientShader().SetUniformVec2("uScale", _scale);
+
+    ShaderManager::GetRadialGradientShader().SetUniformVec4("uBackgroundGap", _backgroundGapData);
 
     if(_shaderFeatureDIP & ShaderFeatures::DottedPattern)
         uploadDotUniforms(ShaderManager::GetRadialGradientShader());
@@ -439,8 +445,10 @@ void RetroFuturaGUI::Rectangle::drawHueStarGradientFill()
     if(_shaderFeatureDIP & ShaderFeatures::RoundedCorners)
         ShaderManager::GetHueStarGradientShader().SetUniformVec4("uCornerRadii", _cornerRadii);
 
-    if(_shaderFeatureDIP & (ShaderFeatures::RoundedCorners | ShaderFeatures::DottedPattern | ShaderFeatures::FogEffect | ShaderFeatures::Wave))
+    if((_shaderFeatureDIP & (ShaderFeatures::RoundedCorners | ShaderFeatures::DottedPattern | ShaderFeatures::FogEffect | ShaderFeatures::Wave)) || hasBackgroundGap())
         ShaderManager::GetHueStarGradientShader().SetUniformVec2("uScale", _scale);
+
+    ShaderManager::GetHueStarGradientShader().SetUniformVec4("uBackgroundGap", _backgroundGapData);
 
     if(_shaderFeatureDIP & ShaderFeatures::DottedPattern)
         uploadDotUniforms(ShaderManager::GetHueStarGradientShader());
@@ -626,7 +634,7 @@ void RetroFuturaGUI::Rectangle::SetBorderWidth(const f32 width)
 
 void RetroFuturaGUI::Rectangle::SetBorderGaps(std::span<BorderGap> gaps)
 {
-    _borderGapCount = static_cast<i32>(std::min<size_t>(gaps.size(), kMaxBorderGaps));
+    _borderGapCount = static_cast<i32>(std::min<size_t>(gaps.size(), _kMaxBorderGaps));
     _borderGapData.resize(static_cast<size_t>(_borderGapCount));
 
     for(i32 i = 0; i < _borderGapCount; ++i)
@@ -640,6 +648,22 @@ void RetroFuturaGUI::Rectangle::SetBorderGaps(std::span<BorderGap> gaps)
             static_cast<f32>(gap.repeat)
         );
     }
+}
+
+void RetroFuturaGUI::Rectangle::SetBackgroundGaps(const BackgroundGap& gaps)
+{
+    _backgroundGapData = glm::vec4(
+        gaps._Degree,
+        gaps._Offset,
+        gaps._Length,
+        static_cast<f32>(gaps._Repeat)
+    );
+}
+
+bool RetroFuturaGUI::Rectangle::hasBackgroundGap() const
+{
+    // Same test the shader runs: a zero repeat or a zero-width gap leaves the fill solid.
+    return _backgroundGapData.w != 0.0f && _backgroundGapData.z > 0.0f;
 }
 
 void RetroFuturaGUI::Rectangle::SetRectangleMode(const RectangleMode rectanlgeMode)

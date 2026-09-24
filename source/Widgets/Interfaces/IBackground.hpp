@@ -71,6 +71,9 @@ namespace RetroFuturaGUI
         /// @brief Sets the background fill type (solid, linear/radial/huestar gradient).
         void SetBackgroundFillType(const FillType fillType);
 
+        /// @brief Sets sections of the background to skip drawing; see Rectangle::SetBackgroundGaps.
+        virtual void SetBackgroundGaps(const BackgroundGap& gap);
+
     protected:
         void setBackgroundColors();
         void drawBackground();

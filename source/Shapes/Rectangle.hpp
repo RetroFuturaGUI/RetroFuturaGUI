@@ -47,6 +47,23 @@ namespace RetroFuturaGUI
                                             <0: the same repeating pattern, but tiled for the whole edge*/
     };
 
+    /// @brief Describes sections of a Plane-mode rectangle's fill to skip drawing.
+    /// The pattern runs along X, rotated by _Degree. offset/length are absolute pixel values
+    /// measured along that axis from the edge the pattern starts at, so each segment keeps a fixed
+    /// size and a fixed distance from that edge as the rectangle resizes. A background is a single
+    /// element, so - unlike BorderGap, which describes one edge at a time - one of these covers it.
+    struct BackgroundGap
+    {
+        f32
+            _Offset { 0.0f },   // width of each solid segment
+            _Length { 0.0f },   // width of each gap segment
+            _Degree { 0.0f };   // rotates the pattern's axis: 0 runs along X, 90 along Y
+        i32 _Repeat { 1 };      /* 0: no gap at all (solid background)
+                                    1: a single gap
+                                    >1: amount of gaps in a repeating pattern (dashed/dotted lines)
+                                    <0: the same repeating pattern, but tiled for the whole background*/
+    };
+
     class Rectangle
     {
     public:
@@ -139,6 +156,9 @@ namespace RetroFuturaGUI
         /// @brief Sets sections of the border to be drawn with gaps. One element expresses the pattern for one edge at a time. RectangleMode::Border must be active is active.
         void SetBorderGaps(std::span<BorderGap> gaps);
 
+        /// @brief Sets sections of the fill to be drawn with gaps. RectangleMode::Plane must be active.
+        void SetBackgroundGaps(const BackgroundGap& gaps);
+
         /// @brief Sets whether the rectangle draws a filled plane or just its border.
         void SetRectangleMode(const RectangleMode rectanlgeMode);
 
@@ -215,8 +235,9 @@ namespace RetroFuturaGUI
             _dotAnimationOffset { 0.0f };
         RectangleMode _rectangleMode { RectangleMode::Plane };
 
-        static constexpr const i32 kMaxBorderGaps = 255;
-        std::vector<glm::vec4> _borderGapData;
+        static constexpr const i32 _kMaxBorderGaps = 255;
+        std::vector<glm::vec4> _borderGapData {};
+        glm::vec4 _backgroundGapData { 0.0f };
         i32 _borderGapCount { 0 };
 
         // Fog (ShaderFeatures::FogEffect)
@@ -239,6 +260,8 @@ namespace RetroFuturaGUI
         void uploadDotUniforms(Shader& shader);
         void uploadFogUniforms(Shader& shader);
         void uploadWaveUniforms(Shader& shader);
+        /// @brief Whether a background gap is configured, i.e. whether it carves anything out of the fill.
+        bool hasBackgroundGap() const;
         void drawWithSolidFill();
         void drawRadialGradientFill();
         void drawHueStarGradientFill();
