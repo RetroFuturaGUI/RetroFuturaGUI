@@ -70,6 +70,16 @@ void RetroFuturaGUI::WindowBar::Resize()
     }
 }
 
+f32 RetroFuturaGUI::WindowBar::GetThickness() const
+{
+    return _windowBarThiccness;
+}
+
+RetroFuturaGUI::WindowBarPosition RetroFuturaGUI::WindowBar::GetBarPosition() const
+{
+    return _windowBarPosition;
+}
+
 glm::vec3 RetroFuturaGUI::WindowBar::calculateWindowBarPosition()
 {
     f32 

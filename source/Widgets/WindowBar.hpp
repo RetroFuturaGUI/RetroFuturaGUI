@@ -62,6 +62,12 @@ namespace RetroFuturaGUI
         /// @brief Returns whether the given point lies within the window bar's bounds.
         bool IsPointInside(const f32 pointX, const f32 pointY);
 
+        /// @brief Returns the bar's thickness across the edge it is docked to.
+        f32 GetThickness() const;
+
+        /// @brief Returns the edge the bar is docked to.
+        WindowBarPosition GetBarPosition() const;
+
         /// @brief Returns the current maximize/restore state.
         MaximizeState GetMaximizeState();
 
