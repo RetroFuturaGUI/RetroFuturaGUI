@@ -10,6 +10,19 @@
 
 namespace RetroFuturaGUI
 {
+    class Scene;
+    enum class DockEdge : u32;
+
+    /// @brief An axis-aligned region of the window in projection space, with its origin at the bottom-left corner. Widgets take their position as a centre, so Center() converts.
+    struct ScreenRect
+    {
+        glm::vec2
+            _Origin { 0.0f },
+            _Extent { 0.0f };
+
+        glm::vec2 Center() const { return _Origin + _Extent * 0.5f; }
+    };
+
     class Window final : public IBackground, public IHierarchyNode
     {
     public:
@@ -44,8 +57,25 @@ namespace RetroFuturaGUI
         /// @brief Loads an image and applies it as the window's glass-effect background texture, propagating it to the window bar elements.
         void SetBackgroundImage(std::string_view imagePath) override;
 
-        /// @brief Sets the Lasagna grid used to lay out the window's content.
+        /// @brief Sets the Lasagna used to lay out the window's content. It is fitted into the client area left over once the window bar and every docked scene have reserved theirs
         void SetLasagna(Lasagna* lasagna);
+
+        /// @brief Adds a scene to the window's draw order, after the ones already added. Docked scenes reserve space in this order, so the first one to claim an edge also owns the corner where two claims meet.
+        void AddScene(Scene* scene);
+
+        /// @brief Removes a scene from the window's draw order, leaving the order of the rest intact.
+        void RemoveScene(Scene* scene);
+
+        /// @brief Recomputes the client area and re-lays out the root Lasagna and every scene. Called automatically on resize and whenever a scene changes what it reserves.
+        void UpdateLayout();
+
+        /// @brief When true the window bar is drawn over the client area rather than reserving space across its edge - for designs where content is meant to run underneath it.
+        void SetWindowBarOverlaps(const bool overlaps);
+        
+        bool WindowBarOverlaps() const;
+
+        /// @brief The client area left after the window bar and every docked scene took their share.
+        const ScreenRect& GetClientRect() const;
 
         /// @brief Returns the OpenGL texture ID of the background image, if one is set.
         i32 GetBackgroundImageId() const;
@@ -132,7 +162,18 @@ namespace RetroFuturaGUI
 
         // widgets
         std::unique_ptr<WindowBar> _windowBar;
-        Lasagna* _lasagna;
+        Lasagna* _lasagna { nullptr };
+
+        // scenes - borrowed, owned by whoever loaded them
+        std::vector<Scene*> _scenes {};
+        ScreenRect _clientRect {};
+
+        /// @brief Shrinks the client area across the window bar's edge, unless the bar overlaps.
+        void reserveWindowBar(ScreenRect& client) const;
+
+        /// @brief Takes a strip of `thickness` off the given edge of `client` and returns it,
+        ///        shrinking `client` by what it took. Never takes more than is left.
+        static ScreenRect reserveEdge(const DockEdge edge, const f32 thickness, ScreenRect& client);
 
         void createWindow();
         void pollInput();

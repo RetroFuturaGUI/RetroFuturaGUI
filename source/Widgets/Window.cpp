@@ -1,6 +1,8 @@
 #include "Window.hpp"
+#include "Scene.hpp"
 #include "PlatformBridge.hpp"
 #include <glm/gtc/type_ptr.hpp>
+#include <algorithm>
 #include <print>
 
 #if defined(TARGET_PLATFORM_LINUX)
@@ -344,11 +346,7 @@ void RetroFuturaGUI::Window::updateProjection()
 	if (_windowBar)
 		_windowBar->Resize();
 
-	if (_lasagna)
-	{
-		_lasagna->SetPosition(glm::vec3((f32)_width * 0.5f, (f32)_height * 0.5f, _lasagna->GetPosition().z));
-		_lasagna->SetSize(glm::vec3((f32)_width, (f32)_height, _lasagna->GetSize().z));
-	}
+	UpdateLayout();
 
 	if(_background)
 	{
@@ -381,6 +379,14 @@ void RetroFuturaGUI::Window::Draw()
 
 	if(_lasagna)
 		_lasagna->Draw();
+
+	for(Scene* _scene : _scenes)
+	{
+		if(!_scene)
+			continue;
+
+		_scene->Draw();
+	}
 
 	if(_windowBar)
 		_windowBar->Draw();
@@ -426,6 +432,140 @@ void RetroFuturaGUI::Window::SetBackgroundImage(std::string_view imagePath)
 void RetroFuturaGUI::Window::SetLasagna(Lasagna* lasagna)
 {
 	_lasagna = lasagna;
+	UpdateLayout();
+}
+
+void RetroFuturaGUI::Window::AddScene(Scene* scene)
+{
+	if(!scene)
+		return;
+
+	if(std::find(_scenes.begin(), _scenes.end(), scene) != _scenes.end())
+		return;
+
+	_scenes.push_back(scene);
+	UpdateLayout();
+}
+
+void RetroFuturaGUI::Window::RemoveScene(Scene* scene)
+{
+	if(scene == nullptr)
+		return;
+
+	const std::vector<Scene*>::iterator _found { std::find(_scenes.begin(), _scenes.end(), scene) };
+
+	if(_found == _scenes.end())
+		return;
+
+	_scenes.erase(_found);
+	UpdateLayout();
+}
+
+void RetroFuturaGUI::Window::SetWindowBarOverlaps(const bool overlaps)
+{
+	if(_windowBarOverlapsBG == overlaps)
+		return;
+
+	_windowBarOverlapsBG = overlaps;
+	UpdateLayout();
+}
+
+bool RetroFuturaGUI::Window::WindowBarOverlaps() const
+{
+	return _windowBarOverlapsBG;
+}
+
+const RetroFuturaGUI::ScreenRect& RetroFuturaGUI::Window::GetClientRect() const
+{
+	return _clientRect;
+}
+
+void RetroFuturaGUI::Window::reserveWindowBar(ScreenRect& client) const
+{
+	if(_windowBar == nullptr)
+		return;
+
+	if(_windowBarOverlapsBG)
+		return;
+
+	const f32 thickness { std::min<f32>(_windowBar->GetThickness(), client._Extent.y) };
+
+	//Projection space is y-up with its origin bottom-left, so only a bottom bar moves the origin.
+	if(_windowBar->GetBarPosition() == WindowBarPosition::Bottom)
+		client._Origin.y += thickness;
+
+	client._Extent.y -= thickness;
+}
+
+RetroFuturaGUI::ScreenRect RetroFuturaGUI::Window::reserveEdge(const DockEdge edge, const f32 thickness, ScreenRect& client)
+{
+	const bool horizontal { edge == DockEdge::Left || edge == DockEdge::Right };
+	const f32 taken { std::clamp(thickness, 0.0f, horizontal ? client._Extent.x : client._Extent.y) };
+
+	ScreenRect strip { ._Origin = client._Origin, ._Extent = client._Extent };
+
+	switch(edge)
+	{
+	case DockEdge::Top:
+		strip._Origin.y = client._Origin.y + client._Extent.y - taken;
+		strip._Extent.y = taken;
+		client._Extent.y -= taken;
+	break;
+	case DockEdge::Bottom:
+		strip._Extent.y = taken;
+		client._Origin.y += taken;
+		client._Extent.y -= taken;
+	break;
+	case DockEdge::Left:
+		strip._Extent.x = taken;
+		client._Origin.x += taken;
+		client._Extent.x -= taken;
+	break;
+	case DockEdge::Right:
+		strip._Origin.x = client._Origin.x + client._Extent.x - taken;
+		strip._Extent.x = taken;
+		client._Extent.x -= taken;
+	break;
+	}
+
+	return strip;
+}
+
+void RetroFuturaGUI::Window::UpdateLayout()
+{
+	ScreenRect client { ._Origin = glm::vec2(0.0f), ._Extent = glm::vec2((f32)_width, (f32)_height) };
+
+	reserveWindowBar(client);
+
+	//Docked scenes take their strip in the order they were added, so the first one to claim an edge also owns the corner where two claims meet.
+	for(Scene* _scene : _scenes)
+	{
+		if(!_scene || !_scene->IsActive() || !_scene->HasReservedEdge())
+			continue;
+
+		const ScreenRect strip { reserveEdge(_scene->GetReservedEdge(), _scene->GetReservedThickness(), client) };
+
+		_scene->SetPosition(glm::vec3(strip.Center(), _scene->GetPosition().z));
+		_scene->SetSize(glm::vec3(strip._Extent, _scene->GetSize().z));
+	}
+
+	_clientRect = client;
+
+	//Overlay scenes and the root Lasagna share whatever the docked scenes left.
+	for(Scene* _scene : _scenes)
+	{
+		if(!_scene || _scene->HasReservedEdge())
+			continue;
+
+		_scene->SetPosition(glm::vec3(client.Center(), _scene->GetPosition().z));
+		_scene->SetSize(glm::vec3(client._Extent, _scene->GetSize().z));
+	}
+
+	if(!_lasagna)
+		return;
+
+	_lasagna->SetPosition(glm::vec3(client.Center(), _lasagna->GetPosition().z));
+	_lasagna->SetSize(glm::vec3(client._Extent, _lasagna->GetSize().z));
 }
 
 i32 RetroFuturaGUI::Window::GetBackgroundImageId() const
