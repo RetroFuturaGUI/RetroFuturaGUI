@@ -68,6 +68,13 @@ The framework is designed for cross-platform use, and its logic can be compiled 
 - Prefab
   - Children aren't registered with the DynamicLibWidgetManager, so a binding can't address them by string ID yet. That needs a deregistration path as well, or destroying a prefab would leave the manager holding freed pointers
   - The Lasagna is fixed at construction; a prefab keeps whatever AxisDefinition it was built with
+- Scene
+  - A Scene doesn't own its widgets yet. Lasagna::AttachWidget only arranges what it is handed, and the generated _p struct still holds the unique_ptrs, so destroying a Scene would leave its widgets alive with their layout gone from under them. Dynamic loading needs that ownership moved into the Scene first - along with Prefab's name-to-child lookup, which would then exist in two places and is worth factoring out instead of copying
+  - No SceneManager: nothing loads, unloads or holds scenes, and nothing owns the assets they share. Once it exists it has to be the single asset cache rather than a second one beside ResourceManager, and widgets need a way to reach it - they currently load their own textures, SVGs and models straight from a path in their constructors
+  - No lifecycle signals (OnActivate, OnDeactivate, OnLoad, OnUnload), so application code has nothing to hook a scene transition to
+  - Overlay scenes don't block the scene underneath them. Widgets hit-test inside their own Draw, so there is no central pass that could stop at the topmost hit the way a raycast would. Docking avoids it geometrically - a content scene is never given the strip, so it has nothing there to click - but a modal overlay needs the scene beneath it disabled, passing emitSignal = false to SetEnabled so the sweep doesn't fire every connected slot
+  - Only a Lasagna can be the root container. That generalizes to an IContainer interface once ScrollView and Environment exist
+  - SetLasagnaAxis takes its AxisDefinition by value, copying three vectors per call
 - SeparatorLine
   - The caption's left padding isn't clamped to the line's width, so a long caption or a large padding runs the gap and its text off the right end
   - The gap always starts from the left edge, so centering or right-aligning a caption means working out the padding by hand. SetTextAlignment doesn't do it either: the caption is always centered inside its own gap, and the alignment passed in is overwritten the next time the layout runs
@@ -215,12 +222,26 @@ The framework is designed for cross-platform use, and its logic can be compiled 
     - Shadered background
     - Per-button styling (background/border colors, gradients, corner radii, border width)
     - Maximize callback
+    - Reserves space across the edge it sits on so content is laid out beside it rather than underneath it, or overlays the content instead (Window::SetWindowBarOverlaps) for designs where content is meant to run under the bar
   - Window
     - Background color or image
       - Background image ID can be used to create glass effects on widgets
     - Resizeable
     - Movable
     - Toggleable WindowBar
+    - Holds an ordered list of Scenes it draws over its root Lasagna and under its WindowBar (AddScene, RemoveScene), borrowed rather than owned
+    - Divides its surface into a client area: the WindowBar and then each docked Scene take their strip, and whatever is left goes to the overlay Scenes and the root Lasagna. Recomputed on resize, on adding or removing a Scene, and whenever a Scene changes what it reserves or whether it is active
+- Scenes
+  - Scene
+    - A named group of widgets with its own root Lasagna, hanging under a Window: Window / Scene / Container / Widgets. Meant for scene loading and for HUDs
+    - Deliberately not an IWidget, only an IHierarchyNode. A scene has no geometry, no hit-testing and no color state of its own, and staying off IWidget keeps it out of Lasagna::AttachWidget - so a Scene can never end up nested inside a cell, and the hierarchy stays at a fixed depth
+    - Contributes its name to its widgets' paths, so GetPath composes MainWindow/MyScene/RootLasagna/TestButton for the interoperability API and .bechaml to address
+    - Active or Inactive (SetActive), which is a different axis from a widget's Enabled or Disabled: Active decides whether the scene draws at all, Enabled decides whether a widget reacts and which ColorState it renders in. Since widgets hit-test inside their own Draw, an inactive scene stops responding as well as drawing. A disabled widget still draws - so an active scene full of disabled widgets is exactly the dimmed-behind-a-modal case, and a Scene needs no separate visibility flag
+    - Docks to an edge of the client area (SetReservedEdge with a DockEdge), reserving a strip in pixels that everything laid out after it is fitted around, so a menu bar or status bar can't hide or swallow clicks meant for the content behind it. ClearReservedEdge turns it back into an overlay
+    - Overlay is the default: the scene covers the whole client area and reserves nothing, for floating panels and modals
+    - Docked scenes reserve in the order they were added, so the first one to claim an edge also owns the corner where two claims meet
+    - An inactive scene reserves nothing, and is laid out again when it is reactivated, so activating one never shows a layout computed for a different window size
+    - SetPosition, SetSize, SetRotation, forwarded to its root Lasagna
 - Shaders
   - Solid Fill
     - Glass Effect
@@ -367,3 +388,6 @@ RetroFuturaGUI aims to break these barriers!
   - Draw() switches the depth test off for its whole draw so that its coplanar mask passes can blend over the base layer. That also lets any SVG drawn later in the frame paint over whatever is already there, whatever the z - an open ComboBox drop-down is covered by an SvgImage sitting in a later Lasagna cell, for instance. Keeping the test on and using GL_LEQUAL for the mask passes would keep the blending and respect depth
 - TextBox.cpp
   - A TextBox reports WidgetTypeID::Button, so DynamicLibWidgetManager::SetText and ConnectSlot take the Button branch, dynamic_cast to Button* yields null and is then dereferenced. The WidgetTypeID::TextBox branches are unreachable as a result
+
+### Is AI used in this project?
+AI is often used for repititive tasks like adding triple-slash comments to functions, classes, and structs and updating the readme. Shaders are mostly written by AI and AI is sometimes used for finding bugs and to assist with complicated calculations.
