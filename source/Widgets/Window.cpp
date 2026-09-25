@@ -372,9 +372,7 @@ void RetroFuturaGUI::Window::Draw()
 	glfwWindowHint(GLFW_TRANSPARENT_FRAMEBUFFER, GLFW_FALSE);
 	glfwWindowHint(GLFW_ALPHA_BITS, 0); // Disable alpha bits if not needed
 
-	if(_windowSizeChanged)
-		updateProjection();
-
+	updateProjection();
 	drawBackground();
 
 	if(_lasagna)
