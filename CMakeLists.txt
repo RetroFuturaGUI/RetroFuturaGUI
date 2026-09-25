@@ -29,6 +29,7 @@ list(APPEND RetroFuturaGuiSources
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Misc/Rectangle.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Misc/ResourceManager.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Scenes/Scene.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/source/Scenes/SceneLoader.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/OpenGlHelpers/Projection.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/OpenGlHelpers/SvgTexture.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/OpenGlHelpers/Texture.cpp"
