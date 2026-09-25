@@ -65,9 +65,8 @@ namespace RetroFuturaGUI
         using TrackIndex = RetroFuturaGUI::TrackIndex;
         using AxisIndex = RetroFuturaGUI::AxisIndex;
 
-        /// @brief Constructs a Lasagna grid layout container with the given row/column/layer definitions.
-        ///        The definition is copied, so callers need not keep theirs alive; this grid is its owner from here on.
-        Lasagna(const std::string& name, Projection* projection, IWidget* parentWidget, const WidgetTypeID parentWidgetTypeID, GLFWwindow* parentWindow, const AxisDefinition& axisDefinition);
+        /// @brief Constructs a Lasagna layout container with the given row/column/layer definitions.
+        Lasagna(const std::string& name, Projection* projection, IHierarchyNode* parentWidget, const WidgetTypeID parentWidgetTypeID, GLFWwindow* parentWindow, const AxisDefinition& axisDefinition);
         Lasagna() = delete;
         Lasagna(const Lasagna&) = delete;
         Lasagna(Lasagna&&) = delete;

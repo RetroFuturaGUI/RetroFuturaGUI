@@ -1,7 +1,7 @@
 #include "Lasagna.hpp"
 #include <utility>
 
-RetroFuturaGUI::Lasagna::Lasagna(const std::string& name, Projection* projection, IWidget* parentWidget, const WidgetTypeID parentWidgetTypeID, GLFWwindow* parentWindow, const AxisDefinition& axisDefinition)
+RetroFuturaGUI::Lasagna::Lasagna(const std::string& name, Projection* projection, IHierarchyNode* parentWidget, const WidgetTypeID parentWidgetTypeID, GLFWwindow* parentWindow, const AxisDefinition& axisDefinition)
     : IWidget(name, projection, parentWidget, parentWidgetTypeID, parentWindow), _axisdefinition(axisDefinition)
 {
     _widgetTypeID = WidgetTypeID::Lasagna;
