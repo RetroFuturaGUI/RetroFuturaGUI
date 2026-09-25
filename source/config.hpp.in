@@ -1,6 +1,7 @@
 #pragma once
 #include <cstdint>
 #include <cstdlib>
+#include <string_view>
 
 using i8 = int8_t;
 using u8 = uint8_t;
@@ -14,6 +15,23 @@ using f32 = float;
 using f64 = double;
 using uSize = size_t;
 using uChar = unsigned char;
+
+namespace RetroFuturaGUI
+{
+    /// @brief FNV-1a hash of a name
+    constexpr u32 Fnv1aHash(std::string_view str)
+    {
+        u32 hash = 2166136261;
+
+        for(uChar ch : str)
+        {
+            hash ^= ch;
+            hash *= 16777619;
+        }
+
+        return hash;
+    }
+}
 
 #ifdef DYNLIB_MODE
     #ifdef _WIN32

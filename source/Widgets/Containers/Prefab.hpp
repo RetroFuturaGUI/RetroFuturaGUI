@@ -73,7 +73,7 @@ namespace RetroFuturaGUI
                 return nullptr;
             }
 
-            const u32 key { fnv1aHash(name) };
+            const u32 key { Fnv1aHash(name) };
 
             if(_widgetLookup.contains(key))
             {
@@ -99,7 +99,6 @@ namespace RetroFuturaGUI
         }
 
     private:
-        static u32 fnv1aHash(std::string_view str);
 
         /// @brief Looks a child up by name, verifying the stored name so a hash collision cannot silently return the wrong one.
         const ChildWidget* findChild(std::string_view name) const;

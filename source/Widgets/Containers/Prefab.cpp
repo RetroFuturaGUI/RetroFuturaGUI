@@ -79,22 +79,9 @@ bool RetroFuturaGUI::Prefab::IsChildWidgetShown(std::string_view name) const
     return cell->_Show;
 }
 
-u32 RetroFuturaGUI::Prefab::fnv1aHash(std::string_view str)
-{
-    u32 hash = 2166136261;
-
-    for(uChar ch : str)
-    {
-        hash ^= ch;
-        hash *= 16777619;
-    }
-
-    return hash;
-}
-
 const RetroFuturaGUI::ChildWidget* RetroFuturaGUI::Prefab::findChild(std::string_view name) const
 {
-    const auto lookupIterator { _widgetLookup.find(fnv1aHash(name)) };
+    const auto lookupIterator { _widgetLookup.find(Fnv1aHash(name)) };
 
     if(lookupIterator == _widgetLookup.end())
     {
