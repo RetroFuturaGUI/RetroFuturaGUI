@@ -9,10 +9,9 @@ namespace RetroFuturaGUI
 {
     class Window;
 
-    /// @brief Returned by CreateScene and GetSceneID when there is no such scene.
     inline constexpr u32 InvalidSceneID { 0 };
 
-    /// @brief Owns every Scene's lifetime and hands out non-owning pointers to them
+    /// @brief Creates scenes and keeps a registry of them.
     class SceneLoader
     {
     public:
@@ -27,50 +26,44 @@ namespace RetroFuturaGUI
             return Instance;
         }
 
-        /// @brief Creates an empty scene owned by the loader. Give it a root Lasagna with
-        ///        Scene::SetLasagnaAxis, then pass it to Window::AddScene to have it drawn.
-        /// @return The scene's ID - the FNV-1a hash of its name, which unlike a position in the
-        ///         loader's list stays valid when other scenes are closed. InvalidSceneID when the
-        ///         window is null or the name is already taken.
-        u32 CreateScene(std::string_view name, Window* parentWindow);
+        /// @brief Creates an empty scene and registers it.
+        /// @return nullptr when the window is null or the name is already taken.
+        std::unique_ptr<Scene> CreateScene(std::string_view name, Window* parentWindow);
 
-        /// @brief Marks a scene for destruction. It keeps drawing until the next DrainPending(),
-        ///        so this is safe to call from a widget callback - which runs inside Window::Draw,
-        ///        where destroying a scene outright would free a widget still on the stack.
+        /// @brief Marks a scene for closing. It keeps drawing until the next DrainPending(), which makes this safe to call from a widget callback.
         /// @return false when there is no such scene, or it is already marked.
         bool CloseScene(std::string_view name);
 
-        /// @brief Marks a scene for destruction. It keeps drawing until the next DrainPending(),
-        ///        so this is safe to call from a widget callback - which runs inside Window::Draw,
-        ///        where destroying a scene outright would free a widget still on the stack.
+        /// @brief Marks a scene for closing. See the by-name overload.
         /// @return false when there is no such scene, or it is already marked.
         bool CloseScene(const u32 id);
 
-        /// @brief Destroys everything CloseScene marked, unregistering each scene from its window
-        ///        first. Call once per frame from the frame loop, after the windows have drawn -
-        ///        never from inside a widget callback.
+        /// @brief Removes every scene CloseScene marked from its window's draw order and from the
+        ///        registry. Freeing stays with the scene's owner, by dropping the unique_ptr.
+        ///        Call once per frame from the frame loop, after the windows have drawn.
         void DrainPending();
 
-        /// @brief The scene with this name. A scene marked for destruction is still returned until it is drained.
+        /// @brief A scene marked for closing is still returned until it is drained.
         Scene* GetScene(std::string_view name) const;
 
-        /// @brief The scene with this ID. A scene marked for destruction is still returned until it is drained.
+        /// @brief A scene marked for closing is still returned until it is drained.
         Scene* GetScene(const u32 id) const;
 
-        /// @brief The ID a name maps to, whether or not a scene by that name exists.
+        /// @brief The ID a name maps to, whether or not that scene exists.
         static u32 GetSceneID(std::string_view name);
 
-        /// @brief How far along a scene's loading is: 0.0 = 0%, 1.0 = ready, NaN for an unknown ID. Loading is asynchronous
+        /// @brief 0.0 = 0%, 1.0 = ready, NaN for an unknown ID. Creation is synchronous, so a
+        ///        registered scene reports 1.0.
         f32 SceneLoadingProgress(const u32 id) const;
 
-        /// @brief How many scenes the loader owns, including any marked for destruction.
+        /// @brief Includes any scene marked for closing.
         uSize GetSceneCount() const;
 
     private:
         struct SceneEntry
         {
-            std::unique_ptr<Scene> _Scene { nullptr }; //Kept so a hash collision cannot silently hand back the wrong scene, the same way Prefab verifies its children's names.
-            std::string _Name;
+            Scene* _Scene { nullptr }; //Borrowed - CreateScene's caller owns it
+            std::string _Name; //Kept so a hash collision cannot silently hand back the wrong scene
             u32 _ID { InvalidSceneID };
             Window* _Window { nullptr };
             bool _PendingClose { false };
@@ -85,8 +78,6 @@ namespace RetroFuturaGUI
         std::list<SceneEntry> _scenes {};
 
     //Logic
-        bool _draining { false }; //Guards DrainPending against re-entering itself by way of a destructor.
-
-
+        bool _draining { false }; //Guards DrainPending against re-entering itself
     };
 }

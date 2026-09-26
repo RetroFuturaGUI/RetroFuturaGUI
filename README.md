@@ -13,7 +13,7 @@ The framework is designed for cross-platform use, and its logic can be compiled 
 | 1 | Button, Label, Window, MainWindow, Image, Grid2D, WindowBar with Buttons |  | ✅ |
 | 2 | dll/so/dylib compilation for C# and Python support, Widget ID manager | 1 | ✅ | 
 | 3 | Linux Support, Font Manager | 2 | ✅ | 
-| 4 | More Widgets (TextBox ✅, Table ✅, VideoPlayer, AudioPlayer, 3D Model ✅, Slider ✅, CheckBox ✅, ComboBox ✅, ExtendedComoBox ✅, RadioButton ✅, RadioButtonGroup ✅, SeparatorLine ✅, Tabs, Lights, change Grid2d to "Lasagna" and add a 3rd dimension ✅, Color Pickers, MenuBar, Environment), Scene, HUD  | 1 | WIP | 
+| 4 | More Widgets (TextBox ✅, Table ✅, VideoPlayer, AudioPlayer, 3D Model ✅, Slider ✅, CheckBox ✅, ComboBox ✅, ExtendedComoBox ✅, RadioButton ✅, RadioButtonGroup ✅, SeparatorLine ✅, Tabs, Lights, change Grid2d to "Lasagna" and add a 3rd dimension ✅, Color Pickers, MenuBar, Environment), Scene, SceneLoader | 1 | WIP | 
 | 5 | .bechaml markup language for GUI design 🥣 (**B**eautifully **E**xtended **C**ascading but **H**airbally **A**pplication **M**arkup **L**anguage) | 4 | | 
 | 6 | VS Code extension with project generator/manager | 5 | | 
 | 7 | Pre-built Prefabs (StepperSlider, SpinBox, Table with Sliders, Carousel, Extended Color Pickers) | 6 |
@@ -69,8 +69,10 @@ The framework is designed for cross-platform use, and its logic can be compiled 
   - Children aren't registered with the DynamicLibWidgetManager, so a binding can't address them by string ID yet. That needs a deregistration path as well, or destroying a prefab would leave the manager holding freed pointers
   - The Lasagna is fixed at construction; a prefab keeps whatever AxisDefinition it was built with
 - Scene
-  - A Scene doesn't own its widgets yet. Lasagna::AttachWidget only arranges what it is handed, and the generated _p struct still holds the unique_ptrs, so destroying a Scene would leave its widgets alive with their layout gone from under them. Dynamic loading needs that ownership moved into the Scene first - along with Prefab's name-to-child lookup, which would then exist in two places and is worth factoring out instead of copying
-  - No SceneManager: nothing loads, unloads or holds scenes, and nothing owns the assets they share. Once it exists it has to be the single asset cache rather than a second one beside ResourceManager, and widgets need a way to reach it - they currently load their own textures, SVGs and models straight from a path in their constructors
+  - Shared, cross-window scenes. SceneLoader::CreateScene hands back a std::unique_ptr, so a scene is one instance belonging to one window, and "the same scene in two windows" means instantiating the same description twice. Returning a shared scene is planned and needs three things: windows created with a shared GL context (glfwCreateWindow's share argument is nullptr today, so two windows currently share nothing at all), per-context VAOs over shared buffers (the spec never shares VAOs, FBOs or transform feedback, and Rectangle, Text, Mesh and Texture each own one), and splitting shared state from per-window view. Consequence until then: a 3D Model changed in one window does not propagate to another - they are separate objects with separate transform matrices. For 2D widgets sharing is incoherent anyway, because Window::UpdateLayout writes screen-space positions into the widgets and two differently sized windows need different values in the same fields; for 3D content it is coherent, and the shape it wants is one world with a camera per window, which belongs to the planned Environment container rather than to Scene
+  - Widgets are owned by the generated _p struct, not by the Scene, and the Scene owns only its root Lasagna. Closing a scene therefore has to tear down its owner's entry too - SceneLoader registers scenes and borrows a pointer, but whoever holds the unique_ptr owns the lifetime, so CloseScene needs a release hook to make closing actually complete rather than just unregistering
+  - SceneLoader owns no assets yet, so nothing holds what scenes share. When it does it has to be the single asset cache rather than a second one beside ResourceManager, and widgets need a way to reach it - they currently load their own textures, SVGs and models straight from a path in their constructors
+  - Loading is synchronous. SceneLoadingProgress always reports 1.0 for a scene that exists, and becomes meaningful only once asset loading is split into an off-thread prepare step and a main-thread realize step - every gl* call has to stay on the context thread, and destruction can never leave it at all
   - No lifecycle signals (OnActivate, OnDeactivate, OnLoad, OnUnload), so application code has nothing to hook a scene transition to
   - Overlay scenes don't block the scene underneath them. Widgets hit-test inside their own Draw, so there is no central pass that could stop at the topmost hit the way a raycast would. Docking avoids it geometrically - a content scene is never given the strip, so it has nothing there to click - but a modal overlay needs the scene beneath it disabled, passing emitSignal = false to SetEnabled so the sweep doesn't fire every connected slot
   - Only a Lasagna can be the root container. That generalizes to an IContainer interface once ScrollView and Environment exist
@@ -80,6 +82,8 @@ The framework is designed for cross-platform use, and its logic can be compiled 
   - The gap always starts from the left edge, so centering or right-aligning a caption means working out the padding by hand. SetTextAlignment doesn't do it either: the caption is always centered inside its own gap, and the alignment passed in is overwritten the next time the layout runs
 - WindowBar
   - Window Icon
+- Window
+  - line 375 check if updateProjection() can be made conditional again and also called at programmatic size change instead
 
 ### Implemented Features
 <details><summary>CLICK TO EXPAND</summary>
@@ -390,4 +394,4 @@ RetroFuturaGUI aims to break these barriers!
   - A TextBox reports WidgetTypeID::Button, so DynamicLibWidgetManager::SetText and ConnectSlot take the Button branch, dynamic_cast to Button* yields null and is then dereferenced. The WidgetTypeID::TextBox branches are unreachable as a result
 
 ### Is AI used in this project?
-AI is often used for repititive tasks like adding triple-slash comments to functions, classes, and structs and updating the readme. Shaders are mostly written by AI and AI is sometimes used for finding bugs and to assist with complicated calculations.
+AI is often used for repititive tasks like adding triple-slash comments to functions, classes, and structs and updating this readme's ToDo and feature list. Shaders are mostly written by AI and AI is sometimes used for finding bugs and to assist with complicated calculations. The architecture of font loading and Scene management was partially planned with AI 

@@ -30,12 +30,12 @@ const RetroFuturaGUI::SceneLoader::SceneEntry* RetroFuturaGUI::SceneLoader::find
     return nullptr;
 }
 
-u32 RetroFuturaGUI::SceneLoader::CreateScene(std::string_view name, Window* parentWindow)
+std::unique_ptr<RetroFuturaGUI::Scene> RetroFuturaGUI::SceneLoader::CreateScene(std::string_view name, Window* parentWindow)
 {
     if(!parentWindow)
     {
         std::println("ERROR::SCENELOADER::NO_PARENT_WINDOW::{}", name);
-        return InvalidSceneID;
+        return nullptr;
     }
 
     const u32 id { GetSceneID(name) };
@@ -43,28 +43,30 @@ u32 RetroFuturaGUI::SceneLoader::CreateScene(std::string_view name, Window* pare
     if(id == InvalidSceneID)
     {
         std::println("ERROR::SCENELOADER::NAME_HASHES_TO_INVALID_ID::{}", name);
-        return InvalidSceneID;
+        return nullptr;
     }
 
     if(findEntry(id))
     {
         std::println("ERROR::SCENELOADER::SCENE_NAME_TAKEN::{}", name);
-        return InvalidSceneID;
+        return nullptr;
     }
 
     //The entry keeps its own copy of the name so a hash collision can be detected on lookup
     const std::string sceneName { name };
+    std::unique_ptr<Scene> _created { std::make_unique<Scene>(sceneName, parentWindow) };
 
     _scenes.push_back(SceneEntry
     {
-        ._Scene = std::make_unique<Scene>(sceneName, parentWindow),
+        ._Scene = _created.get(),
         ._Name = sceneName,
         ._ID = id,
         ._Window = parentWindow,
         ._PendingClose = false
     });
 
-    return id;
+    //Ownership goes to the caller. the entry above only borrows
+    return _created;
 }
 
 bool RetroFuturaGUI::SceneLoader::CloseScene(std::string_view name)
@@ -101,8 +103,9 @@ void RetroFuturaGUI::SceneLoader::DrainPending()
             continue;
         }
 
-        if(_iterator->_Window) //Unregister before destroying
-            _iterator->_Window->RemoveScene(_iterator->_Scene.get());
+        //Detach only, the loader borrows, so the owner's unique_ptr is what frees the scene
+        if(_iterator->_Window)
+            _iterator->_Window->RemoveScene(_iterator->_Scene);
 
         _iterator = _scenes.erase(_iterator);
     }
@@ -114,14 +117,14 @@ RetroFuturaGUI::Scene* RetroFuturaGUI::SceneLoader::GetScene(std::string_view na
 {
     const SceneEntry* _entry { findEntry(GetSceneID(name)) };
 
-    if(_entry == nullptr)
+    if(!_entry)
         return nullptr;
 
     //A hash is not an identity, so the stored name decides
     if(_entry->_Name != name)
         return nullptr;
 
-    return _entry->_Scene.get();
+    return _entry->_Scene;
 }
 
 RetroFuturaGUI::Scene* RetroFuturaGUI::SceneLoader::GetScene(const u32 id) const
@@ -131,7 +134,7 @@ RetroFuturaGUI::Scene* RetroFuturaGUI::SceneLoader::GetScene(const u32 id) const
     if(!_entry)
         return nullptr;
 
-    return _entry->_Scene.get();
+    return _entry->_Scene;
 }
 
 f32 RetroFuturaGUI::SceneLoader::SceneLoadingProgress(const u32 id) const
