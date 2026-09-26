@@ -2,6 +2,7 @@
 #include "Window.hpp"
 #include <limits>
 #include <print>
+#include <vector>
 
 u32 RetroFuturaGUI::SceneLoader::GetSceneID(std::string_view name)
 {
@@ -11,17 +12,6 @@ u32 RetroFuturaGUI::SceneLoader::GetSceneID(std::string_view name)
 RetroFuturaGUI::SceneLoader::SceneEntry* RetroFuturaGUI::SceneLoader::findEntry(const u32 id)
 {
     for(SceneEntry& _entry : _scenes)
-    {
-        if(_entry._ID == id)
-            return &_entry;
-    }
-
-    return nullptr;
-}
-
-const RetroFuturaGUI::SceneLoader::SceneEntry* RetroFuturaGUI::SceneLoader::findEntry(const u32 id) const
-{
-    for(const SceneEntry& _entry : _scenes)
     {
         if(_entry._ID == id)
             return &_entry;
@@ -88,6 +78,17 @@ bool RetroFuturaGUI::SceneLoader::CloseScene(const u32 id)
     return true;
 }
 
+bool RetroFuturaGUI::SceneLoader::SetReleaseHook(const u32 id, std::function<void()> hook)
+{
+    SceneEntry* _entry { findEntry(id) };
+
+    if(!_entry)
+        return false;
+
+    _entry->_ReleaseHook = std::move(hook);
+    return true;
+}
+
 bool RetroFuturaGUI::SceneLoader::UnregisterScene(const u32 id)
 {
     for(std::list<SceneEntry>::iterator _iterator = _scenes.begin(); _iterator != _scenes.end(); ++_iterator)
@@ -112,6 +113,8 @@ void RetroFuturaGUI::SceneLoader::DrainPending()
 
     _draining = true;
 
+    std::vector<std::function<void()>> _releases;
+
     for(std::list<SceneEntry>::iterator _iterator = _scenes.begin(); _iterator != _scenes.end();)
     {
         if(!_iterator->_PendingClose)
@@ -120,17 +123,25 @@ void RetroFuturaGUI::SceneLoader::DrainPending()
             continue;
         }
 
-        //Detach only, the loader borrows, so the owner's unique_ptr is what frees the scene
         if(_iterator->_Window)
             _iterator->_Window->RemoveScene(_iterator->_Scene);
+
+        if(_iterator->_ReleaseHook)
+            _releases.push_back(std::move(_iterator->_ReleaseHook));
 
         _iterator = _scenes.erase(_iterator);
     }
 
+    //Hooks run only once the registry has settled. A hook drops the host that owns the scene,
+    //and that host's destructor calls UnregisterScene - which must not walk this list while the
+    //loop above still holds an iterator into it.
+    for(const std::function<void()>& _release : _releases)
+        _release();
+
     _draining = false;
 }
 
-RetroFuturaGUI::Scene* RetroFuturaGUI::SceneLoader::GetScene(std::string_view name) const
+RetroFuturaGUI::Scene* RetroFuturaGUI::SceneLoader::GetScene(std::string_view name)
 {
     const SceneEntry* _entry { findEntry(GetSceneID(name)) };
 
@@ -144,7 +155,7 @@ RetroFuturaGUI::Scene* RetroFuturaGUI::SceneLoader::GetScene(std::string_view na
     return _entry->_Scene;
 }
 
-RetroFuturaGUI::Scene* RetroFuturaGUI::SceneLoader::GetScene(const u32 id) const
+RetroFuturaGUI::Scene* RetroFuturaGUI::SceneLoader::GetScene(const u32 id)
 {
     const SceneEntry* _entry { findEntry(id) };
 
@@ -154,7 +165,7 @@ RetroFuturaGUI::Scene* RetroFuturaGUI::SceneLoader::GetScene(const u32 id) const
     return _entry->_Scene;
 }
 
-f32 RetroFuturaGUI::SceneLoader::SceneLoadingProgress(const u32 id) const
+f32 RetroFuturaGUI::SceneLoader::SceneLoadingProgress(const u32 id)
 {
     if(!findEntry(id))
         return std::numeric_limits<f32>::quiet_NaN();
@@ -163,7 +174,7 @@ f32 RetroFuturaGUI::SceneLoader::SceneLoadingProgress(const u32 id) const
     return 1.0f;
 }
 
-uSize RetroFuturaGUI::SceneLoader::GetSceneCount() const
+uSize RetroFuturaGUI::SceneLoader::GetSceneCount()
 {
     return _scenes.size();
 }
