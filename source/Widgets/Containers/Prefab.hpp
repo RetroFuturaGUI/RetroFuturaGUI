@@ -55,7 +55,7 @@ namespace RetroFuturaGUI
         {
             RetroFuturaGUI::LasagnaCell* cell = findCell(name);
 
-            if(cell == nullptr)
+            if(!cell)
                 return nullptr;
 
             return dynamic_cast<T*>(cell->_Widget);
@@ -67,7 +67,7 @@ namespace RetroFuturaGUI
         template<WidgetTypes T, typename... Args>
         T* AttachWidget(std::string_view name, const CellPlacement& placement, Args&&... args)
         {
-            if(_lasagna == nullptr)
+            if(!_lasagna)
             {
                 std::println("ERROR::PREFAB::NO_LAYOUT::{}", name);
                 return nullptr;

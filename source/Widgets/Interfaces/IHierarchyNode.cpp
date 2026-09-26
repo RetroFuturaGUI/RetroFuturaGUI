@@ -6,7 +6,7 @@ std::string RetroFuturaGUI::IHierarchyNode::GetPath() const
 {
     std::vector<const IHierarchyNode*> chain;
 
-    for(const IHierarchyNode* node = this; node != nullptr; node = node->GetParent())
+    for(const IHierarchyNode* node = this; node; node = node->GetParent())
         chain.push_back(node);
 
     std::string path;

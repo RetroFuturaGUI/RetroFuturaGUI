@@ -101,7 +101,7 @@ bool RetroFuturaGUI::Lasagna::AttachWidget(const u32 row, const u32 col, const u
     for(u32 r = row; r < row + rowSpanClamped; ++r)
         for(u32 c = col; c < col + colSpanClamped; ++c)
             for(u32 l = layer; l < layer + layerSpanClamped; ++l)
-                if(_lasagna[r][c][l]._SpanOccupied || _lasagna[r][c][l]._Widget != nullptr)
+                if(_lasagna[r][c][l]._SpanOccupied || _lasagna[r][c][l]._Widget)
                     return false;
 
     LasagnaCell& origin = _lasagna[row][col][layer];
@@ -163,7 +163,7 @@ void RetroFuturaGUI::Lasagna::Draw()
                 if(_drawDebugLines)
                     drawDebugLines(cell);
 
-                if(cell._Widget == nullptr || cell._SpanOccupied)
+                if(!cell._Widget || cell._SpanOccupied)
                     continue;
 
                 cell._Widget->Draw();

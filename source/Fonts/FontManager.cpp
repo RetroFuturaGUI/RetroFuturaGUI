@@ -148,11 +148,11 @@ RetroFuturaGUI::FontManager::LoadFontResult RetroFuturaGUI::FontManager::LoadFon
         if(isFontLoaded(fontFamily, integralFontSize, slant, weight))
             return LoadFontResult::FontAlreadyLoaded;
 
-    if(_ft == nullptr)
+    if(!_ft)
     {
         initFreeTypeLibrary();
 
-        if(_ft == nullptr)
+        if(!_ft)
         {
             std::println("ERROR::FREETYPE: FreeType Library not initialized");
             return LoadFontResult::FreeTypeError;

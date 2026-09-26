@@ -63,7 +63,7 @@ void RetroFuturaGUI::Prefab::ShowChildWidget(std::string_view name, const bool s
 {
     RetroFuturaGUI::LasagnaCell* cell = findCell(name);
 
-    if(cell == nullptr)
+    if(!cell)
         return;
 
     cell->_Show = show;
@@ -73,7 +73,7 @@ bool RetroFuturaGUI::Prefab::IsChildWidgetShown(std::string_view name) const
 {
     RetroFuturaGUI::LasagnaCell* cell = findCell(name);
 
-    if(cell == nullptr)
+    if(!cell)
         return false;
 
     return cell->_Show;
@@ -105,7 +105,7 @@ RetroFuturaGUI::LasagnaCell* RetroFuturaGUI::Prefab::findCell(std::string_view n
 {
     const ChildWidget* _child { findChild(name) };
 
-    if(_child == nullptr || _lasagna == nullptr)
+    if(!_child || !_lasagna)
         return nullptr;
 
     return _lasagna->GetCell(TrackIndex { ._Row = _child->_Placement._Row,

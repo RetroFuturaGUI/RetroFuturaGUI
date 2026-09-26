@@ -16,7 +16,7 @@ void RetroFuturaGUI::Scene::Draw()
     if(!_active)
         return;
 
-    if(_rootLasagna == nullptr)
+    if(!_rootLasagna)
         return;
 
     _rootLasagna->Draw();
@@ -53,10 +53,10 @@ const RetroFuturaGUI::IHierarchyNode* RetroFuturaGUI::Scene::GetParent() const
 
 void RetroFuturaGUI::Scene::SetLasagnaAxis(const AxisDefinition axisdefinition, Projection* projection)
 {
-    if(projection == nullptr)
+    if(!projection)
         return;
 
-    if(_parentWindow == nullptr)
+    if(!_parentWindow)
         return;
 
     _rootLasagna = std::make_unique<Lasagna>("RootLasagna", projection, this, WidgetTypeID::None, _parentWindow->GetGlfwWindow(), axisdefinition);
@@ -73,7 +73,7 @@ void RetroFuturaGUI::Scene::SetSize(const glm::vec3& size)
 {
     _size = size;
 
-    if(_rootLasagna == nullptr)
+    if(!_rootLasagna)
         return;
 
     _rootLasagna->SetSize(_size);
@@ -88,7 +88,7 @@ void RetroFuturaGUI::Scene::SetPosition(const glm::vec3& position)
 {
     _position = position;
 
-    if(_rootLasagna == nullptr)
+    if(!_rootLasagna)
         return;
 
     _rootLasagna->SetPosition(_position);
@@ -103,7 +103,7 @@ void RetroFuturaGUI::Scene::SetRotation(const glm::vec3& rotation)
 {
     _rotation = rotation;
 
-    if(_rootLasagna == nullptr)
+    if(!_rootLasagna)
         return;
 
     _rootLasagna->SetRotation(_rotation);
@@ -156,7 +156,7 @@ f32 RetroFuturaGUI::Scene::GetReservedThickness() const
 
 void RetroFuturaGUI::Scene::requestWindowLayout() const
 {
-    if(_parentWindow == nullptr)
+    if(!_parentWindow)
         return;
 
     _parentWindow->UpdateLayout();

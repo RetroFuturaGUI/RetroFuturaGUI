@@ -447,7 +447,7 @@ void RetroFuturaGUI::Window::AddScene(Scene* scene)
 
 void RetroFuturaGUI::Window::RemoveScene(Scene* scene)
 {
-	if(scene == nullptr)
+	if(!scene)
 		return;
 
 	const std::vector<Scene*>::iterator _found { std::find(_scenes.begin(), _scenes.end(), scene) };
@@ -480,7 +480,7 @@ const RetroFuturaGUI::ScreenRect& RetroFuturaGUI::Window::GetClientRect() const
 
 void RetroFuturaGUI::Window::reserveWindowBar(ScreenRect& client) const
 {
-	if(_windowBar == nullptr)
+	if(!_windowBar)
 		return;
 
 	if(_windowBarOverlapsBG)

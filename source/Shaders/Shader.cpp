@@ -14,7 +14,7 @@ RetroFuturaGUI::Shader::Shader(const char* vertexPath, const char* fragmentPath,
 	u32 fragmentShader = compileShader(fShaderCode, GL_FRAGMENT_SHADER);
     u32 geometryShader = 0;
 
-    if (geometryPath != nullptr)
+    if (geometryPath)
     {
         std::string geometryCode = loadShaderFile(geometryPath);
         const char* gShaderCode = geometryCode.c_str();
@@ -35,7 +35,7 @@ RetroFuturaGUI::Shader::Shader(const char* vertexPath, const char* fragmentPath,
 
     glDeleteShader(vertexShader);
     glDeleteShader(fragmentShader);
-    if (geometryPath != nullptr)
+    if (geometryPath)
         glDeleteShader(geometryShader);
 
     //glUseProgram(_programId);
@@ -175,7 +175,7 @@ u32 RetroFuturaGUI::Shader::compileShader(const char* shaderCode, const int shad
 		return 0;
 	}
 
-	if (shaderCode == nullptr || shaderCode[0] == '\0')
+	if (!shaderCode || shaderCode[0] == '\0')
 	{
 		std::println("ERROR::SHADER::EMPTY_SHADER_CODE");
 		return 0;

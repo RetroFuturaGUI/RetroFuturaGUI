@@ -34,7 +34,7 @@ void RetroFuturaGUI::CheckBox::Draw()
     drawBackground();
     drawBorder();
 
-    if(_useInherietValue && _inherietValue != nullptr)
+    if(_useInherietValue && _inherietValue)
     {
         if(_inherietFill)
             _inherietFill->Draw();
@@ -159,7 +159,7 @@ bool RetroFuturaGUI::CheckBox::GetValue() const
 {
     if(_useInherietValue)
     {
-        if(_inherietValue == nullptr)
+        if(!_inherietValue)
             return false;
         else
             return *_inherietValue;
