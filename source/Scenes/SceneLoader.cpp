@@ -88,6 +88,23 @@ bool RetroFuturaGUI::SceneLoader::CloseScene(const u32 id)
     return true;
 }
 
+bool RetroFuturaGUI::SceneLoader::UnregisterScene(const u32 id)
+{
+    for(std::list<SceneEntry>::iterator _iterator = _scenes.begin(); _iterator != _scenes.end(); ++_iterator)
+    {
+        if(_iterator->_ID != id)
+            continue;
+
+        if(_iterator->_Window)
+            _iterator->_Window->RemoveScene(_iterator->_Scene);
+
+        _scenes.erase(_iterator);
+        return true;
+    }
+
+    return false;
+}
+
 void RetroFuturaGUI::SceneLoader::DrainPending()
 {
     if(_draining)

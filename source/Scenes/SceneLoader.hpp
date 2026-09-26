@@ -38,6 +38,12 @@ namespace RetroFuturaGUI
         /// @return false when there is no such scene, or it is already marked.
         bool CloseScene(const u32 id);
 
+        /// @brief Removes a scene from its window's draw order and from the registry at once, for
+        ///        an owner destroying its scene outside the CloseScene/DrainPending cycle - a
+        ///        destructor, or shutdown. Call it before the scene is freed.
+        /// @return false when there is no such scene.
+        bool UnregisterScene(const u32 id);
+
         /// @brief Removes every scene CloseScene marked from its window's draw order and from the
         ///        registry. Freeing stays with the scene's owner, by dropping the unique_ptr.
         ///        Call once per frame from the frame loop, after the windows have drawn.
