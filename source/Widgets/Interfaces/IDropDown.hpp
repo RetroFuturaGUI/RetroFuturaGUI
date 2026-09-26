@@ -1,4 +1,5 @@
 #pragma once
+#include "IWidget.hpp"
 #include "IBackground.hpp"
 #include "IBorder.hpp"
 #include "Rectangle.hpp"

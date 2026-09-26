@@ -1,4 +1,5 @@
 #include "Text.hpp"
+#include "ShaderManager.hpp"
 
 #ifndef _MSC_VER
     using max;

@@ -11,10 +11,10 @@ u32 RetroFuturaGUI::SceneLoader::GetSceneID(std::string_view name)
 
 RetroFuturaGUI::SceneLoader::SceneEntry* RetroFuturaGUI::SceneLoader::findEntry(const u32 id)
 {
-    for(SceneEntry& _entry : _scenes)
+    for(SceneEntry& entry : _scenes)
     {
-        if(_entry._ID == id)
-            return &_entry;
+        if(entry._ID == id)
+            return &entry;
     }
 
     return nullptr;
@@ -52,7 +52,8 @@ std::unique_ptr<RetroFuturaGUI::Scene> RetroFuturaGUI::SceneLoader::CreateScene(
         ._Name = sceneName,
         ._ID = id,
         ._Window = parentWindow,
-        ._PendingClose = false
+        ._PendingClose = false,
+        ._ReleaseHook = {}
     });
 
     //Ownership goes to the caller. the entry above only borrows
@@ -66,40 +67,40 @@ bool RetroFuturaGUI::SceneLoader::CloseScene(std::string_view name)
 
 bool RetroFuturaGUI::SceneLoader::CloseScene(const u32 id)
 {
-    SceneEntry* _entry { findEntry(id) };
+    SceneEntry* entry { findEntry(id) };
 
-    if(!_entry)
+    if(!entry)
         return false;
 
-    if(_entry->_PendingClose)
+    if(entry->_PendingClose)
         return false;
 
-    _entry->_PendingClose = true;
+    entry->_PendingClose = true;
     return true;
 }
 
 bool RetroFuturaGUI::SceneLoader::SetReleaseHook(const u32 id, std::function<void()> hook)
 {
-    SceneEntry* _entry { findEntry(id) };
+    SceneEntry* entry { findEntry(id) };
 
-    if(!_entry)
+    if(!entry)
         return false;
 
-    _entry->_ReleaseHook = std::move(hook);
+    entry->_ReleaseHook = std::move(hook);
     return true;
 }
 
 bool RetroFuturaGUI::SceneLoader::UnregisterScene(const u32 id)
 {
-    for(std::list<SceneEntry>::iterator _iterator = _scenes.begin(); _iterator != _scenes.end(); ++_iterator)
+    for(std::list<SceneEntry>::iterator iterator = _scenes.begin(); iterator != _scenes.end(); ++iterator)
     {
-        if(_iterator->_ID != id)
+        if(iterator->_ID != id)
             continue;
 
-        if(_iterator->_Window)
-            _iterator->_Window->RemoveScene(_iterator->_Scene);
+        if(iterator->_Window)
+            iterator->_Window->RemoveScene(iterator->_Scene);
 
-        _scenes.erase(_iterator);
+        _scenes.erase(iterator);
         return true;
     }
 
@@ -113,29 +114,29 @@ void RetroFuturaGUI::SceneLoader::DrainPending()
 
     _draining = true;
 
-    std::vector<std::function<void()>> _releases;
+    std::vector<std::function<void()>> releases;
 
-    for(std::list<SceneEntry>::iterator _iterator = _scenes.begin(); _iterator != _scenes.end();)
+    for(std::list<SceneEntry>::iterator iterator = _scenes.begin(); iterator != _scenes.end();)
     {
-        if(!_iterator->_PendingClose)
+        if(!iterator->_PendingClose)
         {
-            ++_iterator;
+            ++iterator;
             continue;
         }
 
-        if(_iterator->_Window)
-            _iterator->_Window->RemoveScene(_iterator->_Scene);
+        if(iterator->_Window)
+            iterator->_Window->RemoveScene(iterator->_Scene);
 
-        if(_iterator->_ReleaseHook)
-            _releases.push_back(std::move(_iterator->_ReleaseHook));
+        if(iterator->_ReleaseHook)
+            releases.push_back(std::move(iterator->_ReleaseHook));
 
-        _iterator = _scenes.erase(_iterator);
+        iterator = _scenes.erase(iterator);
     }
 
     //Hooks run only once the registry has settled. A hook drops the host that owns the scene,
     //and that host's destructor calls UnregisterScene - which must not walk this list while the
     //loop above still holds an iterator into it.
-    for(const std::function<void()>& _release : _releases)
+    for(const std::function<void()>& _release : releases)
         _release();
 
     _draining = false;
@@ -143,26 +144,26 @@ void RetroFuturaGUI::SceneLoader::DrainPending()
 
 RetroFuturaGUI::Scene* RetroFuturaGUI::SceneLoader::GetScene(std::string_view name)
 {
-    const SceneEntry* _entry { findEntry(GetSceneID(name)) };
+    const SceneEntry* entry { findEntry(GetSceneID(name)) };
 
-    if(!_entry)
+    if(!entry)
         return nullptr;
 
     //A hash is not an identity, so the stored name decides
-    if(_entry->_Name != name)
+    if(entry->_Name != name)
         return nullptr;
 
-    return _entry->_Scene;
+    return entry->_Scene;
 }
 
 RetroFuturaGUI::Scene* RetroFuturaGUI::SceneLoader::GetScene(const u32 id)
 {
-    const SceneEntry* _entry { findEntry(id) };
+    const SceneEntry* entry { findEntry(id) };
 
-    if(!_entry)
+    if(!entry)
         return nullptr;
 
-    return _entry->_Scene;
+    return entry->_Scene;
 }
 
 f32 RetroFuturaGUI::SceneLoader::SceneLoadingProgress(const u32 id)

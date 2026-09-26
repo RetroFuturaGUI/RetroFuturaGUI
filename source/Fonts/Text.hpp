@@ -2,7 +2,6 @@
 #include "FontManager.hpp"
 #include "DoubleEncodedString.hpp"
 #include "Projection.hpp"
-#include "ShaderManager.hpp"
 #include <string>
 #include <vector>
 #include <GL/gl.h>

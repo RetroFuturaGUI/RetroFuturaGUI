@@ -1,9 +1,9 @@
 #pragma once
-#include "ShaderManager.hpp"
+#include "IncludeHelper.hpp"
+#include "Shader.hpp"
 #include "Projection.hpp"
 #include <span>
 #include <vector>
-#include "Image.hpp"
 
 namespace RetroFuturaGUI
 {

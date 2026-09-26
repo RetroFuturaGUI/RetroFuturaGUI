@@ -1,5 +1,6 @@
 #include "Window.hpp"
 #include "Scene.hpp"
+#include "ShaderManager.hpp"
 #include "PlatformBridge.hpp"
 #include <glm/gtc/type_ptr.hpp>
 #include <algorithm>

@@ -1,4 +1,5 @@
 #include "ExtendedComboBox.hpp"
+#include "Image.hpp"
 
 #if defined(TARGET_PLATFORM_LINUX)
     #define GLFW_EXPOSE_NATIVE_X11

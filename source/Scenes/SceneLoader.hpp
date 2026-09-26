@@ -76,7 +76,7 @@ namespace RetroFuturaGUI
             u32 _ID { InvalidSceneID };
             Window* _Window { nullptr };
             bool _PendingClose { false };
-            std::function<void()> _ReleaseHook;
+            std::function<void()> _ReleaseHook {};
         };
 
         static SceneEntry* findEntry(const u32 id);

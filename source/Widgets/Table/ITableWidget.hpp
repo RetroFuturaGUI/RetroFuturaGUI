@@ -1,5 +1,6 @@
 #pragma once
 #include "IncludeHelper.hpp"
+#include "Projection.hpp"
 
 namespace RetroFuturaGUI
 {

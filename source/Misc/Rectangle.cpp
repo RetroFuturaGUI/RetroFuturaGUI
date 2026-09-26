@@ -1,4 +1,5 @@
 #include "Rectangle.hpp"
+#include "ShaderManager.hpp"
 #include <algorithm>
 
 RetroFuturaGUI::Rectangle::Rectangle(Projection* projection)

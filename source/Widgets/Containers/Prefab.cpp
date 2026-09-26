@@ -2,7 +2,6 @@
 #include "IWidget.hpp"
 #include "IncludeHelper.hpp"
 #include "config.hpp"
-#include <cstddef>
 #include <memory>
 #include <print>
 
