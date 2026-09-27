@@ -393,7 +393,7 @@ void RetroFuturaGUI::Window::Draw()
 	glfwSwapBuffers(_window);
 	glfwPollEvents();
 
-	if(_windowBar->WindowShouldClose())
+	if(_windowBar && _windowBar->WindowShouldClose())
 		glfwSetWindowShouldClose(_window, GLFW_TRUE);
 }
 
