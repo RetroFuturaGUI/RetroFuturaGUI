@@ -37,6 +37,7 @@ list(APPEND RetroFuturaGuiSources
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Shaders/ShaderManager.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/Button.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/CheckBox.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/ColorPreview.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/ComboBox.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/Image.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/Label.cpp"

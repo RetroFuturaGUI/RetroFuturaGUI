@@ -106,23 +106,26 @@ namespace RetroFuturaGUI
         /// @brief Sets which pattern the Raster shader feature draws.
         void SetRasterPattern(const RasterPattern rasterPattern);
 
-        /// @brief Sets the dot color used for the Dotted raster pattern. Alpha blends the dots over whatever the shader has already drawn.
+        /// @brief Sets the primary raster color: the dot color for Dotted, and one of the two square colors for Checkered. Alpha blends over whatever the shader has already drawn.
         void SetPrimaryRasterColor(const glm::vec4& color);
+
+        /// @brief Sets the second of the two square colors used by the Checkered raster pattern. Alpha blends over whatever the shader has already drawn.
+        void SetSecondaryRasterColor(const glm::vec4& color);
 
         /// @brief Sets the spacing between dot centers, in pixels, for the Dotted raster pattern.
         void SetDotDistance(const f32 distance);
 
-        /// @brief Sets the direction, in degrees, along which dot widths are sampled from PrimaryRasterWidthTransfer and along which the pattern animates.
-        void SetDotSizeTransferDegree(const f32 degree);
+        /// @brief Sets the direction, in degrees, along which raster widths are sampled from PrimaryRasterWidthTransfer and along which the pattern animates. Checkered turns its whole board by this angle.
+        void SetRasterDegree(const f32 degree);
 
-        /// @brief Sets the per-position dot width curve, in pixels (each value is a dot's full width across), sampled along the DotSizeTransferDegree direction across the rectangle. Enables the Raster shader feature when non-empty.
+        /// @brief Sets the per-position raster width curve, in pixels, sampled along the RasterDegree direction across the rectangle. Each value is a dot's full width across for Dotted, and a square's side length for Checkered. Enables the Raster shader feature when non-empty.
         void SetPrimaryRasterWidthTransfer(std::span<f32> widthTransfer);
 
         /// @brief Sets how far each dot's opacity reaches from its center before fading to transparent. 1.0 = fully opaque disc, 0.5 = opaque inner half then fades out, 0.0 = only the center pixel is opaque.
         void SetDotTransparencyTransfer(const f32 transparencyTransfer);
 
-        /// @brief Sets the speed at which the dotted pattern animates along the DotSizeTransferDegree direction.
-        void SetDotAnimationSpeed(const f32 animationSpeed);
+        /// @brief Sets the speed at which the raster pattern animates along the RasterDegree direction.
+        void SetRasterAnimationSpeed(const f32 animationSpeed);
 
         /// @brief Sets the overall opacity of the FogEffect shader feature.
         void SetFogAlpha(const f32 alpha);
@@ -241,7 +244,8 @@ namespace RetroFuturaGUI
 
         RasterPattern _rasterPattern { RasterPattern::Dotted };
 
-        // Dotted raster pattern (RasterPattern::Dotted)
+        // Raster (ShaderFeatures::Raster) - the transfer, the colors, the angle and the animation
+        // serve every pattern; _dotDistance and _dotTransparencyTransfer are Dotted's own.
         std::span<f32> _primaryRasterWidthTransfer;
         i32 _primaryRasterWidthTransferCount { 0 };
         glm::vec4
@@ -249,10 +253,10 @@ namespace RetroFuturaGUI
             _secondaryRasterColor { 1.0f };
         f32
             _dotDistance { 15.0f },
-            _dotSizeTransferDegree { 45.0f },
+            _rasterDegree { 45.0f },
             _dotTransparencyTransfer { 1.0f },
-            _dotAnimationSpeed { 0.0f },
-            _dotAnimationOffset { 0.0f };
+            _rasterAnimationSpeed { 0.0f },
+            _rasterAnimationOffset { 0.0f };
         RectangleMode _rectangleMode { RectangleMode::Plane };
 
         static constexpr const i32 _kMaxBorderGaps = 255;
@@ -283,6 +287,7 @@ namespace RetroFuturaGUI
         void initColors(std::span<glm::vec4> colors);
         void uploadRasterUniforms(Shader& shader);
         void uploadDotUniforms(Shader& shader);
+        void uploadCheckeredUniforms(Shader& shader);
         void uploadFogUniforms(Shader& shader);
         void uploadWaveUniforms(Shader& shader);
         /// @brief Whether a background gap is configured, i.e. whether it carves anything out of the fill.

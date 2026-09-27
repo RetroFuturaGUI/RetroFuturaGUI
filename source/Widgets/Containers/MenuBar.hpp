@@ -15,6 +15,7 @@
 #include "ProgressBar.hpp"
 #include "Prefab.hpp"
 #include "ComboBox.hpp"
+#include "ColorPreview.hpp"
 #include <memory>
 #include <vector>
 
@@ -25,7 +26,7 @@ namespace RetroFuturaGUI
        std::same_as<T, Label>  || std::same_as<T, Button> || std::same_as<T, TextBox>
     || std::same_as<T, Image> || std::same_as<T, SvgImage> || std::same_as<T, CheckBox>
     || std::same_as<T, Slider> || std::same_as<T, ProgressBar> || std::same_as<T, Prefab>
-    || std::same_as<T, ComboBox>;
+    || std::same_as<T, ComboBox> || std::same_as<T, ColorPreview>;
 
     class MenuBar final : public IWidget, public IBackground, public IBorder, public IClickable
     {
@@ -228,8 +229,8 @@ namespace RetroFuturaGUI
         /// @brief Sets the spacing between dot centers, in pixels, for the item border's Dotted raster pattern.
         void SetItemBorderDotDistance(const f32 distance);
 
-        /// @brief Sets the direction, in degrees, along which the item border's dot widths/animation transfer.
-        void SetItemBorderDotSizeTransferDegree(const f32 degree);
+        /// @brief Sets the direction, in degrees, along which the item border's raster widths/animation transfer.
+        void SetItemBorderRasterDegree(const f32 degree);
 
         /// @brief Sets the per-position dot width curve, in pixels (each value is a dot's full width across), for the item border's Dotted raster pattern. Enables the Raster shader feature when non-empty.
         void SetItemBorderPrimaryRasterWidthTransfer(std::span<f32> widthTransfer);
@@ -237,8 +238,8 @@ namespace RetroFuturaGUI
         /// @brief Sets how far each item border dot's opacity reaches from its center before fading to transparent.
         void SetItemBorderDotTransparencyTransfer(const f32 transparencyTransfer);
 
-        /// @brief Sets the speed at which the item border's dotted pattern animates.
-        void SetItemBorderDotAnimationSpeed(const f32 animationSpeed);
+        /// @brief Sets the speed at which the item border's raster pattern animates.
+        void SetItemBorderRasterAnimationSpeed(const f32 animationSpeed);
 
         /// @brief Sets the item border's width.
         void SetItemBorderWidth(const f32 borderWidth);

@@ -136,14 +136,19 @@ void RetroFuturaGUI::Rectangle::SetPrimaryRasterColor(const glm::vec4& color)
     _primaryRasterColor = color;
 }
 
+void RetroFuturaGUI::Rectangle::SetSecondaryRasterColor(const glm::vec4& color)
+{
+    _secondaryRasterColor = color;
+}
+
 void RetroFuturaGUI::Rectangle::SetDotDistance(const f32 distance)
 {
     _dotDistance = distance;
 }
 
-void RetroFuturaGUI::Rectangle::SetDotSizeTransferDegree(const f32 degree)
+void RetroFuturaGUI::Rectangle::SetRasterDegree(const f32 degree)
 {
-    _dotSizeTransferDegree = degree;
+    _rasterDegree = degree;
 }
 
 void RetroFuturaGUI::Rectangle::SetPrimaryRasterWidthTransfer(std::span<f32> widthTransfer)
@@ -162,9 +167,9 @@ void RetroFuturaGUI::Rectangle::SetDotTransparencyTransfer(const f32 transparenc
     _dotTransparencyTransfer = transparencyTransfer;
 }
 
-void RetroFuturaGUI::Rectangle::SetDotAnimationSpeed(const f32 animationSpeed)
+void RetroFuturaGUI::Rectangle::SetRasterAnimationSpeed(const f32 animationSpeed)
 {
-    _dotAnimationSpeed = animationSpeed;
+    _rasterAnimationSpeed = animationSpeed;
 }
 
 void RetroFuturaGUI::Rectangle::SetFogAlpha(const f32 alpha)
@@ -285,25 +290,41 @@ void RetroFuturaGUI::Rectangle::initColors(std::span<glm::vec4> colors)
 
 void RetroFuturaGUI::Rectangle::uploadRasterUniforms(Shader& shader)
 {
+    _rasterAnimationOffset += _rasterAnimationSpeed;
+
+    // The width transfer, the primary color, the angle and the animation drive every pattern, so
+    // they go up whichever one is selected. Each pattern then adds only the uniforms it owns.
     shader.SetUniformInt("uRasterPattern", static_cast<i32>(_rasterPattern));
-
-    if(_rasterPattern == RasterPattern::Dotted)
-        uploadDotUniforms(shader);
-}
-
-void RetroFuturaGUI::Rectangle::uploadDotUniforms(Shader& shader)
-{
-    _dotAnimationOffset += _dotAnimationSpeed;
-
     shader.SetUniformVec4("uPrimaryRasterColor", _primaryRasterColor);
-    shader.SetUniformFloat("uDotDistance", _dotDistance);
-    shader.SetUniformFloat("uDotSizeTransferDegree", _dotSizeTransferDegree);
-    shader.SetUniformFloat("uDotTransparencyTransfer", _dotTransparencyTransfer);
-    shader.SetUniformFloat("uDotAnimationOffset", _dotAnimationOffset);
+    shader.SetUniformFloat("uRasterDegree", _rasterDegree);
+    shader.SetUniformFloat("uRasterAnimationOffset", _rasterAnimationOffset);
     shader.SetUniformInt("uPrimaryRasterWidthTransferCount", _primaryRasterWidthTransferCount);
 
     if(_primaryRasterWidthTransferCount > 0)
         shader.SetUniformFloat("uPrimaryRasterWidthTransfer", _primaryRasterWidthTransfer.data(), static_cast<u32>(_primaryRasterWidthTransferCount));
+
+    switch(_rasterPattern)
+    {
+        case RasterPattern::Checkered:
+        {
+            uploadCheckeredUniforms(shader);
+        } break;
+        default: // RasterPattern::Dotted
+        {
+            uploadDotUniforms(shader);
+        } break;
+    }
+}
+
+void RetroFuturaGUI::Rectangle::uploadDotUniforms(Shader& shader)
+{
+    shader.SetUniformFloat("uDotDistance", _dotDistance);
+    shader.SetUniformFloat("uDotTransparencyTransfer", _dotTransparencyTransfer);
+}
+
+void RetroFuturaGUI::Rectangle::uploadCheckeredUniforms(Shader& shader)
+{
+    shader.SetUniformVec4("uSecondaryRasterColor", _secondaryRasterColor);
 }
 
 void RetroFuturaGUI::Rectangle::uploadFogUniforms(Shader& shader)

@@ -29,6 +29,7 @@ namespace RetroFuturaGUI
     class Table;
     class Prefab;
     class MenuBar;
+    class ColorPreview;
 
     enum class FillType: u32
     {
@@ -70,6 +71,7 @@ namespace RetroFuturaGUI
         ExtendedComboBox,
         SeparatorLine,
         MenuBar,
+        ColorPreview,
         Unknown = -1
     };   
 
