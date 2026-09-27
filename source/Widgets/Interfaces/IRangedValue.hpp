@@ -477,16 +477,16 @@ namespace RetroFuturaGUI
         /// @brief Sets the texture ID sampled for the indicator background's glass-effect-with-image shader feature.
         void SetIndicatorWindowBackgroundImageTextureID(const u32 textureID);
 
-        /// @brief Sets the dot color used for the indicator background's DottedPattern shader feature.
+        /// @brief Sets the dot color used for the indicator background's Dotted raster pattern.
         void SetIndicatorBackgroundDotColor(const glm::vec4& color);
 
-        /// @brief Sets the spacing between dot centers, in pixels, for the indicator background's DottedPattern shader feature.
+        /// @brief Sets the spacing between dot centers, in pixels, for the indicator background's Dotted raster pattern.
         void SetIndicatorBackgroundDotDistance(const f32 distance);
 
         /// @brief Sets the direction, in degrees, along which the indicator background's dot radii/animation transfer.
         void SetIndicatorBackgroundDotSizeTransferDegree(const f32 degree);
 
-        /// @brief Sets the per-position dot radius curve, in pixels, for the indicator background's DottedPattern shader feature. Enables the feature when non-empty.
+        /// @brief Sets the per-position dot radius curve, in pixels, for the indicator background's Dotted raster pattern. Enables the Raster shader feature when non-empty.
         void SetIndicatorBackgroundDotRadiusTransfer(std::span<f32> radiusTransfer);
 
         /// @brief Sets how far each indicator background dot's opacity reaches from its center before fading to transparent.
@@ -525,16 +525,16 @@ namespace RetroFuturaGUI
         /// @brief Sets the texture ID sampled for the indicator border's glass-effect-with-image shader feature.
         void SetIndicatorWindowBorderImageTextureID(const u32 textureID);
 
-        /// @brief Sets the dot color used for the indicator border's DottedPattern shader feature.
+        /// @brief Sets the dot color used for the indicator border's Dotted raster pattern.
         void SetIndicatorBorderDotColor(const glm::vec4& color);
 
-        /// @brief Sets the spacing between dot centers, in pixels, for the indicator border's DottedPattern shader feature.
+        /// @brief Sets the spacing between dot centers, in pixels, for the indicator border's Dotted raster pattern.
         void SetIndicatorBorderDotDistance(const f32 distance);
 
         /// @brief Sets the direction, in degrees, along which the indicator border's dot radii/animation transfer.
         void SetIndicatorBorderDotSizeTransferDegree(const f32 degree);
 
-        /// @brief Sets the per-position dot radius curve, in pixels, for the indicator border's DottedPattern shader feature. Enables the feature when non-empty.
+        /// @brief Sets the per-position dot radius curve, in pixels, for the indicator border's Dotted raster pattern. Enables the Raster shader feature when non-empty.
         void SetIndicatorBorderDotRadiusTransfer(std::span<f32> radiusTransfer);
 
         /// @brief Sets how far each indicator border dot's opacity reaches from its center before fading to transparent.
@@ -582,16 +582,16 @@ namespace RetroFuturaGUI
         /// @brief Sets the texture ID sampled for the graph's glass-effect-with-image shader feature.
         void SetGraphWindowBackgroundImageTextureID(const u32 textureID);
 
-        /// @brief Sets the dot color used for the graph's DottedPattern shader feature.
+        /// @brief Sets the dot color used for the graph's Dotted raster pattern.
         void SetGraphDotColor(const glm::vec4& color);
 
-        /// @brief Sets the spacing between dot centers, in pixels, for the graph's DottedPattern shader feature.
+        /// @brief Sets the spacing between dot centers, in pixels, for the graph's Dotted raster pattern.
         void SetGraphDotDistance(const f32 distance);
 
         /// @brief Sets the direction, in degrees, along which the graph's dot radii/animation transfer.
         void SetGraphDotSizeTransferDegree(const f32 degree);
 
-        /// @brief Sets the per-position dot radius curve, in pixels, for the graph's DottedPattern shader feature. Enables the feature when non-empty.
+        /// @brief Sets the per-position dot radius curve, in pixels, for the graph's Dotted raster pattern. Enables the Raster shader feature when non-empty.
         void SetGraphDotRadiusTransfer(std::span<f32> radiusTransfer);
 
         /// @brief Sets how far each graph dot's opacity reaches from its center before fading to transparent.

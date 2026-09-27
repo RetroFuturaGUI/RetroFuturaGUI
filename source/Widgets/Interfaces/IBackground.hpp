@@ -32,16 +32,16 @@ namespace RetroFuturaGUI
         /// @brief Sets the texture ID sampled for the background's glass-effect-with-image shader feature.
         void SetWindowBackgroundImageTextureID(const u32 textureID);
 
-        /// @brief Sets the dot color used for the background's DottedPattern shader feature.
+        /// @brief Sets the dot color used for the background's Dotted raster pattern.
         void SetBackgroundDotColor(const glm::vec4& color);
 
-        /// @brief Sets the spacing between dot centers, in pixels, for the background's DottedPattern shader feature.
+        /// @brief Sets the spacing between dot centers, in pixels, for the background's Dotted raster pattern.
         void SetBackgroundDotDistance(const f32 distance);
 
         /// @brief Sets the direction, in degrees, along which the background's dot radii/animation transfer.
         void SetBackgroundDotSizeTransferDegree(const f32 degree);
 
-        /// @brief Sets the per-position dot radius curve, in pixels, for the background's DottedPattern shader feature. Enables the feature when non-empty.
+        /// @brief Sets the per-position dot radius curve, in pixels, for the background's Dotted raster pattern. Enables the Raster shader feature when non-empty.
         void SetBackgroundDotRadiusTransfer(std::span<f32> radiusTransfer);
 
         /// @brief Sets how far each background dot's opacity reaches from its center before fading to transparent.

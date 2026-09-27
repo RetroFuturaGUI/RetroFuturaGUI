@@ -2,6 +2,7 @@
 #include "IncludeHelper.hpp"
 #include "Shader.hpp"
 #include "Projection.hpp"
+#include "config.hpp"
 #include <span>
 #include <vector>
 
@@ -12,10 +13,15 @@ namespace RetroFuturaGUI
         RoundedCorners = 1,
         GlassEffect = 1 << 1,
         GlassEffectWithImage = GlassEffect + (1 << 2),
-        DottedPattern = 1 << 3,
+        Raster = 1 << 3,
         FogEffect = 1 << 4,
         Wave = 1 << 5,
         BackgroundImage = 1 << 6
+    };
+
+    enum class RasterPattern : u32
+    {
+        Dotted
     };
 
     enum class RectangleMode : u32
@@ -96,16 +102,19 @@ namespace RetroFuturaGUI
         /// @brief Sets the speed at which the gradient rotates over time.
         void SetGradientRotationSpeed(const f32 rotationSpeed);
 
-        /// @brief Sets the dot color used for the DottedPattern shader feature. Alpha blends the dots over whatever the shader has already drawn.
+        /// @brief Sets which pattern the Raster shader feature draws.
+        void SetRasterPattern(const RasterPattern rasterPattern);
+
+        /// @brief Sets the dot color used for the Dotted raster pattern. Alpha blends the dots over whatever the shader has already drawn.
         void SetDotColor(const glm::vec4& color);
 
-        /// @brief Sets the spacing between dot centers, in pixels, for the DottedPattern shader feature.
+        /// @brief Sets the spacing between dot centers, in pixels, for the Dotted raster pattern.
         void SetDotDistance(const f32 distance);
 
         /// @brief Sets the direction, in degrees, along which dot radii are sampled from DotRadiusTransfer and along which the pattern animates.
         void SetDotSizeTransferDegree(const f32 degree);
 
-        /// @brief Sets the per-position dot radius curve, in pixels, sampled along the DotSizeTransferDegree direction across the rectangle. Enables the DottedPattern shader feature when non-empty.
+        /// @brief Sets the per-position dot radius curve, in pixels, sampled along the DotSizeTransferDegree direction across the rectangle. Enables the Raster shader feature when non-empty.
         void SetDotRadiusTransfer(std::span<f32> radiusTransfer);
 
         /// @brief Sets how far each dot's opacity reaches from its center before fading to transparent. 1.0 = fully opaque disc, 0.5 = opaque inner half then fades out, 0.0 = only the center pixel is opaque.
@@ -229,7 +238,9 @@ namespace RetroFuturaGUI
             _shaderFeatureDIP { 0 },
             _windowBackgroundTextureID { 0 };
 
-        // Dotted pattern (ShaderFeatures::DottedPattern)
+        RasterPattern _rasterPattern { RasterPattern::Dotted };
+
+        // Dotted raster pattern (RasterPattern::Dotted)
         std::span<f32> _dotRadiusTransfer;
         i32 _dotRadiusTransferCount { 0 };
         glm::vec4 _dotColor { 1.0f };
@@ -267,6 +278,7 @@ namespace RetroFuturaGUI
         glm::vec2 backgroundImagePaddingUV() const;
 
         void initColors(std::span<glm::vec4> colors);
+        void uploadRasterUniforms(Shader& shader);
         void uploadDotUniforms(Shader& shader);
         void uploadFogUniforms(Shader& shader);
         void uploadWaveUniforms(Shader& shader);

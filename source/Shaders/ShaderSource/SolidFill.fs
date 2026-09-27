@@ -2,7 +2,8 @@
 #define ROUNDED_CORNERS 1
 #define GLASS_EFFECT 2
 #define GlassEffectWithImage 6
-#define DOTTED_PATTERN 8
+#define RASTER 8
+#define RASTER_PATTERN_DOTTED 0
 #define MAX_DOT_RADIUS_TRANSFER 255
 #define FOG_EFFECT 16
 #define MAX_FOG_DENSITY 8
@@ -14,6 +15,7 @@ uniform vec4 uColor;
 uniform vec4 uCornerRadii;
 uniform vec2 uScale;
 uniform int uDIP;
+uniform int uRasterPattern;
 uniform sampler2D uBackgroundTexture;
 uniform vec2 uImagePadding;
 uniform vec4 uDotColor;
@@ -307,7 +309,7 @@ void main()
         }
     }
 
-    if((uDIP & DOTTED_PATTERN) != 0)
+    if((uDIP & RASTER) != 0 && uRasterPattern == RASTER_PATTERN_DOTTED)
     {
         finalColor = applyDottedPattern(finalColor, vLocalPos);
     }

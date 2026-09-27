@@ -164,16 +164,16 @@ namespace RetroFuturaGUI
         /// @brief Sets the texture ID sampled for the item background's glass-effect-with-image shader feature.
         void SetItemWindowBackgroundImageTextureID(const u32 textureID);
 
-        /// @brief Sets the dot color used for the item background's DottedPattern shader feature.
+        /// @brief Sets the dot color used for the item background's Dotted raster pattern.
         void SetItemBackgroundDotColor(const glm::vec4& color);
 
-        /// @brief Sets the spacing between dot centers, in pixels, for the item background's DottedPattern shader feature.
+        /// @brief Sets the spacing between dot centers, in pixels, for the item background's Dotted raster pattern.
         void SetItemBackgroundDotDistance(const f32 distance);
 
         /// @brief Sets the direction, in degrees, along which the item background's dot radii/animation transfer.
         void SetItemBackgroundDotSizeTransferDegree(const f32 degree);
 
-        /// @brief Sets the per-position dot radius curve, in pixels, for the item background's DottedPattern shader feature. Enables the feature when non-empty.
+        /// @brief Sets the per-position dot radius curve, in pixels, for the item background's Dotted raster pattern. Enables the Raster shader feature when non-empty.
         void SetItemBackgroundDotRadiusTransfer(std::span<f32> radiusTransfer);
 
         /// @brief Sets how far each item background dot's opacity reaches from its center before fading to transparent.
@@ -222,16 +222,16 @@ namespace RetroFuturaGUI
         /// @brief Sets the texture ID sampled for the item border's glass-effect-with-image shader feature.
         void SetItemWindowBorderImageTextureID(const u32 textureID);
 
-        /// @brief Sets the dot color used for the item border's DottedPattern shader feature.
+        /// @brief Sets the dot color used for the item border's Dotted raster pattern.
         void SetItemBorderDotColor(const glm::vec4& color);
 
-        /// @brief Sets the spacing between dot centers, in pixels, for the item border's DottedPattern shader feature.
+        /// @brief Sets the spacing between dot centers, in pixels, for the item border's Dotted raster pattern.
         void SetItemBorderDotDistance(const f32 distance);
 
         /// @brief Sets the direction, in degrees, along which the item border's dot radii/animation transfer.
         void SetItemBorderDotSizeTransferDegree(const f32 degree);
 
-        /// @brief Sets the per-position dot radius curve, in pixels, for the item border's DottedPattern shader feature. Enables the feature when non-empty.
+        /// @brief Sets the per-position dot radius curve, in pixels, for the item border's Dotted raster pattern. Enables the Raster shader feature when non-empty.
         void SetItemBorderDotRadiusTransfer(std::span<f32> radiusTransfer);
 
         /// @brief Sets how far each item border dot's opacity reaches from its center before fading to transparent.

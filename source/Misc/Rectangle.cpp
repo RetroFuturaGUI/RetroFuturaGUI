@@ -126,6 +126,11 @@ void RetroFuturaGUI::Rectangle::SetGradientRotationSpeed(const f32 rotationSpeed
     _gradientRotationSpeed = rotationSpeed;
 }
 
+void RetroFuturaGUI::Rectangle::SetRasterPattern(const RasterPattern rasterPattern)
+{
+    _rasterPattern = rasterPattern;
+}
+
 void RetroFuturaGUI::Rectangle::SetDotColor(const glm::vec4& color)
 {
     _dotColor = color;
@@ -147,9 +152,9 @@ void RetroFuturaGUI::Rectangle::SetDotRadiusTransfer(std::span<f32> radiusTransf
     _dotRadiusTransferCount = static_cast<i32>(std::min<size_t>(_dotRadiusTransfer.size(), 255));
 
     if(_dotRadiusTransferCount > 0)
-        _shaderFeatureDIP |= ShaderFeatures::DottedPattern;
+        _shaderFeatureDIP |= ShaderFeatures::Raster;
     else
-        _shaderFeatureDIP &= ~ShaderFeatures::DottedPattern;
+        _shaderFeatureDIP &= ~ShaderFeatures::Raster;
 }
 
 void RetroFuturaGUI::Rectangle::SetDotTransparencyTransfer(const f32 transparencyTransfer)
@@ -278,6 +283,14 @@ void RetroFuturaGUI::Rectangle::initColors(std::span<glm::vec4> colors)
     _colorCount = static_cast<i32>(_colors.size());
 }
 
+void RetroFuturaGUI::Rectangle::uploadRasterUniforms(Shader& shader)
+{
+    shader.SetUniformInt("uRasterPattern", static_cast<i32>(_rasterPattern));
+
+    if(_rasterPattern == RasterPattern::Dotted)
+        uploadDotUniforms(shader);
+}
+
 void RetroFuturaGUI::Rectangle::uploadDotUniforms(Shader& shader)
 {
     _dotAnimationOffset += _dotAnimationSpeed;
@@ -326,13 +339,13 @@ void RetroFuturaGUI::Rectangle::drawWithSolidFill()
     if(_shaderFeatureDIP & ShaderFeatures::RoundedCorners)
         ShaderManager::GetSolidFillShader().SetUniformVec4("uCornerRadii", _cornerRadii);
 
-    if((_shaderFeatureDIP & (ShaderFeatures::RoundedCorners | ShaderFeatures::DottedPattern | ShaderFeatures::FogEffect | ShaderFeatures::Wave)) || hasBackgroundGap())
+    if((_shaderFeatureDIP & (ShaderFeatures::RoundedCorners | ShaderFeatures::Raster | ShaderFeatures::FogEffect | ShaderFeatures::Wave)) || hasBackgroundGap())
         ShaderManager::GetSolidFillShader().SetUniformVec2("uScale", _scale);
 
     ShaderManager::GetSolidFillShader().SetUniformVec4("uBackgroundGap", _backgroundGapData);
 
-    if(_shaderFeatureDIP & ShaderFeatures::DottedPattern)
-        uploadDotUniforms(ShaderManager::GetSolidFillShader());
+    if(_shaderFeatureDIP & ShaderFeatures::Raster)
+        uploadRasterUniforms(ShaderManager::GetSolidFillShader());
 
     if(_shaderFeatureDIP & ShaderFeatures::FogEffect)
         uploadFogUniforms(ShaderManager::GetSolidFillShader());
@@ -374,13 +387,13 @@ void RetroFuturaGUI::Rectangle::drawLinearGradientFill()
     if(_shaderFeatureDIP & ShaderFeatures::RoundedCorners)
         ShaderManager::GetLinearGradientShader().SetUniformVec4("uCornerRadii", _cornerRadii);
 
-    if((_shaderFeatureDIP & (ShaderFeatures::RoundedCorners | ShaderFeatures::DottedPattern | ShaderFeatures::FogEffect | ShaderFeatures::Wave)) || hasBackgroundGap())
+    if((_shaderFeatureDIP & (ShaderFeatures::RoundedCorners | ShaderFeatures::Raster | ShaderFeatures::FogEffect | ShaderFeatures::Wave)) || hasBackgroundGap())
         ShaderManager::GetLinearGradientShader().SetUniformVec2("uScale", _scale);
 
     ShaderManager::GetLinearGradientShader().SetUniformVec4("uBackgroundGap", _backgroundGapData);
 
-    if(_shaderFeatureDIP & ShaderFeatures::DottedPattern)
-        uploadDotUniforms(ShaderManager::GetLinearGradientShader());
+    if(_shaderFeatureDIP & ShaderFeatures::Raster)
+        uploadRasterUniforms(ShaderManager::GetLinearGradientShader());
 
     if(_shaderFeatureDIP & ShaderFeatures::FogEffect)
         uploadFogUniforms(ShaderManager::GetLinearGradientShader());
@@ -422,13 +435,13 @@ void RetroFuturaGUI::Rectangle::drawRadialGradientFill()
     if(_shaderFeatureDIP & ShaderFeatures::RoundedCorners)
         ShaderManager::GetRadialGradientShader().SetUniformVec4("uCornerRadii", _cornerRadii);
 
-    if((_shaderFeatureDIP & (ShaderFeatures::RoundedCorners | ShaderFeatures::DottedPattern | ShaderFeatures::FogEffect | ShaderFeatures::Wave)) || hasBackgroundGap())
+    if((_shaderFeatureDIP & (ShaderFeatures::RoundedCorners | ShaderFeatures::Raster | ShaderFeatures::FogEffect | ShaderFeatures::Wave)) || hasBackgroundGap())
         ShaderManager::GetRadialGradientShader().SetUniformVec2("uScale", _scale);
 
     ShaderManager::GetRadialGradientShader().SetUniformVec4("uBackgroundGap", _backgroundGapData);
 
-    if(_shaderFeatureDIP & ShaderFeatures::DottedPattern)
-        uploadDotUniforms(ShaderManager::GetRadialGradientShader());
+    if(_shaderFeatureDIP & ShaderFeatures::Raster)
+        uploadRasterUniforms(ShaderManager::GetRadialGradientShader());
 
     if(_shaderFeatureDIP & ShaderFeatures::FogEffect)
         uploadFogUniforms(ShaderManager::GetRadialGradientShader());
@@ -470,13 +483,13 @@ void RetroFuturaGUI::Rectangle::drawHueStarGradientFill()
     if(_shaderFeatureDIP & ShaderFeatures::RoundedCorners)
         ShaderManager::GetHueStarGradientShader().SetUniformVec4("uCornerRadii", _cornerRadii);
 
-    if((_shaderFeatureDIP & (ShaderFeatures::RoundedCorners | ShaderFeatures::DottedPattern | ShaderFeatures::FogEffect | ShaderFeatures::Wave)) || hasBackgroundGap())
+    if((_shaderFeatureDIP & (ShaderFeatures::RoundedCorners | ShaderFeatures::Raster | ShaderFeatures::FogEffect | ShaderFeatures::Wave)) || hasBackgroundGap())
         ShaderManager::GetHueStarGradientShader().SetUniformVec2("uScale", _scale);
 
     ShaderManager::GetHueStarGradientShader().SetUniformVec4("uBackgroundGap", _backgroundGapData);
 
-    if(_shaderFeatureDIP & ShaderFeatures::DottedPattern)
-        uploadDotUniforms(ShaderManager::GetHueStarGradientShader());
+    if(_shaderFeatureDIP & ShaderFeatures::Raster)
+        uploadRasterUniforms(ShaderManager::GetHueStarGradientShader());
 
     if(_shaderFeatureDIP & ShaderFeatures::FogEffect)
         uploadFogUniforms(ShaderManager::GetHueStarGradientShader());
@@ -510,8 +523,8 @@ void RetroFuturaGUI::Rectangle::drawSolidBorder()
     if(_borderGapCount > 0)
         ShaderManager::GetBorderSolidFillShader().SetUniformVec4("uBorderGaps", &_borderGapData[0][0], static_cast<u32>(_borderGapCount));
 
-    if(_shaderFeatureDIP & ShaderFeatures::DottedPattern)
-        uploadDotUniforms(ShaderManager::GetBorderSolidFillShader());
+    if(_shaderFeatureDIP & ShaderFeatures::Raster)
+        uploadRasterUniforms(ShaderManager::GetBorderSolidFillShader());
 
     if(_shaderFeatureDIP & ShaderFeatures::Wave)
         uploadWaveUniforms(ShaderManager::GetBorderSolidFillShader());
@@ -554,8 +567,8 @@ void RetroFuturaGUI::Rectangle::drawLinearGradientBorder()
     if(_borderGapCount > 0)
         ShaderManager::GetBorderLinearGradientShader().SetUniformVec4("uBorderGaps", &_borderGapData[0][0], static_cast<u32>(_borderGapCount));
 
-    if(_shaderFeatureDIP & ShaderFeatures::DottedPattern)
-        uploadDotUniforms(ShaderManager::GetBorderLinearGradientShader());
+    if(_shaderFeatureDIP & ShaderFeatures::Raster)
+        uploadRasterUniforms(ShaderManager::GetBorderLinearGradientShader());
 
     if(_shaderFeatureDIP & ShaderFeatures::Wave)
         uploadWaveUniforms(ShaderManager::GetBorderLinearGradientShader());
@@ -598,8 +611,8 @@ void RetroFuturaGUI::Rectangle::drawRadialGradientBorder()
     if(_borderGapCount > 0)
         ShaderManager::GetBorderRadialGradientShader().SetUniformVec4("uBorderGaps", &_borderGapData[0][0], static_cast<u32>(_borderGapCount));
 
-    if(_shaderFeatureDIP & ShaderFeatures::DottedPattern)
-        uploadDotUniforms(ShaderManager::GetBorderRadialGradientShader());
+    if(_shaderFeatureDIP & ShaderFeatures::Raster)
+        uploadRasterUniforms(ShaderManager::GetBorderRadialGradientShader());
 
     if(_shaderFeatureDIP & ShaderFeatures::Wave)
         uploadWaveUniforms(ShaderManager::GetBorderRadialGradientShader());
@@ -642,8 +655,8 @@ void RetroFuturaGUI::Rectangle::drawHueStarGradientBorder()
     if(_borderGapCount > 0)
         ShaderManager::GetBorderHueStarGradientShader().SetUniformVec4("uBorderGaps", &_borderGapData[0][0], static_cast<u32>(_borderGapCount));
 
-    if(_shaderFeatureDIP & ShaderFeatures::DottedPattern)
-        uploadDotUniforms(ShaderManager::GetBorderHueStarGradientShader());
+    if(_shaderFeatureDIP & ShaderFeatures::Raster)
+        uploadRasterUniforms(ShaderManager::GetBorderHueStarGradientShader());
 
     if(_shaderFeatureDIP & ShaderFeatures::Wave)
         uploadWaveUniforms(ShaderManager::GetBorderHueStarGradientShader());
