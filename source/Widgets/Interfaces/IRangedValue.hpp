@@ -483,11 +483,11 @@ namespace RetroFuturaGUI
         /// @brief Sets the spacing between dot centers, in pixels, for the indicator background's Dotted raster pattern.
         void SetIndicatorBackgroundDotDistance(const f32 distance);
 
-        /// @brief Sets the direction, in degrees, along which the indicator background's dot radii/animation transfer.
+        /// @brief Sets the direction, in degrees, along which the indicator background's dot widths/animation transfer.
         void SetIndicatorBackgroundDotSizeTransferDegree(const f32 degree);
 
-        /// @brief Sets the per-position dot radius curve, in pixels, for the indicator background's Dotted raster pattern. Enables the Raster shader feature when non-empty.
-        void SetIndicatorBackgroundPrimaryRasterWidthTransfer(std::span<f32> radiusTransfer);
+        /// @brief Sets the per-position dot width curve, in pixels (each value is a dot's full width across), for the indicator background's Dotted raster pattern. Enables the Raster shader feature when non-empty.
+        void SetIndicatorBackgroundPrimaryRasterWidthTransfer(std::span<f32> widthTransfer);
 
         /// @brief Sets how far each indicator background dot's opacity reaches from its center before fading to transparent.
         void SetIndicatorBackgroundDotTransparencyTransfer(const f32 transparencyTransfer);
@@ -531,11 +531,11 @@ namespace RetroFuturaGUI
         /// @brief Sets the spacing between dot centers, in pixels, for the indicator border's Dotted raster pattern.
         void SetIndicatorBorderDotDistance(const f32 distance);
 
-        /// @brief Sets the direction, in degrees, along which the indicator border's dot radii/animation transfer.
+        /// @brief Sets the direction, in degrees, along which the indicator border's dot widths/animation transfer.
         void SetIndicatorBorderDotSizeTransferDegree(const f32 degree);
 
-        /// @brief Sets the per-position dot radius curve, in pixels, for the indicator border's Dotted raster pattern. Enables the Raster shader feature when non-empty.
-        void SetIndicatorBorderPrimaryRasterWidthTransfer(std::span<f32> radiusTransfer);
+        /// @brief Sets the per-position dot width curve, in pixels (each value is a dot's full width across), for the indicator border's Dotted raster pattern. Enables the Raster shader feature when non-empty.
+        void SetIndicatorBorderPrimaryRasterWidthTransfer(std::span<f32> widthTransfer);
 
         /// @brief Sets how far each indicator border dot's opacity reaches from its center before fading to transparent.
         void SetIndicatorBorderDotTransparencyTransfer(const f32 transparencyTransfer);
@@ -588,11 +588,11 @@ namespace RetroFuturaGUI
         /// @brief Sets the spacing between dot centers, in pixels, for the graph's Dotted raster pattern.
         void SetGraphDotDistance(const f32 distance);
 
-        /// @brief Sets the direction, in degrees, along which the graph's dot radii/animation transfer.
+        /// @brief Sets the direction, in degrees, along which the graph's dot widths/animation transfer.
         void SetGraphDotSizeTransferDegree(const f32 degree);
 
-        /// @brief Sets the per-position dot radius curve, in pixels, for the graph's Dotted raster pattern. Enables the Raster shader feature when non-empty.
-        void SetGraphPrimaryRasterWidthTransfer(std::span<f32> radiusTransfer);
+        /// @brief Sets the per-position dot width curve, in pixels (each value is a dot's full width across), for the graph's Dotted raster pattern. Enables the Raster shader feature when non-empty.
+        void SetGraphPrimaryRasterWidthTransfer(std::span<f32> widthTransfer);
 
         /// @brief Sets how far each graph dot's opacity reaches from its center before fading to transparent.
         void SetGraphDotTransparencyTransfer(const f32 transparencyTransfer);

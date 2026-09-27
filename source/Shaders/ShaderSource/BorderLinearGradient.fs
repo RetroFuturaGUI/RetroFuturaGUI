@@ -132,7 +132,7 @@ bool isInBorderGap(vec2 scaledPos, vec2 halfSize, vec2 innerHalfSize)
 
 /* Blends a dot-grid pattern over baseColor. Dot centers sit on a uDotDistance grid (in px, local
    to the rectangle) that slides along the uDotSizeTransferDegree direction over time via
-   uDotAnimationOffset. Each dot's radius is sampled from uPrimaryRasterWidthTransfer, indexed by that same
+   uDotAnimationOffset. Each dot's total width is sampled from uPrimaryRasterWidthTransfer, indexed by that same
    dot's position projected onto the direction and normalized across the rectangle's extent -
    this is what lets dots grow/shrink smoothly from one side of the rectangle to the other.*/
 vec4 applyDottedPattern(vec4 baseColor, vec2 localPos)
@@ -150,17 +150,20 @@ vec4 applyDottedPattern(vec4 baseColor, vec2 localPos)
     vec2 cellCenter = floor(animatedPos / dotDistance + 0.5) * dotDistance;
     vec2 localOffset = animatedPos - cellCenter;
 
-    // Normalize this dot's projected position across the rectangle's extent to look up its radius.
+    // Normalize this dot's projected position across the rectangle's extent to look up its width.
     float maxProjection = abs(direction.x) * halfSize.x + abs(direction.y) * halfSize.y;
     // fract (not clamp) so the transfer curve repeats seamlessly as the pattern scrolls forever,
     // instead of freezing once a dot's projected position passes the rectangle's original extent.
     float t = maxProjection > 0.0001 ? fract(dot(cellCenter, direction) / (2.0 * maxProjection) + 0.5) : 0.0;
 
     int count = max(uPrimaryRasterWidthTransferCount, 1);
-    float radiusIndexF = t * float(count - 1);
-    int idx0 = clamp(int(floor(radiusIndexF)), 0, count - 1);
+    float widthIndexF = t * float(count - 1);
+    int idx0 = clamp(int(floor(widthIndexF)), 0, count - 1);
     int idx1 = clamp(idx0 + 1, 0, count - 1);
-    float dotRadius = mix(uPrimaryRasterWidthTransfer[idx0], uPrimaryRasterWidthTransfer[idx1], count > 1 ? fract(radiusIndexF) : 0.0);
+    float dotWidth = mix(uPrimaryRasterWidthTransfer[idx0], uPrimaryRasterWidthTransfer[idx1], count > 1 ? fract(widthIndexF) : 0.0);
+
+    // The transfer curve gives each dot's width across, so the circle drawn from its center is half of it.
+    float dotRadius = dotWidth * 0.5;
     // Clamp to half the spacing so a dot's circle never reaches its Voronoi cell's square boundary
     // (which would otherwise make oversized dots look like squares/diamonds instead of circles).
     dotRadius = min(dotRadius, dotDistance * 0.5);

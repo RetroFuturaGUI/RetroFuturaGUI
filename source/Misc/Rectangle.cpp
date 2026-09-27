@@ -146,9 +146,9 @@ void RetroFuturaGUI::Rectangle::SetDotSizeTransferDegree(const f32 degree)
     _dotSizeTransferDegree = degree;
 }
 
-void RetroFuturaGUI::Rectangle::SetPrimaryRasterWidthTransfer(std::span<f32> radiusTransfer)
+void RetroFuturaGUI::Rectangle::SetPrimaryRasterWidthTransfer(std::span<f32> widthTransfer)
 {
-    _primaryRasterWidthTransfer = radiusTransfer;
+    _primaryRasterWidthTransfer = widthTransfer;
     _primaryRasterWidthTransferCount = static_cast<i32>(std::min<size_t>(_primaryRasterWidthTransfer.size(), 255));
 
     if(_primaryRasterWidthTransferCount > 0)

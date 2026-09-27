@@ -390,11 +390,11 @@ void RetroFuturaGUI::MenuBar::SetItemBackgroundDotSizeTransferDegree(const f32 d
     _itemBackground->SetDotSizeTransferDegree(degree);
 }
 
-void RetroFuturaGUI::MenuBar::SetItemBackgroundPrimaryRasterWidthTransfer(std::span<f32> radiusTransfer)
+void RetroFuturaGUI::MenuBar::SetItemBackgroundPrimaryRasterWidthTransfer(std::span<f32> widthTransfer)
 {
     /* Kept in the member vector because Rectangle holds the curve as a span,
        so the caller's container is free to die right after this call. */
-    _itemBackgroundPrimaryRasterWidthTransfer.assign(radiusTransfer.begin(), radiusTransfer.end());
+    _itemBackgroundPrimaryRasterWidthTransfer.assign(widthTransfer.begin(), widthTransfer.end());
 
     if(!_itemBackground)
         return;
@@ -585,9 +585,9 @@ void RetroFuturaGUI::MenuBar::SetItemBorderDotSizeTransferDegree(const f32 degre
     _itemBorder->SetDotSizeTransferDegree(degree);
 }
 
-void RetroFuturaGUI::MenuBar::SetItemBorderPrimaryRasterWidthTransfer(std::span<f32> radiusTransfer)
+void RetroFuturaGUI::MenuBar::SetItemBorderPrimaryRasterWidthTransfer(std::span<f32> widthTransfer)
 {
-    _itemBorderPrimaryRasterWidthTransfer.assign(radiusTransfer.begin(), radiusTransfer.end());
+    _itemBorderPrimaryRasterWidthTransfer.assign(widthTransfer.begin(), widthTransfer.end());
 
     if(!_itemBorder)
         return;

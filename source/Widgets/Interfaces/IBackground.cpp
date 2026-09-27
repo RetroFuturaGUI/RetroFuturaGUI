@@ -121,9 +121,9 @@ void RetroFuturaGUI::IBackground::SetBackgroundDotSizeTransferDegree(const f32 d
         _background->SetDotSizeTransferDegree(degree);
 }
 
-void RetroFuturaGUI::IBackground::SetBackgroundPrimaryRasterWidthTransfer(std::span<f32> radiusTransfer)
+void RetroFuturaGUI::IBackground::SetBackgroundPrimaryRasterWidthTransfer(std::span<f32> widthTransfer)
 {
-    _backgroundPrimaryRasterWidthTransfer.assign(radiusTransfer.begin(), radiusTransfer.end());
+    _backgroundPrimaryRasterWidthTransfer.assign(widthTransfer.begin(), widthTransfer.end());
 
     if(_background)
         _background->SetPrimaryRasterWidthTransfer(_backgroundPrimaryRasterWidthTransfer);

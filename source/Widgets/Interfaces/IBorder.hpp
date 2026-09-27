@@ -37,11 +37,11 @@ namespace RetroFuturaGUI
         /// @brief Sets the spacing between dot centers, in pixels, for the border's Dotted raster pattern.
         void SetBorderDotDistance(const f32 distance);
 
-        /// @brief Sets the direction, in degrees, along which the border's dot radii/animation transfer.
+        /// @brief Sets the direction, in degrees, along which the border's dot widths/animation transfer.
         void SetBorderDotSizeTransferDegree(const f32 degree);
 
-        /// @brief Sets the per-position dot radius curve, in pixels, for the border's Dotted raster pattern. Enables the Raster shader feature when non-empty.
-        void SetBorderPrimaryRasterWidthTransfer(std::span<f32> radiusTransfer);
+        /// @brief Sets the per-position dot width curve, in pixels (each value is a dot's full width across), for the border's Dotted raster pattern. Enables the Raster shader feature when non-empty.
+        void SetBorderPrimaryRasterWidthTransfer(std::span<f32> widthTransfer);
 
         /// @brief Sets how far each border dot's opacity reaches from its center before fading to transparent.
         void SetBorderDotTransparencyTransfer(const f32 transparencyTransfer);

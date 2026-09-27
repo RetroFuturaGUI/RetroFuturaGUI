@@ -353,9 +353,9 @@ void RetroFuturaGUI::IRangedValue::SetIndicatorBackgroundDotSizeTransferDegree(c
         _indicatorBackground->SetDotSizeTransferDegree(degree);
 }
 
-void RetroFuturaGUI::IRangedValue::SetIndicatorBackgroundPrimaryRasterWidthTransfer(std::span<f32> radiusTransfer)
+void RetroFuturaGUI::IRangedValue::SetIndicatorBackgroundPrimaryRasterWidthTransfer(std::span<f32> widthTransfer)
 {
-    _indicatorBackgroundPrimaryRasterWidthTransfer.assign(radiusTransfer.begin(), radiusTransfer.end());
+    _indicatorBackgroundPrimaryRasterWidthTransfer.assign(widthTransfer.begin(), widthTransfer.end());
 
     if(_indicatorBackground)
         _indicatorBackground->SetPrimaryRasterWidthTransfer(_indicatorBackgroundPrimaryRasterWidthTransfer);
@@ -453,9 +453,9 @@ void RetroFuturaGUI::IRangedValue::SetIndicatorBorderDotSizeTransferDegree(const
         _indicatorBorder->SetDotSizeTransferDegree(degree);
 }
 
-void RetroFuturaGUI::IRangedValue::SetIndicatorBorderPrimaryRasterWidthTransfer(std::span<f32> radiusTransfer)
+void RetroFuturaGUI::IRangedValue::SetIndicatorBorderPrimaryRasterWidthTransfer(std::span<f32> widthTransfer)
 {
-    _indicatorBorderPrimaryRasterWidthTransfer.assign(radiusTransfer.begin(), radiusTransfer.end());
+    _indicatorBorderPrimaryRasterWidthTransfer.assign(widthTransfer.begin(), widthTransfer.end());
 
     if(_indicatorBorder)
         _indicatorBorder->SetPrimaryRasterWidthTransfer(_indicatorBorderPrimaryRasterWidthTransfer);
@@ -600,9 +600,9 @@ void RetroFuturaGUI::IRangedValue::SetGraphDotSizeTransferDegree(const f32 degre
         _graph->SetDotSizeTransferDegree(degree);
 }
 
-void RetroFuturaGUI::IRangedValue::SetGraphPrimaryRasterWidthTransfer(std::span<f32> radiusTransfer)
+void RetroFuturaGUI::IRangedValue::SetGraphPrimaryRasterWidthTransfer(std::span<f32> widthTransfer)
 {
-    _graphPrimaryRasterWidthTransfer.assign(radiusTransfer.begin(), radiusTransfer.end());
+    _graphPrimaryRasterWidthTransfer.assign(widthTransfer.begin(), widthTransfer.end());
 
     if(_graph)
         _graph->SetPrimaryRasterWidthTransfer(_graphPrimaryRasterWidthTransfer);

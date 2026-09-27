@@ -112,11 +112,11 @@ namespace RetroFuturaGUI
         /// @brief Sets the spacing between dot centers, in pixels, for the Dotted raster pattern.
         void SetDotDistance(const f32 distance);
 
-        /// @brief Sets the direction, in degrees, along which dot radii are sampled from PrimaryRasterWidthTransfer and along which the pattern animates.
+        /// @brief Sets the direction, in degrees, along which dot widths are sampled from PrimaryRasterWidthTransfer and along which the pattern animates.
         void SetDotSizeTransferDegree(const f32 degree);
 
-        /// @brief Sets the per-position dot radius curve, in pixels, sampled along the DotSizeTransferDegree direction across the rectangle. Enables the Raster shader feature when non-empty.
-        void SetPrimaryRasterWidthTransfer(std::span<f32> radiusTransfer);
+        /// @brief Sets the per-position dot width curve, in pixels (each value is a dot's full width across), sampled along the DotSizeTransferDegree direction across the rectangle. Enables the Raster shader feature when non-empty.
+        void SetPrimaryRasterWidthTransfer(std::span<f32> widthTransfer);
 
         /// @brief Sets how far each dot's opacity reaches from its center before fading to transparent. 1.0 = fully opaque disc, 0.5 = opaque inner half then fades out, 0.0 = only the center pixel is opaque.
         void SetDotTransparencyTransfer(const f32 transparencyTransfer);

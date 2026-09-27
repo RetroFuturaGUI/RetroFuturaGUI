@@ -170,11 +170,11 @@ namespace RetroFuturaGUI
         /// @brief Sets the spacing between dot centers, in pixels, for the item background's Dotted raster pattern.
         void SetItemBackgroundDotDistance(const f32 distance);
 
-        /// @brief Sets the direction, in degrees, along which the item background's dot radii/animation transfer.
+        /// @brief Sets the direction, in degrees, along which the item background's dot widths/animation transfer.
         void SetItemBackgroundDotSizeTransferDegree(const f32 degree);
 
-        /// @brief Sets the per-position dot radius curve, in pixels, for the item background's Dotted raster pattern. Enables the Raster shader feature when non-empty.
-        void SetItemBackgroundPrimaryRasterWidthTransfer(std::span<f32> radiusTransfer);
+        /// @brief Sets the per-position dot width curve, in pixels (each value is a dot's full width across), for the item background's Dotted raster pattern. Enables the Raster shader feature when non-empty.
+        void SetItemBackgroundPrimaryRasterWidthTransfer(std::span<f32> widthTransfer);
 
         /// @brief Sets how far each item background dot's opacity reaches from its center before fading to transparent.
         void SetItemBackgroundDotTransparencyTransfer(const f32 transparencyTransfer);
@@ -228,11 +228,11 @@ namespace RetroFuturaGUI
         /// @brief Sets the spacing between dot centers, in pixels, for the item border's Dotted raster pattern.
         void SetItemBorderDotDistance(const f32 distance);
 
-        /// @brief Sets the direction, in degrees, along which the item border's dot radii/animation transfer.
+        /// @brief Sets the direction, in degrees, along which the item border's dot widths/animation transfer.
         void SetItemBorderDotSizeTransferDegree(const f32 degree);
 
-        /// @brief Sets the per-position dot radius curve, in pixels, for the item border's Dotted raster pattern. Enables the Raster shader feature when non-empty.
-        void SetItemBorderPrimaryRasterWidthTransfer(std::span<f32> radiusTransfer);
+        /// @brief Sets the per-position dot width curve, in pixels (each value is a dot's full width across), for the item border's Dotted raster pattern. Enables the Raster shader feature when non-empty.
+        void SetItemBorderPrimaryRasterWidthTransfer(std::span<f32> widthTransfer);
 
         /// @brief Sets how far each item border dot's opacity reaches from its center before fading to transparent.
         void SetItemBorderDotTransparencyTransfer(const f32 transparencyTransfer);
