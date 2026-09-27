@@ -106,10 +106,35 @@ void RetroFuturaGUI::MenuBar::SetFlexCount(const uSize count)
 {
     _itemFlex.resize(count);
 
+    /* Cells added here have no policy of their own, so they take an even share. Cells that already had
+       one keep it, which is what lets a count change follow a SetFlexDefinition without undoing it. */
+    _flexDefinition.resize(count, _kEvenShare);
+
     if(_hoveredItemIndex >= _itemFlex.size())
         _hoveredItemIndex = _kNoItem;
 
     placeItems();
+}
+
+void RetroFuturaGUI::MenuBar::SetFlexDefinition(std::span<FlexDefinition> flexDefinitions)
+{
+    _flexDefinition.assign(flexDefinitions.begin(), flexDefinitions.end());
+
+    //The definitions are what say how many cells there are, so the flex follows them.
+    _itemFlex.resize(_flexDefinition.size());
+
+    if(_hoveredItemIndex >= _itemFlex.size())
+        _hoveredItemIndex = _kNoItem;
+
+    placeItems();
+}
+
+const RetroFuturaGUI::MenuBar::FlexDefinition& RetroFuturaGUI::MenuBar::GetFlexDefinition(const uSize index) const
+{
+    if(index >= _flexDefinition.size())
+        return _kEvenShare;
+
+    return _flexDefinition[index];
 }
 
 bool RetroFuturaGUI::MenuBar::RemoveWidget(const uSize index)
@@ -117,12 +142,12 @@ bool RetroFuturaGUI::MenuBar::RemoveWidget(const uSize index)
     if(index >= _itemFlex.size())
         return false;
 
-    std::unique_ptr<IWidget>& slot { *std::next(_itemFlex.begin(), static_cast<i64>(index)) };
+    std::unique_ptr<IWidget>& cell { *std::next(_itemFlex.begin(), static_cast<i64>(index)) };
 
-    if(!slot)
+    if(!cell)
         return false;
 
-    slot.reset();
+    cell.reset();
     return true;
 }
 
@@ -617,6 +642,14 @@ void RetroFuturaGUI::MenuBar::interact()
     bool isMouseButtonPressed { PlatformBridge::Input::IsMouseButtonDown(PlatformBridge::MouseButton::Left) };
     bool isMouseInside { hasMousePosition && isPointInside(mousePos) };
 
+    updateWindowDrag(MouseState
+    {
+        ._WorldPoint = mousePos,
+        ._WindowPoint = glm::i32vec2(mouseX, mouseY),
+        ._HasPosition = hasMousePosition,
+        ._IsPressed = isMouseButtonPressed
+    });
+
     if(!_isEnabledFlag || !isMouseInside) //no action and mouse leave
     {
         _hoveredItemIndex = _kNoItem;
@@ -633,11 +666,10 @@ void RetroFuturaGUI::MenuBar::interact()
     }
 
     _hoveredItemIndex = _kNoItem;
-    const glm::vec2 slot { slotSize() };
 
     for(uSize index { 0 }; index < _itemFlex.size(); ++index)
     {
-        if(!isPointInsideRect(mousePos, glm::vec3(slot, _size.z), slotPosition(index), _rotation))
+        if(!isPointInsideRect(mousePos, glm::vec3(cellSize(index), _size.z), cellPosition(index), _rotation))
             continue;
 
         _hoveredItemIndex = index;
@@ -668,6 +700,73 @@ void RetroFuturaGUI::MenuBar::interact()
     _wasClicked = isMouseButtonPressed;
 }
 
+void RetroFuturaGUI::MenuBar::updateWindowDrag(const MouseState& mouse)
+{
+    if(!_parentWindow)
+        return;
+
+    const bool pressedThisFrame { mouse._IsPressed && !_wasDragMousePressed };
+    _wasDragMousePressed = mouse._IsPressed;
+
+    if(!mouse._IsPressed)
+    {
+        _isDraggingWindow = false;
+        return;
+    }
+
+    if(!mouse._HasPosition)
+        return;
+
+    if(pressedThisFrame)
+    {
+        //Only the press that lands on a drag cell begins one
+        if(!isPointInsideDragCell(mouse._WorldPoint))
+            return;
+
+        _isDraggingWindow = true;
+        _dragGrabPoint = mouse._WindowPoint;
+        return;
+    }
+
+    if(!_isDraggingWindow)
+        return;
+
+    // How far the cursor has moved from the point it took hold of
+    const glm::i32vec2 slip { mouse._WindowPoint - _dragGrabPoint };
+
+    if(slip.x == 0 && slip.y == 0)
+        return;
+
+    i32 windowX { 0 }, windowY { 0 };
+    glfwGetWindowPos(_parentWindow, &windowX, &windowY);
+    glfwSetWindowPos(_parentWindow, windowX + slip.x, windowY + slip.y);
+}
+
+bool RetroFuturaGUI::MenuBar::isPointInsideDragCell(const glm::vec2& point) const
+{
+    uSize index { 0 };
+
+    for(const std::unique_ptr<IWidget>& item : _itemFlex)
+    {
+        const uSize cell { index };
+        ++index;
+
+        if(!GetFlexDefinition(cell)._IsWindowDrag)
+            continue;
+
+        //The flag only counts on a Label, so a cell holding something clickable keeps its clicks.
+        if(!dynamic_cast<Label*>(item.get()))
+            continue;
+
+        if(!isPointInsideRect(point, glm::vec3(cellSize(cell), _size.z), cellPosition(cell), _rotation))
+            continue;
+
+        return true;
+    }
+
+    return false;
+}
+
 void RetroFuturaGUI::MenuBar::updateLayout()
 {
     SetPosition(calculateDockedPosition());
@@ -675,11 +774,13 @@ void RetroFuturaGUI::MenuBar::updateLayout()
 
 void RetroFuturaGUI::MenuBar::placeItems()
 {
+    resolveCellSizes();
+
     uSize index { 0 };
 
     for(const std::unique_ptr<IWidget>& item : _itemFlex)
     {
-        const glm::vec3 center { slotPosition(index) };
+        const glm::vec3 center { cellPosition(index) };
         ++index;
 
         if(!item)
@@ -749,28 +850,100 @@ bool RetroFuturaGUI::MenuBar::isHorizontal() const
     return _dockingEdge == DockingEdge::Top || _dockingEdge == DockingEdge::Bottom;
 }
 
-glm::vec2 RetroFuturaGUI::MenuBar::slotSize() const
+void RetroFuturaGUI::MenuBar::resolveCellSizes()
 {
+    _resolvedCellSizes.assign(_itemFlex.size(), 0.0f);
+
     if(_itemFlex.empty())
-        return glm::vec2(0.0f);
+        return;
 
-    const f32 slotCount { static_cast<f32>(_itemFlex.size()) };
+    const bool horizontal { isHorizontal() };
+    const f32
+        lengthExtent { horizontal ? _size.x : _size.y },   // along the bar
+        thicknessExtent { horizontal ? _size.y : _size.x };// across it
 
-    if(isHorizontal())
-        return glm::vec2(_size.x / slotCount, _size.y);
+    f32
+        sizedTotal { 0.0f },
+        starWeightTotal { 0.0f };
+    uSize index { 0 };
 
-    return glm::vec2(_size.x, _size.y / slotCount);
+    //First pass: every cell that knows its own extent claims it, and the Star weights are counted up.
+    for(const std::unique_ptr<IWidget>& item : _itemFlex)
+    {
+        const FlexDefinition& definition { GetFlexDefinition(index) };
+        const f32 value { definition._Width > 0.0f ? definition._Width : 0.0f };
+
+        switch(definition._FlexSizing)
+        {
+            case FlexSizing::Star:
+                starWeightTotal += value;
+            break;
+            case FlexSizing::Fixed:
+                _resolvedCellSizes[index] = value;
+            break;
+            case FlexSizing::Auto:
+                _resolvedCellSizes[index] = item ? (horizontal ? item->GetSize().x : item->GetSize().y) : 0.0f;
+            break;
+            case FlexSizing::Square:
+                _resolvedCellSizes[index] = thicknessExtent;
+            break;
+            default:
+                [[unlikely]]
+            break;
+        }
+
+        sizedTotal += _resolvedCellSizes[index];
+        ++index;
+    }
+
+    const f32 leftover { lengthExtent > sizedTotal ? lengthExtent - sizedTotal : 0.0f };
+
+    for(index = 0; index < _resolvedCellSizes.size(); ++index)
+    {
+        const FlexDefinition& definition { GetFlexDefinition(index) };
+
+        if(definition._FlexSizing != FlexSizing::Star)
+            continue;
+
+        const f32 value { definition._Width > 0.0f ? definition._Width : 0.0f };
+        _resolvedCellSizes[index] = starWeightTotal > 0.0f ? leftover * (value / starWeightTotal) : 0.0f;
+    }
 }
 
-glm::vec3 RetroFuturaGUI::MenuBar::slotPosition(const uSize index) const
+glm::vec2 RetroFuturaGUI::MenuBar::cellSize(const uSize index) const
 {
-    const glm::vec2 slot { slotSize() };
-    const f32 offset { (static_cast<f32>(index) + 0.5f) };
+    if(index >= _resolvedCellSizes.size())
+        return glm::vec2(0.0f);
 
     if(isHorizontal())
-        return glm::vec3(_position.x - _size.x * 0.5f + slot.x * offset, _position.y, _position.z);
+        return glm::vec2(_resolvedCellSizes[index], _size.y);
 
-    return glm::vec3(_position.x, _position.y + _size.y * 0.5f - slot.y * offset, _position.z);
+    return glm::vec2(_size.x, _resolvedCellSizes[index]);
+}
+
+f32 RetroFuturaGUI::MenuBar::cellOffset(const uSize index) const
+{
+    f32 offset { 0.0f };
+
+    for(uSize cell { 0 }; cell < index && cell < _resolvedCellSizes.size(); ++cell)
+        offset += _resolvedCellSizes[cell];
+
+    return offset;
+}
+
+glm::vec3 RetroFuturaGUI::MenuBar::cellPosition(const uSize index) const
+{
+    if(index >= _resolvedCellSizes.size())
+        return _position;
+
+    const f32
+        offset { cellOffset(index) },
+        extent { _resolvedCellSizes[index] };
+
+    if(isHorizontal())
+        return glm::vec3(_position.x - _size.x * 0.5f + offset + extent * 0.5f, _position.y, _position.z);
+
+    return glm::vec3(_position.x, _position.y + _size.y * 0.5f - offset - extent * 0.5f, _position.z);
 }
 
 RetroFuturaGUI::ColorState RetroFuturaGUI::MenuBar::itemState(const uSize index) const
@@ -789,18 +962,18 @@ RetroFuturaGUI::ColorState RetroFuturaGUI::MenuBar::itemState(const uSize index)
 
 void RetroFuturaGUI::MenuBar::drawItems()
 {
-    const glm::vec2 slot { slotSize() };
     uSize index { 0 };
 
     for(const std::unique_ptr<IWidget>& item : _itemFlex)
     {
-        const glm::vec3 center { slotPosition(index) };
+        const glm::vec3 center { cellPosition(index) };
+        const glm::vec2 cell { cellSize(index) };
         setItemColors(itemState(index));
         ++index;
 
         if(_itemBackground)
         {
-            _itemBackground->SetSize(slot);
+            _itemBackground->SetSize(cell);
             _itemBackground->SetPosition(center);
             _itemBackground->SetRotation(_rotation);
             _itemBackground->Draw();
@@ -808,7 +981,7 @@ void RetroFuturaGUI::MenuBar::drawItems()
 
         if(_itemBorder)
         {
-            _itemBorder->SetSize(slot);
+            _itemBorder->SetSize(cell);
             _itemBorder->SetPosition(center + glm::vec3(0.0f, 0.0f, 0.01f));
             _itemBorder->SetRotation(_rotation);
             _itemBorder->Draw();
@@ -832,7 +1005,6 @@ void RetroFuturaGUI::MenuBar::drawSeparatorLines()
     if(_itemFlex.size() < 2)
         return;
 
-    const glm::vec2 slot { slotSize() };
     const glm::vec2 lineSize { isHorizontal()
         ? glm::vec2(_separatorLinesThickness, _size.y)
         : glm::vec2(_size.x, _separatorLinesThickness) };
@@ -840,13 +1012,14 @@ void RetroFuturaGUI::MenuBar::drawSeparatorLines()
     _separatorLine->SetSize(lineSize);
     _separatorLine->SetRotation(_rotation);
 
-    // A line goes on every seam between two slots. one fewer than there are slots
+    // A line goes on every seam between two cells. one fewer than there are cells
     for(uSize seam { 1 }; seam < _itemFlex.size(); ++seam)
     {
-        const glm::vec3 center { slotPosition(seam) };
+        //The seam is the near edge of this cell, which is where the previous one ended.
+        const f32 offset { cellOffset(seam) };
         const glm::vec3 seamCenter { isHorizontal()
-            ? glm::vec3(center.x - slot.x * 0.5f, center.y, center.z)
-            : glm::vec3(center.x, center.y + slot.y * 0.5f, center.z) };
+            ? glm::vec3(_position.x - _size.x * 0.5f + offset, _position.y, _position.z)
+            : glm::vec3(_position.x, _position.y + _size.y * 0.5f - offset, _position.z) };
 
         _separatorLine->SetPosition(seamCenter + glm::vec3(0.0f, 0.0f, 0.015f));
         _separatorLine->Draw();

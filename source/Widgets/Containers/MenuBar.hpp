@@ -16,6 +16,7 @@
 #include "Prefab.hpp"
 #include "ComboBox.hpp"
 #include <memory>
+#include <vector>
 
 namespace RetroFuturaGUI
 {
@@ -44,6 +45,21 @@ namespace RetroFuturaGUI
             End
         };
 
+        enum class FlexSizing : u32
+        {
+            Star,  // takes a share of whatever viewport space the Fixed/Auto tracks left over
+            Fixed, // absolute pixel size
+            Auto,  // sized to the track's content
+            Square // If horizontal alignment: Width equal height. If vertical alignment, height equals width
+        };
+
+        struct FlexDefinition
+        {
+            FlexSizing _FlexSizing { FlexSizing::Fixed };
+            f32 _Width { 1.0f };
+            bool _IsWindowDrag { false }; //This marks whether a cell can be used to drag the owning window. True is surpressed if the widget is not a Label
+        };
+
         MenuBar(const std::string& name, Projection* projection, IWidget* parentWidget, const WidgetTypeID parentWidgetTypeID, GLFWwindow* parentWindow);
         MenuBar() = delete;
         MenuBar(const Button&) = delete;
@@ -61,7 +77,7 @@ namespace RetroFuturaGUI
         void SetEdgeAlignment(const EdgeAlignment edgeAlignment);
         void SetFlexCount(const uSize count);
 
-        /// @brief Takes ownership of a widget and puts it in the given flex slot
+        /// @brief Takes ownership of a widget and puts it in the given flex cell
         template<MenuBarWidgetTypes T> void AddWidget(std::unique_ptr<T> widget, const uSize index)
         {
             if(!widget)
@@ -74,7 +90,7 @@ namespace RetroFuturaGUI
             placeItems();
         }
 
-        /// @brief Returns the widget in the given flex slot, or nullptr when the slot is empty, out of range, or holds a widget of another type.
+        /// @brief Returns the widget in the given flex cell, or nullptr when the cell is empty, out of range, or holds a widget of another type.
         template<MenuBarWidgetTypes T> T* GetWidget(const uSize index) const
         {
             if(index >= _itemFlex.size())
@@ -86,6 +102,14 @@ namespace RetroFuturaGUI
         bool RemoveWidget(const uSize index);
         void EnableSeparatorLines(const bool enable);
         void SetSeparatorLinesThickness(const f32 thickness);
+        /// @brief Sets one sizing policy per flex cell, and resizes the flex to match.
+        /// @note Cells beyond the definitions given are dropped, along with the widgets in them. Cells
+        ///       added past the previous count start empty. Without a definition a cell is Star-weighted
+        ///       at 1, so a flex that was only ever given a count divides the bar evenly.
+        void SetFlexDefinition(std::span<FlexDefinition> flexDefinitions);
+
+        /// @brief Returns the sizing policy of the given cell, or the Star-weighted default when out of range.
+        const FlexDefinition& GetFlexDefinition(const uSize index) const;
 
     //Separator lines
         /// @brief Sets a single separator line color for the given color state.
@@ -225,13 +249,29 @@ namespace RetroFuturaGUI
 
 
     private:
-        /// @brief Emits the hover/click signals and works out which flex slot the cursor sits in.
+        struct MouseState
+        {
+            glm::vec2 _WorldPoint { 0.0f };   // projection space, y up, what the cells are measured in
+            glm::i32vec2 _WindowPoint { 0 };  // window coordinates, y down, what the window is moved in
+            bool
+                _HasPosition { false },
+                _IsPressed { false };
+        };
+
+        /// @brief Emits the hover/click signals and works out which flex cell the cursor sits in.
         void interact();
 
-        /// @brief Re-docks the bar against its edge and places the items in their slots.
+        /// @brief Starts, continues or ends dragging the owning window from a cell marked for it.
+        void updateWindowDrag(const MouseState& mouse);
+
+        /// @brief Whether the point sits in a cell that may drag the window. Only a Label qualifies:
+        ///        anything interactive would have its clicks swallowed by the drag.
+        bool isPointInsideDragCell(const glm::vec2& point) const;
+
+        /// @brief Re-docks the bar against its edge and places the items in their cells.
         void updateLayout();
 
-        /// @brief Puts every item in the center of its slot. Slot geometry follows the bar, items keep their own size.
+        /// @brief Puts every item in the center of its cell. Cell geometry follows the bar, items keep their own size.
         void placeItems();
 
         void drawItems();
@@ -246,13 +286,20 @@ namespace RetroFuturaGUI
         /// @brief Whether the bar runs along the X axis, i.e. is docked to the top or the bottom edge.
         bool isHorizontal() const;
 
-        /// @brief Returns the size of one flex slot. Zero on both axes while the flex is empty.
-        glm::vec2 slotSize() const;
+        /// @brief Resolves every cell to a size along the bar's length. Fixed, Auto and Square take
+        ///        their own extent first, then the Star cells divide whatever the bar has left.
+        void resolveCellSizes();
 
-        /// @brief Returns the center of the given flex slot.
-        glm::vec3 slotPosition(const uSize index) const;
+        /// @brief Returns the size of the given flex cell. Zero on both axes when the index is out of range.
+        glm::vec2 cellSize(const uSize index) const;
 
-        /// @brief The state the item in the given slot draws in, given what the cursor is doing.
+        /// @brief Returns the distance from the bar's starting edge to the given cell's near edge.
+        f32 cellOffset(const uSize index) const;
+
+        /// @brief Returns the center of the given flex cell.
+        glm::vec3 cellPosition(const uSize index) const;
+
+        /// @brief The state the item in the given cell draws in, given what the cursor is doing.
         ColorState itemState(const uSize index) const;
 
         /// @brief Makes the given state the one the items draw in, and pushes the matching colors.
@@ -302,10 +349,23 @@ namespace RetroFuturaGUI
             _itemBackgroundColorState { ColorState::Enabled },
             _itemBorderColorState { ColorState::Enabled };
         bool _useSeparatorLines { false };
+        std::vector<FlexDefinition> _flexDefinition {};
 
-        /// @brief Stands in for "the cursor is on no slot at all" in _hoveredItemIndex.
+        /// @brief Each cell's extent along the bar's length, in pixels, as resolveCellSizes worked it out.
+        std::vector<f32> _resolvedCellSizes {};
+
+        /// @brief What a cell without a definition of its own is sized by: an even share of the bar.
+        inline static const FlexDefinition _kEvenShare { ._FlexSizing = FlexSizing::Star, ._Width = 1.0f, ._IsWindowDrag = false };
+
+        /// @brief Stands in for "the cursor is on no cell at all" in _hoveredItemIndex.
         static constexpr uSize _kNoItem { ~uSize(0) };
         uSize _hoveredItemIndex { _kNoItem };
+
+    //Window drag
+        bool
+            _isDraggingWindow { false },
+            _wasDragMousePressed { false };
+        glm::i32vec2 _dragGrabPoint { 0 };
 
     };
 }
