@@ -347,10 +347,10 @@ void RetroFuturaGUI::IRangedValue::SetIndicatorBackgroundDotDistance(const f32 d
         _indicatorBackground->SetDotDistance(distance);
 }
 
-void RetroFuturaGUI::IRangedValue::SetIndicatorBackgroundDotSizeTransferDegree(const f32 degree)
+void RetroFuturaGUI::IRangedValue::SetIndicatorBackgroundRasterDegree(const f32 degree)
 {
     if(_indicatorBackground)
-        _indicatorBackground->SetDotSizeTransferDegree(degree);
+        _indicatorBackground->SetRasterDegree(degree);
 }
 
 void RetroFuturaGUI::IRangedValue::SetIndicatorBackgroundPrimaryRasterWidthTransfer(std::span<f32> widthTransfer)
@@ -367,10 +367,10 @@ void RetroFuturaGUI::IRangedValue::SetIndicatorBackgroundDotTransparencyTransfer
         _indicatorBackground->SetDotTransparencyTransfer(transparencyTransfer);
 }
 
-void RetroFuturaGUI::IRangedValue::SetIndicatorBackgroundDotAnimationSpeed(const f32 animationSpeed)
+void RetroFuturaGUI::IRangedValue::SetIndicatorBackgroundRasterAnimationSpeed(const f32 animationSpeed)
 {
     if(_indicatorBackground)
-        _indicatorBackground->SetDotAnimationSpeed(animationSpeed);
+        _indicatorBackground->SetRasterAnimationSpeed(animationSpeed);
 }
 
 void RetroFuturaGUI::IRangedValue::SetIndicatorBackgroundFogAlpha(const f32 alpha)
@@ -447,10 +447,10 @@ void RetroFuturaGUI::IRangedValue::SetIndicatorBorderDotDistance(const f32 dista
         _indicatorBorder->SetDotDistance(distance);
 }
 
-void RetroFuturaGUI::IRangedValue::SetIndicatorBorderDotSizeTransferDegree(const f32 degree)
+void RetroFuturaGUI::IRangedValue::SetIndicatorBorderRasterDegree(const f32 degree)
 {
     if(_indicatorBorder)
-        _indicatorBorder->SetDotSizeTransferDegree(degree);
+        _indicatorBorder->SetRasterDegree(degree);
 }
 
 void RetroFuturaGUI::IRangedValue::SetIndicatorBorderPrimaryRasterWidthTransfer(std::span<f32> widthTransfer)
@@ -467,10 +467,10 @@ void RetroFuturaGUI::IRangedValue::SetIndicatorBorderDotTransparencyTransfer(con
         _indicatorBorder->SetDotTransparencyTransfer(transparencyTransfer);
 }
 
-void RetroFuturaGUI::IRangedValue::SetIndicatorBorderDotAnimationSpeed(const f32 animationSpeed)
+void RetroFuturaGUI::IRangedValue::SetIndicatorBorderRasterAnimationSpeed(const f32 animationSpeed)
 {
     if(_indicatorBorder)
-        _indicatorBorder->SetDotAnimationSpeed(animationSpeed);
+        _indicatorBorder->SetRasterAnimationSpeed(animationSpeed);
 }
 
 void RetroFuturaGUI::IRangedValue::SetIndicatorBorderWidth(const f32 borderWidth)
@@ -594,10 +594,10 @@ void RetroFuturaGUI::IRangedValue::SetGraphDotDistance(const f32 distance)
         _graph->SetDotDistance(distance);
 }
 
-void RetroFuturaGUI::IRangedValue::SetGraphDotSizeTransferDegree(const f32 degree)
+void RetroFuturaGUI::IRangedValue::SetGraphRasterDegree(const f32 degree)
 {
     if(_graph)
-        _graph->SetDotSizeTransferDegree(degree);
+        _graph->SetRasterDegree(degree);
 }
 
 void RetroFuturaGUI::IRangedValue::SetGraphPrimaryRasterWidthTransfer(std::span<f32> widthTransfer)
@@ -614,10 +614,10 @@ void RetroFuturaGUI::IRangedValue::SetGraphDotTransparencyTransfer(const f32 tra
         _graph->SetDotTransparencyTransfer(transparencyTransfer);
 }
 
-void RetroFuturaGUI::IRangedValue::SetGraphDotAnimationSpeed(const f32 animationSpeed)
+void RetroFuturaGUI::IRangedValue::SetGraphRasterAnimationSpeed(const f32 animationSpeed)
 {
     if(_graph)
-        _graph->SetDotAnimationSpeed(animationSpeed);
+        _graph->SetRasterAnimationSpeed(animationSpeed);
 }
 
 void RetroFuturaGUI::IRangedValue::SetGraphFogAlpha(const f32 alpha)

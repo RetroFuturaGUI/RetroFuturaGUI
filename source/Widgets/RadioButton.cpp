@@ -179,7 +179,7 @@ void RetroFuturaGUI::RadioButton::SetIndicatorGradientOffset(const f32 gradientO
 void RetroFuturaGUI::RadioButton::SetIndicatorGradientAnimationSpeed(const f32 animationSpeed)
 {
     if(_indicator)
-        _indicator->SetDotAnimationSpeed(animationSpeed);
+        _indicator->SetRasterAnimationSpeed(animationSpeed);
 }
 
 void RetroFuturaGUI::RadioButton::SetIndicatorGradientDegree(const f32 degree)

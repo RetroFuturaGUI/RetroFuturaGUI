@@ -382,12 +382,12 @@ void RetroFuturaGUI::MenuBar::SetItemBackgroundDotDistance(const f32 distance)
     _itemBackground->SetDotDistance(distance);
 }
 
-void RetroFuturaGUI::MenuBar::SetItemBackgroundDotSizeTransferDegree(const f32 degree)
+void RetroFuturaGUI::MenuBar::SetItemBackgroundRasterDegree(const f32 degree)
 {
     if(!_itemBackground)
         return;
 
-    _itemBackground->SetDotSizeTransferDegree(degree);
+    _itemBackground->SetRasterDegree(degree);
 }
 
 void RetroFuturaGUI::MenuBar::SetItemBackgroundPrimaryRasterWidthTransfer(std::span<f32> widthTransfer)
@@ -603,12 +603,12 @@ void RetroFuturaGUI::MenuBar::SetItemBorderDotTransparencyTransfer(const f32 tra
     _itemBorder->SetDotTransparencyTransfer(transparencyTransfer);
 }
 
-void RetroFuturaGUI::MenuBar::SetItemBorderDotAnimationSpeed(const f32 animationSpeed)
+void RetroFuturaGUI::MenuBar::SetItemBorderRasterAnimationSpeed(const f32 animationSpeed)
 {
     if(!_itemBorder)
         return;
 
-    _itemBorder->SetDotAnimationSpeed(animationSpeed);
+    _itemBorder->SetRasterAnimationSpeed(animationSpeed);
 }
 
 void RetroFuturaGUI::MenuBar::SetItemBorderWidth(const f32 borderWidth)

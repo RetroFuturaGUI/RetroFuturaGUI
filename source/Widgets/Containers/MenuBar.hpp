@@ -170,8 +170,8 @@ namespace RetroFuturaGUI
         /// @brief Sets the spacing between dot centers, in pixels, for the item background's Dotted raster pattern.
         void SetItemBackgroundDotDistance(const f32 distance);
 
-        /// @brief Sets the direction, in degrees, along which the item background's dot widths/animation transfer.
-        void SetItemBackgroundDotSizeTransferDegree(const f32 degree);
+        /// @brief Sets the direction, in degrees, along which the item background's raster widths/animation transfer.
+        void SetItemBackgroundRasterDegree(const f32 degree);
 
         /// @brief Sets the per-position dot width curve, in pixels (each value is a dot's full width across), for the item background's Dotted raster pattern. Enables the Raster shader feature when non-empty.
         void SetItemBackgroundPrimaryRasterWidthTransfer(std::span<f32> widthTransfer);
@@ -179,8 +179,8 @@ namespace RetroFuturaGUI
         /// @brief Sets how far each item background dot's opacity reaches from its center before fading to transparent.
         void SetItemBackgroundDotTransparencyTransfer(const f32 transparencyTransfer);
 
-        /// @brief Sets the speed at which the item background's dotted pattern animates.
-        void SetItemBackgroundDotAnimationSpeed(const f32 animationSpeed);
+        /// @brief Sets the speed at which the item background's raster pattern animates.
+        void SetItemBackgroundRasterAnimationSpeed(const f32 animationSpeed);
 
         /// @brief Sets the overall opacity of the item background's FogEffect shader feature.
         void SetItemBackgroundFogAlpha(const f32 alpha);

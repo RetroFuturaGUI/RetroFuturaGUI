@@ -233,7 +233,7 @@ void RetroFuturaGUI::CheckBox::SetInherietGradientOffset(const f32 gradientOffse
 void RetroFuturaGUI::CheckBox::SetInherietGradientAnimationSpeed(const f32 animationSpeed)
 {
     if(_inherietFill)
-        _inherietFill->SetDotAnimationSpeed(animationSpeed);
+        _inherietFill->SetRasterAnimationSpeed(animationSpeed);
 }
 
 void RetroFuturaGUI::CheckBox::SetInherietGradientDegree(const f32 degree)

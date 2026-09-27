@@ -115,10 +115,10 @@ void RetroFuturaGUI::IBackground::SetBackgroundDotDistance(const f32 distance)
         _background->SetDotDistance(distance);
 }
 
-void RetroFuturaGUI::IBackground::SetBackgroundDotSizeTransferDegree(const f32 degree)
+void RetroFuturaGUI::IBackground::SetBackgroundRasterDegree(const f32 degree)
 {
     if(_background)
-        _background->SetDotSizeTransferDegree(degree);
+        _background->SetRasterDegree(degree);
 }
 
 void RetroFuturaGUI::IBackground::SetBackgroundPrimaryRasterWidthTransfer(std::span<f32> widthTransfer)
@@ -135,10 +135,10 @@ void RetroFuturaGUI::IBackground::SetBackgroundDotTransparencyTransfer(const f32
         _background->SetDotTransparencyTransfer(transparencyTransfer);
 }
 
-void RetroFuturaGUI::IBackground::SetBackgroundDotAnimationSpeed(const f32 animationSpeed)
+void RetroFuturaGUI::IBackground::SetBackgroundRasterAnimationSpeed(const f32 animationSpeed)
 {
     if(_background)
-        _background->SetDotAnimationSpeed(animationSpeed);
+        _background->SetRasterAnimationSpeed(animationSpeed);
 }
 
 void RetroFuturaGUI::IBackground::SetBackgroundFogAlpha(const f32 alpha)

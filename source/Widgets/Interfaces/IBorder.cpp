@@ -109,10 +109,10 @@ void RetroFuturaGUI::IBorder::SetBorderDotDistance(const f32 distance)
         _border->SetDotDistance(distance);
 }
 
-void RetroFuturaGUI::IBorder::SetBorderDotSizeTransferDegree(const f32 degree)
+void RetroFuturaGUI::IBorder::SetBorderRasterDegree(const f32 degree)
 {
     if(_border)
-        _border->SetDotSizeTransferDegree(degree);
+        _border->SetRasterDegree(degree);
 }
 
 void RetroFuturaGUI::IBorder::SetBorderPrimaryRasterWidthTransfer(std::span<f32> widthTransfer)
@@ -127,10 +127,10 @@ void RetroFuturaGUI::IBorder::SetBorderDotTransparencyTransfer(const f32 transpa
         _border->SetDotTransparencyTransfer(transparencyTransfer);
 }
 
-void RetroFuturaGUI::IBorder::SetBorderDotAnimationSpeed(const f32 animationSpeed)
+void RetroFuturaGUI::IBorder::SetBorderRasterAnimationSpeed(const f32 animationSpeed)
 {
     if(_border)
-        _border->SetDotAnimationSpeed(animationSpeed);
+        _border->SetRasterAnimationSpeed(animationSpeed);
 }
 
 void RetroFuturaGUI::IBorder::drawBorder()
