@@ -28,6 +28,7 @@ namespace RetroFuturaGUI
     class ProgressBar;
     class Table;
     class Prefab;
+    class MenuBar;
 
     enum class FillType: u32
     {
@@ -68,6 +69,7 @@ namespace RetroFuturaGUI
         ComboBox,
         ExtendedComboBox,
         SeparatorLine,
+        MenuBar,
         Unknown = -1
     };   
 

@@ -1,5 +1,4 @@
 #pragma once
-#include "Text.hpp"
 #include "IWidget.hpp"
 #include "IClickable.hpp"
 #include "IBackground.hpp"
@@ -9,7 +8,7 @@
 namespace RetroFuturaGUI
 {
     //A widget that triggers actions
-    class Button : public IWidget, public IClickable, public IBackground, public IBorder, public ITextProperties
+    class Button final : public IWidget, public IClickable, public IBackground, public IBorder, public ITextProperties
     {
     public:
         /// @brief Constructs a Button widget under the given parent widget/window.
