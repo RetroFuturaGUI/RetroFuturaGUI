@@ -25,13 +25,13 @@ uniform int uDIP;
 uniform int uRasterPattern;
 uniform sampler2D uBackgroundTexture;
 uniform vec2 uImagePadding;
-uniform vec4 uDotColor;
+uniform vec4 uPrimaryRasterColor;
 uniform float uDotDistance;
 uniform float uDotSizeTransferDegree;
 uniform float uDotTransparencyTransfer;
 uniform float uDotAnimationOffset;
-uniform int uDotRadiusTransferCount;
-uniform float uDotRadiusTransfer[MAX_DOT_RADIUS_TRANSFER];
+uniform int uPrimaryRasterWidthTransferCount;
+uniform float uPrimaryRasterWidthTransfer[MAX_DOT_RADIUS_TRANSFER];
 uniform float uFogAlpha;
 uniform float uFogAnimationOffset;
 uniform float uFogClearing;
@@ -118,7 +118,7 @@ bool isInBackgroundGap(vec2 scaledPos)
 
 /* Blends a dot-grid pattern over baseColor. Dot centers sit on a uDotDistance grid (in px, local
    to the rectangle) that slides along the uDotSizeTransferDegree direction over time via
-   uDotAnimationOffset. Each dot's radius is sampled from uDotRadiusTransfer, indexed by that same
+   uDotAnimationOffset. Each dot's radius is sampled from uPrimaryRasterWidthTransfer, indexed by that same
    dot's position projected onto the direction and normalized across the rectangle's extent -
    this is what lets dots grow/shrink smoothly from one side of the rectangle to the other.*/
 vec4 applyDottedPattern(vec4 baseColor, vec2 localPos)
@@ -142,11 +142,11 @@ vec4 applyDottedPattern(vec4 baseColor, vec2 localPos)
     // instead of freezing once a dot's projected position passes the rectangle's original extent.
     float t = maxProjection > 0.0001 ? fract(dot(cellCenter, direction) / (2.0 * maxProjection) + 0.5) : 0.0;
 
-    int count = max(uDotRadiusTransferCount, 1);
+    int count = max(uPrimaryRasterWidthTransferCount, 1);
     float radiusIndexF = t * float(count - 1);
     int idx0 = clamp(int(floor(radiusIndexF)), 0, count - 1);
     int idx1 = clamp(idx0 + 1, 0, count - 1);
-    float dotRadius = mix(uDotRadiusTransfer[idx0], uDotRadiusTransfer[idx1], count > 1 ? fract(radiusIndexF) : 0.0);
+    float dotRadius = mix(uPrimaryRasterWidthTransfer[idx0], uPrimaryRasterWidthTransfer[idx1], count > 1 ? fract(radiusIndexF) : 0.0);
     // Clamp to half the spacing so a dot's circle never reaches its Voronoi cell's square boundary
     // (which would otherwise make oversized dots look like squares/diamonds instead of circles).
     dotRadius = min(dotRadius, dotDistance * 0.5);
@@ -159,10 +159,10 @@ vec4 applyDottedPattern(vec4 baseColor, vec2 localPos)
     float innerBound = clamp(uDotTransparencyTransfer, 0.0, 1.0) * (1.0 - 1e-4);
     float aa = max(fwidth(normalizedDist), 1e-4);
     innerBound = min(innerBound, 1.0 - aa);
-    float dotAlpha = (1.0 - smoothstep(innerBound, 1.0, normalizedDist)) * uDotColor.a;
+    float dotAlpha = (1.0 - smoothstep(innerBound, 1.0, normalizedDist)) * uPrimaryRasterColor.a;
 
     vec4 result = baseColor;
-    result.rgb = mix(baseColor.rgb, uDotColor.rgb, dotAlpha);
+    result.rgb = mix(baseColor.rgb, uPrimaryRasterColor.rgb, dotAlpha);
     result.a = mix(baseColor.a, 1.0, dotAlpha);
     return result;
 }

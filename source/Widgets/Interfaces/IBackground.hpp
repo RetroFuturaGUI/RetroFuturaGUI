@@ -33,7 +33,7 @@ namespace RetroFuturaGUI
         void SetWindowBackgroundImageTextureID(const u32 textureID);
 
         /// @brief Sets the dot color used for the background's Dotted raster pattern.
-        void SetBackgroundDotColor(const glm::vec4& color);
+        void SetBackgroundPrimaryRasterColor(const glm::vec4& color);
 
         /// @brief Sets the spacing between dot centers, in pixels, for the background's Dotted raster pattern.
         void SetBackgroundDotDistance(const f32 distance);
@@ -42,7 +42,7 @@ namespace RetroFuturaGUI
         void SetBackgroundDotSizeTransferDegree(const f32 degree);
 
         /// @brief Sets the per-position dot radius curve, in pixels, for the background's Dotted raster pattern. Enables the Raster shader feature when non-empty.
-        void SetBackgroundDotRadiusTransfer(std::span<f32> radiusTransfer);
+        void SetBackgroundPrimaryRasterWidthTransfer(std::span<f32> radiusTransfer);
 
         /// @brief Sets how far each background dot's opacity reaches from its center before fading to transparent.
         void SetBackgroundDotTransparencyTransfer(const f32 transparencyTransfer);
@@ -94,7 +94,7 @@ namespace RetroFuturaGUI
             _backgroundColorHover { glm::vec4(0.55f, 0.55f, 0.55f, 1.0f) };
         FillType _backgroundFillType { FillType::SOLID };
         ColorState _backgroundColorState { ColorState::Enabled };
-        std::vector<f32> _backgroundDotRadiusTransfer;
+        std::vector<f32> _backgroundPrimaryRasterWidthTransfer;
         std::vector<f32> _backgroundFogDensity;
 
     private:

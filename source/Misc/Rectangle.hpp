@@ -21,7 +21,8 @@ namespace RetroFuturaGUI
 
     enum class RasterPattern : u32
     {
-        Dotted
+        Dotted,
+        Checkered
     };
 
     enum class RectangleMode : u32
@@ -106,16 +107,16 @@ namespace RetroFuturaGUI
         void SetRasterPattern(const RasterPattern rasterPattern);
 
         /// @brief Sets the dot color used for the Dotted raster pattern. Alpha blends the dots over whatever the shader has already drawn.
-        void SetDotColor(const glm::vec4& color);
+        void SetPrimaryRasterColor(const glm::vec4& color);
 
         /// @brief Sets the spacing between dot centers, in pixels, for the Dotted raster pattern.
         void SetDotDistance(const f32 distance);
 
-        /// @brief Sets the direction, in degrees, along which dot radii are sampled from DotRadiusTransfer and along which the pattern animates.
+        /// @brief Sets the direction, in degrees, along which dot radii are sampled from PrimaryRasterWidthTransfer and along which the pattern animates.
         void SetDotSizeTransferDegree(const f32 degree);
 
         /// @brief Sets the per-position dot radius curve, in pixels, sampled along the DotSizeTransferDegree direction across the rectangle. Enables the Raster shader feature when non-empty.
-        void SetDotRadiusTransfer(std::span<f32> radiusTransfer);
+        void SetPrimaryRasterWidthTransfer(std::span<f32> radiusTransfer);
 
         /// @brief Sets how far each dot's opacity reaches from its center before fading to transparent. 1.0 = fully opaque disc, 0.5 = opaque inner half then fades out, 0.0 = only the center pixel is opaque.
         void SetDotTransparencyTransfer(const f32 transparencyTransfer);
@@ -241,9 +242,11 @@ namespace RetroFuturaGUI
         RasterPattern _rasterPattern { RasterPattern::Dotted };
 
         // Dotted raster pattern (RasterPattern::Dotted)
-        std::span<f32> _dotRadiusTransfer;
-        i32 _dotRadiusTransferCount { 0 };
-        glm::vec4 _dotColor { 1.0f };
+        std::span<f32> _primaryRasterWidthTransfer;
+        i32 _primaryRasterWidthTransferCount { 0 };
+        glm::vec4
+            _primaryRasterColor { 1.0f },
+            _secondaryRasterColor { 1.0f };
         f32
             _dotDistance { 15.0f },
             _dotSizeTransferDegree { 45.0f },

@@ -335,10 +335,10 @@ void RetroFuturaGUI::IRangedValue::SetIndicatorWindowBackgroundImageTextureID(co
         _indicatorBackground->SetWindowBackgroundImageTextureID(textureID);
 }
 
-void RetroFuturaGUI::IRangedValue::SetIndicatorBackgroundDotColor(const glm::vec4& color)
+void RetroFuturaGUI::IRangedValue::SetIndicatorBackgroundPrimaryRasterColor(const glm::vec4& color)
 {
     if(_indicatorBackground)
-        _indicatorBackground->SetDotColor(color);
+        _indicatorBackground->SetPrimaryRasterColor(color);
 }
 
 void RetroFuturaGUI::IRangedValue::SetIndicatorBackgroundDotDistance(const f32 distance)
@@ -353,12 +353,12 @@ void RetroFuturaGUI::IRangedValue::SetIndicatorBackgroundDotSizeTransferDegree(c
         _indicatorBackground->SetDotSizeTransferDegree(degree);
 }
 
-void RetroFuturaGUI::IRangedValue::SetIndicatorBackgroundDotRadiusTransfer(std::span<f32> radiusTransfer)
+void RetroFuturaGUI::IRangedValue::SetIndicatorBackgroundPrimaryRasterWidthTransfer(std::span<f32> radiusTransfer)
 {
-    _indicatorBackgroundDotRadiusTransfer.assign(radiusTransfer.begin(), radiusTransfer.end());
+    _indicatorBackgroundPrimaryRasterWidthTransfer.assign(radiusTransfer.begin(), radiusTransfer.end());
 
     if(_indicatorBackground)
-        _indicatorBackground->SetDotRadiusTransfer(_indicatorBackgroundDotRadiusTransfer);
+        _indicatorBackground->SetPrimaryRasterWidthTransfer(_indicatorBackgroundPrimaryRasterWidthTransfer);
 }
 
 void RetroFuturaGUI::IRangedValue::SetIndicatorBackgroundDotTransparencyTransfer(const f32 transparencyTransfer)
@@ -435,10 +435,10 @@ void RetroFuturaGUI::IRangedValue::SetIndicatorWindowBorderImageTextureID(const 
         _indicatorBorder->SetWindowBackgroundImageTextureID(textureID);
 }
 
-void RetroFuturaGUI::IRangedValue::SetIndicatorBorderDotColor(const glm::vec4& color)
+void RetroFuturaGUI::IRangedValue::SetIndicatorBorderPrimaryRasterColor(const glm::vec4& color)
 {
     if(_indicatorBorder)
-        _indicatorBorder->SetDotColor(color);
+        _indicatorBorder->SetPrimaryRasterColor(color);
 }
 
 void RetroFuturaGUI::IRangedValue::SetIndicatorBorderDotDistance(const f32 distance)
@@ -453,12 +453,12 @@ void RetroFuturaGUI::IRangedValue::SetIndicatorBorderDotSizeTransferDegree(const
         _indicatorBorder->SetDotSizeTransferDegree(degree);
 }
 
-void RetroFuturaGUI::IRangedValue::SetIndicatorBorderDotRadiusTransfer(std::span<f32> radiusTransfer)
+void RetroFuturaGUI::IRangedValue::SetIndicatorBorderPrimaryRasterWidthTransfer(std::span<f32> radiusTransfer)
 {
-    _indicatorBorderDotRadiusTransfer.assign(radiusTransfer.begin(), radiusTransfer.end());
+    _indicatorBorderPrimaryRasterWidthTransfer.assign(radiusTransfer.begin(), radiusTransfer.end());
 
     if(_indicatorBorder)
-        _indicatorBorder->SetDotRadiusTransfer(_indicatorBorderDotRadiusTransfer);
+        _indicatorBorder->SetPrimaryRasterWidthTransfer(_indicatorBorderPrimaryRasterWidthTransfer);
 }
 
 void RetroFuturaGUI::IRangedValue::SetIndicatorBorderDotTransparencyTransfer(const f32 transparencyTransfer)
@@ -582,10 +582,10 @@ void RetroFuturaGUI::IRangedValue::SetGraphWindowBackgroundImageTextureID(const 
         _graph->SetWindowBackgroundImageTextureID(textureID);
 }
 
-void RetroFuturaGUI::IRangedValue::SetGraphDotColor(const glm::vec4& color)
+void RetroFuturaGUI::IRangedValue::SetGraphPrimaryRasterColor(const glm::vec4& color)
 {
     if(_graph)
-        _graph->SetDotColor(color);
+        _graph->SetPrimaryRasterColor(color);
 }
 
 void RetroFuturaGUI::IRangedValue::SetGraphDotDistance(const f32 distance)
@@ -600,12 +600,12 @@ void RetroFuturaGUI::IRangedValue::SetGraphDotSizeTransferDegree(const f32 degre
         _graph->SetDotSizeTransferDegree(degree);
 }
 
-void RetroFuturaGUI::IRangedValue::SetGraphDotRadiusTransfer(std::span<f32> radiusTransfer)
+void RetroFuturaGUI::IRangedValue::SetGraphPrimaryRasterWidthTransfer(std::span<f32> radiusTransfer)
 {
-    _graphDotRadiusTransfer.assign(radiusTransfer.begin(), radiusTransfer.end());
+    _graphPrimaryRasterWidthTransfer.assign(radiusTransfer.begin(), radiusTransfer.end());
 
     if(_graph)
-        _graph->SetDotRadiusTransfer(_graphDotRadiusTransfer);
+        _graph->SetPrimaryRasterWidthTransfer(_graphPrimaryRasterWidthTransfer);
 }
 
 void RetroFuturaGUI::IRangedValue::SetGraphDotTransparencyTransfer(const f32 transparencyTransfer)

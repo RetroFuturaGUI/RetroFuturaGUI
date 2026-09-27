@@ -165,7 +165,7 @@ namespace RetroFuturaGUI
         void SetItemWindowBackgroundImageTextureID(const u32 textureID);
 
         /// @brief Sets the dot color used for the item background's Dotted raster pattern.
-        void SetItemBackgroundDotColor(const glm::vec4& color);
+        void SetItemBackgroundPrimaryRasterColor(const glm::vec4& color);
 
         /// @brief Sets the spacing between dot centers, in pixels, for the item background's Dotted raster pattern.
         void SetItemBackgroundDotDistance(const f32 distance);
@@ -174,7 +174,7 @@ namespace RetroFuturaGUI
         void SetItemBackgroundDotSizeTransferDegree(const f32 degree);
 
         /// @brief Sets the per-position dot radius curve, in pixels, for the item background's Dotted raster pattern. Enables the Raster shader feature when non-empty.
-        void SetItemBackgroundDotRadiusTransfer(std::span<f32> radiusTransfer);
+        void SetItemBackgroundPrimaryRasterWidthTransfer(std::span<f32> radiusTransfer);
 
         /// @brief Sets how far each item background dot's opacity reaches from its center before fading to transparent.
         void SetItemBackgroundDotTransparencyTransfer(const f32 transparencyTransfer);
@@ -223,7 +223,7 @@ namespace RetroFuturaGUI
         void SetItemWindowBorderImageTextureID(const u32 textureID);
 
         /// @brief Sets the dot color used for the item border's Dotted raster pattern.
-        void SetItemBorderDotColor(const glm::vec4& color);
+        void SetItemBorderPrimaryRasterColor(const glm::vec4& color);
 
         /// @brief Sets the spacing between dot centers, in pixels, for the item border's Dotted raster pattern.
         void SetItemBorderDotDistance(const f32 distance);
@@ -232,7 +232,7 @@ namespace RetroFuturaGUI
         void SetItemBorderDotSizeTransferDegree(const f32 degree);
 
         /// @brief Sets the per-position dot radius curve, in pixels, for the item border's Dotted raster pattern. Enables the Raster shader feature when non-empty.
-        void SetItemBorderDotRadiusTransfer(std::span<f32> radiusTransfer);
+        void SetItemBorderPrimaryRasterWidthTransfer(std::span<f32> radiusTransfer);
 
         /// @brief Sets how far each item border dot's opacity reaches from its center before fading to transparent.
         void SetItemBorderDotTransparencyTransfer(const f32 transparencyTransfer);
@@ -337,9 +337,9 @@ namespace RetroFuturaGUI
             _itemBorderColorsHover {},
             _itemBorderColorsClick {};
         std::vector<f32>
-            _itemBackgroundDotRadiusTransfer {},
+            _itemBackgroundPrimaryRasterWidthTransfer {},
             _itemBackgroundFogDensity {},
-            _itemBorderDotRadiusTransfer {};
+            _itemBorderPrimaryRasterWidthTransfer {};
 
         f32 _separatorLinesThickness { 1.0f };
 

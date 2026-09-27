@@ -478,7 +478,7 @@ namespace RetroFuturaGUI
         void SetIndicatorWindowBackgroundImageTextureID(const u32 textureID);
 
         /// @brief Sets the dot color used for the indicator background's Dotted raster pattern.
-        void SetIndicatorBackgroundDotColor(const glm::vec4& color);
+        void SetIndicatorBackgroundPrimaryRasterColor(const glm::vec4& color);
 
         /// @brief Sets the spacing between dot centers, in pixels, for the indicator background's Dotted raster pattern.
         void SetIndicatorBackgroundDotDistance(const f32 distance);
@@ -487,7 +487,7 @@ namespace RetroFuturaGUI
         void SetIndicatorBackgroundDotSizeTransferDegree(const f32 degree);
 
         /// @brief Sets the per-position dot radius curve, in pixels, for the indicator background's Dotted raster pattern. Enables the Raster shader feature when non-empty.
-        void SetIndicatorBackgroundDotRadiusTransfer(std::span<f32> radiusTransfer);
+        void SetIndicatorBackgroundPrimaryRasterWidthTransfer(std::span<f32> radiusTransfer);
 
         /// @brief Sets how far each indicator background dot's opacity reaches from its center before fading to transparent.
         void SetIndicatorBackgroundDotTransparencyTransfer(const f32 transparencyTransfer);
@@ -526,7 +526,7 @@ namespace RetroFuturaGUI
         void SetIndicatorWindowBorderImageTextureID(const u32 textureID);
 
         /// @brief Sets the dot color used for the indicator border's Dotted raster pattern.
-        void SetIndicatorBorderDotColor(const glm::vec4& color);
+        void SetIndicatorBorderPrimaryRasterColor(const glm::vec4& color);
 
         /// @brief Sets the spacing between dot centers, in pixels, for the indicator border's Dotted raster pattern.
         void SetIndicatorBorderDotDistance(const f32 distance);
@@ -535,7 +535,7 @@ namespace RetroFuturaGUI
         void SetIndicatorBorderDotSizeTransferDegree(const f32 degree);
 
         /// @brief Sets the per-position dot radius curve, in pixels, for the indicator border's Dotted raster pattern. Enables the Raster shader feature when non-empty.
-        void SetIndicatorBorderDotRadiusTransfer(std::span<f32> radiusTransfer);
+        void SetIndicatorBorderPrimaryRasterWidthTransfer(std::span<f32> radiusTransfer);
 
         /// @brief Sets how far each indicator border dot's opacity reaches from its center before fading to transparent.
         void SetIndicatorBorderDotTransparencyTransfer(const f32 transparencyTransfer);
@@ -583,7 +583,7 @@ namespace RetroFuturaGUI
         void SetGraphWindowBackgroundImageTextureID(const u32 textureID);
 
         /// @brief Sets the dot color used for the graph's Dotted raster pattern.
-        void SetGraphDotColor(const glm::vec4& color);
+        void SetGraphPrimaryRasterColor(const glm::vec4& color);
 
         /// @brief Sets the spacing between dot centers, in pixels, for the graph's Dotted raster pattern.
         void SetGraphDotDistance(const f32 distance);
@@ -592,7 +592,7 @@ namespace RetroFuturaGUI
         void SetGraphDotSizeTransferDegree(const f32 degree);
 
         /// @brief Sets the per-position dot radius curve, in pixels, for the graph's Dotted raster pattern. Enables the Raster shader feature when non-empty.
-        void SetGraphDotRadiusTransfer(std::span<f32> radiusTransfer);
+        void SetGraphPrimaryRasterWidthTransfer(std::span<f32> radiusTransfer);
 
         /// @brief Sets how far each graph dot's opacity reaches from its center before fading to transparent.
         void SetGraphDotTransparencyTransfer(const f32 transparencyTransfer);
@@ -744,10 +744,10 @@ namespace RetroFuturaGUI
             _indicatorBorderColorState { ColorState::Enabled },
             _graphColorState { ColorState::Enabled };
         std::vector<f32>
-            _indicatorBackgroundDotRadiusTransfer,
+            _indicatorBackgroundPrimaryRasterWidthTransfer,
             _indicatorBackgroundFogDensity,
-            _indicatorBorderDotRadiusTransfer,
-            _graphDotRadiusTransfer,
+            _indicatorBorderPrimaryRasterWidthTransfer,
+            _graphPrimaryRasterWidthTransfer,
             _graphFogDensity;
 
         Signal<>

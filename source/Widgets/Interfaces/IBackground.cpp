@@ -103,10 +103,10 @@ void RetroFuturaGUI::IBackground::SetWindowBackgroundImageTextureID(const u32 te
         _background->SetWindowBackgroundImageTextureID(textureID);
 }
 
-void RetroFuturaGUI::IBackground::SetBackgroundDotColor(const glm::vec4& color)
+void RetroFuturaGUI::IBackground::SetBackgroundPrimaryRasterColor(const glm::vec4& color)
 {
     if(_background)
-        _background->SetDotColor(color);
+        _background->SetPrimaryRasterColor(color);
 }
 
 void RetroFuturaGUI::IBackground::SetBackgroundDotDistance(const f32 distance)
@@ -121,12 +121,12 @@ void RetroFuturaGUI::IBackground::SetBackgroundDotSizeTransferDegree(const f32 d
         _background->SetDotSizeTransferDegree(degree);
 }
 
-void RetroFuturaGUI::IBackground::SetBackgroundDotRadiusTransfer(std::span<f32> radiusTransfer)
+void RetroFuturaGUI::IBackground::SetBackgroundPrimaryRasterWidthTransfer(std::span<f32> radiusTransfer)
 {
-    _backgroundDotRadiusTransfer.assign(radiusTransfer.begin(), radiusTransfer.end());
+    _backgroundPrimaryRasterWidthTransfer.assign(radiusTransfer.begin(), radiusTransfer.end());
 
     if(_background)
-        _background->SetDotRadiusTransfer(_backgroundDotRadiusTransfer);
+        _background->SetPrimaryRasterWidthTransfer(_backgroundPrimaryRasterWidthTransfer);
 }
 
 void RetroFuturaGUI::IBackground::SetBackgroundDotTransparencyTransfer(const f32 transparencyTransfer)

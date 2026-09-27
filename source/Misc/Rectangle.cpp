@@ -131,9 +131,9 @@ void RetroFuturaGUI::Rectangle::SetRasterPattern(const RasterPattern rasterPatte
     _rasterPattern = rasterPattern;
 }
 
-void RetroFuturaGUI::Rectangle::SetDotColor(const glm::vec4& color)
+void RetroFuturaGUI::Rectangle::SetPrimaryRasterColor(const glm::vec4& color)
 {
-    _dotColor = color;
+    _primaryRasterColor = color;
 }
 
 void RetroFuturaGUI::Rectangle::SetDotDistance(const f32 distance)
@@ -146,12 +146,12 @@ void RetroFuturaGUI::Rectangle::SetDotSizeTransferDegree(const f32 degree)
     _dotSizeTransferDegree = degree;
 }
 
-void RetroFuturaGUI::Rectangle::SetDotRadiusTransfer(std::span<f32> radiusTransfer)
+void RetroFuturaGUI::Rectangle::SetPrimaryRasterWidthTransfer(std::span<f32> radiusTransfer)
 {
-    _dotRadiusTransfer = radiusTransfer;
-    _dotRadiusTransferCount = static_cast<i32>(std::min<size_t>(_dotRadiusTransfer.size(), 255));
+    _primaryRasterWidthTransfer = radiusTransfer;
+    _primaryRasterWidthTransferCount = static_cast<i32>(std::min<size_t>(_primaryRasterWidthTransfer.size(), 255));
 
-    if(_dotRadiusTransferCount > 0)
+    if(_primaryRasterWidthTransferCount > 0)
         _shaderFeatureDIP |= ShaderFeatures::Raster;
     else
         _shaderFeatureDIP &= ~ShaderFeatures::Raster;
@@ -295,15 +295,15 @@ void RetroFuturaGUI::Rectangle::uploadDotUniforms(Shader& shader)
 {
     _dotAnimationOffset += _dotAnimationSpeed;
 
-    shader.SetUniformVec4("uDotColor", _dotColor);
+    shader.SetUniformVec4("uPrimaryRasterColor", _primaryRasterColor);
     shader.SetUniformFloat("uDotDistance", _dotDistance);
     shader.SetUniformFloat("uDotSizeTransferDegree", _dotSizeTransferDegree);
     shader.SetUniformFloat("uDotTransparencyTransfer", _dotTransparencyTransfer);
     shader.SetUniformFloat("uDotAnimationOffset", _dotAnimationOffset);
-    shader.SetUniformInt("uDotRadiusTransferCount", _dotRadiusTransferCount);
+    shader.SetUniformInt("uPrimaryRasterWidthTransferCount", _primaryRasterWidthTransferCount);
 
-    if(_dotRadiusTransferCount > 0)
-        shader.SetUniformFloat("uDotRadiusTransfer", _dotRadiusTransfer.data(), static_cast<u32>(_dotRadiusTransferCount));
+    if(_primaryRasterWidthTransferCount > 0)
+        shader.SetUniformFloat("uPrimaryRasterWidthTransfer", _primaryRasterWidthTransfer.data(), static_cast<u32>(_primaryRasterWidthTransferCount));
 }
 
 void RetroFuturaGUI::Rectangle::uploadFogUniforms(Shader& shader)

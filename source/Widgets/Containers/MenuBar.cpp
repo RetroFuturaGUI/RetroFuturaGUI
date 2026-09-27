@@ -366,12 +366,12 @@ void RetroFuturaGUI::MenuBar::SetItemWindowBackgroundImageTextureID(const u32 te
     _itemBackground->SetWindowBackgroundImageTextureID(textureID);
 }
 
-void RetroFuturaGUI::MenuBar::SetItemBackgroundDotColor(const glm::vec4& color)
+void RetroFuturaGUI::MenuBar::SetItemBackgroundPrimaryRasterColor(const glm::vec4& color)
 {
     if(!_itemBackground)
         return;
 
-    _itemBackground->SetDotColor(color);
+    _itemBackground->SetPrimaryRasterColor(color);
 }
 
 void RetroFuturaGUI::MenuBar::SetItemBackgroundDotDistance(const f32 distance)
@@ -390,16 +390,16 @@ void RetroFuturaGUI::MenuBar::SetItemBackgroundDotSizeTransferDegree(const f32 d
     _itemBackground->SetDotSizeTransferDegree(degree);
 }
 
-void RetroFuturaGUI::MenuBar::SetItemBackgroundDotRadiusTransfer(std::span<f32> radiusTransfer)
+void RetroFuturaGUI::MenuBar::SetItemBackgroundPrimaryRasterWidthTransfer(std::span<f32> radiusTransfer)
 {
     /* Kept in the member vector because Rectangle holds the curve as a span,
        so the caller's container is free to die right after this call. */
-    _itemBackgroundDotRadiusTransfer.assign(radiusTransfer.begin(), radiusTransfer.end());
+    _itemBackgroundPrimaryRasterWidthTransfer.assign(radiusTransfer.begin(), radiusTransfer.end());
 
     if(!_itemBackground)
         return;
 
-    _itemBackground->SetDotRadiusTransfer(_itemBackgroundDotRadiusTransfer);
+    _itemBackground->SetPrimaryRasterWidthTransfer(_itemBackgroundPrimaryRasterWidthTransfer);
 }
 
 void RetroFuturaGUI::MenuBar::SetItemBackgroundDotTransparencyTransfer(const f32 transparencyTransfer)
@@ -561,12 +561,12 @@ void RetroFuturaGUI::MenuBar::SetItemWindowBorderImageTextureID(const u32 textur
     _itemBorder->SetWindowBackgroundImageTextureID(textureID);
 }
 
-void RetroFuturaGUI::MenuBar::SetItemBorderDotColor(const glm::vec4& color)
+void RetroFuturaGUI::MenuBar::SetItemBorderPrimaryRasterColor(const glm::vec4& color)
 {
     if(!_itemBorder)
         return;
 
-    _itemBorder->SetDotColor(color);
+    _itemBorder->SetPrimaryRasterColor(color);
 }
 
 void RetroFuturaGUI::MenuBar::SetItemBorderDotDistance(const f32 distance)
@@ -585,14 +585,14 @@ void RetroFuturaGUI::MenuBar::SetItemBorderDotSizeTransferDegree(const f32 degre
     _itemBorder->SetDotSizeTransferDegree(degree);
 }
 
-void RetroFuturaGUI::MenuBar::SetItemBorderDotRadiusTransfer(std::span<f32> radiusTransfer)
+void RetroFuturaGUI::MenuBar::SetItemBorderPrimaryRasterWidthTransfer(std::span<f32> radiusTransfer)
 {
-    _itemBorderDotRadiusTransfer.assign(radiusTransfer.begin(), radiusTransfer.end());
+    _itemBorderPrimaryRasterWidthTransfer.assign(radiusTransfer.begin(), radiusTransfer.end());
 
     if(!_itemBorder)
         return;
 
-    _itemBorder->SetDotRadiusTransfer(_itemBorderDotRadiusTransfer);
+    _itemBorder->SetPrimaryRasterWidthTransfer(_itemBorderPrimaryRasterWidthTransfer);
 }
 
 void RetroFuturaGUI::MenuBar::SetItemBorderDotTransparencyTransfer(const f32 transparencyTransfer)
