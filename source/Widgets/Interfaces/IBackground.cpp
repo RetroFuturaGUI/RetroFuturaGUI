@@ -170,6 +170,22 @@ void RetroFuturaGUI::IBackground::SetBackgroundFogClearing(const f32 clearing)
 void RetroFuturaGUI::IBackground::SetBackgroundImage(std::string_view imagePath)
 {
     _backgroundImage = std::make_unique<Texture>(imagePath);
+
+    if(!_backgroundImage)
+        return;
+
+    if(!_background)
+        return;
+
+    _background->SetBackgroundImageTextureID(_backgroundImage->GetID());
+}
+
+void RetroFuturaGUI::IBackground::SetBackgroundImagePadding(const f32 padding)
+{
+    if(!_background)
+        return;
+
+    _background->SetBackgroundImagePadding(padding);
 }
 
 void RetroFuturaGUI::IBackground::setBackgroundCornerRadii(const glm::vec4& radii)

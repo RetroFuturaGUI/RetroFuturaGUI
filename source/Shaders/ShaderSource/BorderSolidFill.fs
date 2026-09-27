@@ -6,6 +6,7 @@
 #define MAX_DOT_RADIUS_TRANSFER 255
 #define MAX_BORDER_GAPS 255
 #define WAVE 32
+#define BACKGROUND_IMAGE 64
 
 layout(location = 0) out vec4 Color;
 uniform vec4 uColor;
@@ -13,6 +14,7 @@ uniform vec4 uCornerRadii;
 uniform vec2 uScale;
 uniform int uDIP;
 uniform sampler2D uBackgroundTexture;
+uniform vec2 uImagePadding;
 uniform float uBorderWidth;
 uniform vec4 uDotColor;
 uniform float uDotDistance;
@@ -186,6 +188,30 @@ bool isOutsideWaveLine(vec2 localPos)
     return dist > halfThickness + max(fwidth(dist), 1e-4);
 }
 
+// Blends whatever image uBackgroundTexture holds into baseColor.
+//
+// Without BACKGROUND_IMAGE the image is the window-wide backdrop: screenUV comes from clip space, so
+// the quad shows the part of it sitting behind the quad, which is what sells the glass. With
+// BACKGROUND_IMAGE the image belongs to this quad, so it is sampled across the quad itself and inset
+// by uImagePadding. Outside that inset box baseColor is returned as-is, making the padding read as
+// empty space rather than a stretched edge pixel.
+vec4 blendBackgroundImage(vec4 baseColor, vec2 screenUV)
+{
+    if((uDIP & BACKGROUND_IMAGE) == 0)
+        return mix(texture(uBackgroundTexture, screenUV), baseColor, baseColor.a);
+
+    vec2 span = vec2(1.0) - uImagePadding * 2.0;
+
+    if(span.x <= 0.0 || span.y <= 0.0)
+        return baseColor;
+
+    vec2 imageUV = (vLocalPos + 0.5 - uImagePadding) / span;
+
+    if(any(lessThan(imageUV, vec2(0.0))) || any(greaterThan(imageUV, vec2(1.0))))
+        return baseColor;
+
+    return mix(texture(uBackgroundTexture, imageUV), baseColor, baseColor.a);
+}
 void main()
 {
     vec4 finalColor = uColor;
@@ -213,8 +239,7 @@ void main()
 
             if((uDIP & GlassEffectWithImage) != 0)
             {
-                vec4 background = texture(uBackgroundTexture, distortedUV);
-                finalColor = mix(background, uColor, uColor.a);
+                finalColor = blendBackgroundImage(uColor, distortedUV);
             }
             else
             {

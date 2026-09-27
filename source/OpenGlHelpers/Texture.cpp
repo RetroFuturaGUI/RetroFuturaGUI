@@ -145,7 +145,7 @@ void RetroFuturaGUI::Texture::uploadToGPU()
     glBindTexture(GL_TEXTURE_2D, _id);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
     u32 format = (_colorChannelCount == 4) ? GL_RGBA : GL_RGB;
@@ -245,6 +245,13 @@ void RetroFuturaGUI::Texture::loadSVG(std::string_view path)
 
     const u32 width = static_cast<u32>(bitmap.width());
     const u32 height = static_cast<u32>(bitmap.height());
+
+    /* The pixels below are laid out to the bitmap's dimensions, so the resolution has to come from the
+       bitmap too. Taking it from the document truncates its float size - a 255.99998 wide document
+       reports 255 against a 256 wide bitmap - and the upload then reads every row one pixel short,
+       shearing the image diagonally. */
+    _resolution.x = static_cast<i32>(width);
+    _resolution.y = static_cast<i32>(height);
     const uSize srcStride = static_cast<uSize>(bitmap.stride());
     const uSize rowBytes = static_cast<uSize>(width) * _colorChannelCount;
     std::vector<u8> pixelData(rowBytes * height);

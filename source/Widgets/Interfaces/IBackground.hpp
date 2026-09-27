@@ -62,8 +62,11 @@ namespace RetroFuturaGUI
         /// @brief Sets the coverage threshold above which the background's fog appears; higher values carve larger clear gaps out of the cloud.
         void SetBackgroundFogClearing(const f32 clearing);
 
-        /// @brief Loads an image from disk and applies it as the background's glass-effect-with-image texture.
+        /// @brief Loads an image (png, jpg or svg) from disk and applies it as the background's texture. ToDo: store SVGs as SvgImage
         virtual void SetBackgroundImage(std::string_view imagePath);
+
+        /// @brief Sets how far the background image stays clear of the widget's edges
+        void SetBackgroundImagePadding(const f32 padding);
 
         /// @brief Returns the background colors configured for the given color state.
         const std::vector<glm::vec4>& GetBackgroundColors(const ColorState state) const;

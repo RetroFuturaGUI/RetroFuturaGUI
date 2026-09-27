@@ -14,7 +14,8 @@ namespace RetroFuturaGUI
         GlassEffectWithImage = GlassEffect + (1 << 2),
         DottedPattern = 1 << 3,
         FogEffect = 1 << 4,
-        Wave = 1 << 5
+        Wave = 1 << 5,
+        BackgroundImage = 1 << 6
     };
 
     enum class RectangleMode : u32
@@ -144,6 +145,15 @@ namespace RetroFuturaGUI
         /// @brief Sets the texture ID sampled for the GlassEffectWithImage shader feature.
         void SetWindowBackgroundImageTextureID(const u32 textureID);
 
+        /// @brief Sets the texture ID of an image belonging to this quad
+        /// @note Unlike SetWindowBackgroundImageTextureID, which samples a window-wide backdrop in screen
+        ///       space, this stretches the image over the quad and respects SetBackgroundImagePadding.
+        void SetBackgroundImageTextureID(const u32 textureID);
+
+        /// @brief Sets how far the background image stays clear of the rectangle's edges, per side in pixels.
+        /// @note Only applies to SetBackgroundImageTextureID.
+        void SetBackgroundImagePadding(const f32 padding);
+
         /// @brief Sets the border width, used when RectangleMode::Border is active.
         void SetBorderWidth(const f32 width);
 
@@ -211,11 +221,13 @@ namespace RetroFuturaGUI
             _gradientOffset { 0.0f },
             _gradientAnimationSpeed { 0.0003f },
             _gradientDegree { 45.0f },
-            _gradientRotationSpeed { 0.02f };
+            _gradientRotationSpeed { 0.02f },
+            _backgroundImagePadding { 0.0f },
+            _borderWidth { 5.0f };
         glm::vec4 _cornerRadii { 0.0f };
-        u32 _shaderFeatureDIP { 0 };
-        u32 _windowBackgroundTextureID { 0 };
-        f32 _borderWidth { 5.0f };
+        u32 
+            _shaderFeatureDIP { 0 },
+            _windowBackgroundTextureID { 0 };
 
         // Dotted pattern (ShaderFeatures::DottedPattern)
         std::span<f32> _dotRadiusTransfer;
@@ -250,6 +262,10 @@ namespace RetroFuturaGUI
             _waveLength { 40.0f };
 
         void setupMesh();
+
+        /// @brief The background image's padding as a fraction of the quad, ready for uImagePadding.
+        glm::vec2 backgroundImagePaddingUV() const;
+
         void initColors(std::span<glm::vec4> colors);
         void uploadDotUniforms(Shader& shader);
         void uploadFogUniforms(Shader& shader);
