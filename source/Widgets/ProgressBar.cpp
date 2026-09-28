@@ -41,6 +41,9 @@ void RetroFuturaGUI::ProgressBar::setColors(const ColorState state)
 
 bool RetroFuturaGUI::ProgressBar::isInsideGraph(const glm::vec2& mousePos)
 {
+    if(!_graph)
+        return false;
+
     return isPointInsideRect(mousePos, glm::vec3(_graph->GetSize(), 0.0f), _graph->GetPosition(), _graph->GetRotation());
 }
 
@@ -60,7 +63,7 @@ void RetroFuturaGUI::ProgressBar::interact()
     glm::vec2 mousePos { static_cast<f32>(mouseX), _projection.GetResolution().y - static_cast<f32>(mouseY) };
     bool isMouseButtonPressed = PlatformBridge::Input::IsMouseButtonDown(PlatformBridge::MouseButton::Left);
     bool isMouseInside = hasMousePosition && isPointInsideRect(mousePos, _size, _position, _rotation);
-    bool isMouseInsideGraph = isPointInsideRect(mousePos, glm::vec3(_graph->GetSize(), 0.0f), _graph->GetPosition(), _graph->GetRotation());
+    bool isMouseInsideGraph = isInsideGraph(mousePos);
 
     if(!_isEnabledFlag || !isMouseInside) //no action and mouse leave
     {
