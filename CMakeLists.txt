@@ -24,15 +24,17 @@ set(RetroFuturaGuiSources)
 list(APPEND RetroFuturaGuiSources
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Fonts/FontManager.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Fonts/Text.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/source/MediaPlayback/AudioPlayback.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/source/MediaPlayback/MiniaudioImpl.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Misc/DoubleEncodedString.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Misc/Mesh.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Misc/Rectangle.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Misc/ResourceManager.cpp"
-    "${CMAKE_CURRENT_SOURCE_DIR}/source/Scenes/Scene.cpp"
-    "${CMAKE_CURRENT_SOURCE_DIR}/source/Scenes/SceneLoader.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/OpenGlHelpers/Projection.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/OpenGlHelpers/SvgTexture.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/OpenGlHelpers/Texture.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/source/Scenes/Scene.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/source/Scenes/SceneLoader.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Shaders/Shader.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Shaders/ShaderManager.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/Button.cpp"
@@ -87,6 +89,7 @@ target_include_directories("RetroFuturaGUI" PUBLIC
     "${CMAKE_CURRENT_SOURCE_DIR}/source"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Borders"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Fonts"
+    "${CMAKE_CURRENT_SOURCE_DIR}/source/MediaPlayback"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Misc"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Scenes"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets"
@@ -168,13 +171,23 @@ else()
     message(FATAL_ERROR "Assimp is not found. Please install Assimp via VCPKG.")
 endif()
 
-# checl for lunasvg
+# check for lunasvg
 find_package(lunasvg CONFIG REQUIRED)
 if(TARGET lunasvg::lunasvg)
     message(STATUS "lunasvg is installed and found")
 else()
     message(FATAL_ERROR "lunasvg is not found. Please install lunasvg via VCPKG.")
 endif()
+
+# check for miniaudio
+find_path(MINIAUDIO_INCLUDE_DIRS "miniaudio.h")
+if(MINIAUDIO_INCLUDE_DIRS)
+    message(STATUS "miniaudio is installed and found")
+else()
+    message(FATAL_ERROR "miniaudio is not found. Please install miniaudio via VCPKG.")
+endif()
+
+target_include_directories("RetroFuturaGUI" PUBLIC ${MINIAUDIO_INCLUDE_DIRS})
 
 target_link_libraries("RetroFuturaGUI" PUBLIC
     OpenGL::GL 

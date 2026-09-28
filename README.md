@@ -13,7 +13,7 @@ The framework is designed for cross-platform use, and its logic can be compiled 
 | 1 | Button, Label, Window, MainWindow, Image, Grid2D, WindowBar with Buttons |  | ✅ |
 | 2 | dll/so/dylib compilation for C# and Python support, Widget ID manager | 1 | ✅ | 
 | 3 | Linux Support, Font Manager | 2 | ✅ | 
-| 4 | More Widgets (TextBox ✅, Table ✅, VideoPlayer, AudioPlayer, 3D Model ✅, Slider ✅, CheckBox ✅, ComboBox ✅, ExtendedComoBox ✅, RadioButton ✅, RadioButtonGroup ✅, SeparatorLine ✅, ColorPreview, Histogram, LineDiagram, Tabs, Lights, change Grid2d to "Lasagna" and add a 3rd dimension ✅, Color Pickers, MenuBar, Environment), Scene ✅, SceneLoader ✅ | 1 | WIP | 
+| 4 | More Widgets (TextBox ✅, Table ✅, 3D Model ✅, Slider ✅, CheckBox ✅, ComboBox ✅, ExtendedComoBox ✅, RadioButton ✅, RadioButtonGroup ✅, SeparatorLine ✅, ColorPreview ✅, change Grid2d to "Lasagna" and add a 3rd dimension ✅, MenuBar ✅, Environment, Histogram, LineDiagram, Tabs, Lights, VideoPlayer, Color Pickers), Scene ✅, SceneLoader ✅, MediaPlayer (AudioPlayback ✅) | 1 | WIP | 
 | 5 | .bechaml markup language for GUI design 🥣 (**B**eautifully **E**xtended **C**ascading but **H**airbally **A**pplication **M**arkup **L**anguage) | 4 | | 
 | 6 | VS Code extension with project generator/manager | 5 | | 
 | 7 | Pre-built Prefabs (StepperSlider, SpinBox, Table with Sliders, Carousel, Extended Color Pickers, MediaPlayer) | 6 |
@@ -80,13 +80,31 @@ The framework is designed for cross-platform use, and its logic can be compiled 
 - SeparatorLine
   - The caption's left padding isn't clamped to the line's width, so a long caption or a large padding runs the gap and its text off the right end
   - The gap always starts from the left edge, so centering or right-aligning a caption means working out the padding by hand. SetTextAlignment doesn't do it either: the caption is always centered inside its own gap, and the alignment passed in is overwritten the next time the layout runs
+- ColorPreview
+  - The checkerboard's two colors and its square size are fixed internals, so neither the board's contrast nor its scale can be set from outside
+  - The dual preview is on by default, so a preview that was never asked to be split is
+  - Against the light checkerboard the white half reads almost the same as the checkered one - compositing over white and over a white/light-grey board differ only inside the grey squares. Drawing the color at full opacity there instead would carry information the checkered half can't
+  - Each rectangle rotates around its own center, so a rotated dual preview pulls its halves apart instead of turning as one piece
+  - DualPrevieAlignment is missing a w
 - WindowBar
   - Window Icon
 - Window
   - line 375 check if updateProjection() can be made conditional again and also called at programmatic size change instead
+- Raster wrappers (IBackground, IBorder, IRangedValue, MenuBar)
+  - The raster wrappers expose the Dotted settings only - no pattern selection and no secondary color - so a widget's background or border can't draw the Checkered pattern. Only a Rectangle owned directly can, which is why ColorPreview builds its own
 - IBackground
   - Make SetBackgroundImage() differenciate between image formats and treat SVGs as SvgImage and implement path color setters
   - Padding that automatically applies to the background image as well
+- AudioPlayback / MediaPlayer
+  - MediaPlayer.cpp is written but not in the build yet, so the FFmpeg half is dead code. Until it is wired up, only the formats miniaudio decodes natively work - WAV, FLAC and MP3. Opus and Vorbis need the FFmpeg path, and so does any audio inside a container (MKV/WebM/MP4), because miniaudio has no demuxer
+  - MediaPlayer refuses to open anything outside its codec allowlist, so a build can't quietly start distributing a decoder it isn't licensed for. FreeCodecs holds the royalty-free and patent-expired ones (VP8/VP9/AV1, MPEG-2, MJPEG, FFV1, Theora, FLAC, Vorbis, Opus, MP3, PCM); NonCommercialUseCodecs names the encumbered ones (H.264, HEVC, VVC, VC1, AAC) so a refusal can say which codec it refused and why. The FFmpeg build itself is LGPL 2.1 with GPL and nonfree off, and has to stay dynamically linked
+  - One sound at a time. AudioPlayback owns a single ma_sound so it can be sought and queried, which means opening a second file replaces the first. Layered UI sounds want a second, fire-and-forget path alongside it
+  - GetDuration is unreliable by format: Vorbis always reports 0 (an stb_vorbis push-mode limitation) and MP3 has to decode the whole file to answer, so it must be cached rather than polled
+  - Playback speed shifts pitch with it, because it is resampling rather than time-stretching. miniaudio has no time-stretcher at all; pitch-preserving speed would mean routing through FFmpeg's `atempo` filter, which is already compiled into the build
+  - Negative speeds do nothing - miniaudio drops any pitch <= 0, silently, through a void function. Reverse playback isn't a rate at all: it needs the decoded audio reversed by frame (not by sample, or the channels swap) behind a custom data source, which also gives up streaming
+  - Levels are linear RMS with no dB helper, so a meter bound straight to them sits low and barely moves - music averages well under 0.3. A 20*log10 mapping belongs either in the meter widget or beside GetChannelVolume
+  - The meter's decay is a fixed constant per processed block, so its feel shifts with the device's buffer size instead of with wall-clock time
+  - No signals yet (OnPlaybackFinished, OnPositionChanged), so application code has nothing to hook a track ending to
 
 ### Implemented Features
 <details><summary>CLICK TO EXPAND</summary>
@@ -166,7 +184,7 @@ The framework is designed for cross-platform use, and its logic can be compiled 
     - Track direction (Normal/Inverted) chooses which end of the track holds the minimum, for values that count the opposite way to the track - a scrollbar's offset, for instance. Affects where the indicator and graph are drawn, not the value
     - Drag the indicator or click anywhere on the track to set the value
     - Step the value by a configurable step size, in whatever type the value currently holds
-    - Indicator: Stroke or Circle type, sized per axis in pixels or percent of the track, per-state colors (Enabled, Disabled, Clicked, Hover), Solid/Linear/Radial/HueStar Gradient fill, Dotted Pattern, Fog Effect, corner radii, border width and border gaps. Sized and positioned inside the track's border rather than over it
+    - Indicator: Stroke or Circle type, sized per axis in pixels or percent of the track, per-state colors (Enabled, Disabled, Clicked, Hover), Solid/Linear/Radial/HueStar Gradient fill, Raster, Fog Effect, corner radii, border width and border gaps. Sized and positioned inside the track's border rather than over it
     - Graph (the filled part of the track): Bar or Wave mode, per-state colors, width, all fill types, corner radii
     - Signals: OnValueChanged, OnValueSet
     - Background & Border (same options as Button)
@@ -177,6 +195,13 @@ The framework is designed for cross-platform use, and its logic can be compiled 
     - Signals: OnValueChanged, OnValueSet
     - Background & Border (same options as Button)
     - SetPosition, SetSize, SetRotation, corner radii
+  - ColorPreview
+    - Shows a color against a checkerboard, so an alpha below 1 reads as transparency instead of as a different color
+    - The board is drawn by the Checkered raster pattern rather than by a texture, so its square size and its two colors are shader uniforms
+    - Optional dual preview (EnableDualPreviewBackground): the widget splits in half and the same color is drawn over the checkerboard on one half and over white on the other, side by side or stacked (SetDualPreviewAlignment)
+    - The previewed color and the border always span the whole widget, so the two halves differ only in what lies behind the color
+    - Border (same options as Button)
+    - SetPreviewColor, GetColor, SetPosition, SetSize, SetRotation
   - Table
     - Grid of typed cells, each created on demand the first time a value is assigned to it. The cell type follows from what is assigned: a string or a number makes a TableText, a color makes a TableColor, a bool makes a TableCheckBox
     - TableText cells: editable text, one Text mesh per cell (see the text interaction entry below)
@@ -249,47 +274,61 @@ The framework is designed for cross-platform use, and its logic can be compiled 
     - Docked scenes reserve in the order they were added, so the first one to claim an edge also owns the corner where two claims meet
     - An inactive scene reserves nothing, and is laid out again when it is reactivated, so activating one never shows a layout computed for a different window size
     - SetPosition, SetSize, SetRotation, forwarded to its root Lasagna
+    - Per-frame signal (Connect_OnUpdate / Disconnect_OnUpdate), emitted from Draw before the widgets draw, so a value written by a slot lands in the same frame instead of trailing one behind. Meant for widgets that track a live value, such as an audio level meter. An inactive scene doesn't draw and therefore doesn't tick
+- Media Playback
+  - AudioPlayback
+    - Plays a file through miniaudio's high-level engine, which owns the output device, decoder, resampler and mixer. WAV, FLAC and MP3 decode inside miniaudio itself, with no FFmpeg involved
+    - Open / Start / Stop, with Stop rewinding to the start and the file staying loaded
+    - Seeking and position reporting in **milliseconds** (Seek, GetPosition, GetDuration). miniaudio's own seconds-based calls convert against the file's sample rate rather than the device's, so a 44.1 kHz track on a 48 kHz device still lands where it should
+    - Master volume, and playback speed via resampling (SetPlaybackSpeed). Speed and pitch are coupled, the way a record player couples them
+    - Streamed rather than fully decoded into RAM, so an album-length FLAC costs no more memory than a short one. Seeking still works while streaming
+    - Per-channel level metering (GetChannelVolume, GetChannelCount): a passthrough node measures RMS on the audio thread and publishes it through atomics, so reading a level from the GUI thread never touches an audio buffer and never blocks. Fast attack, slow decay, so it stays readable when polled once a frame
+    - The engine is deliberately neither copyable nor movable: miniaudio objects are transparent structs whose address has to stay put
+  - Note for non-ASCII paths on Windows: file paths reach miniaudio as narrow strings and are opened with `fopen_s`, which reads them in the process codepage. An application that wants to open paths like `…/電気グルーヴ/…` needs an app manifest setting `activeCodePage` to UTF-8 (Windows 10 1903+), and MSVC's `/utf-8` so the literals are UTF-8 to begin with
 - Shaders
   - Solid Fill
     - Glass Effect
     - Rounded corners
-    - Dotted Pattern
+    - Raster (Dotted, Checkered)
     - Fog Effect
   - Linear Gradient
     - Animated (rotation, motion)
     - up to 256 colors (RGBA)
     - Glass Effect
     - Rounded corners
-    - Dotted Pattern
+    - Raster (Dotted, Checkered)
     - Fog Effect
   - Radial Gradient
     - Animated (rotation, motion)
     - up to 256 colors (RGBA)
     - Glass Effect
     - Rounded corners
-    - Dotted Pattern
+    - Raster (Dotted, Checkered)
     - Fog Effect
   - HueStar Gradient
     - Animated (rotation, motion)
     - Glass Effect
     - Rounded corners
-    - Dotted Pattern
+    - Raster (Dotted, Checkered)
     - Fog Effect
-  - Dotted Pattern (combinable overlay, works on every fill and border shader above)
-    - Per-dot radius sampled from a growable/shrinkable curve along a configurable direction
+  - Raster (combinable overlay, works on every fill and border shader above)
+    - Two patterns share the feature, picked with SetRasterPattern: Dotted and Checkered
+    - One width curve drives both, sampled along a configurable direction (SetRasterDegree): each value is a dot's full width across, or a checkerboard square's side length, so the pattern's elements grow and shrink smoothly from one side of an element to the other
+    - That same direction is the axis the pattern animates along, and it turns the checkerboard as a whole
     - Seamless, endless scrolling animation along that direction
-    - Configurable dot color, spacing, and opacity falloff (hard edge to soft center-only glow)
+    - Dotted: configurable color, spacing between dot centers, and opacity falloff (hard edge to soft center-only glow)
+    - Checkered: a second color for the other square of each pair. Square edges are antialiased, and once squares fall below a pixel the board settles into an even mix of both colors rather than aliasing into moire
     - Alpha-blends over whatever the fill/border/glass effect already rendered; clipped by rounded corners
   - Fog Effect (combinable overlay, works on Solid Fill and Linear/Radial/HueStar Gradient; not the Border variants)
     - Dynamic, irregular cloud-like density from a multi-octave fractal noise field
     - Configurable overall opacity, drift speed, per-octave density/weight curve, and clearing threshold (how much clear/fog-free area shows through)
-    - Alpha-blends over whatever the fill/dotted pattern already rendered; clipped by rounded corners
+    - Alpha-blends over whatever the fill/raster pattern already rendered; clipped by rounded corners
   - Background Gaps (combinable, works on Solid Fill and Linear/Radial/HueStar Gradient; the Border variants carry their own Border Gaps instead)
     - Skips sections of the fill in a repeating solid/gap pattern: no gap, a single one, a set number of them, or tiled across the whole element
     - Offset and length are absolute pixels measured from the edge the pattern starts at, so each segment keeps its size and its distance from that edge as the element resizes, rather than stretching with it
     - The pattern runs along X and can be rotated to any angle, so the same definition gives vertical stripes, horizontal bands or anything between
     - A background is one element rather than four edges, so a single definition covers it - unlike Border Gaps, which describe one edge at a time
-  - Dedicated Border variants of the above (Solid, Linear, Radial, HueStar), including Dotted Pattern
+  - Dedicated Border variants of the above (Solid, Linear, Radial, HueStar), including Raster
   - Line Fill
   - Font Atlas Fill (used by the Text Renderer)
   - Texture
@@ -330,7 +369,14 @@ The framework is designed for cross-platform use, and its logic can be compiled 
 ### ToDos before milestone 5
 <details><summary>CLICK TO EXPAND</summary>
   <ul>
-<li>Update and FixedUpdate loops</li>
+<li>Update and FixedUpdate loops (Scene::Connect_OnUpdate covers the per-frame case so far)</li>
+<li>Frequency display for AudioPlayback, once the Histogram widget exists</li>
+  <ul>
+  <li>Histogram first: bars driven by a per-index value array, which the Rectangle raster feature already has the uniform plumbing for</li>
+  <li>FFT via FFmpeg's av_tx (AV_TX_FLOAT_RDFT) - already linked through avutil, so it needs no new dependency and raises no new licensing question. Not FFTW, which is GPL</li>
+  <li>The transform must not run on the audio thread. The meter node already publishes through atomics; a spectrum needs the samples themselves handed over, which is what miniaudio's lock-free ma_pcm_rb is for</li>
+  <li>Log-spaced bands, a Hann window and dB magnitudes, or the bars pile into the bass and read as dead</li>
+  </ul>
 <li>Text</li>
   <ul>
   <li>Emoji support</li>

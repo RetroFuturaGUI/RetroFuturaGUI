@@ -4,6 +4,7 @@
 #include "IHierarchyNode.hpp"
 #include <string_view>
 #include "Lasagna.hpp"
+#include "Signal.hpp"
 
 namespace RetroFuturaGUI
 {
@@ -30,6 +31,10 @@ namespace RetroFuturaGUI
         ~Scene() = default;
 
         void Draw();
+
+        void Connect_OnUpdate(const typename Signal<>::Slot& slot, const bool async);
+
+        void Disconnect_OnUpdate(const typename Signal<>::Slot& slot);
 
         /// @brief Enables or disables drawing
         void SetActive(const bool active);
@@ -88,6 +93,11 @@ namespace RetroFuturaGUI
     //Docking
         DockEdge _reservedEdge { DockEdge::Top };
         f32 _reservedThickness { 0.0f };
+
+    //Signals
+        Signal<>
+            _onUpdate,
+            _onUpdateAsync;
 
     //Logic
         bool

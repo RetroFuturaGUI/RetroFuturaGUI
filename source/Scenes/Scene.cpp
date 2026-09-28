@@ -19,7 +19,24 @@ void RetroFuturaGUI::Scene::Draw()
     if(!_rootLasagna)
         return;
 
+    _onUpdate.Emit();
+    _onUpdateAsync.EmitAsync();
+
     _rootLasagna->Draw();
+}
+
+void RetroFuturaGUI::Scene::Connect_OnUpdate(const typename Signal<>::Slot& slot, const bool async)
+{
+    if(async)
+        _onUpdateAsync.Connect(slot);
+    else
+        _onUpdate.Connect(slot);
+}
+
+void RetroFuturaGUI::Scene::Disconnect_OnUpdate(const typename Signal<>::Slot& slot)
+{
+    _onUpdate.Disconnect(slot);
+    _onUpdateAsync.Disconnect(slot);
 }
 
 void RetroFuturaGUI::Scene::SetActive(const bool active)
