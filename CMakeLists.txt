@@ -24,7 +24,10 @@ set(RetroFuturaGuiSources)
 list(APPEND RetroFuturaGuiSources
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Fonts/FontManager.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Fonts/Text.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/source/MediaPlayback/AudioMetadata.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/MediaPlayback/AudioPlayback.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/source/MediaPlayback/Decoder.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/source/MediaPlayback/MediaSource.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/MediaPlayback/MiniaudioImpl.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Misc/DoubleEncodedString.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Misc/Mesh.cpp"
@@ -179,6 +182,14 @@ else()
     message(FATAL_ERROR "lunasvg is not found. Please install lunasvg via VCPKG.")
 endif()
 
+# check for ffmpeg
+find_package(FFMPEG REQUIRED)
+if(FFMPEG_FOUND)
+    message(STATUS "FFMPEG is installed and found")
+else()
+    message(FATAL_ERROR "FFMPEG is not found. Please install FFMPEG via VCPKG.")
+endif()
+
 # check for miniaudio
 find_path(MINIAUDIO_INCLUDE_DIRS "miniaudio.h")
 if(MINIAUDIO_INCLUDE_DIRS)
@@ -187,6 +198,8 @@ else()
     message(FATAL_ERROR "miniaudio is not found. Please install miniaudio via VCPKG.")
 endif()
 
+target_include_directories("RetroFuturaGUI" PUBLIC ${FFMPEG_INCLUDE_DIRS})
+target_link_directories("RetroFuturaGUI" PUBLIC ${FFMPEG_LIBRARY_DIRS})
 target_include_directories("RetroFuturaGUI" PUBLIC ${MINIAUDIO_INCLUDE_DIRS})
 
 target_link_libraries("RetroFuturaGUI" PUBLIC

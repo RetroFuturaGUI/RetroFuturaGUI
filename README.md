@@ -13,7 +13,7 @@ The framework is designed for cross-platform use, and its logic can be compiled 
 | 1 | Button, Label, Window, MainWindow, Image, Grid2D, WindowBar with Buttons |  | ✅ |
 | 2 | dll/so/dylib compilation for C# and Python support, Widget ID manager | 1 | ✅ | 
 | 3 | Linux Support, Font Manager | 2 | ✅ | 
-| 4 | More Widgets (TextBox ✅, Table ✅, 3D Model ✅, Slider ✅, CheckBox ✅, ComboBox ✅, ExtendedComoBox ✅, RadioButton ✅, RadioButtonGroup ✅, SeparatorLine ✅, ColorPreview ✅, change Grid2d to "Lasagna" and add a 3rd dimension ✅, MenuBar ✅, Environment, Histogram, LineDiagram, Tabs, Lights, VideoPlayer, Color Pickers), Scene ✅, SceneLoader ✅, MediaPlayer (AudioPlayback ✅) | 1 | WIP | 
+| 4 | More Widgets (TextBox ✅, Table ✅, 3D Model ✅, Slider ✅, CheckBox ✅, ComboBox ✅, ExtendedComoBox ✅, RadioButton ✅, RadioButtonGroup ✅, SeparatorLine ✅, ColorPreview ✅, change Grid2d to "Lasagna" and add a 3rd dimension ✅, MenuBar ✅, Environment, Histogram, LineDiagram, Tabs, Lights, VideoPlayer, Color Pickers), Scene ✅, SceneLoader ✅, MediaPlayer (AudioPlayback ✅, AudioMetadata ✅, MediaSource + Decoder ✅, VideoPlayback) | 1 | WIP | 
 | 5 | .bechaml markup language for GUI design 🥣 (**B**eautifully **E**xtended **C**ascading but **H**airbally **A**pplication **M**arkup **L**anguage) | 4 | | 
 | 6 | VS Code extension with project generator/manager | 5 | | 
 | 7 | Pre-built Prefabs (StepperSlider, SpinBox, Table with Sliders, Carousel, Extended Color Pickers, MediaPlayer) | 6 |
@@ -95,9 +95,16 @@ The framework is designed for cross-platform use, and its logic can be compiled 
 - IBackground
   - Make SetBackgroundImage() differenciate between image formats and treat SVGs as SvgImage and implement path color setters
   - Padding that automatically applies to the background image as well
-- AudioPlayback / MediaPlayer
-  - MediaPlayer.cpp is written but not in the build yet, so the FFmpeg half is dead code. Until it is wired up, only the formats miniaudio decodes natively work - WAV, FLAC and MP3. Opus and Vorbis need the FFmpeg path, and so does any audio inside a container (MKV/WebM/MP4), because miniaudio has no demuxer
-  - MediaPlayer refuses to open anything outside its codec allowlist, so a build can't quietly start distributing a decoder it isn't licensed for. FreeCodecs holds the royalty-free and patent-expired ones (VP8/VP9/AV1, MPEG-2, MJPEG, FFV1, Theora, FLAC, Vorbis, Opus, MP3, PCM); NonCommercialUseCodecs names the encumbered ones (H.264, HEVC, VVC, VC1, AAC) so a refusal can say which codec it refused and why. The FFmpeg build itself is LGPL 2.1 with GPL and nonfree off, and has to stay dynamically linked
+- AudioPlayback / MediaSource / Decoder
+  - The FFmpeg half decodes, but nothing plays what it decodes yet. AudioPlayback still opens files through miniaudio alone, so only WAV, FLAC and MP3 are audible. Opus, Vorbis and audio inside containers (MKV/WebM/MP4) need a bridge: a custom ma_data_source that pulls frames from a Decoder and converts them with swr_convert
+  - Decoder::Open refuses anything outside the codec allowlist in DecodingPolicy.hpp, so a build can't quietly start distributing a decoder it isn't licensed for. FreeCodecs holds the royalty-free and patent-expired ones (VP8/VP9/AV1, MPEG-2, MJPEG, FFV1, Theora, FLAC, Vorbis, Opus, MP3, 16-bit PCM); NonCommercialUseCodecs names the encumbered ones (H.264, HEVC, VVC, VC1, AAC) so a refusal can say which codec it refused and why. The FFmpeg build itself is LGPL 2.1 with GPL and nonfree off, and has to stay dynamically linked
+  - FreeCodecs is narrower than the licensing situation: 24-bit and float PCM (WAV, AIFF), ALAC, ADX and Nintendo DSP ADPCM are all refused, although PCM has no patents at all and ALAC has been royalty-free since 2011. Each addition is a deliberate licensing decision rather than a code change
+  - Packet owns an AVPacket's lifetime, but MediaSource::ReadPacket still takes a raw AVPacket* and leaves the unref to the caller. A Frame wrapper and a reader that runs the send / receive / drain / flush-after-seek protocol behind one call aren't built yet, so every caller currently repeats it by hand
+  - A reader built on FindBestStream drops the packets of every other stream. That's right for audio alone; audio and video from one file will need a packet queue per stream
+  - AudioMetadata's loop points (_Loop) aren't wired into AudioPlayback yet - ma_data_source_set_loop_point_in_pcm_frames is the hook
+  - AudioMetadata doesn't read the Opus vendor string (it sits in OpusTags, which FFmpeg skips) or APE tags; WAV loops come from the first smpl loop only, and RF64/BW64/RIFX files aren't scanned for smpl at all
+  - Cover art is handed over still encoded (JPEG/PNG bytes); a CoverArtCodec enum and decoded covers are planned
+  - AHX and ADX encoding types other than 3 read but don't decode - FFmpeg has no AHX support at all, and its ADX decoder takes standard ADX only. Encrypted ADX decodes to noise without FFmpeg noticing, so AdxMetadata::_Decodable has to gate playback
   - One sound at a time. AudioPlayback owns a single ma_sound so it can be sought and queried, which means opening a second file replaces the first. Layered UI sounds want a second, fire-and-forget path alongside it
   - GetDuration is unreliable by format: Vorbis always reports 0 (an stb_vorbis push-mode limitation) and MP3 has to decode the whole file to answer, so it must be cached rather than polled
   - Playback speed shifts pitch with it, because it is resampling rather than time-stretching. miniaudio has no time-stretcher at all; pitch-preserving speed would mean routing through FFmpeg's `atempo` filter, which is already compiled into the build
@@ -284,7 +291,26 @@ The framework is designed for cross-platform use, and its logic can be compiled 
     - Streamed rather than fully decoded into RAM, so an album-length FLAC costs no more memory than a short one. Seeking still works while streaming
     - Per-channel level metering (GetChannelVolume, GetChannelCount): a passthrough node measures RMS on the audio thread and publishes it through atomics, so reading a level from the GUI thread never touches an audio buffer and never blocks. Fast attack, slow decay, so it stays readable when polled once a frame
     - The engine is deliberately neither copyable nor movable: miniaudio objects are transparent structs whose address has to stay put
-  - Note for non-ASCII paths on Windows: file paths reach miniaudio as narrow strings and are opened with `fopen_s`, which reads them in the process codepage. An application that wants to open paths like `…/電気グルーヴ/…` needs an app manifest setting `activeCodePage` to UTF-8 (Windows 10 1903+), and MSVC's `/utf-8` so the literals are UTF-8 to begin with
+  - MediaSource
+    - The demuxer, one per file. FFmpeg recognises the format from the content rather than the extension, so a WAV renamed to .bin still opens
+    - Stream discovery (FindBestStream, GetStream, GetStreamCount), ReadPacket, and read-only access to the format context for metadata
+    - Seeking in milliseconds: lands on the keyframe at or before the target, and allows for containers whose timeline doesn't start at zero
+  - Decoder
+    - One per stream: packets in, frames out, the same calls for audio and video. Checks the codec against the licensing allowlist when it opens
+    - SendPacket / ReceiveFrame pass FFmpeg's codes through, so "needs more input", "finished" and "error" stay distinguishable; Flush discards buffered frames after a seek
+    - Keeps the stream's index and time base, so a caller can route packets and turn frame timestamps into seconds
+    - Verified sample-exact: a FLAC decodes to exactly the 16,689,792 samples its STREAMINFO header states
+  - Packet: owns an AVPacket for its whole lifetime, so an early return can't leak one
+  - AudioMetadata (ReadAudioMetadata)
+    - Everything a file says about itself, without playing it. Tells WAV, FLAC (native or in Ogg), MP3, Ogg Vorbis, Opus, M4A, ADX and AHX apart by container and codec, never by extension
+    - Common fields: duration, sample rate, channels and layout, bit depth, bit rate, all tags (merged from file and stream - Ogg keeps its comments on the stream), chapters and cue markers, embedded cover art, and whether the codec is on the allowlist
+    - Per-format details: WAV smpl loops; FLAC block/frame sizes and audio MD5; MP3 ID3 versions, VBR/CBR and LAME gapless delay/padding; Vorbis vendor and bit-rate hints; Opus pre-skip, input rate and output gain; M4A brand, AAC profile and iTunes gapless info; ADX version, encryption and loop points (samples and bytes)
+    - The sample count is what Decoder actually produces: Opus pre-skip, LAME gapless trimming (including the MP3 decoder's own 529-sample delay) and iTunes priming are taken out. Checked against full decodes of FLAC, MP3, Opus, Ogg Vorbis, Ogg FLAC and WAV files
+    - One normalized loop region (_Loop, end exclusive) from wherever the format keeps it: the ADX header, a WAV smpl chunk, or LOOPSTART / LOOPLENGTH / LOOPEND tags
+    - Reads FFmpeg leaves out: ADX loop points from the header (and its exact length - the demuxer only estimates one), WAV smpl chunks, the MP3 Xing/LAME header and the Vorbis vendor string
+    - Still reads streams FFmpeg can't decode, such as AHX and type 4 ADX, whose channel count FFmpeg wipes once its decoder refuses them
+  - Note for non-ASCII paths on Windows: file paths reach miniaudio as narrow strings and are opened with `fopen_s`, which reads them in the process codepage. An application that wants to open paths like `…/電気グルーヴ/…` needs an app manifest setting `activeCodePage` to UTF-8 (Windows 10 1903+), and MSVC's `/utf-8` on its own target too - CMake's add_compile_options only reaches targets created after it. Without `/utf-8`, std::print also writes raw bytes the console misreads
+  - NTFS doesn't normalize Unicode in file names: a name stored decomposed (NFD - common for files that came from macOS) and the same name typed in code (NFC) look identical but are different files. Paths taken from a file picker always match
 - Shaders
   - Solid Fill
     - Glass Effect
@@ -377,6 +403,13 @@ The framework is designed for cross-platform use, and its logic can be compiled 
   <li>The transform must not run on the audio thread. The meter node already publishes through atomics; a spectrum needs the samples themselves handed over, which is what miniaudio's lock-free ma_pcm_rb is for</li>
   <li>Log-spaced bands, a Hann window and dB magnitudes, or the bars pile into the bass and read as dead</li>
   </ul>
+<li>Audio formats, in this order</li>
+  <ul>
+  <li>The FFmpeg-to-miniaudio bridge first, so Opus, Vorbis and container audio actually play</li>
+  <li>WebM/MKA audio (needed for VP9/AV1 video anyway) and AIFF; WavPack and CAF are cheap extras</li>
+  <li>HCA - CRI's successor to ADX, used across PlayStation, Xbox, PC and mobile, with loop points like ADX</li>
+  <li>Tracker modules (libopenmpt, switched off in the current FFmpeg build), MIDI (needs a synthesizer such as TinySoundFont - and a SoundFont whose sample sources are clear for commercial use) and chiptune formats each need a new dependency</li>
+  </ul>
 <li>Text</li>
   <ul>
   <li>Emoji support</li>
@@ -443,4 +476,4 @@ RetroFuturaGUI aims to break these barriers!
   - A TextBox reports WidgetTypeID::Button, so DynamicLibWidgetManager::SetText and ConnectSlot take the Button branch, dynamic_cast to Button* yields null and is then dereferenced. The WidgetTypeID::TextBox branches are unreachable as a result
 
 ### Is AI used in this project?
-AI is often used for repititive tasks like adding triple-slash comments to functions, classes, and structs and updating this readme's ToDo and feature list. Shaders are mostly written by AI and AI is sometimes used for finding bugs and to assist with complicated calculations. The architecture of font loading and Scene management was partially planned with AI 
+AI is often used for repititive tasks like adding code comments to functions, classes, and structs and updating this readme's ToDo and feature list. Shaders are mostly written by AI and AI is sometimes used for finding bugs and to assist with complicated calculations. The architecture of font loading and Scene management was partially planned with AI. AudioMetadata.hpp/cpp are entirely written by AI.
