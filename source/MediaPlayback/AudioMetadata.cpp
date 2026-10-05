@@ -792,7 +792,7 @@ std::optional<RetroFuturaGUI::AudioMetadata> RetroFuturaGUI::ReadAudioMetadata(s
         metadata._Seconds = static_cast<f64>(stream->duration) * av_q2d(stream->time_base);
 
         if(audio->sample_rate > 0)
-            metadata._TotalSamples = static_cast<u64>(av_rescale_q(stream->duration, stream->time_base, AVRational { 1, audio->sample_rate }));
+            metadata._TotalSamples = static_cast<u64>(av_rescale_q(stream->duration, stream->time_base, AVRational { .num = 1, .den = audio->sample_rate }));
     }
     else if(context->duration > 0)
     {

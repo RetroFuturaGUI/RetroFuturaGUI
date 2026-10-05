@@ -1,4 +1,5 @@
 #pragma once
+#include "AudioStream.hpp"
 #include "config.hpp"
 #include <atomic>
 #include <string_view>
@@ -96,6 +97,14 @@ namespace RetroFuturaGUI
         /// @brief Returns how many channels GetChannelVolume reports on.
         u32 GetChannelCount() const;
 
+        /// @brief The engine, for sounds that play alongside this one's - a video's, for instance.
+        /// Null until InitDevice.
+        ma_engine* GetEngine();
+
+        /// @brief Where such sounds attach to be heard: the meter if there is one, so it measures them
+        /// too, the engine's endpoint otherwise. Null until InitDevice.
+        ma_node* GetOutputNode();
+
     private:
         /// @brief Runs on the audio thread. Measures each channel into the meter's atomics,
         /// then passes the audio through untouched - a meter must never colour what is heard.
@@ -110,15 +119,19 @@ namespace RetroFuturaGUI
         /// @brief Tears the meter node down. Idempotent.
         void uninitMeter();
 
+        static bool isNativeFormat(std::string_view file);
+
         ma_engine _engine {};
         ma_sound _sound {};
         AudioMeterNode _meter {};
+        AudioStream _audioStream {};
         u32
             _channels { 0 }, // 0 - let the device decide
             _sampleRate { 0 }; // 0 - let the device decide
         bool
             _initialized { false },
             _soundLoaded { false },
-            _meterReady { false };
+            _meterReady { false },
+            _streamed { false };
     };
 }

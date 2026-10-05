@@ -1,12 +1,12 @@
 #pragma once
 #include "config.hpp"
 #include "DecodingPolicy.hpp"
+#include <thread>
 
 extern "C"
 {
     #include <libavformat/avformat.h>
     #include <libavcodec/avcodec.h>
-    //#include <libswresample/swresample.h>
     #include <libavutil/opt.h>
 }
 
@@ -62,7 +62,9 @@ namespace RetroFuturaGUI
 
     private:
         AVCodecContext* _codecContext { nullptr };
-        AVRational _timeBase { 0, 1 };
+        AVRational _timeBase { .num = 0, .den = 1 };
         i32 _streamIndex { -1 };
+        std::thread _thread;
+        uSize _threadCount { 0 };
     };
 }

@@ -184,17 +184,31 @@ bool RetroFuturaGUI::AudioPlayback::OpenAudioFile(std::string_view file)
         return false;
 
     unloadSound();
+    ma_uint32 flags = MA_SOUND_FLAG_NO_SPATIALIZATION;
 
-    const std::string filepath(file); //need 0-terminated string
-    ma_uint32 flags = MA_SOUND_FLAG_STREAM | MA_SOUND_FLAG_NO_SPATIALIZATION;
-
-    // With a meter in place the sound must not wire itself straight to the endpoint -
-    // it has to pass through the meter instead, or nothing would be measured.
     if(_meterReady)
         flags |= MA_SOUND_FLAG_NO_DEFAULT_ATTACHMENT;
 
-    if(ma_sound_init_from_file(&_engine, filepath.c_str(), flags, nullptr, nullptr, &_sound) != MA_SUCCESS)
-        return false;
+    if(isNativeFormat(file))
+    {
+        const std::string filepath(file); //need 0-terminated string
+
+        if(ma_sound_init_from_file(&_engine, filepath.c_str(), flags | MA_SOUND_FLAG_STREAM, nullptr, nullptr, &_sound) != MA_SUCCESS)
+            return false;
+    }
+    else
+    {
+        if(!_audioStream.Open(file))
+            return false;
+
+        if(ma_sound_init_from_data_source(&_engine, _audioStream.GetDataSource(), flags, nullptr, &_sound) != MA_SUCCESS)
+        {
+            _audioStream.Close();
+            return false;
+        }
+
+        _streamed = true;
+    }
 
     _soundLoaded = true;
 
@@ -213,7 +227,9 @@ void RetroFuturaGUI::AudioPlayback::unloadSound()
         return;
 
     ma_sound_uninit(&_sound);
+    _audioStream.Close();
     _soundLoaded = false;
+    _streamed = false;
 }
 
 void RetroFuturaGUI::AudioPlayback::StopPlaying()
@@ -222,6 +238,13 @@ void RetroFuturaGUI::AudioPlayback::StopPlaying()
         return;
 
     ma_sound_stop(&_sound);
+
+    if(_streamed)
+    {
+        _audioStream.Seek(0);
+        return;
+    }
+
     ma_sound_seek_to_pcm_frame(&_sound, 0);
 }
 
@@ -229,6 +252,9 @@ bool RetroFuturaGUI::AudioPlayback::StartPlaying()
 {
     if(!_soundLoaded)
         return false;
+
+    if(_streamed && ma_sound_at_end(&_sound) && _audioStream.HasEnded())
+        _audioStream.Seek(0);
 
     return ma_sound_start(&_sound) == MA_SUCCESS;
 }
@@ -246,6 +272,9 @@ u32 RetroFuturaGUI::AudioPlayback::GetPosition() const
     if(!_soundLoaded)
         return 0;
 
+    if(_streamed)
+        return static_cast<u32>(_audioStream.GetPosition());
+
     f32 cursorseconds = 0.0f;
 
     if(ma_sound_get_cursor_in_seconds(const_cast<ma_sound*>(&_sound), &cursorseconds) != MA_SUCCESS)
@@ -259,8 +288,11 @@ u32 RetroFuturaGUI::AudioPlayback::GetDuration() const
     if(!_soundLoaded)
         return 0;
 
-    f32 lengthseconds = 0.0f;
+    if(_streamed)
+        return static_cast<u32>(_audioStream.GetDuration());
 
+    f32 lengthseconds = 0.0f;
+    
     if(ma_sound_get_length_in_seconds(const_cast<ma_sound*>(&_sound), &lengthseconds) != MA_SUCCESS)
         return 0;
 
@@ -271,6 +303,12 @@ void RetroFuturaGUI::AudioPlayback::Seek(const u32 position)
 {
     if(!_soundLoaded)
         return;
+
+    if(_streamed)
+    {
+        _audioStream.Seek(static_cast<i64>(position));
+        return;
+    }
 
     ma_sound_seek_to_second(&_sound, static_cast<f32>(position) * 0.001f);
 }
@@ -294,6 +332,25 @@ void RetroFuturaGUI::AudioPlayback::SetPlaybackSpeed(const f32 factor)
     ma_sound_set_pitch(&_sound, factor);
 }
 
+ma_engine* RetroFuturaGUI::AudioPlayback::GetEngine()
+{
+    if(!_initialized)
+        return nullptr;
+
+    return &_engine;
+}
+
+ma_node* RetroFuturaGUI::AudioPlayback::GetOutputNode()
+{
+    if(!_initialized)
+        return nullptr;
+
+    if(_meterReady)
+        return &_meter.base;
+
+    return ma_engine_get_endpoint(&_engine);
+}
+
 f32 RetroFuturaGUI::AudioPlayback::GetChannelVolume(const u32 channel) const
 {
     if(!_meterReady)
@@ -311,4 +368,36 @@ u32 RetroFuturaGUI::AudioPlayback::GetChannelCount() const
         return 0;
 
     return _meter.channels;
+}
+
+bool RetroFuturaGUI::AudioPlayback::isNativeFormat(std::string_view file)
+{
+    RetroFuturaGUI::MediaSource source;
+
+    if(!source.Open(file))
+        return false;
+
+    const AVFormatContext* context { source.GetFormatContext() };
+    const AVStream* stream { source.GetStream(source.FindBestStream(AVMEDIA_TYPE_AUDIO)) };
+
+    if(!context->iformat)
+        return false;
+
+    if(!stream->codecpar)
+        return false;
+
+    const std::string_view container { context->iformat->name };
+    const AVCodecID codec { stream->codecpar->codec_id };
+
+    if(container == "wav")
+        return codec == AV_CODEC_ID_PCM_S16LE || codec == AV_CODEC_ID_PCM_S24LE
+            || codec == AV_CODEC_ID_PCM_S32LE || codec == AV_CODEC_ID_PCM_F32LE || codec == AV_CODEC_ID_PCM_U8;
+
+    if(container == "flac")
+        return codec == AV_CODEC_ID_FLAC;
+
+    if(container == "mp3")
+        return codec == AV_CODEC_ID_MP3; // FFmpeg's mp3 demuxer also reads MP1/MP2 files - those go through the policy
+
+    return false;
 }

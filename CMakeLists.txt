@@ -24,22 +24,41 @@ set(RetroFuturaGuiSources)
 list(APPEND RetroFuturaGuiSources
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Fonts/FontManager.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Fonts/Text.cpp"
+
+    "${CMAKE_CURRENT_SOURCE_DIR}/source/MediaPlayback/AudioDecodeThread.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/MediaPlayback/AudioMetadata.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/MediaPlayback/AudioPlayback.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/source/MediaPlayback/AudioStream.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/source/MediaPlayback/AudioTrack.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/MediaPlayback/Decoder.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/source/MediaPlayback/Frame.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/MediaPlayback/MediaSource.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/MediaPlayback/MiniaudioImpl.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/source/MediaPlayback/Packet.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/source/MediaPlayback/PacketQueue.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/source/MediaPlayback/Resampler.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/source/MediaPlayback/RingBufferSource.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/source/MediaPlayback/VideoDecodeThread.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/source/MediaPlayback/VideoFrameQueue.cpp"
+
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Misc/DoubleEncodedString.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Misc/Mesh.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Misc/Rectangle.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Misc/ResourceManager.cpp"
+
     "${CMAKE_CURRENT_SOURCE_DIR}/source/OpenGlHelpers/Projection.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/OpenGlHelpers/SvgTexture.cpp"
-    "${CMAKE_CURRENT_SOURCE_DIR}/source/OpenGlHelpers/Texture.cpp"
+
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Scenes/Scene.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Scenes/SceneLoader.cpp"
+
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Shaders/Shader.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Shaders/ShaderManager.cpp"
+    
+    "${CMAKE_CURRENT_SOURCE_DIR}/source/Texture/ITexture.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/source/Texture/Texture.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/source/Texture/VideoTexture.cpp"
+
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/Button.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/CheckBox.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/ColorPreview.cpp"
@@ -53,13 +72,16 @@ list(APPEND RetroFuturaGuiSources
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/Slider.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/SvgImage.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/TextBox.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/Video.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/Window.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/WindowBar.cpp"
+
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/Containers/ExtendedComboBox.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/Containers/Lasagna.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/Containers/MenuBar.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/Containers/Prefab.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/Containers/RadioButtonGroup.cpp"
+
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/Interfaces/IDropDown.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/Interfaces/IHierarchyNode.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/Interfaces/IRangedValue.cpp"
@@ -71,6 +93,7 @@ list(APPEND RetroFuturaGuiSources
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/Interfaces/IBackground.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/Interfaces/IBorder.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/Interfaces/IClickable.cpp"
+    
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/Table/ITableTextProperties.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/Table/ITableWidget.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/Table/Table.cpp"
@@ -103,6 +126,7 @@ target_include_directories("RetroFuturaGUI" PUBLIC
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/Prefabs"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/OpenGlHelpers"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Shaders"
+    "${CMAKE_CURRENT_SOURCE_DIR}/source/Texture"
 )
 
 # Check for OpenGL installation
@@ -211,6 +235,7 @@ target_link_libraries("RetroFuturaGUI" PUBLIC
     glad::glad
     assimp::assimp
     lunasvg::lunasvg
+    ${FFMPEG_LIBRARIES}
     PlatformBridge
 )
 

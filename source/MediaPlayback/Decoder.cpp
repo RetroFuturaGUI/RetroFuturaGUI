@@ -6,7 +6,7 @@ RetroFuturaGUI::Decoder::Decoder(Decoder&& other) noexcept
     , _streamIndex(other._streamIndex)
 {
     other._codecContext = nullptr;
-    other._timeBase = { 0, 1 };
+    other._timeBase = { .num = 0, .den = 1 };
     other._streamIndex = -1;
 }
 
@@ -22,7 +22,7 @@ RetroFuturaGUI::Decoder& RetroFuturaGUI::Decoder::operator=(Decoder&& other) noe
     _streamIndex = other._streamIndex;
 
     other._codecContext = nullptr;
-    other._timeBase = { 0, 1 };
+    other._timeBase = { .num = 0, .den = 1 };
     other._streamIndex = -1;
 
     return *this;
@@ -64,6 +64,12 @@ bool RetroFuturaGUI::Decoder::Open(const AVStream* stream)
         return false;
     }
 
+    if(parameters->codec_type == AVMEDIA_TYPE_VIDEO)
+    {
+        _codecContext->thread_count = 0;
+        _codecContext->thread_type = FF_THREAD_FRAME | FF_THREAD_SLICE;
+    }
+
     if(avcodec_open2(_codecContext, codec, nullptr) < 0)
     {
         Close();
@@ -80,7 +86,7 @@ void RetroFuturaGUI::Decoder::Close()
     if(_codecContext)
         avcodec_free_context(&_codecContext);
 
-    _timeBase = { 0, 1 };
+    _timeBase = { .num = 0, .den = 1 };
     _streamIndex = -1;
 }
 

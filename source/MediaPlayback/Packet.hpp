@@ -1,5 +1,9 @@
 #pragma once
-#include "MediaSource.hpp"
+
+extern "C"
+{
+    #include <libavcodec/avcodec.h>
+}
 
 namespace RetroFuturaGUI
 {
