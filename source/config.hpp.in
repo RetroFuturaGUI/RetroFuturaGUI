@@ -2,6 +2,7 @@
 #include <cstdint>
 #include <cstdlib>
 #include <string_view>
+#include <concepts>
 
 using i8 = int8_t;
 using u8 = uint8_t;
@@ -18,6 +19,43 @@ using uChar = unsigned char;
 
 namespace RetroFuturaGUI
 {
+    enum class PrimitiveTypeID : u32
+    {
+        Bool,
+        Int8,
+        Int16,
+        Int32,
+        Int64,
+        UInt8,
+        UInt16,
+        UInt32,
+        UInt64,
+        Float32,
+        Float64
+    };
+
+    union PrimitiveUnion
+    {
+        bool Bool;
+        i8 Int8;
+        i16 Int16;
+        i32 Int32;
+        i64 Int64;
+        u8 UInt8;
+        u16 UInt16;
+        u32 UInt32;
+        u64 UInt64;
+        f32 Float32;
+        f64 Float64;
+    };
+
+    template<typename T>
+    concept NumericValueType =
+        std::same_as<T, bool> ||
+        std::same_as<T, i8>  || std::same_as<T, i16> || std::same_as<T, i32> || std::same_as<T, i64> ||
+        std::same_as<T, u8>  || std::same_as<T, u16> || std::same_as<T, u32> || std::same_as<T, u64> ||
+        std::same_as<T, f32> || std::same_as<T, f64>;
+
     /// @brief FNV-1a hash of a name
     constexpr u32 Fnv1aHash(std::string_view str)
     {

@@ -13,7 +13,7 @@
 #include <GLFW/glfw3native.h>
 
 RetroFuturaGUI::Slider::Slider(const std::string& name, Projection* projection, IWidget* parentWidget, const WidgetTypeID parentWidgetTypeID, GLFWwindow* parentWindow)
-   : IRangedValue(name, projection, parentWidget, parentWidgetTypeID, parentWindow)
+   : IRangedSingleValue(name, projection, parentWidget, parentWidgetTypeID, parentWindow)
 {
     _widgetTypeID = WidgetTypeID::Slider;
 }

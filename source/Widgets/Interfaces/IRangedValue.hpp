@@ -1,6 +1,5 @@
 #pragma once
 #include "config.hpp"
-#include "Signal.hpp"
 #include "IncludeHelper.hpp"
 #include "Rectangle.hpp"
 #include <memory>
@@ -14,7 +13,7 @@
 
 namespace RetroFuturaGUI
 {
-    /// @brief Shared value/indicator/graph for widgets that visualize a min/max-bounded value (Slider, ProgressBar, ...)
+    /// @brief Shared range, track, indicator and graph for widgets that map values into a min/max range. IRangedSingleValue holds one value (Slider, ProgressBar), IRangedMultiValue many (Histogram, LineGraph).
     class IRangedValue : public IWidget, public IClickable, public IBackground, public IBorder
     {
     public:
@@ -82,368 +81,128 @@ namespace RetroFuturaGUI
         /// @brief Sets the corner rounding radii of the track's track background and border.
         void SetCornerRadii(const glm::vec4& radii);
 
-        /// @brief Connects a slot to be called when the value has changed
-        /// @param async If true, the slot is invoked asynchronously.
-        void Connect_OnValueChanged(const typename Signal<>::Slot& slot, const bool async);
-
-        /// @brief Connects a slot to be called when the value has been set
-        /// @param async If true, the slot is invoked asynchronously.
-        void Connect_OnValueSet(const typename Signal<>::Slot& slot, const bool async);
-
-        /// @brief Disconnects a previously connected OnValueChanged slot.
-        void Disconnect_OnValueChanged(const typename Signal<>::Slot& slot);
-
-        /// @brief Disconnects a previously connected OnValueSet slot.
-        void Disconnect_OnValueSet(const typename Signal<>::Slot& slot);
-
-        template <typename T> void SetValue(T value, const bool emitSignal = true)
-        {
-            if constexpr (std::is_same_v<T, i8>)
-            {
-                _value.Int8 = value < _minValue.Int8 ? _minValue.Int8 : value;
-                _value.Int8 = value > _maxValue.Int8 ? _maxValue.Int8 : value;
-                _valueType = ValueType::Int8;
-            }
-            else if constexpr (std::is_same_v<T, i16>)
-            {
-                _value.Int16 = value < _minValue.Int16 ? _minValue.Int16 : value;
-                _value.Int16 = value > _maxValue.Int16 ? _maxValue.Int16 : value;
-                _valueType = ValueType::Int16;
-            }
-            else if constexpr (std::is_same_v<T, i32>)
-            {
-                _value.Int32 = value < _minValue.Int32 ? _minValue.Int32 : value;
-                _value.Int32 = value > _maxValue.Int32 ? _maxValue.Int32 : value;
-                _valueType = ValueType::Int32;
-            }
-            else if constexpr (std::is_same_v<T, i64>)
-            {
-                _value.Int64 = value < _minValue.Int64 ? _minValue.Int64 : value;
-                _value.Int64 = value > _maxValue.Int64 ? _maxValue.Int64 : value;
-                _valueType = ValueType::Int64;
-            }
-            else if constexpr (std::is_same_v<T, u8>)
-            {
-                _value.UInt8 = value < _minValue.UInt8 ? _minValue.UInt8 : value;
-                _value.UInt8 = value > _maxValue.UInt8 ? _maxValue.UInt8 : value;
-                _valueType = ValueType::UInt8;
-            }
-            else if constexpr (std::is_same_v<T, u16>)
-            {
-                _value.UInt16 = value < _minValue.UInt16 ? _minValue.UInt16 : value;
-                _value.UInt16 = value > _maxValue.UInt16 ? _maxValue.UInt16 : value;
-                _valueType = ValueType::UInt16;
-            }
-            else if constexpr (std::is_same_v<T, u32>)
-            {
-                _value.UInt32 = value < _minValue.UInt32 ? _minValue.UInt32 : value;
-                _value.UInt32 = value > _maxValue.UInt32 ? _maxValue.UInt32 : value;
-                _valueType = ValueType::UInt32;
-            }
-            else if constexpr (std::is_same_v<T, u64>)
-            {
-                _value.UInt64 = value < _minValue.UInt64 ? _minValue.UInt64 : value;
-                _value.UInt64 = value > _maxValue.UInt64 ? _maxValue.UInt64 : value;
-                _valueType = ValueType::UInt64;
-            }
-            else if constexpr (std::is_same_v<T, f32>)
-            {
-                _value.Float32 = value < _minValue.Float32 ? _minValue.Float32 : value;
-                _value.Float32 = value > _maxValue.Float32 ? _maxValue.Float32 : value;
-                _valueType = ValueType::Float32;
-            }
-            else if constexpr (std::is_same_v<T, f64>)
-            {
-                _value.Float64 = value < _minValue.Float64 ? _minValue.Float64 : value;
-                _value.Float64 = value > _maxValue.Float64 ? _maxValue.Float64 : value;
-                _valueType = ValueType::Float64;
-            }
-            else
-            {
-                _value.Bool = value;
-                _valueType = ValueType::Bool;
-            }
-
-            if(emitSignal)
-            {
-                _onValueChanged.Emit();
-                _onValueChangedAsync.EmitAsync();
-            }
-
-            setIndicatorPosition();
-            setGraphPosition();
-        }
-
-        template <typename T> void SetMinValue(T value)
+        /// @brief Sets the range's lower bound and, with it, the type the range is read as. The derived interface then aligns its values to the new range.
+        template <NumericValueType T> void SetMinValue(T value)
         {
             if constexpr (std::is_same_v<T, i8>)
             {
                 _minValue.Int8 = value;
-
-                if(_minValue.Int8 > _value.Int8)
-                    _value.Int8 = _minValue.Int8;
+                _valueType = PrimitiveTypeID::Int8;
             }
             else if constexpr (std::is_same_v<T, i16>)
             {
                 _minValue.Int16 = value;
-
-                if(_minValue.Int16 > _value.Int16)
-                    _value.Int16 = _minValue.Int16;
+                _valueType = PrimitiveTypeID::Int16;
             }
             else if constexpr (std::is_same_v<T, i32>)
             {
                 _minValue.Int32 = value;
-
-                if(_minValue.Int32 > _value.Int32)
-                    _value.Int32 = _minValue.Int32;
+                _valueType = PrimitiveTypeID::Int32;
             }
             else if constexpr (std::is_same_v<T, i64>)
             {
                 _minValue.Int64 = value;
-
-                if(_minValue.Int64 > _value.Int64)
-                    _value.Int64 = _minValue.Int64;
+                _valueType = PrimitiveTypeID::Int64;
             }
             else if constexpr (std::is_same_v<T, u8>)
             {
                 _minValue.UInt8 = value;
-
-                if(_minValue.UInt8 > _value.UInt8)
-                    _value.UInt8 = _minValue.UInt8;
+                _valueType = PrimitiveTypeID::UInt8;
             }
             else if constexpr (std::is_same_v<T, u16>)
             {
                 _minValue.UInt16 = value;
-
-                if(_minValue.UInt16 > _value.UInt16)
-                    _value.UInt16 = _minValue.UInt16;
+                _valueType = PrimitiveTypeID::UInt16;
             }
             else if constexpr (std::is_same_v<T, u32>)
             {
                 _minValue.UInt32 = value;
-
-                if(_minValue.UInt32 > _value.UInt32)
-                    _value.UInt32 = _minValue.UInt32;
+                _valueType = PrimitiveTypeID::UInt32;
             }
             else if constexpr (std::is_same_v<T, u64>)
             {
                 _minValue.UInt64 = value;
-
-                if(_minValue.UInt64 > _value.UInt64)
-                    _value.UInt64 = _minValue.UInt64;
+                _valueType = PrimitiveTypeID::UInt64;
             }
             else if constexpr (std::is_same_v<T, f32>)
             {
                 _minValue.Float32 = value;
-
-                if(_minValue.Float32 > _value.Float32)
-                    _value.Float32 = _minValue.Float32;
+                _valueType = PrimitiveTypeID::Float32;
             }
             else if constexpr (std::is_same_v<T, f64>)
             {
                 _minValue.Float64 = value;
-
-                if(_minValue.Float64 > _value.Float64)
-                    _value.Float64 = _minValue.Float64;
+                _valueType = PrimitiveTypeID::Float64;
             }
             else
+            {
                 _minValue.Bool = value;
+                _valueType = PrimitiveTypeID::Bool;
+            }
 
-            setIndicatorPosition();
-            setGraphPosition();
+            alignValueToRange();
         }
 
-        template <typename T> void SetMaxValue(T value)
+        /// @brief Sets the range's upper bound and, with it, the type the range is read as. The derived interface then aligns its values to the new range.
+        template <NumericValueType T> void SetMaxValue(T value)
         {
             if constexpr (std::is_same_v<T, i8>)
             {
                 _maxValue.Int8 = value;
-
-                if(_maxValue.Int8 < _value.Int8)
-                    _value.Int8 = _maxValue.Int8;
+                _valueType = PrimitiveTypeID::Int8;
             }
             else if constexpr (std::is_same_v<T, i16>)
             {
                 _maxValue.Int16 = value;
-
-                if(_maxValue.Int16 < _value.Int16)
-                    _value.Int16 = _maxValue.Int16;
+                _valueType = PrimitiveTypeID::Int16;
             }
             else if constexpr (std::is_same_v<T, i32>)
             {
                 _maxValue.Int32 = value;
-
-                if(_maxValue.Int32 < _value.Int32)
-                    _value.Int32 = _maxValue.Int32;
+                _valueType = PrimitiveTypeID::Int32;
             }
             else if constexpr (std::is_same_v<T, i64>)
             {
                 _maxValue.Int64 = value;
-
-                if(_maxValue.Int64 < _value.Int64)
-                    _value.Int64 = _maxValue.Int64;
+                _valueType = PrimitiveTypeID::Int64;
             }
             else if constexpr (std::is_same_v<T, u8>)
             {
                 _maxValue.UInt8 = value;
-
-                if(_maxValue.UInt8 < _value.UInt8)
-                    _value.UInt8 = _maxValue.UInt8;
+                _valueType = PrimitiveTypeID::UInt8;
             }
             else if constexpr (std::is_same_v<T, u16>)
             {
                 _maxValue.UInt16 = value;
-
-                if(_maxValue.UInt16 < _value.UInt16)
-                    _value.UInt16 = _maxValue.UInt16;
+                _valueType = PrimitiveTypeID::UInt16;
             }
             else if constexpr (std::is_same_v<T, u32>)
             {
                 _maxValue.UInt32 = value;
-
-                if(_maxValue.UInt32 < _value.UInt32)
-                    _value.UInt32 = _maxValue.UInt32;
+                _valueType = PrimitiveTypeID::UInt32;
             }
             else if constexpr (std::is_same_v<T, u64>)
             {
                 _maxValue.UInt64 = value;
-
-                if(_maxValue.UInt64 < _value.UInt64)
-                    _value.UInt64 = _maxValue.UInt64;
+                _valueType = PrimitiveTypeID::UInt64;
             }
             else if constexpr (std::is_same_v<T, f32>)
             {
                 _maxValue.Float32 = value;
-
-                if(_maxValue.Float32 < _value.Float32)
-                    _value.Float32 = _maxValue.Float32;
+                _valueType = PrimitiveTypeID::Float32;
             }
             else if constexpr (std::is_same_v<T, f64>)
             {
                 _maxValue.Float64 = value;
-
-                if(_maxValue.Float64 < _value.Float64)
-                    _value.Float64 = _maxValue.Float64;
+                _valueType = PrimitiveTypeID::Float64;
             }
             else
-                _maxValue.Bool = value;
-
-            setIndicatorPosition();
-            setGraphPosition();
-        }
-
-        /// @brief Moves the value one step toward the max (increase) or the min, clamped to the range.
-        void StepValue(const bool increase);
-
-        /// @brief Sets the amount StepValue moves the value by.
-        template <typename T> void SetStepSize(T value)
-        {
-            if constexpr (std::is_same_v<T, i8>)
-                _stepSize.Int8 = value;
-            else if constexpr (std::is_same_v<T, i16>)
-                _stepSize.Int16 = value;
-            else if constexpr (std::is_same_v<T, i32>)
-                _stepSize.Int32 = value;
-            else if constexpr (std::is_same_v<T, i64>)
-                _stepSize.Int64 = value;
-            else if constexpr (std::is_same_v<T, u8>)
-                _stepSize.UInt8 = value;
-            else if constexpr (std::is_same_v<T, u16>)
-                _stepSize.UInt16 = value;
-            else if constexpr (std::is_same_v<T, u32>)
-                _stepSize.UInt32 = value;
-            else if constexpr (std::is_same_v<T, u64>)
-                _stepSize.UInt64 = value;
-            else if constexpr (std::is_same_v<T, f32>)
-                _stepSize.Float32 = value;
-            else if constexpr (std::is_same_v<T, f64>)
-                _stepSize.Float64 = value;
-            else
-                _stepSize.Bool = value;
-        }
-
-        template <typename T> const T GetValue() const
-        {
-            switch(_valueType)
             {
-                case ValueType::Int8:
-                {
-                    if constexpr (std::is_same_v<T, i8>)
-                        return _value.Int8;
-                    else
-                        return static_cast<T>(_value.Int8);
-                }
-                case ValueType::Int16:
-                {
-                    if constexpr (std::is_same_v<T, i16>)
-                        return _value.Int16;
-                    else
-                        return static_cast<T>(_value.Int16);
-                }
-                case ValueType::Int32:
-                {
-                    if constexpr (std::is_same_v<T, i32>)
-                        return _value.Int32;
-                    else
-                        return static_cast<T>(_value.Int32);
-                }
-                case ValueType::Int64:
-                {
-                    if constexpr (std::is_same_v<T, i64>)
-                        return _value.Int64;
-                    else
-                        return static_cast<T>(_value.Int64);
-                }
-                case ValueType::UInt8:
-                {
-                    if constexpr (std::is_same_v<T, u8>)
-                        return _value.UInt8;
-                    else
-                        return static_cast<T>(_value.UInt8);
-                }
-                case ValueType::UInt16:
-                {
-                    if constexpr (std::is_same_v<T, u16>)
-                        return _value.UInt16;
-                    else
-                        return static_cast<T>(_value.UInt16);
-                }
-                case ValueType::UInt32:
-                {
-                    if constexpr (std::is_same_v<T, u32>)
-                        return _value.UInt32;
-                    else
-                        return static_cast<T>(_value.UInt32);
-                }
-                case ValueType::UInt64:
-                {
-                    if constexpr (std::is_same_v<T, u64>)
-                        return _value.UInt64;
-                    else
-                        return static_cast<T>(_value.UInt64);
-                }
-                case ValueType::Float32:
-                {
-                    if constexpr (std::is_same_v<T, f32>)
-                        return _value.Float32;
-                    else
-                        return static_cast<T>(_value.Float32);
-                }
-                case ValueType::Float64:
-                {
-                    if constexpr (std::is_same_v<T, f64>)
-                        return _value.Float64;
-                    else
-                        return static_cast<T>(_value.Float64);
-                }
-                default:
-                {
-                    if constexpr (std::is_same_v<T, bool>)
-                        return _value.Bool;
-                    else
-                         return static_cast<T>(_value.Bool);
-                }
+                _maxValue.Bool = value;
+                _valueType = PrimitiveTypeID::Bool;
             }
+
+            alignValueToRange();
         }
 
         /// @brief Enables or disables the indicator marker. Lazily constructs it (background only) on first enable; subsequent toggles just show/hide it.
@@ -621,91 +380,41 @@ namespace RetroFuturaGUI
         /// @return The given rotation for Horizontal, or that rotation turned a quarter turn counter-clockwise for Vertical.
         glm::vec3 orientedRotation(const glm::vec3& rotation) const;
 
-        void setIndicatorPosition();
-        void setGraphSize();
-        void setGraphPosition();
-        void setValueFromMousePosition(const glm::vec2& mousePos);
+        /// @brief Places the indicator along the track.
+        /// @param trackFraction Where along the track, 0 at the track's start; see toTrackFraction.
+        void setIndicatorPosition(const f32 trackFraction);
+
+        /// @brief Sizes the graph to fill the track up to trackFraction.
+        void setGraphSize(const f32 trackFraction);
+
+        /// @brief Sizes the graph to trackFraction and anchors it to the track's start.
+        void setGraphPosition(const f32 trackFraction);
+
         void setIndicatorColors(const ColorState state);
         void setGraphColors(const ColorState state);
         void drawIndicator();
         void drawGraph();
 
-        enum class ValueType : u32
-        {
-            Bool,
-            Int8,
-            Int16,
-            Int32,
-            Int64,
-            UInt8,
-            UInt16,
-            UInt32,
-            UInt64,
-            Float32,
-            Float64
-        };
+        /// @brief Called after SetMinValue or SetMaxValue stored a new bound. Clamps whatever values the derived interface owns.
+        virtual void alignValueToRange() = 0;
 
-        union
-        {
-            bool Bool;
-            i8 Int8;
-            i16 Int16;
-            i32 Int32;
-            i64 Int64;
-            u8 UInt8;
-            u16 UInt16;
-            u32 UInt32;
-            u64 UInt64;
-            f32 Float32;
-            f64 Float64;
-        } _value { .UInt64 = 0 };
+        /// @brief Called after the track moved, resized, rotated or changed direction, or an element was enabled or resized. Places the indicator and graph for the derived interface's values.
+        /// @note Pure virtual, so nothing in IRangedValue's constructor may lead here.
+        virtual void alignElementsToTrack() = 0;
 
-        union
-        {
-            bool Bool;
-            i8 Int8;
-            i16 Int16;
-            i32 Int32;
-            i64 Int64;
-            u8 UInt8;
-            u16 UInt16;
-            u32 UInt32;
-            u64 UInt64;
-            f32 Float32;
-            f64 Float64;
-        } _minValue { .UInt64 = 0 };
+        /// @brief Reads a value stored in the range's type (_valueType) as f64.
+        f64 toF64(const PrimitiveUnion value) const;
 
-        union
-        {
-            bool Bool;
-            i8 Int8;
-            i16 Int16;
-            i32 Int32;
-            i64 Int64;
-            u8 UInt8;
-            u16 UInt16;
-            u32 UInt32;
-            u64 UInt64;
-            f32 Float32;
-            f64 Float64;
-        } _maxValue { .UInt64 = 0 };
+        /// @brief Where value sits in the range: 0 at the minimum, 1 at the maximum. Not clamped - a value outside the range maps outside 0..1.
+        f32 getRangeFraction(const f64 value) const;
 
-        union
-        {
-            bool Bool;
-            i8 Int8;
-            i16 Int16;
-            i32 Int32;
-            i64 Int64;
-            u8 UInt8;
-            u16 UInt16;
-            u32 UInt32;
-            u64 UInt64;
-            f32 Float32;
-            f64 Float64;
-        } _stepSize { .UInt64 = 1 };
+        /// @brief Turns a range fraction into a position along the track, 0 at the track's start. The same unless the track direction is Inverted.
+        f32 toTrackFraction(const f32 rangeFraction) const;
 
-        ValueType _valueType { ValueType::Int32 };
+        PrimitiveUnion
+            _minValue { .UInt64 = 0 },
+            _maxValue { .UInt64 = 1 };
+        PrimitiveTypeID _valueType { PrimitiveTypeID::Int32 };
 
         // Elements
         std::unique_ptr<Rectangle>
@@ -750,18 +459,7 @@ namespace RetroFuturaGUI
             _graphPrimaryRasterWidthTransfer,
             _graphFogDensity;
 
-        Signal<>
-            _onValueChanged,
-            _onValueChangedAsync,
-            _onValueSet,
-            _onValueSetAsync;
-
     private:
-        /// @brief Where the value sits in its range, 0 at the minimum. Independent of how the track is drawn.
-        f32 getValueFraction() const;
-
-        /// @brief Where along the track that value is drawn, 0 at the track's start. The same as getValueFraction unless the track direction is Inverted. Positioning uses this; nothing else should.
-        f32 getTrackFraction() const;
         void setIndicatorBackgroundColors();
         void setIndicatorBorderColors();
         void setGraphColorsApply();

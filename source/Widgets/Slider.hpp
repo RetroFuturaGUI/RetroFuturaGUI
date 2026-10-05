@@ -4,12 +4,12 @@
 #include <glm/ext/vector_int2_sized.hpp>
 #include <memory>
 #include <span>
-#include "IRangedValue.hpp"
+#include "IRangedSingleValue.hpp"
 
 namespace RetroFuturaGUI
 {
     // A slider which value can be set by dragging its indicator
-    class Slider final : public IRangedValue
+    class Slider final : public IRangedSingleValue
     {
     public:
     /// @brief Constructs the Slider

@@ -1,6 +1,5 @@
 #pragma once
 #include "IncludeHelper.hpp"
-#include <concepts>
 #include <type_traits>
 #include <string_view>
 #include <string>
@@ -20,13 +19,6 @@ namespace RetroFuturaGUI
         std::same_as<T, u8>  || std::same_as<T, u16> || std::same_as<T, u32> || std::same_as<T, u64> ||
         std::same_as<T, f32> || std::same_as<T, f64> ||
         std::same_as<T, std::string_view>;
-
-    template<typename T>
-    concept NumericValueType =
-        std::same_as<T, bool> ||
-        std::same_as<T, i8>  || std::same_as<T, i16> || std::same_as<T, i32> || std::same_as<T, i64> ||
-        std::same_as<T, u8>  || std::same_as<T, u16> || std::same_as<T, u32> || std::same_as<T, u64> ||
-        std::same_as<T, f32> || std::same_as<T, f64>;
 
     class ITextTypes
     {

@@ -5,12 +5,12 @@
 #include <glm/ext/vector_int2_sized.hpp>
 #include <memory>
 #include <span>
-#include "IRangedValue.hpp"
+#include "IRangedSingleValue.hpp"
 
 namespace RetroFuturaGUI
 {
     /// @brief A ProgressBar that visualizes a numeric value
-    class ProgressBar : public IRangedValue
+    class ProgressBar : public IRangedSingleValue
     {
     public:
         /// @brief Constructs the ProgressBar

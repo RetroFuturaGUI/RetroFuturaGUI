@@ -85,6 +85,8 @@ list(APPEND RetroFuturaGuiSources
 
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/Interfaces/IDropDown.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/Interfaces/IHierarchyNode.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/Interfaces/IRangedMultiValue.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/Interfaces/IRangedSingleValue.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/Interfaces/IRangedValue.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/Interfaces/ITextEditable.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/Interfaces/ITextInteraction.cpp"

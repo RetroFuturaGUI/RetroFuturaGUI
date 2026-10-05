@@ -38,8 +38,7 @@ void RetroFuturaGUI::IRangedValue::SetPosition(const glm::vec3& position)
     if (_border)
         _border->SetPosition(position + glm::vec3(0.0f, 0.0f, 0.01f));
 
-    setIndicatorPosition();
-    setGraphPosition();
+    alignElementsToTrack();
 }
 
 void RetroFuturaGUI::IRangedValue::SetSize(const glm::vec3& size)
@@ -57,8 +56,7 @@ void RetroFuturaGUI::IRangedValue::SetSize(const glm::vec3& size)
         _border->SetSize(trackSize);
 
     setIndicatorSize();
-    setIndicatorPosition();
-    setGraphPosition();
+    alignElementsToTrack();
 }
 
 void RetroFuturaGUI::IRangedValue::SetRotation(const glm::vec3& rotation)
@@ -72,8 +70,7 @@ void RetroFuturaGUI::IRangedValue::SetRotation(const glm::vec3& rotation)
     if (_border)
         _border->SetRotation(trackRotation);
 
-    setIndicatorPosition();
-    setGraphPosition();
+    alignElementsToTrack();
 }
 
 void RetroFuturaGUI::IRangedValue::SetOrientation(const Orientation orientation)
@@ -86,8 +83,7 @@ void RetroFuturaGUI::IRangedValue::SetOrientation(const Orientation orientation)
 void RetroFuturaGUI::IRangedValue::SetTrackDirection(const TrackDirection direction)
 {
     _trackDirection = direction;
-    setIndicatorPosition();
-    setGraphPosition();
+    alignElementsToTrack();
 }
 
 void RetroFuturaGUI::IRangedValue::SetIndicatorSize(const glm::vec2& size, const ElementSizing sizingMode)
@@ -95,111 +91,7 @@ void RetroFuturaGUI::IRangedValue::SetIndicatorSize(const glm::vec2& size, const
     _indicatorSize = size;
     _indicatorSizingMode = sizingMode;
     setIndicatorSize();
-    setIndicatorPosition();
-}
-
-void RetroFuturaGUI::IRangedValue::Connect_OnValueChanged(const typename Signal<>::Slot& slot, const bool async)
-{
-    if (async)
-        _onValueChangedAsync.Connect(slot);
-    else
-        _onValueChanged.Connect(slot);
-}
-
-void RetroFuturaGUI::IRangedValue::Connect_OnValueSet(const typename Signal<>::Slot& slot, const bool async)
-{
-    if (async)
-        _onValueSetAsync.Connect(slot);
-    else
-        _onValueSet.Connect(slot);
-}
-
-void RetroFuturaGUI::IRangedValue::Disconnect_OnValueChanged(const typename Signal<>::Slot& slot)
-{
-    _onValueChanged.Disconnect(slot);
-    _onValueChangedAsync.Disconnect(slot);
-}
-
-void RetroFuturaGUI::IRangedValue::Disconnect_OnValueSet(const typename Signal<>::Slot& slot)
-{
-    _onValueSet.Disconnect(slot);
-    _onValueSetAsync.Disconnect(slot);
-}
-
-f32 RetroFuturaGUI::IRangedValue::getValueFraction() const
-{
-    f32
-        value { 0.0f },
-        minValue { 0.0f },
-        maxValue { 1.0f };
-
-    switch(_valueType)
-    {
-        case ValueType::Int8:
-            value = static_cast<f32>(_value.Int8);
-            minValue = static_cast<f32>(_minValue.Int8);
-            maxValue = static_cast<f32>(_maxValue.Int8);
-        break;
-        case ValueType::Int16:
-            value = static_cast<f32>(_value.Int16);
-            minValue = static_cast<f32>(_minValue.Int16);
-            maxValue = static_cast<f32>(_maxValue.Int16);
-        break;
-        case ValueType::Int32:
-            value = static_cast<f32>(_value.Int32);
-            minValue = static_cast<f32>(_minValue.Int32);
-            maxValue = static_cast<f32>(_maxValue.Int32);
-        break;
-        case ValueType::Int64:
-            value = static_cast<f32>(_value.Int64);
-            minValue = static_cast<f32>(_minValue.Int64);
-            maxValue = static_cast<f32>(_maxValue.Int64);
-        break;
-        case ValueType::UInt8:
-            value = static_cast<f32>(_value.UInt8);
-            minValue = static_cast<f32>(_minValue.UInt8);
-            maxValue = static_cast<f32>(_maxValue.UInt8);
-        break;
-        case ValueType::UInt16:
-            value = static_cast<f32>(_value.UInt16);
-            minValue = static_cast<f32>(_minValue.UInt16);
-            maxValue = static_cast<f32>(_maxValue.UInt16);
-        break;
-        case ValueType::UInt32:
-            value = static_cast<f32>(_value.UInt32);
-            minValue = static_cast<f32>(_minValue.UInt32);
-            maxValue = static_cast<f32>(_maxValue.UInt32);
-        break;
-        case ValueType::UInt64:
-            value = static_cast<f32>(_value.UInt64);
-            minValue = static_cast<f32>(_minValue.UInt64);
-            maxValue = static_cast<f32>(_maxValue.UInt64);
-        break;
-        case ValueType::Float32:
-            value = _value.Float32;
-            minValue = _minValue.Float32;
-            maxValue = _maxValue.Float32;
-        break;
-        case ValueType::Float64:
-            value = static_cast<f32>(_value.Float64);
-            minValue = static_cast<f32>(_minValue.Float64);
-            maxValue = static_cast<f32>(_maxValue.Float64);
-        break;
-        default: // Bool
-            value = _value.Bool ? 1.0f : 0.0f;
-            minValue = 0.0f;
-            maxValue = 1.0f;
-        break;
-    }
-
-    const f32 range { maxValue - minValue };
-    return range != 0.0f ? (value - minValue) / range : 0.0f;
-}
-
-f32 RetroFuturaGUI::IRangedValue::getTrackFraction() const
-{
-    const f32 fraction { getValueFraction() };
-    return _trackDirection == TrackDirection::Inverted ? 1.0f - fraction : fraction;
+    alignElementsToTrack();
 }
 
 void RetroFuturaGUI::IRangedValue::EnableIndicator(const bool value)
@@ -213,7 +105,7 @@ void RetroFuturaGUI::IRangedValue::EnableIndicator(const bool value)
         setIndicatorBackgroundColors();
     }
 
-    setIndicatorPosition();
+    alignElementsToTrack();
 }
 
 void RetroFuturaGUI::IRangedValue::SetIndicatorType(const IndicatorType type)
@@ -496,7 +388,7 @@ void RetroFuturaGUI::IRangedValue::EnableGraph(const bool value)
         setGraphColorsApply();
     }
 
-    setGraphPosition();
+    alignElementsToTrack();
 }
 
 void RetroFuturaGUI::IRangedValue::SetGraphMode(const GraphMode mode)
@@ -543,7 +435,7 @@ void RetroFuturaGUI::IRangedValue::SetGraphCornerRadii(const glm::vec4& radii)
 void RetroFuturaGUI::IRangedValue::SetGraphWidth(const f32 width)
 {
     _graphWidth = width;
-    setGraphPosition();
+    alignElementsToTrack();
 }
 
 void RetroFuturaGUI::IRangedValue::SetGraphFillType(const FillType fillType)
@@ -653,18 +545,71 @@ glm::vec3 RetroFuturaGUI::IRangedValue::orientedRotation(const glm::vec3& rotati
         : rotation;
 }
 
-void RetroFuturaGUI::IRangedValue::setIndicatorPosition()
+f64 RetroFuturaGUI::IRangedValue::toF64(const PrimitiveUnion value) const
 {
-    if(!_track || !_indicatorBackground)
+    switch(_valueType)
+    {
+        case PrimitiveTypeID::Int8:
+            return static_cast<f64>(value.Int8);
+        case PrimitiveTypeID::Int16:
+            return static_cast<f64>(value.Int16);
+        case PrimitiveTypeID::Int32:
+            return static_cast<f64>(value.Int32);
+        case PrimitiveTypeID::Int64:
+            return static_cast<f64>(value.Int64);
+        case PrimitiveTypeID::UInt8:
+            return static_cast<f64>(value.UInt8);
+        case PrimitiveTypeID::UInt16:
+            return static_cast<f64>(value.UInt16);
+        case PrimitiveTypeID::UInt32:
+            return static_cast<f64>(value.UInt32);
+        case PrimitiveTypeID::UInt64:
+            return static_cast<f64>(value.UInt64);
+        case PrimitiveTypeID::Float32:
+            return static_cast<f64>(value.Float32);
+        case PrimitiveTypeID::Float64:
+            return value.Float64;
+        default: // Bool
+            return value.Bool ? 1.0 : 0.0;
+    }
+}
+
+f32 RetroFuturaGUI::IRangedValue::getRangeFraction(const f64 value) const
+{
+    // A bool's range is always false..true, whatever its bounds hold
+    if(_valueType == PrimitiveTypeID::Bool)
+        return 0.0 != value ? 1.0f : 0.0f;
+
+    // f64 rather than f32: with a large minimum, such as an absolute timestamp, f32 collapses nearby values into one fraction
+    const f64
+        minValue { toF64(_minValue) },
+        range { toF64(_maxValue) - minValue };
+
+    if(0.0 == range)
+        return 0.0f;
+
+    return static_cast<f32>((value - minValue) / range);
+}
+
+f32 RetroFuturaGUI::IRangedValue::toTrackFraction(const f32 rangeFraction) const
+{
+    return _trackDirection == TrackDirection::Inverted ? 1.0f - rangeFraction : rangeFraction;
+}
+
+void RetroFuturaGUI::IRangedValue::setIndicatorPosition(const f32 trackFraction)
+{
+    if(!_track)
+        return;
+
+    if(!_indicatorBackground)
         return;
 
     const f32
-        fraction { getTrackFraction() },
         borderInset { _border ? _border->GetBorderWidth() * 2.0f : 0.0f },
         trackLength { glm::max(_track->GetSize().x - borderInset, 0.0f) },
         indicatorLength { _indicatorBackground->GetSize().x },
-        travelRange { trackLength - indicatorLength > 0.0f ? trackLength - indicatorLength : 0.0f },
-        indicatorSliderPosition { indicatorLength * 0.5f + fraction * travelRange };
+        travelRange { 0.0f < trackLength - indicatorLength ? trackLength - indicatorLength : 0.0f },
+        indicatorSliderPosition { indicatorLength * 0.5f + trackFraction * travelRange };
 
     // The indicator always travels along the track's local x-axis.
     // Rotate that local offset by the track's rotation to place it correctly in world space.
@@ -693,26 +638,32 @@ void RetroFuturaGUI::IRangedValue::setIndicatorPosition()
     }
 }
 
-void RetroFuturaGUI::IRangedValue::setGraphSize()
+void RetroFuturaGUI::IRangedValue::setGraphSize(const f32 trackFraction)
 {
-    if(!_track || !_graph)
+    if(!_track)
+        return;
+
+    if(!_graph)
         return;
 
     const f32
         trackWidth { _track->GetSize().x },
         trackHeight { _track->GetSize().y },
-        graphWidth { trackWidth * getTrackFraction() },
-        graphHeight { _graphWidth > 0.0f ? (_graphWidth < trackHeight ? _graphWidth : trackHeight) : trackHeight };
+        graphWidth { trackWidth * trackFraction },
+        graphHeight { 0.0f < _graphWidth ? (_graphWidth < trackHeight ? _graphWidth : trackHeight) : trackHeight };
 
     _graph->SetSize(glm::vec2(graphWidth, graphHeight));
 }
 
-void RetroFuturaGUI::IRangedValue::setGraphPosition()
+void RetroFuturaGUI::IRangedValue::setGraphPosition(const f32 trackFraction)
 {
-    if(!_track || !_graph)
+    if(!_track)
         return;
 
-    setGraphSize();
+    if(!_graph)
+        return;
+
+    setGraphSize(trackFraction);
 
     const f32
         trackWidth { _track->GetSize().x },
@@ -736,73 +687,6 @@ void RetroFuturaGUI::IRangedValue::setGraphPosition()
 
     _graph->SetPosition(position);
     _graph->SetRotation(_track->GetRotation());
-}
-
-void RetroFuturaGUI::IRangedValue::setValueFromMousePosition(const glm::vec2& mousePos)
-{
-    if(!_track || !_indicatorBackground)
-        return;
-
-    // Revert the track's rotation to bring the mouse position into the track's local space where it always runs along the local X axis
-    const glm::vec2 translated { mousePos - glm::vec2(_track->GetPosition().x, _track->GetPosition().y) };
-    const f32 radians { glm::radians(-_track->GetRotation().z) };
-    const glm::vec2 localMouse
-    (
-        translated.x * cos(radians) - translated.y * sin(radians),
-        translated.x * sin(radians) + translated.y * cos(radians)
-    );
-
-    // Must match the span setIndicatorPosition places the indicator across, or the cursor drifts from it mid-drag.
-    const f32
-        borderInset { _border ? _border->GetBorderWidth() * 2.0f : 0.0f },
-        trackLength { glm::max(_track->GetSize().x - borderInset, 0.0f) },
-        indicatorLength { _indicatorBackground->GetSize().x },
-        travelRange { trackLength - indicatorLength > 0.0f ? trackLength - indicatorLength : 0.0f },
-        trackNearEdge { -trackLength * 0.5f },
-        mouseOffsetOnAxis { localMouse.x - trackNearEdge - indicatorLength * 0.5f },
-        clampedOffset { mouseOffsetOnAxis < 0.0f ? 0.0f : (mouseOffsetOnAxis > travelRange ? travelRange : mouseOffsetOnAxis) },
-        // Position along the track, then back to a position in the value's range - the inverse of getTrackFraction
-        trackFraction { travelRange != 0.0f ? clampedOffset / travelRange : 0.0f },
-        fraction { _trackDirection == TrackDirection::Inverted ? 1.0f - trackFraction : trackFraction };
-
-    switch(_valueType)
-    {
-        case ValueType::Int8:
-            _value.Int8 = static_cast<i8>(_minValue.Int8 + fraction * (_maxValue.Int8 - _minValue.Int8));
-        break;
-        case ValueType::Int16:
-            _value.Int16 = static_cast<i16>(_minValue.Int16 + fraction * (_maxValue.Int16 - _minValue.Int16));
-        break;
-        case ValueType::Int32:
-            _value.Int32 = static_cast<i32>(_minValue.Int32 + fraction * (_maxValue.Int32 - _minValue.Int32));
-        break;
-        case ValueType::Int64:
-            _value.Int64 = static_cast<i64>(_minValue.Int64 + fraction * (_maxValue.Int64 - _minValue.Int64));
-        break;
-        case ValueType::UInt8:
-            _value.UInt8 = static_cast<u8>(_minValue.UInt8 + fraction * (_maxValue.UInt8 - _minValue.UInt8));
-        break;
-        case ValueType::UInt16:
-            _value.UInt16 = static_cast<u16>(_minValue.UInt16 + fraction * (_maxValue.UInt16 - _minValue.UInt16));
-        break;
-        case ValueType::UInt32:
-            _value.UInt32 = static_cast<u32>(_minValue.UInt32 + fraction * (_maxValue.UInt32 - _minValue.UInt32));
-        break;
-        case ValueType::UInt64:
-            _value.UInt64 = static_cast<u64>(_minValue.UInt64 + fraction * (_maxValue.UInt64 - _minValue.UInt64));
-        break;
-        case ValueType::Float32:
-            _value.Float32 = _minValue.Float32 + fraction * (_maxValue.Float32 - _minValue.Float32);
-        break;
-        case ValueType::Float64:
-            _value.Float64 = _minValue.Float64 + static_cast<f64>(fraction) * (_maxValue.Float64 - _minValue.Float64);
-        break;
-        default: // Bool
-            _value.Bool = fraction >= 0.5f;
-        break;
-    }
-
-    setIndicatorPosition();
 }
 
 void RetroFuturaGUI::IRangedValue::setIndicatorColors(const ColorState state)
@@ -900,90 +784,6 @@ void RetroFuturaGUI::IRangedValue::drawGraph()
         return;
 
     _graph->Draw(); // TODO: GraphMode::Wave currently draws identically to GraphMode::Bar — wave geometry/shader not implemented yet.
-}
-void RetroFuturaGUI::IRangedValue::StepValue(const bool increase)
-{
-    union
-    {
-        bool Bool;
-        i8 Int8;
-        i16 Int16;
-        i32 Int32;
-        i64 Int64;
-        u8 UInt8;
-        u16 UInt16;
-        u32 UInt32;
-        u64 UInt64;
-        f32 Float32;
-        f64 Float64;
-    } clamped { .UInt64 = 0 };
-
-    switch(_valueType)
-    {
-        case ValueType::Int8:
-            clamped.Int8 = increase
-                ? (_maxValue.Int8 - _value.Int8 < _stepSize.Int8 ? _maxValue.Int8 : _value.Int8 + _stepSize.Int8)
-                : (_value.Int8 - _minValue.Int8 < _stepSize.Int8 ? _minValue.Int8 : _value.Int8 - _stepSize.Int8);
-            SetValue<i8>(clamped.Int8);
-        break;
-        case ValueType::Int16:
-            clamped.Int16 = increase
-                ? (_maxValue.Int16 - _value.Int16 < _stepSize.Int16 ? _maxValue.Int16 : _value.Int16 + _stepSize.Int16)
-                : (_value.Int16 - _minValue.Int16 < _stepSize.Int16 ? _minValue.Int16 : _value.Int16 - _stepSize.Int16);
-            SetValue<i16>(clamped.Int16);
-        break;
-        case ValueType::Int32:
-            clamped.Int32 = increase
-                ? (_maxValue.Int32 - _value.Int32 < _stepSize.Int32 ? _maxValue.Int32 : _value.Int32 + _stepSize.Int32)
-                : (_value.Int32 - _minValue.Int32 < _stepSize.Int32 ? _minValue.Int32 : _value.Int32 - _stepSize.Int32);
-            SetValue<i32>(clamped.Int32);
-        break;
-        case ValueType::Int64:
-            clamped.Int64 = increase
-                ? (_maxValue.Int64 - _value.Int64 < _stepSize.Int64 ? _maxValue.Int64 : _value.Int64 + _stepSize.Int64)
-                : (_value.Int64 - _minValue.Int64 < _stepSize.Int64 ? _minValue.Int64 : _value.Int64 - _stepSize.Int64);
-            SetValue<i64>(clamped.Int64);
-        break;
-        case ValueType::UInt8:
-            clamped.UInt8 = increase
-                ? (_maxValue.UInt8 - _value.UInt8 < _stepSize.UInt8 ? _maxValue.UInt8 : _value.UInt8 + _stepSize.UInt8)
-                : (_value.UInt8 - _minValue.UInt8 < _stepSize.UInt8 ? _minValue.UInt8 : _value.UInt8 - _stepSize.UInt8);
-            SetValue<u8>(clamped.UInt8);
-        break;
-        case ValueType::UInt16:
-            clamped.UInt16 = increase
-                ? (_maxValue.UInt16 - _value.UInt16 < _stepSize.UInt16 ? _maxValue.UInt16 : _value.UInt16 + _stepSize.UInt16)
-                : (_value.UInt16 - _minValue.UInt16 < _stepSize.UInt16 ? _minValue.UInt16 : _value.UInt16 - _stepSize.UInt16);
-            SetValue<u16>(clamped.UInt16);
-        break;
-        case ValueType::UInt32:
-            clamped.UInt32 = increase
-                ? (_maxValue.UInt32 - _value.UInt32 < _stepSize.UInt32 ? _maxValue.UInt32 : _value.UInt32 + _stepSize.UInt32)
-                : (_value.UInt32 - _minValue.UInt32 < _stepSize.UInt32 ? _minValue.UInt32 : _value.UInt32 - _stepSize.UInt32);
-            SetValue<u32>(clamped.UInt32);
-        break;
-        case ValueType::UInt64:
-            clamped.UInt64 = increase
-                ? (_maxValue.UInt64 - _value.UInt64 < _stepSize.UInt64 ? _maxValue.UInt64 : _value.UInt64 + _stepSize.UInt64)
-                : (_value.UInt64 - _minValue.UInt64 < _stepSize.UInt64 ? _minValue.UInt64 : _value.UInt64 - _stepSize.UInt64);
-            SetValue<u64>(clamped.UInt64);
-        break;
-        case ValueType::Float32:
-            clamped.Float32 = increase
-                ? (_maxValue.Float32 - _value.Float32 < _stepSize.Float32 ? _maxValue.Float32 : _value.Float32 + _stepSize.Float32)
-                : (_value.Float32 - _minValue.Float32 < _stepSize.Float32 ? _minValue.Float32 : _value.Float32 - _stepSize.Float32);
-            SetValue<f32>(clamped.Float32);
-        break;
-        case ValueType::Float64:
-            clamped.Float64 = increase
-                ? (_maxValue.Float64 - _value.Float64 < _stepSize.Float64 ? _maxValue.Float64 : _value.Float64 + _stepSize.Float64)
-                : (_value.Float64 - _minValue.Float64 < _stepSize.Float64 ? _minValue.Float64 : _value.Float64 - _stepSize.Float64);
-            SetValue<f64>(clamped.Float64);
-        break;
-        default:
-            SetValue<bool>(increase);
-        break;
-    }
 }
 
 void RetroFuturaGUI::IRangedValue::setIndicatorSize()
