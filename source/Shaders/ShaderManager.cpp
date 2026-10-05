@@ -77,6 +77,11 @@ RetroFuturaGUI::Shader& RetroFuturaGUI::ShaderManager::GetSvgMaskHueStarGradient
     return *_svgMaskHueStarGradient;
 }
 
+RetroFuturaGUI::Shader& RetroFuturaGUI::ShaderManager::GetYuvToRgbShader()
+{
+    return *_yuvToRgb;
+}
+
 void RetroFuturaGUI::ShaderManager::Init()
 {
     std::println("Compiling shaders...");
@@ -168,5 +173,10 @@ void RetroFuturaGUI::ShaderManager::compileShaders()
     _svgMaskHueStarGradient = std::make_unique<Shader>(
         std::string(workingDir + "SvgMask.vs").c_str(),
         std::string(workingDir + "SvgMaskHueStarGradient.fs").c_str()
+    );
+
+    _yuvToRgb = std::make_unique<Shader>(
+        std::string(workingDir + "YuvToRgb.vs").c_str(),
+        std::string(workingDir + "YuvToRgb.fs").c_str()
     );
 }

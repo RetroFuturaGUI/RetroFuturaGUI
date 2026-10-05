@@ -4,7 +4,7 @@
 
 namespace RetroFuturaGUI
 {
-    class Image : public IWidget
+    class Image final : public IWidget
     {
     public:
         /// @brief Constructs an Image widget that loads and displays the texture at imagePath.

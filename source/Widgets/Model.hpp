@@ -1,6 +1,7 @@
 #pragma once
 #include "IWidget.hpp"
 #include "Mesh.hpp"
+#include "Texture.hpp"
 #include <assimp/Importer.hpp>
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>

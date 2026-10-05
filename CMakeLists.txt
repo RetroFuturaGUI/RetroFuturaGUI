@@ -40,6 +40,7 @@ list(APPEND RetroFuturaGuiSources
     "${CMAKE_CURRENT_SOURCE_DIR}/source/MediaPlayback/RingBufferSource.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/MediaPlayback/VideoDecodeThread.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/MediaPlayback/VideoFrameQueue.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/source/MediaPlayback/VideoPlayback.cpp"
 
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Misc/DoubleEncodedString.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Misc/Mesh.cpp"

@@ -39,10 +39,8 @@ RetroFuturaGUI::Shader::Shader(const char* vertexPath, const char* fragmentPath,
         glDeleteShader(geometryShader);
 
     //glUseProgram(_programId);
+    // -1 for shaders that don't project anything - YuvToRgb, for one, renders into a texture, not onto the screen
     _projectionLocation = glGetUniformLocation(_programId, "uProjection");
-
-    if (_projectionLocation == -1)
-        std::println("Warning: 'uProjection' uniform not found in shader program.");
 }
 
 RetroFuturaGUI::Shader::~Shader()

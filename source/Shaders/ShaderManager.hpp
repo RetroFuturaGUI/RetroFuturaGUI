@@ -67,6 +67,10 @@ namespace RetroFuturaGUI
         /// @return Reference to the SVG mask hue star gradient Shader object
         static Shader& GetSvgMaskHueStarGradientShader();
 
+        /// @brief Get the YUV to RGB shader, which converts decoded video pictures into an RGBA texture
+        /// @return Reference to the YUV to RGB Shader object
+        static Shader& GetYuvToRgbShader();
+
         /// @brief Initialize the ShaderManager and compile all shaders
         static void Init();
 
@@ -99,5 +103,6 @@ namespace RetroFuturaGUI
         static inline std::unique_ptr<Shader> _svgMaskLinearGradient;
         static inline std::unique_ptr<Shader> _svgMaskRadialGradient;
         static inline std::unique_ptr<Shader> _svgMaskHueStarGradient;
+        static inline std::unique_ptr<Shader> _yuvToRgb;
     };
 }

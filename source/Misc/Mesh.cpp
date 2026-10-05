@@ -63,7 +63,7 @@ namespace RetroFuturaGUI
         {
             if (meshTexture._Type == "texture_diffuse" && meshTexture.texture)
             {
-                meshTexture.texture->Draw();
+                meshTexture.texture->Bind(0);
                 boundTexture = true;
                 break;
             }

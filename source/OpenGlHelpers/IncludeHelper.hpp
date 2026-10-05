@@ -30,6 +30,7 @@ namespace RetroFuturaGUI
     class Prefab;
     class MenuBar;
     class ColorPreview;
+    class Video;
 
     enum class FillType: u32
     {
@@ -72,6 +73,7 @@ namespace RetroFuturaGUI
         SeparatorLine,
         MenuBar,
         ColorPreview,
+        Video,
         Unknown = -1
     };   
 

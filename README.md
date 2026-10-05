@@ -13,7 +13,7 @@ The framework is designed for cross-platform use, and its logic can be compiled 
 | 1 | Button, Label, Window, MainWindow, Image, Grid2D, WindowBar with Buttons |  | ✅ |
 | 2 | dll/so/dylib compilation for C# and Python support, Widget ID manager | 1 | ✅ | 
 | 3 | Linux Support, Font Manager | 2 | ✅ | 
-| 4 | More Widgets (TextBox ✅, Table ✅, 3D Model ✅, Slider ✅, CheckBox ✅, ComboBox ✅, ExtendedComoBox ✅, RadioButton ✅, RadioButtonGroup ✅, SeparatorLine ✅, ColorPreview ✅, change Grid2d to "Lasagna" and add a 3rd dimension ✅, MenuBar ✅, Environment, Histogram, LineDiagram, Tabs, Lights, VideoPlayer, Color Pickers), Scene ✅, SceneLoader ✅, MediaPlayer (AudioPlayback ✅, AudioMetadata ✅, MediaSource + Decoder ✅, VideoPlayback) | 1 | WIP | 
+| 4 | More Widgets (TextBox ✅, Table ✅, 3D Model ✅, Slider ✅, CheckBox ✅, ComboBox ✅, ExtendedComoBox ✅, RadioButton ✅, RadioButtonGroup ✅, SeparatorLine ✅, ColorPreview ✅, change Grid2d to "Lasagna" and add a 3rd dimension ✅, MenuBar ✅, Environment, Histogram, LineDiagram, Tabs, Lights, VideoPlayer ✅, Color Pickers), Scene ✅, SceneLoader ✅, MediaPlayer (AudioPlayback ✅, AudioMetadata ✅, MediaSource + Decoder ✅, VideoPlayback ✅) | 1 | WIP | 
 | 5 | .bechaml markup language for GUI design 🥣 (**B**eautifully **E**xtended **C**ascading but **H**airbally **A**pplication **M**arkup **L**anguage) | 4 | | 
 | 6 | VS Code extension with project generator/manager | 5 | | 
 | 7 | Pre-built Prefabs (StepperSlider, SpinBox, Table with Sliders, Carousel, Extended Color Pickers, MediaPlayer) | 6 |
@@ -456,6 +456,7 @@ The framework is designed for cross-platform use, and its logic can be compiled 
 <li>Rectangle, Text, Texture, IWidget: 3rd dimension</li>
 <li>Complete Python binding</li>
 <li>Refactor Binding</li>
+<li>Refactor textures so a texture on a 3D model carries no unused quad (ITexture holds the standalone quad that only Image and Video draw with - VAO/VBO/EBO, the scaling/translation/rotation matrices, Draw/SetSize/SetPosition/SetRotation. Without a Projection the buffers are never created, but every Model texture still carries the members and the API. Move the quad out to what draws it)</li>
 </ul>
 </details>
 
@@ -476,4 +477,4 @@ RetroFuturaGUI aims to break these barriers!
   - A TextBox reports WidgetTypeID::Button, so DynamicLibWidgetManager::SetText and ConnectSlot take the Button branch, dynamic_cast to Button* yields null and is then dereferenced. The WidgetTypeID::TextBox branches are unreachable as a result
 
 ### Is AI used in this project?
-AI is often used for repititive tasks like adding code comments to functions, classes, and structs and updating this readme's ToDo and feature list. Shaders are mostly written by AI and AI is sometimes used for finding bugs and to assist with complicated calculations. The architecture of font loading and Scene management was partially planned with AI. AudioMetadata.hpp/cpp are entirely written by AI.
+AI is often used for repititive tasks like adding code comments to functions, classes, and structs and updating this readme's ToDo and feature list. Shaders are mostly written by AI and AI is sometimes used for finding bugs and to assist with complicated calculations. The architecture of font loading and Scene management was partially planned with AI. AudioMetadata.hpp/cpp are entirely written by AI. YUV to RGB conversion was done by AI

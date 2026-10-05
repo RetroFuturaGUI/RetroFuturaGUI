@@ -7,7 +7,7 @@
 #include <string>
 #include <glm/glm.hpp>
 #include "config.hpp"
-#include "Texture.hpp"
+#include "ITexture.hpp"
 
 namespace RetroFuturaGUI
 {
@@ -75,10 +75,10 @@ namespace RetroFuturaGUI
         Vec2 _TextureCoordinate;
     };
 
-    // non-owning view used purely to pick which texture to bind when drawing
+    // non-owning view used purely to pick which texture to bind when drawing so a video can be a material as well as an image
     struct MeshTexture
     {
-        Texture* texture { nullptr };
+        ITexture* texture { nullptr };
         std::string 
             _Type,
             _Path;
