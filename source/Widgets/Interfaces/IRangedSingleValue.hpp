@@ -30,63 +30,33 @@ namespace RetroFuturaGUI
         /// @brief Disconnects a previously connected OnValueSet slot.
         void Disconnect_OnValueSet(const typename Signal<>::Slot& slot);
 
+        /// @brief Sets the value, clamped to the range. A T different from the range's first converts the range and the step to T (see setValueType).
         template <NumericValueType T> void SetValue(T value, const bool emitSignal = true)
         {
+            setValueType(GetPrimitiveTypeID<T>());
+
             if constexpr (std::is_same_v<T, i8>)
-            {
                 _value.Int8 = value < _minValue.Int8 ? _minValue.Int8 : value > _maxValue.Int8 ? _maxValue.Int8 : value;
-                _valueType = PrimitiveTypeID::Int8;
-            }
             else if constexpr (std::is_same_v<T, i16>)
-            {
                 _value.Int16 = value < _minValue.Int16 ? _minValue.Int16 : value > _maxValue.Int16 ? _maxValue.Int16 : value;
-                _valueType = PrimitiveTypeID::Int16;
-            }
             else if constexpr (std::is_same_v<T, i32>)
-            {
                 _value.Int32 = value < _minValue.Int32 ? _minValue.Int32 : value > _maxValue.Int32 ? _maxValue.Int32 : value;
-                _valueType = PrimitiveTypeID::Int32;
-            }
             else if constexpr (std::is_same_v<T, i64>)
-            {
                 _value.Int64 = value < _minValue.Int64 ? _minValue.Int64 : value > _maxValue.Int64 ? _maxValue.Int64 : value;
-                _valueType = PrimitiveTypeID::Int64;
-            }
             else if constexpr (std::is_same_v<T, u8>)
-            {
                 _value.UInt8 = value < _minValue.UInt8 ? _minValue.UInt8 : value > _maxValue.UInt8 ? _maxValue.UInt8 : value;
-                _valueType = PrimitiveTypeID::UInt8;
-            }
             else if constexpr (std::is_same_v<T, u16>)
-            {
                 _value.UInt16 = value < _minValue.UInt16 ? _minValue.UInt16 : value > _maxValue.UInt16 ? _maxValue.UInt16 : value;
-                _valueType = PrimitiveTypeID::UInt16;
-            }
             else if constexpr (std::is_same_v<T, u32>)
-            {
                 _value.UInt32 = value < _minValue.UInt32 ? _minValue.UInt32 : value > _maxValue.UInt32 ? _maxValue.UInt32 : value;
-                _valueType = PrimitiveTypeID::UInt32;
-            }
             else if constexpr (std::is_same_v<T, u64>)
-            {
                 _value.UInt64 = value < _minValue.UInt64 ? _minValue.UInt64 : value > _maxValue.UInt64 ? _maxValue.UInt64 : value;
-                _valueType = PrimitiveTypeID::UInt64;
-            }
             else if constexpr (std::is_same_v<T, f32>)
-            {
                 _value.Float32 = value < _minValue.Float32 ? _minValue.Float32 : value > _maxValue.Float32 ? _maxValue.Float32 : value;
-                _valueType = PrimitiveTypeID::Float32;
-            }
             else if constexpr (std::is_same_v<T, f64>)
-            {
                 _value.Float64 = value < _minValue.Float64 ? _minValue.Float64 : value > _maxValue.Float64 ? _maxValue.Float64 : value;
-                _valueType = PrimitiveTypeID::Float64;
-            }
             else
-            {
                 _value.Bool = value;
-                _valueType = PrimitiveTypeID::Bool;
-            }
 
             if(emitSignal)
             {
@@ -98,93 +68,41 @@ namespace RetroFuturaGUI
         }
 
 
+        /// @brief Returns the value converted to T. Saturates where T can't hold it (a negative value as unsigned gives 0) instead of the undefined behavior of a plain cast.
         template <NumericValueType T> const T GetValue() const
         {
             switch(_valueType)
             {
                 case PrimitiveTypeID::Int8:
-                {
-                    if constexpr (std::is_same_v<T, i8>)
-                        return _value.Int8;
-                    else
-                        return static_cast<T>(_value.Int8);
-                }
+                    return saturatingCast<T>(_value.Int8);
                 case PrimitiveTypeID::Int16:
-                {
-                    if constexpr (std::is_same_v<T, i16>)
-                        return _value.Int16;
-                    else
-                        return static_cast<T>(_value.Int16);
-                }
+                    return saturatingCast<T>(_value.Int16);
                 case PrimitiveTypeID::Int32:
-                {
-                    if constexpr (std::is_same_v<T, i32>)
-                        return _value.Int32;
-                    else
-                        return static_cast<T>(_value.Int32);
-                }
+                    return saturatingCast<T>(_value.Int32);
                 case PrimitiveTypeID::Int64:
-                {
-                    if constexpr (std::is_same_v<T, i64>)
-                        return _value.Int64;
-                    else
-                        return static_cast<T>(_value.Int64);
-                }
+                    return saturatingCast<T>(_value.Int64);
                 case PrimitiveTypeID::UInt8:
-                {
-                    if constexpr (std::is_same_v<T, u8>)
-                        return _value.UInt8;
-                    else
-                        return static_cast<T>(_value.UInt8);
-                }
+                    return saturatingCast<T>(_value.UInt8);
                 case PrimitiveTypeID::UInt16:
-                {
-                    if constexpr (std::is_same_v<T, u16>)
-                        return _value.UInt16;
-                    else
-                        return static_cast<T>(_value.UInt16);
-                }
+                    return saturatingCast<T>(_value.UInt16);
                 case PrimitiveTypeID::UInt32:
-                {
-                    if constexpr (std::is_same_v<T, u32>)
-                        return _value.UInt32;
-                    else
-                        return static_cast<T>(_value.UInt32);
-                }
+                    return saturatingCast<T>(_value.UInt32);
                 case PrimitiveTypeID::UInt64:
-                {
-                    if constexpr (std::is_same_v<T, u64>)
-                        return _value.UInt64;
-                    else
-                        return static_cast<T>(_value.UInt64);
-                }
+                    return saturatingCast<T>(_value.UInt64);
                 case PrimitiveTypeID::Float32:
-                {
-                    if constexpr (std::is_same_v<T, f32>)
-                        return _value.Float32;
-                    else
-                        return static_cast<T>(_value.Float32);
-                }
+                    return saturatingCast<T>(_value.Float32);
                 case PrimitiveTypeID::Float64:
-                {
-                    if constexpr (std::is_same_v<T, f64>)
-                        return _value.Float64;
-                    else
-                        return static_cast<T>(_value.Float64);
-                }
-                default:
-                {
-                    if constexpr (std::is_same_v<T, bool>)
-                        return _value.Bool;
-                    else
-                         return static_cast<T>(_value.Bool);
-                }
+                    return saturatingCast<T>(_value.Float64);
+                default: // Bool
+                    return saturatingCast<T>(_value.Bool);
             }
         }
 
-         /// @brief Sets the amount StepValue moves the value by.
-        template <typename T> void SetStepSize(T value)
+        /// @brief Sets the amount StepValue moves the value by - zero or positive, in the T the range was set with (see SetValue).
+        template <NumericValueType T> void SetStepSize(T value)
         {
+            setValueType(GetPrimitiveTypeID<T>());
+
             if constexpr (std::is_same_v<T, i8>)
                 _stepSize.Int8 = value;
             else if constexpr (std::is_same_v<T, i16>)
@@ -216,6 +134,9 @@ namespace RetroFuturaGUI
     protected:
         /// @brief Clamps the value into the new range and emits OnValueChanged if that moved it.
         void alignValueToRange() override;
+
+        /// @brief Converts the value and the step from previousType to the new type. A fractional step becomes 0 as an integer type, so StepValue then stays put until SetStepSize.
+        void convertValuesToType(const PrimitiveTypeID previousType) override;
 
         /// @brief Places the indicator and graph at the value.
         void alignElementsToTrack() override;
@@ -249,7 +170,47 @@ namespace RetroFuturaGUI
             return true;
         }
 
-        PrimitiveUnion _value { .UInt64 = 0 };
-        PrimitiveUnion _stepSize { .UInt64 = 1 };
+        /// @brief value moved one step toward bound, stopping at bound.
+        /// @note Integer distances are taken in the unsigned type, where they can't overflow however wide the range is.
+        template <NumericValueType T> requires (!std::same_as<T, bool>) static T stepToward(const T value, const T step, const T bound)
+        {
+            const bool isUpward { value < bound };
+
+            if constexpr (std::is_integral_v<T>)
+            {
+                using UnsignedT = std::make_unsigned_t<T>;
+
+                const UnsignedT distance { static_cast<UnsignedT>(isUpward
+                    ? static_cast<UnsignedT>(bound) - static_cast<UnsignedT>(value)
+                    : static_cast<UnsignedT>(value) - static_cast<UnsignedT>(bound)) };
+
+                if(distance <= static_cast<UnsignedT>(step))
+                    return bound;
+
+                // distance > step, so this stays between value and bound
+                return static_cast<T>(isUpward ? value + step : value - step);
+            }
+            else
+            {
+                const T distance { isUpward ? bound - value : value - bound };
+
+                if(distance <= step)
+                    return bound;
+
+                return isUpward ? value + step : value - step;
+            }
+        }
+
+        /// @brief The point fraction (0..1) of the way from minValue to maxValue.
+        /// @note Computed in f64, where an integer range can't overflow, then saturated into T and clamped to the range against rounding.
+        template <NumericValueType T> requires (!std::same_as<T, bool>) static T interpolate(const T minValue, const T maxValue, const f32 fraction)
+        {
+            const f64 interpolated { static_cast<f64>(minValue) + static_cast<f64>(fraction) * (static_cast<f64>(maxValue) - static_cast<f64>(minValue)) };
+            const T value { saturatingCast<T>(interpolated) };
+            return value < minValue ? minValue : value > maxValue ? maxValue : value;
+        }
+
+        PrimitiveUnion _value { .Int32 = 0 };
+        PrimitiveUnion _stepSize { .Int32 = 1 };
     };
 }

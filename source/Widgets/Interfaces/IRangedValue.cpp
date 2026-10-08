@@ -23,7 +23,6 @@ RetroFuturaGUI::IRangedValue::IRangedValue(std::string_view name, Projection* pr
     if (_indicatorBorder)
         _indicatorBorder->SetRectangleMode(RectangleMode::Border);
 
-    _track = _background.get();
     _elementProjection = projection;
     _useIndicator = true;
 }
@@ -545,32 +544,32 @@ glm::vec3 RetroFuturaGUI::IRangedValue::orientedRotation(const glm::vec3& rotati
         : rotation;
 }
 
-f64 RetroFuturaGUI::IRangedValue::toF64(const PrimitiveUnion value) const
+f32 RetroFuturaGUI::IRangedValue::toF32(const PrimitiveUnion value) const
 {
     switch(_valueType)
     {
         case PrimitiveTypeID::Int8:
-            return static_cast<f64>(value.Int8);
+            return static_cast<f32>(value.Int8);
         case PrimitiveTypeID::Int16:
-            return static_cast<f64>(value.Int16);
+            return static_cast<f32>(value.Int16);
         case PrimitiveTypeID::Int32:
-            return static_cast<f64>(value.Int32);
+            return static_cast<f32>(value.Int32);
         case PrimitiveTypeID::Int64:
-            return static_cast<f64>(value.Int64);
+            return static_cast<f32>(value.Int64);
         case PrimitiveTypeID::UInt8:
-            return static_cast<f64>(value.UInt8);
+            return static_cast<f32>(value.UInt8);
         case PrimitiveTypeID::UInt16:
-            return static_cast<f64>(value.UInt16);
+            return static_cast<f32>(value.UInt16);
         case PrimitiveTypeID::UInt32:
-            return static_cast<f64>(value.UInt32);
+            return static_cast<f32>(value.UInt32);
         case PrimitiveTypeID::UInt64:
-            return static_cast<f64>(value.UInt64);
+            return static_cast<f32>(value.UInt64);
         case PrimitiveTypeID::Float32:
-            return static_cast<f64>(value.Float32);
+            return value.Float32;
         case PrimitiveTypeID::Float64:
-            return value.Float64;
+            return static_cast<f32>(value.Float64);
         default: // Bool
-            return value.Bool ? 1.0 : 0.0;
+            return value.Bool ? 1.0f : 0.0f;
     }
 }
 
@@ -580,10 +579,10 @@ f32 RetroFuturaGUI::IRangedValue::getRangeFraction(const f64 value) const
     if(_valueType == PrimitiveTypeID::Bool)
         return 0.0 != value ? 1.0f : 0.0f;
 
-    // f64 rather than f32: with a large minimum, such as an absolute timestamp, f32 collapses nearby values into one fraction
-    const f64
-        minValue { toF64(_minValue) },
-        range { toF64(_maxValue) - minValue };
+    // f32 rather than f32: with a large minimum, such as an absolute timestamp, f32 collapses nearby values into one fraction
+    const f32
+        minValue { toF32(_minValue) },
+        range { toF32(_maxValue) - minValue };
 
     if(0.0 == range)
         return 0.0f;
@@ -596,9 +595,58 @@ f32 RetroFuturaGUI::IRangedValue::toTrackFraction(const f32 rangeFraction) const
     return _trackDirection == TrackDirection::Inverted ? 1.0f - rangeFraction : rangeFraction;
 }
 
+void RetroFuturaGUI::IRangedValue::setValueType(const PrimitiveTypeID type)
+{
+    if(type == _valueType)
+        return;
+
+    const PrimitiveTypeID previousType { _valueType };
+    _valueType = type;
+    _minValue = convertPrimitive(_minValue, previousType, _valueType);
+    _maxValue = convertPrimitive(_maxValue, previousType, _valueType);
+    convertValuesToType(previousType);
+}
+
+RetroFuturaGUI::PrimitiveTypeID RetroFuturaGUI::IRangedValue::resolveValueType(const PrimitiveTypeID requestedType) const
+{
+    return requestedType;
+}
+
+RetroFuturaGUI::PrimitiveUnion RetroFuturaGUI::IRangedValue::convertPrimitive(const PrimitiveUnion value, const PrimitiveTypeID from, const PrimitiveTypeID to)
+{
+    // Read through the member from says was written last, then let convertPrimitiveTo write through to's
+    switch(from)
+    {
+        case PrimitiveTypeID::Int8:
+            return convertPrimitiveTo(value.Int8, to);
+        case PrimitiveTypeID::Int16:
+            return convertPrimitiveTo(value.Int16, to);
+        case PrimitiveTypeID::Int32:
+            return convertPrimitiveTo(value.Int32, to);
+        case PrimitiveTypeID::Int64:
+            return convertPrimitiveTo(value.Int64, to);
+        case PrimitiveTypeID::UInt8:
+            return convertPrimitiveTo(value.UInt8, to);
+        case PrimitiveTypeID::UInt16:
+            return convertPrimitiveTo(value.UInt16, to);
+        case PrimitiveTypeID::UInt32:
+            return convertPrimitiveTo(value.UInt32, to);
+        case PrimitiveTypeID::UInt64:
+            return convertPrimitiveTo(value.UInt64, to);
+        case PrimitiveTypeID::Float32:
+            return convertPrimitiveTo(value.Float32, to);
+        case PrimitiveTypeID::Float64:
+            return convertPrimitiveTo(value.Float64, to);
+        default: // Bool
+            return convertPrimitiveTo(value.Bool, to);
+    }
+}
+
 void RetroFuturaGUI::IRangedValue::setIndicatorPosition(const f32 trackFraction)
 {
-    if(!_track)
+    Rectangle* track { getTrack() };
+
+    if(!track)
         return;
 
     if(!_indicatorBackground)
@@ -606,7 +654,7 @@ void RetroFuturaGUI::IRangedValue::setIndicatorPosition(const f32 trackFraction)
 
     const f32
         borderInset { _border ? _border->GetBorderWidth() * 2.0f : 0.0f },
-        trackLength { glm::max(_track->GetSize().x - borderInset, 0.0f) },
+        trackLength { glm::max(track->GetSize().x - borderInset, 0.0f) },
         indicatorLength { _indicatorBackground->GetSize().x },
         travelRange { 0.0f < trackLength - indicatorLength ? trackLength - indicatorLength : 0.0f },
         indicatorSliderPosition { indicatorLength * 0.5f + trackFraction * travelRange };
@@ -614,7 +662,7 @@ void RetroFuturaGUI::IRangedValue::setIndicatorPosition(const f32 trackFraction)
     // The indicator always travels along the track's local x-axis.
     // Rotate that local offset by the track's rotation to place it correctly in world space.
     const glm::vec2 localOffset(indicatorSliderPosition - trackLength * 0.5f, 0.0f);
-    const f32 radians = glm::radians(_track->GetRotation().z);
+    const f32 radians = glm::radians(track->GetRotation().z);
     const glm::vec2 rotatedOffset
     (
         localOffset.x * cos(radians) - localOffset.y * sin(radians),
@@ -623,32 +671,34 @@ void RetroFuturaGUI::IRangedValue::setIndicatorPosition(const f32 trackFraction)
 
     const glm::vec3 position
     (
-        _track->GetPosition().x + rotatedOffset.x,
-        _track->GetPosition().y + rotatedOffset.y,
-        _track->GetPosition().z + 0.02f
+        track->GetPosition().x + rotatedOffset.x,
+        track->GetPosition().y + rotatedOffset.y,
+        track->GetPosition().z + 0.02f
     );
 
     _indicatorBackground->SetPosition(position);
-    _indicatorBackground->SetRotation(_track->GetRotation());
+    _indicatorBackground->SetRotation(track->GetRotation());
 
     if(_indicatorBorder)
     {
         _indicatorBorder->SetPosition(position + glm::vec3(0.0f, 0.0f, 0.01f));
-        _indicatorBorder->SetRotation(_track->GetRotation());
+        _indicatorBorder->SetRotation(track->GetRotation());
     }
 }
 
 void RetroFuturaGUI::IRangedValue::setGraphSize(const f32 trackFraction)
 {
-    if(!_track)
+    Rectangle* track { getTrack() };
+
+    if(!track)
         return;
 
     if(!_graph)
         return;
 
     const f32
-        trackWidth { _track->GetSize().x },
-        trackHeight { _track->GetSize().y },
+        trackWidth { track->GetSize().x },
+        trackHeight { track->GetSize().y },
         graphWidth { trackWidth * trackFraction },
         graphHeight { 0.0f < _graphWidth ? (_graphWidth < trackHeight ? _graphWidth : trackHeight) : trackHeight };
 
@@ -657,7 +707,9 @@ void RetroFuturaGUI::IRangedValue::setGraphSize(const f32 trackFraction)
 
 void RetroFuturaGUI::IRangedValue::setGraphPosition(const f32 trackFraction)
 {
-    if(!_track)
+    Rectangle* track { getTrack() };
+
+    if(!track)
         return;
 
     if(!_graph)
@@ -666,12 +718,12 @@ void RetroFuturaGUI::IRangedValue::setGraphPosition(const f32 trackFraction)
     setGraphSize(trackFraction);
 
     const f32
-        trackWidth { _track->GetSize().x },
+        trackWidth { track->GetSize().x },
         graphWidth { _graph->GetSize().x };
 
     // The graph always grows along the track's local x-axis, anchored to its left edge.
     const glm::vec2 localOffset(graphWidth * 0.5f - trackWidth * 0.5f, 0.0f);
-    const f32 radians = glm::radians(_track->GetRotation().z);
+    const f32 radians = glm::radians(track->GetRotation().z);
     const glm::vec2 rotatedOffset
     (
         localOffset.x * cos(radians) - localOffset.y * sin(radians),
@@ -680,13 +732,13 @@ void RetroFuturaGUI::IRangedValue::setGraphPosition(const f32 trackFraction)
 
     const glm::vec3 position
     (
-        _track->GetPosition().x + rotatedOffset.x,
-        _track->GetPosition().y + rotatedOffset.y,
-        _track->GetPosition().z + 0.02f
+        track->GetPosition().x + rotatedOffset.x,
+        track->GetPosition().y + rotatedOffset.y,
+        track->GetPosition().z + 0.02f
     );
 
     _graph->SetPosition(position);
-    _graph->SetRotation(_track->GetRotation());
+    _graph->SetRotation(track->GetRotation());
 }
 
 void RetroFuturaGUI::IRangedValue::setIndicatorColors(const ColorState state)

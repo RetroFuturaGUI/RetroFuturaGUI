@@ -13,7 +13,7 @@ The framework is designed for cross-platform use, and its logic can be compiled 
 | 1 | Button, Label, Window, MainWindow, Image, Grid2D, WindowBar with Buttons |  | ✅ |
 | 2 | dll/so/dylib compilation for C# and Python support, Widget ID manager | 1 | ✅ | 
 | 3 | Linux Support, Font Manager | 2 | ✅ | 
-| 4 | More Widgets (TextBox ✅, Table ✅, 3D Model ✅, Slider ✅, CheckBox ✅, ComboBox ✅, ExtendedComoBox ✅, RadioButton ✅, RadioButtonGroup ✅, SeparatorLine ✅, ColorPreview ✅, change Grid2d to "Lasagna" and add a 3rd dimension ✅, MenuBar ✅, Environment, Histogram, LineDiagram, Tabs, Lights, VideoPlayer ✅, Color Pickers), Scene ✅, SceneLoader ✅, MediaPlayer (AudioPlayback ✅, AudioMetadata ✅, MediaSource + Decoder ✅, VideoPlayback ✅) | 1 | WIP | 
+| 4 | More Widgets (TextBox ✅, Table ✅, 3D Model ✅, Slider ✅, CheckBox ✅, ComboBox ✅, ExtendedComoBox ✅, RadioButton ✅, RadioButtonGroup ✅, SeparatorLine ✅, ColorPreview ✅, change Grid2d to "Lasagna" and add a 3rd dimension ✅, MenuBar ✅, MultilineTextBox, Environment, Histogram ✅, LineDiagram, Tabs, Lights, VideoPlayer ✅, Color Pickers), Scene ✅, SceneLoader ✅, AudioPlayback ✅, Popups, PopupManager, Tooltip, FileExplorer | 1 | WIP | 
 | 5 | .bechaml markup language for GUI design 🥣 (**B**eautifully **E**xtended **C**ascading but **H**airbally **A**pplication **M**arkup **L**anguage) | 4 | | 
 | 6 | VS Code extension with project generator/manager | 5 | | 
 | 7 | Pre-built Prefabs (StepperSlider, SpinBox, Table with Sliders, Carousel, Extended Color Pickers, MediaPlayer) | 6 |

@@ -64,6 +64,7 @@ list(APPEND RetroFuturaGuiSources
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/CheckBox.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/ColorPreview.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/ComboBox.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/Histogram.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/Image.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/Label.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/Model.cpp"

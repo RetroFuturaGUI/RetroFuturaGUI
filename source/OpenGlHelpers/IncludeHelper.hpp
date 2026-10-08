@@ -31,6 +31,7 @@ namespace RetroFuturaGUI
     class MenuBar;
     class ColorPreview;
     class Video;
+    class Histogram;
 
     enum class FillType: u32
     {
@@ -74,6 +75,7 @@ namespace RetroFuturaGUI
         MenuBar,
         ColorPreview,
         Video,
+        Histogram,
         Unknown = -1
     };   
 

@@ -19,6 +19,13 @@ using uChar = unsigned char;
 
 namespace RetroFuturaGUI
 {
+    template<typename T>
+    concept NumericValueType =
+        std::same_as<T, bool> ||
+        std::same_as<T, i8>  || std::same_as<T, i16> || std::same_as<T, i32> || std::same_as<T, i64> ||
+        std::same_as<T, u8>  || std::same_as<T, u16> || std::same_as<T, u32> || std::same_as<T, u64> ||
+        std::same_as<T, f32> || std::same_as<T, f64>;
+
     enum class PrimitiveTypeID : u32
     {
         Bool,
@@ -49,13 +56,6 @@ namespace RetroFuturaGUI
         f64 Float64;
     };
 
-    template<typename T>
-    concept NumericValueType =
-        std::same_as<T, bool> ||
-        std::same_as<T, i8>  || std::same_as<T, i16> || std::same_as<T, i32> || std::same_as<T, i64> ||
-        std::same_as<T, u8>  || std::same_as<T, u16> || std::same_as<T, u32> || std::same_as<T, u64> ||
-        std::same_as<T, f32> || std::same_as<T, f64>;
-
     /// @brief FNV-1a hash of a name
     constexpr u32 Fnv1aHash(std::string_view str)
     {
@@ -68,6 +68,33 @@ namespace RetroFuturaGUI
         }
 
         return hash;
+    }
+
+    template<NumericValueType T>
+    constexpr PrimitiveTypeID GetPrimitiveTypeID()
+    {
+        if constexpr (std::same_as<T, bool>)
+            return PrimitiveTypeID::Bool;
+        else if constexpr (std::same_as<T, i8>)
+            return PrimitiveTypeID::Int8;
+        else if constexpr (std::same_as<T, i16>)
+            return PrimitiveTypeID::Int16;
+        else if constexpr (std::same_as<T, i32>)
+            return PrimitiveTypeID::Int32;
+        else if constexpr (std::same_as<T, i64>)
+            return PrimitiveTypeID::Int64;
+        else if constexpr (std::same_as<T, u8>)
+            return PrimitiveTypeID::UInt8;
+        else if constexpr (std::same_as<T, u16>)
+            return PrimitiveTypeID::UInt16;
+        else if constexpr (std::same_as<T, u32>)
+            return PrimitiveTypeID::UInt32;
+        else if constexpr (std::same_as<T, u64>)
+            return PrimitiveTypeID::UInt64;
+        else if constexpr (std::same_as<T, f32>)
+            return PrimitiveTypeID::Float32;
+        else if constexpr (std::same_as<T, f64>)
+            return PrimitiveTypeID::Float64;
     }
 }
 
