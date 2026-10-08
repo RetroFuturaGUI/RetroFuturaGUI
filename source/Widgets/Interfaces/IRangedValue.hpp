@@ -324,6 +324,48 @@ namespace RetroFuturaGUI
         /// @return requestedType - the range follows whatever type it is set with. IRangedMultiValue overrides this, because its data decides the type.
         virtual PrimitiveTypeID resolveValueType(const PrimitiveTypeID requestedType) const;
 
+        /// @brief Converts value to T like static_cast, except where static_cast is undefined behavior or wraps: a value beyond T's limits
+        /// saturates to the nearest limit, and NaN becomes 0 when T is an integer.
+        template <NumericValueType T, NumericValueType From> static T saturatingCast(const From value)
+        {
+            if constexpr (std::same_as<T, bool> || std::same_as<From, bool>)
+                return static_cast<T>(value);
+            else if constexpr (std::is_integral_v<T> && std::is_floating_point_v<From>)
+            {
+                if(std::isnan(value))
+                    return T {};
+
+                if(value <= static_cast<From>(std::numeric_limits<T>::lowest()))
+                    return std::numeric_limits<T>::lowest();
+
+                if(value >= static_cast<From>((std::numeric_limits<T>::max)()))
+                    return (std::numeric_limits<T>::max)();
+
+                return static_cast<T>(value);
+            }
+            else if constexpr (std::is_integral_v<T>)
+            {
+                if(std::cmp_less(value, std::numeric_limits<T>::lowest()))
+                    return std::numeric_limits<T>::lowest();
+
+                if(std::cmp_greater(value, (std::numeric_limits<T>::max)()))
+                    return (std::numeric_limits<T>::max)();
+
+                return static_cast<T>(value);
+            }
+            else if constexpr (std::same_as<T, f32> && std::same_as<From, f64>)
+            {
+                if(value < static_cast<f64>(std::numeric_limits<f32>::lowest()))
+                    return std::numeric_limits<f32>::lowest();
+
+                if(value > static_cast<f64>((std::numeric_limits<f32>::max)()))
+                    return (std::numeric_limits<f32>::max)();
+
+                return static_cast<f32>(value);
+            }
+            else
+                return static_cast<T>(value);
+        }
 
         /// @brief value, stored as type from, converted to type to - saturating like saturatingCast, so 300 becomes 255 as u8, -1 becomes 0 as an unsigned type,
         /// and a fraction is cut off towards zero (2.7 becomes 2).

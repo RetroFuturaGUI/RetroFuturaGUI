@@ -210,7 +210,8 @@ namespace RetroFuturaGUI
             return value < minValue ? minValue : value > maxValue ? maxValue : value;
         }
 
-        PrimitiveUnion _value { .Int32 = 0 };
-        PrimitiveUnion _stepSize { .Int32 = 1 };
+        PrimitiveUnion
+            _value { .Int32 = 0 },
+            _stepSize { .Int32 = 1 };
     };
 }

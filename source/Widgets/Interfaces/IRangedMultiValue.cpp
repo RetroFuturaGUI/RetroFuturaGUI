@@ -19,7 +19,7 @@ void RetroFuturaGUI::IRangedMultiValue::Disconnect_OnDataSet(const typename Sign
     _onDataSetAsync.Disconnect(slot);
 }
 
-void RetroFuturaGUI::IRangedMultiValue::setData(void* data, const uSize count, const PrimitiveTypeID type)
+void RetroFuturaGUI::IRangedMultiValue::setData(const void* data, const uSize count, const PrimitiveTypeID type)
 {
     _data = data;
     _dataCount = count;

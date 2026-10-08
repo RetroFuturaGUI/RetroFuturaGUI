@@ -24,8 +24,9 @@ namespace RetroFuturaGUI
          /// @brief Disconnects a previously connected OnValueSet slot.
         void Disconnect_OnDataSet(const typename Signal<>::Slot& slot);
 
-        template<NumericValueType T> void SetData(std::span<T> data, const bool emitSignal)
-        {    
+        /// @brief Shows data without copying it - it is read every frame, so it must stay valid, and its buffer must not move, until the next SetData.
+        template<NumericValueType T> void SetData(std::span<const T> data, const bool emitSignal)
+        {
             setData(data.data(), data.size(), GetPrimitiveTypeID<T>());
             _stride = sizeof(T);
 
@@ -50,7 +51,7 @@ namespace RetroFuturaGUI
         /// Without data, requestedType; the next SetData then converts the range to the data's type.
         PrimitiveTypeID resolveValueType(const PrimitiveTypeID requestedType) const override;
 
-        void setData(void* data, const uSize count, const PrimitiveTypeID type);
+        void setData(const void* data, const uSize count, const PrimitiveTypeID type);
         
         template<NumericValueType T> T getDataValue(const uSize index) const
         {
@@ -60,10 +61,10 @@ namespace RetroFuturaGUI
             if(index >= _dataCount)
                 return T{};
 
-            return static_cast<T*>(_data)[index];
+            return static_cast<const T*>(_data)[index];
         }
 
-        void* _data { nullptr };
+        const void* _data { nullptr };
         uSize
             _dataCount { 0 },
             _maxDataCount { 0 },

@@ -51,37 +51,37 @@ f32 RetroFuturaGUI::Histogram::calculateBarHeight(const uSize index) const
     switch(_valueType)
     {
         case PrimitiveTypeID::Bool:
-            height = reinterpret_cast<bool*>(_data)[index] ? 1.0f : 0.0f;
+            height = reinterpret_cast<const bool*>(_data)[index] ? 1.0f : 0.0f;
         break;
         case PrimitiveTypeID::Int8:
-            height = static_cast<f32>(reinterpret_cast<i8*>(_data)[index]);
+            height = static_cast<f32>(reinterpret_cast<const i8*>(_data)[index]);
         break;
         case PrimitiveTypeID::Int16:
-            height = static_cast<f32>(reinterpret_cast<i16*>(_data)[index]);
+            height = static_cast<f32>(reinterpret_cast<const i16*>(_data)[index]);
         break;
         case PrimitiveTypeID::Int32:
-            height = static_cast<f32>(reinterpret_cast<i32*>(_data)[index]);
+            height = static_cast<f32>(reinterpret_cast<const i32*>(_data)[index]);
         break;
         case PrimitiveTypeID::Int64:
-            height = static_cast<f32>(reinterpret_cast<i64*>(_data)[index]);
+            height = static_cast<f32>(reinterpret_cast<const i64*>(_data)[index]);
         break;
         case PrimitiveTypeID::UInt8:
-            height = static_cast<f32>(reinterpret_cast<u8*>(_data)[index]);
+            height = static_cast<f32>(reinterpret_cast<const u8*>(_data)[index]);
         break;
         case PrimitiveTypeID::UInt16:
-            height = static_cast<f32>(reinterpret_cast<u16*>(_data)[index]);
+            height = static_cast<f32>(reinterpret_cast<const u16*>(_data)[index]);
         break;
         case PrimitiveTypeID::UInt32:
-            height = static_cast<f32>(reinterpret_cast<u32*>(_data)[index]);
+            height = static_cast<f32>(reinterpret_cast<const u32*>(_data)[index]);
         break;
         case PrimitiveTypeID::UInt64:
-            height = static_cast<f32>(reinterpret_cast<u64*>(_data)[index]);
+            height = static_cast<f32>(reinterpret_cast<const u64*>(_data)[index]);
         break;
         case PrimitiveTypeID::Float64:
-            height = saturatingCast<f32>(reinterpret_cast<f64*>(_data)[index]); // beyond f32's range a plain cast is undefined behavior
+            height = saturatingCast<f32>(reinterpret_cast<const f64*>(_data)[index]); // beyond f32's range a plain cast is undefined behavior
         break;
         default: // Float32
-            height = reinterpret_cast<f32*>(_data)[index];
+            height = reinterpret_cast<const f32*>(_data)[index];
         break;
     }
     

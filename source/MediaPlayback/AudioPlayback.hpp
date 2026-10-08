@@ -1,7 +1,9 @@
 #pragma once
+#include "AudioSpectrum.hpp"
 #include "AudioStream.hpp"
 #include "config.hpp"
 #include <atomic>
+#include <span>
 #include <string_view>
 #include <miniaudio.h>
 
@@ -11,14 +13,22 @@ namespace RetroFuturaGUI
     inline constexpr u32 MaxMeterChannels = 8;
 
     /// @brief A passthrough node that measures each channel's level as audio flows through
-    /// it. Measuring happens on the audio thread inside onProcess; readers pick the result
-    /// up from the atomics, so no buffer is ever shared across threads.
+    /// it, and copies a mono mix out for the spectrum. Both happen on the audio thread inside
+    /// onProcess; readers pick the levels up from the atomics and the samples from a lock-free
+    /// ring buffer, so nothing that needs a lock is shared across threads.
     /// @note ma_node_base must stay the first member - miniaudio casts between the two.
     struct AudioMeterNode
     {
         ma_node_base base {};
         std::atomic<f32> levels[MaxMeterChannels] {};
         u32 channels { 0 };
+
+        /// @brief The mono mix of everything that passed, for the spectrum. Written on the audio thread, read by
+        /// GetFrequencyBands - miniaudio's ring buffer is lock-free for exactly one writer and one reader.
+        ma_pcm_rb samples {};
+
+        /// @brief Whether samples is initialized. Set before the node joins the graph and never changed while it is in it.
+        bool hasSamples { false };
     };
 
     /// @brief Plays audio files through miniaudio's high-level engine, which owns the
@@ -97,6 +107,18 @@ namespace RetroFuturaGUI
         /// @brief Returns how many channels GetChannelVolume reports on.
         u32 GetChannelCount() const;
 
+        /// @brief Analyzes the audio that arrived since the last call into the bands GetFrequencyBands points at. Call it
+        /// once per frame on the thread that draws - Video::Draw does that for a video. While nothing plays, the bands fall to 0.
+        void UpdateFrequencyBands();
+
+        /// @brief The spectrum of what the meter measures (see GetChannelVolume): one level per frequency band, 0 to 1,
+        /// spaced logarithmically from bass to treble. The levels change in place with every UpdateFrequencyBands, so a
+        /// Histogram can be bound to this span once - it stays valid until SetFrequencyBandCount. All 0 without a meter.
+        std::span<const f32> GetFrequencyBands() const;
+
+        /// @brief Sets how many bands GetFrequencyBands reports - 32 by default.
+        void SetFrequencyBandCount(const uSize bandCount);
+
         /// @brief The engine, for sounds that play alongside this one's - a video's, for instance.
         /// Null until InitDevice.
         ma_engine* GetEngine();
@@ -106,8 +128,9 @@ namespace RetroFuturaGUI
         ma_node* GetOutputNode();
 
     private:
-        /// @brief Runs on the audio thread. Measures each channel into the meter's atomics,
-        /// then passes the audio through untouched - a meter must never colour what is heard.
+        /// @brief Runs on the audio thread. Measures each channel into the meter's atomics and copies a
+        /// mono mix into its ring buffer for the spectrum, then passes the audio through untouched - a
+        /// meter must never colour what is heard.
         static void meterProcess(ma_node* node, const float** framesin, ma_uint32* framecountin, float** framesout, ma_uint32* framecountout);
 
         /// @brief Releases the loaded sound, if any. Idempotent.
@@ -121,9 +144,13 @@ namespace RetroFuturaGUI
 
         static bool isNativeFormat(std::string_view file);
 
+        static void writeSpectrumSamples(RetroFuturaGUI::AudioMeterNode& meter, const f32* input, const u32 frameCount, const u32 channels);
+        static void uninitSpectrumSamples(RetroFuturaGUI::AudioMeterNode& meter);
+
         ma_engine _engine {};
         ma_sound _sound {};
         AudioMeterNode _meter {};
+        AudioSpectrum _spectrum {};
         AudioStream _audioStream {};
         u32
             _channels { 0 }, // 0 - let the device decide
@@ -133,5 +160,7 @@ namespace RetroFuturaGUI
             _soundLoaded { false },
             _meterReady { false },
             _streamed { false };
+        static inline constexpr f32 _meterDecay { 0.85f }; //how smoothly the meter falls when the signal is falling
+        static inline constexpr ma_uint32 _spectrumBufferFrameCount { 16384 };
     };
 }

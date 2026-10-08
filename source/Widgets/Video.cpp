@@ -29,6 +29,11 @@ void RetroFuturaGUI::Video::Draw()
     if(!_videoPlayback)
         return;
 
+    if(!_audioPlayback)
+        return;
+
+    _audioPlayback->UpdateFrequencyBands();
+
     ITexture* texture { _videoPlayback->GetTexture() };
 
     if(!texture)
@@ -140,6 +145,22 @@ f32 RetroFuturaGUI::Video::GetChannelVolume(const u32 channel) const
         return 0.0f;
 
     return _audioPlayback->GetChannelVolume(channel);
+}
+
+std::span<const f32> RetroFuturaGUI::Video::GetFrequencyBands() const
+{
+    if(!_audioPlayback)
+        return {};
+
+    return _audioPlayback->GetFrequencyBands();
+}
+
+void RetroFuturaGUI::Video::SetFrequencyBandCount(const uSize bandCount)
+{
+    if(!_audioPlayback)
+        return;
+
+    _audioPlayback->SetFrequencyBandCount(bandCount);
 }
 
 bool RetroFuturaGUI::Video::Seek(const i64 milliseconds)
