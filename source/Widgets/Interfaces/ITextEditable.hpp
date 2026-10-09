@@ -50,7 +50,6 @@ namespace RetroFuturaGUI
         /// @brief Sets the corner rounding radii of the selection highlight.
         void SetSelectedAreaCornerRadii(const glm::vec4& radii);
 
-
         /// @brief Sets the placeholder text color for the given color state.
         void SetPlaceholderTextColor(const glm::vec4& color);
 
@@ -119,24 +118,35 @@ namespace RetroFuturaGUI
         void syncValueFromText();
         void drawSelectedArea();
         virtual f32 clampToTextBounds(const f32 worldX, const f32 = 0.0f) const { return worldX; }
+        virtual f32 clampToTextBoundsY(const f32 worldY) const { return worldY; }
         virtual f32 keepCaretVisible(const f32 worldX, const f32 halfExtent = 0.0f) { return clampToTextBounds(worldX, halfExtent); }
 
-        //Caret
+        /// @brief Returns the caret's full height, before updateCaretPosition clips it to the text area.
+        f32 caretHeight() const;
+        
+    //Caret
         std::unique_ptr<Rectangle> _caret;
         std::vector<glm::vec4> _caretColors { glm::vec4(1.0f) };
-
-        //input logic
+        static constexpr f32 _caretHeightFactor { 1.6f };
+        bool _isCaretInView { true };
+        
+    //input logic
         bool _readOnly { false };
         std::vector<char> _prevKeyStates {};
 
-        //Selection
+    //Selection
+        struct SelectedLineArea
+        {
+            glm::vec2
+                _Center { 0.0f },
+                _Size { 0.0f };
+        };
         std::unique_ptr<Rectangle> _selectedArea;
+        std::vector<SelectedLineArea> _selectedLineAreas {};
         std::vector<glm::vec4> _selectedAreaColors { glm::vec4(0.24f, 0.47f, 0.85f, 0.4f) };
 
-        //Placeholder Text
+    //Placeholder Text
         std::unique_ptr<Text> _placeholderText { nullptr };
         std::vector<glm::vec4> _placeholderTextColors { glm::vec4(0.5f, 0.5f, 0.5f, 1.0f) };
-
-        //The caret/selection/clipboard/key-repeat editing loop lives in ITextInteraction.
     };
 }

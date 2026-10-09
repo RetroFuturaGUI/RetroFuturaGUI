@@ -44,6 +44,15 @@ namespace RetroFuturaGUI
         void Disconnect_OnPaste(const typename Signal<>::Slot& slot);
 
     protected:
+        enum class CaretDirection : u32
+        {
+            None,
+            Left,
+            Right,
+            Up,
+            Down
+        };
+
         /// @brief The Text edits currently apply to, or nullptr when nothing is editable.
         virtual Text* activeText() const = 0;
 
@@ -66,6 +75,8 @@ namespace RetroFuturaGUI
         void moveCaret();
         void moveCaretLeft();
         void moveCaretRight();
+        void moveCaretUp();//refactor into new interface for multiline text boxes
+        void moveCaretDown();//refactor into new interface for multiline text boxes
         void setCaretFromBoundary(const uSize boundary);
 
         bool checkForTextCopy();
@@ -82,38 +93,6 @@ namespace RetroFuturaGUI
         void emitEnterRelease();
         void emitCopy();
         void emitPaste();
-
-    //Caret movement
-        uSize _caretPosition { 0 };
-        i32 _caretRepeatDirection { 0 };
-        bool _caretKeyWasReleased { true };
-        u32 _caretKeyHoldFrames { 0 };
-
-    //Input logic
-        bool
-            _editingEnabled { false },
-            _enterPressed { false },
-            _textCopied { false },
-            _textCut { false },
-            _textPasted { false };
-        u32 _keyHoldFrames { 0 };
-        std::u32string _keyRepeatText {};
-        u32
-            _repeatKeySym { 0 },
-            _repeatKeyPressCountSeen { 0 },
-            _backspaceKeyHoldFrames { 0 },
-            _backspacePressCountSeen { 0 };
-        std::string _copiedText {};
-
-        Signal<>
-            _onEnterPressed,
-            _onEnterPressedAsync,
-            _onEnterReleased,
-            _onEnterReleasedAsync,
-            _onCopy,
-            _onCopyAsync,
-            _onPaste,
-            _onPasteAsync;
 
         /// @brief Returns whether the widget's window is the one currently taking keyboard input.
         bool hasInputFocus() const;
@@ -134,6 +113,41 @@ namespace RetroFuturaGUI
         uSize markedEnd() const;
 
         static bool shouldRepeat(const u32 holdFrames);
+
+        void stepCaret(const CaretDirection direction);
+
+    //Caret movement
+        CaretDirection _caretRepeatDirection { CaretDirection::None };
+        uSize _caretPosition { 0 };
+        bool _caretKeyWasReleased { true };
+        u32 _caretKeyHoldFrames { 0 };
+
+    //Input logic
+        bool
+            _editingEnabled { false },
+            _enterPressed { false },
+            _textCopied { false },
+            _textCut { false },
+            _textPasted { false },
+            _multiline { false };
+        u32 _keyHoldFrames { 0 };
+        std::u32string _keyRepeatText {};
+        u32
+            _repeatKeySym { 0 },
+            _repeatKeyPressCountSeen { 0 },
+            _backspaceKeyHoldFrames { 0 },
+            _backspacePressCountSeen { 0 };
+        std::string _copiedText {};
+
+        Signal<>
+            _onEnterPressed,
+            _onEnterPressedAsync,
+            _onEnterReleased,
+            _onEnterReleasedAsync,
+            _onCopy,
+            _onCopyAsync,
+            _onPaste,
+            _onPasteAsync;
 
     //Caret blink
         bool

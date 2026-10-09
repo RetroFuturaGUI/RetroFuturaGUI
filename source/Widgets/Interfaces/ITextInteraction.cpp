@@ -79,49 +79,59 @@ void RetroFuturaGUI::ITextInteraction::moveCaret()
     if(!hasInputFocus())
         return;
 
-    if(PlatformBridge::Input::GetKeyboardUseState() == PlatformBridge::KeyboardUseState::KeyReleased)
+   if(PlatformBridge::Input::GetKeyboardUseState() == PlatformBridge::KeyboardUseState::KeyReleased)
     {
         _caretKeyWasReleased = true;
         _caretKeyHoldFrames = 0;
-        _caretRepeatDirection = 0;
+        _caretRepeatDirection = CaretDirection::None;
         return;
     }
 
     if(!_caretKeyWasReleased)
     {
-        if(_caretRepeatDirection != 0)
-        {
-            ++_caretKeyHoldFrames;
+        ++_caretKeyHoldFrames;
 
-            if(shouldRepeat(_caretKeyHoldFrames))
-            {
-                if(_caretRepeatDirection < 0)
-                    moveCaretLeft();
-                else
-                    moveCaretRight();
-            }
-        }
+        if(shouldRepeat(_caretKeyHoldFrames))
+            stepCaret(_caretRepeatDirection);
 
         return;
     }
 
     if(PlatformBridge::Input::GetKeyPressState(PB_KEY_LEFT) == PlatformBridge::KeyPressState::Press)
-    {
-        moveCaretLeft();
-        _caretRepeatDirection = -1;
-    }
+        _caretRepeatDirection = CaretDirection::Left;
     else if(PlatformBridge::Input::GetKeyPressState(PB_KEY_RIGHT) == PlatformBridge::KeyPressState::Press)
-    {
-        moveCaretRight();
-        _caretRepeatDirection = 1;
-    }
+        _caretRepeatDirection = CaretDirection::Right;
+    else if(_multiline && PlatformBridge::Input::GetKeyPressState(PB_KEY_UP) == PlatformBridge::KeyPressState::Press)
+        _caretRepeatDirection = CaretDirection::Up;
+    else if(_multiline && PlatformBridge::Input::GetKeyPressState(PB_KEY_DOWN) == PlatformBridge::KeyPressState::Press)
+        _caretRepeatDirection = CaretDirection::Down;
     else
-    {
         return;
-    }
 
+    stepCaret(_caretRepeatDirection);
     _caretKeyWasReleased = false;
     _caretKeyHoldFrames = 0;
+}
+
+void RetroFuturaGUI::ITextInteraction::stepCaret(const CaretDirection direction)
+{
+    switch(direction)
+    {
+        case CaretDirection::Left:
+            moveCaretLeft();
+            break;
+        case CaretDirection::Right:
+            moveCaretRight();
+            break;
+        case CaretDirection::Up:
+            moveCaretUp();
+            break;
+        case CaretDirection::Down:
+            moveCaretDown();
+            break;
+        default: //None
+            break;
+    }
 }
 
 void RetroFuturaGUI::ITextInteraction::moveCaretLeft()
@@ -145,6 +155,40 @@ void RetroFuturaGUI::ITextInteraction::moveCaretRight()
 
     if(_caretPosition < text->GetGlyphCount())
         ++_caretPosition;
+
+    updateCaretPosition();
+}
+
+void RetroFuturaGUI::ITextInteraction::moveCaretUp()//refactor into new interface
+{
+    Text* text { activeText() };
+
+    if(!text)
+        return;
+
+    deselect();
+    const uSize currentLine { text->GetBoundaryLine(_caretPosition) };
+
+    if(0 == currentLine) //already on the first line: go to the start of the text
+        _caretPosition = 0;
+    else
+        _caretPosition = text->GetBoundaryOnLine(currentLine - 1, text->GetBoundaryPosition(_caretPosition, 0.0f).x); //the caret size only affects y
+
+    updateCaretPosition();
+}
+
+void RetroFuturaGUI::ITextInteraction::moveCaretDown()//refactor into new interface
+{
+    Text* text { activeText() };
+
+    if(!text)
+        return;
+
+    deselect();
+    const uSize currentLine { text->GetBoundaryLine(_caretPosition) };
+
+    //past the last line, GetBoundaryOnLine returns the end of the text
+    _caretPosition = text->GetBoundaryOnLine(currentLine + 1, text->GetBoundaryPosition(_caretPosition, 0.0f).x);
 
     updateCaretPosition();
 }
@@ -241,6 +285,7 @@ bool RetroFuturaGUI::ITextInteraction::checkForTextPaste()
                 return true;
 
             middlePart = std::u32string(reinterpret_cast<char32_t*>(dataPtr), dataSize / sizeof(char32_t));
+            std::erase(middlePart, U'\r');
 
             if(_isSelected)
             {
@@ -347,16 +392,38 @@ bool RetroFuturaGUI::ITextInteraction::checkForKeyRepeat()
 
 bool RetroFuturaGUI::ITextInteraction::checkForEnterPress()
 {
-    if(PlatformBridge::Input::GetKeyPressState(PB_KEY_RETURN) == PlatformBridge::KeyPressState::Press
-        || PlatformBridge::Input::GetKeyPressState(PB_KEY_KP_ENTER) == PlatformBridge::KeyPressState::Press
-        || PlatformBridge::Input::GetKeyPressState(PB_KEY_ISO_ENTER) == PlatformBridge::KeyPressState::Press)
-    {
-        emitEnterPressed();
-        _enterPressed = true;
+    Text* text { activeText() };
+
+    if(!text)
+        return false;
+
+    const u32 keySym { PlatformBridge::Input::GetLastKeySym() };
+
+    if(PB_KEY_RETURN != keySym && PB_KEY_KP_ENTER != keySym && PB_KEY_ISO_ENTER != keySym)
+        return false;
+
+    if(keySym == _repeatKeySym && PlatformBridge::Input::GetKeyPressCount(keySym) == _repeatKeyPressCountSeen)
         return true;
+
+    _repeatKeySym = keySym;
+    _repeatKeyPressCountSeen = PlatformBridge::Input::GetKeyPressCount(keySym);
+
+    if(_multiline)
+    {
+        std::u32string left { text->GetTextUTF32().substr(0, _caretPosition) };
+        std::u32string right { text->GetTextUTF32().substr(_caretPosition) };
+        text->SetTextUTF32(left + U'\n' + right);
+        ++_caretPosition;
+        deselect();
+        updateCaretPosition();
+        emitChange();
+        _keyRepeatText = U"\n";
+        _keyHoldFrames = 0;
     }
 
-    return false;
+    emitEnterPressed();
+    _enterPressed = true;
+    return true;
 }
 
 bool RetroFuturaGUI::ITextInteraction::checkForBackspacePress()

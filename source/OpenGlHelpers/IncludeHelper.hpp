@@ -32,6 +32,7 @@ namespace RetroFuturaGUI
     class ColorPreview;
     class Video;
     class Histogram;
+    class MultilineTextBox;
 
     enum class FillType: u32
     {
@@ -76,6 +77,7 @@ namespace RetroFuturaGUI
         ColorPreview,
         Video,
         Histogram,
+        MultilineTextBox,
         Unknown = -1
     };   
 

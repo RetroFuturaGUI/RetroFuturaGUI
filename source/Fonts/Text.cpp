@@ -1,5 +1,6 @@
 #include "Text.hpp"
 #include "ShaderManager.hpp"
+#include <algorithm>
 
 #ifndef _MSC_VER
     using max;
@@ -189,6 +190,7 @@ void RetroFuturaGUI::Text::updateMesh()
     if(_text.GetUtf32().empty())
     {
         _glyphPositions.clear();
+        _glyphLines.clear();
         return;
     }
 
@@ -214,6 +216,8 @@ void RetroFuturaGUI::Text::updateMesh()
 
     _glyphPositions.clear();
     _glyphPositions.push_back(0.0f);
+    _glyphLines.clear();
+    _glyphLines.push_back(0);
 
     for (const u32 codepoint : _text.GetUtf32())
     {
@@ -221,9 +225,12 @@ void RetroFuturaGUI::Text::updateMesh()
         {
             currentY -= _glyphSize.y * _lineSpacingFactor;
             currentX = 0.0f;
-            _glyphPositions.push_back(currentX); //Every codepoint must occupy exactly one _glyphPosition
+            _glyphPositions.push_back(currentX);
+            _glyphLines.push_back(_glyphLines.back() + 1);
             continue;
         }
+
+        _glyphLines.push_back(_glyphLines.back()); //before the branches below, since each of them can continue
 
         blockKey = findGlyphBlockKey(codepoint);
         auto blockIterator { _atlas._GlyphBlocks.find(blockKey) };
@@ -332,24 +339,52 @@ void RetroFuturaGUI::Text::updateMesh()
 
 glm::vec3 RetroFuturaGUI::Text::GetBoundaryPosition(const uSize boundary, const f32 caretSize) const
 {
-    f32 x { 0.0f };
+    f32
+        x { 0.0f },
+        y { 0.0f };
 
     if(!_glyphPositions.empty())
-        x = _glyphPositions[min(boundary, _glyphPositions.size() - 1)];
+    {
+        const uSize index { min(boundary, _glyphPositions.size() - 1) };
+        x = _glyphPositions[index];
+        y = -static_cast<f32>(_glyphLines[index]) * _glyphSize.y * _lineSpacingFactor; //the same step updateMesh moves down per '\n'
+    }
 
-    return glm::vec3(x, caretSize * 0.25f, 0) + glm::vec3(_positionAligned, _position.z + 0.01f);
+    return glm::vec3(x, y + caretSize * 0.25f, 0) + glm::vec3(_positionAligned, _position.z + 0.01f);
+}
+
+uSize RetroFuturaGUI::Text::GetBoundaryAtPosition(const glm::vec2& worldPosition) const
+{
+    if(_glyphLines.empty())
+        return 0;
+
+    const f32 linesDown { (_positionAligned.y + _glyphSize.y - worldPosition.y) / (_glyphSize.y * _lineSpacingFactor) };
+
+    if(0.0f > linesDown)
+        return GetBoundaryOnLine(0, worldPosition.x);
+
+    return GetBoundaryOnLine(min(static_cast<uSize>(linesDown), _glyphLines.back()), worldPosition.x);
 }
 
 uSize RetroFuturaGUI::Text::GetBoundaryAtPosition(const f32 worldX) const
 {
-    if(_glyphPositions.empty())
-        return 0;
+    return GetBoundaryOnLine(0, worldX);
+}
+
+uSize RetroFuturaGUI::Text::GetBoundaryOnLine(const uSize line, const f32 worldX) const
+{
+    const uSize
+        first { static_cast<uSize>(std::lower_bound(_glyphLines.begin(), _glyphLines.end(), line) - _glyphLines.begin()) },
+        end { static_cast<uSize>(std::upper_bound(_glyphLines.begin(), _glyphLines.end(), line) - _glyphLines.begin()) };
+
+    if(first == end)
+        return GetGlyphCount();
 
     const f32 localX { worldX - _positionAligned.x };
-    uSize closest { 0 };
-    f32 closestDistance { std::abs(_glyphPositions[0] - localX) };
+    uSize closest { first };
+    f32 closestDistance { std::abs(_glyphPositions[first] - localX) };
 
-    for(uSize i = 1; i < _glyphPositions.size(); ++i)
+    for(uSize i = first + 1; i < end; ++i)
     {
         const f32 distance { std::abs(_glyphPositions[i] - localX) };
 
@@ -365,19 +400,23 @@ uSize RetroFuturaGUI::Text::GetBoundaryAtPosition(const f32 worldX) const
 
 void RetroFuturaGUI::Text::alignPosition()
 {
+    const f32 baselineY { _anchorTop
+        ? _position.y + _parentSize.y * 0.5f - _textPadding - _textBaseHeight //first baseline one glyph height below the top edge
+        : _position.y - _textBaseHeight * 0.5f };
+
     switch(_textAlignment)
     {
         case TextAlignment::Center:
         {
-            _positionAligned = glm::vec2(_position.x - _textSpan.x * 0.5f, _position.y - _textBaseHeight * 0.5f);
+            _positionAligned = glm::vec2(_position.x - _textSpan.x * 0.5f, baselineY);
         } break;
         case TextAlignment::Right:
         {
-            _positionAligned = glm::vec2(_position.x - _textSpan.x + _parentSize.x * 0.5f - _textPadding, _position.y - _textBaseHeight * 0.5f);
+            _positionAligned = glm::vec2(_position.x - _textSpan.x + _parentSize.x * 0.5f - _textPadding, baselineY);
         } break;
         default: //LEFT
         {
-            _positionAligned = glm::vec2(_position.x - _parentSize.x * 0.5f + _textPadding, _position.y - _textBaseHeight * 0.5f);
+            _positionAligned = glm::vec2(_position.x - _parentSize.x * 0.5f + _textPadding, baselineY);
         }
     }
 
@@ -447,6 +486,13 @@ void RetroFuturaGUI::Text::calculateTextSpan()
     _textBaseHeight = _glyphSize.y;
 }
 
+void RetroFuturaGUI::Text::SetAnchorTop(const bool anchorTop)
+{
+    _anchorTop = anchorTop;
+    alignPosition();
+    updateMesh();
+}
+
 const std::string& RetroFuturaGUI::Text::GetTextUTF8() const
 {
     return _text.GetUtf8();
@@ -490,4 +536,26 @@ f32 RetroFuturaGUI::Text::GetSpanHeight() const
 f32 RetroFuturaGUI::Text::GetPadding() const
 {
     return _textPadding;
+}
+
+uSize RetroFuturaGUI::Text::GetBoundaryLine(const uSize boundary) const
+{
+    if(_glyphLines.empty())
+        return 0;
+
+    return _glyphLines[min(boundary, _glyphLines.size() - 1)];
+}
+
+uSize RetroFuturaGUI::Text::GetLineLastBoundary(const uSize line) const
+{
+    if(_glyphLines.empty())
+        return 0;
+
+    //_glyphLines never decreases, so the line ends right before the first boundary of the next one
+    return static_cast<uSize>(std::upper_bound(_glyphLines.begin(), _glyphLines.end(), line) - _glyphLines.begin()) - 1;
+}
+
+f32 RetroFuturaGUI::Text::GetLineHeight() const
+{
+    return _glyphSize.y * _lineSpacingFactor;
 }

@@ -94,9 +94,11 @@ namespace RetroFuturaGUI
         /// @return The world position of the boundary.
         glm::vec3 GetBoundaryPosition(const uSize boundary, const f32 caretSize) const;
 
-        /// @brief Returns the glyph boundary closest to the given world X position.
-        /// @return The glyph boundary index.
+        /// @brief Returns the glyph boundary closest to the given world position: the line under its Y first, then the closest X on that line.
+        uSize GetBoundaryAtPosition(const glm::vec2& worldPosition) const;
         uSize GetBoundaryAtPosition(const f32 worldX) const;
+        /// @brief Returns the glyph boundary on the given line closest to the given world X, or the end of the text if there is no such line.
+        uSize GetBoundaryOnLine(const uSize line, const f32 worldX) const;
 
         /// @brief Returns the text content as a UTF-8 encoded string.
         const std::string& GetTextUTF8() const;
@@ -110,6 +112,18 @@ namespace RetroFuturaGUI
         /// @brief Converts a glyph index to its corresponding byte position within the UTF-8 string.
         /// @return The UTF-8 byte position.
         uSize GetUtf8Position(uSize const glyphPosition) const;
+
+        /// @brief Puts the first line just below the parent's top edge instead of centring it on the position - for multiline text.
+        void SetAnchorTop(const bool anchorTop);
+
+        /// @brief Returns the line the given glyph boundary sits on, 0 being the first.
+        uSize GetBoundaryLine(const uSize boundary) const;
+
+        /// @brief Returns the last glyph boundary of the given line - the one right before its '\n'.
+        uSize GetLineLastBoundary(const uSize line) const;
+
+        /// @brief Returns the distance from one baseline to the next.
+        f32 GetLineHeight() const;
 
     private:
         Projection& _projection;
@@ -137,6 +151,8 @@ namespace RetroFuturaGUI
             _rotationMatrix { 1.0f };
         static inline constinit const f32 _1emFraction { 0.00390625f };
         std::vector<f32> _glyphPositions {};
+        std::vector<uSize> _glyphLines {};
+        bool _anchorTop { false };
 
         // mesh
         std::vector<f32> _vertices; // x,y,u,v per vertex

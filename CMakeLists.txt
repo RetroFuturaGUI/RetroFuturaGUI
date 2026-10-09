@@ -69,6 +69,7 @@ list(APPEND RetroFuturaGuiSources
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/Image.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/Label.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/Model.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/MultilineTextBox.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/ProgressBar.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/RadioButton.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/SeparatorLine.cpp"

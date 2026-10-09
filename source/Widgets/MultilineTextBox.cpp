@@ -1,4 +1,4 @@
-#include "TextBox.hpp"
+#include "MultilineTextBox.hpp"
 
 #if defined(TARGET_PLATFORM_LINUX)
     #define GLFW_EXPOSE_NATIVE_X11
@@ -7,17 +7,17 @@
 #endif
 #include <GLFW/glfw3native.h>
 
-RetroFuturaGUI::TextBox::TextBox(const std::string& name, Projection* projection, IWidget* parentWidget, const WidgetTypeID parentWidgetTypeID, GLFWwindow* parentWindow)
+RetroFuturaGUI::MultilineTextBox::MultilineTextBox(const std::string& name, Projection* projection, IWidget* parentWidget, const WidgetTypeID parentWidgetTypeID, GLFWwindow* parentWindow)
    : IWidget(name, projection, parentWidget, parentWidgetTypeID, parentWindow)
 {
-    _widgetTypeID = WidgetTypeID::TextBox;
+    _widgetTypeID = WidgetTypeID::MultilineTextBox;
     _background = std::make_unique<Rectangle>(projection);
     _border = std::make_unique<Rectangle>(projection);
     _text = std::make_unique<Text>(projection);
     _caret = std::make_unique<Rectangle>(projection);
     _selectedArea = std::make_unique<Rectangle>(projection);
     _placeholderText = std::make_unique<Text>(projection);
-    _multiline = false;
+    _multiline = true;
 
     if (_background)
         _background->SetRectangleMode(RectangleMode::Plane);
@@ -25,8 +25,14 @@ RetroFuturaGUI::TextBox::TextBox(const std::string& name, Projection* projection
     if (_border)
         _border->SetRectangleMode(RectangleMode::Border);
 
+    if(_text)
+        _text->SetAnchorTop(true);
+
     if(_placeholderText)
+    {
         _placeholderText->SetColor(_placeholderTextColors[0]);
+        _placeholderText->SetAnchorTop(true);
+    }
 
     if(_caret)
     {
@@ -43,7 +49,7 @@ RetroFuturaGUI::TextBox::TextBox(const std::string& name, Projection* projection
     }
 }
 
-void RetroFuturaGUI::TextBox::Draw()
+void RetroFuturaGUI::MultilineTextBox::Draw()
 {
     interact();
     drawBackground();
@@ -63,7 +69,7 @@ void RetroFuturaGUI::TextBox::Draw()
     drawCaret();
 }
 
-void RetroFuturaGUI::TextBox::SetEnabled(const bool enable, const bool emitSignal)
+void RetroFuturaGUI::MultilineTextBox::SetEnabled(const bool enable, const bool emitSignal)
 {
     _isEnabledFlag = enable;
 
@@ -88,7 +94,7 @@ void RetroFuturaGUI::TextBox::SetEnabled(const bool enable, const bool emitSigna
     setColors(ColorState::Disabled);
 }
 
-void RetroFuturaGUI::TextBox::SetSize(const glm::vec3& size)
+void RetroFuturaGUI::MultilineTextBox::SetSize(const glm::vec3& size)
 {
     IWidget::SetSize(size);
 
@@ -108,7 +114,7 @@ void RetroFuturaGUI::TextBox::SetSize(const glm::vec3& size)
         _caret->SetSize(glm::vec2(2.0f, _text->GetGlyphSize() * 1.6f));
 }
 
-void RetroFuturaGUI::TextBox::SetPosition(const glm::vec3& position)
+void RetroFuturaGUI::MultilineTextBox::SetPosition(const glm::vec3& position)
 {
     IWidget::SetPosition(position);
 
@@ -121,17 +127,19 @@ void RetroFuturaGUI::TextBox::SetPosition(const glm::vec3& position)
     if(_border)
         _border->SetPosition(position + glm::vec3(0.0f, 0.0f, 0.2f));
 
+    glm::vec3 textPos { position + glm::vec3(0.0f, 0.0f, 0.3f) };
+    
     if(_text)
-        _text->SetPosition(position + glm::vec3(0.0f, 0.0f, 0.3f));
+        _text->SetPosition(textPos);
 
     if(_placeholderText)
-        _placeholderText->SetPosition(position + glm::vec3(0.0f, 0.0f, 0.3f));
+        _placeholderText->SetPosition(textPos);
 
     if(_caret)
-        _caret->SetPosition(position + glm::vec3(0.0f, 0.0f, 0.5f));
+        _caret->SetPosition(textPos);
 }
 
-void RetroFuturaGUI::TextBox::SetRotation(const glm::vec3& rotation)
+void RetroFuturaGUI::MultilineTextBox::SetRotation(const glm::vec3& rotation)
 {
     _rotation = rotation;
 
@@ -148,7 +156,7 @@ void RetroFuturaGUI::TextBox::SetRotation(const glm::vec3& rotation)
         _placeholderText->SetRotation(rotation);
 }
 
-void RetroFuturaGUI::TextBox::interact()
+void RetroFuturaGUI::MultilineTextBox::interact()
 {
     i32 mouseX { 0 }, mouseY { 0 };
     bool hasMousePosition { false };
@@ -161,10 +169,10 @@ void RetroFuturaGUI::TextBox::interact()
 
     //PlatformBridge reports native (top-down) window coordinates; flip to this library's bottom-up world space here
     glm::vec2 mousePos { static_cast<f32>(mouseX), _projection.GetResolution().y - static_cast<f32>(mouseY) };
-    bool isMouseTextBoxPressed = PlatformBridge::Input::IsMouseButtonDown(PlatformBridge::MouseButton::Left);
+    bool isMouseMultilineTextBoxPressed = PlatformBridge::Input::IsMouseButtonDown(PlatformBridge::MouseButton::Left);
     bool isMouseInside = hasMousePosition && isPointInside(mousePos);
 
-    if(_editingEnabled && !_mouseEnteredFlag && !_isMarking && isMouseTextBoxPressed)
+    if(_editingEnabled && !_mouseEnteredFlag && !_isMarking && isMouseMultilineTextBoxPressed)
     {
         _editingEnabled = false;
         _showCaret = false;
@@ -178,11 +186,11 @@ void RetroFuturaGUI::TextBox::interact()
 
     if(_isMarking)
     {
-        if(isMouseTextBoxPressed && hasMousePosition)
+        if(isMouseMultilineTextBoxPressed && hasMousePosition)
         {
-            //clamp before the hit-test, so the selection doesn't extend outside the visible text area
+            //clamp before the hit-test, so the selection doesn't extend outside the visible text area.
             //also consider scrolling when marking goes out of bounds
-            _selectedPositionLast = _text->GetBoundaryAtPosition(mousePos.x); 
+            _selectedPositionLast = _text->GetBoundaryAtPosition(mousePos); 
             setCaretFromBoundary(_selectedPositionLast);
             updateSelectedArea();
         }
@@ -226,7 +234,7 @@ void RetroFuturaGUI::TextBox::interact()
         setColors(ColorState::Hover);
     }
 
-    if (isMouseTextBoxPressed && !_wasClicked) //click
+    if (isMouseMultilineTextBoxPressed && !_wasClicked) //click
     {
         _onClickAsync.EmitAsync();
         _onClick.Emit();
@@ -239,12 +247,12 @@ void RetroFuturaGUI::TextBox::interact()
         PlatformBridge::Input::SetActiveWindow(glfwGetWin32Window(_parentWindow));
 #endif
         _isMarking = true;
-        _selectedPositionFirst = _selectedPositionLast = _text->GetBoundaryAtPosition(clampToTextBounds(mousePos.x));
+        _selectedPositionFirst = _selectedPositionLast = _text->GetBoundaryAtPosition(glm::vec2(clampToTextBounds(mousePos.x), mousePos.y));
         setCaretFromBoundary(_selectedPositionFirst);
         updateSelectedArea();
         _showCaret = true;
     }
-    else if(!isMouseTextBoxPressed && _wasClicked) //release
+    else if(!isMouseMultilineTextBoxPressed && _wasClicked) //release
     {
         _onReleaseAsync.EmitAsync();
         _onRelease.Emit();
@@ -255,10 +263,10 @@ void RetroFuturaGUI::TextBox::interact()
             setColors(ColorState::Enabled);
     }
 
-    _wasClicked = isMouseTextBoxPressed;
+    _wasClicked = isMouseMultilineTextBoxPressed;
 }
 
-void RetroFuturaGUI::TextBox::setColors(const ColorState state)
+void RetroFuturaGUI::MultilineTextBox::setColors(const ColorState state)
 {
     _backgroundColorState = state;
     _borderColorState = state;
@@ -268,7 +276,7 @@ void RetroFuturaGUI::TextBox::setColors(const ColorState state)
     setTextColors();
 }
 
-void RetroFuturaGUI::TextBox::drawCaret()
+void RetroFuturaGUI::MultilineTextBox::drawCaret()
 {
     if(!_caret)
         return;
@@ -280,7 +288,7 @@ void RetroFuturaGUI::TextBox::drawCaret()
         _caret->Draw();
 }
 
-f32 RetroFuturaGUI::TextBox::clampToTextBounds(const f32 worldX, const f32 halfExtent) const
+f32 RetroFuturaGUI::MultilineTextBox::clampToTextBounds(const f32 worldX, const f32 halfExtent) const
 {
     const f32
         left { _position.x - _size.x * 0.5f + halfExtent },
@@ -298,7 +306,7 @@ f32 RetroFuturaGUI::TextBox::clampToTextBounds(const f32 worldX, const f32 halfE
     return worldX;
 }
 
-f32 RetroFuturaGUI::TextBox::keepCaretVisible(const f32 worldX, const f32 halfExtent)
+f32 RetroFuturaGUI::MultilineTextBox::keepCaretVisible(const f32 worldX, const f32 halfExtent)
 {
     const f32
         left { _position.x - _size.x * 0.5f + halfExtent },
@@ -326,14 +334,29 @@ f32 RetroFuturaGUI::TextBox::keepCaretVisible(const f32 worldX, const f32 halfEx
     return clampToTextBounds(worldX, halfExtent); //nothing left to scroll; fall back to a hard clamp
 }
 
-void RetroFuturaGUI::TextBox::SetFontFamily(std::string_view fontFamily, const f32 fontSize, const PlatformBridge::Fonts::Slant slant, const PlatformBridge::Fonts::Weight fontWeight)
+void RetroFuturaGUI::MultilineTextBox::SetFontFamily(std::string_view fontFamily, const f32 fontSize, const PlatformBridge::Fonts::Slant slant, const PlatformBridge::Fonts::Weight fontWeight)
 {
     ITextEditable::SetFontFamily(fontFamily, fontSize, slant, fontWeight);
     _caret->SetSize(glm::vec2(2.0f, fontSize * 1.6f));
 }
 
-void RetroFuturaGUI::TextBox::SetCornerRadii(const glm::vec4& radii)
+void RetroFuturaGUI::MultilineTextBox::SetCornerRadii(const glm::vec4& radii)
 {
     _background->SetCornerRadii(radii);
     _border->SetCornerRadii(radii);
+}
+
+f32 RetroFuturaGUI::MultilineTextBox::clampToTextBoundsY(const f32 worldY) const
+{
+    const f32
+        bottom { _position.y - _size.y * 0.5f },
+        top { _position.y + _size.y * 0.5f };
+
+    if(worldY < bottom)
+        return bottom;
+
+    if(worldY > top)
+        return top;
+
+    return worldY;
 }

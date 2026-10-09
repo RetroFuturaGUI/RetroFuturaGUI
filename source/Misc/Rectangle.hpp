@@ -194,6 +194,10 @@ namespace RetroFuturaGUI
         /// @brief Returns the border width.
         f32 GetBorderWidth() const;
 
+        f32 GetGradientOffset() const;
+
+        f32 GetGradientDegree() const;
+
     private:
     //Geometry
         f32 _vertices[3 * 4] = 

@@ -759,3 +759,13 @@ f32 RetroFuturaGUI::Rectangle::GetBorderWidth() const
 {
     return _borderWidth;
 }
+
+f32 RetroFuturaGUI::Rectangle::GetGradientOffset() const
+{
+    return _gradientOffset;
+}
+
+f32 RetroFuturaGUI::Rectangle::GetGradientDegree() const
+{
+    return _gradientDegree;
+}
