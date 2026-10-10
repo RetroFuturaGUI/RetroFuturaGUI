@@ -48,15 +48,7 @@ RetroFuturaGUI::Table::Table(const std::string& name, Projection* projection, IW
     if(_innerBorder)
         _innerBorder->SetRectangleMode(RectangleMode::Border);
 
-    _caret = std::make_unique<Rectangle>(projection);
-
-    if(_caret)
-    {
-        _caret->SetRectangleMode(RectangleMode::Plane);
-        _caret->SetFillType(FillType::SOLID);
-        _caret->SetSize(glm::vec2(2.0f, _textDefaults._FontSize * 1.6f));
-        _caret->SetColors(_caretColors);
-    }
+    initEditVisuals(projection);
 
     _cellColorPlane = std::make_unique<Rectangle>(projection);
 
@@ -64,15 +56,6 @@ RetroFuturaGUI::Table::Table(const std::string& name, Projection* projection, IW
     {
         _cellColorPlane->SetRectangleMode(RectangleMode::Plane);
         _cellColorPlane->SetFillType(FillType::SOLID);
-    }
-
-    _textSelectedArea = std::make_unique<Rectangle>(projection);
-
-    if(_textSelectedArea)
-    {
-        _textSelectedArea->SetRectangleMode(RectangleMode::Plane);
-        _textSelectedArea->SetFillType(FillType::SOLID);
-        _textSelectedArea->SetColors(_selectedAreaColors);
     }
 
     _checkBoxBackground = std::make_unique<Rectangle>(projection);
@@ -347,6 +330,9 @@ void RetroFuturaGUI::Table::SetPosition(const glm::vec3& position)
 
     if(_border)
         _border->SetPosition(position + glm::vec3(0.0f, 0.0f, 0.1f));
+
+    if(_selectedArea)
+        _selectedArea->SetPosition(position + glm::vec3(0.0f, 0.0f, _widgetZOffset - 0.01f));
 
     layoutCells();
 }
@@ -845,33 +831,10 @@ bool RetroFuturaGUI::Table::IsTrackReadOnly(const uSize trackIndex) const
     return trackIndex < _trackReadOnlyFlags.size() ? _trackReadOnlyFlags[trackIndex] : false;
 }
 
-void RetroFuturaGUI::Table::SetCaretColors(std::span<glm::vec4> colors)
-{
-    _caretColors.assign(colors.begin(), colors.end());
-
-    if(_caret)
-        _caret->SetColors(_caretColors);
-}
-
-void RetroFuturaGUI::Table::SetCaretBlinkTime(const f64 milliseconds)
-{
-    _caretNeverBlinks = milliseconds <= 0.0;
-    _blinkForMilliseconds = milliseconds;
-    resetCaretBlink();
-}
-
 void RetroFuturaGUI::Table::SetCaretSize(const glm::vec2& size)
 {
     if(_caret)
         _caret->SetSize(size);
-}
-
-void RetroFuturaGUI::Table::SetSelectedAreaColors(std::span<glm::vec4> colors)
-{
-    _selectedAreaColors.assign(colors.begin(), colors.end());
-
-    if(_textSelectedArea)
-        _textSelectedArea->SetColors(_selectedAreaColors);
 }
 
 bool RetroFuturaGUI::Table::GetEditedCell(uSize& outRow, uSize& outColumn) const
@@ -998,8 +961,6 @@ void RetroFuturaGUI::Table::SetFontFamily(std::string_view fontFamily, const f32
 
             static_cast<TableText*>(cell._TableWidget.get())->SetFontFamily(fontFamily, fontSize, slant, fontWeight);
         }
-
-    _caret->SetSize({ 2.0f, _textDefaults._FontSize * 1.6f });
 }
 
 void RetroFuturaGUI::Table::SetTextAlignment(const TextAlignment alignment)
@@ -1142,56 +1103,14 @@ bool RetroFuturaGUI::Table::isEditedTrackReadOnly() const
     return track < _trackReadOnlyFlags.size() ? _trackReadOnlyFlags[track] : false;
 }
 
-f32 RetroFuturaGUI::Table::clampToCellBounds(const f32 worldX, const f32 halfExtent) const
+RetroFuturaGUI::ITextEditVisuals::TextArea RetroFuturaGUI::Table::textArea() const
 {
-    if(!_hasEditCell || _editRow >= _tableCells.size() || _editColumn >= _tableCells[_editRow].size())
-        return worldX;
+    if(!_hasEditCell || _editRow >= _tableCells.size() || _editColumn >= _tableCells[_editRow].size()) //nothing edited: fall back to the whole table
+        return { ._Left = _position.x - _size.x * 0.5f, ._Bottom = _position.y - _size.y * 0.5f, ._Right = _position.x + _size.x * 0.5f, ._Top = _position.y + _size.y * 0.5f };
 
     const TableCell& cell { _tableCells[_editRow][_editColumn] };
-    const f32
-        left { cell._PositionPixels.x - cell._SizePixels.x * 0.5f + halfExtent },
-        right { cell._PositionPixels.x + cell._SizePixels.x * 0.5f - halfExtent };
 
-    if(left > right) // the requested extent is wider than the cell itself
-        return cell._PositionPixels.x;
-
-    return worldX < left ? left : (worldX > right ? right : worldX);
-}
-
-f32 RetroFuturaGUI::Table::keepCaretVisible(const f32 worldX, const f32 halfExtent)
-{
-    Text* text { activeText() };
-
-    if(!text || !_hasEditCell || _editRow >= _tableCells.size() || _editColumn >= _tableCells[_editRow].size())
-        return worldX;
-
-    const TableCell& cell { _tableCells[_editRow][_editColumn] };
-    const f32
-        left { cell._PositionPixels.x - cell._SizePixels.x * 0.5f + halfExtent },
-        right { cell._PositionPixels.x + cell._SizePixels.x * 0.5f - halfExtent };
-
-    if(left > right)
-        return cell._PositionPixels.x;
-
-    f32 scrollOffset { text->GetScrollOffset() };
-
-    if(worldX > right) // scroll the cell's text left so the caret lands exactly on the edge
-    {
-        scrollOffset += worldX - right;
-        text->SetScrollOffset(scrollOffset);
-        return right;
-    }
-
-    if(worldX < left && scrollOffset > 0.0f) // scroll back right, as far as there's room to
-    {
-        const f32
-            newScrollOffset { (scrollOffset + worldX - left) > 0.0f ? (scrollOffset + worldX - left) : 0.0f },
-            delta { newScrollOffset - scrollOffset };
-        text->SetScrollOffset(newScrollOffset);
-        return worldX - delta;
-    }
-
-    return clampToCellBounds(worldX, halfExtent);
+    return { ._Left = cell._PositionPixels.x - cell._SizePixels.x * 0.5f, ._Bottom = cell._PositionPixels.y - cell._SizePixels.y * 0.5f, ._Right = cell._PositionPixels.x + cell._SizePixels.x * 0.5f, ._Top = cell._PositionPixels.y + cell._SizePixels.y * 0.5f };
 }
 
 void RetroFuturaGUI::Table::beginEdit(const uSize row, const uSize column, const f32 worldX)
@@ -1217,7 +1136,7 @@ void RetroFuturaGUI::Table::beginEdit(const uSize row, const uSize column, const
     if(!text)
         return;
 
-    _selectedPositionFirst = _selectedPositionLast = text->GetBoundaryAtPosition(clampToCellBounds(worldX));
+    _selectedPositionFirst = _selectedPositionLast = text->GetBoundaryAtPosition(clampToTextBounds(worldX));
     setCaretFromBoundary(_selectedPositionFirst);
     updateSelectedArea();
     _isMarking = true;
@@ -1480,7 +1399,7 @@ void RetroFuturaGUI::Table::interactTableText(const MouseState& mouse)
         {
             if(Text* text { activeText() })
             {
-                _selectedPositionLast = text->GetBoundaryAtPosition(clampToCellBounds(mouse._Position.x));
+                _selectedPositionLast = text->GetBoundaryAtPosition(clampToTextBounds(mouse._Position.x));
                 setCaretFromBoundary(_selectedPositionLast);
                 updateSelectedArea();
             }
@@ -1526,70 +1445,13 @@ void RetroFuturaGUI::Table::interactTableText(const MouseState& mouse)
         updateCaretBlink();
 }
 
-void RetroFuturaGUI::Table::updateCaretPosition()
-{
-    Text* text { activeText() };
-
-    if(!text || !_caret)
-        return;
-
-    glm::vec3 caretPosition { text->GetBoundaryPosition(_caretPosition, _caret->GetSize().y) };
-    caretPosition.x = keepCaretVisible(caretPosition.x, _caret->GetSize().x * 0.5f);
-    caretPosition.z = _position.z + _widgetZOffset + 0.02f; // in front of the cell's own text
-    _caret->SetPosition(caretPosition);
-    resetCaretBlink();
-}
-
-void RetroFuturaGUI::Table::updateSelectedArea()
-{
-    Text* text { activeText() };
-    const uSize
-        left { markedStart() },
-        right { markedEnd() };
-
-    if(!text || !_textSelectedArea || !_caret || left == right) // nothing selected
-    {
-        _isSelected = false;
-        return;
-    }
-
-    const glm::vec3
-        leftPosition { text->GetBoundaryPosition(left, _caret->GetSize().y) },
-        rightPosition { text->GetBoundaryPosition(right, _caret->GetSize().y) };
-    const f32
-        clippedLeftX { clampToCellBounds(leftPosition.x) },
-        clippedRightX { clampToCellBounds(rightPosition.x) },
-        width { clippedRightX - clippedLeftX };
-
-    if(width <= 0.0f) // the selection sits entirely outside the visible part of the cell
-    {
-        _isSelected = false;
-        return;
-    }
-
-    _textSelectedArea->SetSize(glm::vec2(width, _caret->GetSize().y));
-    _textSelectedArea->SetPosition(glm::vec3(clippedLeftX + width * 0.5f,
-                                             leftPosition.y,
-                                             _position.z + _widgetZOffset - 0.01f)); // behind the text it highlights
-    _isSelected = true;
-}
-
 void RetroFuturaGUI::Table::drawCaretAndSelection()
 {
     if(!_hasEditCell)
         return;
 
-    if(_textSelectedArea && _isSelected)
-    {
-        _textSelectedArea->SetColors(_selectedAreaColors);
-        _textSelectedArea->Draw();
-    }
-
-    if(_caret && _showCaret && (_caretNeverBlinks || _caretBlinkState))
-    {
-        _caret->SetColors(_caretColors);
-        _caret->Draw();
-    }
+    drawSelectedArea();
+    drawCaret();
 }
 
 void RetroFuturaGUI::Table::SetValue(const bool value, const TrackIndex& index, const bool emitSignal)

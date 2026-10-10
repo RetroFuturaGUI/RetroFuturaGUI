@@ -75,9 +75,29 @@ namespace RetroFuturaGUI
         void moveCaret();
         void moveCaretLeft();
         void moveCaretRight();
-        void moveCaretUp();//refactor into new interface for multiline text boxes
-        void moveCaretDown();//refactor into new interface for multiline text boxes
         void setCaretFromBoundary(const uSize boundary);
+
+    //Multiline hooks: single-line text ignores Up/Down and doesn't break lines; multiline widgets override these
+        /// @brief Moves the caret to the closest boundary on the line above.
+        virtual void moveCaretUp() {}
+
+        /// @brief Moves the caret to the closest boundary on the line below.
+        virtual void moveCaretDown() {}
+
+        /// @brief Inserts a line break at the caret when Enter is pressed.
+        virtual void insertLineBreak() {}
+
+        /// @brief Strips what pasted text mustn't bring in. Single-line text turns line breaks into spaces.
+        virtual void filterPastedText(std::u32string& text) const;
+
+        /// @brief Whether a codepoint must never end up in edited text: control characters (C0, DEL, C1), surrogate halves and values past the end of Unicode.
+        static constexpr bool isInvalidCodepoint(const char32_t codepoint)
+        {
+            return 0x20u > codepoint
+                || (0x7Fu <= codepoint && 0x9Fu >= codepoint)
+                || (0xD800u <= codepoint && 0xDFFFu >= codepoint)
+                || 0x10FFFFu < codepoint;
+        }
 
         bool checkForTextCopy();
         bool checkForTextCut();
@@ -128,8 +148,7 @@ namespace RetroFuturaGUI
             _enterPressed { false },
             _textCopied { false },
             _textCut { false },
-            _textPasted { false },
-            _multiline { false };
+            _textPasted { false };
         u32 _keyHoldFrames { 0 };
         std::u32string _keyRepeatText {};
         u32

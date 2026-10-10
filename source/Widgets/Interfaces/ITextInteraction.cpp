@@ -1,6 +1,7 @@
 #include "ITextInteraction.hpp"
 #include "PlatformBridge.hpp"
 #include "DoubleEncodedString.hpp"
+#include <algorithm>
 
 #if defined(TARGET_PLATFORM_LINUX)
     #define GLFW_EXPOSE_NATIVE_X11
@@ -101,9 +102,9 @@ void RetroFuturaGUI::ITextInteraction::moveCaret()
         _caretRepeatDirection = CaretDirection::Left;
     else if(PlatformBridge::Input::GetKeyPressState(PB_KEY_RIGHT) == PlatformBridge::KeyPressState::Press)
         _caretRepeatDirection = CaretDirection::Right;
-    else if(_multiline && PlatformBridge::Input::GetKeyPressState(PB_KEY_UP) == PlatformBridge::KeyPressState::Press)
+    else if(PlatformBridge::Input::GetKeyPressState(PB_KEY_UP) == PlatformBridge::KeyPressState::Press)
         _caretRepeatDirection = CaretDirection::Up;
-    else if(_multiline && PlatformBridge::Input::GetKeyPressState(PB_KEY_DOWN) == PlatformBridge::KeyPressState::Press)
+    else if(PlatformBridge::Input::GetKeyPressState(PB_KEY_DOWN) == PlatformBridge::KeyPressState::Press)
         _caretRepeatDirection = CaretDirection::Down;
     else
         return;
@@ -155,40 +156,6 @@ void RetroFuturaGUI::ITextInteraction::moveCaretRight()
 
     if(_caretPosition < text->GetGlyphCount())
         ++_caretPosition;
-
-    updateCaretPosition();
-}
-
-void RetroFuturaGUI::ITextInteraction::moveCaretUp()//refactor into new interface
-{
-    Text* text { activeText() };
-
-    if(!text)
-        return;
-
-    deselect();
-    const uSize currentLine { text->GetBoundaryLine(_caretPosition) };
-
-    if(0 == currentLine) //already on the first line: go to the start of the text
-        _caretPosition = 0;
-    else
-        _caretPosition = text->GetBoundaryOnLine(currentLine - 1, text->GetBoundaryPosition(_caretPosition, 0.0f).x); //the caret size only affects y
-
-    updateCaretPosition();
-}
-
-void RetroFuturaGUI::ITextInteraction::moveCaretDown()//refactor into new interface
-{
-    Text* text { activeText() };
-
-    if(!text)
-        return;
-
-    deselect();
-    const uSize currentLine { text->GetBoundaryLine(_caretPosition) };
-
-    //past the last line, GetBoundaryOnLine returns the end of the text
-    _caretPosition = text->GetBoundaryOnLine(currentLine + 1, text->GetBoundaryPosition(_caretPosition, 0.0f).x);
 
     updateCaretPosition();
 }
@@ -285,7 +252,14 @@ bool RetroFuturaGUI::ITextInteraction::checkForTextPaste()
                 return true;
 
             middlePart = std::u32string(reinterpret_cast<char32_t*>(dataPtr), dataSize / sizeof(char32_t));
-            std::erase(middlePart, U'\r');
+            filterPastedText(middlePart);
+
+            if(middlePart.empty()) //nothing pasteable left - keep the selection as it is
+            {
+                PlatformBridge::Clipboard::ClearClipboardDataBuffer();
+                _textPasted = true;
+                return true;
+            }
 
             if(_isSelected)
             {
@@ -319,6 +293,12 @@ bool RetroFuturaGUI::ITextInteraction::checkForTextPaste()
 
     _textPasted = false;
     return false;
+}
+
+void RetroFuturaGUI::ITextInteraction::filterPastedText(std::u32string& text) const
+{
+    std::ranges::replace(text, U'\n', U' ');
+    std::erase_if(text, isInvalidCodepoint);
 }
 
 bool RetroFuturaGUI::ITextInteraction::checkForSelectAllText()
@@ -381,7 +361,7 @@ bool RetroFuturaGUI::ITextInteraction::checkForKeyRepeat()
         std::u32string left { text->GetTextUTF32().substr(0, _caretPosition) };
         std::u32string right { text->GetTextUTF32().substr(_caretPosition) };
         text->SetTextUTF32(left + _keyRepeatText + right);
-        ++_caretPosition;
+        _caretPosition += _keyRepeatText.size();
         deselect();
         updateCaretPosition();
         emitChange();
@@ -408,19 +388,7 @@ bool RetroFuturaGUI::ITextInteraction::checkForEnterPress()
     _repeatKeySym = keySym;
     _repeatKeyPressCountSeen = PlatformBridge::Input::GetKeyPressCount(keySym);
 
-    if(_multiline)
-    {
-        std::u32string left { text->GetTextUTF32().substr(0, _caretPosition) };
-        std::u32string right { text->GetTextUTF32().substr(_caretPosition) };
-        text->SetTextUTF32(left + U'\n' + right);
-        ++_caretPosition;
-        deselect();
-        updateCaretPosition();
-        emitChange();
-        _keyRepeatText = U"\n";
-        _keyHoldFrames = 0;
-    }
-
+    insertLineBreak();
     emitEnterPressed();
     _enterPressed = true;
     return true;
@@ -504,50 +472,62 @@ bool RetroFuturaGUI::ITextInteraction::checkForTextInput()
     if(!text)
         return false;
 
-    const std::u32string keyText { DoubleEncodedString::Utf8ToUtf32(PlatformBridge::Input::GetInputString()) };
+    std::u32string keyText { DoubleEncodedString::Utf8ToUtf32(PlatformBridge::Input::GetInputString()) };
+    std::erase_if(keyText, isInvalidCodepoint);
 
-    if(!keyText.empty())
+    if(keyText.empty())
+        return false;
+
+    if(_isSelected)
     {
-        if(_isSelected)
-        {
-            const uSize
-                selectionStart { markedStart() },
-                selectionEnd { markedEnd() };
-            text->SetTextUTF32(text->GetTextUTF32().substr(0, selectionStart) + keyText + text->GetTextUTF32().substr(selectionEnd));
-            _selectedPositionFirst = 0;
-            _selectedPositionLast = 0;
-            _isSelected = false;
-            updateSelectedArea();
-            setCaretFromBoundary(selectionStart + 1);
-        }
-        else
-        {
-            std::u32string left { text->GetTextUTF32().substr(0, _caretPosition) };
-            std::u32string right { text->GetTextUTF32().substr(_caretPosition) };
-            text->SetTextUTF32(left + keyText + right);
-            ++_caretPosition;
-            deselect();
-            updateCaretPosition();
-            _keyRepeatText = keyText;
-            _repeatKeySym = PlatformBridge::Input::GetLastKeySym();
-            _repeatKeyPressCountSeen = PlatformBridge::Input::GetKeyPressCount(_repeatKeySym);
-            _keyHoldFrames = 0;
-        }
-
-        emitChange();
-        return true;
+        const uSize
+            selectionStart { markedStart() },
+            selectionEnd { markedEnd() };
+        text->SetTextUTF32(text->GetTextUTF32().substr(0, selectionStart) + keyText + text->GetTextUTF32().substr(selectionEnd));
+        _selectedPositionFirst = 0;
+        _selectedPositionLast = 0;
+        _isSelected = false;
+        updateSelectedArea();
+        setCaretFromBoundary(selectionStart + keyText.size());
+    }
+    else
+    {
+        std::u32string left { text->GetTextUTF32().substr(0, _caretPosition) };
+        std::u32string right { text->GetTextUTF32().substr(_caretPosition) };
+        text->SetTextUTF32(left + keyText + right);
+        _caretPosition += keyText.size();
+        deselect();
+        updateCaretPosition();
+        _keyRepeatText = keyText;
+        _repeatKeySym = PlatformBridge::Input::GetLastKeySym();
+        _repeatKeyPressCountSeen = PlatformBridge::Input::GetKeyPressCount(_repeatKeySym);
+        _keyHoldFrames = 0;
     }
 
-    return false;
+    emitChange();
+    return true;
 }
 
 void RetroFuturaGUI::ITextInteraction::editText()
 {
-    if(!activeText())
+    Text* text { activeText() };
+
+    if(!text)
         return;
 
     if(!hasInputFocus())
         return;
+
+    const uSize length { text->GetTextUTF32().size() };
+
+    if(_caretPosition > length)
+        _caretPosition = length;
+
+    if(_selectedPositionFirst > length)
+        _selectedPositionFirst = length;
+
+    if(_selectedPositionLast > length)
+        _selectedPositionLast = length;
 
     /* Copy and select-all stay available on read-only text; only the mutating paths are gated, which is why
        the _editingEnabled check sits below them rather than at the top. */

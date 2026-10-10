@@ -11,7 +11,7 @@
 
 namespace RetroFuturaGUI
 {
-    /// @brief The value types ITextTypes can hold: exactly the members of ITextTypes::ValueType, plus text.
+    /// @brief The value types TextTypes can hold: exactly the members of TextTypes::ValueType, plus text.
     template<typename T>
     concept TextValueType =
         std::same_as<T, bool> ||
@@ -20,7 +20,7 @@ namespace RetroFuturaGUI
         std::same_as<T, f32> || std::same_as<T, f64> ||
         std::same_as<T, std::string_view>;
 
-    class ITextTypes
+    class TextTypes
     {
     public:
         union ValueType
@@ -58,6 +58,9 @@ namespace RetroFuturaGUI
 
         /// @brief Returns the stored value rendered as text in the current numeric base.
         const std::string& GetValueText() const;
+
+        /// @brief Returns the type the value is currently stored as.
+        DataTypeID GetDataType() const { return _currentDataType; }
 
         /// @brief Returns the stored value converted to T. Parses _valueText when the current type is Text.
         template<NumericValueType T>

@@ -19,6 +19,14 @@ using uChar = unsigned char;
 
 namespace RetroFuturaGUI
 {
+    static constexpr bool isInvalidCodepoint(const char32_t codepoint)
+    {
+        return 0x20 > codepoint
+            || (0x7F <= codepoint && 0x9F >= codepoint)
+            || (0xD800 <= codepoint && 0xDFFF >= codepoint)
+            || 0x10FFFF < codepoint;
+    }
+
     template<typename T>
     concept NumericValueType =
         std::same_as<T, bool> ||

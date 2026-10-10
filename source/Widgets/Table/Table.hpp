@@ -3,7 +3,6 @@
 #include "IBorder.hpp"
 #include "IClickable.hpp"
 #include "ITableWidget.hpp"
-#include "ITextTypes.hpp"
 #include "IWidget.hpp"
 #include "IncludeHelper.hpp"
 #include "Projection.hpp"
@@ -12,7 +11,7 @@
 #include "SvgTexture.hpp"
 #include "config.hpp"
 #include "TableText.hpp"
-#include "ITextInteraction.hpp"
+#include "ITextEditVisuals.hpp"
 #include "TableColor.hpp"
 #include "TableCheckBox.hpp"
 #include "TrackIndex.hpp"
@@ -20,7 +19,7 @@
 
 namespace RetroFuturaGUI
 {
-    class Table final : public IWidget, public IClickable, public IBackground, public IBorder, public ITextInteraction
+    class Table final : public IWidget, public IClickable, public IBackground, public IBorder, public ITextEditVisuals
     {
     public:
         enum class TableOrientation : u32
@@ -277,17 +276,8 @@ namespace RetroFuturaGUI
 
         bool IsTrackReadOnly(const uSize trackIndex) const;
 
-        /// @brief Sets the caret colour(s). One caret is shared by every cell, so this is table-wide.
-        void SetCaretColors(std::span<glm::vec4> colors);
-
-        /// @brief Sets how long, in milliseconds, the caret stays visible/hidden per blink cycle.
-        void SetCaretBlinkTime(const f64 milliseconds);
-
-        /// @brief Sets the caret's width and height, in pixels.
+        /// @brief Sets the caret's size, in pixels. Width is fixed at 2 pixels
         void SetCaretSize(const glm::vec2& size);
-
-        /// @brief Sets the selection highlight colour(s), shared the same way the caret is.
-        void SetSelectedAreaColors(std::span<glm::vec4> colors);
 
         /// @brief Returns the cell currently being edited, or false when no cell has focus.
         bool GetEditedCell(uSize& outRow, uSize& outColumn) const;
@@ -418,18 +408,13 @@ namespace RetroFuturaGUI
 
         //ITextInteraction hooks: edits apply to whichever cell is active, and read-only is per track.
         Text* activeText() const override;
-        void updateCaretPosition() override;
-        void updateSelectedArea() override;
         void emitChange() override;
         bool isTextReadOnly() const override { return isEditedTrackReadOnly(); }
 
         bool isEditedTrackReadOnly() const;
 
-        /// @brief Clamps a world x to the edited cell's horizontal bounds, so a caret or selection edge can't escape its cell.
-        f32 clampToCellBounds(const f32 worldX, const f32 halfExtent = 0.0f) const;
-
-        /// @brief Scrolls the edited cell's text just far enough to keep the caret inside the cell, falling back to a hard clamp.
-        f32 keepCaretVisible(const f32 worldX, const f32 halfExtent = 0.0f);
+        /// @brief The edited cell's bounds, so the caret and selection can't escape it
+        TextArea textArea() const override;
 
         struct TextDefaults
         {
@@ -453,8 +438,6 @@ namespace RetroFuturaGUI
             _highlightedCellBorder { nullptr },
             _trackColoringOverlay { nullptr },
             _innerBorder { nullptr },
-            _textSelectedArea { nullptr },
-            _caret { nullptr },
             _cellColorPlane { nullptr },
             _checkBoxBackground { nullptr },
             _checkBoxBorder { nullptr };
@@ -550,8 +533,5 @@ namespace RetroFuturaGUI
             _editRow { 0 },
             _editColumn { 0 };
         bool _hasEditCell { false };
-        std::vector<glm::vec4>
-            _caretColors {{ 1.0f, 1.0f, 1.0f, 1.0f }},
-            _selectedAreaColors {{ 0.24f, 0.47f, 0.85f, 0.4f }};
     };
 }

@@ -1,6 +1,6 @@
-#include "ITextTypes.hpp"
+#include "TextTypes.hpp"
 
-void RetroFuturaGUI::ITextTypes::ChangeType(const DataTypeID id)
+void RetroFuturaGUI::TextTypes::ChangeType(const DataTypeID id)
 {
     if(_currentDataType == id)
         return;
@@ -49,12 +49,12 @@ void RetroFuturaGUI::ITextTypes::ChangeType(const DataTypeID id)
     refreshValueText();
 }
 
-const std::string& RetroFuturaGUI::ITextTypes::GetValueText() const
+const std::string& RetroFuturaGUI::TextTypes::GetValueText() const
 {
     return _valueText;
 }
 
-void RetroFuturaGUI::ITextTypes::SetNumericBase(const u32 base)
+void RetroFuturaGUI::TextTypes::SetNumericBase(const u32 base)
 {
     if(base > 1 && base < 37)
         _numericBase = base;
@@ -64,13 +64,13 @@ void RetroFuturaGUI::ITextTypes::SetNumericBase(const u32 base)
     refreshValueText();
 }
 
-void RetroFuturaGUI::ITextTypes::SetDecimalPrecision(const i32 precision)
+void RetroFuturaGUI::TextTypes::SetDecimalPrecision(const i32 precision)
 {
     _precision = precision > 32 ? 32 : precision;
     refreshValueText();
 }
 
-void RetroFuturaGUI::ITextTypes::refreshValueText()
+void RetroFuturaGUI::TextTypes::refreshValueText()
 {
     switch(_currentDataType)
     {
@@ -88,7 +88,7 @@ void RetroFuturaGUI::ITextTypes::refreshValueText()
     }
 }
 
- std::string RetroFuturaGUI::ITextTypes::convertIntegralString() const
+ std::string RetroFuturaGUI::TextTypes::convertIntegralString() const
 {
     switch(_currentDataType)
     {
