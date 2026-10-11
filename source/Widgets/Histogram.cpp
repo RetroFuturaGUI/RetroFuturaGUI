@@ -5,6 +5,8 @@ RetroFuturaGUI::Histogram::Histogram(std::string_view name, Projection* projecti
     : IRangedMultiValue(name, projection, parentWidget, parentWidgetTypeID, parentWindow)
 {
     _widgetTypeID = WidgetTypeID::Histogram;
+    _data.resize(1);
+    _dataCount.resize(1);
 }
 
 void RetroFuturaGUI::Histogram::Draw()
@@ -29,62 +31,30 @@ void RetroFuturaGUI::Histogram::SetBarInterstice(const f32 interstice)
 
 void RetroFuturaGUI::Histogram::calculateBarWidth()
 {
-    if(!_dataCount)
+    if(_dataCount.empty())
+        return;
+
+    if(!_dataCount.front())
     {
         _barWidth = 0.0f;
         return;
     }
 
     _barWidth = _orientation == Orientation::Horizontal
-        ? _size.x / static_cast<f32>(_dataCount)
-        : _size.y / static_cast<f32>(_dataCount);
+        ? _size.x / static_cast<f32>(_dataCount.front())
+        : _size.y / static_cast<f32>(_dataCount.front());
     _barWidth -= _barInterstice;
 }
 
 f32 RetroFuturaGUI::Histogram::calculateBarHeight(const uSize index) const
 {
-    if(!_data)
+    if(_data.empty())
         return 0.0f;
 
-    f32 height { 0.0f };
-    
-    switch(_valueType)
-    {
-        case PrimitiveTypeID::Bool:
-            height = reinterpret_cast<const bool*>(_data)[index] ? 1.0f : 0.0f;
-        break;
-        case PrimitiveTypeID::Int8:
-            height = static_cast<f32>(reinterpret_cast<const i8*>(_data)[index]);
-        break;
-        case PrimitiveTypeID::Int16:
-            height = static_cast<f32>(reinterpret_cast<const i16*>(_data)[index]);
-        break;
-        case PrimitiveTypeID::Int32:
-            height = static_cast<f32>(reinterpret_cast<const i32*>(_data)[index]);
-        break;
-        case PrimitiveTypeID::Int64:
-            height = static_cast<f32>(reinterpret_cast<const i64*>(_data)[index]);
-        break;
-        case PrimitiveTypeID::UInt8:
-            height = static_cast<f32>(reinterpret_cast<const u8*>(_data)[index]);
-        break;
-        case PrimitiveTypeID::UInt16:
-            height = static_cast<f32>(reinterpret_cast<const u16*>(_data)[index]);
-        break;
-        case PrimitiveTypeID::UInt32:
-            height = static_cast<f32>(reinterpret_cast<const u32*>(_data)[index]);
-        break;
-        case PrimitiveTypeID::UInt64:
-            height = static_cast<f32>(reinterpret_cast<const u64*>(_data)[index]);
-        break;
-        case PrimitiveTypeID::Float64:
-            height = saturatingCast<f32>(reinterpret_cast<const f64*>(_data)[index]); // beyond f32's range a plain cast is undefined behavior
-        break;
-        default: // Float32
-            height = reinterpret_cast<const f32*>(_data)[index];
-        break;
-    }
-    
+    if(!_data.front())
+        return 0.0f;
+
+    const f32 height { getDataValueAsF32(0, index) };
     f32 fraction { getRangeFraction(height) < 0.0f ? 0.0f : getRangeFraction(height) > 1.0f ? 1.0f : getRangeFraction(height) };
 
     if(_orientation == Orientation::Horizontal)
@@ -100,7 +70,10 @@ void RetroFuturaGUI::Histogram::alignElementsToTrack()
 
 glm::vec3 RetroFuturaGUI::Histogram::calculateBarPosition(const uSize index) const
 {
-    if(!_data)
+    if(_data.empty())
+        return glm::vec3(0.0f);
+
+    if(!_data.front())
         return glm::vec3(0.0f);
 
     f32 
@@ -128,10 +101,13 @@ glm::vec3 RetroFuturaGUI::Histogram::calculateBarRotation() const
 
 void RetroFuturaGUI::Histogram::drawGraph()
 {
+    if(_dataCount.empty())
+        return;
+
     if(!_useGraph || !_graph)
         return;
 
-    for(uSize i = 0; i < _dataCount; ++i)
+    for(uSize i = 0; i < _dataCount.front(); ++i)
     {
         glm::vec3 
             barPosition = calculateBarPosition(i),

@@ -45,6 +45,7 @@ list(APPEND RetroFuturaGuiSources
 
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Misc/DoubleEncodedString.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Misc/Mesh.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/source/Misc/Polyline.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Misc/Rectangle.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Misc/ResourceManager.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Misc/TextTypes.cpp"
@@ -69,6 +70,7 @@ list(APPEND RetroFuturaGuiSources
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/Histogram.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/Image.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/Label.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/LineDiagram.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/Model.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/MultilineTextBox.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/ProgressBar.cpp"

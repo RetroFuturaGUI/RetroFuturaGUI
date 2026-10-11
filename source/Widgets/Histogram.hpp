@@ -17,9 +17,13 @@ namespace RetroFuturaGUI
         auto operator =(const Histogram&) = delete;
         auto operator =(Histogram&&) = delete;
 
-        
         void Draw() override;
         void SetBarInterstice(const f32 interstice);
+
+        template<NumericValueType T> bool SetData(std::span<const T> data, const bool emitSignal)
+        {
+            return IRangedMultiValue::SetData<T>(0, data, emitSignal);
+        }
 
     private:
         void calculateBarWidth();

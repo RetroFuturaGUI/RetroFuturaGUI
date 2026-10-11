@@ -16,26 +16,36 @@ namespace RetroFuturaGUI
         auto operator =(const IRangedMultiValue&) = delete;
         auto operator =(IRangedMultiValue&&) = delete;
 
-
         /// @brief Connects a slot to be called when the value has been set
         /// @param async If true, the slot is invoked asynchronously.
         void Connect_OnDataSet(const typename Signal<>::Slot& slot, const bool async);
 
-         /// @brief Disconnects a previously connected OnValueSet slot.
+        /// @brief Disconnects a previously connected OnDataSet slot.
         void Disconnect_OnDataSet(const typename Signal<>::Slot& slot);
 
         /// @brief Shows data without copying it - it is read every frame, so it must stay valid, and its buffer must not move, until the next SetData.
-        template<NumericValueType T> void SetData(std::span<const T> data, const bool emitSignal)
+        /// All sets are read in one type, so a set may only bring a type of its own while no other set holds values. An empty span unbinds the set.
+        /// @return false when another set holds values of a different type, in which case nothing is changed.
+        template<NumericValueType T> bool SetData(const uSize nthSet, std::span<const T> data, const bool emitSignal)
         {
-            setData(data.data(), data.size(), GetPrimitiveTypeID<T>());
-            _stride = sizeof(T);
+            if(!setData(nthSet, data.data(), data.size(), GetPrimitiveTypeID<T>()))
+                return false;
 
             if(emitSignal)
             {
                 _onDataSet.Emit();
                 _onDataSetAsync.EmitAsync();
             }
+
+            return true;
         }
+
+        /// @brief Sets whether a set shorter than the longest holds its last value up to the end of the track, instead of ending where its data does.
+        void SetClampToLastValue(const bool value);
+
+        /// @brief Sets whether values are shown in hexadecimal: an integer as its value (17 is 0x11, -1 in an i8 is 0xFF),
+        /// a float as its bits in full (1.0f is 0x3F800000, 1.0 is 0x3FF0000000000000).
+        void HexNumbers(const bool value);
 
     protected:
         /// @brief Nothing to clamp: the values belong to the caller and are mapped into the range when drawn.
@@ -47,36 +57,48 @@ namespace RetroFuturaGUI
         /// @brief Nothing to convert: the data belongs to the caller and brings its own type.
         void convertValuesToType(const PrimitiveTypeID previousType) override;
 
-        /// @brief The data's type once there is data - the buffer can't change type, so a bound set in another type is converted to the data's instead.
+        /// @brief The data's type once any set holds values - the buffers can't change type, so a bound set in another type is converted to the data's instead.
         /// Without data, requestedType; the next SetData then converts the range to the data's type.
         PrimitiveTypeID resolveValueType(const PrimitiveTypeID requestedType) const override;
 
-        void setData(const void* data, const uSize count, const PrimitiveTypeID type);
-        
-        template<NumericValueType T> T getDataValue(const uSize index) const
+        /// @return false when another set holds values of a different type, in which case nothing is changed. See SetData.
+        bool setData(const uSize nthSet, const void* data, const uSize count, const PrimitiveTypeID type);
+
+        /// @brief The value at index of the nthSet, read as _valueType and converted to f32. 0 for a set or index that holds no value.
+        f32 getDataValueAsF32(const uSize nthSet, const uSize index) const;
+
+        /// @brief The value at index of the nthSet as text, in its own type, so nothing is lost converting it - decimal floats as short as still reads back exactly,
+        /// or hexadecimal while HexNumbers is on.
+        std::string getDataValueAsString(const uSize nthSet, const uSize index) const;
+
+        /// @note T must be _valueType, or the buffer is read as the wrong type - getDataValueAsF32 picks it for you.
+        template<NumericValueType T> T getDataValue(const uSize nthSet, const uSize index) const
         {
-            if(!_data)
+            if(nthSet >= _data.size() || nthSet >= _dataCount.size())
                 return T{};
 
-            if(index >= _dataCount)
+            if(!_data[nthSet])
                 return T{};
 
-            return static_cast<const T*>(_data)[index];
+            if(index >= _dataCount[nthSet])
+                return T{};
+
+            return static_cast<const T*>(_data[nthSet])[index];
         }
 
-        const void* _data { nullptr };
-        uSize
-            _dataCount { 0 },
-            _maxDataCount { 0 },
-            _stride { 4 };
-        bool _clampToLastValue { false };
+        std::vector<const void*> _data {};
+        std::vector<uSize> _dataCount {};
+        uSize _maxDataCount { 0 }; // the longest set's count; 0 while no set holds values
+        bool
+            _clampToLastValue { false },
+            _hexNumbers { false };
 
         Signal<>
             _onDataSet,
             _onDataSetAsync;
 
     private:
-
-
+        /// @brief Whether a set other than nthSet holds values - those are read as _valueType, so the type can't change while one does.
+        bool isOtherSetBound(const uSize nthSet) const;
     };
 }
