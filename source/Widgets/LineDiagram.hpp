@@ -32,7 +32,7 @@ namespace RetroFuturaGUI
         /// @brief Sets the color of the line drawn for set lineIndex, and of its label. It may be set before the set is bound.
         void SetLineColor(const uSize lineIndex, const glm::vec4 color);
 
-        /// @brief Sets the width of every line, in pixels. The line under the cursor is drawn _kHoverThicknessIncrease wider.
+        /// @brief Sets the width of every line, in pixels. The line under the cursor is drawn _hoverThicknessIncrease wider.
         void SetLineThickness(const f32 thickness);
 
         /// @brief Sets the font of the line labels and of the text next to the pointer. Text draws nothing until it has a font.
