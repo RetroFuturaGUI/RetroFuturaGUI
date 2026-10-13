@@ -32,8 +32,8 @@ namespace RetroFuturaGUI
     };
 
     /// @brief Plays audio files through miniaudio's high-level engine, which owns the
-    /// output device, decoder, resampler and mixer. Handles WAV, FLAC and MP3 on its own;
-    /// Opus and Vorbis need decoding through MediaPlayer first.
+    /// output device, decoder, resampler and mixer. miniaudio decodes WAV, FLAC and MP3
+    /// itself; every other format is decoded by FFmpeg through AudioStream.
     /// @note ma_engine must keep a stable address and must never be copied, so this class
     /// is neither copyable nor movable.
     class AudioPlayback
@@ -64,8 +64,8 @@ namespace RetroFuturaGUI
         /// @brief Sets the sample rate used on the next InitDevice(). 0 uses the device default.
         void SetSampleRate(const u32 sampleRate);
 
-        /// @brief Loads a file and starts playing it, replacing whatever was loaded before.
-        /// The stream stays open so it can be sought, queried and stopped - unlike a
+        /// @brief Loads a file, replacing whatever was loaded before, without starting it - StartPlaying()
+        /// does that. The stream stays open so it can be sought, queried and stopped - unlike a
         /// fire-and-forget sound, which hands back no handle to act on.
         bool OpenAudioFile(std::string_view file);
 

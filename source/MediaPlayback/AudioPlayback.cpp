@@ -481,7 +481,13 @@ bool RetroFuturaGUI::AudioPlayback::isNativeFormat(std::string_view file)
     const AVFormatContext* context { source.GetFormatContext() };
     const AVStream* stream { source.GetStream(source.FindBestStream(AVMEDIA_TYPE_AUDIO)) };
 
+    if(!context)
+        return false;
+
     if(!context->iformat)
+        return false;
+
+    if(!stream)
         return false;
 
     if(!stream->codecpar)
