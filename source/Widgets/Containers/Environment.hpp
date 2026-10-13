@@ -1,0 +1,144 @@
+#pragma once
+#include "IncludeHelper.hpp"
+#include "IWidget.hpp"
+#include <glm/gtc/quaternion.hpp>
+#include <memory>
+#include <string>
+#include <vector>
+#include "Rectangle.hpp"
+
+namespace RetroFuturaGUI
+{
+    /// @brief How an Environment is scaled into the rectangle (Window/Scene) it is given
+    enum class EnvironmentFit : u32
+    {
+        Contain,    // The whole Environment stays visible. In a rect of a different aspect ratio the remaining areas won't be covered by the Environment
+        Cover,      // The box fills the whole rectangle. Overhangs are cut off when clipping is enabled
+        KeepHeight, // The box's height fills the rectangle. A wider rectangle shows more on the sides, a narrower one less
+        KeepWidth   // The box's width fills the rectangle. A taller rectangle shows more above and below, a shorter one less
+    };
+
+    /// @brief Where a widget sits inside an Environment in environment units (-1.0f ... 1.0f)
+    struct EnvironmentPlacement
+    {
+        glm::vec3
+            _Position { 0.0f },
+            _Size { 1.0f },     // For a Model this is the scale applied to its mesh, so a mesh modelled within -1 ... 1 fills a box of the default extent.
+            _Rotation { 0.0f }; // Degrees, applied in the same Z * Y * X order as IWidget::SetRotation, before the Environment's own rotation.
+    };
+
+    struct EnvironmentEntry
+    {
+        IWidget* _Widget { nullptr };
+        EnvironmentPlacement _Placement {};
+        bool _Show { true };
+    };
+
+    /// @brief An empty room in which models and widgets are placed freely in its own environment units (-1.0f ... 1.0f)
+    ///        Moving, resizing or rotating the Environment moves, resizes and rotates everything inside it alike.
+    class Environment final : public IWidget
+    {
+    public:
+        /// @brief Constructs an empty Environment that covers the whole projection until a parent places it
+        Environment(const std::string& name, Projection* projection, IHierarchyNode* parentWidget, const WidgetTypeID parentWidgetTypeID, GLFWwindow* parentWindow);
+        Environment() = delete;
+        Environment(const Environment&) = delete;
+        Environment(Environment&&) = delete;
+        ~Environment() override = default;
+        auto operator =(const Environment&) = delete;
+        auto operator =(Environment&&) = delete;
+
+        /// @brief Places a widget in the Environment, without taking ownership. Widgets draw in the order they were attached.
+        /// @return false when the widget is null, the Environment itself, or already attached.
+        bool AttachWidget(IWidget* widget, const EnvironmentPlacement& placement = {});
+
+        /// @brief Removes a widget from the Environment. The widget keeps the window position, size and rotation it had last.
+        /// @return false when the widget was not attached.
+        bool DetachWidget(const IWidget* widget);
+
+        /// @brief Moves an attached widget within the Environment.
+        /// @return false when the widget is not attached.
+        bool SetPlacement(const IWidget* widget, const EnvironmentPlacement& placement);
+
+        /// @brief Returns where an attached widget sits, or nullptr when the widget is not attached.
+        const EnvironmentPlacement* GetPlacement(const IWidget* widget) const;
+
+        /// @brief Sets whether an attached widget is drawn. A hidden widget keeps its placement.
+        void ShowWidget(const IWidget* widget, const bool show);
+
+        /// @brief Returns whether an attached widget is drawn. false when the widget is not attached.
+        bool IsWidgetShown(const IWidget* widget) const;
+
+        /// @brief Sets half the box's size on each axis, in environment units, and refits everything inside.
+        /// @return false when any component is not positive, in which case nothing is changed.
+        bool SetExtent(const glm::vec3& extent);
+
+        /// @brief Returns half the box's size on each axis, in environment units.
+        const glm::vec3& GetExtent() const;
+
+        /// @brief Sets how the box is scaled into the Environment's rectangle, and refits everything inside.
+        void SetFit(const EnvironmentFit fit);
+
+        /// @brief Returns how the box is scaled into the Environment's rectangle.
+        EnvironmentFit GetFit() const;
+
+        /// @brief Returns how many window pixels one environment unit currently spans.
+        f32 GetScale() const;
+
+        /// @brief Converts a point from environment units to window coordinates, through the Environment's position, rotation and scale.
+        glm::vec3 ToWindow(const glm::vec3& point) const;
+
+        /// @brief Sets whether drawing is cut off at the Environment's rectangle. Off by default; Cover, KeepHeight and KeepWidth
+        ///        need it to keep overhanging content off neighbouring widgets.
+        /// @note  The clip is the unrotated rectangle, because scissoring only cuts along the window's axes. It no longer matches
+        ///        once the Environment itself is rotated.
+        void SetClipping(const bool clip);
+
+        /// @brief Sets whether the box's outline is drawn over the contents, which shows where the fit put it.
+        void ShowDebugBox(const bool show);
+
+        /// @brief Draws every shown widget in attachment order.
+        void Draw() override;
+
+        /// @brief Sets the size of the Environment's rectangle, in window pixels, and refits everything inside.
+        void SetSize(const glm::vec3& size) override;
+
+        /// @brief Sets the window position of the box's center, moving everything inside along.
+        void SetPosition(const glm::vec3& position) override;
+
+        /// @brief Sets the rotation of the box, in degrees, turning everything inside around the box's center.
+        void SetRotation(const glm::vec3& rotation) override;
+
+    private:
+        struct ScissorState
+        {
+            bool _WasEnabled { false };
+            i32 _Previous[4] { 0, 0, 0, 0 };
+        };
+
+        EnvironmentEntry* findEntry(const IWidget* widget);
+        const EnvironmentEntry* findEntry(const IWidget* widget) const;
+
+        /// @brief Recomputes the scale and orientation from the Environment's size, rotation, extent and fit, then places every widget anew.
+        void applyTransform();
+        void placeWidget(const EnvironmentEntry& entry) const;
+        void drawDebugBox();
+
+        /// @brief Clips to the given rectangle, intersected with whatever clip is already active, and returns the state to restore.
+        static ScissorState pushScissor(const f32 left, const f32 bottom, const f32 width, const f32 height);
+
+        /// @brief Restores the clip state captured by pushScissor.
+        static void popScissor(const ScissorState& state);
+
+        std::vector<EnvironmentEntry> _entries {};
+        glm::vec3 _extent { 1.0f };
+        EnvironmentFit _fit { EnvironmentFit::Contain };
+        f32 _scale { 1.0f };
+        glm::quat _orientation { glm::vec3(0.0f) };
+        std::unique_ptr<Rectangle> _debugBox { nullptr };
+        std::vector<glm::vec4> _debugBoxColor { glm::vec4(0.35f, 0.9f, 1.0f, 1.0f) };
+        bool
+            _clip { false },
+            _drawDebugBox { false };
+    };
+}

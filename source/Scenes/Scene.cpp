@@ -4,6 +4,7 @@
 #include "Projection.hpp"
 #include "Window.hpp"
 #include <memory>
+#include <utility>
 
 RetroFuturaGUI::Scene::Scene(std::string_view name, Window* parentWindow)
     : _name(name), _parentWindow(parentWindow)
@@ -16,13 +17,13 @@ void RetroFuturaGUI::Scene::Draw()
     if(!_active)
         return;
 
-    if(!_rootLasagna)
+    if(!_rootContainer)
         return;
 
     _onUpdate.Emit();
     _onUpdateAsync.EmitAsync();
 
-    _rootLasagna->Draw();
+    _rootContainer->Draw();
 }
 
 void RetroFuturaGUI::Scene::Connect_OnUpdate(const typename Signal<>::Slot& slot, const bool async)
@@ -53,9 +54,9 @@ bool RetroFuturaGUI::Scene::IsActive() const
     return _active;
 }
 
-RetroFuturaGUI::Lasagna* RetroFuturaGUI::Scene::GetRootLasagna() const
+RetroFuturaGUI::IWidget* RetroFuturaGUI::Scene::GetRootContainer() const
 {
-    return _rootLasagna.get();
+    return _rootContainer.get();
 }
 
 const std::string& RetroFuturaGUI::Scene::GetName() const
@@ -70,30 +71,17 @@ const RetroFuturaGUI::IHierarchyNode* RetroFuturaGUI::Scene::GetParent() const
 
 void RetroFuturaGUI::Scene::SetLasagnaAxis(const AxisDefinition axisdefinition, Projection* projection)
 {
-    if(!projection)
-        return;
-
-    if(!_parentWindow)
-        return;
-
-    _rootLasagna = std::make_unique<Lasagna>("RootLasagna", projection, this, WidgetTypeID::None, _parentWindow->GetGlfwWindow(), axisdefinition);
-
-    if(_size == glm::vec3(0.0f))
-        return;
-
-    _rootLasagna->SetPosition(_position);
-    _rootLasagna->SetSize(_size);
-    _rootLasagna->SetRotation(_rotation);
+    SetRootContainer<Lasagna>(projection, axisdefinition);
 }
 
 void RetroFuturaGUI::Scene::SetSize(const glm::vec3& size)
 {
     _size = size;
 
-    if(!_rootLasagna)
+    if(!_rootContainer)
         return;
 
-    _rootLasagna->SetSize(_size);
+    _rootContainer->SetSize(_size);
 }
 
 const glm::vec3& RetroFuturaGUI::Scene::GetSize() const
@@ -105,10 +93,10 @@ void RetroFuturaGUI::Scene::SetPosition(const glm::vec3& position)
 {
     _position = position;
 
-    if(!_rootLasagna)
+    if(!_rootContainer)
         return;
 
-    _rootLasagna->SetPosition(_position);
+    _rootContainer->SetPosition(_position);
 }
 
 const glm::vec3& RetroFuturaGUI::Scene::GetPosition() const
@@ -120,10 +108,10 @@ void RetroFuturaGUI::Scene::SetRotation(const glm::vec3& rotation)
 {
     _rotation = rotation;
 
-    if(!_rootLasagna)
+    if(!_rootContainer)
         return;
 
-    _rootLasagna->SetRotation(_rotation);
+    _rootContainer->SetRotation(_rotation);
 }
 
 const glm::vec3& RetroFuturaGUI::Scene::GetRotation() const
@@ -177,4 +165,27 @@ void RetroFuturaGUI::Scene::requestWindowLayout() const
         return;
 
     _parentWindow->UpdateLayout();
+}
+
+GLFWwindow* RetroFuturaGUI::Scene::parentGlfwWindow() const
+{
+    if(!_parentWindow)
+        return nullptr;
+
+    return _parentWindow->GetGlfwWindow();
+}
+
+void RetroFuturaGUI::Scene::adoptRootContainer(std::unique_ptr<IWidget> container)
+{
+    _rootContainer = std::move(container);
+
+    if(!_rootContainer)
+        return;
+
+    if(_size == glm::vec3(0.0f))
+        return;
+
+    _rootContainer->SetPosition(_position);
+    _rootContainer->SetSize(_size);
+    _rootContainer->SetRotation(_rotation);
 }

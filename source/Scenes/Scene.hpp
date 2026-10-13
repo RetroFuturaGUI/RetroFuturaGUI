@@ -4,6 +4,7 @@
 #include "IHierarchyNode.hpp"
 #include <string_view>
 #include "Lasagna.hpp"
+#include "Environment.hpp"
 #include "Signal.hpp"
 
 namespace RetroFuturaGUI
@@ -18,6 +19,10 @@ namespace RetroFuturaGUI
         Bottom = 2,
         Left = 3
     };
+
+    template<typename T>
+    concept RootContainer =
+        std::same_as<T, Lasagna> || std::same_as<T, Environment>;
 
     class Scene final : public IHierarchyNode
     {
@@ -39,9 +44,34 @@ namespace RetroFuturaGUI
         /// @brief Enables or disables drawing
         void SetActive(const bool active);
         bool IsActive() const;
-        Lasagna* GetRootLasagna() const;
+        IWidget* GetRootContainer() const;
         const std::string& GetName() const override;
         const IHierarchyNode* GetParent() const override;
+
+        /// @brief Builds the scene's root container
+        template<RootContainer T, typename... Args>
+        T* SetRootContainer(Projection* projection, Args&&... args)
+        {
+            if(!projection)
+                return nullptr;
+
+            GLFWwindow* glfwWindow { parentGlfwWindow() };
+
+            if(!glfwWindow)
+                return nullptr;
+
+            std::unique_ptr<T> container { std::make_unique<T>("RootContainer", projection, this, WidgetTypeID::None, glfwWindow, std::forward<Args>(args)...) };
+            T* root { container.get() };
+            adoptRootContainer(std::move(container));
+            return root;
+        }
+
+        /// @brief Returns the root container as T, or nullptr when there is none or it is of another kind.
+        template<RootContainer T>
+        T* GetRootContainer() const
+        {
+            return dynamic_cast<T*>(_rootContainer.get());
+        }
 
         /// @brief Builds the scene's root Lasagna. Replaces any previous one, discarding its cells.
         void SetLasagnaAxis(const AxisDefinition axisdefinition, Projection* projection);
@@ -88,7 +118,7 @@ namespace RetroFuturaGUI
             _rotation { 0.0f };
 
     //Elements
-        std::unique_ptr<Lasagna> _rootLasagna { nullptr };
+        std::unique_ptr<IWidget> _rootContainer { nullptr };
 
     //Docking
         DockEdge _reservedEdge { DockEdge::Top };
@@ -107,5 +137,12 @@ namespace RetroFuturaGUI
         /// @brief Asks the parent window to recompute its client area, because what this scene
         ///        reserves from it just changed.
         void requestWindowLayout() const;
+
+        /// @brief The parent window's GLFW window, or nullptr without a parent window. Defined out of
+        ///        line, because Window is only forward-declared here and SetRootContainer cannot reach into it.
+        GLFWwindow* parentGlfwWindow() const;
+
+        /// @brief Takes ownership of a new root container and hands it the scene's current geometry.
+        void adoptRootContainer(std::unique_ptr<IWidget> container);
     };
 }

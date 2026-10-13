@@ -384,6 +384,8 @@ void RetroFuturaGUI::Window::Draw()
 		if(!_scene)
 			continue;
 
+		//Each scene starts with a fresh depth buffer, so a scene added later always draws over the ones loaded before
+		glClear(GL_DEPTH_BUFFER_BIT);
 		_scene->Draw();
 	}
 

@@ -13,7 +13,7 @@ The framework is designed for cross-platform use, and its logic can be compiled 
 | 1 | Button, Label, Window, MainWindow, Image, Grid2D, WindowBar with Buttons |  | ✅ |
 | 2 | dll/so/dylib compilation for C# and Python support, Widget ID manager | 1 | ✅ | 
 | 3 | Linux Support, Font Manager | 2 | ✅ | 
-| 4 | More Widgets (TextBox ✅, Table ✅, 3D Model ✅, Slider ✅, CheckBox ✅, ComboBox ✅, ExtendedComoBox ✅, RadioButton ✅, RadioButtonGroup ✅, SeparatorLine ✅, ColorPreview ✅, change Grid2d to "Lasagna" and add a 3rd dimension ✅, MenuBar ✅, MultilineTextBox, Environment, Histogram ✅, LineDiagram, Tabs, Lights, VideoPlayer ✅, Color Pickers), Scene ✅, SceneLoader ✅, AudioPlayback ✅, Popups, PopupManager, Tooltip, FileExplorer | 1 | WIP | 
+| 4 | More Widgets (TextBox ✅, Table ✅, 3D Model ✅, Slider ✅, CheckBox ✅, ComboBox ✅, ExtendedComoBox ✅, RadioButton ✅, RadioButtonGroup ✅, SeparatorLine ✅, ColorPreview ✅, change Grid2d to "Lasagna" and add a 3rd dimension ✅, MenuBar ✅, MultilineTextBox ✅, Histogram ✅, VideoPlayer ✅, Environment ✅, LineDiagram ✅, WindowTab and window docking, Lights, Color Pickers), Scene ✅, SceneLoader ✅, AudioPlayback ✅, ScrollView, Popups, PopupManager, Tooltip, FileExplorer | 1 | WIP | 
 | 5 | .bechaml markup language for GUI design 🥣 (**B**eautifully **E**xtended **C**ascading but **H**airbally **A**pplication **M**arkup **L**anguage) | 4 | | 
 | 6 | VS Code extension with project generator/manager | 5 | | 
 | 7 | Pre-built Prefabs (StepperSlider, SpinBox, Table with Sliders, Carousel, Extended Color Pickers, MediaPlayer) | 6 |
@@ -52,6 +52,16 @@ The framework is designed for cross-platform use, and its logic can be compiled 
 - Slider / ProgressBar
   - The graph doesn't account for the track's border width, so an enabled graph paints over the frame; the indicator does account for it
   - A Circle indicator takes its corner radius from the indicator's x size alone, so it draws as a rounded rectangle whenever the two axes differ
+- IRangedMultiValue (shared base of Histogram and LineDiagram)
+  - All data sets are read in one type, so while one set holds values SetData refuses a set in another type (and returns false). Sources that deliver different types need a type per set - and the min/max range then needs a type of its own, since today it follows the data's
+- LineDiagram
+  - The lines are only spaced by index across the longest set. Sets that cover the same span at different resolutions (32 and 64 frequency bands, say) want a mode that stretches every line across the full width
+  - Labels and the hover text take the track's rotation, so with Orientation::Vertical they turn with the lines and read sideways
+  - Where points sit closer together than the line is wide, the inner side of a mitered corner can fold back over the previous segment
+  - A translucent line blends twice where a bevel overlaps its segments at a sharp turn - Polyline draws with GL_LEQUAL so the overlap isn't rejected by the depth test
+  - The pointer is the inherited indicator, which IRangedValue switches on without ever applying its colors, so it stays invisible until EnableIndicator(true) or SetIndicatorBackgroundColors is called
+  - No signal tells the application which line or data point is hovered
+  - Labels always take their line's color; there is no label color of their own
 - IDropDown (shared base of ComboBox and ExtendedComboBox)
   - _borderColorsEnabled/Disabled/Hover/Clicked and _backgroundColorsEnabled/Disabled/Hover/Clicked are never read or written. The colors that actually reach the closed box come from IBorder's _borderColorEnabled and IBackground's _backgroundColorEnabled - one letter apart - so assigning the IDropDown ones looks right and changes nothing
   - The per-row border (_dropDownItemBorder) is declared but never built or drawn
@@ -202,6 +212,28 @@ The framework is designed for cross-platform use, and its logic can be compiled 
     - Signals: OnValueChanged, OnValueSet
     - Background & Border (same options as Button)
     - SetPosition, SetSize, SetRotation, corner radii
+  - Histogram
+    - One bar per value of a bound array (SetData), of any numeric type (Bool, Int8-64, UInt8-64, Float32/64), mapped into a min/max range and clamped to the track
+    - The data isn't copied but read every frame, so a producer that updates its buffer in place - a Video's frequency bands, for instance - shows live without being bound again
+    - Spacing between the bars (SetBarInterstice), Horizontal and Vertical orientation
+    - Graph colors and fill options from IRangedValue
+    - Signals: OnDataSet
+    - Background & Border (same options as Button)
+    - SetPosition, SetSize, SetRotation
+  - LineDiagram
+    - Draws every bound data set as its own line (SetData with a set index). Each set is its own buffer with its own length, read every frame without copying, so lines follow data updated in place
+    - Any numeric type (Bool, Int8-64, UInt8-64, Float32/64), shared by all sets; values are mapped into one min/max range and clamped to the track, while the data itself is left as it is
+    - The lines share the x spacing of the longest set, so the same index lines up across all of them. A shorter set ends where its data does, or holds its last value to the end (SetClampToLastValue)
+    - Per-line color (SetLineColor) and one line width for all (SetLineThickness). Lines have mitered joins and anti-aliased edges (Polyline and the Line shaders), and are inset from the border far enough that a line at the minimum or maximum isn't cut off
+    - The line under the cursor is drawn 2 px wider and on top of the others. It keeps the hover while the cursor is on its wider self, so it doesn't flicker at its edge
+    - Pointer on the hovered line's data point nearest the cursor. It is the indicator, so EnableIndicator and the SetIndicator setters style it - a 10 px circle by default
+    - Labels (SetLabel, SetLabelFontFamily): at the start of each line (ShowLineLabels), where labels of lines starting together simply overlap, and next to the pointer as "Label: value" (ShowHoverLineLabel and ShowHoverValue, each also on its own)
+    - The hover text flips to the other side of the pointer where it would leave the widget, and sits on a translucent box (SetHoverTextBackgroundColor) so it stays readable across its own line
+    - Hexadecimal values (HexNumbers): an integer as its value (17 is 0x11, -1 in an Int8 is 0xFF), a float as its bits in full (1.0f is 0x3F800000, 1.0 is 0x3FF0000000000000)
+    - Lines, labels and pointer appear once EnableGraph(true) is called
+    - Signals: OnDataSet
+    - Background & Border (same options as Button)
+    - SetPosition, SetSize, SetRotation
   - ColorPreview
     - Shows a color against a checkerboard, so an alpha below 1 reads as transparency instead of as a different color
     - The board is drawn by the Checkered raster pattern rather than by a texture, so its square size and its two colors are shader uniforms
@@ -355,7 +387,10 @@ The framework is designed for cross-platform use, and its logic can be compiled 
     - The pattern runs along X and can be rotated to any angle, so the same definition gives vertical stripes, horizontal bands or anything between
     - A background is one element rather than four edges, so a single definition covers it - unlike Border Gaps, which describe one edge at a time
   - Dedicated Border variants of the above (Solid, Linear, Radial, HueStar), including Raster
-  - Line Fill
+  - Line Fill (used by Polyline)
+    - A geometry shader widens each segment in world space, so the width stays in pixels however the line is scaled
+    - Mitered joins between segments; turns too sharp for a miter get a bevel instead of a spike
+    - Anti-aliased edges, faded over about a pixel
   - Font Atlas Fill (used by the Text Renderer)
   - Texture
   - Shader Manager (compiles and caches all shaders once)

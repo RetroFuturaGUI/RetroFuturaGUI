@@ -34,6 +34,7 @@ namespace RetroFuturaGUI
     class Histogram;
     class MultilineTextBox;
     class LineDiagram;
+    class Environment;
 
     enum class FillType: u32
     {
@@ -80,6 +81,7 @@ namespace RetroFuturaGUI
         Histogram,
         MultilineTextBox,
         LineDiagram,
+        Environment,
         Unknown = -1
     };   
 
