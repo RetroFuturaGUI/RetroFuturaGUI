@@ -70,6 +70,8 @@ bool RetroFuturaGUI::Decoder::Open(const AVStream* stream)
         _codecContext->thread_type = FF_THREAD_FRAME | FF_THREAD_SLICE;
     }
 
+    _codecContext->pkt_timebase = stream->time_base;
+
     if(avcodec_open2(_codecContext, codec, nullptr) < 0)
     {
         Close();
