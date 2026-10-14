@@ -13,7 +13,6 @@
 namespace RetroFuturaGUI
 {
     class Window;
-    class WindowBar;
     class Lasagna;
     class Label;
     class Button;
@@ -47,7 +46,7 @@ namespace RetroFuturaGUI
     template<typename T>
     concept WidgetTypes =
            std::same_as<T, Window> || std::same_as<T, Label>  || std::same_as<T, Button> 
-        || std::same_as<T, WindowBar> || std::same_as<T, Lasagna> || std::same_as<T, TextBox>
+        || std::same_as<T, Lasagna> || std::same_as<T, TextBox>
         || std::same_as<T, Model> || std::same_as<T, Image> || std::same_as<T, SvgImage> 
         || std::same_as<T, CheckBox> || std::same_as<T, RadioButton> || std::same_as<T, RadioButtonGroup>
         || std::same_as<T, Slider> || std::same_as<T, ProgressBar> || std::same_as<T, Table>
@@ -57,7 +56,6 @@ namespace RetroFuturaGUI
     {
         None,
         Window,
-        WindowBar,
         Lasagna,
         Label,
         Button,

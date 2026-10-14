@@ -89,16 +89,15 @@ void RetroFuturaGUI::Window::createWindow()
 	}
 
 	SetBackgroundColor(glm::vec4(0.086f, 0.086f, 0.1137f, 1.0f), ColorState::Enabled);
-	//setupWindowBar();
 }
 
-void RetroFuturaGUI::Window::SetWindowTitle(std::string_view title, std::string_view fontFamily)
+void RetroFuturaGUI::Window::SetWindowTitle(std::string_view title)
 {
+	if(!_window)
+		return;
+
 	_windowTitle = title;
 	glfwSetWindowTitle(_window, _windowTitle.c_str());
-
-	if(_windowBar)
-		_windowBar->SetWindowTitle(_windowTitle, fontFamily);
 }
 
 bool RetroFuturaGUI::Window::getCursorPosition(i32& x, i32& y) const
@@ -120,27 +119,13 @@ void RetroFuturaGUI::Window::pollInput()
 	const bool isMouseButtonDown { PlatformBridge::Input::IsMouseButtonDown(PlatformBridge::MouseButton::Left) };
 
 	if (isMouseButtonDown && !_wasMouseButtonDown) //press
-	{
 		setResizeState(GLFW_MOUSE_BUTTON_LEFT, GLFW_PRESS, 0);
-
-		if (_windowBar && _windowBar->IsPointInside(static_cast<f32>(_cursorPosX), static_cast<f32>(_cursorPosY)))
-		{
-			_isDragging = true;
-			setAbsoluteCursorPosition(this);
-			_dragStartPos = glm::vec2(_absoluteCursorPosX, _absoluteCursorPosY);
-			_windowDragStartPos = glm::vec2(_windowPosX, _windowPosY);
-		}
-	}
 	else if (!isMouseButtonDown && _wasMouseButtonDown) //release
-	{
-		_isDragging = false;
 		setResizeState(GLFW_MOUSE_BUTTON_LEFT, GLFW_RELEASE, 0);
-	}
 
 	_wasMouseButtonDown = isMouseButtonDown;
 
 	resize();
-	drag();
 }
 
 void RetroFuturaGUI::Window::setCursorPosition()
@@ -281,59 +266,6 @@ void RetroFuturaGUI::Window::resize()
 	_windowSizeChanged = true;
 }
 
-void RetroFuturaGUI::Window::drag()
-{
-	if (!_isDragging) 
-		return;
-
-	setAbsoluteCursorPosition(this);
-	glm::vec2 currentPos = glm::vec2(_absoluteCursorPosX, _absoluteCursorPosY);
-	glm::vec2 delta = currentPos - _dragStartPos;
-	i32 newPosX = (i32)_windowDragStartPos.x + (i32)delta.x;
-	i32 newPosY = (i32)_windowDragStartPos.y + (i32)delta.y;
-	moveWindow(newPosX, newPosY);
-}
-
-void RetroFuturaGUI::Window::moveWindow(const i32 posX, const i32 posY)
-{
-	glfwSetWindowPos(_window, posX, posY);
-	_windowPosX = posX;
-	_windowPosY = posY;
-}
-
-void RetroFuturaGUI::Window::setAbsoluteCursorPosition(Window *self)
-{
-	if(!self)
-		return;
-
-	i32 x { 0 }, y { 0 };
-	self->getCursorPosition(x, y);
-	glfwGetWindowPos(self->_window, &self->_windowPosX, &self->_windowPosY);
-	self->_absoluteCursorPosX = x + self->_windowPosX;
-	self->_absoluteCursorPosY = y + self->_windowPosY;
-}
-
-void RetroFuturaGUI::Window::toggleMaximize()
-{
-	if (_maximizeState == MaximizeState::RESTORE)
-	{
-
-		_preMaximizeSize = glm::ivec2(_width, _height);
-		_preMaximizePos = glm::ivec2(_windowPosX, _windowPosY);
-		glfwMaximizeWindow(_window);
-		_maximizeState = MaximizeState::MAXIMIZE;
-	} 
-	else
-	{
-		glfwRestoreWindow(_window);
-		SetWindowSize(_preMaximizeSize.x, _preMaximizeSize.y);
-		moveWindow(_preMaximizePos.x, _preMaximizePos.y);
-		_maximizeState = MaximizeState::RESTORE;
-	}
-	
-	_windowSizeChanged = true;
-}
-
 void RetroFuturaGUI::Window::updateProjection()
 { 
 	glfwGetWindowSize(_window, &_width, &_height);
@@ -343,9 +275,6 @@ void RetroFuturaGUI::Window::updateProjection()
 		
 	_projection->UpdateProjectionMatrix((f32)_width, (f32)_height);
 	glViewport(0, 0, _width, _height);
-
-	if (_windowBar)
-		_windowBar->Resize();
 
 	UpdateLayout();
 
@@ -389,14 +318,8 @@ void RetroFuturaGUI::Window::Draw()
 		_scene->Draw();
 	}
 
-	if(_windowBar)
-		_windowBar->Draw();
-
 	glfwSwapBuffers(_window);
 	glfwPollEvents();
-
-	if(_windowBar && _windowBar->WindowShouldClose())
-		glfwSetWindowShouldClose(_window, GLFW_TRUE);
 }
 
 void RetroFuturaGUI::Window::SetWindowSize(i32 width, i32 height)
@@ -420,14 +343,6 @@ void RetroFuturaGUI::Window::SetHeight(i32 height)
 void RetroFuturaGUI::Window::SetBackgroundImage(std::string_view imagePath)
 {
 	IBackground::SetBackgroundImage(imagePath);
-/*
-	if(!_windowBar)
-		return;
-
-	_windowBar->SetElementBackgroundImageTextureID(_backgroundImage->GetID(), WindowBar::ElementType::Title);
-	_windowBar->SetElementBackgroundImageTextureID(_backgroundImage->GetID(), WindowBar::ElementType::CloseButton);
-	_windowBar->SetElementBackgroundImageTextureID(_backgroundImage->GetID(), WindowBar::ElementType::MaximizeButton);
-	_windowBar->SetElementBackgroundImageTextureID(_backgroundImage->GetID(), WindowBar::ElementType::MinimizeButton);*/
 }
 
 void RetroFuturaGUI::Window::SetLasagna(Lasagna* lasagna)
@@ -462,40 +377,9 @@ void RetroFuturaGUI::Window::RemoveScene(Scene* scene)
 	UpdateLayout();
 }
 
-void RetroFuturaGUI::Window::SetWindowBarOverlaps(const bool overlaps)
-{
-	if(_windowBarOverlapsBG == overlaps)
-		return;
-
-	_windowBarOverlapsBG = overlaps;
-	UpdateLayout();
-}
-
-bool RetroFuturaGUI::Window::WindowBarOverlaps() const
-{
-	return _windowBarOverlapsBG;
-}
-
 const RetroFuturaGUI::ScreenRect& RetroFuturaGUI::Window::GetClientRect() const
 {
 	return _clientRect;
-}
-
-void RetroFuturaGUI::Window::reserveWindowBar(ScreenRect& client) const
-{
-	if(!_windowBar)
-		return;
-
-	if(_windowBarOverlapsBG)
-		return;
-
-	const f32 thickness { std::min<f32>(_windowBar->GetThickness(), client._Extent.y) };
-
-	//Projection space is y-up with its origin bottom-left, so only a bottom bar moves the origin.
-	if(_windowBar->GetBarPosition() == WindowBarPosition::Bottom)
-		client._Origin.y += thickness;
-
-	client._Extent.y -= thickness;
 }
 
 RetroFuturaGUI::ScreenRect RetroFuturaGUI::Window::reserveEdge(const DockEdge edge, const f32 thickness, ScreenRect& client)
@@ -535,8 +419,6 @@ RetroFuturaGUI::ScreenRect RetroFuturaGUI::Window::reserveEdge(const DockEdge ed
 void RetroFuturaGUI::Window::UpdateLayout()
 {
 	ScreenRect client { ._Origin = glm::vec2(0.0f), ._Extent = glm::vec2((f32)_width, (f32)_height) };
-
-	reserveWindowBar(client);
 
 	//Docked scenes take their strip in the order they were added, so the first one to claim an edge also owns the corner where two claims meet.
 	for(Scene* _scene : _scenes)
@@ -587,38 +469,6 @@ RetroFuturaGUI::Projection* RetroFuturaGUI::Window::GetProjection() const
     return &*_projection;
 }
 
-RetroFuturaGUI::WindowBar& RetroFuturaGUI::Window::GetWindowBar()
-{
-	return *_windowBar;
-}
-
-void RetroFuturaGUI::Window::setupWindowBar()
-{
-	_windowBar = std::make_unique<WindowBar>(_name + "/WindowBar", const_cast<Projection*>(&*_projection.get()), nullptr, WidgetTypeID::Window, _window);
-
-	if(!_windowBar)
-		return;
-		
-	_windowBar->ConnectMaximizeCallback([this]() { toggleMaximize(); });
-}
-
-void RetroFuturaGUI::Window::destroyWindowBar()
-{
-	if(!_windowBar)
-		return;
-
-	_windowBar.reset();
-}
-
-void RetroFuturaGUI::Window::ShowWindowBar(const bool show)
-{
-	if(show)
-		setupWindowBar();
-	else
-	    destroyWindowBar();
-}
-
-
 const std::string& RetroFuturaGUI::Window::GetName() const
 {
 	return _name;
@@ -627,4 +477,23 @@ const std::string& RetroFuturaGUI::Window::GetName() const
 const RetroFuturaGUI::IHierarchyNode* RetroFuturaGUI::Window::GetParent() const
 {
 	return nullptr;
+}
+
+void RetroFuturaGUI::Window::ToggleMaximize()
+{
+    if(!_window)
+        return;
+
+    if(IsMaximized())
+        glfwRestoreWindow(_window);
+    else
+        glfwMaximizeWindow(_window);
+}
+
+bool RetroFuturaGUI::Window::IsMaximized() const
+{
+    if(!_window)
+        return false;
+
+    return GLFW_TRUE == glfwGetWindowAttrib(_window, GLFW_MAXIMIZED);
 }

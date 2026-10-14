@@ -81,7 +81,6 @@ list(APPEND RetroFuturaGuiSources
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/TextBox.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/Video.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/Window.cpp"
-    "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/WindowBar.cpp"
 
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/Containers/Environment.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/Containers/ExtendedComboBox.cpp"

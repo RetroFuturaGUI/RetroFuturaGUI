@@ -1,7 +1,6 @@
 #pragma once
 #include "IncludeHelper.hpp"
 #include "Label.hpp"
-#include "WindowBar.hpp"
 #include "Image.hpp"
 #include "Lasagna.hpp"
 #include "IBackground.hpp"
@@ -38,7 +37,7 @@ namespace RetroFuturaGUI
         /// @brief Returns whether the user has requested the window be closed.
         bool WindowShouldClose();
 
-        /// @brief Handles input, resizing/dragging and draws the window's background, bar and layout.
+        /// @brief Handles input and resizing, and draws the window's background, its root Lasagna and its scenes.
         void Draw();
 
         /// @brief Sets the window's width and height.
@@ -50,14 +49,13 @@ namespace RetroFuturaGUI
         /// @brief Sets the window's height.
         void SetHeight(i32 height);
 
-        /// @brief Sets the window bar's title text and font family.
-        void SetWindowTitle(std::string_view title, std::string_view fontFamily);
-        //void SetWindowTitleFont(std::string_view fontPath); separate later when fallback fonts are implemented
+        /// @brief Sets the window's native title, the one the taskbar and the window switcher show. A title drawn inside the window belongs to whichever scene draws it.
+        void SetWindowTitle(std::string_view title);
 
-        /// @brief Loads an image and applies it as the window's glass-effect background texture, propagating it to the window bar elements.
+        /// @brief Loads an image and applies it as the window's glass-effect background texture.
         void SetBackgroundImage(std::string_view imagePath) override;
 
-        /// @brief Sets the Lasagna used to lay out the window's content. It is fitted into the client area left over once the window bar and every docked scene have reserved theirs
+        /// @brief Sets the Lasagna used to lay out the window's content. It is fitted into the client area left over once every docked scene has reserved its strip.
         void SetLasagna(Lasagna* lasagna);
 
         /// @brief Adds a scene to the window's draw order, after the ones already added. Docked scenes reserve space in this order, so the first one to claim an edge also owns the corner where two claims meet.
@@ -69,12 +67,7 @@ namespace RetroFuturaGUI
         /// @brief Recomputes the client area and re-lays out the root Lasagna and every scene. Called automatically on resize and whenever a scene changes what it reserves.
         void UpdateLayout();
 
-        /// @brief When true the window bar is drawn over the client area rather than reserving space across its edge - for designs where content is meant to run underneath it.
-        void SetWindowBarOverlaps(const bool overlaps);
-        
-        bool WindowBarOverlaps() const;
-
-        /// @brief The client area left after the window bar and every docked scene took their share.
+        /// @brief The client area left after every docked scene took its share.
         const ScreenRect& GetClientRect() const;
 
         /// @brief Returns the OpenGL texture ID of the background image, if one is set.
@@ -86,17 +79,17 @@ namespace RetroFuturaGUI
         /// @brief Returns the window's projection.
         Projection* GetProjection() const;
 
-        /// @brief Returns the window's title bar.
-        WindowBar& GetWindowBar();
-
-        /// @brief Shows or hides the window's title bar.
-        void ShowWindowBar(const bool show);
-
         /// @brief Returns the window's name.
         const std::string& GetName() const override;
 
         /// @brief Returns nullptr: a window is always the root of its path.
         const IHierarchyNode* GetParent() const override;
+
+        /// @brief Maximizes the window, or restores it to its previous size and position if it is maximized already.
+        void ToggleMaximize();
+
+        /// @brief Returns whether the window is maximized. GLFW is asked each time rather than a flag being kept, so the answer cannot drift from the real window.
+        bool IsMaximized() const;
 
     private:
         enum class ResizeEdge : u32
@@ -130,12 +123,7 @@ namespace RetroFuturaGUI
             _absoluteCursorPosY { 0.0 },
             _boundaryThreshold { 10.0 };
         std::unique_ptr<Projection> _projection;
-        bool _windowBarOverlapsBG { false };
-        MaximizeState _maximizeState { MaximizeState::RESTORE };
-        glm::ivec2
-            _preMaximizeSize { 0 },
-            _preMaximizePos { 0 };
-        std::string 
+        std::string
             _name,
             _windowTitle { "RetroFuturaGUI Window" };
 
@@ -143,11 +131,7 @@ namespace RetroFuturaGUI
         ResizeEdge _resizeEdge { ResizeEdge::None };
         bool
             _isResizing { false },
-            _isDragging { false },
             _wasMouseButtonDown { false };
-        glm::vec2 
-            _dragStartPos { 0.0f },
-            _windowDragStartPos { 0.0f };
         glm::ivec2 _lastSize = { _width, _height };
         bool _windowSizeChanged { false };
 
@@ -161,15 +145,11 @@ namespace RetroFuturaGUI
         bool _cursorsInitialized { false };
 
         // widgets
-        std::unique_ptr<WindowBar> _windowBar;
         Lasagna* _lasagna { nullptr };
 
         // scenes - borrowed, owned by whoever loaded them
         std::vector<Scene*> _scenes {};
         ScreenRect _clientRect {};
-
-        /// @brief Shrinks the client area across the window bar's edge, unless the bar overlaps.
-        void reserveWindowBar(ScreenRect& client) const;
 
         /// @brief Takes a strip of `thickness` off the given edge of `client` and returns it,
         ///        shrinking `client` by what it took. Never takes more than is left.
@@ -182,12 +162,6 @@ namespace RetroFuturaGUI
         void setCursorIcon();
         void setResizeState(i32 button, i32 action, [[maybe_unused]] i32 mods);
         void resize();
-        void drag();
-        void moveWindow(const i32 posX, const i32 posY);
-        static void setAbsoluteCursorPosition(Window* self);
-        void toggleMaximize();
         void updateProjection();
-        void setupWindowBar();
-        void destroyWindowBar();
     };
 }

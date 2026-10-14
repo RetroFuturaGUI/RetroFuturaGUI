@@ -96,8 +96,6 @@ The framework is designed for cross-platform use, and its logic can be compiled 
   - Against the light checkerboard the white half reads almost the same as the checkered one - compositing over white and over a white/light-grey board differ only inside the grey squares. Drawing the color at full opacity there instead would carry information the checkered half can't
   - Each rectangle rotates around its own center, so a rotated dual preview pulls its halves apart instead of turning as one piece
   - DualPrevieAlignment is missing a w
-- WindowBar
-  - Window Icon
 - Window
   - line 375 check if updateProjection() can be made conditional again and also called at programmatic size change instead
 - Raster wrappers (IBackground, IBorder, IRangedValue, MenuBar)
@@ -285,23 +283,14 @@ The framework is designed for cross-platform use, and its logic can be compiled 
     - Children are reached by name afterwards: GetChildWidget&lt;T&gt;, ShowChildWidget, IsChildWidgetShown
     - Owns its children; refuses a name that is already taken, and a cell that is out of range or occupied, without keeping the widget it was asked to build
     - SetPosition, SetSize, SetRotation, forwarded to its Lasagna
-  - WindowBar
-    - Top, Bottom Position
-    - Close, Minimize, Maximize buttons (all shadered)
-    - Toggleable elements (buttons, title, background, no-docking-drag zone)
-    - Window Title
-    - Shadered background
-    - Per-button styling (background/border colors, gradients, corner radii, border width)
-    - Maximize callback
-    - Reserves space across the edge it sits on so content is laid out beside it rather than underneath it, or overlays the content instead (Window::SetWindowBarOverlaps) for designs where content is meant to run under the bar
   - Window
     - Background color or image
       - Background image ID can be used to create glass effects on widgets
     - Resizeable
-    - Movable
-    - Toggleable WindowBar
-    - Holds an ordered list of Scenes it draws over its root Lasagna and under its WindowBar (AddScene, RemoveScene), borrowed rather than owned
-    - Divides its surface into a client area: the WindowBar and then each docked Scene take their strip, and whatever is left goes to the overlay Scenes and the root Lasagna. Recomputed on resize, on adding or removing a Scene, and whenever a Scene changes what it reserves or whether it is active
+    - Movable, by dragging a MenuBar cell marked for it (FlexDefinition::_IsWindowDrag)
+    - Maximize and restore (ToggleMaximize, IsMaximized), with the state read from GLFW rather than kept by the window
+    - Holds an ordered list of Scenes it draws over its root Lasagna (AddScene, RemoveScene), borrowed rather than owned
+    - Divides its surface into a client area: each docked Scene takes its strip, and whatever is left goes to the overlay Scenes and the root Lasagna. Recomputed on resize, on adding or removing a Scene, and whenever a Scene changes what it reserves or whether it is active
 - Scenes
   - Scene
     - A named group of widgets with its own root Lasagna, hanging under a Window: Window / Scene / Container / Widgets. Meant for scene loading and for HUDs
@@ -465,12 +454,6 @@ The framework is designed for cross-platform use, and its logic can be compiled 
     <li>different IDs but only once compiled code</li>
     <li>only pass parameters on initialzation and on parameter value change</li>
     </ul>
-  </ul>
-<li>WindowBar</li>
-  <ul>
-  <li>Positioning, left, right</li>
-  <li>Docking emblem</li>
-  <li>Icon</li>
   </ul>
 <li>Window
   <ul>
