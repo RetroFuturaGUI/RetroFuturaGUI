@@ -285,7 +285,7 @@ void RetroFuturaGUI::Rectangle::setupMesh()
 void RetroFuturaGUI::Rectangle::initColors(std::span<glm::vec4> colors)
 {
     _colors = colors;
-    _colorCount = static_cast<i32>(_colors.size());
+    _colorCount = static_cast<i32>(std::min<size_t>(_colors.size(), 255));
 }
 
 void RetroFuturaGUI::Rectangle::uploadRasterUniforms(Shader& shader)
@@ -394,7 +394,7 @@ void RetroFuturaGUI::Rectangle::drawLinearGradientFill()
         _gradientDegree = 0.0f;
 
     ShaderManager::GetLinearGradientShader().UseProgram();
-    ShaderManager::GetLinearGradientShader().SetUniformVec4("uColors", &_colors[0][0], 255);
+    ShaderManager::GetLinearGradientShader().SetUniformVec4("uColors", &_colors[0][0], static_cast<u32>(_colorCount));
     ShaderManager::GetLinearGradientShader().SetUniformFloat("uDegree", _gradientDegree);
     ShaderManager::GetLinearGradientShader().SetUniformInt("uNumColors", _colorCount);
     ShaderManager::GetLinearGradientShader().SetUniformInt("uDIP", _shaderFeatureDIP);
@@ -442,7 +442,7 @@ void RetroFuturaGUI::Rectangle::drawRadialGradientFill()
         _gradientDegree = 0.0f;
 
     ShaderManager::GetRadialGradientShader().UseProgram();
-    ShaderManager::GetRadialGradientShader().SetUniformVec4("uColors", &_colors[0][0], 255);
+    ShaderManager::GetRadialGradientShader().SetUniformVec4("uColors", &_colors[0][0], static_cast<u32>(_colorCount));
     ShaderManager::GetRadialGradientShader().SetUniformFloat("uDegree", _gradientDegree);
     ShaderManager::GetRadialGradientShader().SetUniformInt("uNumColors", _colorCount);
     ShaderManager::GetRadialGradientShader().SetUniformInt("uDIP", _shaderFeatureDIP);
@@ -490,7 +490,7 @@ void RetroFuturaGUI::Rectangle::drawHueStarGradientFill()
         _gradientDegree = 0.0f;
 
     ShaderManager::GetHueStarGradientShader().UseProgram();
-    ShaderManager::GetHueStarGradientShader().SetUniformVec4("uColors", &_colors[0][0], 255);
+    ShaderManager::GetHueStarGradientShader().SetUniformVec4("uColors", &_colors[0][0], static_cast<u32>(_colorCount));
     ShaderManager::GetHueStarGradientShader().SetUniformFloat("uDegree", _gradientDegree);
     ShaderManager::GetHueStarGradientShader().SetUniformInt("uNumColors", _colorCount);
     ShaderManager::GetHueStarGradientShader().SetUniformInt("uDIP", _shaderFeatureDIP);
@@ -570,7 +570,7 @@ void RetroFuturaGUI::Rectangle::drawLinearGradientBorder()
         _gradientDegree = 0.0f;
 
     ShaderManager::GetBorderLinearGradientShader().UseProgram();
-    ShaderManager::GetBorderLinearGradientShader().SetUniformVec4("uColors", &_colors[0][0], 255);
+    ShaderManager::GetBorderLinearGradientShader().SetUniformVec4("uColors", &_colors[0][0], static_cast<u32>(_colorCount));
     ShaderManager::GetBorderLinearGradientShader().SetUniformFloat("uDegree", _gradientDegree);
     ShaderManager::GetBorderLinearGradientShader().SetUniformInt("uNumColors", _colorCount);
     ShaderManager::GetBorderLinearGradientShader().SetUniformInt("uDIP", _shaderFeatureDIP);
@@ -614,7 +614,7 @@ void RetroFuturaGUI::Rectangle::drawRadialGradientBorder()
         _gradientDegree = 0.0f;
 
     ShaderManager::GetBorderRadialGradientShader().UseProgram();
-    ShaderManager::GetBorderRadialGradientShader().SetUniformVec4("uColors", &_colors[0][0], 255);
+    ShaderManager::GetBorderRadialGradientShader().SetUniformVec4("uColors", &_colors[0][0], static_cast<u32>(_colorCount));
     ShaderManager::GetBorderRadialGradientShader().SetUniformFloat("uDegree", _gradientDegree);
     ShaderManager::GetBorderRadialGradientShader().SetUniformInt("uNumColors", _colorCount);
     ShaderManager::GetBorderRadialGradientShader().SetUniformInt("uDIP", _shaderFeatureDIP);
@@ -658,7 +658,7 @@ void RetroFuturaGUI::Rectangle::drawHueStarGradientBorder()
         _gradientDegree = 0.0f;
 
     ShaderManager::GetBorderHueStarGradientShader().UseProgram();
-    ShaderManager::GetBorderHueStarGradientShader().SetUniformVec4("uColors", &_colors[0][0], 255);
+    ShaderManager::GetBorderHueStarGradientShader().SetUniformVec4("uColors", &_colors[0][0], static_cast<u32>(_colorCount));
     ShaderManager::GetBorderHueStarGradientShader().SetUniformFloat("uDegree", _gradientDegree);
     ShaderManager::GetBorderHueStarGradientShader().SetUniformInt("uNumColors", _colorCount);
     ShaderManager::GetBorderHueStarGradientShader().SetUniformInt("uDIP", _shaderFeatureDIP);
