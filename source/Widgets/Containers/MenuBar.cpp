@@ -629,24 +629,21 @@ void RetroFuturaGUI::MenuBar::SetItemBorderGaps(std::span<BorderGap> gaps)
 
 void RetroFuturaGUI::MenuBar::interact()
 {
-    i32 mouseX { 0 }, mouseY { 0 };
-    bool hasMousePosition { false };
+    const PointerState pointer { readPointer() };
 
-#if defined(TARGET_PLATFORM_LINUX)
-    hasMousePosition = PlatformBridge::Input::GetMouseWindowPosition(glfwGetX11Window(_parentWindow), mouseX, mouseY);
-#elif defined(TARGET_PLATFORM_WINDOWS)
-    hasMousePosition = PlatformBridge::Input::GetMouseWindowPosition(glfwGetWin32Window(_parentWindow), mouseX, mouseY);
-#endif
+    if(pointer._IsCaptured)
+        return; //ScrollView above has taken the pointer
 
-    glm::vec2 mousePos { static_cast<f32>(mouseX), _projection.GetResolution().y - static_cast<f32>(mouseY) };
-    bool isMouseButtonPressed { PlatformBridge::Input::IsMouseButtonDown(PlatformBridge::MouseButton::Left) };
-    bool isMouseInside { hasMousePosition && isPointInside(mousePos) };
+    glm::vec2 mousePos { pointer._Position };
+    bool
+        isMouseButtonPressed { pointer._LeftButtonPressed },
+        isMouseInside { pointer._HasPosition && isPointInside(mousePos) };
 
     updateWindowDrag(MouseState
     {
         ._WorldPoint = mousePos,
-        ._WindowPoint = glm::i32vec2(mouseX, mouseY),
-        ._HasPosition = hasMousePosition,
+        ._WindowPoint = glm::i32vec2(static_cast<i32>(mousePos.x), static_cast<i32>(_projection.GetResolution().y - mousePos.y)), //undo the bottom-up flip, the window moves in top-down coordinates
+        ._HasPosition = pointer._HasPosition,
         ._IsPressed = isMouseButtonPressed
     });
 

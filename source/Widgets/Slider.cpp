@@ -47,21 +47,16 @@ bool RetroFuturaGUI::Slider::isInsideIndicator(const glm::vec2& mousePos)
 
 void RetroFuturaGUI::Slider::interact()
 {
-    i32
-        mouseX { 0 },
-        mouseY { 0 };
-    bool hasMousePosition { false };
+    const PointerState pointer { readPointer() };
 
-#if defined(TARGET_PLATFORM_LINUX)
-    hasMousePosition = PlatformBridge::Input::GetMouseWindowPosition(glfwGetX11Window(_parentWindow), mouseX, mouseY);
-#elif defined(TARGET_PLATFORM_WINDOWS)
-    hasMousePosition = PlatformBridge::Input::GetMouseWindowPosition(glfwGetWin32Window(_parentWindow), mouseX, mouseY);
-#endif
+    if(pointer._IsCaptured)
+        return; //ScrollView above has taken the pointer
 
-    glm::vec2 mousePos { static_cast<f32>(mouseX), _projection.GetResolution().y - static_cast<f32>(mouseY) };
-    bool isMouseButtonPressed = PlatformBridge::Input::IsMouseButtonDown(PlatformBridge::MouseButton::Left);
-    bool isMouseInside = hasMousePosition && isPointInsideRect(mousePos, _size, _position, _rotation);
-    bool isMouseInsideIndicator = isPointInsideRect(mousePos, glm::vec3(_indicatorBackground->GetSize(), 0.0f), _indicatorBackground->GetPosition(), _indicatorBackground->GetRotation());
+    glm::vec2 mousePos { pointer._Position };
+    bool
+        isMouseButtonPressed { pointer._LeftButtonPressed },
+        isMouseInside { pointer._HasPosition && isPointInsideRect(mousePos, _size, _position, _rotation) },
+        isMouseInsideIndicator { isPointInsideRect(mousePos, glm::vec3(_indicatorBackground->GetSize(), 0.0f), _indicatorBackground->GetPosition(), _indicatorBackground->GetRotation()) };
 
     if(!_isEnabledFlag || !isMouseInside) //no action and mouse leave
     {

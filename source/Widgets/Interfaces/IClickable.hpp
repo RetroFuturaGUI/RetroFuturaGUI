@@ -56,9 +56,10 @@ namespace RetroFuturaGUI
             _onMouseEnterAsync,
             _onMouseLeave,
             _onMouseLeaveAsync;
-        bool 
+        bool
             _wasClicked { false },
             _mouseEnteredFlag { false },
-            _mouseLeftFlag { false };
+            _mouseLeftFlag { false },
+            _pressStartedInside { false }; // The current press began on this widget, so releasing it over the widget is a click
     };
 }

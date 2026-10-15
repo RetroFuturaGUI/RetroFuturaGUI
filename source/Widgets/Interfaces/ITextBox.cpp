@@ -130,19 +130,11 @@ void RetroFuturaGUI::ITextBox::SetRotation(const glm::vec3& rotation)
 
 void RetroFuturaGUI::ITextBox::interact()
 {
-    i32 mouseX { 0 }, mouseY { 0 };
-    bool hasMousePosition { false };
-
-#if defined(TARGET_PLATFORM_LINUX)
-    hasMousePosition = PlatformBridge::Input::GetMouseWindowPosition(glfwGetX11Window(_parentWindow), mouseX, mouseY);
-#elif defined(TARGET_PLATFORM_WINDOWS)
-    hasMousePosition = PlatformBridge::Input::GetMouseWindowPosition(glfwGetWin32Window(_parentWindow), mouseX, mouseY);
-#endif
-
-    //PlatformBridge reports native (top-down) window coordinates; flip to this library's bottom-up world space here
-    glm::vec2 mousePos { static_cast<f32>(mouseX), _projection.GetResolution().y - static_cast<f32>(mouseY) };
-    bool isMouseTextBoxPressed = PlatformBridge::Input::IsMouseButtonDown(PlatformBridge::MouseButton::Left);
-    bool isMouseInside = hasMousePosition && isPointInside(mousePos);
+    const PointerState pointer { readPointer() };
+    glm::vec2 mousePos { pointer._Position };
+    bool
+        isMouseTextBoxPressed { pointer._LeftButtonPressed },
+        isMouseInside { pointer._HasPosition && isPointInside(mousePos) };
 
     if(_editingEnabled && !_mouseEnteredFlag && !_isMarking && isMouseTextBoxPressed)
     {
@@ -156,9 +148,12 @@ void RetroFuturaGUI::ITextBox::interact()
     if(!_caretNeverBlinks)
         updateCaretBlink();
 
+    if(pointer._IsCaptured)
+        return; //ScrollView above has taken the pointer. Typing still works, the keyboard was handled above
+
     if(_isMarking)
     {
-        if(isMouseTextBoxPressed && hasMousePosition)
+        if(isMouseTextBoxPressed && pointer._HasPosition)
         {
             //clamp before the hit-test, so the selection doesn't extend outside the visible text area
             //also consider scrolling when marking goes out of bounds

@@ -8,6 +8,7 @@
 #include "Signal.hpp"
 #include "IWindowAccessor.hpp"
 #include "IHierarchyNode.hpp"
+#include "IPointerFilter.hpp"
 
 namespace RetroFuturaGUI
 {
@@ -106,7 +107,14 @@ namespace RetroFuturaGUI
         bool isPointInside(const glm::vec2& point) const;
         bool isPointInsideRect(const glm::vec2& point, const glm::vec3& size, const glm::vec3& position, const glm::vec3& rotation) const;
 
-    private:
+        /// @brief Reads the mouse in window coordinates, bottom-up, as this widget should see it: every ancestor that is an
+        ///        IPointerFilter may hold the press back, replay it, or take the pointer away entirely while it scrolls.
+        PointerState readPointer() const;
 
+    private:
+        /// @brief Applies the pointer filters from the outermost container down to the closest one. Each container then adjusts
+        ///        what the containers above it already let through: an inner ScrollView only ever sees a press its outer one passed on,
+        ///        and an outer one that scrolls keeps the pointer captured whatever the inner one does.
+        static void filterThroughAncestors(const IHierarchyNode* node, PointerState& pointer);
     };
 }

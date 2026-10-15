@@ -88,6 +88,7 @@ list(APPEND RetroFuturaGuiSources
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/Containers/MenuBar.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/Containers/Prefab.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/Containers/RadioButtonGroup.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/Containers/ScrollView.cpp"
 
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/Interfaces/IDropDown.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/Interfaces/IHierarchyNode.cpp"

@@ -177,25 +177,18 @@ const std::string& RetroFuturaGUI::ComboBox::GetSelectedText() const
 
 void RetroFuturaGUI::ComboBox::interact()
 {
-     i32
-        mouseX { 0 },
-        mouseY { 0 };
-    bool hasMousePosition { false };
+    const PointerState pointer { readPointer() };
 
-#if defined(TARGET_PLATFORM_LINUX)
-    hasMousePosition = PlatformBridge::Input::GetMouseWindowPosition(glfwGetX11Window(_parentWindow), mouseX, mouseY);
-#elif defined(TARGET_PLATFORM_WINDOWS)
-    hasMousePosition = PlatformBridge::Input::GetMouseWindowPosition(glfwGetWin32Window(_parentWindow), mouseX, mouseY);
-#endif
+    if(pointer._IsCaptured)
+        return; //ScrollView above has taken the pointer
 
-    //PlatformBridge reports native (top-down) window coordinates; flip to this library's bottom-up world space here
-    const glm::vec2 mousePos { static_cast<f32>(mouseX), _projection.GetResolution().y - static_cast<f32>(mouseY) };
+    const glm::vec2 mousePos { pointer._Position };
     const bool
-        isMousePressed { PlatformBridge::Input::IsMouseButtonDown(PlatformBridge::MouseButton::Left) },
+        isMousePressed { pointer._LeftButtonPressed },
         pressedThisFrame { isMousePressed && !_wasClicked },
         releasedThisFrame { !isMousePressed && _wasClicked },
-        isInsideBox { hasMousePosition && isPointInside(mousePos) },
-        isInsideDropDown { hasMousePosition && _showDropDown && isPointInsideDropDown(mousePos) };
+        isInsideBox { pointer._HasPosition && isPointInside(mousePos) },
+        isInsideDropDown { pointer._HasPosition && _showDropDown && isPointInsideDropDown(mousePos) };
     _wasClicked = isMousePressed;
 
     //the open dropDown belongs to the widget, so hovering a row still counts as hovering the ComboBox

@@ -1254,26 +1254,19 @@ void RetroFuturaGUI::Table::setCheckBoxColors(const ColorState state)
 
 void RetroFuturaGUI::Table::interact()
 {
-    i32
-        mouseX { 0 },
-        mouseY { 0 };
-    bool hasMousePosition { false };
+    const PointerState pointer { readPointer() };
 
-#if defined(TARGET_PLATFORM_LINUX)
-    hasMousePosition = PlatformBridge::Input::GetMouseWindowPosition(glfwGetX11Window(_parentWindow), mouseX, mouseY);
-#elif defined(TARGET_PLATFORM_WINDOWS)
-    hasMousePosition = PlatformBridge::Input::GetMouseWindowPosition(glfwGetWin32Window(_parentWindow), mouseX, mouseY);
-#endif
+    if(pointer._IsCaptured)
+        return; //ScrollView above has taken the pointer
 
-    //PlatformBridge reports native (top-down) window coordinates; flip to this library's bottom-up world space here
-    const glm::vec2 mousePos { static_cast<f32>(mouseX), _projection.GetResolution().y - static_cast<f32>(mouseY) };
-    const bool isMousePressed { PlatformBridge::Input::IsMouseButtonDown(PlatformBridge::MouseButton::Left) };
+    const glm::vec2 mousePos { pointer._Position };
+    const bool isMousePressed { pointer._LeftButtonPressed };
 
     const MouseState mouse
     {
         ._Position = mousePos,
-        ._HasPosition = hasMousePosition,
-        ._IsInside = hasMousePosition && isPointInside(mousePos),
+        ._HasPosition = pointer._HasPosition,
+        ._IsInside = pointer._HasPosition && isPointInside(mousePos),
         ._IsPressed = isMousePressed,
         ._PressedThisFrame = isMousePressed && !_wasClicked // every cell kind shares IClickable's _wasClicked, so the press edge is resolved here, once
     };

@@ -306,20 +306,15 @@ void RetroFuturaGUI::CheckBox::setInherietFillColors()
 
 void RetroFuturaGUI::CheckBox::interact()
 {
-    i32 
-        mouseX { 0 }, 
-        mouseY { 0 };
-    bool hasMousePosition { false };
+    const PointerState pointer { readPointer() };
 
-#if defined(TARGET_PLATFORM_LINUX)
-    hasMousePosition = PlatformBridge::Input::GetMouseWindowPosition(glfwGetX11Window(_parentWindow), mouseX, mouseY);
-#elif defined(TARGET_PLATFORM_WINDOWS)
-    hasMousePosition = PlatformBridge::Input::GetMouseWindowPosition(glfwGetWin32Window(_parentWindow), mouseX, mouseY);
-#endif
+    if(pointer._IsCaptured)
+        return; //ScrollView above has taken the pointer
 
-    glm::vec2 mousePos { static_cast<f32>(mouseX), _projection.GetResolution().y - static_cast<f32>(mouseY) };
-    bool isMouseButtonPressed = PlatformBridge::Input::IsMouseButtonDown(PlatformBridge::MouseButton::Left);
-    bool isMouseInside = hasMousePosition && isPointInside(mousePos);
+    glm::vec2 mousePos { pointer._Position };
+    bool
+        isMouseButtonPressed { pointer._LeftButtonPressed },
+        isMouseInside { pointer._HasPosition && isPointInside(mousePos) };
 
     if(!_isEnabledFlag || !isMouseInside) //no action and mouse leave
     {

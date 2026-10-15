@@ -13,7 +13,7 @@ The framework is designed for cross-platform use, and its logic can be compiled 
 | 1 | Button, Label, Window, MainWindow, Image, Grid2D, WindowBar with Buttons |  | ✅ |
 | 2 | dll/so/dylib compilation for C# and Python support, Widget ID manager | 1 | ✅ | 
 | 3 | Linux Support, Font Manager | 2 | ✅ | 
-| 4 | More Widgets (TextBox ✅, Table ✅, 3D Model ✅, Slider ✅, CheckBox ✅, ComboBox ✅, ExtendedComoBox ✅, RadioButton ✅, RadioButtonGroup ✅, SeparatorLine ✅, ColorPreview ✅, change Grid2d to "Lasagna" and add a 3rd dimension ✅, MenuBar ✅, MultilineTextBox ✅, Histogram ✅, VideoPlayer ✅, Environment ✅, LineDiagram ✅, WindowTab and window docking, Lights, Color Pickers), Scene ✅, SceneLoader ✅, AudioPlayback ✅, ScrollView, Popups, PopupManager, Tooltip, FileExplorer | 1 | WIP | 
+| 4 | More Widgets (TextBox ✅, Table ✅, 3D Model ✅, Slider ✅, CheckBox ✅, ComboBox ✅, ExtendedComoBox ✅, RadioButton ✅, RadioButtonGroup ✅, SeparatorLine ✅, ColorPreview ✅, change Grid2d to "Lasagna" and add a 3rd dimension ✅, MenuBar ✅, MultilineTextBox ✅, Histogram ✅, VideoPlayer ✅, Environment ✅, LineDiagram ✅, ScrollView ✅, Node, WindowTab and window docking, Lights, Color Pickers), Scene ✅, SceneLoader ✅, AudioPlayback ✅, Popups, PopupManager, Tooltip, FileExplorer | 1 | WIP | 
 | 5 | .bechaml markup language for GUI design 🥣 (**B**eautifully **E**xtended **C**ascading but **H**airbally **A**pplication **M**arkup **L**anguage) | 4 | | 
 | 6 | VS Code extension with project generator/manager | 5 | | 
 | 7 | Pre-built Prefabs (StepperSlider, SpinBox, Table with Sliders, Carousel, Extended Color Pickers, MediaPlayer) | 6 |
@@ -475,6 +475,18 @@ The framework is designed for cross-platform use, and its logic can be compiled 
 <li>Complete Python binding</li>
 <li>Refactor Binding</li>
 <li>Refactor textures so a texture on a 3D model carries no unused quad (ITexture holds the standalone quad that only Image and Video draw with - VAO/VBO/EBO, the scaling/translation/rotation matrices, Draw/SetSize/SetPosition/SetRotation. Without a Projection the buffers are never created, but every Model texture still carries the members and the API. Move the quad out to what draws it)</li>
+<li>Double-check which containers in Widgets/Containers should own their widgets and which should only borrow them</li>
+  <ul>
+  <li>Borrowing today: Lasagna, Environment and RadioButtonGroup hold raw pointers, and the widgets are owned elsewhere - by the generated _p structs, for instance</li>
+  <li>Owning today: Prefab, ExtendedComboBox and MenuBar. They disagree on how as well: Prefab constructs the widget itself (AttachWidget&lt;T&gt;(name, ...)), while ExtendedComboBox and MenuBar take a finished std::unique_ptr</li>
+  <li>ScrollView is planned to own its widgets and construct them itself, so they can be added and removed at runtime</li>
+  </ul>
+<li>PlatformBridge::Input: scroll wheel and two-finger stretch</li>
+  <ul>
+  <li>Scroll wheel, vertical and horizontal (tilting wheels and two-finger touchpad swipes report horizontally). Until then a ScrollView only scrolls by dragging its empty space</li>
+  <li>Two-finger stretch (pinch) on touchpads and touchscreens, as the input for scrolling a ScrollView along Z, which nothing can do yet</li>
+  <li>One wheel turn must not scroll nested ScrollViews together: the innermost hovered one should take the delta, so a ScrollView has to read it after its widgets have drawn rather than before</li>
+  </ul>
 </ul>
 </details>
 

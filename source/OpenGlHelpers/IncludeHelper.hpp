@@ -34,6 +34,7 @@ namespace RetroFuturaGUI
     class MultilineTextBox;
     class LineDiagram;
     class Environment;
+    class ScrollView;
 
     enum class FillType: u32
     {
@@ -80,6 +81,7 @@ namespace RetroFuturaGUI
         MultilineTextBox,
         LineDiagram,
         Environment,
+        ScrollView,
         Unknown = -1
     };   
 

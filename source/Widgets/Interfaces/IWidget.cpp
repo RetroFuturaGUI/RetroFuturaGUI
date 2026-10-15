@@ -1,4 +1,12 @@
 #include "IWidget.hpp"
+#include "PlatformBridge.hpp"
+
+#if defined(TARGET_PLATFORM_LINUX)
+    #define GLFW_EXPOSE_NATIVE_X11
+#elif defined(TARGET_PLATFORM_WINDOWS)
+    #define GLFW_EXPOSE_NATIVE_WIN32
+#endif
+#include <GLFW/glfw3native.h>
 
 RetroFuturaGUI::IWidget::IWidget(std::string_view name, Projection* projection, IHierarchyNode* parentWidget, const WidgetTypeID parentWidgetTypeID, GLFWwindow* parentWindow)
     : _name(name), _parentWidget(parentWidget), _parentWidgetTypeID(parentWidgetTypeID), _projection(*projection)
@@ -114,4 +122,40 @@ bool RetroFuturaGUI::IWidget::isPointInsideRect(const glm::vec2& point, const gl
 bool RetroFuturaGUI::IWidget::isPointInside(const glm::vec2& point) const
 {
     return isPointInsideRect(point, _size, _position, _rotation);
+}
+
+RetroFuturaGUI::PointerState RetroFuturaGUI::IWidget::readPointer() const
+{
+    PointerState pointer {};
+    i32
+        mouseX { 0 },
+        mouseY { 0 };
+
+#if defined(TARGET_PLATFORM_LINUX)
+    pointer._HasPosition = PlatformBridge::Input::GetMouseWindowPosition(glfwGetX11Window(_parentWindow), mouseX, mouseY);
+#elif defined(TARGET_PLATFORM_WINDOWS)
+    pointer._HasPosition = PlatformBridge::Input::GetMouseWindowPosition(glfwGetWin32Window(_parentWindow), mouseX, mouseY);
+#endif
+
+    // PlatformBridge reports native, top-down window coordinates; the library's world space runs bottom-up.
+    pointer._Position = glm::vec2(static_cast<f32>(mouseX), _projection.GetResolution().y - static_cast<f32>(mouseY));
+    pointer._LeftButtonPressed = PlatformBridge::Input::IsMouseButtonDown(PlatformBridge::MouseButton::Left);
+
+    filterThroughAncestors(_parentWidget, pointer);
+    return pointer;
+}
+
+void RetroFuturaGUI::IWidget::filterThroughAncestors(const IHierarchyNode* node, PointerState& pointer)
+{
+    if(!node)
+        return;
+
+    filterThroughAncestors(node->GetParent(), pointer);
+
+    const IPointerFilter* filter { dynamic_cast<const IPointerFilter*>(node) };
+
+    if(!filter)
+        return;
+
+    filter->FilterPointer(pointer);
 }

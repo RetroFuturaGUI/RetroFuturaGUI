@@ -440,19 +440,13 @@ void RetroFuturaGUI::LineDiagram::interact()
     if(!_parentWindow)
         return;
 
-    i32
-        mouseX { 0 },
-        mouseY { 0 };
-    bool hasMousePosition { false };
+    const PointerState pointer { readPointer() };
 
-#if defined(TARGET_PLATFORM_LINUX)
-    hasMousePosition = PlatformBridge::Input::GetMouseWindowPosition(glfwGetX11Window(_parentWindow), mouseX, mouseY);
-#elif defined(TARGET_PLATFORM_WINDOWS)
-    hasMousePosition = PlatformBridge::Input::GetMouseWindowPosition(glfwGetWin32Window(_parentWindow), mouseX, mouseY);
-#endif
+    if(pointer._IsCaptured)
+        return; //ScrollView above has taken the pointer
 
-    const glm::vec2 mousePos { static_cast<f32>(mouseX), _projection.GetResolution().y - static_cast<f32>(mouseY) };
-    const bool canHover { _isEnabledFlag && _useGraph && hasMousePosition && isPointInside(mousePos) };
+    const glm::vec2 mousePos { pointer._Position };
+    const bool canHover { _isEnabledFlag && _useGraph && pointer._HasPosition && isPointInside(mousePos) };
 
     if(!canHover)
     {

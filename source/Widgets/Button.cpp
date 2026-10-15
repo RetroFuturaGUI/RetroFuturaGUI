@@ -103,21 +103,26 @@ void RetroFuturaGUI::Button::SetRotation(const glm::vec3& rotation)
 
 void RetroFuturaGUI::Button::interact()
 {
-    i32 mouseX { 0 }, mouseY { 0 };
-    bool hasMousePosition { false };
+    const PointerState pointer { readPointer() };
 
-#if defined(TARGET_PLATFORM_LINUX)
-    hasMousePosition = PlatformBridge::Input::GetMouseWindowPosition(glfwGetX11Window(_parentWindow), mouseX, mouseY);
-#elif defined(TARGET_PLATFORM_WINDOWS)
-    hasMousePosition = PlatformBridge::Input::GetMouseWindowPosition(glfwGetWin32Window(_parentWindow), mouseX, mouseY);
-#endif
+    if(pointer._IsCaptured)
+        return; //ScrollView above has taken the pointer
 
-    glm::vec2 mousePos { static_cast<f32>(mouseX), _projection.GetResolution().y - static_cast<f32>(mouseY) };
-    bool isMouseButtonPressed = PlatformBridge::Input::IsMouseButtonDown(PlatformBridge::MouseButton::Left);
-    bool isMouseInside = hasMousePosition && isPointInside(mousePos);
+    glm::vec2 mousePos { pointer._Position };
+    bool 
+        isMouseButtonPressed { pointer._LeftButtonPressed },
+        isMouseInside { pointer._HasPosition && isPointInside(mousePos) };
+    
+    const bool //drop presses that started outside and were released inside this widget. A release outside ends the press without triggering OnRelease
+        isPressStart { isMouseButtonPressed && !_wasClicked },
+        isRelease { !isMouseButtonPressed && _wasClicked };
+    _wasClicked = isMouseButtonPressed;
 
     if(!_isEnabledFlag || !isMouseInside) //no action and mouse leave
     {
+        if(isRelease)
+            _pressStartedInside = false;
+
         if(_mouseEnteredFlag)
         {
             _mouseEnteredFlag = false;
@@ -144,14 +149,16 @@ void RetroFuturaGUI::Button::interact()
         setColors(ColorState::Hover);
     }
 
-    if (isMouseButtonPressed && !_wasClicked) //click
+    if(isPressStart) //click
     {
+        _pressStartedInside = true;
         _onClickAsync.EmitAsync();
         _onClick.Emit();
         setColors(ColorState::Clicked);
     }
-    else if(!isMouseButtonPressed && _wasClicked) //release
+    else if(isRelease && _pressStartedInside) //release
     {
+        _pressStartedInside = false;
         _onReleaseAsync.EmitAsync();
         _onRelease.Emit();
 
@@ -160,8 +167,6 @@ void RetroFuturaGUI::Button::interact()
         else
             setColors(ColorState::Enabled);
     }
-
-    _wasClicked = isMouseButtonPressed;
 }
 
 void RetroFuturaGUI::Button::setColors(const ColorState state)
