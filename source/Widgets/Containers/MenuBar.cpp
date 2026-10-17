@@ -1,4 +1,5 @@
 #include "MenuBar.hpp"
+#include "Window.hpp"
 #include "PlatformBridge.hpp"
 
 #if defined(TARGET_PLATFORM_LINUX)
@@ -32,6 +33,7 @@ RetroFuturaGUI::MenuBar::MenuBar(const std::string& name, Projection* projection
 
 void RetroFuturaGUI::MenuBar::Draw()
 {
+    syncUndockCells();
     interact();
     drawBackground();
     drawBorder();
@@ -310,6 +312,12 @@ void RetroFuturaGUI::MenuBar::SetItemBackgroundColors(std::span<glm::vec4> color
     }
 
     setItemBackgroundColors();
+}
+
+void RetroFuturaGUI::MenuBar::SetCornerRadii(const glm::vec4& radii)
+{
+    setBackgroundCornerRadii(radii);
+    setBorderCornerRadii(radii);
 }
 
 void RetroFuturaGUI::MenuBar::SetItemCornerRadii(const glm::vec4& radii)
@@ -706,7 +714,10 @@ void RetroFuturaGUI::MenuBar::updateWindowDrag(const MouseState& mouse)
     _wasDragMousePressed = mouse._IsPressed;
 
     if(!mouse._IsPressed)
-    {
+    {   //dock window where its preview showed
+        if(_isDraggingWindow)
+            endParentWindowDrag();
+
         _isDraggingWindow = false;
         return;
     }
@@ -716,12 +727,21 @@ void RetroFuturaGUI::MenuBar::updateWindowDrag(const MouseState& mouse)
 
     if(pressedThisFrame)
     {
-        //Only the press that lands on a drag cell begins one
-        if(!isPointInsideDragCell(mouse._WorldPoint))
+        const bool
+            isDragCell { isPointInsideDragCell(mouse._WorldPoint) },
+            isUndockCell { isPointInsideUndockCell(mouse._WorldPoint) };
+
+        //Only the press that lands on a drag or undock cell begins one
+        if(!isDragCell && !isUndockCell)
             return;
+
+        //From an undock cell the window leaves its docking group first, so the drag moves it alone instead of the whole group
+        if(isUndockCell)
+            undockParentWindow();
 
         _isDraggingWindow = true;
         _dragGrabPoint = mouse._WindowPoint;
+        beginParentWindowDrag();
         return;
     }
 
@@ -762,6 +782,109 @@ bool RetroFuturaGUI::MenuBar::isPointInsideDragCell(const glm::vec2& point) cons
     }
 
     return false;
+}
+
+bool RetroFuturaGUI::MenuBar::isPointInsideUndockCell(const glm::vec2& point) const
+{
+    uSize index { 0 };
+
+    for(const std::unique_ptr<IWidget>& item : _itemFlex)
+    {
+        const uSize cell { index };
+        ++index;
+
+        if(!GetFlexDefinition(cell)._IsWindowUndock)
+            continue;
+
+        //An empty cell has nothing to grab, a clickable widget keeps its clicks, and a disabled one has nothing to undock
+        if(!item)
+            continue;
+
+        if(dynamic_cast<const IClickable*>(item.get()))
+            continue;
+
+        if(!item->IsEnabled())
+            continue;
+
+        if(!isPointInsideRect(point, glm::vec3(cellSize(cell), _size.z), cellPosition(cell), _rotation))
+            continue;
+
+        return true;
+    }
+
+    return false;
+}
+
+void RetroFuturaGUI::MenuBar::undockParentWindow() const
+{
+    Window* window { Window::FromGlfwWindow(_parentWindow) };
+
+    if(!window)
+        return;
+
+    window->Undock();
+}
+
+void RetroFuturaGUI::MenuBar::syncUndockCells()
+{
+    Window* window { Window::FromGlfwWindow(_parentWindow) };
+
+    if(!window)
+        return;
+
+    //A window docked to nothing has nothing to be pulled out of
+    const bool isDocked { window->IsDocked() };
+    uSize index { 0 };
+
+    for(const std::unique_ptr<IWidget>& item : _itemFlex)
+    {
+        const uSize cell { index };
+        ++index;
+
+        if(!item)
+            continue;
+
+        if(!GetFlexDefinition(cell)._IsWindowUndock)
+            continue;
+
+        if(item->IsEnabled() == isDocked)
+            continue;
+
+        item->SetEnabled(isDocked, false);
+    }
+}
+
+bool RetroFuturaGUI::MenuBar::isItemDisabled(const uSize index) const
+{
+    if(index >= _itemFlex.size())
+        return false;
+
+    const IWidget* item { std::next(_itemFlex.begin(), static_cast<i64>(index))->get() };
+
+    if(!item)
+        return false;
+
+    return !item->IsEnabled();
+}
+
+void RetroFuturaGUI::MenuBar::beginParentWindowDrag() const
+{
+    Window* window { Window::FromGlfwWindow(_parentWindow) };
+
+    if(!window)
+        return;
+
+    window->BeginDrag();
+}
+
+void RetroFuturaGUI::MenuBar::endParentWindowDrag() const
+{
+    Window* window { Window::FromGlfwWindow(_parentWindow) };
+
+    if(!window)
+        return;
+
+    window->EndDrag();
 }
 
 void RetroFuturaGUI::MenuBar::updateLayout()
@@ -946,6 +1069,9 @@ glm::vec3 RetroFuturaGUI::MenuBar::cellPosition(const uSize index) const
 RetroFuturaGUI::ColorState RetroFuturaGUI::MenuBar::itemState(const uSize index) const
 {
     if(!_isEnabledFlag)
+        return ColorState::Disabled;
+
+    if(isItemDisabled(index))
         return ColorState::Disabled;
 
     if(index != _hoveredItemIndex)

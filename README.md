@@ -13,7 +13,7 @@ The framework is designed for cross-platform use, and its logic can be compiled 
 | 1 | Button, Label, Window, MainWindow, Image, Grid2D, WindowBar with Buttons |  | ✅ |
 | 2 | dll/so/dylib compilation for C# and Python support, Widget ID manager | 1 | ✅ | 
 | 3 | Linux Support, Font Manager | 2 | ✅ | 
-| 4 | More Widgets (TextBox ✅, Table ✅, 3D Model ✅, Slider ✅, CheckBox ✅, ComboBox ✅, ExtendedComoBox ✅, RadioButton ✅, RadioButtonGroup ✅, SeparatorLine ✅, ColorPreview ✅, change Grid2d to "Lasagna" and add a 3rd dimension ✅, MenuBar ✅, MultilineTextBox ✅, Histogram ✅, VideoPlayer ✅, Environment ✅, LineDiagram ✅, ScrollView ✅, Color Pickers ✅, Node, WindowTab and window docking), Scene ✅, SceneLoader ✅, Scene Lights, AudioPlayback ✅, Popups, PopupManager, Tooltip ✅, FileExplorer | 1 | WIP | 
+| 4 | More Widgets (TextBox ✅, Table ✅, 3D Model ✅, Slider ✅, CheckBox ✅, ComboBox ✅, ExtendedComoBox ✅, RadioButton ✅, RadioButtonGroup ✅, SeparatorLine ✅, ColorPreview ✅, change Grid2d to "Lasagna" and add a 3rd dimension ✅, MenuBar ✅, MultilineTextBox ✅, Histogram ✅, VideoPlayer ✅, Environment ✅, LineDiagram ✅, ScrollView ✅, Color Pickers ✅, Node, WindowTab, window docking ✅), Scene ✅, SceneLoader ✅, Scene Lights, AudioPlayback ✅, Popups, PopupManager, Tooltip ✅, FileExplorer | 1 | WIP | 
 | 5 | .bechaml markup language for GUI design 🥣 (**B**eautifully **E**xtended **C**ascading but **H**airbally **A**pplication **M**arkup **L**anguage) | 4 | | 
 | 6 | VS Code extension with project generator/manager | 5 | | 
 | 7 | Pre-built Prefabs (StepperSlider, SpinBox, Table with Sliders, Carousel, Extended Color Pickers, MediaPlayer) | 6 |
@@ -79,13 +79,14 @@ The framework is designed for cross-platform use, and its logic can be compiled 
   - Children aren't registered with the DynamicLibWidgetManager, so a binding can't address them by string ID yet. That needs a deregistration path as well, or destroying a prefab would leave the manager holding freed pointers
   - The Lasagna is fixed at construction; a prefab keeps whatever AxisDefinition it was built with
 - Scene
-  - Shared, cross-window scenes. SceneLoader::CreateScene hands back a std::unique_ptr, so a scene is one instance belonging to one window, and "the same scene in two windows" means instantiating the same description twice. Returning a shared scene is planned and needs three things: windows created with a shared GL context (glfwCreateWindow's share argument is nullptr today, so two windows currently share nothing at all), per-context VAOs over shared buffers (the spec never shares VAOs, FBOs or transform feedback, and Rectangle, Text, Mesh and Texture each own one), and splitting shared state from per-window view. Consequence until then: a 3D Model changed in one window does not propagate to another - they are separate objects with separate transform matrices. For 2D widgets sharing is incoherent anyway, because Window::UpdateLayout writes screen-space positions into the widgets and two differently sized windows need different values in the same fields; for 3D content it is coherent, and the shape it wants is one world with a camera per window, which belongs to the planned Environment container rather than to Scene
-  - Widgets are owned by the generated _p struct, not by the Scene, and the Scene owns only its root Lasagna. Closing a scene therefore has to tear down its owner's entry too - SceneLoader registers scenes and borrows a pointer, but whoever holds the unique_ptr owns the lifetime, so CloseScene needs a release hook to make closing actually complete rather than just unregistering
+  - Shared, cross-window scenes. SceneLoader::CreateScene hands back a std::unique_ptr, so a scene is one instance belonging to one window, and "the same scene in two windows" means instantiating the same description twice. Returning a shared scene is planned and needs three things: windows created with a shared GL context (done: every window shares textures, buffers and shaders with the first one created), per-context VAOs over shared buffers (the spec never shares VAOs, FBOs or transform feedback, and Rectangle, Text, Mesh and Texture each own one), and splitting shared state from per-window view. Consequence until then: a 3D Model changed in one window does not propagate to another - they are separate objects with separate transform matrices. For 2D widgets sharing is incoherent anyway, because Window::UpdateLayout writes screen-space positions into the widgets and two differently sized windows need different values in the same fields; for 3D content it is coherent, and the shape it wants is one world with a camera per window, which belongs to the planned Environment container rather than to Scene
+  - Widgets are owned by the generated _p struct, not by the Scene, and the Scene owns only its root container. Closing a scene therefore has to tear down its owner's entry too - SceneLoader registers scenes and borrows a pointer, but whoever holds the unique_ptr owns the lifetime, so CloseScene needs a release hook to make closing actually complete rather than just unregistering
   - SceneLoader owns no assets yet, so nothing holds what scenes share. When it does it has to be the single asset cache rather than a second one beside ResourceManager, and widgets need a way to reach it - they currently load their own textures, SVGs and models straight from a path in their constructors
   - Loading is synchronous. SceneLoadingProgress always reports 1.0 for a scene that exists, and becomes meaningful only once asset loading is split into an off-thread prepare step and a main-thread realize step - every gl* call has to stay on the context thread, and destruction can never leave it at all
   - No lifecycle signals (OnActivate, OnDeactivate, OnLoad, OnUnload), so application code has nothing to hook a scene transition to
   - Overlay scenes don't block the scene underneath them. Widgets hit-test inside their own Draw, so there is no central pass that could stop at the topmost hit the way a raycast would. Docking avoids it geometrically - a content scene is never given the strip, so it has nothing there to click - but a modal overlay needs the scene beneath it disabled, passing emitSignal = false to SetEnabled so the sweep doesn't fire every connected slot
-  - Only a Lasagna can be the root container. That generalizes to an IContainer interface once ScrollView and Environment exist
+  - The root container is one of a fixed set - Lasagna, Environment or ScrollView, through the RootContainer concept. An IContainer interface would open it to any container
+  - SceneLoader::DrainPending runs the release hooks in whichever window's GL context drew last. With several windows, closing a scene of a window that didn't draw last would delete its VAOs in the wrong context, where the same VAO name means a different object - every widget has to be destroyed with its own window's context current
   - SetLasagnaAxis takes its AxisDefinition by value, copying three vectors per call
 - SeparatorLine
   - The caption's left padding isn't clamped to the line's width, so a long caption or a large padding runs the gap and its text off the right end
@@ -97,7 +98,17 @@ The framework is designed for cross-platform use, and its logic can be compiled 
   - Each rectangle rotates around its own center, so a rotated dual preview pulls its halves apart instead of turning as one piece
   - DualPrevieAlignment is missing a w
 - Window
-  - line 375 check if updateProjection() can be made conditional again and also called at programmatic size change instead
+  - Check if Draw()'s updateProjection() call can be made conditional again and also called at programmatic size change instead
+  - Rounded window corners are cut by the fill shaders discarding fragments, so their edges aren't anti-aliased
+  - Windows on top don't stop input: the mouse state is read for the whole screen, so a window covered by another one still sees hovers and presses where they overlap. The same goes for another application's window on top
+  - The docking preview is a window of its own, so it gets a taskbar button while it shows. Hiding it needs WS_EX_TOOLWINDOW on Windows (_NET_WM_STATE_SKIP_TASKBAR on X11), which belongs in PlatformBridge
+  - A minimized or maximized window stays out of the docking layout until it is restored, and minimizing a group's root leaves the rest of the group on screen
+- IWidget
+  - SetEnabled ignores its emitSignal argument, so OnEnable and OnDisable never fire for widgets that don't override it - SvgImage among them, which is why a window bar polls its undock handle's state instead of listening
+- SvgImage
+  - No disabled look of its own. Graying it out means recoloring its named paths, which would overwrite path colors set by the application, so whoever owns the image does it
+- ScrollView
+  - Doesn't clip yet: content scrolled past its edges is still drawn, over whatever lies there. As the root container of a scene with a window bar, the bar has to be drawn after it to stay on top
 - Raster wrappers (IBackground, IBorder, IRangedValue, MenuBar)
   - The raster wrappers expose the Dotted settings only - no pattern selection and no secondary color - so a widget's background or border can't draw the Checkered pattern. Only a Rectangle owned directly can, which is why ColorPreview builds its own
 - IBackground
@@ -286,14 +297,28 @@ The framework is designed for cross-platform use, and its logic can be compiled 
   - Window
     - Background color or image
       - Background image ID can be used to create glass effects on widgets
-    - Resizeable
+    - Background & Border (same options as Button), with a radius per corner (SetCornerRadii). The border is 0 px wide until it is set, and is drawn over the scenes
+    - Transparent framebuffer: what the background leaves out - the area outside its rounded corners, or all of it with a translucent background color - shows what lies behind the window. Alpha blends with a function of its own (glBlendFuncSeparate), so a semi-transparent widget on an opaque background leaves the window opaque instead of letting the desktop through
+    - Resizeable, by presses inside the window only. The mouse state is read for the whole screen, and outside the window every position would count as near an edge
     - Movable, by dragging a MenuBar cell marked for it (FlexDefinition::_IsWindowDrag)
+    - Several windows at once: every window shares textures, buffers and shaders with the first one created, so fonts, images and shaders load once. Each window makes its own GL context current before it draws. VAOs are never shared, so a widget has to be built, drawn and destroyed with its own window's context current
+    - Destroying a Window destroys its native window. FromGlfwWindow returns the Window behind a GLFW window
+    - Docking (DockWindow, Undock, IsDocked)
+      - A window docks to one of another window's edges (DockEdge). The windows on one edge share its whole length, minus the gaps between them, and keep their own depth away from it - like the columns of Niri
+      - A window has one host at most, the window whose edge it sits on, and never one docked to it, so a docking group is a tree. It can still border several windows: in a row of three, the middle one is docked to the first and the last one to the middle one
+      - The group moves and resizes together: moving or resizing any of its windows carries the others along. A docked window can only be resized on its far edge, since its host sets its length and where its near edge sits
+      - The gap is the largest docking padding (SetDockingPadding) among the host and the windows on its edge, so it doesn't matter which window was docked onto which
+      - A window that undocks or closes gets its length from before docking back, the windows left on its edge grow to fill the gap, and the windows docked to it are let go where they are
+      - The corners where docked windows meet are squared: a host's corners along an edge with windows on it, a window's corners facing its host, and those facing its neighbors on the same edge. SetNoCornerRadiiWhenDocked turns it off for every window. GetDrawnCornerRadii returns the radii actually drawn, so a widget lining the window's edge - a window bar, for instance - can match its own corners to them
+      - Drag to dock: a window bar calls BeginDrag and EndDrag around a drag. A window docked to nothing that is dragged within 32 px of where it would sit docked on another window's edge shows a translucent preview of the exact slot, and docks there when it is let go - among the windows already on that edge, in the order of their positions. Dragging a docked window moves its group instead
+      - Undock cells (FlexDefinition::_IsWindowUndock): a drag that starts in one pulls the window out of its group, then drags it alone, so it can be docked somewhere else. The bar disables the cell's widget while the window is docked to nothing, and a cell holding a disabled widget draws in the disabled item colors and takes no presses
     - Maximize and restore (ToggleMaximize, IsMaximized), with the state read from GLFW rather than kept by the window
     - Holds an ordered list of Scenes it draws over its root Lasagna (AddScene, RemoveScene), borrowed rather than owned
     - Divides its surface into a client area: each docked Scene takes its strip, and whatever is left goes to the overlay Scenes and the root Lasagna. Recomputed on resize, on adding or removing a Scene, and whenever a Scene changes what it reserves or whether it is active
 - Scenes
   - Scene
-    - A named group of widgets with its own root Lasagna, hanging under a Window: Window / Scene / Container / Widgets. Meant for scene loading and for HUDs
+    - A named group of widgets with its own root container, hanging under a Window: Window / Scene / Container / Widgets. Meant for scene loading and for HUDs
+    - The root container is a Lasagna (SetLasagnaAxis), an Environment or a ScrollView (SetRootContainer&lt;T&gt;), so a whole scene can be a 3D room or scroll as one
     - Deliberately not an IWidget, only an IHierarchyNode. A scene has no geometry, no hit-testing and no color state of its own, and staying off IWidget keeps it out of Lasagna::AttachWidget - so a Scene can never end up nested inside a cell, and the hierarchy stays at a fixed depth
     - Contributes its name to its widgets' paths, so GetPath composes MainWindow/MyScene/RootLasagna/TestButton for the interoperability API and .bechaml to address
     - Active or Inactive (SetActive), which is a different axis from a widget's Enabled or Disabled: Active decides whether the scene draws at all, Enabled decides whether a widget reacts and which ColorState it renders in. Since widgets hit-test inside their own Draw, an inactive scene stops responding as well as drawing. A disabled widget still draws - so an active scene full of disabled widgets is exactly the dimmed-behind-a-modal case, and a Scene needs no separate visibility flag
@@ -301,7 +326,7 @@ The framework is designed for cross-platform use, and its logic can be compiled 
     - Overlay is the default: the scene covers the whole client area and reserves nothing, for floating panels and modals
     - Docked scenes reserve in the order they were added, so the first one to claim an edge also owns the corner where two claims meet
     - An inactive scene reserves nothing, and is laid out again when it is reactivated, so activating one never shows a layout computed for a different window size
-    - SetPosition, SetSize, SetRotation, forwarded to its root Lasagna
+    - SetPosition, SetSize, SetRotation, forwarded to its root container
     - Per-frame signal (Connect_OnUpdate / Disconnect_OnUpdate), emitted from Draw before the widgets draw, so a value written by a slot lands in the same frame instead of trailing one behind. Meant for widgets that track a live value, such as an audio level meter. An inactive scene doesn't draw and therefore doesn't tick
 - Media Playback
   - AudioPlayback
@@ -375,7 +400,7 @@ The framework is designed for cross-platform use, and its logic can be compiled 
     - Offset and length are absolute pixels measured from the edge the pattern starts at, so each segment keeps its size and its distance from that edge as the element resizes, rather than stretching with it
     - The pattern runs along X and can be rotated to any angle, so the same definition gives vertical stripes, horizontal bands or anything between
     - A background is one element rather than four edges, so a single definition covers it - unlike Border Gaps, which describe one edge at a time
-  - Dedicated Border variants of the above (Solid, Linear, Radial, HueStar), including Raster
+  - Dedicated Border variants of the above (Solid, Linear, Radial, HueStar), including Raster. The outline takes each corner's own radius, so a frame can be rounded on some corners and square on others
   - Line Fill (used by Polyline)
     - A geometry shader widens each segment in world space, so the width stays in pixels however the line is scaled
     - Mitered joins between segments; turns too sharp for a miter get a bevel instead of a spike
@@ -455,10 +480,6 @@ The framework is designed for cross-platform use, and its logic can be compiled 
     <li>only pass parameters on initialzation and on parameter value change</li>
     </ul>
   </ul>
-<li>Window
-  <ul>
-  <li>Docking</li>
-  </ul>
 <li>Font Manager</li>
 <li>Cursor Icon Manager</li>
 <li>Animation Engine</li>
@@ -486,8 +507,7 @@ The framework is designed for cross-platform use, and its logic can be compiled 
 <li>Double-check which containers in Widgets/Containers should own their widgets and which should only borrow them</li>
   <ul>
   <li>Borrowing today: Lasagna, Environment and RadioButtonGroup hold raw pointers, and the widgets are owned elsewhere - by the generated _p structs, for instance</li>
-  <li>Owning today: Prefab, ExtendedComboBox and MenuBar. They disagree on how as well: Prefab constructs the widget itself (AttachWidget&lt;T&gt;(name, ...)), while ExtendedComboBox and MenuBar take a finished std::unique_ptr</li>
-  <li>ScrollView is planned to own its widgets and construct them itself, so they can be added and removed at runtime</li>
+  <li>Owning today: Prefab, ScrollView, ExtendedComboBox and MenuBar. They disagree on how as well: Prefab and ScrollView construct the widget themselves (AttachWidget&lt;T&gt;(name, ...), AddWidget&lt;T&gt;(name, ...)), while ExtendedComboBox and MenuBar take a finished std::unique_ptr</li>
   </ul>
 <li>PlatformBridge::Input: scroll wheel and two-finger stretch</li>
   <ul>
@@ -507,12 +527,10 @@ There are many C++ GUI frameworks available, but most come with one or more draw
 RetroFuturaGUI aims to break these barriers!
 
 ### Known Bugs
-- Window.hpp/.cpp
-  - glfwWindowHint(GLFW_TRANSPARENT_FRAMEBUFFER, GLFW_TRUE()) causes objects with transparency to show what's behind the window even if the background is completely opaque
 - SvgTexture.cpp
   - Draw() switches the depth test off for its whole draw so that its coplanar mask passes can blend over the base layer. That also lets any SVG drawn later in the frame paint over whatever is already there, whatever the z - an open ComboBox drop-down is covered by an SvgImage sitting in a later Lasagna cell, for instance. Keeping the test on and using GL_LEQUAL for the mask passes would keep the blending and respect depth
 - TextBox.cpp
   - A TextBox reports WidgetTypeID::Button, so DynamicLibWidgetManager::SetText and ConnectSlot take the Button branch, dynamic_cast to Button* yields null and is then dereferenced. The WidgetTypeID::TextBox branches are unreachable as a result
 
 ### Is AI used in this project?
-AI is often used for repititive tasks like adding code comments to functions, classes, and structs and updating this readme's ToDo and feature list. Shaders are mostly written by AI and AI is sometimes used for finding bugs and to assist with complicated calculations. The architecture of font loading and Scene management was partially planned with AI. AudioMetadata.hpp/cpp are entirely written by AI. YUV to RGB conversion was done by AI
+AI is often used for repititive tasks like adding code comments to functions, classes, and structs and updating this readme's ToDo and feature list. Shaders are mostly written by AI and AI is sometimes used for finding bugs and to assist with complicated calculations. The architecture of font loading and Scene management was partially planned with AI. AudioMetadata.hpp/cpp are entirely written by AI. YUV to RGB conversion was done by AI. Multi-window support, transparent windows and window docking were written by AI, following a design of mine

@@ -59,6 +59,7 @@ namespace RetroFuturaGUI
             FlexSizing _FlexSizing { FlexSizing::Fixed };
             f32 _Width { 1.0f };
             bool _IsWindowDrag { false }; //This marks whether a cell can be used to drag the owning window. True is surpressed if the widget is not a Label
+            bool _IsWindowUndock { false }; //A drag that starts in this cell takes the owning window out of its docking group first, then drags it alone. True is suppressed if the widget is clickable. The bar disables the cell's widget while the window is docked to nothing
         };
 
         MenuBar(const std::string& name, Projection* projection, IWidget* parentWidget, const WidgetTypeID parentWidgetTypeID, GLFWwindow* parentWindow);
@@ -136,6 +137,9 @@ namespace RetroFuturaGUI
 
         /// @brief Sets sections of the separator lines to skip drawing, which is what turns them into dashed lines; see Rectangle::SetBackgroundGaps.
         void SetSeparatorLinesGaps(const BackgroundGap& gap);
+
+        /// @brief Sets the corner rounding radii of the bar's own background and border, clockwise from the top-left.
+        void SetCornerRadii(const glm::vec4& radii);
 
     //Item background
         /// @brief Sets a single item background color for the given color state.
@@ -269,6 +273,25 @@ namespace RetroFuturaGUI
         ///        anything interactive would have its clicks swallowed by the drag.
         bool isPointInsideDragCell(const glm::vec2& point) const;
 
+        /// @brief Whether the point sits in a cell that pulls the window out of its docking group. Anything that is not
+        ///        clickable qualifies, an icon for instance, since the drag would swallow its clicks.
+        bool isPointInsideUndockCell(const glm::vec2& point) const;
+
+        /// @brief Takes the window the bar sits in out of its docking group.
+        void undockParentWindow() const;
+
+        /// @brief Enables the widgets in undock cells while the window is docked, and disables them while there is nothing to undock it from.
+        void syncUndockCells();
+
+        /// @brief Whether the cell holds a disabled widget. Its cell then draws in the disabled colors and takes no presses.
+        bool isItemDisabled(const uSize index) const;
+
+        /// @brief Tells the window the bar sits in that the user started dragging it, so it can offer to dock where it is let go.
+        void beginParentWindowDrag() const;
+
+        /// @brief Tells the window the bar sits in that the drag ended, which docks it if its preview showed.
+        void endParentWindowDrag() const;
+
         /// @brief Re-docks the bar against its edge and places the items in their cells.
         void updateLayout();
 
@@ -356,7 +379,7 @@ namespace RetroFuturaGUI
         std::vector<f32> _resolvedCellSizes {};
 
         /// @brief What a cell without a definition of its own is sized by: an even share of the bar.
-        inline static const FlexDefinition _kEvenShare { ._FlexSizing = FlexSizing::Star, ._Width = 1.0f, ._IsWindowDrag = false };
+        inline static const FlexDefinition _kEvenShare { ._FlexSizing = FlexSizing::Star, ._Width = 1.0f, ._IsWindowDrag = false, ._IsWindowUndock = false };
 
         /// @brief Stands in for "the cursor is on no cell at all" in _hoveredItemIndex.
         static constexpr uSize _kNoItem { ~uSize(0) };

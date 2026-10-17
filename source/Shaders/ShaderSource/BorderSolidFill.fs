@@ -65,6 +65,15 @@ float roundedRectSDF(vec2 p, vec2 halfSize, float radius)
     return length(max(d, 0.0)) + min(max(d.x, d.y), 0.0) - radius;
 }
 
+// The radius of the corner nearest to p, which is centered on the rectangle with y up. uCornerRadii runs clockwise from the top-left
+float cornerRadiusAt(vec2 p)
+{
+    if (p.x >= 0.0)
+        return p.y >= 0.0 ? uCornerRadii.y : uCornerRadii.z;
+
+    return p.y >= 0.0 ? uCornerRadii.x : uCornerRadii.w;
+}
+
 /* Tests distance d (pixels from a gap's anchor corner, along its edge) against a periodic
    ###offset___length###offset___length### pattern, where '#' is solid border and '_' is gap.
    repeat selects how many gap segments to draw: 0 disables the gap entirely, 1 reproduces a
@@ -282,7 +291,7 @@ void main()
     vec2 halfSize = vec2(0.5) * uScale;
     vec2 innerHalfSize = halfSize - vec2(uBorderWidth);
     
-    float cornerRadius = ((uDIP & ROUNDED_CORNERS) != 0) ? uCornerRadii.x : 0.0;
+    float cornerRadius = ((uDIP & ROUNDED_CORNERS) != 0) ? cornerRadiusAt(scaledPos) : 0.0; // each corner its own radius, so the outline follows the fill
     float innerRadius = max(cornerRadius - uBorderWidth, 0.0);
     
     float outerDist = roundedRectSDF(scaledPos, halfSize, cornerRadius);

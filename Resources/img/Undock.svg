@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   width="255.99998"
+   height="255.99998"
+   viewBox="0 0 67.733328 67.733329"
+   version="1.1"
+   id="Undock"
+   xmlns="http://www.w3.org/2000/svg">
+  <g id="layer1">
+    <path
+       style="fill:none;stroke:#ffffff;stroke-width:5.74836;stroke-linecap:round;stroke-linejoin:round"
+       d="M 30.48,2.874 H 2.874 V 64.859 H 64.859 V 37.253"
+       id="Window" />
+    <path
+       style="fill:none;stroke:#ffffff;stroke-width:5.74836;stroke-linecap:round;stroke-linejoin:round"
+       d="M 30.48,37.253 64.859,2.874"
+       id="ArrowShaft" />
+    <path
+       style="fill:none;stroke:#ffffff;stroke-width:5.74836;stroke-linecap:round;stroke-linejoin:round"
+       d="M 41.233,2.874 H 64.859 V 26.5"
+       id="ArrowHead" />
+  </g>
+</svg>

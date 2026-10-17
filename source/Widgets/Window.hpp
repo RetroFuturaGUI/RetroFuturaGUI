@@ -4,13 +4,15 @@
 #include "Image.hpp"
 #include "Lasagna.hpp"
 #include "IBackground.hpp"
+#include "IBorder.hpp"
 #include "IHierarchyNode.hpp"
+#include "DockEdge.hpp"
 #include <algorithm>
+#include <list>
 
 namespace RetroFuturaGUI
 {
     class Scene;
-    enum class DockEdge : u32;
 
     /// @brief An axis-aligned region of the window in projection space, with its origin at the bottom-left corner. Widgets take their position as a centre, so Center() converts.
     struct ScreenRect
@@ -22,7 +24,7 @@ namespace RetroFuturaGUI
         glm::vec2 Center() const { return _Origin + _Extent * 0.5f; }
     };
 
-    class Window final : public IBackground, public IHierarchyNode
+    class Window final : public IBackground, public IBorder, public IHierarchyNode
     {
     public:
         /// @brief Creates a native GLFW window with the given title and size.
@@ -92,7 +94,68 @@ namespace RetroFuturaGUI
         /// @brief Returns whether the window is maximized. GLFW is asked each time rather than a flag being kept, so the answer cannot drift from the real window.
         bool IsMaximized() const;
 
+        /// @brief Sets the radii of the background's and the border's corners, clockwise from the top-left. Docking may square
+        ///        some of them, see SetNoCornerRadiiWhenDocked.
+        void SetCornerRadii(const glm::vec4& radii);
+
+        /// @brief Returns the radii the background and border are drawn with: the ones set, with the corners where docked windows
+        ///        meet squared. A widget lining the window's edge, such as a window bar, can match its own corners to them.
+        glm::vec4 GetDrawnCornerRadii() const;
+
+    //Docking
+        /// @brief Docks a window to one of this window's edges, after the ones already docked there. The windows on one edge
+        ///        share its whole length, minus the docking padding between them, and keep their own depth. From then on the
+        ///        group moves together: moving or resizing any of its windows carries the others along.
+        /// @return false when the window is null, this window, already has a host (the window it is docked to), or is this
+        ///        window's host or a host further up.
+        bool DockWindow(Window* window, const DockEdge edge);
+
+        /// @brief Takes this window out of its docking group. It leaves the window it is docked to, whose other docked windows
+        ///        grow to fill the gap, and lets go of the windows docked to it where they are. Every window that stops being
+        ///        docked gets back the length it had before.
+        void Undock();
+
+        /// @brief Returns whether this window is docked to another window or has windows docked to it.
+        bool IsDocked() const;
+
+        /// @brief Sets the gap this window keeps to the windows it is docked with. The windows on one edge, and the window whose
+        ///        edge it is, all keep the largest padding among them, so it doesn't matter which window was docked onto which.
+        void SetDockingPadding(const f32 padding);
+
+        /// @brief Sets, for every window, whether the corners where docked windows meet are squared.
+        static void SetNoCornerRadiiWhenDocked(const bool noCornerRadii);
+
+        /// @brief Returns the window that drives the given GLFW window, or nullptr when there is none.
+        static Window* FromGlfwWindow(GLFWwindow* glfwWindow);
+
+        /// @brief Tells the window that the user started dragging it, from a window bar. While it is docked to nothing, dragging
+        ///        it near another window's edge shows a translucent preview of where it would dock, and letting go docks it there.
+        void BeginDrag();
+
+        /// @brief Tells the window that the drag ended. It docks where the preview showed, if a preview was showing.
+        void EndDrag();
+
     private:
+        /// @brief A screen rectangle in screen coordinates, y running downward: where a window is, or would be once docked.
+        struct DockRect
+        {
+            glm::ivec2
+                _Position { 0 },
+                _Size { 0 };
+        };
+
+        /// @brief Where a dragged window docks when it is let go, if anywhere.
+        struct DockSnap
+        {
+            Window* _Target { nullptr };
+            DockEdge _Edge { DockEdge::Top };
+            uSize _Index { 0 }; //its place among the windows already docked to that edge
+        };
+
+        /// @brief Creates a window, or a docking preview: a bare translucent window that stays out of input, docking and the
+        ///        window list, and only shows while a dragged window is near an edge it can dock to.
+        Window(std::string_view name, const i32 width, const i32 height, const bool isDockPreview);
+
         enum class ResizeEdge : u32
         {
             None,
@@ -111,6 +174,32 @@ namespace RetroFuturaGUI
 
         // The first window created. Every later one shares its textures, buffers and shaders, which are only loaded once
         static inline GLFWwindow* _shareWindow { nullptr };
+
+    // Docking
+        std::list<Window*>
+            _bottomDockedWindows {},
+            _rightDockedWindows {},
+            _topDockedWindows {},
+            _leftDockedWindows {};
+        f32 _dockingPadding { 0.0f };
+        static inline bool _noCornerRadiiWhenDocked { true };
+        Window* _dockHost { nullptr };
+        DockEdge _dockHostEdge { DockEdge::Top };
+        i32 _undockedLength { 0 }; //length before docking for restore when undocking
+        glm::ivec2 //Where the docking layout last saw or put the window, so a move or resize from anywhere else stands out
+            _dockedPosition { 0 },
+            _dockedSize { 0 };
+        bool 
+            _dockingLayoutPending { false },//The layout had to skip this window while it was minimized or maximized, so it lays out its group once it is restored
+            _isDragged { false },
+            _isDockPreview { false };
+        glm::ivec2 _dragStartPosition { 0 };
+        DockSnap _dockSnap {};
+        static constexpr i32 _snapDistance { 32 };
+        std::unique_ptr<Window> _dockPreview { nullptr }; //created the first time this window is dragged near an edge
+        glm::vec4
+            _cornerRadii { 0.0f },
+            _appliedCornerRadii { -1.0f }; //what the background and border last got, so they are only set again on a change
 
         i32
             _width { 1280 },
@@ -167,5 +256,102 @@ namespace RetroFuturaGUI
         void setResizeState(i32 button, i32 action, [[maybe_unused]] i32 mods);
         void resize();
         void updateProjection();
+
+        /// @brief The edge or corner a press at the given window coordinates would resize, or None.
+        ResizeEdge resizeEdgeAt(const f64 x, const f64 y) const;
+
+        /// @brief Whether that edge may be resized. A docked window's host decides its length and where its near edge sits, so
+        ///        only its far edge is left.
+        bool canResize(const ResizeEdge edge) const;
+
+        /// @brief Draws the border over the scenes, when it has a width.
+        void drawFrame();
+
+    //Docking
+        /// @brief The list of windows docked to the given edge.
+        std::list<Window*>& dockedWindows(const DockEdge edge);
+        const std::list<Window*>& dockedWindows(const DockEdge edge) const;
+
+        /// @brief The window at the root of this window's docking group, which is this one when it is docked to nothing.
+        Window* dockRoot();
+
+        /// @brief Whether the given window is this one's host, or the host of a window further up the chain.
+        bool isDockedTo(const Window* window) const;
+
+        /// @brief Leaves the window this one is docked to, which then lays out the windows left on that edge.
+        void leaveDockHost();
+
+        /// @brief Lets go of every window docked to this one, where they are.
+        void releaseDockedWindows();
+
+        /// @brief Gives the window back the length it had along its host's edge before docking.
+        void restoreUndockedLength();
+
+        /// @brief Places and sizes the windows docked to this one, then the ones docked to those.
+        void layoutDockedWindows();
+
+        /// @brief Moves and resizes the window for the docking layout, and remembers where it put it.
+        void setDockedGeometry(const glm::ivec2& position, const glm::ivec2& size);
+
+        /// @brief Called after each draw: when the window was moved or resized since the docking layout last placed it, the
+        ///        rest of its group follows.
+        void followDocking();
+
+        /// @brief Whether the window is minimized or maximized, which keeps it out of the docking layout until it is restored.
+        bool isMinimizedOrMaximized() const;
+
+        /// @brief The corners where a docked window meets this one, clockwise from the top-left like the radii.
+        glm::bvec4 squaredCorners() const;
+
+        /// @brief Hands the corner radii to the background and border, with the corners where docked windows meet squared.
+        void applyCornerRadii();
+
+        /// @brief Marks the two corners at the ends of an edge.
+        static void squareEdgeCorners(glm::bvec4& squared, const DockEdge edge);
+
+        /// @brief The edge across from the given one.
+        static DockEdge oppositeEdge(const DockEdge edge);
+
+        /// @brief Docks a window at the given place among the ones on the edge. DockWindow appends.
+        bool dockWindowAt(Window* window, const DockEdge edge, const uSize index);
+
+        /// @brief Where the window is on screen.
+        DockRect screenRect() const;
+
+        /// @brief The gap on one of this window's edges, in whole pixels: the largest docking padding among this window, the windows
+        ///        on that edge, and the one about to join them, if any. So the gap doesn't depend on which window hosts the other.
+        i32 edgeGap(const DockEdge edge, const Window* joining) const;
+
+        /// @brief The window's own size away from the given edge of its host: its width beside it, its height above or below.
+        i32 dockDepth(const DockEdge edge) const;
+
+        /// @brief Where a window of the given depth goes when it sits at index among count windows on one of this window's edges.
+        ///        The docking layout and the docking preview both place by it, so the preview shows exactly where it lands.
+        DockRect dockSlot(const DockRect& host, const DockEdge edge, const uSize index, const uSize count, const i32 depth, const i32 gap) const;
+
+        /// @brief The place a window would take among the ones already on the edge: before every one whose middle lies past its own.
+        uSize dockIndexFor(const DockRect& dragged, const DockEdge edge) const;
+
+        /// @brief Called after each draw: while the window is dragged, finds where it would dock and shows the preview there.
+        void updateDockSnap();
+
+        /// @brief The closest edge of another window the dragged one is near enough to dock to, if any.
+        DockSnap findDockSnap() const;
+
+        /// @brief Shows the docking preview over the slot the window would take on the edge, creating it the first time.
+        void showDockPreview(const DockRect& slot, const DockEdge edge);
+
+        /// @brief Hides the docking preview, if it shows.
+        void hideDockPreview();
+
+        /// @brief How far the dragged window is from where it would sit docked to the host's edge, across that edge.
+        static i32 dockDistance(const DockRect& dragged, const DockRect& host, const i32 gap, const DockEdge edge);
+
+        /// @brief How far the dragged window and the host overlap along the edge. Without overlap there is nothing to dock to.
+        static i32 dockOverlap(const DockRect& dragged, const DockRect& host, const DockEdge edge);
+
+        /// @brief Every window except docking previews, so a dragged window can find the ones it could dock to. Never destroyed,
+        ///        so a window destroyed late in shutdown can still take itself off it.
+        static std::vector<Window*>& allWindows();
     };
 }

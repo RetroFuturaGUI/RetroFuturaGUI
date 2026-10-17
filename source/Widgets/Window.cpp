@@ -5,7 +5,10 @@
 #include "Tooltip.hpp"
 #include <glm/gtc/type_ptr.hpp>
 #include <algorithm>
+#include <cmath>
+#include <cstdlib>
 #include <print>
+#include <utility>
 
 #if defined(TARGET_PLATFORM_LINUX)
     #define GLFW_EXPOSE_NATIVE_X11
@@ -15,9 +18,18 @@
 #include <GLFW/glfw3native.h>
 
 RetroFuturaGUI::Window::Window(std::string_view name, const i32 width, const i32 height)
+: Window(name, width, height, false)
+{
+}
+
+RetroFuturaGUI::Window::Window(std::string_view name, const i32 width, const i32 height, const bool isDockPreview)
 : _width(width), _height(height), _name(name)
 {
+	_isDockPreview = isDockPreview;
 	createWindow();
+
+	if(!_isDockPreview)
+		allWindows().push_back(this);
 
 	if(_cursorsInitialized)
 		return;
@@ -32,13 +44,17 @@ RetroFuturaGUI::Window::Window(std::string_view name, const i32 width, const i32
 
 RetroFuturaGUI::Window::~Window()
 {
+	std::erase(allWindows(), this);
+	Undock();
+
 	if(!_window)
 		return;
 
-	//The background's GL objects belong to this window's context, so they go while it still exists and is current
+	//The background's and the border's GL objects belong to this window's context, so they go while it still exists and is current
 	glfwMakeContextCurrent(_window);
 	_background.reset();
 	_backgroundImage.reset();
+	_border.reset();
 
 	//A later window must not try to share with a destroyed one
 	if(_shareWindow == _window)
@@ -49,9 +65,18 @@ RetroFuturaGUI::Window::~Window()
 
 void RetroFuturaGUI::Window::createWindow()
 {
+	//Hints outlive the window they were set for, so every one this window depends on is set each time
 	glfwWindowHint(GLFW_DECORATED, GLFW_FALSE);
-	glfwWindowHint(GLFW_TRANSPARENT_FRAMEBUFFER, GLFW_FALSE); //Using GLFW_TRUE enables the possibility of rendering transparent backgrounds (desired) but causes any other object with transparency to be bugged (makes everything behind the window is visible)
 	glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
+
+	//enable transparency on cut out corners
+	glfwWindowHint(GLFW_TRANSPARENT_FRAMEBUFFER, GLFW_TRUE);
+	glfwWindowHint(GLFW_ALPHA_BITS, 8);
+
+	//A docking preview shows only once it is placed, stays above the windows it previews and never takes the focus
+	glfwWindowHint(GLFW_VISIBLE, _isDockPreview ? GLFW_FALSE : GLFW_TRUE);
+	glfwWindowHint(GLFW_FLOATING, _isDockPreview ? GLFW_TRUE : GLFW_FALSE);
+	glfwWindowHint(GLFW_FOCUS_ON_SHOW, _isDockPreview ? GLFW_FALSE : GLFW_TRUE);
 
 	//Shares GL objects with the first window, so the shaders compiled once below and the fonts and images loaded there work in this one too.
 	//VAOs are never shared, so a widget still has to be built, drawn and destroyed with its own window's context current.
@@ -67,6 +92,10 @@ void RetroFuturaGUI::Window::createWindow()
 
 	if(!_shareWindow)
 		_shareWindow = _window;
+
+	//Lets a window bar, which only gets the GLFW window, reach this one, e.g. to undock it
+	glfwSetWindowUserPointer(_window, this);
+
 	_prevResizeX = (f64)_width;
 	_prevResizeY = (f64)_height;
 
@@ -83,7 +112,8 @@ void RetroFuturaGUI::Window::createWindow()
 
 	glEnable(GL_DEPTH_TEST);
 	glEnable(GL_BLEND);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
+	glClearColor(0.0f, 0.0f, 0.0f, 0.0f); //what is left where nothing draws, the corners outside the background: invisible
 	glViewport(0, 0, _width, _height);
 
 	if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
@@ -111,7 +141,20 @@ void RetroFuturaGUI::Window::createWindow()
 		_background->SetRotation(glm::vec3(0.0f));
 	}
 
+	_border = std::make_unique<Rectangle>(_projection.get());
+
+	if(_border)
+	{
+		_border->SetRectangleMode(RectangleMode::Border);
+		_border->SetPosition(glm::vec3((f32)_width * 0.5f, (f32)_height * 0.5f, 0.0f));
+		_border->SetSize(glm::vec2((f32)_width, (f32)_height));
+		_border->SetRotation(glm::vec3(0.0f));
+		//No frame until one is asked for, since a Rectangle starts with a 5 px border
+		_border->SetBorderWidth(0.0f);
+	}
+
 	SetBackgroundColor(glm::vec4(0.086f, 0.086f, 0.1137f, 1.0f), ColorState::Enabled);
+	setBorderColors();
 }
 
 void RetroFuturaGUI::Window::SetWindowTitle(std::string_view title)
@@ -159,20 +202,91 @@ void RetroFuturaGUI::Window::setCursorPosition()
 	_cursorPosY = y;
 }
 
-void RetroFuturaGUI::Window::setCursorIcon() // clean up this abomination
+void RetroFuturaGUI::Window::setCursorIcon()
 {
-	if ((_cursorPosY < _boundaryThreshold && _cursorPosX < _boundaryThreshold)
-		|| (_cursorPosY > _height - _boundaryThreshold && _cursorPosX > _width - _boundaryThreshold))
+	ResizeEdge edge { resizeEdgeAt(_cursorPosX, _cursorPosY) };
+
+	if(!canResize(edge))
+		edge = ResizeEdge::None;
+
+	switch(edge)
+	{
+		case ResizeEdge::TopLeft:
+		case ResizeEdge::BottomRight:
 			glfwSetCursor(_window, _resizeCursorTLBR);
-	else if ((_cursorPosY < _boundaryThreshold && _cursorPosX > _width - _boundaryThreshold)
-		|| (_cursorPosY > _height - _boundaryThreshold && _cursorPosX < _boundaryThreshold))
+		break;
+		case ResizeEdge::TopRight:
+		case ResizeEdge::BottomLeft:
 			glfwSetCursor(_window, _resizeCursorTRBL);
-	else if (_cursorPosX < _boundaryThreshold || _cursorPosX > _width - _boundaryThreshold)
-		glfwSetCursor(_window, _resizeCursorHorizontal);
-	else if (_cursorPosY < _boundaryThreshold || _cursorPosY > _height - _boundaryThreshold)
-		glfwSetCursor(_window, _resizeCursorVertical);
-	else
-		glfwSetCursor(_window, _defaultCursor);
+		break;
+		case ResizeEdge::Left:
+		case ResizeEdge::Right:
+			glfwSetCursor(_window, _resizeCursorHorizontal);
+		break;
+		case ResizeEdge::Top:
+		case ResizeEdge::Bottom:
+			glfwSetCursor(_window, _resizeCursorVertical);
+		break;
+		default:
+			glfwSetCursor(_window, _defaultCursor);
+		break;
+	}
+}
+
+RetroFuturaGUI::Window::ResizeEdge RetroFuturaGUI::Window::resizeEdgeAt(const f64 x, const f64 y) const
+{
+	const bool
+		nearLeft { x < _boundaryThreshold },
+		nearRight { x > _width - _boundaryThreshold },
+		nearTop { y < _boundaryThreshold },
+		nearBottom { y > _height - _boundaryThreshold };
+
+	//Corners first, so the cursor near one resizes both of its edges
+	if(nearTop && nearLeft)
+		return ResizeEdge::TopLeft;
+
+	if(nearTop && nearRight)
+		return ResizeEdge::TopRight;
+
+	if(nearBottom && nearLeft)
+		return ResizeEdge::BottomLeft;
+
+	if(nearBottom && nearRight)
+		return ResizeEdge::BottomRight;
+
+	if(nearLeft)
+		return ResizeEdge::Left;
+
+	if(nearRight)
+		return ResizeEdge::Right;
+
+	if(nearTop)
+		return ResizeEdge::Top;
+
+	if(nearBottom)
+		return ResizeEdge::Bottom;
+
+	return ResizeEdge::None;
+}
+
+bool RetroFuturaGUI::Window::canResize(const ResizeEdge edge) const
+{
+	if(!_dockHost)
+		return true;
+
+	switch(_dockHostEdge)
+	{
+		case DockEdge::Top:
+			return ResizeEdge::Top == edge;
+		case DockEdge::Right:
+			return ResizeEdge::Right == edge;
+		case DockEdge::Bottom:
+			return ResizeEdge::Bottom == edge;
+		case DockEdge::Left:
+			return ResizeEdge::Left == edge;
+		default:
+			return false;
+	}
 }
 
 void RetroFuturaGUI::Window::setResizeState(i32 button, i32 action, [[maybe_unused]] i32 mods)
@@ -194,25 +308,11 @@ void RetroFuturaGUI::Window::setResizeState(i32 button, i32 action, [[maybe_unus
 		if(0.0 > _cursorPosX || 0.0 > _cursorPosY || static_cast<f64>(_width) <= _cursorPosX || static_cast<f64>(_height) <= _cursorPosY)
 			return;
 
-		if(_cursorPosY < _boundaryThreshold && _cursorPosX < _boundaryThreshold)
-			_resizeEdge = ResizeEdge::TopLeft;
-		else if (_cursorPosY < _boundaryThreshold && _cursorPosX > _width - _boundaryThreshold) 
-			_resizeEdge = ResizeEdge::TopRight;
-		else if (_cursorPosY > _height - _boundaryThreshold && _cursorPosX < _boundaryThreshold) 
-			_resizeEdge = ResizeEdge::BottomLeft;
-		else if (_cursorPosY > _height - _boundaryThreshold && _cursorPosX > _width - _boundaryThreshold) 
-			_resizeEdge = ResizeEdge::BottomRight;
-		else if (_cursorPosX < _boundaryThreshold)
-			_resizeEdge = ResizeEdge::Left;
-		else if (_cursorPosX > _width - _boundaryThreshold) 
-			_resizeEdge = ResizeEdge::Right;
-		else if (_cursorPosY < _boundaryThreshold) 
-			_resizeEdge = ResizeEdge::Top;
-		else if (_cursorPosY > _height - _boundaryThreshold) 
-			_resizeEdge = ResizeEdge::Bottom;
-		else 
+		_resizeEdge = resizeEdgeAt(_cursorPosX, _cursorPosY);
+
+		if(!canResize(_resizeEdge))
 			_resizeEdge = ResizeEdge::None;
-		
+
 		if (_resizeEdge != ResizeEdge::None)
 			_isResizing = true;
 	} 
@@ -312,6 +412,12 @@ void RetroFuturaGUI::Window::updateProjection()
 		_background->SetPosition(glm::vec3((f32)_width * 0.5f, (f32)_height * 0.5f, -1.0f));
 	}
 
+	if(_border)
+	{
+		_border->SetSize(glm::vec2((f32)_width, (f32)_height));
+		_border->SetPosition(glm::vec3((f32)_width * 0.5f, (f32)_height * 0.5f, 0.0f));
+	}
+
 	_lastSize = { _width, _height };
 	_windowSizeChanged = false;
 }
@@ -329,14 +435,18 @@ void RetroFuturaGUI::Window::Draw()
 	//Another window may have drawn last, and every GL call below has to land in this window's context
 	glfwMakeContextCurrent(_window);
 
-	pollInput();
+	if(!_isDockPreview)
+		pollInput();
 
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	glfwWindowHint(GLFW_TRANSPARENT_FRAMEBUFFER, GLFW_FALSE);
-	glfwWindowHint(GLFW_ALPHA_BITS, 0); // Disable alpha bits if not needed
+
+	//Color blends as usual. Alpha only ever adds up, so a semi-transparent widget on the opaque background leaves the window
+	//opaque there, instead of lowering its alpha and letting the desktop show through. The result is premultiplied by alpha,
+	//which is what the compositor expects of a transparent framebuffer.
+	glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
 
 	updateProjection();
+	applyCornerRadii();
 	drawBackground();
 
 	if(_lasagna)
@@ -352,10 +462,26 @@ void RetroFuturaGUI::Window::Draw()
 		_scene->Draw();
 	}
 
+	drawFrame();
 	Tooltip::DrawShown(); //last, so it covers every scene
-
 	glfwSwapBuffers(_window);
 	glfwPollEvents();
+	followDocking();//After the scenes, because a window bar may have dragged this window while it drew
+	updateDockSnap();
+}
+
+void RetroFuturaGUI::Window::drawFrame()
+{
+	if(!_border)
+		return;
+
+	//Width 0, the default, means no frame
+	if(0.0f >= _border->GetBorderWidth())
+		return;
+
+	//A fresh depth buffer, so the frame lies over every scene
+	glClear(GL_DEPTH_BUFFER_BIT);
+	drawBorder();
 }
 
 void RetroFuturaGUI::Window::SetWindowSize(i32 width, i32 height)
@@ -532,4 +658,695 @@ bool RetroFuturaGUI::Window::IsMaximized() const
         return false;
 
     return GLFW_TRUE == glfwGetWindowAttrib(_window, GLFW_MAXIMIZED);
+}
+
+void RetroFuturaGUI::Window::SetCornerRadii(const glm::vec4& radii)
+{
+	_cornerRadii = radii;
+}
+
+bool RetroFuturaGUI::Window::DockWindow(Window* window, const DockEdge edge)
+{
+	return dockWindowAt(window, edge, dockedWindows(edge).size());
+}
+
+bool RetroFuturaGUI::Window::dockWindowAt(Window* window, const DockEdge edge, const uSize index)
+{
+	if(!window)
+		return false;
+
+	if(!window->_window)
+		return false;
+
+	if(window == this)
+		return false;
+
+	//A window has one host at most, the window whose edge sets its length and position, and never one docked to it, so every
+	//group stays a tree. It can still border more windows: the ones docked to its own edges, and its neighbors on the host's edge.
+	if(window->_dockHost)
+		return false;
+
+	if(isDockedTo(window))
+		return false;
+
+	glm::ivec2 size { 0 };
+	glfwGetWindowSize(window->_window, &size.x, &size.y);
+
+	window->_dockHost = this;
+	window->_dockHostEdge = edge;
+	//The length this window's edge takes over, so undocking can give it back
+	window->_undockedLength = DockEdge::Left == edge || DockEdge::Right == edge ? size.y : size.x;
+
+	std::list<Window*>& docked { dockedWindows(edge) };
+	docked.insert(std::next(docked.begin(), static_cast<i64>((std::min)(index, docked.size()))), window);
+
+	layoutDockedWindows();
+	return true;
+}
+
+void RetroFuturaGUI::Window::Undock()
+{
+	leaveDockHost();
+	releaseDockedWindows();
+}
+
+bool RetroFuturaGUI::Window::IsDocked() const
+{
+	return _dockHost != nullptr
+		|| !_topDockedWindows.empty()
+		|| !_rightDockedWindows.empty()
+		|| !_bottomDockedWindows.empty()
+		|| !_leftDockedWindows.empty();
+}
+
+void RetroFuturaGUI::Window::SetDockingPadding(const f32 padding)
+{
+	_dockingPadding = (std::max)(padding, 0.0f);
+    dockRoot()->layoutDockedWindows();
+}
+
+void RetroFuturaGUI::Window::SetNoCornerRadiiWhenDocked(const bool noCornerRadii)
+{
+	_noCornerRadiiWhenDocked = noCornerRadii;
+}
+
+RetroFuturaGUI::Window* RetroFuturaGUI::Window::FromGlfwWindow(GLFWwindow* glfwWindow)
+{
+	if(!glfwWindow)
+		return nullptr;
+
+	return static_cast<Window*>(glfwGetWindowUserPointer(glfwWindow));
+}
+
+std::list<RetroFuturaGUI::Window*>& RetroFuturaGUI::Window::dockedWindows(const DockEdge edge)
+{
+	return const_cast<std::list<Window*>&>(std::as_const(*this).dockedWindows(edge));
+}
+
+const std::list<RetroFuturaGUI::Window*>& RetroFuturaGUI::Window::dockedWindows(const DockEdge edge) const
+{
+	switch(edge)
+	{
+		case DockEdge::Right:
+			return _rightDockedWindows;
+		case DockEdge::Bottom:
+			return _bottomDockedWindows;
+		case DockEdge::Left:
+			return _leftDockedWindows;
+		default:
+			return _topDockedWindows;
+	}
+}
+
+RetroFuturaGUI::Window* RetroFuturaGUI::Window::dockRoot()
+{
+	Window* root { this };
+
+	while(root->_dockHost)
+		root = root->_dockHost;
+
+	return root;
+}
+
+bool RetroFuturaGUI::Window::isDockedTo(const Window* window) const
+{
+	for(const Window* host { _dockHost }; host; host = host->_dockHost)
+	{
+		if(host == window)
+			return true;
+	}
+
+	return false;
+}
+
+void RetroFuturaGUI::Window::leaveDockHost()
+{
+	if(!_dockHost)
+		return;
+
+	Window* host { _dockHost };
+	host->dockedWindows(_dockHostEdge).remove(this);
+	_dockHost = nullptr;
+	restoreUndockedLength();
+	host->layoutDockedWindows(); //The windows left on that edge share all of it again, so they grow into the gap
+}
+
+void RetroFuturaGUI::Window::releaseDockedWindows()
+{
+	for(const DockEdge edge : { DockEdge::Top, DockEdge::Right, DockEdge::Bottom, DockEdge::Left })
+	{
+		std::list<Window*>& docked { dockedWindows(edge) };
+
+		for(Window* window : docked)
+		{
+			if(!window)
+				continue;
+
+			window->_dockHost = nullptr;
+			window->restoreUndockedLength();
+		}
+
+		docked.clear();
+	}
+}
+
+void RetroFuturaGUI::Window::restoreUndockedLength()
+{
+	const i32 length { _undockedLength };
+	_undockedLength = 0;
+
+	if(!_window)
+		return;
+
+	if(0 >= length)
+		return;
+
+	if(isMinimizedOrMaximized())
+		return;
+
+	glm::ivec2 size { 0 };
+	glfwGetWindowSize(_window, &size.x, &size.y);
+
+	if(DockEdge::Left == _dockHostEdge || DockEdge::Right == _dockHostEdge)
+		size.y = length;
+	else
+		size.x = length;
+
+	glfwSetWindowSize(_window, size.x, size.y);
+}
+
+void RetroFuturaGUI::Window::layoutDockedWindows()
+{
+	if(!_window)
+		return;
+
+	//Its docked windows stay where they are rather than stacking off screen or over it, until it is restored
+	if(isMinimizedOrMaximized())
+	{
+		_dockingLayoutPending = true;
+		return;
+	}
+
+	const DockRect host { screenRect() };
+	_dockedPosition = host._Position;
+	_dockedSize = host._Size;
+
+	for(const DockEdge edge : { DockEdge::Top, DockEdge::Right, DockEdge::Bottom, DockEdge::Left })
+	{
+		const std::list<Window*>& docked { dockedWindows(edge) };
+		const uSize count { docked.size() };
+		const i32 gap { edgeGap(edge, nullptr) };
+		uSize index { 0 };
+
+		for(Window* window : docked)
+		{
+			const uSize slot { index };
+			++index;
+
+			if(!window)
+				continue;
+
+			if(!window->_window)
+				continue;
+
+			const DockRect placed { dockSlot(host, edge, slot, count, window->dockDepth(edge), gap) };
+			window->setDockedGeometry(placed._Position, placed._Size);
+			window->layoutDockedWindows();
+		}
+	}
+}
+
+RetroFuturaGUI::Window::DockRect RetroFuturaGUI::Window::screenRect() const
+{
+	DockRect rect {};
+
+	if(!_window)
+		return rect;
+
+	glfwGetWindowPos(_window, &rect._Position.x, &rect._Position.y);
+	glfwGetWindowSize(_window, &rect._Size.x, &rect._Size.y);
+	return rect;
+}
+
+i32 RetroFuturaGUI::Window::edgeGap(const DockEdge edge, const Window* joining) const
+{
+	f32 padding { _dockingPadding };
+
+	for(const Window* window : dockedWindows(edge))
+	{
+		if(!window)
+			continue;
+
+		padding = (std::max)(padding, window->_dockingPadding);
+	}
+
+	if(!joining)
+		return static_cast<i32>(std::lround(padding));
+
+	return static_cast<i32>(std::lround((std::max)(padding, joining->_dockingPadding)));
+}
+
+i32 RetroFuturaGUI::Window::dockDepth(const DockEdge edge) const
+{
+	const DockRect rect { screenRect() };
+	return DockEdge::Left == edge || DockEdge::Right == edge ? rect._Size.x : rect._Size.y;
+}
+
+RetroFuturaGUI::Window::DockRect RetroFuturaGUI::Window::dockSlot(const DockRect& host, const DockEdge edge, const uSize index, const uSize count, const i32 depth, const i32 gap) const
+{
+	//The windows on an edge share its whole length, minus the gaps between them, and keep their own depth away from it
+	const bool alongHeight { DockEdge::Left == edge || DockEdge::Right == edge };
+	const i32
+		edgeLength { alongHeight ? host._Size.y : host._Size.x }, //Screen coordinates, so y runs downward.
+		windowCount { (std::max)(static_cast<i32>(count), 1) },
+		slot { static_cast<i32>(index) },
+		share { (edgeLength - gap * (windowCount - 1)) / windowCount },
+		offset { slot * (share + gap) },
+		//The last one takes what the division left over
+		length { (std::max)(windowCount - 1 == slot ? edgeLength - offset : share, _minWindowSpan) };
+
+	switch(edge)
+	{
+		case DockEdge::Top:
+			return DockRect { ._Position = host._Position + glm::ivec2(offset, -gap - depth), ._Size = glm::ivec2(length, depth) };
+		case DockEdge::Right:
+			return DockRect { ._Position = host._Position + glm::ivec2(host._Size.x + gap, offset), ._Size = glm::ivec2(depth, length) };
+		case DockEdge::Bottom:
+			return DockRect { ._Position = host._Position + glm::ivec2(offset, host._Size.y + gap), ._Size = glm::ivec2(length, depth) };
+		default:
+			return DockRect { ._Position = host._Position + glm::ivec2(-gap - depth, offset), ._Size = glm::ivec2(depth, length) };
+	}
+}
+
+void RetroFuturaGUI::Window::setDockedGeometry(const glm::ivec2& position, const glm::ivec2& size)
+{
+	if(!_window)
+		return;
+
+	if(isMinimizedOrMaximized())
+	{
+		_dockingLayoutPending = true;
+		return;
+	}
+
+	glm::ivec2
+		currentPosition { 0 },
+		currentSize { 0 };
+	glfwGetWindowPos(_window, &currentPosition.x, &currentPosition.y);
+	glfwGetWindowSize(_window, &currentSize.x, &currentSize.y);
+
+	if(size != currentSize)
+		glfwSetWindowSize(_window, size.x, size.y);
+
+	if(position != currentPosition)
+		glfwSetWindowPos(_window, position.x, position.y);
+
+	_dockedPosition = position;
+	_dockedSize = size;
+}
+
+void RetroFuturaGUI::Window::followDocking()
+{
+	if(!_window)
+		return;
+
+	if(!IsDocked())
+		return;
+
+	if(isMinimizedOrMaximized())
+		return;
+
+	Window* root { dockRoot() };
+
+	if(_dockingLayoutPending)
+	{
+		_dockingLayoutPending = false;
+		root->layoutDockedWindows();
+		return;
+	}
+
+	glm::ivec2
+		position { 0 },
+		size { 0 };
+	glfwGetWindowPos(_window, &position.x, &position.y);
+	glfwGetWindowSize(_window, &size.x, &size.y);
+
+	if(position == _dockedPosition && size == _dockedSize)
+		return;
+
+	//Moved or resized by something other than the docking layout: a window bar drag, an edge drag or the system. A docked
+	//window that was moved, not resized, carries its group along, so the root moves by as much and the layout then places
+	//every other window around it. A resize moves nothing: the layout already puts a resized window where its new size goes.
+	if(root != this && size == _dockedSize)
+	{
+		//A minimized or maximized root can't move
+		if(root->isMinimizedOrMaximized())
+		{
+			_dockedPosition = position;
+			root->_dockingLayoutPending = true;
+			return;
+		}
+
+		const glm::ivec2 shift { position - _dockedPosition };
+		glm::ivec2 rootPosition { 0 };
+		glfwGetWindowPos(root->_window, &rootPosition.x, &rootPosition.y);
+		glfwSetWindowPos(root->_window, rootPosition.x + shift.x, rootPosition.y + shift.y);
+	}
+
+	root->layoutDockedWindows();
+}
+
+bool RetroFuturaGUI::Window::isMinimizedOrMaximized() const
+{
+	if(!_window)
+		return false;
+
+	return GLFW_TRUE == glfwGetWindowAttrib(_window, GLFW_ICONIFIED) || GLFW_TRUE == glfwGetWindowAttrib(_window, GLFW_MAXIMIZED);
+}
+
+glm::bvec4 RetroFuturaGUI::Window::squaredCorners() const
+{
+	glm::bvec4 squared { false };
+
+	for(const DockEdge edge : { DockEdge::Top, DockEdge::Right, DockEdge::Bottom, DockEdge::Left })
+	{
+		if(dockedWindows(edge).empty())
+			continue;
+
+		squareEdgeCorners(squared, edge);
+	}
+
+	if(!_dockHost)
+		return squared;
+
+	//The edge facing the host lies against it from end to end
+	squareEdgeCorners(squared, oppositeEdge(_dockHostEdge));
+
+	//Neighbors on the same edge of the host sit before and after this window, across the docking padding
+	const std::list<Window*>& neighbors { _dockHost->dockedWindows(_dockHostEdge) };
+	const bool alongHeight { DockEdge::Left == _dockHostEdge || DockEdge::Right == _dockHostEdge };
+
+	if(neighbors.front() != this)
+		squareEdgeCorners(squared, alongHeight ? DockEdge::Top : DockEdge::Left);
+
+	if(neighbors.back() != this)
+		squareEdgeCorners(squared, alongHeight ? DockEdge::Bottom : DockEdge::Right);
+
+	return squared;
+}
+
+glm::vec4 RetroFuturaGUI::Window::GetDrawnCornerRadii() const
+{
+	glm::vec4 radii { _cornerRadii };
+
+	if(!_noCornerRadiiWhenDocked)
+		return radii;
+
+	const glm::bvec4 squared { squaredCorners() };
+
+	for(glm::length_t corner = 0; 4 > corner; ++corner)
+	{
+		if(squared[corner])
+			radii[corner] = 0.0f;
+	}
+
+	return radii;
+}
+
+void RetroFuturaGUI::Window::applyCornerRadii()
+{
+	const glm::vec4 radii { GetDrawnCornerRadii() };
+
+	if(radii == _appliedCornerRadii)
+		return;
+
+	_appliedCornerRadii = radii;
+	setBackgroundCornerRadii(radii);
+	setBorderCornerRadii(radii);
+}
+
+void RetroFuturaGUI::Window::squareEdgeCorners(glm::bvec4& squared, const DockEdge edge)
+{
+	switch(edge)
+	{
+		case DockEdge::Top:
+			squared.x = true;
+			squared.y = true;
+		break;
+		case DockEdge::Right:
+			squared.y = true;
+			squared.z = true;
+		break;
+		case DockEdge::Bottom:
+			squared.z = true;
+			squared.w = true;
+		break;
+		case DockEdge::Left:
+			squared.w = true;
+			squared.x = true;
+		break;
+		default:
+		break;
+	}
+}
+
+RetroFuturaGUI::DockEdge RetroFuturaGUI::Window::oppositeEdge(const DockEdge edge)
+{
+	switch(edge)
+	{
+		case DockEdge::Top:
+			return DockEdge::Bottom;
+		case DockEdge::Right:
+			return DockEdge::Left;
+		case DockEdge::Bottom:
+			return DockEdge::Top;
+		default:
+			return DockEdge::Right;
+	}
+}
+
+void RetroFuturaGUI::Window::BeginDrag()
+{
+	if(!_window)
+		return;
+
+	_isDragged = true;
+	_dockSnap = {};
+	glfwGetWindowPos(_window, &_dragStartPosition.x, &_dragStartPosition.y);
+}
+
+void RetroFuturaGUI::Window::EndDrag()
+{
+	if(!_isDragged)
+		return;
+
+	_isDragged = false;
+	hideDockPreview();
+
+	const DockSnap snap { _dockSnap };
+	_dockSnap = {};
+
+	if(!snap._Target)
+		return;
+
+	if(std::ranges::find(allWindows(), snap._Target) == allWindows().end())
+		return;
+
+	snap._Target->dockWindowAt(this, snap._Edge, snap._Index);
+}
+
+void RetroFuturaGUI::Window::updateDockSnap()
+{
+	if(!_isDragged)
+		return;
+
+	_dockSnap = findDockSnap();
+
+	if(!_dockSnap._Target)
+	{
+		hideDockPreview();
+		return;
+	}
+
+	//The slot this window would take, with the windows already on that edge making room for it
+	const DockRect host { _dockSnap._Target->screenRect() };
+	const uSize count { _dockSnap._Target->dockedWindows(_dockSnap._Edge).size() + 1 };
+	const i32 gap { _dockSnap._Target->edgeGap(_dockSnap._Edge, this) };
+	showDockPreview(_dockSnap._Target->dockSlot(host, _dockSnap._Edge, _dockSnap._Index, count, dockDepth(_dockSnap._Edge), gap), _dockSnap._Edge);
+}
+
+RetroFuturaGUI::Window::DockSnap RetroFuturaGUI::Window::findDockSnap() const
+{
+	if(!_window)
+		return {};
+
+	//Only a window docked to nothing docks by dragging. Dragging a docked one carries its whole group along instead.
+	if(_dockHost)
+		return {};
+
+	if(isMinimizedOrMaximized())
+		return {};
+
+	const DockRect dragged { screenRect() };
+
+	//A click on the title is no drag: the window has to have moved
+	if(dragged._Position == _dragStartPosition)
+		return {};
+
+	DockSnap snap {};
+	i32 closest { _snapDistance + 1 };
+
+	for(Window* target : allWindows())
+	{
+		if(!target)
+			continue;
+
+		if(target == this)
+			continue;
+
+		if(!target->_window)
+			continue;
+
+		//A window of its own group would make the group a loop
+		if(target->isDockedTo(this))
+			continue;
+
+		if(target->isMinimizedOrMaximized())
+			continue;
+
+		if(GLFW_FALSE == glfwGetWindowAttrib(target->_window, GLFW_VISIBLE))
+			continue;
+
+		const DockRect host { target->screenRect() };
+
+		for(const DockEdge edge : { DockEdge::Top, DockEdge::Right, DockEdge::Bottom, DockEdge::Left })
+		{
+			//Measured to where it would really sit, with the gap it would get there
+			const i32 distance { dockDistance(dragged, host, target->edgeGap(edge, this), edge) };
+
+			if(distance >= closest)
+				continue;
+
+			if(0 >= dockOverlap(dragged, host, edge))
+				continue;
+
+			closest = distance;
+			snap = DockSnap { ._Target = target, ._Edge = edge, ._Index = target->dockIndexFor(dragged, edge) };
+		}
+	}
+
+	return snap;
+}
+
+uSize RetroFuturaGUI::Window::dockIndexFor(const DockRect& dragged, const DockEdge edge) const
+{
+	//Along the edge: y beside the window, x above or below it
+	const glm::length_t axis { DockEdge::Left == edge || DockEdge::Right == edge ? 1 : 0 };
+	const i32 draggedMiddle { dragged._Position[axis] + dragged._Size[axis] / 2 };
+	uSize index { 0 };
+
+	for(const Window* window : dockedWindows(edge))
+	{
+		if(!window)
+			continue;
+
+		const DockRect docked { window->screenRect() };
+
+		if(docked._Position[axis] + docked._Size[axis] / 2 < draggedMiddle)
+			++index;
+	}
+
+	return index;
+}
+
+void RetroFuturaGUI::Window::showDockPreview(const DockRect& slot, const DockEdge edge)
+{
+	if(!_dockPreview)
+	{
+		_dockPreview = std::unique_ptr<Window>(new Window("DockPreview", slot._Size.x, slot._Size.y, true));
+		_dockPreview->SetWindowTitle("Dock preview");
+		_dockPreview->SetBackgroundColor(glm::vec4(0.3f, 0.55f, 1.0f, 0.25f), ColorState::Enabled);
+		_dockPreview->SetBorderWidth(2.0f);
+		_dockPreview->SetBorderColor(glm::vec4(0.45f, 0.7f, 1.0f, 0.85f), ColorState::Enabled);
+	}
+
+	if(!_dockPreview->_window)
+		return;
+
+	//Rounded like this window, with the corners that would meet the target squared like they will be once docked
+	glm::vec4 radii { _cornerRadii };
+
+	if(_noCornerRadiiWhenDocked)
+	{
+		glm::bvec4 squared { false };
+		squareEdgeCorners(squared, oppositeEdge(edge));
+
+		for(glm::length_t corner = 0; 4 > corner; ++corner)
+		{
+			if(squared[corner])
+				radii[corner] = 0.0f;
+		}
+	}
+
+	_dockPreview->SetCornerRadii(radii);
+
+	const DockRect current { _dockPreview->screenRect() };
+
+	if(slot._Size != current._Size)
+		glfwSetWindowSize(_dockPreview->_window, slot._Size.x, slot._Size.y);
+
+	if(slot._Position != current._Position)
+		glfwSetWindowPos(_dockPreview->_window, slot._Position.x, slot._Position.y);
+
+	_dockPreview->Draw(); //Drawn before it shows, so it never shows a frame it hasn't drawn
+
+	if(GLFW_FALSE == glfwGetWindowAttrib(_dockPreview->_window, GLFW_VISIBLE))
+		glfwShowWindow(_dockPreview->_window);
+}
+
+void RetroFuturaGUI::Window::hideDockPreview()
+{
+	if(!_dockPreview)
+		return;
+
+	if(!_dockPreview->_window)
+		return;
+
+	if(GLFW_FALSE == glfwGetWindowAttrib(_dockPreview->_window, GLFW_VISIBLE))
+		return;
+
+	glfwHideWindow(_dockPreview->_window);
+}
+
+i32 RetroFuturaGUI::Window::dockDistance(const DockRect& dragged, const DockRect& host, const i32 gap, const DockEdge edge)
+{
+	switch(edge)
+	{
+		case DockEdge::Top:
+			return std::abs(dragged._Position.y + dragged._Size.y - (host._Position.y - gap));
+		case DockEdge::Right:
+			return std::abs(dragged._Position.x - (host._Position.x + host._Size.x + gap));
+		case DockEdge::Bottom:
+			return std::abs(dragged._Position.y - (host._Position.y + host._Size.y + gap));
+		default:
+			return std::abs(dragged._Position.x + dragged._Size.x - (host._Position.x - gap));
+	}
+}
+
+i32 RetroFuturaGUI::Window::dockOverlap(const DockRect& dragged, const DockRect& host, const DockEdge edge)
+{
+	//Along the edge: y beside the host, x above or below it
+	const glm::length_t axis { DockEdge::Left == edge || DockEdge::Right == edge ? 1 : 0 };
+	const i32
+		start { (std::max)(dragged._Position[axis], host._Position[axis]) },
+		end { (std::min)(dragged._Position[axis] + dragged._Size[axis], host._Position[axis] + host._Size[axis]) };
+
+	return end - start;
+}
+
+std::vector<RetroFuturaGUI::Window*>& RetroFuturaGUI::Window::allWindows()
+{
+	//Deliberately never freed: a window owned by a static is destroyed after every other static, and still takes itself off
+	static std::vector<Window*>* windows { new std::vector<Window*>() };
+	return *windows;
 }

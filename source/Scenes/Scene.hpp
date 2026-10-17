@@ -6,20 +6,12 @@
 #include "Lasagna.hpp"
 #include "Environment.hpp"
 #include "ScrollView.hpp"
+#include "DockEdge.hpp"
 #include "Signal.hpp"
 
 namespace RetroFuturaGUI
 {
     class Window;
-
-    /// @brief Identifies the edge of the window's client area a Scene docks to.
-    enum class DockEdge : u32
-    {
-        Top = 0,
-        Right = 1,
-        Bottom = 2,
-        Left = 3
-    };
 
     template<typename T>
     concept RootContainer =
