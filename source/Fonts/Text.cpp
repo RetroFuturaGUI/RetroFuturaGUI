@@ -96,6 +96,11 @@ void RetroFuturaGUI::Text::SetFontFamily(std::string_view fontFamily, const f32 
     _fontSlant = slant;
     _fontWeight = weight;
     _fontInfo = FontManager::GetFontInfo(fontFamily, _fontSize, _fontSlant, _fontWeight);
+
+    // Lays the text out again: text set before the font was never measured, and other glyphs measure differently
+    calculateTextSpan();
+    alignPosition();
+    updateMesh();
 }
 
 /*void RetroFuturaGUI::Text::SetFontSize(const f32 size)

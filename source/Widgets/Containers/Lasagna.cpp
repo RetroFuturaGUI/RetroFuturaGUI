@@ -166,6 +166,7 @@ void RetroFuturaGUI::Lasagna::Draw()
                 if(!cell._Widget || cell._SpanOccupied)
                     continue;
 
+                cell._Widget->UpdateTooltip();
                 cell._Widget->Draw();
             }
         }

@@ -13,7 +13,7 @@ The framework is designed for cross-platform use, and its logic can be compiled 
 | 1 | Button, Label, Window, MainWindow, Image, Grid2D, WindowBar with Buttons |  | ✅ |
 | 2 | dll/so/dylib compilation for C# and Python support, Widget ID manager | 1 | ✅ | 
 | 3 | Linux Support, Font Manager | 2 | ✅ | 
-| 4 | More Widgets (TextBox ✅, Table ✅, 3D Model ✅, Slider ✅, CheckBox ✅, ComboBox ✅, ExtendedComoBox ✅, RadioButton ✅, RadioButtonGroup ✅, SeparatorLine ✅, ColorPreview ✅, change Grid2d to "Lasagna" and add a 3rd dimension ✅, MenuBar ✅, MultilineTextBox ✅, Histogram ✅, VideoPlayer ✅, Environment ✅, LineDiagram ✅, ScrollView ✅, Color Pickers ✅, Node, WindowTab and window docking), Scene ✅, SceneLoader ✅, Scene Lights, AudioPlayback ✅, Popups, PopupManager, Tooltip, FileExplorer | 1 | WIP | 
+| 4 | More Widgets (TextBox ✅, Table ✅, 3D Model ✅, Slider ✅, CheckBox ✅, ComboBox ✅, ExtendedComoBox ✅, RadioButton ✅, RadioButtonGroup ✅, SeparatorLine ✅, ColorPreview ✅, change Grid2d to "Lasagna" and add a 3rd dimension ✅, MenuBar ✅, MultilineTextBox ✅, Histogram ✅, VideoPlayer ✅, Environment ✅, LineDiagram ✅, ScrollView ✅, Color Pickers ✅, Node, WindowTab and window docking), Scene ✅, SceneLoader ✅, Scene Lights, AudioPlayback ✅, Popups, PopupManager, Tooltip ✅, FileExplorer | 1 | WIP | 
 | 5 | .bechaml markup language for GUI design 🥣 (**B**eautifully **E**xtended **C**ascading but **H**airbally **A**pplication **M**arkup **L**anguage) | 4 | | 
 | 6 | VS Code extension with project generator/manager | 5 | | 
 | 7 | Pre-built Prefabs (StepperSlider, SpinBox, Table with Sliders, Carousel, Extended Color Pickers, MediaPlayer) | 6 |
@@ -475,6 +475,14 @@ The framework is designed for cross-platform use, and its logic can be compiled 
 <li>Complete Python binding</li>
 <li>Refactor Binding</li>
 <li>Refactor textures so a texture on a 3D model carries no unused quad (ITexture holds the standalone quad that only Image and Video draw with - VAO/VBO/EBO, the scaling/translation/rotation matrices, Draw/SetSize/SetPosition/SetRotation. Without a Projection the buffers are never created, but every Model texture still carries the members and the API. Move the quad out to what draws it)</li>
+<li>Separate the background and border features of Rectangle, so a border carries no background features and a background no border features</li>
+  <ul>
+  <li>Today one class covers both through RectangleMode::Plane/Border, so every Rectangle carries both sets and silently ignores half of them</li>
+  <li>Background only: SetBackgroundGaps, the fog, the COLOR_CIRCLE/COLOR_SQUARE fills and SetBackgroundImageTextureID/SetBackgroundImagePadding</li>
+  <li>Border only: SetBorderWidth and SetBorderGaps</li>
+  <li>Shared: geometry, colors, gradients, corner radii, raster, wave and glass</li>
+  <li>The background image travels on the glass sampler (SetBackgroundImageTextureID sets GlassEffectWithImage too), so the border shaders take it as well today. The split has to pull the two apart</li>
+  </ul>
 <li>Double-check which containers in Widgets/Containers should own their widgets and which should only borrow them</li>
   <ul>
   <li>Borrowing today: Lasagna, Environment and RadioButtonGroup hold raw pointers, and the widgets are owned elsewhere - by the generated _p structs, for instance</li>

@@ -1,5 +1,7 @@
 #include "IWidget.hpp"
 #include "PlatformBridge.hpp"
+#include "Tooltip.hpp"
+#include <memory>
 
 #if defined(TARGET_PLATFORM_LINUX)
     #define GLFW_EXPOSE_NATIVE_X11
@@ -13,6 +15,8 @@ RetroFuturaGUI::IWidget::IWidget(std::string_view name, Projection* projection, 
 {
     _parentWindow = parentWindow;
 }
+
+RetroFuturaGUI::IWidget::~IWidget() = default;
 
 void RetroFuturaGUI::IWidget::Connect_OnEnable(const typename Signal<>::Slot& slot, const bool async)
 {
@@ -158,4 +162,36 @@ void RetroFuturaGUI::IWidget::filterThroughAncestors(const IHierarchyNode* node,
         return;
 
     filter->FilterPointer(pointer);
+}
+
+void RetroFuturaGUI::IWidget::SetTooltipText(std::string_view text)
+{
+    if(!_tooltip)
+        _tooltip = std::make_unique<Tooltip>(&_projection, this);
+
+    if(!_tooltip)
+        return;
+
+    _tooltip->SetText(text, false);
+}
+
+void RetroFuturaGUI::IWidget::EnableTooltip(const bool enable)
+{
+    _enableTooltip = enable;
+}
+
+RetroFuturaGUI::Tooltip* RetroFuturaGUI::IWidget::GetTooltip() const
+{
+    return _tooltip.get();
+}
+
+void RetroFuturaGUI::IWidget::UpdateTooltip()
+{
+    if(!_enableTooltip)
+        return;
+
+    if(!_tooltip)
+        return;
+
+    _tooltip->Update();
 }

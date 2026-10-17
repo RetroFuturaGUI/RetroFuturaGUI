@@ -179,6 +179,7 @@ void RetroFuturaGUI::Environment::Draw()
         if(!entry._Widget || !entry._Show)
             continue;
 
+        entry._Widget->UpdateTooltip();
         entry._Widget->Draw();
     }
 

@@ -12,14 +12,18 @@
 
 namespace RetroFuturaGUI
 {
+    class Tooltip; //not included: its text pulls in windows.h, whose min/max macros would reach every widget
+
     //An interface with properties that all Widgets must implement.
     class IWidget : virtual public IWindowAccessor, public IHierarchyNode
     {
+        friend class Tooltip;
+
     public:
         /// @brief Constructs a widget with the given name, under the given parent widget/window.
         IWidget(std::string_view name, Projection* projection, IHierarchyNode* parentWidget, const WidgetTypeID parentWidgetTypeID, GLFWwindow* parentWindow);
         IWidget() = delete;
-        virtual ~IWidget() = default;
+        virtual ~IWidget();
 
         /// @brief Draws the widget.
         virtual void Draw() = 0;
@@ -80,6 +84,16 @@ namespace RetroFuturaGUI
             return static_cast<T*>(_parentWidget);
         }
 
+        void SetTooltipText(std::string_view text);
+        void EnableTooltip(const bool enable);
+
+        /// @brief Returns the widget's tooltip for styling (font, colors, corner radii), or nullptr until SetTooltipText created it.
+        Tooltip* GetTooltip() const;
+
+        /// @brief Tracks the mouse for the widget's tooltip. Containers call it every frame, right before the widget's Draw,
+        ///        so the tooltips of widgets inside this one are updated after it and win.
+        void UpdateTooltip();
+
     protected:
     //Identity
         std::string _name;
@@ -103,6 +117,10 @@ namespace RetroFuturaGUI
             _onEnableAsync,
             _onDisable,
             _onDisableAsync;
+
+    // stuff
+        std::unique_ptr<Tooltip> _tooltip; //no { nullptr }: with Tooltip only declared here, MSVC can't compile the initializer's cleanup
+        bool _enableTooltip { false };
 
         bool isPointInside(const glm::vec2& point) const;
         bool isPointInsideRect(const glm::vec2& point, const glm::vec3& size, const glm::vec3& position, const glm::vec3& rotation) const;

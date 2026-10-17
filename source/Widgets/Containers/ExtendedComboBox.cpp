@@ -76,7 +76,10 @@ void RetroFuturaGUI::ExtendedComboBox::Draw()
             return;
 
         if(item)
+        {
+            item->UpdateTooltip();
             item->Draw();
+        }
 
         ++visibleIndex;
     }

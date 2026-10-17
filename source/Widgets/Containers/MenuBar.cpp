@@ -987,6 +987,7 @@ void RetroFuturaGUI::MenuBar::drawItems()
         if(!item)
             continue;
 
+        item->UpdateTooltip();
         item->Draw();
     }
 }

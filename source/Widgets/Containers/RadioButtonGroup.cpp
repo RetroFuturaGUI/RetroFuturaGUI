@@ -34,10 +34,14 @@ void RetroFuturaGUI::RadioButtonGroup::Draw()
             if(!column._RadioButton)
                 continue;
 
+            column._RadioButton->UpdateTooltip();
             column._RadioButton->Draw();
 
-            if(column._Label)
-                column._Label->Draw();
+            if(!column._Label)
+                continue;
+
+            column._Label->UpdateTooltip();
+            column._Label->Draw();
         }
 }
 

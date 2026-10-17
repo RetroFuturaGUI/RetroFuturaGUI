@@ -35,6 +35,7 @@ void RetroFuturaGUI::ScrollView::Draw()
         if(!cell._Widget)
             continue;
 
+        cell._Widget->UpdateTooltip();
         cell._Widget->Draw();
     }
 }

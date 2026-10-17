@@ -2,6 +2,7 @@
 #include "Scene.hpp"
 #include "ShaderManager.hpp"
 #include "PlatformBridge.hpp"
+#include "Tooltip.hpp"
 #include <glm/gtc/type_ptr.hpp>
 #include <algorithm>
 #include <print>
@@ -317,6 +318,8 @@ void RetroFuturaGUI::Window::Draw()
 		glClear(GL_DEPTH_BUFFER_BIT);
 		_scene->Draw();
 	}
+
+	Tooltip::DrawShown(); //last, so it covers every scene
 
 	glfwSwapBuffers(_window);
 	glfwPollEvents();
