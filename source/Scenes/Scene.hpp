@@ -5,6 +5,7 @@
 #include <string_view>
 #include "Lasagna.hpp"
 #include "Environment.hpp"
+#include "ScrollView.hpp"
 #include "Signal.hpp"
 
 namespace RetroFuturaGUI
@@ -22,7 +23,7 @@ namespace RetroFuturaGUI
 
     template<typename T>
     concept RootContainer =
-        std::same_as<T, Lasagna> || std::same_as<T, Environment>;
+        std::same_as<T, Lasagna> || std::same_as<T, Environment> || std::same_as<T, ScrollView>;
 
     class Scene final : public IHierarchyNode
     {

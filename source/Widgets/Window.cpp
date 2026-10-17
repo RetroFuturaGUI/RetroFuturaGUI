@@ -30,13 +30,32 @@ RetroFuturaGUI::Window::Window(std::string_view name, const i32 width, const i32
 	_cursorsInitialized = true;
 }
 
+RetroFuturaGUI::Window::~Window()
+{
+	if(!_window)
+		return;
+
+	//The background's GL objects belong to this window's context, so they go while it still exists and is current
+	glfwMakeContextCurrent(_window);
+	_background.reset();
+	_backgroundImage.reset();
+
+	//A later window must not try to share with a destroyed one
+	if(_shareWindow == _window)
+		_shareWindow = nullptr;
+
+	glfwDestroyWindow(_window);
+}
+
 void RetroFuturaGUI::Window::createWindow()
 {
 	glfwWindowHint(GLFW_DECORATED, GLFW_FALSE);
 	glfwWindowHint(GLFW_TRANSPARENT_FRAMEBUFFER, GLFW_FALSE); //Using GLFW_TRUE enables the possibility of rendering transparent backgrounds (desired) but causes any other object with transparency to be bugged (makes everything behind the window is visible)
 	glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
 
-	_window = glfwCreateWindow(_width, _height, _windowTitle.c_str(), nullptr, nullptr);
+	//Shares GL objects with the first window, so the shaders compiled once below and the fonts and images loaded there work in this one too.
+	//VAOs are never shared, so a widget still has to be built, drawn and destroyed with its own window's context current.
+	_window = glfwCreateWindow(_width, _height, _windowTitle.c_str(), nullptr, _shareWindow);
 	glfwSetWindowTitle(_window, _windowTitle.c_str());
 
 	if (!_window)
@@ -45,6 +64,9 @@ void RetroFuturaGUI::Window::createWindow()
 		glfwTerminate();
 		return;
 	}
+
+	if(!_shareWindow)
+		_shareWindow = _window;
 	_prevResizeX = (f64)_width;
 	_prevResizeY = (f64)_height;
 
@@ -167,7 +189,12 @@ void RetroFuturaGUI::Window::setResizeState(i32 button, i32 action, [[maybe_unus
         _prevResizeX = _absoluteCursorPosX;
         _prevResizeY = _absoluteCursorPosY;
 
-		if(_cursorPosY < _boundaryThreshold && _cursorPosX < _boundaryThreshold) 
+		//The button is read for the whole screen, so a press in another window arrives here too. Outside this window every
+		//position would count as near an edge, so only a press inside it may start a resize.
+		if(0.0 > _cursorPosX || 0.0 > _cursorPosY || static_cast<f64>(_width) <= _cursorPosX || static_cast<f64>(_height) <= _cursorPosY)
+			return;
+
+		if(_cursorPosY < _boundaryThreshold && _cursorPosX < _boundaryThreshold)
 			_resizeEdge = ResizeEdge::TopLeft;
 		else if (_cursorPosY < _boundaryThreshold && _cursorPosX > _width - _boundaryThreshold) 
 			_resizeEdge = ResizeEdge::TopRight;
@@ -296,6 +323,12 @@ bool RetroFuturaGUI::Window::WindowShouldClose()
 
 void RetroFuturaGUI::Window::Draw()
 {
+	if(!_window)
+		return;
+
+	//Another window may have drawn last, and every GL call below has to land in this window's context
+	glfwMakeContextCurrent(_window);
+
 	pollInput();
 
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);

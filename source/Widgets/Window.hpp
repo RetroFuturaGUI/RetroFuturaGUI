@@ -32,12 +32,13 @@ namespace RetroFuturaGUI
         Window(Window&&) = delete;
         auto operator =(const Window&) = delete;
         auto operator =(Window&&) = delete;
-        ~Window() = default;
+        /// @brief Destroys the native window. The widgets of its scenes have to be gone by then, and destroyed with this window's context current.
+        ~Window();
 
         /// @brief Returns whether the user has requested the window be closed.
         bool WindowShouldClose();
 
-        /// @brief Handles input and resizing, and draws the window's background, its root Lasagna and its scenes.
+        /// @brief Makes the window's GL context current, then handles input and resizing, and draws the window's background, its root Lasagna and its scenes.
         void Draw();
 
         /// @brief Sets the window's width and height.
@@ -107,6 +108,9 @@ namespace RetroFuturaGUI
 
         // Window properties
         GLFWwindow* _window {nullptr};
+
+        // The first window created. Every later one shares its textures, buffers and shaders, which are only loaded once
+        static inline GLFWwindow* _shareWindow { nullptr };
 
         i32
             _width { 1280 },
