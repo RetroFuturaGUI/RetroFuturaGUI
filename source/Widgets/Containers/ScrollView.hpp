@@ -1,4 +1,5 @@
 #pragma once
+#include "ColorPicker.hpp"
 #include "ColorPreview.hpp"
 #include "Environment.hpp"
 #include "Histogram.hpp"
@@ -25,7 +26,7 @@ namespace RetroFuturaGUI
         || std::same_as<T, RadioButtonGroup> || std::same_as<T, Slider> || std::same_as<T, ProgressBar> || std::same_as<T, Table>
         || std::same_as<T, Prefab> || std::same_as<T, Environment> || std::same_as<T, ScrollView> || std::same_as<T, Prefab>
         || std::same_as<T, SeparatorLine> || std::same_as<T, ColorPreview> || std::same_as<T, Video> || std::same_as<T, Histogram>
-        || std::same_as<T, MultilineTextBox> || std::same_as<T, LineDiagram>;
+        || std::same_as<T, MultilineTextBox> || std::same_as<T, LineDiagram> || std::same_as<T, ColorPicker>;
 
     class ScrollView : public IWidget, public IBackground, public IBorder, public IClickable, public IPointerFilter
     {

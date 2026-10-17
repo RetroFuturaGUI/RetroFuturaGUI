@@ -179,8 +179,11 @@ namespace RetroFuturaGUI
         /// @brief Sets whether the rectangle draws a filled plane or just its border.
         void SetRectangleMode(const RectangleMode rectanlgeMode);
 
-        /// @brief Sets the fill type (solid, linear/radial/huestar gradient).
+        /// @brief Sets the fill type (solid, linear/radial/huestar gradient, color circle/square).
         void SetFillType(const FillType fillType);
+
+        /// @brief Sets how bright the COLOR_CIRCLE and COLOR_SQUARE fills are drawn, 0..1. Other fills ignore it.
+        void SetColorFieldBrightness(const f32 brightness);
 
         /// @brief Returns the current size of the rectangle.
         const glm::vec2& GetSize() const;
@@ -240,7 +243,8 @@ namespace RetroFuturaGUI
             _gradientDegree { 45.0f },
             _gradientRotationSpeed { 0.02f },
             _backgroundImagePadding { 0.0f },
-            _borderWidth { 5.0f };
+            _borderWidth { 5.0f },
+            _colorFieldBrightness { 1.0f };
         glm::vec4 _cornerRadii { 0.0f };
         u32 
             _shaderFeatureDIP { 0 },
@@ -296,6 +300,12 @@ namespace RetroFuturaGUI
         void uploadWaveUniforms(Shader& shader);
         /// @brief Whether a background gap is configured, i.e. whether it carves anything out of the fill.
         bool hasBackgroundGap() const;
+
+        /// @brief Whether this draws a COLOR_CIRCLE or COLOR_SQUARE plane. Those compute their colors, so they draw without any being set.
+        bool isColorField() const;
+
+        /// @brief Draws a COLOR_CIRCLE or COLOR_SQUARE plane with the given shader. Both take the same uniforms, only the layout differs.
+        void drawColorFieldFill(Shader& shader);
         void drawWithSolidFill();
         void drawRadialGradientFill();
         void drawHueStarGradientFill();

@@ -17,7 +17,7 @@ RetroFuturaGUI::Rectangle::~Rectangle()
 
 void RetroFuturaGUI::Rectangle::Draw()
 {
-    if(_colors.size() == 0)
+    if(_colors.empty() && !isColorField())
         return;
 
     switch(_rectangleMode)
@@ -38,7 +38,7 @@ void RetroFuturaGUI::Rectangle::Draw()
                 {
                     drawHueStarGradientBorder();
                 } break;
-                default: // FillType::SOLID
+                default: // FillType::SOLID, and the color fields, which have no border of their own
                 {
                     drawSolidBorder();
                 } break;
@@ -59,6 +59,14 @@ void RetroFuturaGUI::Rectangle::Draw()
                 case FillType::HUESTAR_GRADIENT:
                 {
                     drawHueStarGradientFill();
+                } break;
+                case FillType::COLOR_CIRCLE:
+                {
+                    drawColorFieldFill(ShaderManager::GetColorCircleShader());
+                } break;
+                case FillType::COLOR_SQUARE:
+                {
+                    drawColorFieldFill(ShaderManager::GetColorSquareShader());
                 } break;
                 default: // FillType::SOLID
                 {
@@ -345,6 +353,18 @@ void RetroFuturaGUI::Rectangle::uploadWaveUniforms(Shader& shader)
     shader.SetUniformFloat("uWaveThickness", _waveThiccness);
     shader.SetUniformFloat("uWaveHeight", _waveHeight);
     shader.SetUniformFloat("uWaveLength", _waveLength);
+}
+
+void RetroFuturaGUI::Rectangle::drawColorFieldFill(Shader& shader)
+{
+    // No shader features: glass, raster or fog over a color field would change the colors it shows
+    shader.UseProgram();
+    shader.SetUniformMat4("uProjection", _projection.GetProjectionMatrix());
+    shader.SetUniformMat4("uPosition", _translationMatrix);
+    shader.SetUniformMat4("uScaling", _scalingMatrix);
+    shader.SetUniformMat4("uRotation", _rotationMatrix);
+    shader.SetUniformVec2("uScale", _scale);
+    shader.SetUniformFloat("uBrightness", _colorFieldBrightness);
 }
 
 void RetroFuturaGUI::Rectangle::drawWithSolidFill()
@@ -730,6 +750,11 @@ bool RetroFuturaGUI::Rectangle::hasBackgroundGap() const
     return _backgroundGapData.w != 0.0f && _backgroundGapData.z > 0.0f;
 }
 
+bool RetroFuturaGUI::Rectangle::isColorField() const
+{
+    return _rectangleMode == RectangleMode::Plane && (_fillType == FillType::COLOR_CIRCLE || _fillType == FillType::COLOR_SQUARE);
+}
+
 void RetroFuturaGUI::Rectangle::SetRectangleMode(const RectangleMode rectanlgeMode)
 {
     _rectangleMode = rectanlgeMode;
@@ -738,6 +763,11 @@ void RetroFuturaGUI::Rectangle::SetRectangleMode(const RectangleMode rectanlgeMo
 void RetroFuturaGUI::Rectangle::SetFillType(const FillType fillType)
 {
     _fillType = fillType;
+}
+
+void RetroFuturaGUI::Rectangle::SetColorFieldBrightness(const f32 brightness)
+{
+    _colorFieldBrightness = brightness;
 }
 
 const glm::vec2& RetroFuturaGUI::Rectangle::GetSize() const

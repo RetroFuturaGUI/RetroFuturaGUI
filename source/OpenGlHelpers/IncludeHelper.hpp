@@ -35,13 +35,16 @@ namespace RetroFuturaGUI
     class LineDiagram;
     class Environment;
     class ScrollView;
+    class ColorPicker;
 
     enum class FillType: u32
     {
         SOLID,
         LINEAR_GRADIENT,
         RADIAL_GRADIENT,
-        HUESTAR_GRADIENT
+        HUESTAR_GRADIENT,
+        COLOR_CIRCLE,
+        COLOR_SQUARE
     };
 
     template<typename T>
@@ -51,7 +54,7 @@ namespace RetroFuturaGUI
         || std::same_as<T, Model> || std::same_as<T, Image> || std::same_as<T, SvgImage> 
         || std::same_as<T, CheckBox> || std::same_as<T, RadioButton> || std::same_as<T, RadioButtonGroup>
         || std::same_as<T, Slider> || std::same_as<T, ProgressBar> || std::same_as<T, Table>
-        || std::same_as<T, Prefab>;
+        || std::same_as<T, Prefab> || std::same_as<T, ColorPicker>;
 
     enum class WidgetTypeID : i32
     {
@@ -82,6 +85,7 @@ namespace RetroFuturaGUI
         LineDiagram,
         Environment,
         ScrollView,
+        ColorPicker,
         Unknown = -1
     };   
 

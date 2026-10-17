@@ -22,6 +22,16 @@ RetroFuturaGUI::Shader& RetroFuturaGUI::ShaderManager::GetHueStarGradientShader(
     return *_hueStarGradient;
 }
 
+RetroFuturaGUI::Shader& RetroFuturaGUI::ShaderManager::GetColorCircleShader()
+{
+    return *_colorCircle;
+}
+
+RetroFuturaGUI::Shader& RetroFuturaGUI::ShaderManager::GetColorSquareShader()
+{
+    return *_colorSquare;
+}
+
 RetroFuturaGUI::Shader& RetroFuturaGUI::ShaderManager::GetLineFillShader()
 {
     return *_lineFill;
@@ -100,53 +110,63 @@ void RetroFuturaGUI::ShaderManager::compileShaders()
 #endif
 
     _solidFill = std::make_unique<Shader>(
-        std::string(workingDir + "SolidFill.vs").c_str(), 
+        std::string(workingDir + "SolidFill.vs").c_str(),
         std::string(workingDir + "SolidFill.fs").c_str()
     );
 
     _linearGradient = std::make_unique<Shader>(
-        std::string(workingDir + "LinearGradient.vs").c_str(), 
+        std::string(workingDir + "LinearGradient.vs").c_str(),
         std::string(workingDir + "LinearGradient.fs").c_str()
     );
 
     _radialGradient = std::make_unique<Shader>(
-        std::string(workingDir + "RadialGradient.vs").c_str(), 
+        std::string(workingDir + "RadialGradient.vs").c_str(),
         std::string(workingDir + "RadialGradient.fs").c_str()
     );
 
     _hueStarGradient = std::make_unique<Shader>(
-        std::string(workingDir + "HueStarGradient.vs").c_str(), 
+        std::string(workingDir + "HueStarGradient.vs").c_str(),
         std::string(workingDir + "HueStarGradient.fs").c_str()
     );
 
+    _colorCircle = std::make_unique<Shader>(
+        std::string(workingDir + "ColorCircle.vs").c_str(),
+        std::string(workingDir + "ColorCircle.fs").c_str()
+    );
+
+    _colorSquare = std::make_unique<Shader>(
+        std::string(workingDir + "ColorSquare.vs").c_str(),
+        std::string(workingDir + "ColorSquare.fs").c_str()
+    );
+
     _borderSolidFill = std::make_unique<Shader>(
-        std::string(workingDir + "BorderSolidFill.vs").c_str(), 
+        std::string(workingDir + "BorderSolidFill.vs").c_str(),
         std::string(workingDir + "BorderSolidFill.fs").c_str()
     );
 
     _borderLinearGradient = std::make_unique<Shader>(
-        std::string(workingDir + "BorderLinearGradient.vs").c_str(), 
+        std::string(workingDir + "BorderLinearGradient.vs").c_str(),
         std::string(workingDir + "BorderLinearGradient.fs").c_str()
     );
 
     _borderRadialGradient = std::make_unique<Shader>(
-        std::string(workingDir + "BorderRadialGradient.vs").c_str(), 
+        std::string(workingDir + "BorderRadialGradient.vs").c_str(),
         std::string(workingDir + "BorderRadialGradient.fs").c_str()
     );
 
     _borderHueStarGradient = std::make_unique<Shader>(
-        std::string(workingDir + "BorderHueStarGradient.vs").c_str(), 
+        std::string(workingDir + "BorderHueStarGradient.vs").c_str(),
         std::string(workingDir + "BorderHueStarGradient.fs").c_str()
     );
 
     _lineFill = std::make_unique<Shader>(
-        std::string(workingDir + "Line.vs").c_str(), 
+        std::string(workingDir + "Line.vs").c_str(),
         std::string(workingDir + "Line.fs").c_str(),
         std::string(workingDir + "Line.gs").c_str()
     );
 
     _fontAtlasFill = std::make_unique<Shader>(
-        std::string(workingDir + "FontAtlas.vs").c_str(), 
+        std::string(workingDir + "FontAtlas.vs").c_str(),
         std::string(workingDir + "FontAtlas.fs").c_str()
     );
 
