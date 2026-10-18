@@ -18,17 +18,18 @@
 #include <GLFW/glfw3native.h>
 
 RetroFuturaGUI::Window::Window(std::string_view name, const i32 width, const i32 height)
-: Window(name, width, height, false)
+: Window(name, width, height, WindowRole::Normal)
 {
 }
 
-RetroFuturaGUI::Window::Window(std::string_view name, const i32 width, const i32 height, const bool isDockPreview)
+RetroFuturaGUI::Window::Window(std::string_view name, const i32 width, const i32 height, const WindowRole role)
 : _width(width), _height(height), _name(name)
 {
-	_isDockPreview = isDockPreview;
+	_role = role;
 	createWindow();
 
-	if(!_isDockPreview)
+	//Docking previews and popups are never docking targets
+	if(WindowRole::Normal == _role)
 		allWindows().push_back(this);
 
 	if(_cursorsInitialized)
@@ -44,6 +45,11 @@ RetroFuturaGUI::Window::Window(std::string_view name, const i32 width, const i32
 
 RetroFuturaGUI::Window::~Window()
 {
+	//Popups go from the top down, the reverse of how they opened, which a vector's own destruction wouldn't do. Their results
+	//don't go out: the slots may be gone by now.
+	while(!_popups.empty())
+		_popups.pop_back();
+
 	std::erase(allWindows(), this);
 	Undock();
 
@@ -73,10 +79,11 @@ void RetroFuturaGUI::Window::createWindow()
 	glfwWindowHint(GLFW_TRANSPARENT_FRAMEBUFFER, GLFW_TRUE);
 	glfwWindowHint(GLFW_ALPHA_BITS, 8);
 
-	//A docking preview shows only once it is placed, stays above the windows it previews and never takes the focus
-	glfwWindowHint(GLFW_VISIBLE, _isDockPreview ? GLFW_FALSE : GLFW_TRUE);
-	glfwWindowHint(GLFW_FLOATING, _isDockPreview ? GLFW_TRUE : GLFW_FALSE);
-	glfwWindowHint(GLFW_FOCUS_ON_SHOW, _isDockPreview ? GLFW_FALSE : GLFW_TRUE);
+	//A docking preview shows only once it is placed, stays above the windows it previews and never takes the focus. A popup
+	//shows once it is centered and has drawn, and takes the focus then.
+	glfwWindowHint(GLFW_VISIBLE, WindowRole::Normal == _role ? GLFW_TRUE : GLFW_FALSE);
+	glfwWindowHint(GLFW_FLOATING, WindowRole::DockPreview == _role ? GLFW_TRUE : GLFW_FALSE);
+	glfwWindowHint(GLFW_FOCUS_ON_SHOW, WindowRole::DockPreview == _role ? GLFW_FALSE : GLFW_TRUE);
 
 	//Shares GL objects with the first window, so the shaders compiled once below and the fonts and images loaded there work in this one too.
 	//VAOs are never shared, so a widget still has to be built, drawn and destroyed with its own window's context current.
@@ -184,7 +191,11 @@ void RetroFuturaGUI::Window::pollInput()
 
 	const bool isMouseButtonDown { PlatformBridge::Input::IsMouseButtonDown(PlatformBridge::MouseButton::Left) };
 
-	if (isMouseButtonDown && !_wasMouseButtonDown) //press
+	//Once the button is up, a press held from before this window took the mouse is over
+	if(!isMouseButtonDown)
+		_ignoreHeldPress = false;
+
+	if (isMouseButtonDown && !_wasMouseButtonDown && !_ignoreHeldPress) //press
 		setResizeState(GLFW_MOUSE_BUTTON_LEFT, GLFW_PRESS, 0);
 	else if (!isMouseButtonDown && _wasMouseButtonDown) //release
 		setResizeState(GLFW_MOUSE_BUTTON_LEFT, GLFW_RELEASE, 0);
@@ -271,6 +282,9 @@ RetroFuturaGUI::Window::ResizeEdge RetroFuturaGUI::Window::resizeEdgeAt(const f6
 
 bool RetroFuturaGUI::Window::canResize(const ResizeEdge edge) const
 {
+	if(IsBlockedByPopup())
+		return false;
+
 	if(!_dockHost)
 		return true;
 
@@ -424,7 +438,11 @@ void RetroFuturaGUI::Window::updateProjection()
 
 bool RetroFuturaGUI::Window::WindowShouldClose()
 {
-    return glfwWindowShouldClose(_window);
+	if(!_window)
+		return true;
+
+	refuseCloseWhileBlocked();
+	return GLFW_TRUE == glfwWindowShouldClose(_window);
 }
 
 void RetroFuturaGUI::Window::Draw()
@@ -435,7 +453,7 @@ void RetroFuturaGUI::Window::Draw()
 	//Another window may have drawn last, and every GL call below has to land in this window's context
 	glfwMakeContextCurrent(_window);
 
-	if(!_isDockPreview)
+	if(WindowRole::DockPreview != _role)
 		pollInput();
 
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -466,8 +484,10 @@ void RetroFuturaGUI::Window::Draw()
 	Tooltip::DrawShown(); //last, so it covers every scene
 	glfwSwapBuffers(_window);
 	glfwPollEvents();
+	refuseCloseWhileBlocked();
 	followDocking();//After the scenes, because a window bar may have dragged this window while it drew
 	updateDockSnap();
+	drawPopups();
 }
 
 void RetroFuturaGUI::Window::drawFrame()
@@ -679,6 +699,10 @@ bool RetroFuturaGUI::Window::dockWindowAt(Window* window, const DockEdge edge, c
 		return false;
 
 	if(window == this)
+		return false;
+
+	//Docking previews and popups never dock
+	if(WindowRole::Normal != _role || WindowRole::Normal != window->_role)
 		return false;
 
 	//A window has one host at most, the window whose edge sets its length and position, and never one docked to it, so every
@@ -1180,6 +1204,9 @@ RetroFuturaGUI::Window::DockSnap RetroFuturaGUI::Window::findDockSnap() const
 	if(!_window)
 		return {};
 
+	if(WindowRole::Normal != _role)
+		return {}; //popups never dock
+
 	//Only a window docked to nothing docks by dragging. Dragging a docked one carries its whole group along instead.
 	if(_dockHost)
 		return {};
@@ -1263,7 +1290,7 @@ void RetroFuturaGUI::Window::showDockPreview(const DockRect& slot, const DockEdg
 {
 	if(!_dockPreview)
 	{
-		_dockPreview = std::unique_ptr<Window>(new Window("DockPreview", slot._Size.x, slot._Size.y, true));
+		_dockPreview = std::unique_ptr<Window>(new Window("DockPreview", slot._Size.x, slot._Size.y, WindowRole::DockPreview));
 		_dockPreview->SetWindowTitle("Dock preview");
 		_dockPreview->SetBackgroundColor(glm::vec4(0.3f, 0.55f, 1.0f, 0.25f), ColorState::Enabled);
 		_dockPreview->SetBorderWidth(2.0f);
@@ -1349,4 +1376,192 @@ std::vector<RetroFuturaGUI::Window*>& RetroFuturaGUI::Window::allWindows()
 	//Deliberately never freed: a window owned by a static is destroyed after every other static, and still takes itself off
 	static std::vector<Window*>* windows { new std::vector<Window*>() };
 	return *windows;
+}
+
+bool RetroFuturaGUI::Window::PushPopup(std::unique_ptr<IPopup> popup)
+{
+	if(!popup)
+		return false;
+
+	//A popup's window keeps no stack of its own: a popup opened from it goes on top of the stack it is on
+	if(WindowRole::Popup == _role)
+	{
+		if(!_popupHost)
+			return false;
+
+		return _popupHost->PushPopup(std::move(popup));
+	}
+
+	if(!_window)
+		return false;
+
+	Window* popupWindow { popup->GetWindow() };
+
+	if(!popupWindow)
+		return false;
+
+	if(!popupWindow->_window)
+		return false;
+
+	if(popupWindow->_popupHost)
+		return false; //Already on a stack
+
+	//It opens over the current top, which owns it natively
+	Window* owner { topPopupWindow() };
+	popupWindow->_popupHost = this;
+	popupWindow->_ignoreHeldPress = true; //the click that opened it may still be down!
+	popupWindow->_showAfterDraw = true;
+	popupWindow->setNativeOwner(owner);
+	popupWindow->centerOver(owner);
+
+	_popups.push_back(std::move(popup));
+	_popups.back()->restoreOpenerContext();
+	return true;
+}
+
+bool RetroFuturaGUI::Window::HasPopups() const
+{
+	return !_popups.empty();
+}
+
+bool RetroFuturaGUI::Window::IsBlockedByPopup() const
+{
+	if(!_popups.empty())
+		return true;
+
+	if(!_popupHost)
+		return false;
+
+	//A popup's window is blocked unless it is the top of the stack
+	return _popupHost->topPopupWindow() != this;
+}
+
+void RetroFuturaGUI::Window::FilterPointer(PointerState& pointer) const
+{
+	if(_ignoreHeldPress)
+		pointer._LeftButtonPressed = false;
+
+	//Only the capture, so a press stays visible and a text box below still ends its editing on a click elsewhere
+	if(IsBlockedByPopup())
+		pointer._IsCaptured = true;
+}
+
+void RetroFuturaGUI::Window::drawPopups()
+{
+	//By index: a button in a popup may open another popup while this loop runs, and push_back would invalidate an iterator
+	for(uSize index = 0; index < _popups.size(); ++index)
+	{
+		IPopup* popup { _popups[index].get() };
+
+		if(!popup)
+			continue;
+
+		Window* popupWindow { popup->GetWindow() };
+
+		if(!popupWindow)
+			continue;
+
+		popupWindow->Draw();
+
+		if(!popupWindow->_showAfterDraw)
+			continue;
+
+		//Shown only once it has drawn, so it never shows a frame it hasn't drawn
+		popupWindow->_showAfterDraw = false;
+		glfwShowWindow(popupWindow->_window);
+	}
+
+	closeTopPopup();
+}
+
+void RetroFuturaGUI::Window::closeTopPopup()
+{
+	if(_popups.empty())
+		return;
+
+	Window* topWindow { topPopupWindow() };
+
+	if(topWindow == this)
+		return;
+
+	if(!topWindow->WindowShouldClose())
+		return;
+
+	std::unique_ptr<IPopup> closing { std::move(_popups.back()) }; //Off the stack before its result goes out, so a slot that opens a follow-up popup puts it on top
+	_popups.pop_back();
+	topPopupWindow()->_ignoreHeldPress = true; //The window below takes the mouse again, but not the press on the button that closed the popup
+
+	if(!closing)
+		return;
+
+	closing->emitClosed();
+	closing.reset();
+
+	//Destroying the popup's window left no context current
+	glfwMakeContextCurrent(_window);
+}
+
+RetroFuturaGUI::Window* RetroFuturaGUI::Window::topPopupWindow()
+{
+	if(_popups.empty())
+		return this;
+
+	IPopup* top { _popups.back().get() };
+
+	if(!top)
+		return this;
+
+	Window* topWindow { top->GetWindow() };
+
+	if(!topWindow)
+		return this;
+
+	return topWindow;
+}
+
+void RetroFuturaGUI::Window::refuseCloseWhileBlocked()
+{
+	if(!_window)
+		return;
+
+	if(!IsBlockedByPopup())
+		return;
+
+	glfwSetWindowShouldClose(_window, GLFW_FALSE);
+}
+
+void RetroFuturaGUI::Window::centerOver(const Window* window)
+{
+	if(!window)
+		return;
+
+	if(!_window)
+		return;
+
+	if(!window->_window)
+		return;
+
+	const DockRect
+		over { window->screenRect() },
+		own { screenRect() };
+	const glm::ivec2 position { over._Position + (over._Size - own._Size) / 2 };
+	glfwSetWindowPos(_window, position.x, position.y);
+}
+
+void RetroFuturaGUI::Window::setNativeOwner(const Window* owner)
+{
+	if(!owner)
+		return;
+
+	if(!_window)
+		return;
+
+	if(!owner->_window)
+		return;
+
+#if defined(TARGET_PLATFORM_LINUX)
+	PlatformBridge::NativeWindow::SetOwner(glfwGetX11Display(), glfwGetX11Window(_window), glfwGetX11Window(owner->_window));
+#elif defined(TARGET_PLATFORM_WINDOWS)
+	PlatformBridge::NativeWindow::SetOwner(glfwGetWin32Window(_window), glfwGetWin32Window(owner->_window));
+#endif
 }

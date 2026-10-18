@@ -13,7 +13,7 @@ The framework is designed for cross-platform use, and its logic can be compiled 
 | 1 | Button, Label, Window, MainWindow, Image, Grid2D, WindowBar with Buttons |  | ✅ |
 | 2 | dll/so/dylib compilation for C# and Python support, Widget ID manager | 1 | ✅ | 
 | 3 | Linux Support, Font Manager | 2 | ✅ | 
-| 4 | More Widgets (TextBox ✅, Table ✅, 3D Model ✅, Slider ✅, CheckBox ✅, ComboBox ✅, ExtendedComoBox ✅, RadioButton ✅, RadioButtonGroup ✅, SeparatorLine ✅, ColorPreview ✅, change Grid2d to "Lasagna" and add a 3rd dimension ✅, MenuBar ✅, MultilineTextBox ✅, Histogram ✅, VideoPlayer ✅, Environment ✅, LineDiagram ✅, ScrollView ✅, Color Pickers ✅, Node, WindowTab, window docking ✅), Scene ✅, SceneLoader ✅, Scene Lights, AudioPlayback ✅, Popups, PopupManager, Tooltip ✅, FileExplorer | 1 | WIP | 
+| 4 | More Widgets (TextBox ✅, Table ✅, 3D Model ✅, Slider ✅, CheckBox ✅, ComboBox ✅, ExtendedComoBox ✅, RadioButton ✅, RadioButtonGroup ✅, SeparatorLine ✅, ColorPreview ✅, change Grid2d to "Lasagna" and add a 3rd dimension ✅, MenuBar ✅, MultilineTextBox ✅, Histogram ✅, VideoPlayer ✅, Environment ✅, LineDiagram ✅, ScrollView ✅, Color Pickers ✅, WindowTab, window docking ✅), Scene ✅, SceneLoader ✅, AudioPlayback ✅, Popups ✅, Tooltip ✅, FileExplorer | 1 | WIP | 
 | 5 | .bechaml markup language for GUI design 🥣 (**B**eautifully **E**xtended **C**ascading but **H**airbally **A**pplication **M**arkup **L**anguage) | 4 | | 
 | 6 | VS Code extension with project generator/manager | 5 | | 
 | 7 | Pre-built Prefabs (StepperSlider, SpinBox, Table with Sliders, Carousel, Extended Color Pickers, MediaPlayer) | 6 |
@@ -28,6 +28,7 @@ The framework is designed for cross-platform use, and its logic can be compiled 
 | 16 | 3DS support (citro3d/citro2d (devkitPro)) | 8 | | 
 | 17 | Switch support (deko3d (devkitPro)) | 8 | | 
 | 18 | PS2 (ps2gl), PS3 (RSXGL), PS4 (OpenOrbis/GNMX/GNM) support | 8 | | 
+|    | Environment Lights, Node | | |
 
 ### WIP in detail
 - Font Manager
@@ -103,6 +104,11 @@ The framework is designed for cross-platform use, and its logic can be compiled 
   - Windows on top don't stop input: the mouse state is read for the whole screen, so a window covered by another one still sees hovers and presses where they overlap. The same goes for another application's window on top
   - The docking preview is a window of its own, so it gets a taskbar button while it shows. Hiding it needs WS_EX_TOOLWINDOW on Windows (_NET_WM_STATE_SKIP_TASKBAR on X11), which belongs in PlatformBridge
   - A minimized or maximized window stays out of the docking layout until it is restored, and minimizing a group's root leaves the rest of the group on screen
+- Popups
+  - Widgets under a popup keep whatever hover color they had when it opened, since they stop reacting before they would reset it
+  - A popup opens centered over the one below it, so a nested popup of the same size covers it completely
+  - No key closes the top popup yet (Escape, Enter)
+  - Linux is untested: the owner is set with XSetTransientForHint, and whether the popup stays off the taskbar is up to the window manager
 - IWidget
   - SetEnabled ignores its emitSignal argument, so OnEnable and OnDisable never fire for widgets that don't override it - SvgImage among them, which is why a window bar polls its undock handle's state instead of listening
 - SvgImage
@@ -328,6 +334,15 @@ The framework is designed for cross-platform use, and its logic can be compiled 
     - An inactive scene reserves nothing, and is laid out again when it is reactivated, so activating one never shows a layout computed for a different window size
     - SetPosition, SetSize, SetRotation, forwarded to its root container
     - Per-frame signal (Connect_OnUpdate / Disconnect_OnUpdate), emitted from Draw before the widgets draw, so a value written by a slot lands in the same frame instead of trailing one behind. Meant for widgets that track a live value, such as an audio level meter. An inactive scene doesn't draw and therefore doesn't tick
+- Popups
+  - Popup&lt;Ts...&gt; is a window of its own that closes with values of any types: Popup&lt;bool, std::string&gt; closes with Close(true, name), and the values reach the slots connected with Connect_OnResult. Dismiss, or the window bar's close button, closes it without values and fires Connect_OnDismiss instead
+  - A popup owns its Window and the scenes added to it (AddScene). IPopup is its base without the value types, which is what a window's popup stack holds
+  - Window::PushPopup opens one and takes ownership. A window has one popup stack: a popup opened from a popup's window goes on top of the same stack. Popups close from the top down - Close and Dismiss return false on a popup with another one over it, and only the stack's owner ever destroys one, always the top. A window destroyed with popups open destroys them top-down, without sending results
+  - Only the top popup takes the mouse. Every window below it ignores the mouse, can't be resized and drops close requests, like a window under a native modal dialog. The window does this as an IPointerFilter at the root of every widget's pointer chain, so no widget needed changing
+  - The click that opens or closes a popup doesn't click again in the window that takes the mouse next: a press held from before is ignored until the button is released
+  - Each popup is natively owned by the window it opens over (PlatformBridge::NativeWindow::SetOwner), so it stays above it, minimizes with it and has no taskbar button. It opens centered over that window, and shows once it has drawn its first frame
+  - Results are sent once the popup is off the stack, after its frame is drawn, so a result slot can open a follow-up popup. PushPopup makes the GL context current again that was current when the popup was created, because it usually runs inside a button's slot in the middle of another window's draw
+  - Popups' windows stay out of docking
 - Media Playback
   - AudioPlayback
     - Plays a file through miniaudio's high-level engine, which owns the output device, decoder, resampler and mixer. WAV, FLAC and MP3 decode inside miniaudio itself, with no FFmpeg involved
@@ -529,8 +544,10 @@ RetroFuturaGUI aims to break these barriers!
 ### Known Bugs
 - SvgTexture.cpp
   - Draw() switches the depth test off for its whole draw so that its coplanar mask passes can blend over the base layer. That also lets any SVG drawn later in the frame paint over whatever is already there, whatever the z - an open ComboBox drop-down is covered by an SvgImage sitting in a later Lasagna cell, for instance. Keeping the test on and using GL_LEQUAL for the mask passes would keep the blending and respect depth
+- Text
+  - A font size is rasterized as points at 96 DPI (FontManager::generateGlyphAtlas), so 25 draws glyphs about 33 px tall, but Text lays its lines out as if the size were pixels: the baseline, the line height and the caret all use 25. Since glyphs are clipped to their widget, a widget only a little taller than the font size cuts off the tails of p, g and y - a 30 px Label at 25 does
 - TextBox.cpp
   - A TextBox reports WidgetTypeID::Button, so DynamicLibWidgetManager::SetText and ConnectSlot take the Button branch, dynamic_cast to Button* yields null and is then dereferenced. The WidgetTypeID::TextBox branches are unreachable as a result
 
 ### Is AI used in this project?
-AI is often used for repititive tasks like adding code comments to functions, classes, and structs and updating this readme's ToDo and feature list. Shaders are mostly written by AI and AI is sometimes used for finding bugs and to assist with complicated calculations. The architecture of font loading and Scene management was partially planned with AI. AudioMetadata.hpp/cpp are entirely written by AI. YUV to RGB conversion was done by AI. Multi-window support, transparent windows and window docking were written by AI, following a design of mine
+AI is often used for repititive tasks like adding code comments to functions, classes, and structs and updating this readme's ToDo and feature list. Shaders are mostly written by AI and AI is sometimes used for finding bugs and to assist with complicated calculations. The architecture of font loading and Scene management was partially planned with AI. AudioMetadata.hpp/cpp are entirely written by AI. YUV to RGB conversion was done by AI. Multi-window support, transparent windows, window docking and popups were written by AI, following a design of mine

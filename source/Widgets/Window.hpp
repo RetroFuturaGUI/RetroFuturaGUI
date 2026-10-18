@@ -6,9 +6,13 @@
 #include "IBackground.hpp"
 #include "IBorder.hpp"
 #include "IHierarchyNode.hpp"
+#include "IPointerFilter.hpp"
+#include "IPopup.hpp"
 #include "DockEdge.hpp"
 #include <algorithm>
 #include <list>
+#include <memory>
+#include <vector>
 
 namespace RetroFuturaGUI
 {
@@ -24,7 +28,7 @@ namespace RetroFuturaGUI
         glm::vec2 Center() const { return _Origin + _Extent * 0.5f; }
     };
 
-    class Window final : public IBackground, public IBorder, public IHierarchyNode
+    class Window final : public IBackground, public IBorder, public IHierarchyNode, public IPointerFilter
     {
     public:
         /// @brief Creates a native GLFW window with the given title and size.
@@ -37,10 +41,12 @@ namespace RetroFuturaGUI
         /// @brief Destroys the native window. The widgets of its scenes have to be gone by then, and destroyed with this window's context current.
         ~Window();
 
-        /// @brief Returns whether the user has requested the window be closed.
+        /// @brief Returns whether the user has requested the window be closed. A window under a popup drops the request and
+        ///        stays open, like a native window under a modal dialog.
         bool WindowShouldClose();
 
-        /// @brief Makes the window's GL context current, then handles input and resizing, and draws the window's background, its root Lasagna and its scenes.
+        /// @brief Makes the window's GL context current, then handles input and resizing, and draws the window's background, its
+        ///        root Lasagna and its scenes. Then draws its popups, and closes the top one if it was asked to.
         void Draw();
 
         /// @brief Sets the window's width and height.
@@ -135,6 +141,21 @@ namespace RetroFuturaGUI
         /// @brief Tells the window that the drag ended. It docks where the preview showed, if a preview was showing.
         void EndDrag();
 
+    //Popups
+        /// @brief Opens a popup over this window and takes ownership of it. A window has one popup stack: a popup opened from a
+        ///        popup's window goes on top of the same stack. Only the top popup is interactiable
+        /// @return false when the popup is null or already open, or when this is the window of a popup that isn't open yet.
+        bool PushPopup(std::unique_ptr<IPopup> popup);
+
+        /// @brief Returns whether popups are open over this window.
+        bool HasPopups() const;
+
+        /// @brief Returns whether a popup lies over this window
+        bool IsBlockedByPopup() const;
+
+        /// @brief Takes all interactions away from this window's widgets while a popup lies over it
+        void FilterPointer(PointerState& pointer) const override;
+
     private:
         /// @brief A screen rectangle in screen coordinates, y running downward: where a window is, or would be once docked.
         struct DockRect
@@ -152,9 +173,16 @@ namespace RetroFuturaGUI
             uSize _Index { 0 }; //its place among the windows already docked to that edge
         };
 
-        /// @brief Creates a window, or a docking preview: a bare translucent window that stays out of input, docking and the
-        ///        window list, and only shows while a dragged window is near an edge it can dock to.
-        Window(std::string_view name, const i32 width, const i32 height, const bool isDockPreview);
+        /// @brief What a window is for. Docking previews and popups' windows start hidden and stay out of docking and the window list.
+        enum class WindowRole : u8
+        {
+            Normal,
+            DockPreview, //a bare translucent window that stays out of input, and only shows while a dragged window is near an edge it can dock to
+            Popup //an IPopup's window
+        };
+
+        /// @brief Creates a window in the given role.
+        Window(std::string_view name, const i32 width, const i32 height, const WindowRole role);
 
         enum class ResizeEdge : u32
         {
@@ -189,10 +217,10 @@ namespace RetroFuturaGUI
         glm::ivec2 //Where the docking layout last saw or put the window, so a move or resize from anywhere else stands out
             _dockedPosition { 0 },
             _dockedSize { 0 };
-        bool 
+        bool
             _dockingLayoutPending { false },//The layout had to skip this window while it was minimized or maximized, so it lays out its group once it is restored
-            _isDragged { false },
-            _isDockPreview { false };
+            _isDragged { false };
+        WindowRole _role { WindowRole::Normal };
         glm::ivec2 _dragStartPosition { 0 };
         DockSnap _dockSnap {};
         static constexpr i32 _snapDistance { 32 };
@@ -200,6 +228,13 @@ namespace RetroFuturaGUI
         glm::vec4
             _cornerRadii { 0.0f },
             _appliedCornerRadii { -1.0f }; //what the background and border last got, so they are only set again on a change
+
+    // Popups
+        std::vector<std::unique_ptr<IPopup>> _popups {};
+        Window* _popupHost { nullptr }; //set on popups' windows only: the window holding the popup stack
+        bool
+            _ignoreHeldPress { false }, //the window just took the mouse, and the button may still be down from the click that caused it
+            _showAfterDraw { false }; //a popup's window that just opened, and shows once it has drawn
 
         i32
             _width { 1280 },
@@ -350,8 +385,29 @@ namespace RetroFuturaGUI
         /// @brief How far the dragged window and the host overlap along the edge. Without overlap there is nothing to dock to.
         static i32 dockOverlap(const DockRect& dragged, const DockRect& host, const DockEdge edge);
 
-        /// @brief Every window except docking previews, so a dragged window can find the ones it could dock to. Never destroyed,
-        ///        so a window destroyed late in shutdown can still take itself off it.
+        /// @brief Every window except docking previews and popups' windows, so a dragged window can find the ones it could dock
+        ///        to. Never destroyed, so a window destroyed late in shutdown can still take itself off it.
         static std::vector<Window*>& allWindows();
+
+    //Popups
+        /// @brief Draws every popup on the stack, bottom first, then closes the top one if it was asked to.
+        void drawPopups();
+
+        /// @brief Closes the top popup if its window was asked to close: takes it off the stack, sends its result, then destroys it.
+        void closeTopPopup();
+
+        /// @brief The window of the top popup, or this window when no popup is open.
+        Window* topPopupWindow();
+
+        /// @brief Drops a request to close while a popup lies over this window.
+        void refuseCloseWhileBlocked();
+
+        /// @brief Centers this window over the given one.
+        void centerOver(const Window* window);
+
+        /// @brief Makes the given window this one's native owner, which keeps this one above it.
+        void setNativeOwner(const Window* owner);
+
+        friend class IPopup; //creates its window through the private constructor
     };
 }
