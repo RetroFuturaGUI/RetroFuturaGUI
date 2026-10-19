@@ -1,8 +1,10 @@
 #pragma once
 #include "IncludeHelper.hpp"
+#include "ContextObjects.hpp"
 #include "Shader.hpp"
 #include "Projection.hpp"
 #include "config.hpp"
+#include <memory>
 #include <span>
 #include <vector>
 
@@ -217,10 +219,10 @@ namespace RetroFuturaGUI
             2, 3, 0
         };
         
-        u32 
-            _vao { 0 },
+        u32
             _vbo { 0 },
             _ebo { 0 };
+        std::unique_ptr<VertexArray> _vertexArray { nullptr }; //one VAO per context that draws the rectangle, over the same buffers
 
         Projection& _projection;
         glm::mat4 

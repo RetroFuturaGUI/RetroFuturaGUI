@@ -1,6 +1,7 @@
 #pragma once
 #include "IncludeHelper.hpp"
 #include "Projection.hpp"
+#include "ContextObjects.hpp"
 #include "config.hpp"
 #include <string>
 #include <string_view>
@@ -135,9 +136,9 @@ namespace RetroFuturaGUI
             2, 3, 0
         };
         u32
-            _vao { 0 },
             _vbo { 0 },
             _ebo { 0 };
+        std::unique_ptr<VertexArray> _vertexArray { nullptr }; //one VAO per context that draws the quad, over the same buffers
         Projection* _projection { nullptr };
         glm::mat4
             _scalingMatrix { 1.0f },

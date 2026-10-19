@@ -2,6 +2,8 @@
 #include "FontManager.hpp"
 #include "DoubleEncodedString.hpp"
 #include "Projection.hpp"
+#include "ContextObjects.hpp"
+#include <memory>
 #include <string>
 #include <vector>
 #include <GL/gl.h>
@@ -157,9 +159,8 @@ namespace RetroFuturaGUI
         // mesh
         std::vector<f32> _vertices; // x,y,u,v per vertex
         std::vector<GlyphDraw> _glyphDraws;
-        u32 
-            _vao { 0 },
-            _vbo { 0 };
+        u32 _vbo { 0 };
+        std::unique_ptr<VertexArray> _vertexArray { nullptr }; //one VAO per context that draws the text, over the same buffer
 
         void updateMesh();
         void alignPosition();

@@ -1,6 +1,7 @@
 #include "ITextInteraction.hpp"
 #include "PlatformBridge.hpp"
 #include "DoubleEncodedString.hpp"
+#include "Window.hpp"
 #include <algorithm>
 
 #if defined(TARGET_PLATFORM_LINUX)
@@ -10,14 +11,46 @@
 #endif
 #include <GLFW/glfw3native.h>
 
+RetroFuturaGUI::ITextInteraction::~ITextInteraction()
+{
+    releaseKeyboardFocus();
+}
+
+void RetroFuturaGUI::ITextInteraction::takeKeyboardFocus()
+{
+    _keyboardFocus = this;
+
+    //Keys arrive at the window that has the focus, which is the host's while this window sits in a tab
+#if defined(TARGET_PLATFORM_LINUX)
+    PlatformBridge::Input::SetActiveDisplay(glfwGetX11Display());
+    PlatformBridge::Input::SetActiveWindow(glfwGetX11Window(Window::KeyboardWindowOf(_parentWindow)));
+#elif defined(TARGET_PLATFORM_WINDOWS)
+    PlatformBridge::Input::SetActiveWindow(glfwGetWin32Window(Window::KeyboardWindowOf(_parentWindow)));
+#endif
+}
+
+void RetroFuturaGUI::ITextInteraction::releaseKeyboardFocus()
+{
+    if(this != _keyboardFocus)
+        return;
+
+    _keyboardFocus = nullptr;
+    PlatformBridge::Input::SetActiveDisplay(nullptr);
+    PlatformBridge::Input::SetActiveWindow(0);
+}
+
 bool RetroFuturaGUI::ITextInteraction::hasInputFocus() const
 {
+    if(this != _keyboardFocus)
+        return false;
+
     const uint64_t activeWindowId { PlatformBridge::Input::GetActiveWindowID() };
 
+    //The window keys arrive at, which is the host's while this window sits in a tab
 #if defined(TARGET_PLATFORM_LINUX)
-    return activeWindowId == static_cast<uint64_t>(glfwGetX11Window(_parentWindow));
+    return activeWindowId == static_cast<uint64_t>(glfwGetX11Window(Window::KeyboardWindowOf(_parentWindow)));
 #elif defined(TARGET_PLATFORM_WINDOWS)
-    return activeWindowId == reinterpret_cast<uint64_t>(glfwGetWin32Window(_parentWindow));
+    return activeWindowId == reinterpret_cast<uint64_t>(glfwGetWin32Window(Window::KeyboardWindowOf(_parentWindow)));
 #else
     return false;
 #endif

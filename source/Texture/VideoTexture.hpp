@@ -37,9 +37,8 @@ namespace RetroFuturaGUI
         void releaseVideoResources();
 
         std::array<u32, 3> _planeTextureIds {};
-        u32
-            _framebuffer { 0 },
-            _emptyVao { 0 };
+        std::unique_ptr<Framebuffer> _framebuffer { nullptr }; //one per context that converts a picture, all rendering into the same texture
+        std::unique_ptr<VertexArray> _emptyVertexArray { nullptr }; //the conversion pass makes its triangle in the vertex shader, so there is no layout
         SwsContext* _converter { nullptr };
         AVFrame* _convertedFrame { nullptr };
         bool _hasPicture { false };

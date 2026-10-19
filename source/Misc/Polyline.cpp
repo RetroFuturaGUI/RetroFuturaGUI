@@ -9,7 +9,6 @@ RetroFuturaGUI::Polyline::Polyline(Projection* projection)
 
 RetroFuturaGUI::Polyline::~Polyline()
 {
-    glDeleteVertexArrays(1, &_vao);
     glDeleteBuffers(1, &_vbo);
 }
 
@@ -73,6 +72,9 @@ void RetroFuturaGUI::Polyline::SetThickness(const f32 thickness)
 
 void RetroFuturaGUI::Polyline::Draw()
 {
+    if(!_vertexArray)
+        return;
+
     if(0 == _vertexCount)
         return;
 
@@ -91,23 +93,21 @@ void RetroFuturaGUI::Polyline::Draw()
     glGetIntegerv(GL_DEPTH_FUNC, &depthFunction);
     glDepthFunc(GL_LEQUAL);
 
-    glBindVertexArray(_vao);
+    _vertexArray->Bind();
     glDrawArrays(GL_LINE_STRIP_ADJACENCY, 0, static_cast<GLsizei>(_vertexCount));
-    glBindVertexArray(0);
+    VertexArray::Unbind();
 
     glDepthFunc(static_cast<GLenum>(depthFunction));
 }
 
 void RetroFuturaGUI::Polyline::setupMesh()
 {
-    glGenVertexArrays(1, &_vao);
-    glBindVertexArray(_vao);
-
     glGenBuffers(1, &_vbo);
-    glBindBuffer(GL_ARRAY_BUFFER, _vbo);
 
-    glEnableVertexAttribArray(0);
-    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(glm::vec2), nullptr);
-
-    glBindVertexArray(0);
+    _vertexArray = std::make_unique<VertexArray>([vbo = _vbo]()
+        {
+            glBindBuffer(GL_ARRAY_BUFFER, vbo);
+            glEnableVertexAttribArray(0);
+            glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(glm::vec2), nullptr);
+        });
 }

@@ -39,6 +39,9 @@ RetroFuturaGUI::Tooltip::~Tooltip()
 {
     if(this == _shownTooltip)
         _shownTooltip = nullptr;
+
+    if(this == _asideTooltip)
+        _asideTooltip = nullptr;
 }
 
 void RetroFuturaGUI::Tooltip::Update()
@@ -59,6 +62,18 @@ void RetroFuturaGUI::Tooltip::DrawShown()
     glClear(GL_DEPTH_BUFFER_BIT);
     _shownTooltip->draw();
     _shownTooltip = nullptr;
+}
+
+void RetroFuturaGUI::Tooltip::setShownAside()
+{
+    _asideTooltip = _shownTooltip;
+    _shownTooltip = nullptr;
+}
+
+void RetroFuturaGUI::Tooltip::restoreShownFromAside()
+{
+    _shownTooltip = _asideTooltip;
+    _asideTooltip = nullptr;
 }
 
 void RetroFuturaGUI::Tooltip::SetDefaultFontFamily(std::string_view fontFamily, const f32 fontSize, const PlatformBridge::Fonts::Slant slant, const PlatformBridge::Fonts::Weight fontWeight)

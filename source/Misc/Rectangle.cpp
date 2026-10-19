@@ -10,13 +10,15 @@ RetroFuturaGUI::Rectangle::Rectangle(Projection* projection)
 
 RetroFuturaGUI::Rectangle::~Rectangle()
 {
-    glDeleteVertexArrays(1, &_vao);
     glDeleteBuffers(1, &_vbo);
     glDeleteBuffers(1, &_ebo);
 }
 
 void RetroFuturaGUI::Rectangle::Draw()
 {
+    if(!_vertexArray)
+        return;
+
     if(_colors.empty() && !isColorField())
         return;
 
@@ -76,9 +78,9 @@ void RetroFuturaGUI::Rectangle::Draw()
         }
     }
 
-    glBindVertexArray(_vao);
+    _vertexArray->Bind();
     glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
-    glBindVertexArray(0);
+    VertexArray::Unbind();
 }
 
 void RetroFuturaGUI::Rectangle::SetSize(const glm::vec2& size)
@@ -273,21 +275,23 @@ void RetroFuturaGUI::Rectangle::SetRotation(const glm::vec3& rotation)
 
 void RetroFuturaGUI::Rectangle::setupMesh()
 {
-    glGenVertexArrays(1, &_vao);
-    glBindVertexArray(_vao);
-
     glGenBuffers(1, &_vbo);
     glBindBuffer(GL_ARRAY_BUFFER, _vbo);
     glBufferData(GL_ARRAY_BUFFER, sizeof(_vertices), _vertices, GL_STATIC_DRAW);
 
-    glEnableVertexAttribArray(0);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(f32), nullptr);
-
+    //Filled through GL_ARRAY_BUFFER, since the GL_ELEMENT_ARRAY_BUFFER binding belongs to whichever VAO is bound
     glGenBuffers(1, &_ebo);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _ebo);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(_indices), _indices, GL_STATIC_DRAW);
+    glBindBuffer(GL_ARRAY_BUFFER, _ebo);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(_indices), _indices, GL_STATIC_DRAW);
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
 
-    glBindVertexArray(0);
+    _vertexArray = std::make_unique<VertexArray>([vbo = _vbo, ebo = _ebo]()
+        {
+            glBindBuffer(GL_ARRAY_BUFFER, vbo);
+            glEnableVertexAttribArray(0);
+            glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(f32), nullptr);
+            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
+        });
 }
 
 void RetroFuturaGUI::Rectangle::initColors(std::span<glm::vec4> colors)

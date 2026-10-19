@@ -36,6 +36,7 @@ namespace RetroFuturaGUI
     class Environment;
     class ScrollView;
     class ColorPicker;
+    class WindowTab;
 
     enum class FillType: u32
     {
@@ -86,6 +87,7 @@ namespace RetroFuturaGUI
         Environment,
         ScrollView,
         ColorPicker,
+        WindowTab,
         Unknown = -1
     };   
 

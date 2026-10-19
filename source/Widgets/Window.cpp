@@ -1,5 +1,7 @@
 #include "Window.hpp"
 #include "Scene.hpp"
+#include "WindowTab.hpp"
+#include "ContextObjects.hpp"
 #include "ShaderManager.hpp"
 #include "PlatformBridge.hpp"
 #include "Tooltip.hpp"
@@ -50,6 +52,9 @@ RetroFuturaGUI::Window::~Window()
 	while(!_popups.empty())
 		_popups.pop_back();
 
+	if(_dockSnap._Tab && isRegisteredWindowTab(_dockSnap._Tab))
+		_dockSnap._Tab->hideDropPreview();
+
 	std::erase(allWindows(), this);
 	Undock();
 
@@ -58,6 +63,7 @@ RetroFuturaGUI::Window::~Window()
 
 	//The background's and the border's GL objects belong to this window's context, so they go while it still exists and is current
 	glfwMakeContextCurrent(_window);
+	ContextObject::DeletePending(_window);
 	_background.reset();
 	_backgroundImage.reset();
 	_border.reset();
@@ -67,6 +73,7 @@ RetroFuturaGUI::Window::~Window()
 		_shareWindow = nullptr;
 
 	glfwDestroyWindow(_window);
+	ContextObject::ForgetContext(_window); //its VAOs and framebuffers went with it
 }
 
 void RetroFuturaGUI::Window::createWindow()
@@ -186,16 +193,21 @@ bool RetroFuturaGUI::Window::getCursorPosition(i32& x, i32& y) const
 
 void RetroFuturaGUI::Window::pollInput()
 {
+	const bool isMouseButtonDown { PlatformBridge::Input::IsMouseButtonDown(PlatformBridge::MouseButton::Left) };
+
+	//The mouse is read for the whole screen, so only the topmost window under the cursor takes it, and a press stays with the
+	//window it landed on until it is let go: a click never reaches a window lying underneath, and a drag carries on over others
+	if(!isMouseButtonDown || !_wasMouseButtonDown)
+		_hasPointer = isUnderMouse();
+
 	setCursorPosition();
 	setCursorIcon();
-
-	const bool isMouseButtonDown { PlatformBridge::Input::IsMouseButtonDown(PlatformBridge::MouseButton::Left) };
 
 	//Once the button is up, a press held from before this window took the mouse is over
 	if(!isMouseButtonDown)
 		_ignoreHeldPress = false;
 
-	if (isMouseButtonDown && !_wasMouseButtonDown && !_ignoreHeldPress) //press
+	if (isMouseButtonDown && !_wasMouseButtonDown && !_ignoreHeldPress && _hasPointer) //press
 		setResizeState(GLFW_MOUSE_BUTTON_LEFT, GLFW_PRESS, 0);
 	else if (!isMouseButtonDown && _wasMouseButtonDown) //release
 		setResizeState(GLFW_MOUSE_BUTTON_LEFT, GLFW_RELEASE, 0);
@@ -203,6 +215,20 @@ void RetroFuturaGUI::Window::pollInput()
 	_wasMouseButtonDown = isMouseButtonDown;
 
 	resize();
+}
+
+bool RetroFuturaGUI::Window::isUnderMouse() const
+{
+	if(!_window)
+		return false;
+
+#if defined(TARGET_PLATFORM_LINUX)
+	return PlatformBridge::Input::IsWindowUnderMouse(glfwGetX11Window(_window));
+#elif defined(TARGET_PLATFORM_WINDOWS)
+	return PlatformBridge::Input::IsWindowUnderMouse(glfwGetWin32Window(_window));
+#else
+	return true;
+#endif
 }
 
 void RetroFuturaGUI::Window::setCursorPosition()
@@ -282,6 +308,9 @@ RetroFuturaGUI::Window::ResizeEdge RetroFuturaGUI::Window::resizeEdgeAt(const f6
 
 bool RetroFuturaGUI::Window::canResize(const ResizeEdge edge) const
 {
+	if(IsInTab())
+		return false;
+
 	if(IsBlockedByPopup())
 		return false;
 
@@ -409,15 +438,27 @@ void RetroFuturaGUI::Window::resize()
 }
 
 void RetroFuturaGUI::Window::updateProjection()
-{ 
+{
+	if(!updateSize())
+		return;
+
+	glViewport(0, 0, _width, _height);
+}
+
+bool RetroFuturaGUI::Window::updateSize()
+{
+	if(!_window)
+		return false;
+
+	if(!_projection)
+		return false;
+
 	glfwGetWindowSize(_window, &_width, &_height);
 
 	if (_lastSize == glm::ivec2(_width, _height))
-		return;
-		
-	_projection->UpdateProjectionMatrix((f32)_width, (f32)_height);
-	glViewport(0, 0, _width, _height);
+		return false;
 
+	_projection->UpdateProjectionMatrix((f32)_width, (f32)_height);
 	UpdateLayout();
 
 	if(_background)
@@ -434,6 +475,7 @@ void RetroFuturaGUI::Window::updateProjection()
 
 	_lastSize = { _width, _height };
 	_windowSizeChanged = false;
+	return true;
 }
 
 bool RetroFuturaGUI::Window::WindowShouldClose()
@@ -450,8 +492,21 @@ void RetroFuturaGUI::Window::Draw()
 	if(!_window)
 		return;
 
+	if(IsInTab())
+		return; //the window holding its WindowTab draws it
+
 	//Another window may have drawn last, and every GL call below has to land in this window's context
 	glfwMakeContextCurrent(_window);
+	ContextObject::DeletePending(_window); //VAOs and framebuffers of objects destroyed while another window's context was current
+
+	//Each WindowTab marks itself again when it draws. One in an inactive scene, which doesn't, takes no dropped windows.
+	for(WindowTab* tab : _windowTabs)
+	{
+		if(!tab)
+			continue;
+
+		tab->_isShown = false;
+	}
 
 	if(WindowRole::DockPreview != _role)
 		pollInput();
@@ -464,36 +519,52 @@ void RetroFuturaGUI::Window::Draw()
 	glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
 
 	updateProjection();
+	drawContent();
+	glfwSwapBuffers(_window);
+
+	if(_showAfterDraw)
+	{
+		_showAfterDraw = false;
+		glfwShowWindow(_window);
+	}
+
+	glfwPollEvents();
+	refuseCloseWhileBlocked();
+	followCursor(); //before the docking, which looks at where the window is now
+	followDocking(); //After the scenes, because a window bar may have dragged this window while it drew
+	updateDockSnap();
+	drawPopups();
+}
+
+void RetroFuturaGUI::Window::drawContent()
+{
 	applyCornerRadii();
 	drawBackground();
 
 	if(_lasagna)
 		_lasagna->Draw();
 
-	for(Scene* _scene : _scenes)
+	for(Scene* scene : _scenes)
 	{
-		if(!_scene)
+		if(!isSceneShown(scene))
 			continue;
 
 		//Each scene starts with a fresh depth buffer, so a scene added later always draws over the ones loaded before
 		glClear(GL_DEPTH_BUFFER_BIT);
-		_scene->Draw();
+		scene->Draw();
 	}
 
 	drawFrame();
 	Tooltip::DrawShown(); //last, so it covers every scene
-	glfwSwapBuffers(_window);
-	glfwPollEvents();
-	refuseCloseWhileBlocked();
-	followDocking();//After the scenes, because a window bar may have dragged this window while it drew
-	updateDockSnap();
-	drawPopups();
 }
 
 void RetroFuturaGUI::Window::drawFrame()
 {
 	if(!_border)
 		return;
+
+	if(IsInTab())
+		return; //it would cut the selected field off from the content
 
 	//Width 0, the default, means no frame
 	if(0.0f >= _border->GetBorderWidth())
@@ -512,12 +583,24 @@ void RetroFuturaGUI::Window::SetWindowSize(i32 width, i32 height)
 
 void RetroFuturaGUI::Window::SetWidth(i32 width)
 {
+	if(IsInTab())
+	{
+		_untabbedSize.x = width;
+		return;
+	}
+
 	_width = width;
 	glfwSetWindowSize(_window, _width, _height);
 }
 
 void RetroFuturaGUI::Window::SetHeight(i32 height)
 {
+	if(IsInTab())
+	{
+		_untabbedSize.y = height;
+		return;
+	}
+
 	_height = height;
 	glfwSetWindowSize(_window, _width, _height);
 }
@@ -603,27 +686,28 @@ void RetroFuturaGUI::Window::UpdateLayout()
 	ScreenRect client { ._Origin = glm::vec2(0.0f), ._Extent = glm::vec2((f32)_width, (f32)_height) };
 
 	//Docked scenes take their strip in the order they were added, so the first one to claim an edge also owns the corner where two claims meet.
-	for(Scene* _scene : _scenes)
+	//A scene hidden in a tab reserves nothing while the window is in one.
+	for(Scene* scene : _scenes)
 	{
-		if(!_scene || !_scene->IsActive() || !_scene->HasReservedEdge())
+		if(!isSceneShown(scene) || !scene->HasReservedEdge())
 			continue;
 
-		const ScreenRect strip { reserveEdge(_scene->GetReservedEdge(), _scene->GetReservedThickness(), client) };
+		const ScreenRect strip { reserveEdge(scene->GetReservedEdge(), scene->GetReservedThickness(), client) };
 
-		_scene->SetPosition(glm::vec3(strip.Center(), _scene->GetPosition().z));
-		_scene->SetSize(glm::vec3(strip._Extent, _scene->GetSize().z));
+		scene->SetPosition(glm::vec3(strip.Center(), scene->GetPosition().z));
+		scene->SetSize(glm::vec3(strip._Extent, scene->GetSize().z));
 	}
 
 	_clientRect = client;
 
 	//Overlay scenes and the root Lasagna share whatever the docked scenes left.
-	for(Scene* _scene : _scenes)
+	for(Scene* scene : _scenes)
 	{
-		if(!_scene || _scene->HasReservedEdge())
+		if(!scene || scene->HasReservedEdge())
 			continue;
 
-		_scene->SetPosition(glm::vec3(client.Center(), _scene->GetPosition().z));
-		_scene->SetSize(glm::vec3(client._Extent, _scene->GetSize().z));
+		scene->SetPosition(glm::vec3(client.Center(), scene->GetPosition().z));
+		scene->SetSize(glm::vec3(client._Extent, scene->GetSize().z));
 	}
 
 	if(!_lasagna)
@@ -705,6 +789,9 @@ bool RetroFuturaGUI::Window::dockWindowAt(Window* window, const DockEdge edge, c
 	if(WindowRole::Normal != _role || WindowRole::Normal != window->_role)
 		return false;
 
+	if(IsInTab() || window->IsInTab())
+		return false;
+
 	//A window has one host at most, the window whose edge sets its length and position, and never one docked to it, so every
 	//group stays a tree. It can still border more windows: the ones docked to its own edges, and its neighbors on the host's edge.
 	if(window->_dockHost)
@@ -732,6 +819,11 @@ void RetroFuturaGUI::Window::Undock()
 {
 	leaveDockHost();
 	releaseDockedWindows();
+
+	if(!_tabHost)
+		return;
+
+	_tabHost->RemoveWindow(this); //a free window again, where the tab's content was
 }
 
 bool RetroFuturaGUI::Window::IsDocked() const
@@ -1081,6 +1173,9 @@ glm::bvec4 RetroFuturaGUI::Window::squaredCorners() const
 
 glm::vec4 RetroFuturaGUI::Window::GetDrawnCornerRadii() const
 {
+	if(IsInTab())
+		return _tabCornerRadii;
+
 	glm::vec4 radii { _cornerRadii };
 
 	if(!_noCornerRadiiWhenDocked)
@@ -1176,7 +1271,17 @@ void RetroFuturaGUI::Window::EndDrag()
 	if(std::ranges::find(allWindows(), snap._Target) == allWindows().end())
 		return;
 
-	snap._Target->dockWindowAt(this, snap._Edge, snap._Index);
+	if(!snap._Tab)
+	{
+		snap._Target->dockWindowAt(this, snap._Edge, snap._Index);
+		return;
+	}
+
+	if(!isRegisteredWindowTab(snap._Tab))
+		return;
+
+	snap._Tab->hideDropPreview();
+	snap._Tab->AddWindow(this);
 }
 
 void RetroFuturaGUI::Window::updateDockSnap()
@@ -1184,7 +1289,11 @@ void RetroFuturaGUI::Window::updateDockSnap()
 	if(!_isDragged)
 		return;
 
+	WindowTab* previousTab { _dockSnap._Tab };
 	_dockSnap = findDockSnap();
+
+	if(previousTab && previousTab != _dockSnap._Tab && isRegisteredWindowTab(previousTab))
+		previousTab->hideDropPreview();
 
 	if(!_dockSnap._Target)
 	{
@@ -1192,11 +1301,23 @@ void RetroFuturaGUI::Window::updateDockSnap()
 		return;
 	}
 
+	if(_dockSnap._Tab)
+	{
+		//get the content area it would fill, and a field with its title at the end of the strip
+		const glm::ivec4 content { _dockSnap._Tab->contentScreenRect() };
+		_dockSnap._Tab->showDropPreview(_windowTitle);
+		showDockPreview(DockRect 
+							{ ._Position = glm::ivec2(content.x, content.y), ._Size = glm::ivec2(content.z, content.w) },
+								_dockSnap._Tab->GetContentCornerRadii()
+						);
+		return;
+	}
+
 	//The slot this window would take, with the windows already on that edge making room for it
 	const DockRect host { _dockSnap._Target->screenRect() };
 	const uSize count { _dockSnap._Target->dockedWindows(_dockSnap._Edge).size() + 1 };
 	const i32 gap { _dockSnap._Target->edgeGap(_dockSnap._Edge, this) };
-	showDockPreview(_dockSnap._Target->dockSlot(host, _dockSnap._Edge, _dockSnap._Index, count, dockDepth(_dockSnap._Edge), gap), _dockSnap._Edge);
+	showDockPreview(_dockSnap._Target->dockSlot(host, _dockSnap._Edge, _dockSnap._Index, count, dockDepth(_dockSnap._Edge), gap), cornerRadiiDockedAt(_dockSnap._Edge));
 }
 
 RetroFuturaGUI::Window::DockSnap RetroFuturaGUI::Window::findDockSnap() const
@@ -1219,6 +1340,11 @@ RetroFuturaGUI::Window::DockSnap RetroFuturaGUI::Window::findDockSnap() const
 	//A click on the title is no drag: the window has to have moved
 	if(dragged._Position == _dragStartPosition)
 		return {};
+
+	const DockSnap tabSnap { findTabSnap() }; //Over a WindowTab's strip, dropping into the tab wins over docking to an edge!
+
+	if(tabSnap._Tab)
+		return tabSnap;
 
 	DockSnap snap {};
 	i32 closest { _snapDistance + 1 };
@@ -1265,6 +1391,58 @@ RetroFuturaGUI::Window::DockSnap RetroFuturaGUI::Window::findDockSnap() const
 	return snap;
 }
 
+RetroFuturaGUI::Window::DockSnap RetroFuturaGUI::Window::findTabSnap() const
+{
+	if(!_window)
+		return {};
+
+	if(holdsTabbedWindows() || IsDocked())
+		return {}; //a window carrying docked windows along would have to leave them behind
+
+	i32
+		cursorX { 0 },
+		cursorY { 0 };
+
+	if(!getCursorPosition(cursorX, cursorY))
+		return {};
+
+	const glm::ivec2 cursor { screenRect()._Position + glm::ivec2(cursorX, cursorY) };
+
+	for(Window* target : allWindows())
+	{
+		if(!target)
+			continue;
+
+		if(target == this)
+			continue;
+
+		if(!target->_window)
+			continue;
+
+		if(target->IsInTab() || target->isDockedTo(this))
+			continue; //a window of this one's group moves along with it
+
+		if(GLFW_TRUE == glfwGetWindowAttrib(target->_window, GLFW_ICONIFIED))
+			continue;
+
+		if(GLFW_FALSE == glfwGetWindowAttrib(target->_window, GLFW_VISIBLE))
+			continue;
+
+		for(WindowTab* tab : target->_windowTabs)
+		{
+			if(!tab)
+				continue;
+
+			if(!tab->isStripUnder(cursor))
+				continue;
+
+			return DockSnap { ._Target = target, ._Edge = DockEdge::Top, ._Index = tab->GetWindowCount(), ._Tab = tab };
+		}
+	}
+
+	return {};
+}
+
 uSize RetroFuturaGUI::Window::dockIndexFor(const DockRect& dragged, const DockEdge edge) const
 {
 	//Along the edge: y beside the window, x above or below it
@@ -1286,8 +1464,11 @@ uSize RetroFuturaGUI::Window::dockIndexFor(const DockRect& dragged, const DockEd
 	return index;
 }
 
-void RetroFuturaGUI::Window::showDockPreview(const DockRect& slot, const DockEdge edge)
+void RetroFuturaGUI::Window::showDockPreview(const DockRect& slot, const glm::vec4& cornerRadii)
 {
+	if(0 >= slot._Size.x || 0 >= slot._Size.y)
+		return;
+
 	if(!_dockPreview)
 	{
 		_dockPreview = std::unique_ptr<Window>(new Window("DockPreview", slot._Size.x, slot._Size.y, WindowRole::DockPreview));
@@ -1300,22 +1481,7 @@ void RetroFuturaGUI::Window::showDockPreview(const DockRect& slot, const DockEdg
 	if(!_dockPreview->_window)
 		return;
 
-	//Rounded like this window, with the corners that would meet the target squared like they will be once docked
-	glm::vec4 radii { _cornerRadii };
-
-	if(_noCornerRadiiWhenDocked)
-	{
-		glm::bvec4 squared { false };
-		squareEdgeCorners(squared, oppositeEdge(edge));
-
-		for(glm::length_t corner = 0; 4 > corner; ++corner)
-		{
-			if(squared[corner])
-				radii[corner] = 0.0f;
-		}
-	}
-
-	_dockPreview->SetCornerRadii(radii);
+	_dockPreview->SetCornerRadii(cornerRadii);
 
 	const DockRect current { _dockPreview->screenRect() };
 
@@ -1329,6 +1495,25 @@ void RetroFuturaGUI::Window::showDockPreview(const DockRect& slot, const DockEdg
 
 	if(GLFW_FALSE == glfwGetWindowAttrib(_dockPreview->_window, GLFW_VISIBLE))
 		glfwShowWindow(_dockPreview->_window);
+}
+
+glm::vec4 RetroFuturaGUI::Window::cornerRadiiDockedAt(const DockEdge edge) const
+{
+	glm::vec4 radii { _cornerRadii };
+
+	if(!_noCornerRadiiWhenDocked)
+		return radii;
+
+	glm::bvec4 squared { false };
+	squareEdgeCorners(squared, oppositeEdge(edge));
+
+	for(glm::length_t corner = 0; 4 > corner; ++corner)
+	{
+		if(squared[corner])
+			radii[corner] = 0.0f;
+	}
+
+	return radii;
 }
 
 void RetroFuturaGUI::Window::hideDockPreview()
@@ -1383,6 +1568,17 @@ bool RetroFuturaGUI::Window::PushPopup(std::unique_ptr<IPopup> popup)
 	if(!popup)
 		return false;
 
+	//The window holding the tab takes the popups, so they block the tab strip too
+	if(IsInTab())
+	{
+		Window* host { tabHostWindow() };
+
+		if(!host)
+			return false;
+
+		return host->PushPopup(std::move(popup));
+	}
+
 	//A popup's window keeps no stack of its own: a popup opened from it goes on top of the stack it is on
 	if(WindowRole::Popup == _role)
 	{
@@ -1426,6 +1622,16 @@ bool RetroFuturaGUI::Window::HasPopups() const
 
 bool RetroFuturaGUI::Window::IsBlockedByPopup() const
 {
+	if(IsInTab())
+	{
+		const Window* host { tabHostWindow() };
+
+		if(!host)
+			return false;
+
+		return host->IsBlockedByPopup();
+	}
+
 	if(!_popups.empty())
 		return true;
 
@@ -1438,11 +1644,22 @@ bool RetroFuturaGUI::Window::IsBlockedByPopup() const
 
 void RetroFuturaGUI::Window::FilterPointer(PointerState& pointer) const
 {
+	//The mouse is on another window lying over this one, or holds a press that began on another window: to this window's
+	//widgets it is outside, so they let go of their hover. The press stays visible, so a text box still ends its editing.
+	if(!_hasPointer)
+		pointer._HasPosition = false;
+
 	if(_ignoreHeldPress)
 		pointer._LeftButtonPressed = false;
 
 	//Only the capture, so a press stays visible and a text box below still ends its editing on a click elsewhere
 	if(IsBlockedByPopup())
+		pointer._IsCaptured = true;
+
+	if(!_tabHost)
+		return;
+
+	if(!_tabHost->IsEnabled())
 		pointer._IsCaptured = true;
 }
 
@@ -1461,14 +1678,7 @@ void RetroFuturaGUI::Window::drawPopups()
 		if(!popupWindow)
 			continue;
 
-		popupWindow->Draw();
-
-		if(!popupWindow->_showAfterDraw)
-			continue;
-
-		//Shown only once it has drawn, so it never shows a frame it hasn't drawn
-		popupWindow->_showAfterDraw = false;
-		glfwShowWindow(popupWindow->_window);
+		popupWindow->Draw(); //shows itself once it has drawn its first frame
 	}
 
 	closeTopPopup();
@@ -1564,4 +1774,282 @@ void RetroFuturaGUI::Window::setNativeOwner(const Window* owner)
 #elif defined(TARGET_PLATFORM_WINDOWS)
 	PlatformBridge::NativeWindow::SetOwner(glfwGetWin32Window(_window), glfwGetWin32Window(owner->_window));
 #endif
+}
+
+bool RetroFuturaGUI::Window::IsInTab() const
+{
+	return _tabHost != nullptr;
+}
+
+const std::string& RetroFuturaGUI::Window::GetWindowTitle() const
+{
+	return _windowTitle;
+}
+
+GLFWwindow* RetroFuturaGUI::Window::GetKeyboardWindow() const
+{
+	const Window* host { tabHostWindow() };
+
+	if(!host)
+		return _window;
+
+	return host->GetKeyboardWindow();
+}
+
+GLFWwindow* RetroFuturaGUI::Window::KeyboardWindowOf(GLFWwindow* glfwWindow)
+{
+	const Window* window { FromGlfwWindow(glfwWindow) };
+
+	if(!window)
+		return glfwWindow;
+
+	return window->GetKeyboardWindow();
+}
+
+glm::ivec2 RetroFuturaGUI::Window::DrawOriginOf(GLFWwindow* glfwWindow)
+{
+	const Window* window { FromGlfwWindow(glfwWindow) };
+
+	if(!window)
+		return glm::ivec2(0);
+
+	return window->_drawOrigin;
+}
+
+bool RetroFuturaGUI::Window::enterTab(WindowTab* tab)
+{
+	if(!tab)
+		return false;
+
+	if(!_window)
+		return false;
+
+	const Window* host { tab->GetHostWindow() };
+
+	if(!host)
+		return false;
+
+	if(WindowRole::Normal != _role || host == this)
+		return false;
+
+	if(_tabHost == tab)
+		return false;
+
+	if(holdsTabbedWindows() || host->IsInTab())
+		return false;
+
+	Undock(); //Leaves its docking group, or the tab it was in, and lets go of the windows docked to it
+
+	if(isMinimizedOrMaximized())
+		glfwRestoreWindow(_window);
+
+	if(_dockSnap._Tab && isRegisteredWindowTab(_dockSnap._Tab))
+		_dockSnap._Tab->hideDropPreview(); //A drag in progress ends here, since the window no longer moves on its own
+
+	_isDragged = false;
+	_followsCursor = false;
+	_dockSnap = {};
+	hideDockPreview();
+
+	glfwGetWindowSize(_window, &_untabbedSize.x, &_untabbedSize.y);
+	_tabHost = tab;
+	_showAfterDraw = false;
+	glfwHideWindow(_window);
+	UpdateLayout(); //the scenes hidden in a tab give their strips back
+	return true;
+}
+
+void RetroFuturaGUI::Window::leaveTab(const glm::ivec2& position)
+{
+	if(!_tabHost)
+		return;
+
+	_tabHost = nullptr;
+	_tabCornerRadii = glm::vec4(0.0f);
+
+	if(!_window)
+		return;
+
+	const glm::ivec2 size { 0 < _untabbedSize.x && 0 < _untabbedSize.y ? _untabbedSize : glm::ivec2(_width, _height) };
+	glfwSetWindowSize(_window, size.x, size.y);
+	glfwSetWindowPos(_window, position.x, position.y);
+
+	//Shows once it has drawn a frame of its own, so it never shows the picture its native window held before it went into the
+	//tab. Its own context's viewport is still the one from back then too, so the next frame sets it again.
+	_showAfterDraw = true;
+	_lastSize = glm::ivec2(-1);
+	UpdateLayout(); //the scenes hidden in a tab take their strips again
+}
+
+void RetroFuturaGUI::Window::drawInHost(const ScreenRect& contentArea, const glm::ivec2& screenPosition, const glm::vec4& cornerRadii)
+{
+	if(!_window)
+		return;
+
+	const Window* host { tabHostWindow() };
+
+	if(!host)
+		return;
+
+	//Its native window is hidden and never under the cursor, so the mouse reaches it whenever it reaches the window drawing it
+	_hasPointer = host->_hasPointer;
+
+	//Left, bottom, width and height in the drawing window's framebuffer
+	const glm::ivec4 area
+	{
+		static_cast<i32>(std::lround(contentArea._Origin.x)),
+		static_cast<i32>(std::lround(contentArea._Origin.y)),
+		(std::max)(static_cast<i32>(std::lround(contentArea._Extent.x)), 1),
+		(std::max)(static_cast<i32>(std::lround(contentArea._Extent.y)), 1)
+	};
+
+	//The hidden native window lies right under the content area, so its widgets read the cursor as they do on the window itself
+	setDockedGeometry(screenPosition, glm::ivec2(area.z, area.w));
+	_tabCornerRadii = cornerRadii;
+	updateSize();
+
+	//Once the button is up, a press held from before this window took the mouse is over
+	if(!PlatformBridge::Input::IsMouseButtonDown(PlatformBridge::MouseButton::Left))
+		_ignoreHeldPress = false;
+
+	//The drawing window's viewport and scissor box, given back once this window is drawn
+	GLint
+		viewport[4] {},
+		scissorBox[4] {};
+	glGetIntegerv(GL_VIEWPORT, viewport);
+	glGetIntegerv(GL_SCISSOR_BOX, scissorBox);
+	const bool scissorWasEnabled { GL_TRUE == glIsEnabled(GL_SCISSOR_TEST) };
+
+	//Everything lands in the content area, depth clears included, and an active clip stays in force
+	i32
+		clipLeft { area.x },
+		clipBottom { area.y },
+		clipRight { area.x + area.z },
+		clipTop { area.y + area.w };
+
+	if(scissorWasEnabled)
+	{
+		clipLeft = (std::max)(clipLeft, scissorBox[0]);
+		clipBottom = (std::max)(clipBottom, scissorBox[1]);
+		clipRight = (std::min)(clipRight, scissorBox[0] + scissorBox[2]);
+		clipTop = (std::min)(clipTop, scissorBox[1] + scissorBox[3]);
+	}
+
+	glViewport(area.x, area.y, area.z, area.w);
+	glEnable(GL_SCISSOR_TEST);
+	glScissor(clipLeft, clipBottom, (std::max)(clipRight - clipLeft, 0), (std::max)(clipTop - clipBottom, 0));
+	_drawOrigin = glm::ivec2(area.x, area.y);
+
+	//The drawing window's own tooltip still draws last in its frame
+	Tooltip::setShownAside();
+	glClear(GL_DEPTH_BUFFER_BIT);
+	drawContent();
+	glClear(GL_DEPTH_BUFFER_BIT); //the drawing window's widgets after the WindowTab aren't tested against this window's content
+	Tooltip::restoreShownFromAside();
+
+	_drawOrigin = glm::ivec2(0);
+	glViewport(viewport[0], viewport[1], viewport[2], viewport[3]);
+	glScissor(scissorBox[0], scissorBox[1], scissorBox[2], scissorBox[3]);
+
+	if(!scissorWasEnabled)
+		glDisable(GL_SCISSOR_TEST);
+}
+
+void RetroFuturaGUI::Window::beginCursorDrag(const glm::ivec2& grabPoint)
+{
+	if(!_window)
+		return;
+
+	_cursorGrabPoint = grabPoint;
+	_followsCursor = true;
+	_ignoreHeldPress = true; //the press that pulled it out is still down, and isn't a click on whatever lies under it now
+	BeginDrag();
+}
+
+void RetroFuturaGUI::Window::followCursor()
+{
+	if(!_followsCursor)
+		return;
+
+	if(!_window)
+		return;
+
+	if(!PlatformBridge::Input::IsMouseButtonDown(PlatformBridge::MouseButton::Left))
+	{
+		_followsCursor = false;
+		EndDrag(); //docks it, or drops it into a tab, where its preview showed
+		return;
+	}
+
+	i32
+		cursorX { 0 },
+		cursorY { 0 };
+
+	if(!getCursorPosition(cursorX, cursorY))
+		return;
+
+	//How far the cursor has moved from the point it holds
+	const glm::ivec2 slip { glm::ivec2(cursorX, cursorY) - _cursorGrabPoint };
+
+	if(0 == slip.x && 0 == slip.y)
+		return;
+
+	i32
+		windowX { 0 },
+		windowY { 0 };
+	glfwGetWindowPos(_window, &windowX, &windowY);
+	glfwSetWindowPos(_window, windowX + slip.x, windowY + slip.y);
+}
+
+bool RetroFuturaGUI::Window::isSceneShown(const Scene* scene) const
+{
+	if(!scene)
+		return false;
+
+	if(!scene->IsActive())
+		return false;
+
+	if(!IsInTab())
+		return true;
+
+	return !scene->IsHiddenInTab();
+}
+
+bool RetroFuturaGUI::Window::holdsTabbedWindows() const
+{
+	for(const WindowTab* tab : _windowTabs)
+	{
+		if(!tab)
+			continue;
+
+		if(0 < tab->GetWindowCount())
+			return true;
+	}
+
+	return false;
+}
+
+RetroFuturaGUI::Window* RetroFuturaGUI::Window::tabHostWindow() const
+{
+	if(!_tabHost)
+		return nullptr;
+
+	return _tabHost->GetHostWindow();
+}
+
+bool RetroFuturaGUI::Window::isRegisteredWindowTab(const WindowTab* tab)
+{
+	if(!tab)
+		return false;
+
+	for(const Window* window : allWindows())
+	{
+		if(!window)
+			continue;
+
+		if(std::ranges::find(window->_windowTabs, tab) != window->_windowTabs.end())
+			return true;
+	}
+
+	return false;
 }

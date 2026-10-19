@@ -51,6 +51,7 @@ list(APPEND RetroFuturaGuiSources
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Misc/TextTypes.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Misc/Tooltip.cpp"
 
+    "${CMAKE_CURRENT_SOURCE_DIR}/source/OpenGlHelpers/ContextObjects.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/OpenGlHelpers/Projection.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/OpenGlHelpers/SvgTexture.cpp"
 
@@ -84,6 +85,7 @@ list(APPEND RetroFuturaGuiSources
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/TextBox.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/Video.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/Window.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/WindowTab.cpp"
 
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/Containers/Environment.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/Containers/ExtendedComboBox.cpp"

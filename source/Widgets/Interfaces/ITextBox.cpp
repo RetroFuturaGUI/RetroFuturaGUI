@@ -178,10 +178,7 @@ void RetroFuturaGUI::ITextBox::interact()
         }
 
         if(!_editingEnabled)
-        {
-            PlatformBridge::Input::SetActiveDisplay(nullptr);
-            PlatformBridge::Input::SetActiveWindow(0);
-        }
+            releaseKeyboardFocus();
 
         return;
     }
@@ -207,12 +204,7 @@ void RetroFuturaGUI::ITextBox::interact()
         _onClick.Emit();
         setColors(ColorState::Clicked);
         _editingEnabled = true;
-#if defined(TARGET_PLATFORM_LINUX)
-        PlatformBridge::Input::SetActiveDisplay(glfwGetX11Display());
-        PlatformBridge::Input::SetActiveWindow(glfwGetX11Window(_parentWindow));
-#elif defined(TARGET_PLATFORM_WINDOWS)
-        PlatformBridge::Input::SetActiveWindow(glfwGetWin32Window(_parentWindow));
-#endif
+        takeKeyboardFocus();
         _isMarking = true;
         _selectedPositionFirst = _selectedPositionLast = _text->GetBoundaryAtPosition(glm::vec2(clampToTextBounds(mousePos.x), mousePos.y));
         setCaretFromBoundary(_selectedPositionFirst);

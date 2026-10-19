@@ -159,8 +159,11 @@ RetroFuturaGUI::VideoTexture::VideoTexture(Projection* projection)
     // life of the VideoTexture, so whoever took GetID() once still has the right one after a size change.
     glGenTextures(1, &_id);
     glGenTextures(static_cast<i32>(_planeTextureIds.size()), _planeTextureIds.data());
-    glGenFramebuffers(1, &_framebuffer);
-    glGenVertexArrays(1, &_emptyVao);
+    _framebuffer = std::make_unique<Framebuffer>([texture = _id]()
+        {
+            glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, texture, 0);
+        });
+    _emptyVertexArray = std::make_unique<VertexArray>([]() {});
     setupQuad(); // only builds the quad with a Projection
 }
 
@@ -172,8 +175,6 @@ RetroFuturaGUI::VideoTexture::~VideoTexture()
 void RetroFuturaGUI::VideoTexture::releaseVideoResources()
 {
     glDeleteTextures(static_cast<i32>(_planeTextureIds.size()), _planeTextureIds.data());
-    glDeleteFramebuffers(1, &_framebuffer);
-    glDeleteVertexArrays(1, &_emptyVao);
     sws_freeContext(_converter); // accepts null
     av_frame_free(&_convertedFrame); // accepts null and nulls the pointer
     _converter = nullptr;
@@ -222,6 +223,9 @@ bool RetroFuturaGUI::VideoTexture::HasPicture() const
 
 bool RetroFuturaGUI::VideoTexture::allocate(const i32 width, const i32 height)
 {
+    if(!_framebuffer)
+        return false;
+
     // the RGBA texture everything else binds: repeats like any texture, so tiled UVs on a model work,
     // and has mipmaps, so it doesn't shimmer on a distant surface - they're rebuilt after each conversion
     glBindTexture(GL_TEXTURE_2D, _id);
@@ -245,7 +249,7 @@ bool RetroFuturaGUI::VideoTexture::allocate(const i32 width, const i32 height)
         glTexImage2D(GL_TEXTURE_2D, 0, GL_R8, planeWidth, planeHeight, 0, GL_RED, GL_UNSIGNED_BYTE, nullptr);
     }
 
-    glBindFramebuffer(GL_FRAMEBUFFER, _framebuffer);
+    _framebuffer->Bind();
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, _id, 0);
 
     if(glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
@@ -336,6 +340,12 @@ void RetroFuturaGUI::VideoTexture::uploadPlanes(const AVFrame* frame)
 
 void RetroFuturaGUI::VideoTexture::convert(const AVFrame* frame)
 {
+    if(!_framebuffer)
+        return;
+
+    if(!_emptyVertexArray)
+        return;
+
     const ColorConversion conversion { colorConversionFor(frame) };
 
     Shader& shader = ShaderManager::GetYuvToRgbShader();
@@ -359,14 +369,14 @@ void RetroFuturaGUI::VideoTexture::convert(const AVFrame* frame)
     glDisable(GL_SCISSOR_TEST);
     glDisable(GL_CULL_FACE);
 
-    glBindFramebuffer(GL_FRAMEBUFFER, _framebuffer);
+    _framebuffer->Bind();
     glViewport(0, 0, _resolution.x, _resolution.y);
-    glBindVertexArray(_emptyVao);
+    _emptyVertexArray->Bind();
     glDrawArrays(GL_TRIANGLES, 0, 3);
 
     // the smaller versions for distant and minified use - built from the finished picture, so after the
     // pass and with the framebuffer released
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    Framebuffer::Unbind();
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, _id);
     glGenerateMipmap(GL_TEXTURE_2D);

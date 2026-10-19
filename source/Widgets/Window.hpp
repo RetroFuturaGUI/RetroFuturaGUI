@@ -17,6 +17,7 @@
 namespace RetroFuturaGUI
 {
     class Scene;
+    class WindowTab;
 
     /// @brief An axis-aligned region of the window in projection space, with its origin at the bottom-left corner. Widgets take their position as a centre, so Center() converts.
     struct ScreenRect
@@ -118,7 +119,7 @@ namespace RetroFuturaGUI
 
         /// @brief Takes this window out of its docking group. It leaves the window it is docked to, whose other docked windows
         ///        grow to fill the gap, and lets go of the windows docked to it where they are. Every window that stops being
-        ///        docked gets back the length it had before.
+        ///        docked gets back the length it had before. A window docked into a WindowTab leaves the tab.
         void Undock();
 
         /// @brief Returns whether this window is docked to another window or has windows docked to it.
@@ -140,6 +141,26 @@ namespace RetroFuturaGUI
 
         /// @brief Tells the window that the drag ended. It docks where the preview showed, if a preview was showing.
         void EndDrag();
+
+    //Tabs
+        /// @brief Returns whether this window is docked into a WindowTab.
+        bool IsInTab() const;
+
+        /// @brief Returns the window's native title
+        const std::string& GetWindowTitle() const;
+
+        /// @brief Returns the native window keyboard input arrives at: the host's while this window is docked into a WindowTab,
+        ///        since its own native window is hidden then and never has the focus, otherwise its own.
+        GLFWwindow* GetKeyboardWindow() const;
+
+        /// @brief The native window keyboard input for the given GLFW window's widgets arrives at, see GetKeyboardWindow. Widgets
+        ///        only hold the GLFW window, so they ask through this. A GLFW window without a Window answers for itself.
+        static GLFWwindow* KeyboardWindowOf(GLFWwindow* glfwWindow);
+
+        /// @brief Where the given GLFW window's (0, 0) lies in the framebuffer being drawn: the corner of the content area while a
+        ///        WindowTab's window draws it, otherwise (0, 0). Scissor boxes count framebuffer pixels, so a widget setting one
+        ///        adds this.
+        static glm::ivec2 DrawOriginOf(GLFWwindow* glfwWindow);
 
     //Popups
         /// @brief Opens a popup over this window and takes ownership of it. A window has one popup stack: a popup opened from a
@@ -171,6 +192,7 @@ namespace RetroFuturaGUI
             Window* _Target { nullptr };
             DockEdge _Edge { DockEdge::Top };
             uSize _Index { 0 }; //its place among the windows already docked to that edge
+            WindowTab* _Tab { nullptr }; //set when it drops into one of the target's WindowTabs instead, at the end of its strip
         };
 
         /// @brief What a window is for. Docking previews and popups' windows start hidden and stay out of docking and the window list.
@@ -234,7 +256,18 @@ namespace RetroFuturaGUI
         Window* _popupHost { nullptr }; //set on popups' windows only: the window holding the popup stack
         bool
             _ignoreHeldPress { false }, //the window just took the mouse, and the button may still be down from the click that caused it
-            _showAfterDraw { false }; //a popup's window that just opened, and shows once it has drawn
+            _showAfterDraw { false }, //a popup's window that just opened, or a window that just left a tab, and shows once it has drawn
+            _hasPointer { false }; //the mouse reaches this window: it lies on top under the cursor, or took the press that is still held
+
+    // Tabs
+        WindowTab* _tabHost { nullptr }; //the WindowTab this window is docked into/which window draws it
+        std::vector<WindowTab*> _windowTabs {}; //the WindowTabs in this window's scenes, registered by them
+        glm::ivec2
+            _untabbedSize { 0 },
+            _drawOrigin { 0 },
+            _cursorGrabPoint { 0 }; //where the cursor holds the window while it follows the cursor after being pulled out of a tab
+        glm::vec4 _tabCornerRadii { 0.0f }; //the content area's radii, which the window takes while it is in a tab
+        bool _followsCursor { false }; //whether window should move when pulled out off a tab
 
         i32
             _width { 1280 },
@@ -263,7 +296,7 @@ namespace RetroFuturaGUI
         glm::ivec2 _lastSize = { _width, _height };
         bool _windowSizeChanged { false };
 
-        // todo: create a cursor manager once the TextBox widget exists
+        // todo: move the cursor icons into PlatformBridge, see "Cursor icons in PlatformBridge" in the README's ToDos
         static inline GLFWcursor* _resizeCursorHorizontal { nullptr };
         static inline GLFWcursor* _resizeCursorVertical { nullptr };
         static inline GLFWcursor* _resizeCursorTLBR { nullptr };
@@ -284,13 +317,28 @@ namespace RetroFuturaGUI
         static ScreenRect reserveEdge(const DockEdge edge, const f32 thickness, ScreenRect& client);
 
         void createWindow();
+
+        /// @brief Reads the mouse for this frame: whether it reaches this window and where the cursor is. Then sets the cursor, and starts or ends a resize on a press or release.
         void pollInput();
+
+        /// @brief Whether this window is the topmost one under the cursor, of any application's.
+        bool isUnderMouse() const;
         bool getCursorPosition(i32& x, i32& y) const;
         void setCursorPosition();
         void setCursorIcon();
         void setResizeState(i32 button, i32 action, [[maybe_unused]] i32 mods);
         void resize();
+
+        /// @brief Takes over the native window's size when it changed: the projection, the layout and the background's and border's
+        ///        geometry, then the viewport.
         void updateProjection();
+
+        /// @brief Everything updateProjection does but the viewport, which belongs to whichever window's frame is being drawn.
+        /// @return whether the size changed.
+        bool updateSize();
+
+        /// @brief Draws the corner radii, background, root Lasagna, scenes, frame and tooltip into whatever framebuffer and viewport are set.
+        void drawContent();
 
         /// @brief The edge or corner a press at the given window coordinates would resize, or None.
         ResizeEdge resizeEdgeAt(const f64 x, const f64 y) const;
@@ -370,11 +418,19 @@ namespace RetroFuturaGUI
         /// @brief Called after each draw: while the window is dragged, finds where it would dock and shows the preview there.
         void updateDockSnap();
 
-        /// @brief The closest edge of another window the dragged one is near enough to dock to, if any.
+        /// @brief The closest edge of another window the dragged one is near enough to dock to, if any. A WindowTab strip under the
+        ///        cursor wins over every edge.
         DockSnap findDockSnap() const;
 
-        /// @brief Shows the docking preview over the slot the window would take on the edge, creating it the first time.
-        void showDockPreview(const DockRect& slot, const DockEdge edge);
+        /// @brief The WindowTab whose strip lies under the cursor, if the dragged window may drop into it.
+        DockSnap findTabSnap() const;
+
+        /// @brief Shows the docking preview over the given place on the screen, rounded with the given radii, creating it the first time.
+        void showDockPreview(const DockRect& slot, const glm::vec4& cornerRadii);
+
+        /// @brief This window's corner radii with the corners that would meet a window it docks to on the given edge squared, the
+        ///        way they will be once it is docked.
+        glm::vec4 cornerRadiiDockedAt(const DockEdge edge) const;
 
         /// @brief Hides the docking preview, if it shows.
         void hideDockPreview();
@@ -408,6 +464,45 @@ namespace RetroFuturaGUI
         /// @brief Makes the given window this one's native owner, which keeps this one above it.
         void setNativeOwner(const Window* owner);
 
+    //Tabs
+        /// @brief Docks this window into the WindowTab: it leaves its docking group, its native window hides, and from then on the
+        ///        WindowTab's window draws it.
+        /// @return false for popups' windows and docking previews, for the WindowTab's own window, for a window holding windows in
+        ///         its own WindowTabs, and when the WindowTab's window sits in a tab itself.
+        bool enterTab(WindowTab* tab);
+
+        /// @brief Takes this window out of its WindowTab. It gets back the size it had before, with its top-left corner at the given
+        ///        place on the screen, and shows once it has drawn a frame of its own.
+        void leaveTab(const glm::ivec2& position);
+
+        /// @brief Draws this window into its WindowTab's content area, with the WindowTab's window's context current: viewport and
+        ///        scissor box set to the content area, and the hidden native window kept right under it, so the cursor reads the
+        ///        same as on the window itself.
+        /// @param contentArea the content area in the drawing window's framebuffer pixels, y running upward
+        /// @param screenPosition the content area's top-left corner on the screen
+        void drawInHost(const ScreenRect& contentArea, const glm::ivec2& screenPosition, const glm::vec4& cornerRadii);
+
+        /// @brief Moves the window with the cursor, held at the given point, until the left button is let go, then ends the drag,
+        ///        which docks or tabs it where its preview showed. For a window just pulled out of a tab, since the press that
+        ///        drags it began in another window.
+        void beginCursorDrag(const glm::ivec2& grabPoint);
+
+        /// @brief Called after each draw: keeps the cursor at the grab point while the window follows it.
+        void followCursor();
+
+        /// @brief Whether the scene draws and takes its space: it is active, and not hidden while this window is in a tab.
+        bool isSceneShown(const Scene* scene) const;
+
+        /// @brief Whether any of this window's WindowTabs holds windows.
+        bool holdsTabbedWindows() const;
+
+        /// @brief The window whose WindowTab this one is docked into, or nullptr.
+        Window* tabHostWindow() const;
+
+        /// @brief Whether the WindowTab still lives in one of the windows, so a pointer kept from an earlier frame is safe to use.
+        static bool isRegisteredWindowTab(const WindowTab* tab);
+
         friend class IPopup; //creates its window through the private constructor
+        friend class WindowTab; //registers itself, docks windows into itself and draws the selected one
     };
 }

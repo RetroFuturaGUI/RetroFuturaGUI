@@ -1,4 +1,5 @@
 #include "Environment.hpp"
+#include "Window.hpp"
 #include <algorithm>
 #include <cmath>
 #include <print>
@@ -232,7 +233,7 @@ void RetroFuturaGUI::Environment::applyTransform()
     switch(_fit)
     {
         case EnvironmentFit::Cover:
-            _scale = std::max(widthScale, heightScale);
+            _scale = (std::max)(widthScale, heightScale);
         break;
         case EnvironmentFit::KeepHeight:
             _scale = heightScale;
@@ -242,7 +243,7 @@ void RetroFuturaGUI::Environment::applyTransform()
         break;
         case EnvironmentFit::Contain:
         default:
-            _scale = std::min(widthScale, heightScale);
+            _scale = (std::min)(widthScale, heightScale);
         break;
     }
 
@@ -285,29 +286,30 @@ void RetroFuturaGUI::Environment::drawDebugBox()
         glEnable(GL_DEPTH_TEST);
 }
 
-RetroFuturaGUI::Environment::ScissorState RetroFuturaGUI::Environment::pushScissor(const f32 left, const f32 bottom, const f32 width, const f32 height)
+RetroFuturaGUI::Environment::ScissorState RetroFuturaGUI::Environment::pushScissor(const f32 left, const f32 bottom, const f32 width, const f32 height) const
 {
     ScissorState state {};
     state._WasEnabled = static_cast<bool>(glIsEnabled(GL_SCISSOR_TEST));
     glGetIntegerv(GL_SCISSOR_BOX, state._Previous);
 
+    const glm::ivec2 origin { Window::DrawOriginOf(_parentWindow) }; //off the corner while the window is drawn inside another window's tab
     i32
-        clipLeft { static_cast<i32>(left) },
-        clipBottom { static_cast<i32>(bottom) },
+        clipLeft { origin.x + static_cast<i32>(left) },
+        clipBottom { origin.y + static_cast<i32>(bottom) },
         clipRight { clipLeft + static_cast<i32>(width) },
         clipTop { clipBottom + static_cast<i32>(height) };
 
 
     if(state._WasEnabled) // A clip already active, such as an enclosing Table's, stays in force: the Environment only narrows it.
     {
-        clipLeft = std::max(clipLeft, state._Previous[0]);
-        clipBottom = std::max(clipBottom, state._Previous[1]);
-        clipRight = std::min(clipRight, state._Previous[0] + state._Previous[2]);
-        clipTop = std::min(clipTop, state._Previous[1] + state._Previous[3]);
+        clipLeft = (std::max)(clipLeft, state._Previous[0]);
+        clipBottom = (std::max)(clipBottom, state._Previous[1]);
+        clipRight = (std::min)(clipRight, state._Previous[0] + state._Previous[2]);
+        clipTop = (std::min)(clipTop, state._Previous[1] + state._Previous[3]);
     }
 
     glEnable(GL_SCISSOR_TEST);
-    glScissor(clipLeft, clipBottom, std::max(clipRight - clipLeft, 0), std::max(clipTop - clipBottom, 0));
+    glScissor(clipLeft, clipBottom, (std::max)(clipRight - clipLeft, 0), (std::max)(clipTop - clipBottom, 0));
     return state;
 }
 

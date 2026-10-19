@@ -10,26 +10,27 @@
 RetroFuturaGUI::Text::Text(Projection* projection)
     : _projection(*projection)
 {
-    glGenVertexArrays(1, &_vao);
     glGenBuffers(1, &_vbo);
-    glBindVertexArray(_vao);
-    glBindBuffer(GL_ARRAY_BUFFER, _vbo);
-    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(f32), nullptr); // position
-    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(f32), (void*)(2 * sizeof(f32))); // uv
-    glEnableVertexAttribArray(0);
-    glEnableVertexAttribArray(1);
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
-    glBindVertexArray(0);
+    _vertexArray = std::make_unique<VertexArray>([vbo = _vbo]()
+        {
+            glBindBuffer(GL_ARRAY_BUFFER, vbo);
+            glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(f32), nullptr); // position
+            glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(f32), (void*)(2 * sizeof(f32))); // uv
+            glEnableVertexAttribArray(0);
+            glEnableVertexAttribArray(1);
+        });
 }
 
 RetroFuturaGUI::Text::~Text()
 {
-    glDeleteVertexArrays(1, &_vao);
     glDeleteBuffers(1, &_vbo);
 }
 
 void RetroFuturaGUI::Text::Draw()
 {
+    if(!_vertexArray)
+        return;
+
     if (_vertices.empty() || !_fontInfo || _glyphDraws.empty())
         return;
 
@@ -41,7 +42,7 @@ void RetroFuturaGUI::Text::Draw()
     ShaderManager::GetFontAtlasFillShader().SetUniformMat4("uScaling", glm::mat4(1.0f));
     ShaderManager::GetFontAtlasFillShader().SetUniformInt("uTexture", 0);
 
-    glBindVertexArray(_vao);
+    _vertexArray->Bind();
     glBindBuffer(GL_ARRAY_BUFFER, _vbo);
     glBufferData(GL_ARRAY_BUFFER, _vertices.size() * sizeof(f32), _vertices.data(), GL_DYNAMIC_DRAW);
     glActiveTexture(GL_TEXTURE0);
@@ -53,7 +54,7 @@ void RetroFuturaGUI::Text::Draw()
     }
 
     glBindBuffer(GL_ARRAY_BUFFER, 0);
-    glBindVertexArray(0);
+    VertexArray::Unbind();
     glBindTexture(GL_TEXTURE_2D, 0);
 }
 

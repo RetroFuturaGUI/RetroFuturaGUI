@@ -6,6 +6,7 @@
 #include "Lasagna.hpp"
 #include "Environment.hpp"
 #include "ScrollView.hpp"
+#include "WindowTab.hpp"
 #include "DockEdge.hpp"
 #include "Signal.hpp"
 
@@ -15,7 +16,7 @@ namespace RetroFuturaGUI
 
     template<typename T>
     concept RootContainer =
-        std::same_as<T, Lasagna> || std::same_as<T, Environment> || std::same_as<T, ScrollView>;
+        std::same_as<T, Lasagna> || std::same_as<T, Environment> || std::same_as<T, ScrollView> || std::same_as<T, WindowTab>;
 
     class Scene final : public IHierarchyNode
     {
@@ -37,6 +38,12 @@ namespace RetroFuturaGUI
         /// @brief Enables or disables drawing
         void SetActive(const bool active);
         bool IsActive() const;
+
+        /// @brief Hides the scene, and gives back the strip it reserves, while its window is docked into a WindowTab. Meant for a window's own bar: the tab's field shows the window's title and close button instead.
+        void SetHiddenInTab(const bool hidden);
+
+        /// @brief Whether the scene hides while its window is docked into a WindowTab.
+        bool IsHiddenInTab() const;
         IWidget* GetRootContainer() const;
         const std::string& GetName() const override;
         const IHierarchyNode* GetParent() const override;
@@ -125,7 +132,8 @@ namespace RetroFuturaGUI
     //Logic
         bool
             _hasReservedEdge { false },
-            _active { true };
+            _active { true },
+            _hiddenInTab { false };
 
         /// @brief Asks the parent window to recompute its client area, because what this scene
         ///        reserves from it just changed.

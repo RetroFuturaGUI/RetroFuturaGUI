@@ -8,6 +8,8 @@
 #include <glm/glm.hpp>
 #include "config.hpp"
 #include "ITexture.hpp"
+#include "ContextObjects.hpp"
+#include <memory>
 
 namespace RetroFuturaGUI
 {
@@ -99,10 +101,10 @@ namespace RetroFuturaGUI
         void Draw(const glm::mat4& projection, const glm::mat4& position, const glm::mat4& rotation, const glm::mat4& scaling);
 
     private:
-        u32 
-            _vao { 0 },
+        u32
             _vbo { 0 },
             _ebo { 0 };
+        std::unique_ptr<VertexArray> _vertexArray { nullptr }; //one VAO per context that draws the mesh, over the same buffers
         std::vector<Vertex> _vertices;
         std::vector<u32> _indices;
         std::vector<MeshTexture> _textures;

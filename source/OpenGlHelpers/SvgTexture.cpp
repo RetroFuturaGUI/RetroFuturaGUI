@@ -30,11 +30,10 @@ RetroFuturaGUI::SvgTexture::SvgTexture(SvgTexture&& other) noexcept
       _layers(std::move(other._layers)), _pathInfoCache(std::move(other._pathInfoCache)),
       _baseLayerTextureId(other._baseLayerTextureId), _verticallyFlipped(other._verticallyFlipped),
       _resolution(other._resolution), _aspectRatio(other._aspectRatio), _path(std::move(other._path)),
-      _vao(other._vao), _vbo(other._vbo), _ebo(other._ebo), _projection(other._projection),
+      _vbo(other._vbo), _ebo(other._ebo), _vertexArray(std::move(other._vertexArray)), _projection(other._projection),
       _scalingMatrix(other._scalingMatrix), _translationMatrix(other._translationMatrix), _rotationMatrix(other._rotationMatrix)
 {
     other._baseLayerTextureId = 0;
-    other._vao = 0;
     other._vbo = 0;
     other._ebo = 0;
 }
@@ -55,16 +54,15 @@ RetroFuturaGUI::SvgTexture& RetroFuturaGUI::SvgTexture::operator=(SvgTexture&& o
     _resolution = other._resolution;
     _aspectRatio = other._aspectRatio;
     _path = std::move(other._path);
-    _vao = other._vao;
     _vbo = other._vbo;
     _ebo = other._ebo;
+    _vertexArray = std::move(other._vertexArray);
     _projection = other._projection;
     _scalingMatrix = other._scalingMatrix;
     _translationMatrix = other._translationMatrix;
     _rotationMatrix = other._rotationMatrix;
 
     other._baseLayerTextureId = 0;
-    other._vao = 0;
     other._vbo = 0;
     other._ebo = 0;
 
@@ -83,13 +81,15 @@ void RetroFuturaGUI::SvgTexture::releaseGPUResources()
     for (PathLayer& layer : _layers)
         glDeleteTextures(1, &layer.maskTextureId);
 
-    glDeleteVertexArrays(1, &_vao);
     glDeleteBuffers(1, &_vbo);
     glDeleteBuffers(1, &_ebo);
 }
 
 void RetroFuturaGUI::SvgTexture::Draw()
 {
+    if(!_vertexArray)
+        return;
+
     if (!_projection || _baseLayerTextureId == 0)
         return;
 
@@ -103,7 +103,7 @@ void RetroFuturaGUI::SvgTexture::Draw()
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, _baseLayerTextureId);
 
-    glBindVertexArray(_vao);
+    _vertexArray->Bind();
 
     // The base layer and every masked overlay share the exact same transform, so they land at
     // identical depth. With the default GL_LESS depth func, anything after the first draw would
@@ -119,14 +119,14 @@ void RetroFuturaGUI::SvgTexture::Draw()
 
     glEnable(GL_DEPTH_TEST);
 
-    glBindVertexArray(0);
+    VertexArray::Unbind();
 }
 
 void RetroFuturaGUI::SvgTexture::SetProjection(Projection* projection)
 {
     _projection = projection;
 
-    if (_projection && _vao == 0)
+    if (_projection && !_vertexArray)
         setupQuad();
 }
 
@@ -455,24 +455,28 @@ void RetroFuturaGUI::SvgTexture::uploadMask(PathLayer& layer, const std::vector<
 
 void RetroFuturaGUI::SvgTexture::setupQuad()
 {
-    glGenVertexArrays(1, &_vao);
-    glBindVertexArray(_vao);
-
     glGenBuffers(1, &_vbo);
     glBindBuffer(GL_ARRAY_BUFFER, _vbo);
     glBufferData(GL_ARRAY_BUFFER, sizeof(_vertices), _vertices, GL_STATIC_DRAW);
 
-    glEnableVertexAttribArray(0);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(f32), nullptr);
-
-    glEnableVertexAttribArray(1);
-    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(f32), (void*)(3 * sizeof(f32)));
-
+    //Filled through GL_ARRAY_BUFFER, since the GL_ELEMENT_ARRAY_BUFFER binding belongs to whichever VAO is bound
     glGenBuffers(1, &_ebo);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _ebo);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(_indices), _indices, GL_STATIC_DRAW);
+    glBindBuffer(GL_ARRAY_BUFFER, _ebo);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(_indices), _indices, GL_STATIC_DRAW);
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
 
-    glBindVertexArray(0);
+    _vertexArray = std::make_unique<VertexArray>([vbo = _vbo, ebo = _ebo]()
+        {
+            glBindBuffer(GL_ARRAY_BUFFER, vbo);
+
+            glEnableVertexAttribArray(0);
+            glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(f32), nullptr);
+
+            glEnableVertexAttribArray(1);
+            glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(f32), (void*)(3 * sizeof(f32)));
+
+            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
+        });
 }
 
 RetroFuturaGUI::SvgTexture::PathLayer* RetroFuturaGUI::SvgTexture::findLayer(std::string_view name)

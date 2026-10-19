@@ -1,8 +1,10 @@
 #pragma once
 #include "config.hpp"
 #include "IncludeHelper.hpp"
+#include <memory>
 #include <span>
 #include "Projection.hpp"
+#include "ContextObjects.hpp"
 
 namespace RetroFuturaGUI
 {
@@ -48,9 +50,8 @@ namespace RetroFuturaGUI
         void setupMesh();
 
     //Geometry
-        u32
-            _vao { 0 },
-            _vbo { 0 };
+        u32 _vbo { 0 };
+        std::unique_ptr<VertexArray> _vertexArray { nullptr }; //one VAO per context that draws the line, over the same buffer
         uSize
             _vertexCount { 0 },
             _bufferVertexCount { 0 };

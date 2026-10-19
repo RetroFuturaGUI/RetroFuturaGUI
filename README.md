@@ -13,7 +13,7 @@ The framework is designed for cross-platform use, and its logic can be compiled 
 | 1 | Button, Label, Window, MainWindow, Image, Grid2D, WindowBar with Buttons |  | ✅ |
 | 2 | dll/so/dylib compilation for C# and Python support, Widget ID manager | 1 | ✅ | 
 | 3 | Linux Support, Font Manager | 2 | ✅ | 
-| 4 | More Widgets (TextBox ✅, Table ✅, 3D Model ✅, Slider ✅, CheckBox ✅, ComboBox ✅, ExtendedComoBox ✅, RadioButton ✅, RadioButtonGroup ✅, SeparatorLine ✅, ColorPreview ✅, change Grid2d to "Lasagna" and add a 3rd dimension ✅, MenuBar ✅, MultilineTextBox ✅, Histogram ✅, VideoPlayer ✅, Environment ✅, LineDiagram ✅, ScrollView ✅, Color Pickers ✅, WindowTab, window docking ✅), Scene ✅, SceneLoader ✅, AudioPlayback ✅, Popups ✅, Tooltip ✅, FileExplorer | 1 | WIP | 
+| 4 | More Widgets (TextBox ✅, Table ✅, 3D Model ✅, Slider ✅, CheckBox ✅, ComboBox ✅, ExtendedComoBox ✅, RadioButton ✅, RadioButtonGroup ✅, SeparatorLine ✅, ColorPreview ✅, change Grid2d to "Lasagna" and add a 3rd dimension ✅, MenuBar ✅, MultilineTextBox ✅, Histogram ✅, VideoPlayer ✅, Environment ✅, LineDiagram ✅, ScrollView ✅, Color Pickers ✅, WindowTab ✅, window docking ✅), Scene ✅, SceneLoader ✅, AudioPlayback ✅, Popups ✅, Tooltip ✅, FileExplorer | 1 | WIP | 
 | 5 | .bechaml markup language for GUI design 🥣 (**B**eautifully **E**xtended **C**ascading but **H**airbally **A**pplication **M**arkup **L**anguage) | 4 | | 
 | 6 | VS Code extension with project generator/manager | 5 | | 
 | 7 | Pre-built Prefabs (StepperSlider, SpinBox, Table with Sliders, Carousel, Extended Color Pickers, MediaPlayer) | 6 |
@@ -80,14 +80,13 @@ The framework is designed for cross-platform use, and its logic can be compiled 
   - Children aren't registered with the DynamicLibWidgetManager, so a binding can't address them by string ID yet. That needs a deregistration path as well, or destroying a prefab would leave the manager holding freed pointers
   - The Lasagna is fixed at construction; a prefab keeps whatever AxisDefinition it was built with
 - Scene
-  - Shared, cross-window scenes. SceneLoader::CreateScene hands back a std::unique_ptr, so a scene is one instance belonging to one window, and "the same scene in two windows" means instantiating the same description twice. Returning a shared scene is planned and needs three things: windows created with a shared GL context (done: every window shares textures, buffers and shaders with the first one created), per-context VAOs over shared buffers (the spec never shares VAOs, FBOs or transform feedback, and Rectangle, Text, Mesh and Texture each own one), and splitting shared state from per-window view. Consequence until then: a 3D Model changed in one window does not propagate to another - they are separate objects with separate transform matrices. For 2D widgets sharing is incoherent anyway, because Window::UpdateLayout writes screen-space positions into the widgets and two differently sized windows need different values in the same fields; for 3D content it is coherent, and the shape it wants is one world with a camera per window, which belongs to the planned Environment container rather than to Scene
+  - Shared, cross-window scenes. SceneLoader::CreateScene hands back a std::unique_ptr, so a scene is one instance belonging to one window, and "the same scene in two windows" means instantiating the same description twice. Returning a shared scene is planned and needs three things: windows created with a shared GL context (done: every window shares textures, buffers and shaders with the first one created), per-context VAOs over shared buffers (done: the spec never shares VAOs or framebuffers, so VertexArray and Framebuffer keep one for each context that draws the object), and splitting shared state from per-window view. Consequence until then: a 3D Model changed in one window does not propagate to another - they are separate objects with separate transform matrices. For 2D widgets sharing is incoherent anyway, because Window::UpdateLayout writes screen-space positions into the widgets and two differently sized windows need different values in the same fields; for 3D content it is coherent, and the shape it wants is one world with a camera per window, which belongs to the planned Environment container rather than to Scene
   - Widgets are owned by the generated _p struct, not by the Scene, and the Scene owns only its root container. Closing a scene therefore has to tear down its owner's entry too - SceneLoader registers scenes and borrows a pointer, but whoever holds the unique_ptr owns the lifetime, so CloseScene needs a release hook to make closing actually complete rather than just unregistering
   - SceneLoader owns no assets yet, so nothing holds what scenes share. When it does it has to be the single asset cache rather than a second one beside ResourceManager, and widgets need a way to reach it - they currently load their own textures, SVGs and models straight from a path in their constructors
   - Loading is synchronous. SceneLoadingProgress always reports 1.0 for a scene that exists, and becomes meaningful only once asset loading is split into an off-thread prepare step and a main-thread realize step - every gl* call has to stay on the context thread, and destruction can never leave it at all
   - No lifecycle signals (OnActivate, OnDeactivate, OnLoad, OnUnload), so application code has nothing to hook a scene transition to
   - Overlay scenes don't block the scene underneath them. Widgets hit-test inside their own Draw, so there is no central pass that could stop at the topmost hit the way a raycast would. Docking avoids it geometrically - a content scene is never given the strip, so it has nothing there to click - but a modal overlay needs the scene beneath it disabled, passing emitSignal = false to SetEnabled so the sweep doesn't fire every connected slot
-  - The root container is one of a fixed set - Lasagna, Environment or ScrollView, through the RootContainer concept. An IContainer interface would open it to any container
-  - SceneLoader::DrainPending runs the release hooks in whichever window's GL context drew last. With several windows, closing a scene of a window that didn't draw last would delete its VAOs in the wrong context, where the same VAO name means a different object - every widget has to be destroyed with its own window's context current
+  - The root container is one of a fixed set - Lasagna, Environment, ScrollView or WindowTab, through the RootContainer concept. An IContainer interface would open it to any container
   - SetLasagnaAxis takes its AxisDefinition by value, copying three vectors per call
 - SeparatorLine
   - The caption's left padding isn't clamped to the line's width, so a long caption or a large padding runs the gap and its text off the right end
@@ -101,9 +100,18 @@ The framework is designed for cross-platform use, and its logic can be compiled 
 - Window
   - Check if Draw()'s updateProjection() call can be made conditional again and also called at programmatic size change instead
   - Rounded window corners are cut by the fill shaders discarding fragments, so their edges aren't anti-aliased
-  - Windows on top don't stop input: the mouse state is read for the whole screen, so a window covered by another one still sees hovers and presses where they overlap. The same goes for another application's window on top
   - The docking preview is a window of its own, so it gets a taskbar button while it shows. Hiding it needs WS_EX_TOOLWINDOW on Windows (_NET_WM_STATE_SKIP_TASKBAR on X11), which belongs in PlatformBridge
   - A minimized or maximized window stays out of the docking layout until it is restored, and minimizing a group's root leaves the rest of the group on screen
+- WindowTab
+  - Only the selected tab's window draws, so a window in a background tab pauses, as in ImGui: a video stops advancing (its audio keeps playing), Scene::Connect_OnUpdate stops ticking, and whatever they feed freezes until the tab shows again. A separate update step (see "Update and FixedUpdate loops") would let background tabs keep updating without drawing
+  - The strip runs along the top only. Its fields have no icons, and there is no "+" field, no closing by middle-click and no switching tabs by keyboard
+  - A dropped window goes to the end of the strip, the way ImGui docks one, not where the cursor is; reorder it by dragging afterwards
+  - A dragged window stays a window until it is let go, instead of joining the strip as a tab right away the way browsers do
+  - Fields that don't fit at their minimum width are left out; the strip doesn't scroll
+  - Tabs don't nest: a window holding windows in tabs doesn't go into a tab, and a window in a tab takes none
+  - The WindowTab's rotation is ignored, since the content is drawn through a viewport, which can't turn
+  - Not addressable through the C binding (DynamicLibWidgetManager) yet
+  - Linux is untested: a window in a tab keeps its native window, hidden, under the content area for its input, and whether X11 moves and reports an unmapped window the same way is unverified
 - Popups
   - Widgets under a popup keep whatever hover color they had when it opened, since they stop reacting before they would reset it
   - A popup opens centered over the one below it, so a nested popup of the same size covers it completely
@@ -202,6 +210,7 @@ The framework is designed for cross-platform use, and its logic can be compiled 
     - SetPosition, SetSize, SetRotation: every part sits around the widget's center and its offset is rotated with the widget, so the open list stays attached to a rotated box
   - TextBox
     - Text input & editing (insert, backspace, key repeat)
+    - Keystrokes go to the text box or table cell clicked last, in whichever window it is; one that isn't being edited never takes them from another
     - Read-only mode
     - Caret: blinking with configurable blink time, colors, Solid/Linear/Radial/HueStar Gradient fill, gradient animation speed
     - Text selection: mouse-drag selection, colors, Solid/Linear/Radial/HueStar Gradient fill, gradient offset/degree/rotation speed, corner radii
@@ -300,14 +309,27 @@ The framework is designed for cross-platform use, and its logic can be compiled 
     - Children are reached by name afterwards: GetChildWidget&lt;T&gt;, ShowChildWidget, IsChildWidgetShown
     - Owns its children; refuses a name that is already taken, and a cell that is out of range or occupied, without keeping the widget it was asked to build
     - SetPosition, SetSize, SetRotation, forwarded to its Lasagna
+  - WindowTab
+    - Docks windows as tabs, like a file explorer: a strip of fields along the top, each with a window's native title and a close button, and the selected window's content in the area below (AddWindow, InsertWindow, RemoveWindow, SelectWindow, GetSelectedWindow, GetWindow, GetWindowCount)
+    - Drawn the way ImGui draws docked windows: the window holding the WindowTab draws the selected window's scenes itself, in its own GL context, with the viewport and scissor box set to the content area. Its own later scenes, a drop-down for instance, draw over the content. The tabbed window keeps its native window, hidden and kept right under the content area, so its widgets read the cursor as on the window itself, and keys reach its text boxes through the focused window (Window::KeyboardWindowOf)
+    - Only the selected window draws; the windows in the other tabs pause until they are selected, as in ImGui
+    - A press on a field selects it, the close button closes its window the way the window's own close button does, and the window's owner destroys it as usual
+    - Dragging a field sideways reorders the fields. Dragging it 1.5 title font sizes above or below the strip, or 2.2 past the first or last field (ImGui's thresholds), pulls its window out: it gets its old size back, with the cursor holding it where it held the field, and follows the cursor until let go, docking to an edge or into a tab where its preview showed
+    - Dragging a free window by its bar over a strip shows a translucent preview over the content area and a preview field at the end of the strip, and letting go docks it in at the end. Over a strip, docking into the tab wins over docking to an edge
+    - A window in a tab hides the scenes marked SetHiddenInTab (its window bar), draws no frame, takes the content area's corner radii (SetContentCornerRadii), can't be resized or docked to an edge, and its popups go on the stack of the window holding the tab, so they block the strip too
+    - A window leaving a tab shows only once it has drawn a frame of its own, so it never shows a stale picture, and nothing shows when that happens during shutdown
+    - Styling: strip height, field width range, spacing, corner radii, per-state field background, border and title colors plus the selected field's, title font, close button size, colors and icon color, and the WindowTab's own background and border
+    - Signals: OnSelectionChanged, OnWindowAdded, OnWindowRemoved
+    - Can be a scene's root container (Scene::SetRootContainer<WindowTab>) as well as sit in a Lasagna cell
   - Window
     - Background color or image
       - Background image ID can be used to create glass effects on widgets
     - Background & Border (same options as Button), with a radius per corner (SetCornerRadii). The border is 0 px wide until it is set, and is drawn over the scenes
     - Transparent framebuffer: what the background leaves out - the area outside its rounded corners, or all of it with a translucent background color - shows what lies behind the window. Alpha blends with a function of its own (glBlendFuncSeparate), so a semi-transparent widget on an opaque background leaves the window opaque instead of letting the desktop through
     - Resizeable, by presses inside the window only. The mouse state is read for the whole screen, and outside the window every position would count as near an edge
+    - The mouse reaches only the topmost window under the cursor, whatever application it belongs to (PlatformBridge::Input::IsWindowUnderMouse), and a press stays with the window it landed on until it is let go. A click never reaches a window lying underneath, whose widgets see the mouse as outside and let go of their hover, and a drag carries on over other windows
     - Movable, by dragging a MenuBar cell marked for it (FlexDefinition::_IsWindowDrag)
-    - Several windows at once: every window shares textures, buffers and shaders with the first one created, so fonts, images and shaders load once. Each window makes its own GL context current before it draws. VAOs are never shared, so a widget has to be built, drawn and destroyed with its own window's context current
+    - Several windows at once: every window shares textures, buffers and shaders with the first one created, so fonts, images and shaders load once. Each window makes its own GL context current before it draws. VAOs and framebuffers, the only GL objects windows don't share, are kept per context (VertexArray, Framebuffer): every context that draws an object makes its own on first use and deletes it only while that context is current, so a widget can be drawn by another window - a window in a tab is - and destroyed with any context current
     - Destroying a Window destroys its native window. FromGlfwWindow returns the Window behind a GLFW window
     - Docking (DockWindow, Undock, IsDocked)
       - A window docks to one of another window's edges (DockEdge). The windows on one edge share its whole length, minus the gaps between them, and keep their own depth away from it - like the columns of Niri
@@ -318,13 +340,15 @@ The framework is designed for cross-platform use, and its logic can be compiled 
       - The corners where docked windows meet are squared: a host's corners along an edge with windows on it, a window's corners facing its host, and those facing its neighbors on the same edge. SetNoCornerRadiiWhenDocked turns it off for every window. GetDrawnCornerRadii returns the radii actually drawn, so a widget lining the window's edge - a window bar, for instance - can match its own corners to them
       - Drag to dock: a window bar calls BeginDrag and EndDrag around a drag. A window docked to nothing that is dragged within 32 px of where it would sit docked on another window's edge shows a translucent preview of the exact slot, and docks there when it is let go - among the windows already on that edge, in the order of their positions. Dragging a docked window moves its group instead
       - Undock cells (FlexDefinition::_IsWindowUndock): a drag that starts in one pulls the window out of its group, then drags it alone, so it can be docked somewhere else. The bar disables the cell's widget while the window is docked to nothing, and a cell holding a disabled widget draws in the disabled item colors and takes no presses
+      - Docking into tabs: a window also docks into a WindowTab, by its API or by dropping it on the strip. It leaves its docking group when it goes in, and Undock takes it out of the tab again (IsInTab)
     - Maximize and restore (ToggleMaximize, IsMaximized), with the state read from GLFW rather than kept by the window
     - Holds an ordered list of Scenes it draws over its root Lasagna (AddScene, RemoveScene), borrowed rather than owned
     - Divides its surface into a client area: each docked Scene takes its strip, and whatever is left goes to the overlay Scenes and the root Lasagna. Recomputed on resize, on adding or removing a Scene, and whenever a Scene changes what it reserves or whether it is active
 - Scenes
   - Scene
     - A named group of widgets with its own root container, hanging under a Window: Window / Scene / Container / Widgets. Meant for scene loading and for HUDs
-    - The root container is a Lasagna (SetLasagnaAxis), an Environment or a ScrollView (SetRootContainer&lt;T&gt;), so a whole scene can be a 3D room or scroll as one
+    - The root container is a Lasagna (SetLasagnaAxis), an Environment, a ScrollView or a WindowTab (SetRootContainer&lt;T&gt;), so a whole scene can be a 3D room, scroll as one, or hold other windows in tabs
+    - Hidden while its window sits in a tab (SetHiddenInTab), for a window's own bar, whose title and close button the tab's field shows instead. It gives back its strip meanwhile
     - Deliberately not an IWidget, only an IHierarchyNode. A scene has no geometry, no hit-testing and no color state of its own, and staying off IWidget keeps it out of Lasagna::AttachWidget - so a Scene can never end up nested inside a cell, and the hierarchy stays at a fixed depth
     - Contributes its name to its widgets' paths, so GetPath composes MainWindow/MyScene/RootLasagna/TestButton for the interoperability API and .bechaml to address
     - Active or Inactive (SetActive), which is a different axis from a widget's Enabled or Disabled: Active decides whether the scene draws at all, Enabled decides whether a widget reacts and which ColorState it renders in. Since widgets hit-test inside their own Draw, an inactive scene stops responding as well as drawing. A disabled widget still draws - so an active scene full of disabled widgets is exactly the dimmed-behind-a-modal case, and a Scene needs no separate visibility flag
@@ -442,7 +466,7 @@ The framework is designed for cross-platform use, and its logic can be compiled 
   - Clipboard (copy/paste of text and bitmap data)
   - System font enumeration (family, weight, slant, Unicode ranges)
   - Keyboard input, held-key tracking, per-window key capture
-  - Mouse button state & window-relative cursor position
+  - Mouse button state & window-relative cursor position, and whether a window is the topmost one under the cursor
   - Monitor enumeration (Windows)
   - Executable path & working directory utilities
 - Cross Language Capabilities
@@ -496,8 +520,28 @@ The framework is designed for cross-platform use, and its logic can be compiled 
     </ul>
   </ul>
 <li>Font Manager</li>
-<li>Cursor Icon Manager</li>
-<li>Animation Engine</li>
+<li>Cursor icons in PlatformBridge instead of GLFW</li>
+  <ul>
+  <li>Window creates and sets them through GLFW today (glfwCreateStandardCursor, glfwSetCursor, the static GLFWcursor members in Window.hpp), and only for its resize arrows. They belong in PlatformBridge beside Input: LoadCursor/SetCursor on Windows, XCreateFontCursor/XDefineCursor on X11</li>
+  <li>GLFW answers WM_SETCURSOR with its own cursor on every mouse move, so a cursor PlatformBridge sets lasts until the mouse moves. PlatformBridge has to take that message over, the way Input's window subclass takes the keys</li>
+  <li>One place decides each frame's icon: widgets ask for one (an I-beam over a text box, resize arrows near a window's edge), and only the window the mouse reaches (Window::_hasPointer) applies it</li>
+  <li>Custom icons from images</li>
+  </ul>
+<li>A .ini settings file that remembers the window layout, the way imgui.ini does for ImGui</li>
+  <ul>
+  <li>Per window: position, size and whether it is maximized; its edge docking (the host, the edge and its place among the windows on that edge); and the WindowTab it sits in, with the tabs' order and which one is selected. Also the size each window had before it was docked or tabbed, so taking it out later gives that back</li>
+  <li>Windows are found again by name (Window::GetName) and WindowTabs by their path (GetPath), so both names have to be unique and stay the same between runs</li>
+  <li>Read at startup once the windows exist, before the first frame, and written when the layout changes (with a delay, like ImGui's IniSavingRate) and on exit. Windows or WindowTabs that no longer exist are skipped, and without a file the docking the code sets up applies</li>
+  <li>A window saved on a monitor that is gone comes back onto one that is there (PlatformBridge's monitor enumeration)</li>
+  <li>The file's name and folder can be set, or saving switched off (ImGui sets IniFilename to null for that); PlatformBridge::Paths gives the default folder</li>
+  </ul>
+<li>Animation Engine: transitions that carry a value smoothly to a new one instead of letting it jump</li>
+  <ul>
+  <li>Today every change lands in a single frame: a tab field jumps into its new slot when the fields reorder or one leaves, and the dragged field into its slot when it is let go (WindowTab::slotRect); a window's corners square at once when it docks (Window::applyCornerRadii); hover, click and disabled colors switch at once (the widgets' setColors)</li>
+  <li>A transition moves a value from where it is to its target over a duration, along an easing curve. It is timed by the clock rather than by frames, so it runs the same at any frame rate, and a new target set midway starts from where the value is, not from the old start</li>
+  <li>Values to cover: positions and sizes (tab fields, a WindowTab's preview field opening its gap), corner radii, colors - gradients too, blended stop by stop, which needs both to have as many stops - and alpha, for fading popups, tooltips and the docking preview in and out</li>
+  <li>Unlike the gradient, raster and fog animations, which run without end, a transition stops at its target, so it costs nothing while nothing changes</li>
+  </ul>
 <li>Test Carbon compatibility</li>
 <li>Add more widget interactions to the DynamicLibWidgetManager</li>
   <ul>
@@ -509,7 +553,14 @@ The framework is designed for cross-platform use, and its logic can be compiled 
 <li>More text color properties</li>
 <li>Rectangle, Text, Texture, IWidget: 3rd dimension</li>
 <li>Complete Python binding</li>
-<li>Refactor Binding</li>
+<li>General refactor across the framework</li>
+  <ul>
+  <li>Split Window into parts with one job each: Window.cpp has grown to over 2000 lines covering the native window, input and resizing, docking, tabs and popups</li>
+  <li>Merge duplicated code, such as Table::pushScissor and Environment::pushScissor, which are copies of each other</li>
+  <li>Keep windows.h out of headers: through its includes Window.hpp brings its min and max macros into every file that includes it, which is why parts of the code have to write (std::max)</li>
+  <li>Bring older code in line with the conventions: file-local static functions and anonymous namespaces (AudioMetadata, RingBufferSource, VideoTexture, Environment, IRangedMultiValue) become class members, underscore-named locals (Text.cpp, Prefab.cpp, Window::RemoveScene) lose the underscore, and comments that only restate their guard go</li>
+  <li>One indentation style: Window.cpp, IPopup.cpp and Shader.cpp indent with tabs, everything else with spaces</li>
+  </ul>
 <li>Refactor textures so a texture on a 3D model carries no unused quad (ITexture holds the standalone quad that only Image and Video draw with - VAO/VBO/EBO, the scaling/translation/rotation matrices, Draw/SetSize/SetPosition/SetRotation. Without a Projection the buffers are never created, but every Model texture still carries the members and the API. Move the quad out to what draws it)</li>
 <li>Separate the background and border features of Rectangle, so a border carries no background features and a background no border features</li>
   <ul>
@@ -529,6 +580,14 @@ The framework is designed for cross-platform use, and its logic can be compiled 
   <li>Scroll wheel, vertical and horizontal (tilting wheels and two-finger touchpad swipes report horizontally). Until then a ScrollView only scrolls by dragging its empty space</li>
   <li>Two-finger stretch (pinch) on touchpads and touchscreens, as the input for scrolling a ScrollView along Z, which nothing can do yet</li>
   <li>One wheel turn must not scroll nested ScrollViews together: the innermost hovered one should take the delta, so a ScrollView has to read it after its widgets have drawn rather than before</li>
+  </ul>
+<li>Bring the interoperability binding (DYNLIB_MODE, DynamicLibWidgetManager, the C#, Python and Rust bindings) up to date with scenes and the window mechanisms. Last on the list, since it builds on the items above</li>
+  <ul>
+  <li>Widgets are registered under their bare name (AddWidget(widget->GetName(), ...)), so of two widgets with the same name in different scenes or windows only the first one registered is reachable. Register them by path instead (GetPath: MainWindow/MyScene/RootLasagna/TestButton), which is what the path was made for</li>
+  <li>Nothing is ever unregistered, so a closed scene (SceneLoader::CloseScene), a closed window or a destroyed prefab leaves the manager holding freed pointers. A scene's widgets have to leave the registry along with the scene</li>
+  <li>The exported functions reach single widgets and the one MainWindow only. Scenes (create, close, activate, reserve an edge), several windows, docking, WindowTabs and popups can't be used from another language yet</li>
+  <li>Callbacks are void(*)() only, so signals that carry values - WindowTab's OnSelectionChanged with its Window*, a popup's results - have no way out</li>
+  <li>MainScene_setup.cpp still registers _testTextBox in DYNLIB_MODE although its construction is commented out, so a dynamic-library build dereferences a null pointer at startup</li>
   </ul>
 </ul>
 </details>
@@ -550,4 +609,4 @@ RetroFuturaGUI aims to break these barriers!
   - A TextBox reports WidgetTypeID::Button, so DynamicLibWidgetManager::SetText and ConnectSlot take the Button branch, dynamic_cast to Button* yields null and is then dereferenced. The WidgetTypeID::TextBox branches are unreachable as a result
 
 ### Is AI used in this project?
-AI is often used for repititive tasks like adding code comments to functions, classes, and structs and updating this readme's ToDo and feature list. Shaders are mostly written by AI and AI is sometimes used for finding bugs and to assist with complicated calculations. The architecture of font loading and Scene management was partially planned with AI. AudioMetadata.hpp/cpp are entirely written by AI. YUV to RGB conversion was done by AI. Multi-window support, transparent windows, window docking and popups were written by AI, following a design of mine
+AI is often used for repititive tasks like adding code comments to functions, classes, and structs and updating this readme's ToDo and feature list. Shaders are mostly written by AI and AI is sometimes used for finding bugs and to assist with complicated calculations. The architecture of font loading and Scene management was partially planned with AI. AudioMetadata.hpp/cpp are entirely written by AI. YUV to RGB conversion was done by AI. Multi-window support, transparent windows, window docking, window tabs and popups were written by AI, following a design of mine

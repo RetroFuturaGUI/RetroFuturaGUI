@@ -54,6 +54,20 @@ bool RetroFuturaGUI::Scene::IsActive() const
     return _active;
 }
 
+void RetroFuturaGUI::Scene::SetHiddenInTab(const bool hidden)
+{
+    if(_hiddenInTab == hidden)
+        return;
+
+    _hiddenInTab = hidden;
+    requestWindowLayout();
+}
+
+bool RetroFuturaGUI::Scene::IsHiddenInTab() const
+{
+    return _hiddenInTab;
+}
+
 RetroFuturaGUI::IWidget* RetroFuturaGUI::Scene::GetRootContainer() const
 {
     return _rootContainer.get();

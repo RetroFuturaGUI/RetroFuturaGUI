@@ -5,6 +5,7 @@
 #include "SvgImage.hpp"
 #include "SvgTexture.hpp"
 #include "TableCheckBox.hpp"
+#include "Window.hpp"
 #include <memory>
 
 #if defined(TARGET_PLATFORM_LINUX)
@@ -268,16 +269,17 @@ void RetroFuturaGUI::Table::drawHeaderBand(std::vector<TableCell>& cells, const 
     }
 }
 
-RetroFuturaGUI::Table::ScissorState RetroFuturaGUI::Table::pushScissor(const f32 left, const f32 bottom, const f32 width, const f32 height)
+RetroFuturaGUI::Table::ScissorState RetroFuturaGUI::Table::pushScissor(const f32 left, const f32 bottom, const f32 width, const f32 height) const
 {
     // axis-aligned scissor box. breaks when rotation is applied
     ScissorState state {};
     state._WasEnabled = static_cast<bool>(glIsEnabled(GL_SCISSOR_TEST));
     glGetIntegerv(GL_SCISSOR_BOX, state._Previous);
 
+    const glm::ivec2 origin { Window::DrawOriginOf(_parentWindow) }; //off the corner while the window is drawn inside another window's tab
     i32
-        clipLeft { static_cast<i32>(left) },
-        clipBottom { static_cast<i32>(bottom) },
+        clipLeft { origin.x + static_cast<i32>(left) },
+        clipBottom { origin.y + static_cast<i32>(bottom) },
         clipRight { clipLeft + static_cast<i32>(width) },
         clipTop { clipBottom + static_cast<i32>(height) };
 
@@ -1123,13 +1125,7 @@ void RetroFuturaGUI::Table::beginEdit(const uSize row, const uSize column, const
     _hasEditCell = true;
     _editingEnabled = true;
     _showCaret = true;
-
-#if defined(TARGET_PLATFORM_LINUX)
-    PlatformBridge::Input::SetActiveDisplay(glfwGetX11Display());
-    PlatformBridge::Input::SetActiveWindow(glfwGetX11Window(_parentWindow));
-#elif defined(TARGET_PLATFORM_WINDOWS)
-    PlatformBridge::Input::SetActiveWindow(glfwGetWin32Window(_parentWindow));
-#endif
+    takeKeyboardFocus();
 
     Text* text { activeText() };
 
@@ -1419,16 +1415,6 @@ void RetroFuturaGUI::Table::interactTableText(const MouseState& mouse)
         {
             EndEdit();
         }
-    }
-
-    if(_editingEnabled)
-    {
-#if defined(TARGET_PLATFORM_LINUX)
-        PlatformBridge::Input::SetActiveDisplay(glfwGetX11Display());
-        PlatformBridge::Input::SetActiveWindow(glfwGetX11Window(_parentWindow));
-#elif defined(TARGET_PLATFORM_WINDOWS)
-        PlatformBridge::Input::SetActiveWindow(glfwGetWin32Window(_parentWindow));
-#endif
     }
 
     editText();

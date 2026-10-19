@@ -125,7 +125,8 @@ namespace RetroFuturaGUI
         void drawDebugBox();
 
         /// @brief Clips to the given rectangle, intersected with whatever clip is already active, and returns the state to restore.
-        static ScissorState pushScissor(const f32 left, const f32 bottom, const f32 width, const f32 height);
+        ///        The rectangle is in window pixels; the window's draw origin moves it to where the window lies in the framebuffer.
+        ScissorState pushScissor(const f32 left, const f32 bottom, const f32 width, const f32 height) const;
 
         /// @brief Restores the clip state captured by pushScissor.
         static void popScissor(const ScissorState& state);

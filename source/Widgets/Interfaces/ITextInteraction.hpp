@@ -12,6 +12,9 @@ namespace RetroFuturaGUI
     class ITextInteraction : virtual public IWindowAccessor
     {
     public:
+        /// @brief Gives up the keystrokes, if this text has them.
+        virtual ~ITextInteraction();
+
         /// @brief Returns the text most recently copied or cut.
         const std::string& GetCopiedText() const;
 
@@ -114,7 +117,14 @@ namespace RetroFuturaGUI
         void emitCopy();
         void emitPaste();
 
-        /// @brief Returns whether the widget's window is the one currently taking keyboard input.
+        /// @brief Makes this text the one the keystrokes go to, and captures them on the native window they arrive at: the
+        ///        widget's own window, or the host's while that window sits in a tab.
+        void takeKeyboardFocus();
+
+        /// @brief Gives up the keystrokes, if this text has them. Another text's keystrokes stay where they are.
+        void releaseKeyboardFocus();
+
+        /// @brief Returns whether the keystrokes go to this text: it took them last, and they still arrive at its window.
         bool hasInputFocus() const;
 
         /// @brief Flips the caret's visibility once a full blink interval has elapsed.
@@ -188,5 +198,8 @@ namespace RetroFuturaGUI
         static constexpr u32
             _keyRepeatInitialDelay { 60 },
             _keyRepeatInterval { 5 };
+
+    private:
+        inline static const ITextInteraction* _keyboardFocus { nullptr }; //the text the keystrokes go to: the one clicked last, in any window
     };
 }

@@ -46,6 +46,14 @@ namespace RetroFuturaGUI
         void SetBorderWidth(const f32 borderWidth);
 
     private:
+        friend class Window; //sets its own waiting tooltip aside while it draws a window docked into one of its tabs
+
+        /// @brief Sets the tooltip waiting for the end of the frame, so a window drawn in the middle of another one's frame draws only its own.
+        static void setShownAside();
+
+        /// @brief Makes the tooltip set aside the waiting one again.
+        static void restoreShownFromAside();
+
         void draw();
         void setSize();
         void setPosition();
@@ -69,6 +77,7 @@ namespace RetroFuturaGUI
         u32 _appliedDefaultFontVersion { 0 };
 
         inline static Tooltip* _shownTooltip { nullptr }; //drawn and cleared by DrawShown at the end of the frame
+        inline static Tooltip* _asideTooltip { nullptr }; //a window's waiting tooltip, while a window docked into its tab draws
         inline static std::string _defaultFontFamily {};
         inline static f32 _defaultFontSize { 16.0f };
         inline static PlatformBridge::Fonts::Slant _defaultFontSlant { PlatformBridge::Fonts::Slant::Roman };
