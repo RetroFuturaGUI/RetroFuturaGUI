@@ -35,6 +35,7 @@ void RetroFuturaGUI::TableCheckBox::Draw()
 
     if(_checkmark)
     {
+        _checkmark->SetProjection(_projection); //ToDo: double check if it should be moved to SetSize instead
         _checkmark->SetSize(_size);
         _checkmark->SetPosition(_position + glm::vec3(0.0f, 0.0f, 0.02f));
         _checkmark->SetRotation(_rotation);
