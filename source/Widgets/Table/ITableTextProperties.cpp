@@ -3,13 +3,18 @@
  const std::string& RetroFuturaGUI::ITableTextProperties::GetText() const
 {
     if(!_text)
-        return _dummyText;
+        return _content;
 
     return _text->GetTextUTF8();
 }
 
 void RetroFuturaGUI::ITableTextProperties::SetFontFamily(std::string_view fontFamily, const f32 fontSize, const PlatformBridge::Fonts::Slant slant, const PlatformBridge::Fonts::Weight fontWeight)
 {
+    _fontFamily = fontFamily;
+    _fontSize = fontSize;
+    _slant = slant;
+    _fontWeight = fontWeight;
+
     if(_text)
         _text->SetFontFamily(fontFamily, fontSize, slant, fontWeight);
 }
@@ -24,6 +29,8 @@ void RetroFuturaGUI::ITableTextProperties::SetTextAlignment(const TextAlignment 
 
 void RetroFuturaGUI::ITableTextProperties::SetTextPadding(const f32 padding)
 {
+    _textPadding = padding;
+
     if(_text)
         _text->SetTextPadding(padding);
 }
@@ -31,6 +38,19 @@ void RetroFuturaGUI::ITableTextProperties::SetTextPadding(const f32 padding)
 f32 RetroFuturaGUI::ITableTextProperties::GetTextWidth() const
 {
     return _text ? _text->GetWidth() : 0.0f;
+}
+
+void RetroFuturaGUI::ITableTextProperties::applyTextSettings()
+{
+    if(!_text)
+        return;
+
+    if(!_fontFamily.empty())
+        _text->SetFontFamily(_fontFamily, _fontSize, _slant, _fontWeight);
+
+    _text->SetTextAlignment(_textAlignment);
+    _text->SetTextPadding(_textPadding);
+    setTextColors();
 }
 
 void RetroFuturaGUI::ITableTextProperties::setTextColors()
@@ -41,15 +61,19 @@ void RetroFuturaGUI::ITableTextProperties::setTextColors()
     switch(_textColorState)
     {
         case ColorState::Enabled:
-            _text->SetColor(_textColorEnabled.front());
+            if(!_textColorEnabled.empty())
+                _text->SetColor(_textColorEnabled.front());
             break;
         case ColorState::Clicked:
-            _text->SetColor(_textColorClicked.front());
+            if(!_textColorClicked.empty())
+                _text->SetColor(_textColorClicked.front());
             break;
         case ColorState::Hover:
-            _text->SetColor(_textColorHover.front());
+            if(!_textColorHover.empty())
+                _text->SetColor(_textColorHover.front());
             break;
         default: //Disabled
-            _text->SetColor(_textColorDisabled.front());
+            if(!_textColorDisabled.empty())
+                _text->SetColor(_textColorDisabled.front());
     }
 }

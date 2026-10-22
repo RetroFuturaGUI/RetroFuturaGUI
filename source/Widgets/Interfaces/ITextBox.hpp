@@ -21,6 +21,9 @@ namespace RetroFuturaGUI
         /// @brief Sets the corner rounding radii of the text box's background and border.
         void SetCornerRadii(const glm::vec4& radii);
 
+        /// @brief Takes the keystrokes as a click into the box would, with its whole text selected and the caret at its end, so a dialog opens ready for typing.
+        void TakeKeyboardFocus();
+
     //Geometry
         /// @brief Sets the size of the text box.
         void SetSize(const glm::vec3& size) override;

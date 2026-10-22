@@ -33,10 +33,14 @@ namespace RetroFuturaGUI
     protected:
         void setTextColors();
 
-    // Elements
-        std::unique_ptr<Text> _text { nullptr };
+        /// @brief Applies the kept font, alignment, padding and colors to a Text just built, so it draws as the one it replaces.
+        void applyTextSettings();
 
-    // Style    
+    // Elements
+        std::unique_ptr<Text> _text { nullptr }; //built for drawing only, while the cell is in view: a table can hold thousands of cells. ToDo: check foor possible performance loss
+        std::string _content {}; //the text while there is no Text, and what it is built with
+
+    // Style
         std::span<glm::vec4>
             _textColorEnabled {},
             _textColorDisabled {},
@@ -44,9 +48,13 @@ namespace RetroFuturaGUI
             _textColorHover {};
         ColorState _textColorState { ColorState::Enabled };
         TextAlignment _textAlignment { TextAlignment::Left };
+        std::string _fontFamily {}; //empty: Text's own default
+        f32
+            _fontSize { 16.0f },
+            _textPadding { 0.0f };
+        PlatformBridge::Fonts::Slant _slant { PlatformBridge::Fonts::Slant::Roman };
+        PlatformBridge::Fonts::Weight _fontWeight { PlatformBridge::Fonts::Weight::Normal };
 
-    // Logic
-          
     private:
         inline static const std::string _dummyText { "" };
 

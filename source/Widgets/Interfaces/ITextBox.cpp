@@ -225,6 +225,23 @@ void RetroFuturaGUI::ITextBox::interact()
     _wasClicked = isMouseTextBoxPressed;
 }
 
+void RetroFuturaGUI::ITextBox::TakeKeyboardFocus()
+{
+    if(!_text)
+        return;
+
+    _editingEnabled = true;
+    takeKeyboardFocus();
+    _isMarking = false;
+    _selectedPositionFirst = 0;
+    _selectedPositionLast = _text->GetGlyphCount();
+    _isSelected = 0 < _selectedPositionLast;
+    setCaretFromBoundary(_selectedPositionLast);
+    updateSelectedArea();
+    _showCaret = true;
+    resetCaretBlink();
+}
+
 void RetroFuturaGUI::ITextBox::setColors(const ColorState state)
 {
     _backgroundColorState = state;
