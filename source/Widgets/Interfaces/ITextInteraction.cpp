@@ -20,6 +20,11 @@ void RetroFuturaGUI::ITextInteraction::takeKeyboardFocus()
 {
     _keyboardFocus = this;
 
+    //A key down when the focus comes was typed for something else, like the key that opened this box; it types once pressed again
+    _repeatKeySym = PlatformBridge::Input::GetLastKeySym();
+    _repeatKeyPressCountSeen = PlatformBridge::Input::GetKeyPressCount(_repeatKeySym);
+    _keyRepeatText.clear();
+
     //Keys arrive at the window that has the focus, which is the host's while this window sits in a tab
 #if defined(TARGET_PLATFORM_LINUX)
     PlatformBridge::Input::SetActiveDisplay(glfwGetX11Display());
@@ -505,6 +510,9 @@ bool RetroFuturaGUI::ITextInteraction::checkForTextInput()
     if(!text)
         return false;
 
+    if(PlatformBridge::Input::GetLastKeySym() == _repeatKeySym && PlatformBridge::Input::GetKeyPressCount(_repeatKeySym) == _repeatKeyPressCountSeen)
+        return false; //the key that was down when the focus came
+
     std::u32string keyText { DoubleEncodedString::Utf8ToUtf32(PlatformBridge::Input::GetInputString()) };
     std::erase_if(keyText, isInvalidCodepoint);
 
@@ -531,12 +539,13 @@ bool RetroFuturaGUI::ITextInteraction::checkForTextInput()
         _caretPosition += keyText.size();
         deselect();
         updateCaretPosition();
-        _keyRepeatText = keyText;
-        _repeatKeySym = PlatformBridge::Input::GetLastKeySym();
-        _repeatKeyPressCountSeen = PlatformBridge::Input::GetKeyPressCount(_repeatKeySym);
-        _keyHoldFrames = 0;
     }
 
+    //The key's text stays until it is released, so it is the repeating key now; otherwise typing over a selection put the character in twice
+    _keyRepeatText = keyText;
+    _repeatKeySym = PlatformBridge::Input::GetLastKeySym();
+    _repeatKeyPressCountSeen = PlatformBridge::Input::GetKeyPressCount(_repeatKeySym);
+    _keyHoldFrames = 0;
     emitChange();
     return true;
 }
