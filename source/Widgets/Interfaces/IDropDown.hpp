@@ -6,6 +6,7 @@
 #include "SvgTexture.hpp"
 #include "Text.hpp"
 #include <memory>
+#include <vector>
 #include "IClickable.hpp"
 
 namespace RetroFuturaGUI
@@ -22,8 +23,17 @@ namespace RetroFuturaGUI
         };
 
         IDropDown(std::string_view name, Projection* projection, IHierarchyNode* parentWidget, const WidgetTypeID parentWidgetTypeID, GLFWwindow* parentWindow);
+        ~IDropDown();
         virtual void Draw() = 0;
-        
+
+        /// @brief Draws the lists opened in this frame over everything drawn so far, in a fresh depth buffer.
+        ///        Window::drawContent calls it after its scenes, so a list covers the widgets that come after its box.
+        static void DrawShown();
+
+        /// @brief Captures the pointer for a widget lying under the open list of another drop-down in its window, so a
+        ///        click on the list reaches only the drop-down. IWidget::readPointer calls it for every widget.
+        static void CaptureUnderOpenList(const IHierarchyNode* reader, GLFWwindow* readerWindow, PointerState& pointer);
+
         virtual void RemoveItem(const uSize index) = 0;
         void Connect_OnItemClicked(const typename Signal<>::Slot& slot, const bool async);
         void Connect_OnIndexChanged(const typename Signal<>::Slot& slot, const bool async);
@@ -42,7 +52,13 @@ namespace RetroFuturaGUI
         virtual void SetTextPadding(const f32 padding) = 0;
         virtual void SetDropDownPosition(const DropDownPosition position) = 0;
 
+        /// @brief Sets the open list's width, 0 for the box's own. A wider list keeps its near edge on the box's: the left edge below or above the box, so a narrow menu title can open a list of long entries.
+        void SetDropDownWidth(const f32 width);
+
     protected:
+        /// @brief The open list's width: the one set, or the box's.
+        f32 dropDownWidth() const;
+
         void updateDropDownArrowGeometry();
         void updateDropDownGeometry();
         uSize visibleItemCount() const;
@@ -57,6 +73,12 @@ namespace RetroFuturaGUI
 
         virtual void selectItem(const uSize index) = 0;
 
+        /// @brief Draws the open list. DrawShown calls it at the end of the frame.
+        virtual void drawDropDown() = 0;
+
+        /// @brief Has DrawShown draw the open list at the end of this frame. Called from Draw.
+        void showDropDownLater();
+
     //Elements
         std::unique_ptr<Rectangle>
             _dropDownBackground { nullptr },
@@ -70,9 +92,10 @@ namespace RetroFuturaGUI
         static constexpr const f32 _zStep { 0.01f };
         TextAlignment _textAlignment { TextAlignment::Left };
         std::string _fontFamily {};
-        f32 
+        f32
             _fontSize { 11.0f },
-            _textPadding { 4.0f };
+            _textPadding { 4.0f },
+            _dropDownWidth { 0.0f }; //0: the box's width
         PlatformBridge::Fonts::Slant _slant { PlatformBridge::Fonts::Slant::Roman };
         PlatformBridge::Fonts::Weight _fontWeight { PlatformBridge::Fonts::Weight::Normal };
 
@@ -90,9 +113,21 @@ namespace RetroFuturaGUI
             _onIndexChangedAsync;
         bool
             _showDropDown { false },
-            _dropDownItemHovered { false };
+            _dropDownItemHovered { false },
+            _holdsPickPress { false }; //the press that picked a row is still down, so the closed list keeps it from the widgets under it
 
     private:
+        friend class Window; //sets the waiting lists aside while it draws a window docked into one of its tabs
+
+        /// @brief Takes the lists waiting for the end of the frame, so a window drawn in the middle of another one's frame draws only its own.
+        static std::vector<IDropDown*> takeShown();
+
+        /// @brief Puts lists taken by takeShown back.
+        static void restoreShown(std::vector<IDropDown*>&& shown);
+
+        /// @brief Returns whether the list lies over a point in the reader's window, and the reader is neither this drop-down nor inside it.
+        bool isListOver(const IHierarchyNode* reader, GLFWwindow* readerWindow, const glm::vec2& point) const;
+
         void setDropDownArrowColors();
         void setDropDownBackgroundColors();
         void setDropDownBorderColors();
@@ -141,5 +176,9 @@ namespace RetroFuturaGUI
         static const constexpr f32
             _zOffset { 0.05f },
             _arrowPadding { 15.0f };
+
+    //Logic
+        inline static std::vector<IDropDown*> _shownDropDowns {}; //opened in the frame being drawn, drawn and cleared by DrawShown
+        inline static std::vector<const IDropDown*> _dropDowns {}; //every drop-down, for the pointer check
     };
 }

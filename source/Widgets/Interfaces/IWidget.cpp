@@ -1,5 +1,6 @@
 #include "IWidget.hpp"
 #include "PlatformBridge.hpp"
+#include "IDropDown.hpp"
 #include "Tooltip.hpp"
 #include <memory>
 
@@ -146,6 +147,7 @@ RetroFuturaGUI::PointerState RetroFuturaGUI::IWidget::readPointer() const
     pointer._LeftButtonPressed = PlatformBridge::Input::IsMouseButtonDown(PlatformBridge::MouseButton::Left);
 
     filterThroughAncestors(_parentWidget, pointer);
+    IDropDown::CaptureUnderOpenList(this, _parentWindow, pointer);
     return pointer;
 }
 

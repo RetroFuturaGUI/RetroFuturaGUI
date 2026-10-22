@@ -1,5 +1,7 @@
 #include "IDropDown.hpp"
 #include "ResourceManager.hpp"
+#include <algorithm>
+#include <utility>
 
 RetroFuturaGUI::IDropDown::IDropDown(std::string_view name, Projection* projection, IHierarchyNode* parentWidget, const WidgetTypeID parentWidgetTypeID, GLFWwindow* parentWindow)
     : IWidget(name, projection, parentWidget, parentWidgetTypeID, parentWindow)
@@ -26,6 +28,87 @@ RetroFuturaGUI::IDropDown::IDropDown(std::string_view name, Projection* projecti
 
     if(_dropDownItemHighlight)
         _dropDownItemHighlight->SetColors(_highLightColor);
+
+    _dropDowns.push_back(this);
+}
+
+RetroFuturaGUI::IDropDown::~IDropDown()
+{
+    std::erase(_dropDowns, this);
+    std::erase(_shownDropDowns, this);
+}
+
+void RetroFuturaGUI::IDropDown::DrawShown()
+{
+    if(_shownDropDowns.empty())
+        return;
+
+    //By index: an ExtendedComboBox's row may be a drop-down itself, whose list joins while the panel draws
+    for(uSize index = 0; index < _shownDropDowns.size(); ++index)
+    {
+        IDropDown* dropDown { _shownDropDowns[index] };
+
+        if(!dropDown)
+            continue;
+
+        glClear(GL_DEPTH_BUFFER_BIT); //over everything drawn before, a row's list over its panel too
+        dropDown->drawDropDown();
+    }
+
+    _shownDropDowns.clear();
+}
+
+void RetroFuturaGUI::IDropDown::CaptureUnderOpenList(const IHierarchyNode* reader, GLFWwindow* readerWindow, PointerState& pointer)
+{
+    if(!pointer._HasPosition)
+        return;
+
+    for(const IDropDown* dropDown : _dropDowns)
+    {
+        if(!dropDown)
+            continue;
+
+        if(!dropDown->isListOver(reader, readerWindow, pointer._Position))
+            continue;
+
+        pointer._IsCaptured = true;
+        return;
+    }
+}
+
+bool RetroFuturaGUI::IDropDown::isListOver(const IHierarchyNode* reader, GLFWwindow* readerWindow, const glm::vec2& point) const
+{
+    if(!_showDropDown && !_holdsPickPress)
+        return false;
+
+    if(readerWindow != _parentWindow)
+        return false;
+
+    for(const IHierarchyNode* node { reader }; node; node = node->GetParent())
+    {
+        if(node == this)
+            return false; //the drop-down itself, or a row of an ExtendedComboBox
+    }
+
+    return isPointInsideDropDown(point);
+}
+
+void RetroFuturaGUI::IDropDown::showDropDownLater()
+{
+    if(std::find(_shownDropDowns.begin(), _shownDropDowns.end(), this) != _shownDropDowns.end())
+        return;
+
+    _shownDropDowns.push_back(this);
+}
+
+std::vector<RetroFuturaGUI::IDropDown*> RetroFuturaGUI::IDropDown::takeShown()
+{
+    return std::exchange(_shownDropDowns, {});
+}
+
+void RetroFuturaGUI::IDropDown::restoreShown(std::vector<IDropDown*>&& shown)
+{
+    _shownDropDowns = std::move(shown);
 }
 
 void RetroFuturaGUI::IDropDown::updateDropDownGeometry()
@@ -39,33 +122,47 @@ void RetroFuturaGUI::IDropDown::updateDropDownGeometry()
     const f32 panelHeight { _size.y * static_cast<f32>(visibleItemCount()) };
     const glm::vec3 center { dropDownCenter() };
 
-    _dropDownBackground->SetSize(glm::vec2(_size.x, panelHeight));
+    _dropDownBackground->SetSize(glm::vec2(dropDownWidth(), panelHeight));
     _dropDownBackground->SetPosition(center);
     _dropDownBorder->SetSize(_dropDownBackground->GetSize());
     _dropDownBorder->SetPosition(center + glm::vec3(0.0f, 0.0f, _zStep * 3.0f));
 
     if(_dropDownItemHighlight)
-        _dropDownItemHighlight->SetSize(glm::vec2(_size.x, _size.y));
+        _dropDownItemHighlight->SetSize(glm::vec2(dropDownWidth(), _size.y));
+}
+
+void RetroFuturaGUI::IDropDown::SetDropDownWidth(const f32 width)
+{
+    _dropDownWidth = 0.0f < width ? width : 0.0f;
+    updateDropDownGeometry();
+}
+
+f32 RetroFuturaGUI::IDropDown::dropDownWidth() const
+{
+    return 0.0f < _dropDownWidth ? _dropDownWidth : _size.x;
 }
 
 glm::vec3 RetroFuturaGUI::IDropDown::dropDownCenter() const
 {
-    const f32 panelHeight { _size.y * static_cast<f32>(visibleItemCount()) };
+    const f32
+        panelHeight { _size.y * static_cast<f32>(visibleItemCount()) },
+        panelWidth { dropDownWidth() },
+        nearEdgeShift { (panelWidth - _size.x) * 0.5f }; //a list wider than the box keeps its left edge on the box's
     glm::vec2 localOffset {};
 
     switch(_dropDownPosition)
     {
         case DropDownPosition::Right:
-            localOffset = glm::vec2( _size.x, (_size.y - panelHeight) * 0.5f);
+            localOffset = glm::vec2( (_size.x + panelWidth) * 0.5f, (_size.y - panelHeight) * 0.5f);
         break;
         case DropDownPosition::Left:
-            localOffset = glm::vec2(-_size.x, (_size.y - panelHeight) * 0.5f);
+            localOffset = glm::vec2(-(_size.x + panelWidth) * 0.5f, (_size.y - panelHeight) * 0.5f);
         break;
         case DropDownPosition::Top:
-            localOffset = glm::vec2(0.0f,  (_size.y + panelHeight) * 0.5f);
+            localOffset = glm::vec2(nearEdgeShift,  (_size.y + panelHeight) * 0.5f);
         break;
         default:
-            localOffset = glm::vec2(0.0f, -(_size.y + panelHeight) * 0.5f);
+            localOffset = glm::vec2(nearEdgeShift, -(_size.y + panelHeight) * 0.5f);
     }
 
     const glm::vec2 offset { rotateLocalOffset(localOffset) };
@@ -77,9 +174,14 @@ void RetroFuturaGUI::IDropDown::updateDropDownArrowGeometry()
     if(!_dropDownArrow)
         return;
 
+    //Every drop-down in every window shares the arrow, so it takes this window's projection before each draw. Kept from the
+    //constructor alone, it held the last drop-down's, which a closed popup's window left dangling.
+    _dropDownArrow->SetProjection(&_projection);
+
     const bool isQuarterTurned { _dropDownPosition == DropDownPosition::Right || _dropDownPosition == DropDownPosition::Left };
     const f32
-        extent { _size.y - _arrowPadding * 2.0f > 0.0f ? _size.y - _arrowPadding * 2.0f : 0.0f },
+        padding { _size.y * 0.25f < _arrowPadding ? _size.y * 0.25f : _arrowPadding }, //a box under 60 px tall keeps half its height for the arrow, instead of none below 30 px
+        extent { _size.y - padding * 2.0f > 0.0f ? _size.y - padding * 2.0f : 0.0f },
         aspectRatio { _dropDownArrow->GetAspectRatio() > 0.0f ? _dropDownArrow->GetAspectRatio() : 1.0f },
         width { aspectRatio > 1.0f ? extent : extent * aspectRatio },
         height { aspectRatio > 1.0f ? extent / aspectRatio : extent },
@@ -344,7 +446,7 @@ bool RetroFuturaGUI::IDropDown::isPointInsideDropDown(const glm::vec2& point) co
 
 bool RetroFuturaGUI::IDropDown::hoveredItemIndex(const glm::vec2& point, uSize& outIndex) const
 {
-    const glm::vec3 rowSize { _size.x, _size.y, 0.0f };
+    const glm::vec3 rowSize { dropDownWidth(), _size.y, 0.0f };
 
     for(uSize index { 0 }; index < visibleItemCount(); ++index)
     {
