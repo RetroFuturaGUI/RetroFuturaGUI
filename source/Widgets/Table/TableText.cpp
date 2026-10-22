@@ -4,15 +4,33 @@ RetroFuturaGUI::TableText::TableText(Table* parentTable, Projection* projection)
     : ITableWidget(parentTable, projection)
 {
     _tableWidgetID = TableWidgetTypeID::TableText;
-    _text = std::make_unique<Text>(projection);
 }
 
 void RetroFuturaGUI::TableText::Draw()
 {
+    ensureText();
+
     if(!_text)
         return;
 
     _text->Draw();
+}
+
+void RetroFuturaGUI::TableText::ensureText()
+{
+    if(_text)
+        return;
+
+    _text = std::make_unique<Text>(_projection);
+
+    if(!_text)
+        return;
+
+    applyTextSettings();
+    _text->SetParentSize(glm::vec2(_size.x, _size.y));
+    _text->SetPosition(_position);
+    _text->SetRotation(_rotation);
+    _text->SetTextUTF8(_content);
 }
 
 void RetroFuturaGUI::TableText::SetSize(const glm::vec3& size)
@@ -41,6 +59,8 @@ void RetroFuturaGUI::TableText::SetRotation(const glm::vec3& rotation)
 
 void RetroFuturaGUI::TableText::renderValueText(std::string_view text, const bool)
 {
+    _content = text;
+
     if(!_text)
         return;
 
@@ -51,14 +71,6 @@ void RetroFuturaGUI::TableText::SetText(std::string_view text)
 {
     renderValueText(text, false);
     updateValueStore(text);
-}
-
-void RetroFuturaGUI::TableText::syncValueFromText()
-{
-    if(!_text)
-        return;
-
-    ITypedText::syncValueFromText(_text->GetTextUTF8());
 }
 
 void RetroFuturaGUI::TableText::SetTextColors(std::span<glm::vec4> colors, const ColorState colorState)

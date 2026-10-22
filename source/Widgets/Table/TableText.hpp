@@ -21,8 +21,8 @@ namespace RetroFuturaGUI
             void SetText(std::string_view text) override;
             void SetTextColors(std::span<glm::vec4> colors, const ColorState colorState);
 
-            /// @brief Stores the edited cell text as its value. Table calls it whenever an edit changes the text.
-            void syncValueFromText();
+            /// @brief Builds the Text that draws the cell, unless it has one. Draw builds it; editing needs it before.
+            void ensureText();
 
         private:
             void renderValueText(std::string_view text, const bool) override; //Table emits the cell's signals itself
