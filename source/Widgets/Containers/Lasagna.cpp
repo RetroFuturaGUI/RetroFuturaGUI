@@ -163,7 +163,8 @@ void RetroFuturaGUI::Lasagna::Draw()
                 if(_drawDebugLines)
                     drawDebugLines(cell);
 
-                if(!cell._Widget || cell._SpanOccupied)
+                                                         // A hidden cell's widget mustn't take input
+                if(!cell._Widget || cell._SpanOccupied || !cell._Show)
                     continue;
 
                 cell._Widget->UpdateTooltip();
