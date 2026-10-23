@@ -43,8 +43,11 @@ void RetroFuturaGUI::CheckBox::Draw()
     if(!_isChecked)
         return;
 
-    if(_checkmark)
-        _checkmark->Draw();
+    if(!_checkmark)
+        return;
+
+    _checkmark->SetProjection(&_projection); //todo: check if it can be moved to certain setters
+    _checkmark->Draw();
 }
 
 void RetroFuturaGUI::CheckBox::SetEnabled(const bool enable, const bool emitSignal)
