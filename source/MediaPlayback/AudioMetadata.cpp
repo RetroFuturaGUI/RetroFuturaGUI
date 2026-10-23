@@ -219,6 +219,27 @@ static std::vector<RetroFuturaGUI::AudioChapter> readChapters(const AVFormatCont
 }
 
 // FFmpeg exposes embedded cover art as an extra video stream holding a single picture
+// Some taggers leave a stray byte before the picture - an extra null after an ID3 picture's description, say - and FFmpeg
+// keeps it. Players start at the picture's own signature, so this does too: a JPEG or PNG one within the first few bytes
+static size_t findPictureStart(const u8* data, const size_t size)
+{
+    constexpr size_t searchLimit { 16 };
+    constexpr std::array<u8, 3> jpegSignature { 0xFF, 0xD8, 0xFF };
+    constexpr std::array<u8, 4> pngSignature { 0x89, 'P', 'N', 'G' };
+
+    for(size_t start = 0; start < searchLimit && start < size; ++start)
+    {
+        const bool
+            isJpeg { start + jpegSignature.size() <= size && std::equal(jpegSignature.begin(), jpegSignature.end(), data + start) },
+            isPng { start + pngSignature.size() <= size && std::equal(pngSignature.begin(), pngSignature.end(), data + start) };
+
+        if(isJpeg || isPng)
+            return start;
+    }
+
+    return 0; // another format, kept as it is
+}
+
 static void readCoverArt(const AVFormatContext* context, RetroFuturaGUI::AudioMetadata& metadata)
 {
     if(!context)
@@ -246,7 +267,10 @@ static void readCoverArt(const AVFormatContext* context, RetroFuturaGUI::AudioMe
         if(!stream->attached_pic.data)
             return;
 
-        metadata._CoverArt.assign(stream->attached_pic.data, stream->attached_pic.data + stream->attached_pic.size);
+        const size_t
+            size { static_cast<size_t>(std::max(stream->attached_pic.size, 0)) },
+            start { findPictureStart(stream->attached_pic.data, size) };
+        metadata._CoverArt.assign(stream->attached_pic.data + start, stream->attached_pic.data + size);
         return; // the first picture only - it's the front cover in practice
     }
 }

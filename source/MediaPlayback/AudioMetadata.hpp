@@ -212,7 +212,7 @@ namespace RetroFuturaGUI
         u32
             _CoverArtWidth { 0 },
             _CoverArtHeight { 0 };
-        std::vector<u8> _CoverArt; // the image as embedded, still encoded
+        std::vector<u8> _CoverArt; // the image as embedded, still encoded, from its own signature on: stray bytes a tagger left before it are dropped
         std::optional<AudioLoop> _Loop; // from wherever the format keeps its loop points
         std::variant<std::monostate, WavMetadata, FlacMetadata, Mp3Metadata, OggVorbisMetadata, OpusMetadata, M4aMetadata, AdxMetadata> _Details;
     };
