@@ -90,14 +90,14 @@ namespace RetroFuturaGUI
         /// @brief Makes the given item the selected one and emits what changed.
         void selectItem(const uSize index) override;
 
-        
+        void drawDropDown() override;
         void setColors(const ColorState state) override;
         void setPreviewTextColors();
         void updateItemGeometry();
         void updatePreviewTextGeometry() const;
 
-        /// @brief Returns what is left of the box once the thickest of the two borders is taken off.
-        glm::vec2 contentSize() const;
+        /// @brief Returns what is left of a box of the given width, the closed box's or the open list's, once the thickest of the two borders is taken off.
+        glm::vec2 contentSize(const f32 width) const;
 
         /// @brief Returns whether a world space point falls on a drop down one of the visible rows has open.
         bool isPointInsideItemDropDown(const glm::vec2& point) const;

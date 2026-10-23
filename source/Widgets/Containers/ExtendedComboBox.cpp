@@ -57,6 +57,11 @@ void RetroFuturaGUI::ExtendedComboBox::Draw()
     if(!_showDropDown)
         return;
 
+    showDropDownLater(); //drawn at the end of the frame, otherwise the widgets after this box would cover the list
+}
+
+void RetroFuturaGUI::ExtendedComboBox::drawDropDown()
+{
     if(_dropDownBackground)
         _dropDownBackground->Draw();
 
@@ -87,7 +92,7 @@ void RetroFuturaGUI::ExtendedComboBox::Draw()
 
 void RetroFuturaGUI::ExtendedComboBox::placeItemWidget(IWidget* item, const glm::vec3& center) const
 {
-    const glm::vec2 available { contentSize() };
+    const glm::vec2 available { contentSize(dropDownWidth()) }; //the rows span the open list which can be wider than the box
     const f32
         parentWidth { available.x },
         parentHeight { available.y };
@@ -187,7 +192,7 @@ void RetroFuturaGUI::ExtendedComboBox::placeItemWidget(IWidget* item, const glm:
     }
 }
 
-glm::vec2 RetroFuturaGUI::ExtendedComboBox::contentSize() const
+glm::vec2 RetroFuturaGUI::ExtendedComboBox::contentSize(const f32 width) const
 {
     const f32
         boxBorder { _border ? _border->GetBorderWidth() : 0.0f },
@@ -196,7 +201,7 @@ glm::vec2 RetroFuturaGUI::ExtendedComboBox::contentSize() const
 
     return glm::vec2
     (
-        _size.x - inset > 0.0f ? _size.x - inset : 0.0f,
+        width - inset > 0.0f ? width - inset : 0.0f,
         _size.y - inset > 0.0f ? _size.y - inset : 0.0f
     );
 }
@@ -236,7 +241,7 @@ void RetroFuturaGUI::ExtendedComboBox::updatePreviewTextGeometry() const
         return;
 
     //the same inset the rows get, so the closed box and the open list line their text up the same way
-    _previewText->SetParentSize(contentSize());
+    _previewText->SetParentSize(contentSize(_size.x));
     _previewText->SetPosition(_position + glm::vec3(0.0f, 0.0f, _zStep * 2.0f));
     _previewText->SetRotation(_rotation);
     _previewText->SetTextAlignment(_textAlignment);
