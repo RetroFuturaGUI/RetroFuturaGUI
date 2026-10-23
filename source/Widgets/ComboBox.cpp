@@ -47,14 +47,19 @@ void RetroFuturaGUI::ComboBox::Draw()
         _dropDownArrow->Draw();
     }
 
-    if(_currentIndex < _itemTexts.size())
+    if(_hasCaption && _previewText)
+    {
+        placeItemText(*_previewText, _position + glm::vec3(0.0f, 0.0f, _zStep * 2.0f), _size.x);
+        _previewText->Draw();
+    }
+    else if(_currentIndex < _itemTexts.size())
     {
         auto iterator { _itemTexts.begin() };
         std::advance(iterator, _currentIndex);
 
         if(*iterator)
         {
-            placeItemText(**iterator, _position + glm::vec3(0.0f, 0.0f, _zStep * 2.0f));
+            placeItemText(**iterator, _position + glm::vec3(0.0f, 0.0f, _zStep * 2.0f), _size.x);
             iterator->get()->Draw();
         }
     }
@@ -62,6 +67,11 @@ void RetroFuturaGUI::ComboBox::Draw()
     if(!_showDropDown)
         return;
 
+    showDropDownLater(); //drawn at the end of the frame, or the widgets after this box would cover the list
+}
+
+void RetroFuturaGUI::ComboBox::drawDropDown()
+{
     if(_dropDownBackground)
         _dropDownBackground->Draw();
 
@@ -102,13 +112,13 @@ void RetroFuturaGUI::ComboBox::SetSize(const glm::vec3& size)
 
 
 
-void RetroFuturaGUI::ComboBox::placeItemText(Text& item, const glm::vec3& center) const
+void RetroFuturaGUI::ComboBox::placeItemText(Text& item, const glm::vec3& center, const f32 width) const
 {
     const f32
         boxBorder { _border ? _border->GetBorderWidth() : 0.0f },
         panelBorder { _dropDownBorder ? _dropDownBorder->GetBorderWidth() : 0.0f },
         inset { (boxBorder > panelBorder ? boxBorder : panelBorder) * 2.0f },
-        parentWidth { _size.x - inset > 0.0f ? _size.x - inset : 0.0f },
+        parentWidth { width - inset > 0.0f ? width - inset : 0.0f },
         parentHeight { _size.y - inset > 0.0f ? _size.y - inset : 0.0f };
 
     item.SetParentSize(glm::vec2(parentWidth, parentHeight));
@@ -156,13 +166,71 @@ void RetroFuturaGUI::ComboBox::SetRotation(const glm::vec3& rotation)
 void RetroFuturaGUI::ComboBox::AddItem(std::string_view name)
 {
     _itemTexts.emplace_back(std::make_unique<Text>(&_projection));
+    _itemEnabledFlags.push_back(true);
 
     if(!_fontFamily.empty())
         _itemTexts.back()->SetFontFamily(_fontFamily, _fontSize, _slant, _fontWeight);
 
     _itemTexts.back()->SetTextUTF8(name);
+    _itemTexts.back()->SetColor(_itemTextColorEnabled);
     _itemCount = _itemTexts.size();
     updateDropDownGeometry();
+}
+
+void RetroFuturaGUI::ComboBox::SetCaption(std::string_view caption)
+{
+    _hasCaption = !caption.empty();
+
+    if(!_previewText)
+        _previewText = std::make_shared<Text>(&_projection);
+
+    if(!_previewText)
+        return;
+
+    if(!_fontFamily.empty())
+        _previewText->SetFontFamily(_fontFamily, _fontSize, _slant, _fontWeight);
+
+    _previewText->SetTextUTF8(caption);
+    _previewText->SetColor(_itemTextColorEnabled);
+}
+
+void RetroFuturaGUI::ComboBox::SetItemEnabled(const uSize index, const bool enable)
+{
+    if(_itemEnabledFlags.size() <= index)
+        return;
+
+    _itemEnabledFlags[index] = enable;
+    updateItemColors();
+}
+
+bool RetroFuturaGUI::ComboBox::IsItemEnabled(const uSize index) const
+{
+    return index < _itemEnabledFlags.size() && _itemEnabledFlags[index];
+}
+
+void RetroFuturaGUI::ComboBox::SetItemTextColors(const glm::vec4& enabled, const glm::vec4& disabled)
+{
+    _itemTextColorEnabled = enabled;
+    _itemTextColorDisabled = disabled;
+    updateItemColors();
+
+    if(!_previewText)
+        return;
+
+    _previewText->SetColor(_itemTextColorEnabled);
+}
+
+void RetroFuturaGUI::ComboBox::updateItemColors()
+{
+    uSize index { 0 };
+
+    for(const auto& item : _itemTexts)
+    {
+        if(item)
+            item->SetColor(IsItemEnabled(index) ? _itemTextColorEnabled : _itemTextColorDisabled);
+
+        ++index;
+    }
 }
 
 const std::string& RetroFuturaGUI::ComboBox::GetSelectedText() const
@@ -179,6 +247,9 @@ void RetroFuturaGUI::ComboBox::interact()
 {
     const PointerState pointer { readPointer() };
 
+    if(!pointer._LeftButtonPressed)
+        _holdsPickPress = false;
+
     if(pointer._IsCaptured)
         return; //ScrollView above has taken the pointer
 
@@ -191,9 +262,10 @@ void RetroFuturaGUI::ComboBox::interact()
         isInsideDropDown { pointer._HasPosition && _showDropDown && isPointInsideDropDown(mousePos) };
     _wasClicked = isMousePressed;
 
-    //the open dropDown belongs to the widget, so hovering a row still counts as hovering the ComboBox
+    //the open dropDown belongs to the widget, so hovering a row still counts as hovering the ComboBox. A disabled row is
+    //neither highlighted nor picked, and a press on it leaves the list open.
     const bool isHovering { _isEnabledFlag && (isInsideBox || isInsideDropDown) };
-    _dropDownItemHovered = isHovering && isInsideDropDown && hoveredItemIndex(mousePos, _nthItemHovered);
+    _dropDownItemHovered = isHovering && isInsideDropDown && hoveredItemIndex(mousePos, _nthItemHovered) && IsItemEnabled(_nthItemHovered);
 
     if(isHovering) // hover
     {
@@ -251,6 +323,7 @@ void RetroFuturaGUI::ComboBox::interact()
         selectItem(_nthItemHovered);
         _showDropDown = false;
         _dropDownItemHovered = false;
+        _holdsPickPress = true; //a widget drawn after this box would take the same press for its own
         return;
     }
 
@@ -297,7 +370,7 @@ void RetroFuturaGUI::ComboBox::updateItemGeometry()
             return;
 
         if(item)
-            placeItemText(*item, itemRowCenter(visibleIndex));
+            placeItemText(*item, itemRowCenter(visibleIndex), dropDownWidth());
 
         ++visibleIndex;
     }
@@ -305,9 +378,16 @@ void RetroFuturaGUI::ComboBox::updateItemGeometry()
 
 void RetroFuturaGUI::ComboBox::RemoveItem(const uSize index)
 {
+    if(_itemTexts.size() <= index)
+        return;
+
     auto iterator = _itemTexts.begin();
     std::advance(iterator, index);
     _itemTexts.erase(iterator);
+
+    if(index < _itemEnabledFlags.size())
+        _itemEnabledFlags.erase(_itemEnabledFlags.begin() + static_cast<std::ptrdiff_t>(index));
+
     _itemCount = _itemTexts.size();
     updateDropDownGeometry();
 }
@@ -324,6 +404,12 @@ void RetroFuturaGUI::ComboBox::SetFontFamily(std::string_view fontFamily, const 
         item->SetFontFamily(_fontFamily, _fontSize, _slant, _fontWeight);
         item->SetTextUTF8(std::string(item->GetTextUTF8())); //a font swap leaves the glyph mesh behind, so the text is laid out again
     }
+
+    if(!_previewText)
+        return;
+
+    _previewText->SetFontFamily(_fontFamily, _fontSize, _slant, _fontWeight);
+    _previewText->SetTextUTF8(std::string(_previewText->GetTextUTF8()));
 }
 
 void RetroFuturaGUI::ComboBox::SetTextAlignment(const TextAlignment alignment)
