@@ -9,9 +9,10 @@
 namespace RetroFuturaGUI
 {
     /// @brief A popup that closes with values of the given types, e.g. Popup<bool, std::string> for a confirmation and a name.
-    ///        Popup<> closes with no values, which still tells closing apart from dismissing.
+    ///        Popup<> closes with no values, which still tells closing apart from dismissing. A popup with content of its own
+    ///        derives from it, as FileExplorer does.
     template<typename... Ts>
-    class Popup final : public IPopup
+    class Popup : public IPopup
     {
         static_assert((!std::is_reference_v<Ts> && ...), "A popup keeps its values until it closes, so they can't be references");
 
@@ -31,7 +32,7 @@ namespace RetroFuturaGUI
 
         /// @brief Closes the popup without returning values, so the OnDismiss slots fire instead. The window bar's close button does the same.
         /// @return false while another popup lies over this one
-        bool Dismiss() override
+        bool Dismiss() override final
         {
             if(!requestClose())
                 return false;
@@ -80,7 +81,7 @@ namespace RetroFuturaGUI
             _onDismiss,
             _onDismissAsync;
 
-        void emitClosed() override
+        void emitClosed() override final
         {
             if(!_result)
             {
