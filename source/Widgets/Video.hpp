@@ -24,10 +24,17 @@ namespace RetroFuturaGUI
         void SetPosition(const glm::vec3& position) override;
         void SetRotation(const glm::vec3& rotation) override;
         bool OpenVideoFile(std::string_view file);
+
+        /// @brief Closes the file, so nothing holds it open, until OpenVideoFile opens one again.
+        void Close();
+        bool IsOpen() const;
         void Play();
         void Pause();
         void Stop();
         bool Seek(const i64 milliseconds);
+
+        /// @brief The open file's length in milliseconds, 0 while none is open.
+        i64 GetDuration() const;
 
         /// @brief The video sound's level per channel, linear RMS 0.0 to ~1.0 - see AudioPlayback::GetChannelVolume.
         f32 GetChannelVolume(const u32 channel) const;

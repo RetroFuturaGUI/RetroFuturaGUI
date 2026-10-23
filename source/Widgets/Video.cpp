@@ -170,3 +170,27 @@ bool RetroFuturaGUI::Video::Seek(const i64 milliseconds)
 
     return false;
 }
+
+void RetroFuturaGUI::Video::Close()
+{
+    if(!_videoPlayback)
+        return;
+
+    _videoPlayback->Close();
+}
+
+bool RetroFuturaGUI::Video::IsOpen() const
+{
+    if(!_videoPlayback)
+        return false;
+
+    return _videoPlayback->IsOpen();
+}
+
+i64 RetroFuturaGUI::Video::GetDuration() const
+{
+    if(!_videoPlayback)
+        return 0;
+
+    return _videoPlayback->GetDuration();
+}
