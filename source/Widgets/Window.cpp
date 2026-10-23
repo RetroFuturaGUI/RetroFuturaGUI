@@ -4,6 +4,7 @@
 #include "ContextObjects.hpp"
 #include "ShaderManager.hpp"
 #include "PlatformBridge.hpp"
+#include "IDropDown.hpp"
 #include "Tooltip.hpp"
 #include <glm/gtc/type_ptr.hpp>
 #include <algorithm>
@@ -109,6 +110,7 @@ void RetroFuturaGUI::Window::createWindow()
 
 	//Lets a window bar, which only gets the GLFW window, reach this one, e.g. to undock it
 	glfwSetWindowUserPointer(_window, this);
+	glfwSetDropCallback(_window, &Window::dropCallback);
 
 	_prevResizeX = (f64)_width;
 	_prevResizeY = (f64)_height;
@@ -511,6 +513,7 @@ void RetroFuturaGUI::Window::Draw()
 	if(WindowRole::DockPreview != _role)
 		pollInput();
 
+	emitDroppedFiles(); //before the scenes, so a slot's changes show in this frame
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	//Color blends as usual. Alpha only ever adds up, so a semi-transparent widget on the opaque background leaves the window
@@ -554,6 +557,7 @@ void RetroFuturaGUI::Window::drawContent()
 		scene->Draw();
 	}
 
+	IDropDown::DrawShown(); //after every scene, so an open list covers the widgets drawn after its box
 	drawFrame();
 	Tooltip::DrawShown(); //last, so it covers every scene
 }
@@ -1697,6 +1701,18 @@ void RetroFuturaGUI::Window::closeTopPopup()
 	if(!topWindow->WindowShouldClose())
 		return;
 
+	IPopup* top { _popups.back().get() };
+
+	if(!top)
+		return;
+
+	//Closed by the system rather than the popup, which may keep its window open
+	if(!top->_isCloseRequested && !top->allowsSystemClose())
+	{
+		glfwSetWindowShouldClose(topWindow->_window, GLFW_FALSE);
+		return;
+	}
+
 	std::unique_ptr<IPopup> closing { std::move(_popups.back()) }; //Off the stack before its result goes out, so a slot that opens a follow-up popup puts it on top
 	_popups.pop_back();
 	topPopupWindow()->_ignoreHeldPress = true; //The window below takes the mouse again, but not the press on the button that closed the popup
@@ -1794,6 +1810,21 @@ GLFWwindow* RetroFuturaGUI::Window::GetKeyboardWindow() const
 		return _window;
 
 	return host->GetKeyboardWindow();
+}
+
+void RetroFuturaGUI::Window::TakeKeyboardInput() const
+{
+	GLFWwindow* keyboardWindow { GetKeyboardWindow() };
+
+	if(!keyboardWindow)
+		return;
+
+#if defined(TARGET_PLATFORM_LINUX)
+	PlatformBridge::Input::SetActiveDisplay(glfwGetX11Display());
+	PlatformBridge::Input::SetActiveWindow(glfwGetX11Window(keyboardWindow));
+#elif defined(TARGET_PLATFORM_WINDOWS)
+	PlatformBridge::Input::SetActiveWindow(glfwGetWin32Window(keyboardWindow));
+#endif
 }
 
 GLFWwindow* RetroFuturaGUI::Window::KeyboardWindowOf(GLFWwindow* glfwWindow)
@@ -1940,11 +1971,13 @@ void RetroFuturaGUI::Window::drawInHost(const ScreenRect& contentArea, const glm
 	glScissor(clipLeft, clipBottom, (std::max)(clipRight - clipLeft, 0), (std::max)(clipTop - clipBottom, 0));
 	_drawOrigin = glm::ivec2(area.x, area.y);
 
-	//The drawing window's own tooltip still draws last in its frame
+	//The drawing window's own tooltip and open lists still draw last in its frame
 	Tooltip::setShownAside();
+	std::vector<IDropDown*> hostDropDowns { IDropDown::takeShown() };
 	glClear(GL_DEPTH_BUFFER_BIT);
 	drawContent();
 	glClear(GL_DEPTH_BUFFER_BIT); //the drawing window's widgets after the WindowTab aren't tested against this window's content
+	IDropDown::restoreShown(std::move(hostDropDowns));
 	Tooltip::restoreShownFromAside();
 
 	_drawOrigin = glm::ivec2(0);
@@ -2052,4 +2085,65 @@ bool RetroFuturaGUI::Window::isRegisteredWindowTab(const WindowTab* tab)
 	}
 
 	return false;
+}
+
+void RetroFuturaGUI::Window::Connect_OnFilesDropped(const typename Signal<std::vector<std::string>, glm::vec2>::Slot& slot, const bool async)
+{
+	if(async)
+		_onFilesDroppedAsync.Connect(slot);
+	else
+		_onFilesDropped.Connect(slot);
+}
+
+void RetroFuturaGUI::Window::Disconnect_OnFilesDropped(const typename Signal<std::vector<std::string>, glm::vec2>::Slot& slot)
+{
+	_onFilesDropped.Disconnect(slot);
+	_onFilesDroppedAsync.Disconnect(slot);
+}
+
+void RetroFuturaGUI::Window::dropCallback(GLFWwindow* glfwWindow, const int pathCount, const char* paths[])
+{
+	Window* window { FromGlfwWindow(glfwWindow) };
+
+	if(!window)
+		return;
+
+	DroppedFiles dropped {};
+
+	for(int index = 0; index < pathCount; ++index)
+	{
+		if(!paths[index])
+			continue;
+
+		dropped._Paths.emplace_back(paths[index]);
+	}
+
+	// pointer where the files were released
+	i32
+		x { 0 },
+		y { 0 };
+
+	if(window->getCursorPosition(x, y) && window->_projection)
+		dropped._Position = glm::vec2(static_cast<f32>(x), window->_projection->GetResolution().y - static_cast<f32>(y));
+
+	window->_droppedFiles.push_back(std::move(dropped));
+}
+
+void RetroFuturaGUI::Window::emitDroppedFiles()
+{
+	if(_droppedFiles.empty())
+		return;
+
+	//Taken off first, since a slot may open a popup or drop again
+	std::vector<DroppedFiles> dropped { std::move(_droppedFiles) };
+	_droppedFiles.clear();
+
+	if(IsBlockedByPopup())
+		return;
+
+	for(const DroppedFiles& files : dropped)
+	{
+		_onFilesDroppedAsync.EmitAsync(files._Paths, files._Position);
+		_onFilesDropped.Emit(files._Paths, files._Position);
+	}
 }

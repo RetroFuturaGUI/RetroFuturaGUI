@@ -9,9 +9,11 @@
 #include "IPointerFilter.hpp"
 #include "IPopup.hpp"
 #include "DockEdge.hpp"
+#include "Signal.hpp"
 #include <algorithm>
 #include <list>
 #include <memory>
+#include <string>
 #include <vector>
 
 namespace RetroFuturaGUI
@@ -153,6 +155,9 @@ namespace RetroFuturaGUI
         ///        since its own native window is hidden then and never has the focus, otherwise its own.
         GLFWwindow* GetKeyboardWindow() const;
 
+        /// @brief Makes key presses arrive at this window
+        void TakeKeyboardInput() const;
+
         /// @brief The native window keyboard input for the given GLFW window's widgets arrives at, see GetKeyboardWindow. Widgets
         ///        only hold the GLFW window, so they ask through this. A GLFW window without a Window answers for itself.
         static GLFWwindow* KeyboardWindowOf(GLFWwindow* glfwWindow);
@@ -176,6 +181,14 @@ namespace RetroFuturaGUI
 
         /// @brief Takes all interactions away from this window's widgets while a popup lies over it
         void FilterPointer(PointerState& pointer) const override;
+
+    //Dropped files
+        /// @brief Connects a slot to files dropped on the window, from another program or another of the app's windows: their
+        ///        UTF-8 paths, and where the pointer was, in window coordinates. Sent from the next draw, never from inside the
+        ///        system's message handling. A window under a popup takes no drops, like a window under a native modal dialog.
+        void Connect_OnFilesDropped(const typename Signal<std::vector<std::string>, glm::vec2>::Slot& slot, const bool async);
+
+        void Disconnect_OnFilesDropped(const typename Signal<std::vector<std::string>, glm::vec2>::Slot& slot);
 
     private:
         /// @brief A screen rectangle in screen coordinates, y running downward: where a window is, or would be once docked.
@@ -258,6 +271,25 @@ namespace RetroFuturaGUI
             _ignoreHeldPress { false }, //the window just took the mouse, and the button may still be down from the click that caused it
             _showAfterDraw { false }, //a popup's window that just opened, or a window that just left a tab, and shows once it has drawn
             _hasPointer { false }; //the mouse reaches this window: it lies on top under the cursor, or took the press that is still held
+
+    // Dropped files
+        /// @brief Files dropped on the window, kept until the next draw sends them.
+        struct DroppedFiles
+        {
+            std::vector<std::string> _Paths {};
+            glm::vec2 _Position { 0.0f }; //window coordinates
+        };
+
+        std::vector<DroppedFiles> _droppedFiles {};
+        Signal<std::vector<std::string>, glm::vec2>
+            _onFilesDropped,
+            _onFilesDroppedAsync;
+
+        /// @brief GLFW's drop callback: keeps the drop for the next draw.
+        static void dropCallback(GLFWwindow* glfwWindow, const int pathCount, const char* paths[]);
+
+        /// @brief Sends the files dropped since the last draw, unless a popup lies over the window.
+        void emitDroppedFiles();
 
     // Tabs
         WindowTab* _tabHost { nullptr }; //the WindowTab this window is docked into/which window draws it
