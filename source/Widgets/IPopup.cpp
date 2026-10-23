@@ -56,7 +56,13 @@ bool RetroFuturaGUI::IPopup::requestClose()
 	if(_window->IsBlockedByPopup())
 		return false;
 
+	_isCloseRequested = true;
 	glfwSetWindowShouldClose(glfwWindow, GLFW_TRUE);
+	return true;
+}
+
+bool RetroFuturaGUI::IPopup::allowsSystemClose()
+{
 	return true;
 }
 

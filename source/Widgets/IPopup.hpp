@@ -42,10 +42,16 @@ namespace RetroFuturaGUI
         /// @return false while another popup lies over this one.
         bool requestClose();
 
+        /// @brief Asked when the system closes the popup's window, by Alt+F4 or from the taskbar, rather than Close or Dismiss:
+        ///        true lets it close, dismissed; false keeps it open. A popup with work to finish asks the user, and closes itself
+        ///        once that is done. True unless overridden.
+        virtual bool allowsSystemClose();
+
     private:
         std::unique_ptr<Window> _window { nullptr };
         std::list<std::unique_ptr<ISceneHost>> _scenes {};
         GLFWwindow* _openerContext { nullptr };
+        bool _isCloseRequested { false }; //Close or Dismiss raised the close flag, not the system
 
         /// @brief Sends the values the popup closed with, or that it was dismissed. Called by the window holding the stack, once the popup is closing
         virtual void emitClosed() = 0;
@@ -53,6 +59,6 @@ namespace RetroFuturaGUI
         /// @brief Updates the context again that was current when the popup was created.
         void restoreOpenerContext() const;
 
-        friend class Window; //calls emitClosed and restoreOpenerContext
+        friend class Window; //calls emitClosed, restoreOpenerContext and allowsSystemClose
     };
 }
