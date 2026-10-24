@@ -52,6 +52,7 @@ namespace RetroFuturaGUI
         std::list<std::unique_ptr<ISceneHost>> _scenes {};
         GLFWwindow* _openerContext { nullptr };
         bool _isCloseRequested { false }; //Close or Dismiss raised the close flag, not the system
+        bool _isOnStack { false }; //PushPopup took it; one that never got there brings its opener's context back when it goes
 
         /// @brief Sends the values the popup closed with, or that it was dismissed. Called by the window holding the stack, once the popup is closing
         virtual void emitClosed() = 0;
@@ -59,6 +60,6 @@ namespace RetroFuturaGUI
         /// @brief Updates the context again that was current when the popup was created.
         void restoreOpenerContext() const;
 
-        friend class Window; //calls emitClosed, restoreOpenerContext and allowsSystemClose
+        friend class Window; //calls emitClosed, restoreOpenerContext and allowsSystemClose, and sets _isOnStack
     };
 }

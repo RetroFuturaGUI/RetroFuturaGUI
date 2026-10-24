@@ -19,6 +19,15 @@ RetroFuturaGUI::IPopup::~IPopup()
 		return;
 
 	glfwMakeContextCurrent(glfwWindow);
+
+	if(_isOnStack)
+		return; //the window holding the stack makes its own context current once this has gone
+
+	//Never opened (a refused Open() for instance) so nothing else would destroying the window which would leave no context current,
+	//and the one current when the popup was made comes back
+	_scenes.clear();
+	_window.reset();
+	glfwMakeContextCurrent(_openerContext);
 }
 
 RetroFuturaGUI::Window* RetroFuturaGUI::IPopup::GetWindow() const
