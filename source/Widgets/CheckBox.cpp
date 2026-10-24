@@ -16,7 +16,6 @@ RetroFuturaGUI::CheckBox::CheckBox(const std::string& name, Projection* projecti
 {
     _widgetTypeID = WidgetTypeID::CheckBox;
     _checkmark = ResourceManager::GetCheckmarkIcon();
-    _checkmark->SetProjection(projection);
     _inherietFill = std::make_unique<Rectangle>(projection);
     _background = std::make_unique<Rectangle>(projection);
     _border = std::make_unique<Rectangle>(projection);
@@ -46,7 +45,11 @@ void RetroFuturaGUI::CheckBox::Draw()
     if(!_checkmark)
         return;
 
-    _checkmark->SetProjection(&_projection); //todo: check if it can be moved to certain setters
+    //Every CheckBox and Table in every window shares the checkmark, so it takes this box's projection and place right before drawing
+    _checkmark->SetProjection(&_projection);
+    _checkmark->SetSize(_checkmarkSize);
+    _checkmark->SetPosition(_position + glm::vec3(0.0f, 0.0f, 0.03f));
+    _checkmark->SetRotation(_rotation);
     _checkmark->Draw();
 }
 
@@ -100,9 +103,6 @@ void RetroFuturaGUI::CheckBox::SetPosition(const glm::vec3& position)
 
     if(_inherietFill)
         _inherietFill->SetPosition(position + glm::vec3(0.0f, 0.0f, 0.02f));
-
-    if(_checkmark)
-        _checkmark->SetPosition(position + glm::vec3(0.0f, 0.0f, 0.03f));
 }
 
 void RetroFuturaGUI::CheckBox::SetRotation(const glm::vec3& rotation)
@@ -117,9 +117,6 @@ void RetroFuturaGUI::CheckBox::SetRotation(const glm::vec3& rotation)
 
     if(_inherietFill)
         _inherietFill->SetRotation(rotation);
-
-    if(_checkmark)
-        _checkmark->SetRotation(rotation);
 }
 
 void RetroFuturaGUI::CheckBox::SetValue(const bool value, const bool emitSignal)
@@ -385,7 +382,5 @@ void RetroFuturaGUI::CheckBox::SetInnerPadding(const f32 pixels)
         _inherietFill->SetSize(size);
 
     size -= glm::vec3( _innerPadding * 2.0f,  _innerPadding * 2.0f, 0.0f);
-
-    if(_checkmark)
-        _checkmark->SetSize(size);
+    _checkmarkSize = size;
 }

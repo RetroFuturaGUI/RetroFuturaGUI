@@ -80,6 +80,7 @@ namespace RetroFuturaGUI
             _useInherietValue { false },
             _isChecked { false };
         f32 _innerPadding { 2.0f };
+        glm::vec2 _checkmarkSize { 0.0f };
         ColorState
             _checkmarkColorState { ColorState::Enabled },
             _inherietFillColorState { ColorState::Enabled };
