@@ -38,7 +38,8 @@ namespace RetroFuturaGUI
             None,
             TableText,
             TableColor,
-            TableCheckBox
+            TableCheckBox,
+            TableImage
         };
 
     protected:
