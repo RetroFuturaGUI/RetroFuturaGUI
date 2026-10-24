@@ -402,7 +402,6 @@ void RetroFuturaGUI::IRangedValue::SetGraphMode(const GraphMode mode)
         : (_graph->GetShaderFeatures() & ~Wave);
 
     _graph->SetShaderFeatures(features);
-    // TODO: GraphMode::Wave has no distinct rendering path yet — it draws identically to Bar.
 }
 
 void RetroFuturaGUI::IRangedValue::SetGraphColors(std::span<glm::vec4> colors, const ColorState state)
@@ -835,7 +834,7 @@ void RetroFuturaGUI::IRangedValue::drawGraph()
     if(!_useGraph || !_graph)
         return;
 
-    _graph->Draw(); // TODO: GraphMode::Wave currently draws identically to GraphMode::Bar — wave geometry/shader not implemented yet.
+    _graph->Draw();
 }
 
 void RetroFuturaGUI::IRangedValue::setIndicatorSize()
