@@ -136,6 +136,10 @@ namespace RetroFuturaGUI
         /// @brief Drops any selection and stops mouse marking.
         void deselect();
 
+        /// @brief Puts the caret after the last character and drops the selection, for text set by code rather than typed: no
+        ///        keystroke placed them, and the old place may lie past the new text's end.
+        void placeCaretAfterText();
+
         /// @brief Returns the lower end of the marked range, whichever direction it was dragged in.
         uSize markedStart() const;
 

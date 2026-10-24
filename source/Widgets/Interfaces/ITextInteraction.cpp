@@ -90,6 +90,20 @@ void RetroFuturaGUI::ITextInteraction::deselect()
     _isSelected = false;
 }
 
+void RetroFuturaGUI::ITextInteraction::placeCaretAfterText()
+{
+    Text* text { activeText() };
+
+    if(!text)
+        return;
+
+    deselect();
+    _caretPosition = text->GetTextUTF32().size();
+    _selectedPositionFirst = _caretPosition;
+    _selectedPositionLast = _caretPosition;
+    updateCaretPosition();
+}
+
 uSize RetroFuturaGUI::ITextInteraction::markedStart() const
 {
     return _selectedPositionFirst < _selectedPositionLast ? _selectedPositionFirst : _selectedPositionLast;
