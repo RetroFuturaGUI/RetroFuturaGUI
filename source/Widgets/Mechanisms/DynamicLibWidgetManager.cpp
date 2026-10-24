@@ -424,7 +424,6 @@ bool RetroFuturaGUI::DynamicLibWidgetManager::OpenFileExplorer(Window* window, s
     if(!window)
         return false;
 
-    GLFWwindow* openerContext { glfwGetCurrentContext() }; //the explorer's window makes its own current
     std::unique_ptr<FileExplorer> explorer { std::make_unique<FileExplorer>(title, width, height) };
 
     if(!explorer)
@@ -452,13 +451,8 @@ bool RetroFuturaGUI::DynamicLibWidgetManager::OpenFileExplorer(Window* window, s
             onDismiss();
         }, false);
 
-    //A refused explorer is never pushed. Destroying its window leaves no context current
     if(!explorer->Open(startPath, static_cast<FileExplorer::FileExplorerFlags>(flags), extensions))
-    {
-        explorer.reset();
-        glfwMakeContextCurrent(openerContext);
-        return false;
-    }
+        return false; //never pushed, the explorer brings back the context that was current before it
 
     return window->PushPopup(std::move(explorer));
 }
