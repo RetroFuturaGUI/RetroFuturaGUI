@@ -9,6 +9,10 @@ namespace RetroFuturaGUI
     public:
         static std::shared_ptr<SvgTexture> GetCheckmarkIcon();
         static std::shared_ptr<SvgTexture> GetDropDownArrowIcon();
+
+        /// @brief Lets go of the shared icons, so their textures go while GL still runs; GlfwTerminate calls it. Left to static
+        ///        destruction, they would go after it, which crashes when the library is a DLL being unloaded.
+        static void Release();
         static constexpr const glm::vec4 _Eigengrau { 0.086f, 0.086f, 0.114f, 1.0f };
     
     private:

@@ -29,3 +29,9 @@ std::shared_ptr<RetroFuturaGUI::SvgTexture> RetroFuturaGUI::ResourceManager::Get
 
     return GetInstance()._arrowDown;
 }
+
+void RetroFuturaGUI::ResourceManager::Release()
+{
+    _checkmark.reset();
+    _arrowDown.reset();
+}

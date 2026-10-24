@@ -1,5 +1,6 @@
 #pragma once
 #include "IncludeHelper.hpp"
+#include "ResourceManager.hpp"
 #include <print>
 
 namespace RetroFuturaGUI
@@ -26,9 +27,10 @@ namespace RetroFuturaGUI
         return 0;
     }
 
-    /// @brief Terminates GLFW, releasing all windows and resources it owns.
+    /// @brief Terminates GLFW, releasing all windows and resources it owns, and the library's shared icons first.
     static void GlfwTerminate()
     {
+        ResourceManager::Release();
         glfwTerminate();
     }
 }
