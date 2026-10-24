@@ -9,7 +9,7 @@
 
 namespace RetroFuturaGUI
 {
-    enum ImageFormat : i32
+    enum class ImageFormat : i32
     {
         Unknown = -1,
         PNG = 0,
