@@ -5,6 +5,8 @@
 #include <cmath>
 #include <fstream>
 #include <iterator>
+#include <limits>
+#include <system_error>
 #include <print>
 #include <lunasvg.h>
 
@@ -64,6 +66,13 @@ RetroFuturaGUI::Texture& RetroFuturaGUI::Texture::operator=(Texture&& other) noe
 
 std::optional<RetroFuturaGUI::DecodedImage> RetroFuturaGUI::Texture::DecodeFile(const std::filesystem::path& path, const bool flipVertically, const i32 maxSide)
 {
+    //Read whole, so a file named like an image but gigabytes big would fill the memory first
+    std::error_code error {};
+    const std::uintmax_t size { std::filesystem::file_size(path, error) };
+
+    if(error || _maxFileBytes < size)
+        return std::nullopt;
+
     std::ifstream file { path, std::ios::binary };
 
     if(!file)
@@ -90,11 +99,22 @@ std::optional<RetroFuturaGUI::DecodedImage> RetroFuturaGUI::Texture::decodeRaste
     if(bytes.empty())
         return std::nullopt;
 
-    //Always four channels, so a grayscale or gray and alpha image uploads like any other, and every row is 4-byte aligned
+    if(static_cast<uSize>((std::numeric_limits<i32>::max)()) < bytes.size())
+        return std::nullopt; //stb_image takes the length as an int
+
     i32
         width { 0 },
         height { 0 },
         channelCount { 0 };
+
+    //The size the image declares, read before anything is allocated for it: a few bytes can claim a picture of gigabytes
+    if(!stbi_info_from_memory(bytes.data(), static_cast<i32>(bytes.size()), &width, &height, &channelCount))
+        return std::nullopt;
+
+    if(!isDecodableSize(width, height))
+        return std::nullopt;
+
+    //Always four channels, so a grayscale or gray and alpha image uploads like any other, and every row is 4-byte aligned
     u8* decoded { stbi_load_from_memory(bytes.data(), static_cast<i32>(bytes.size()), &width, &height, &channelCount, 4) };
 
     if(!decoded)
@@ -123,7 +143,22 @@ std::optional<RetroFuturaGUI::DecodedImage> RetroFuturaGUI::Texture::decodeSvg(s
         documentHeight { document->height() },
         longest { std::max(documentWidth, documentHeight) },
         scale { 0 < maxSide && 0.0f < longest ? static_cast<f32>(maxSide) / longest : 1.0f };
-    const lunasvg::Bitmap bitmap { document->renderToBitmap(static_cast<i32>(std::lround(documentWidth * scale)), static_cast<i32>(std::lround(documentHeight * scale))) };
+    const f64
+        drawnWidth { static_cast<f64>(documentWidth) * scale },
+        drawnHeight { static_cast<f64>(documentHeight) * scale };
+
+    //A document can declare any size, so it's checked in floating point before rounding to pixels; NaN fails it too
+    if(!(static_cast<f64>(_maxDecodedPixels) >= drawnWidth * drawnHeight))
+        return std::nullopt;
+
+    const i64
+        renderWidth { std::llround(drawnWidth) },
+        renderHeight { std::llround(drawnHeight) };
+
+    if(!isDecodableSize(renderWidth, renderHeight))
+        return std::nullopt;
+
+    const lunasvg::Bitmap bitmap { document->renderToBitmap(static_cast<i32>(renderWidth), static_cast<i32>(renderHeight)) };
 
     if(bitmap.isNull())
         return std::nullopt;
@@ -254,6 +289,11 @@ void RetroFuturaGUI::Texture::shrinkToFit(DecodedImage& image, const i32 maxSide
 
     image._Pixels = std::move(pixels);
     image._Resolution = glm::i32vec2(targetWidth, targetHeight);
+}
+
+bool RetroFuturaGUI::Texture::isDecodableSize(const i64 width, const i64 height)
+{
+    return 0 < width && 0 < height && _maxDecodedPixels / width >= height; //divided, so a huge side can't overflow the product
 }
 
 void RetroFuturaGUI::Texture::flipRows(DecodedImage& image)

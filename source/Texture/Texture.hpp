@@ -1,5 +1,6 @@
 #pragma once
 #include "ITexture.hpp"
+#include <cstdint>
 #include <filesystem>
 #include <optional>
 #include <span>
@@ -52,11 +53,12 @@ namespace RetroFuturaGUI
         ///        its extension. Never throws.
         /// @param maxSide When above 0, a raster image bigger than it is scaled down to fit inside a square that size, and an
         ///        SVG is drawn to fit it; otherwise both keep their own size.
-        /// @return Nothing when the file can't be read or decoded.
+        /// @return Nothing when the file can't be read or decoded, or is too big to: over 256 MB, or a picture over 64
+        ///         megapixels, which an untrusted file can claim to be in a few bytes.
         static std::optional<DecodedImage> DecodeFile(const std::filesystem::path& path, const bool flipVertically, const i32 maxSide = 0);
 
         /// @brief Decodes an image held in memory, the cover art embedded in a song for instance, as DecodeFile does a file. An
-        ///        SVG is told by its text.
+        ///        SVG is told by its text. A picture over 64 megapixels is refused, as DecodeFile refuses it.
         static std::optional<DecodedImage> DecodeMemory(std::span<const u8> bytes, const bool flipVertically, const i32 maxSide = 0);
 
         /// @brief Returns the number of color channels in the texture, 4: every image is uploaded as RGBA.
@@ -94,6 +96,12 @@ namespace RetroFuturaGUI
 
         /// @brief Puts the bottom row first.
         static void flipRows(DecodedImage& image);
+
+        /// @brief Returns whether a picture this size may be decoded: both sides above 0, and no more pixels than the limit.
+        static bool isDecodableSize(const i64 width, const i64 height);
+
+        static constexpr i64 _maxDecodedPixels { 8192 * 8192 }; //256 MB as RGBA, more than a 50 megapixel photo
+        static constexpr std::uintmax_t _maxFileBytes { 256 * 1024 * 1024 };
 
         ImageFormat _format { ImageFormat::Unknown };
         i32 _colorChannelCount { 0 };
