@@ -35,7 +35,8 @@ The framework is designed for cross-platform use, and its logic can be compiled 
   - Update Windows font support to the new system
   - A family that isn't installed doesn't fail: LoadFont falls back to Arial's file and stores it under the name Arial, so GetFontInfo never finds the family it was asked for, returns nullptr - the widget draws no text - and loads one more Arial atlas on every call
   - Per-user fonts aren't found: the Windows side reads the machine's font list (HKEY_LOCAL_MACHINE) only
-- Update all Input to use PlatformBridge's implementation
+  - The Unicode block table (UnicodeBlocks.hpp) is from Unicode 6.0, so CJK Unified Ideographs end at U+9FCB instead of U+9FFF. The kanji in Japanese use lie below that, apart from 𠮟 (U+20B9F, in Extension B, 42,711 code points), which fonts and input methods mostly write as 叱 anyway
+  - A glyph rendered on first use needs a GL context current; laid out without one, its text leaves the glyph out until it's laid out again- Update all Input to use PlatformBridge's implementation
 - Test ITextEditable.cpp#L119 on Linux
 - Text
   - Optimizations
@@ -125,6 +126,7 @@ The framework is designed for cross-platform use, and its logic can be compiled 
   - Widgets under a popup keep whatever hover color they had when it opened, since they stop reacting before they would reset it
   - A popup opens centered over the one below it, so a nested popup of the same size covers it completely
   - No key closes the top popup yet (Escape, Enter)
+  - No styling API: a popup's window background, border, corner radii and bar are whatever the code building it sets, so the library's own popups (the FileExplorer and its prompts) can't be made to match an app's look. A style set on a popup, or once for every popup of a window, would do it, and later the aesthetics of roadmap 9
   - Linux is untested: the owner is set with XSetTransientForHint, and whether the popup stays off the taskbar is up to the window manager
 - IWidget
   - SetEnabled ignores its emitSignal argument, so OnEnable and OnDisable never fire for widgets that don't override it - SvgImage among them, which is why a window bar polls its undock handle's state instead of listening
@@ -136,6 +138,7 @@ The framework is designed for cross-platform use, and its logic can be compiled 
 - CheckBox
   - Every checkbox shares one checkmark (ResourceManager::GetCheckmarkIcon) but places it only when it is laid out, not right before it draws it, so of two checked boxes in one window both checkmarks draw where the last one laid out put it
 - FileExplorer
+  - No styling API: only the font can be set (SetFontFamily). Every color is fixed in FileExplorer.cpp - the bar, the buttons and menus, the list's row, header, selection and drop target colors, the toggles' accent, the scrollbar, the boxes - and the prompts (NamePrompt, ConfirmPrompt, ClashPrompt) copy them. A style set before Open, per widget kind and color state, which the prompts take over too, would let an app match its own look
   - With thumbnails on, the Name column gets what the thumbnails (72 px), Size, Modified and Type leave: about 70 px in the default 1000 px window with the preview pane, a few characters
   - The Thumbnails toggle was tried only by opening with the Thumbnails flag; clicking it, which keeps the selection and the top row in view, hasn't been done yet
   - The preview shows as many detail rows as fit, the most telling first; the rest can't be scrolled to yet. The row for playback controls stays empty until playing is built
@@ -530,6 +533,7 @@ The framework is designed for cross-platform use, and its logic can be compiled 
   - Shader Manager (compiles and caches all shaders once)
 - Text Renderer
   - Full Unicode codepoint range support via configurable glyph atlasses (FreeType)
+  - Big ranges cost nothing until shown: a range of more than 256 code points, CJK's 20,940 ideographs say, renders each glyph the first time a text shows it, into 1024 x 1024 pages added as they fill (about 1 MB and 700 glyphs each at size 25). Loading the CJK block takes 2 ms instead of 2.6 s and about 260 MB; 3000 kanji take 184 ms and 4 pages. Smaller ranges are rendered at once into one atlas, which grows to fit its glyphs. Every atlas and page holds one channel, coverage only, a quarter of RGBA's memory
   - Multiple font families, weights and slants, resolved from installed system fonts
   - Fallback/extended fontsets for filling in missing glyph ranges
   - Dual UTF-8 / UTF-32 string encoding (DoubleEncodedString), always kept in sync
