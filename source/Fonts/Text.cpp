@@ -174,17 +174,6 @@ void RetroFuturaGUI::Text::SetTextUTF32(std::u32string_view text)
     updateMesh();
 }
 
-u32 RetroFuturaGUI::Text::findGlyphBlockKey(const u32 codePoint)
-{
-    for (const auto& [blockFirst, blockLast] : UnicodeBlocks)
-    {
-        if (codePoint >= blockFirst && codePoint <= blockLast)
-            return blockFirst;
-    }
-
-    return 0;
-}
-
 void RetroFuturaGUI::Text::updateMesh()
 {
     _vertices.clear();
@@ -213,7 +202,6 @@ void RetroFuturaGUI::Text::updateMesh()
         height { 0.0f };
     u32 
         lastTextureID { 0 },
-        blockKey { 0 },
         foundTextureID { 0 };
     i32 
         vertexStart { 0 },
@@ -238,25 +226,17 @@ void RetroFuturaGUI::Text::updateMesh()
 
         _glyphLines.push_back(_glyphLines.back()); //before the branches below, since each of them can continue
 
-        blockKey = findGlyphBlockKey(codepoint);
-        auto blockIterator { _atlas._GlyphBlocks.find(blockKey) };
+        const Glyph* foundGlyph { FontManager::FindGlyph(*_fontInfo, _fontIndex, codepoint) };
 
-        if (blockIterator == _atlas._GlyphBlocks.end())
+        if (!foundGlyph)
         {
             //No block covers this codepoint (font doesn't support it) - still needs a slot for making text processable
             _glyphPositions.push_back(currentX);
             continue;
         }
 
-        auto glyphIt { blockIterator->second._Glyphs.find(codepoint) };
-        if (glyphIt == blockIterator->second._Glyphs.end())
-        {
-            _glyphPositions.push_back(currentX); //Block found but this specific codepoint has no glyph in it
-            continue;
-        }
-
-        const Glyph& glyph { glyphIt->second };
-        foundTextureID = blockIterator->second._TextureID;
+        const Glyph& glyph { *foundGlyph };
+        foundTextureID = glyph._TextureID; //a big block's glyphs spread over several pages
 
         xPos = currentX + glyph._Bearing[0] * scale;
         yPos = currentY - (glyph._Size[1] - glyph._Bearing[1]) * scale;
@@ -341,6 +321,8 @@ void RetroFuturaGUI::Text::updateMesh()
     // Flush last batch
     if (batching && vertexCount > 0)
         _glyphDraws.push_back({lastTextureID, vertexStart, vertexCount});
+
+    FontManager::FlushGlyphUploads();
 }
 
 glm::vec3 RetroFuturaGUI::Text::GetBoundaryPosition(const uSize boundary, const f32 caretSize) const
@@ -462,17 +444,12 @@ void RetroFuturaGUI::Text::calculateTextSpan()
             continue;
         }
 
-        u32 blockKey = findGlyphBlockKey(codepoint);
-        auto blockIterator = _atlas._GlyphBlocks.find(blockKey);
-        
-        if (blockIterator == _atlas._GlyphBlocks.end())
+        const Glyph* foundGlyph { FontManager::FindGlyph(*_fontInfo, _fontIndex, codepoint) };
+
+        if (!foundGlyph)
             continue;
 
-        auto glyphIt = blockIterator->second._Glyphs.find(codepoint);
-        if (glyphIt == blockIterator->second._Glyphs.end())
-            continue;
-
-        const Glyph& glyph = glyphIt->second;
+        const Glyph& glyph = *foundGlyph;
         f32 advancePx = glyph._Advance * scale;
 
         if (codepoint == U' ')
@@ -490,6 +467,7 @@ void RetroFuturaGUI::Text::calculateTextSpan()
     finalizeLine();
     _textSpan = glm::vec2(maxLineWidth, totalHeight);
     _textBaseHeight = _glyphSize.y;
+    FontManager::FlushGlyphUploads();
 }
 
 void RetroFuturaGUI::Text::SetAnchorTop(const bool anchorTop)

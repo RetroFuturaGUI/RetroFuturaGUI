@@ -165,6 +165,5 @@ namespace RetroFuturaGUI
         void updateMesh();
         void alignPosition();
         void calculateTextSpan();
-        u32 findGlyphBlockKey(const u32 codePoint);
     };
 }

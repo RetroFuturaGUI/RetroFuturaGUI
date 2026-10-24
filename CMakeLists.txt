@@ -22,6 +22,13 @@ endif()
 set(RetroFuturaGuiSources)
 
 list(APPEND RetroFuturaGuiSources
+    "${CMAKE_CURRENT_SOURCE_DIR}/source/FileExplorer/FileExplorer.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/source/FileExplorer/FileExplorerPrompts.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/source/FileExplorer/FilePreview.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/source/FileExplorer/FileTransfer.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/source/FileExplorer/FileUndoHistory.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/source/FileExplorer/ThumbnailCache.cpp"
+
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Fonts/FontManager.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Fonts/Text.cpp"
 
@@ -41,8 +48,11 @@ list(APPEND RetroFuturaGuiSources
     "${CMAKE_CURRENT_SOURCE_DIR}/source/MediaPlayback/RingBufferSource.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/MediaPlayback/VideoDecodeThread.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/MediaPlayback/VideoFrameQueue.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/source/MediaPlayback/VideoMetadata.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/MediaPlayback/VideoPlayback.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/source/MediaPlayback/VideoStill.cpp"
 
+    "${CMAKE_CURRENT_SOURCE_DIR}/source/Misc/BackgroundWork.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Misc/DoubleEncodedString.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Misc/Mesh.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Misc/Polyline.cpp"
@@ -132,6 +142,7 @@ add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/PlatformBridge")
 target_include_directories("RetroFuturaGUI" PUBLIC
     "${CMAKE_CURRENT_SOURCE_DIR}/source"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Borders"
+    "${CMAKE_CURRENT_SOURCE_DIR}/source/FileExplorer"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Fonts"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/MediaPlayback"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Misc"
