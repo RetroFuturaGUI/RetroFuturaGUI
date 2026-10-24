@@ -220,7 +220,8 @@ static std::vector<RetroFuturaGUI::AudioChapter> readChapters(const AVFormatCont
 
 // FFmpeg exposes embedded cover art as an extra video stream holding a single picture
 // Some taggers leave a stray byte before the picture - an extra null after an ID3 picture's description, say - and FFmpeg
-// keeps it. Players start at the picture's own signature, so this does too: a JPEG or PNG one within the first few bytes
+// keeps it. Readers that follow the standard, Windows Explorer among them, then find no picture. This starts at the
+// picture's own JPEG or PNG signature within the first few bytes, so the cover still shows
 static size_t findPictureStart(const u8* data, const size_t size)
 {
     constexpr size_t searchLimit { 16 };

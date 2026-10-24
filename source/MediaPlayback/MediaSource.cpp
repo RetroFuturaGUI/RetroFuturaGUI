@@ -31,6 +31,20 @@ i32 RetroFuturaGUI::MediaSource::FindBestStream(const AVMediaType type) const
     return index >= 0 ? index : -1;
 }
 
+i32 RetroFuturaGUI::MediaSource::FindVideoStream() const
+{
+    for(u32 index = 0; index < GetStreamCount(); ++index)
+    {
+        const AVStream* stream { GetStream(static_cast<i32>(index)) };
+        const bool isPicture { stream && stream->codecpar && AVMEDIA_TYPE_VIDEO == stream->codecpar->codec_type };
+
+        if(isPicture && 0 == (stream->disposition & AV_DISPOSITION_ATTACHED_PIC))
+            return static_cast<i32>(index);
+    }
+
+    return -1;
+}
+
 const AVStream* RetroFuturaGUI::MediaSource::GetStream(const i32 index) const
 {
     if(!_formatContext)

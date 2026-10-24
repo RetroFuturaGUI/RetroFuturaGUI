@@ -38,6 +38,10 @@ namespace RetroFuturaGUI
         /// @brief Returns the index of the best stream of the given type, or -1 if there is none.
         i32 FindBestStream(const AVMediaType type) const;
 
+        /// @brief Returns the index of the first moving picture, or -1 if there is none. Songs carry their cover art as a
+        /// one-picture video stream, which FindBestStream can return and this skips.
+        i32 FindVideoStream() const;
+
         /// @brief Returns the stream at index, or nullptr if the index is out of range or nothing is open.
         const AVStream* GetStream(const i32 index) const;
 
