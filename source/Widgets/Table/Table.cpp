@@ -102,7 +102,7 @@ RetroFuturaGUI::Table::Table(const std::string& name, Projection* projection, IW
     _sharedCheckBox = std::make_unique<TableCheckBox>(this, projection, _checkBoxBackground.get(), _checkBoxBorder.get(), _checkmark.get());
 
     if(_sharedCheckBox)
-        _sharedCheckBox->SetCellMargin(_checkBoxCellMargin);
+        _sharedCheckBox->SetPadding(_checkBoxPadding);
 
     _selectionBand = std::make_unique<Rectangle>(projection);
 
@@ -121,7 +121,6 @@ RetroFuturaGUI::Table::Table(const std::string& name, Projection* projection, IW
         _selectionBandBorder->SetBorderWidth(1.0f);
     }
 }
-
 
 void RetroFuturaGUI::Table::SetCheckBoxBackgroundColors(std::span<glm::vec4> colors, const ColorState state)
 {
@@ -177,14 +176,14 @@ void RetroFuturaGUI::Table::SetCheckBoxCheckmarkColors(std::span<glm::vec4> colo
     }
 }
 
-void RetroFuturaGUI::Table::SetCheckBoxCellMargin(const f32 margin)
+void RetroFuturaGUI::Table::SetCheckBoxPadding(const f32 padding)
 {
-    _checkBoxCellMargin = margin;
+    _checkBoxPadding = padding;
 
     if(!_sharedCheckBox)
         return;
 
-    _sharedCheckBox->SetCellMargin(margin); //each box is fitted to its cell right before it draws, so the new margin applies from the next frame
+    _sharedCheckBox->SetPadding(padding); //each box is fitted to its cell right before it draws, so the new padding applies from the next frame
 }
 
 void RetroFuturaGUI::Table::Draw()

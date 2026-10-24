@@ -92,8 +92,8 @@ namespace RetroFuturaGUI
         void SetCheckBoxBorderColors(std::span<glm::vec4> colors, const ColorState state);
         void SetCheckBoxCheckmarkColors(std::span<glm::vec4> colors, const ColorState state);
 
-        /// @brief Sets the gap between a cell's edge and the checkbox drawn in it, in pixels. The box stays the largest centered square that fits.
-        void SetCheckBoxCellMargin(const f32 margin);
+        /// @brief Sets the gap/padding between a cell's edge and the checkbox drawn in it, in pixels. The box stays the largest centered square that fits.
+        void SetCheckBoxPadding(const f32 padding);
         void SetInnerBorderWidth(const f32 width);
         void SetTableOrientation(const TableOrientation orientation);
         void SetTrackAlternatingColorCount(const uSize variantCount);
@@ -756,7 +756,7 @@ namespace RetroFuturaGUI
             _horizontalHeaderHeight { 30.0f },
             _verticalHeaderWidth { 60.0f },
             _checkBoxInnerPadding { 5.0f }, // box border -> checkmark
-            _checkBoxCellMargin { 4.0f },   // cell edge -> box edge
+            _checkBoxPadding  { 4.0f },   // cell edge -> box edge
             _imagePadding { 4.0f };         // cell edge -> picture edge
         static constexpr f32 _widgetZOffset { 0.05f };
         SvgPathFill _checkmarkFill
