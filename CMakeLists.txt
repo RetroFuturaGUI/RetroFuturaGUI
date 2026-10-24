@@ -116,6 +116,7 @@ list(APPEND RetroFuturaGuiSources
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/Table/Table.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/Table/TableCheckBox.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/Table/TableColor.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/Table/TableImage.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/Table/TableText.cpp"
 )
 

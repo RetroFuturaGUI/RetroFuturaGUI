@@ -7,7 +7,7 @@ namespace RetroFuturaGUI
 {
     class ITexture;
 
-    /// @brief Draws a texture it doesn't own into a table cell, as large as fits inside the cell (minding marging and aspect ratio).
+    /// @brief Draws a texture it doesn't own into a table cell, as large as fits inside the cell (minding padding and aspect ratio).
     ///        A table has one for all its image cells. The texture and position are set to each cell before drawing.
     class TableImage final : public ITableWidget
     {
@@ -24,12 +24,12 @@ namespace RetroFuturaGUI
         void SetTexture(const ITexture* texture);
 
         /// @brief The empty space between the picture and the cell's edges.
-        void SetCellMargin(const f32 margin);
+        void SetPadding(const f32 padding);
         void Draw() override;
 
     private:
         const ITexture* _texture { nullptr };
         Rectangle* _rectangle { nullptr };
-        f32 _cellMargin { 4.0f };
+        f32 _padding { 4.0f };
     };
 }

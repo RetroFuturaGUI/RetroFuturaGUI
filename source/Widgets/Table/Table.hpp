@@ -14,6 +14,7 @@
 #include "ITextEditVisuals.hpp"
 #include "TableColor.hpp"
 #include "TableCheckBox.hpp"
+#include "TableImage.hpp"
 #include "TrackIndex.hpp"
 #include <array>
 #include <chrono>
@@ -201,6 +202,16 @@ namespace RetroFuturaGUI
 
         /// @brief Sets the TableWidget contents in color.
         void SetTableWidget(const glm::vec4 color, const TrackIndex& index, const bool emitSignal);
+
+        /// @brief Makes the cell an image cell showing the texture, fitted inside it; nullptr shows nothing. The table doesn't
+        ///        own the texture, which has to outlive the cell's value: set another before destroying it.
+        void SetValue(const ITexture* texture, const TrackIndex& index);
+
+        /// @brief The empty space between an image cell's picture and the cell's edges.
+        void SetImagePadding(const f32 padding);
+
+        /// @brief The rows in view, from first up to end, which a caller filling image cells lazily fills first.
+        void GetDisplayedRows(uSize& firstOut, uSize& endOut) const;
 
         /// @brief Sets the row/column tracks as Star weights, for callers that just want plain proportions.
         void SetTrackDefinitions(const std::vector<f32>& rowDefinition, const std::vector<f32>& columnDefinition);
@@ -432,6 +443,7 @@ namespace RetroFuturaGUI
             std::string _Text {};                      //TableText, in UTF-8
             std::unique_ptr<TextTypes> _ValueStore {}; //a TableText set from a number or edited: what GetValue<T> reads
             glm::vec4 _Color { 0.0f };          //TableColor
+            const ITexture* _Texture { nullptr }; //non-ownned TableImage
             ITableWidget::TableWidgetTypeID _Type { ITableWidget::TableWidgetTypeID::None };
             bool
                 _IsChecked { false },    //TableCheckBox
@@ -529,6 +541,7 @@ namespace RetroFuturaGUI
 
         /// @brief Draws a color cell through the shared color swatch.
         void drawColorCell(const BodyCell& cell, const glm::vec3& position, const glm::vec3& size);
+        void drawImageCell(const BodyCell& cell, const glm::vec3& position, const glm::vec3& size);
 
         /// @brief Draws one header band's cells, with the band's own backgrounds and borders.
         void drawHeaderBand(std::vector<TableCell>& cells, const uSize first, const uSize end);
@@ -682,6 +695,7 @@ namespace RetroFuturaGUI
         std::vector<std::unique_ptr<TableText>> _freeTexts {}; //the pool's texts not drawing a cell right now
         std::unique_ptr<TableCheckBox> _sharedCheckBox { nullptr }; //draws every checkbox cell, set from each right before
         std::unique_ptr<TableColor> _sharedColor { nullptr };       //draws every color cell the same way
+        std::unique_ptr<TableImage> _sharedImage { nullptr };       //draws every image cell, each its own texture
         std::vector<TableCell>
             _horizontalHeaderCells {},
             _verticalHeaderCells {};
@@ -692,9 +706,11 @@ namespace RetroFuturaGUI
             _trackColoringOverlay { nullptr },
             _innerBorder { nullptr },
             _cellColorPlane { nullptr },
+            _cellImagePlane { nullptr },
             _checkBoxBackground { nullptr },
             _checkBoxBorder { nullptr };
         std::shared_ptr<SvgTexture> _checkmark { nullptr };
+        std::vector<glm::vec4> _imagePlaneColors { glm::vec4(0.0f) }; //transparent, so the plane draws just its image; the plane only keeps a view of it
         std::vector<ITableWidget::TableWidgetTypeID> _rowWidgetTypes {};
 
     //Geommetry
@@ -740,7 +756,8 @@ namespace RetroFuturaGUI
             _horizontalHeaderHeight { 30.0f },
             _verticalHeaderWidth { 60.0f },
             _checkBoxInnerPadding { 5.0f }, // box border -> checkmark
-            _checkBoxCellMargin { 4.0f };   // cell edge -> box edge 
+            _checkBoxCellMargin { 4.0f },   // cell edge -> box edge
+            _imagePadding { 4.0f };         // cell edge -> picture edge
         static constexpr f32 _widgetZOffset { 0.05f };
         SvgPathFill _checkmarkFill
         {

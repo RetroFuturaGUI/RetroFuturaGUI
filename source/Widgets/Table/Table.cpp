@@ -84,7 +84,21 @@ RetroFuturaGUI::Table::Table(const std::string& name, Projection* projection, IW
     if(_checkmark)
         _checkmark->SetProjection(projection);
 
+    _cellImagePlane = std::make_unique<Rectangle>(projection);
+
+    if(_cellImagePlane)
+    {
+        _cellImagePlane->SetRectangleMode(RectangleMode::Plane);
+        _cellImagePlane->SetFillType(FillType::SOLID);
+        _cellImagePlane->SetColors(_imagePlaneColors);
+    }
+
     _sharedColor = std::make_unique<TableColor>(this, projection, _cellColorPlane.get());
+    _sharedImage = std::make_unique<TableImage>(this, projection, _cellImagePlane.get());
+
+    if(_sharedImage)
+        _sharedImage->SetPadding(_imagePadding);
+
     _sharedCheckBox = std::make_unique<TableCheckBox>(this, projection, _checkBoxBackground.get(), _checkBoxBorder.get(), _checkmark.get());
 
     if(_sharedCheckBox)
@@ -243,6 +257,9 @@ void RetroFuturaGUI::Table::Draw()
                 case ITableWidget::TableWidgetTypeID::TableColor:
                     drawColorCell(*cell, position, size);
                 break;
+                case ITableWidget::TableWidgetTypeID::TableImage:
+                    drawImageCell(*cell, position, size);
+                break;
                 default:
                 break;
             }
@@ -307,6 +324,17 @@ void RetroFuturaGUI::Table::drawColorCell(const BodyCell& cell, const glm::vec3&
     _sharedColor->SetSize(size);
     _sharedColor->SetPosition(position);
     _sharedColor->Draw();
+}
+
+void RetroFuturaGUI::Table::drawImageCell(const BodyCell& cell, const glm::vec3& position, const glm::vec3& size)
+{
+    if(!_sharedImage)
+        return;
+
+    _sharedImage->SetTexture(cell._Texture);
+    _sharedImage->SetSize(size);
+    _sharedImage->SetPosition(position);
+    _sharedImage->Draw();
 }
 
 void RetroFuturaGUI::Table::drawHeaderBand(std::vector<TableCell>& cells, const uSize first, const uSize end)
@@ -1454,6 +1482,7 @@ RetroFuturaGUI::Table::BodyCell* RetroFuturaGUI::Table::cellOfType(const TrackIn
     cell->_Text.clear();
     cell->_ValueStore.reset();
     cell->_Color = glm::vec4(0.0f);
+    cell->_Texture = nullptr;
     cell->_IsChecked = false;
     cell->_Type = type;
     return cell;
@@ -1969,6 +1998,32 @@ void  RetroFuturaGUI::Table::SetTableWidget(const glm::vec4 color, const TrackIn
 
     _onColorChangeAsync.EmitAsync();
     _onColorChange.Emit();
+}
+
+void RetroFuturaGUI::Table::SetValue(const ITexture* texture, const TrackIndex& index)
+{
+    BodyCell* cell { cellOfType(index, ITableWidget::TableWidgetTypeID::TableImage) }; //a cell of another type turns into an image
+
+    if(!cell)
+        return;
+
+    cell->_Texture = texture;
+}
+
+void RetroFuturaGUI::Table::SetImagePadding(const f32 padding)
+{
+    _imagePadding = padding;
+
+    if(!_sharedImage)
+        return;
+
+    _sharedImage->SetPadding(padding);
+}
+
+void RetroFuturaGUI::Table::GetDisplayedRows(uSize& firstOut, uSize& endOut) const
+{
+    firstOut = _displayedRows[0];
+    endOut = (std::min)(_displayedRows[1], _rowDefinition.size());
 }
 
 void RetroFuturaGUI::Table::SetRowSelection(const RowSelection selection)
