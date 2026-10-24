@@ -10,6 +10,7 @@
 #include "IPopup.hpp"
 #include "DockEdge.hpp"
 #include "Signal.hpp"
+#include "CursorIcon.hpp"
 #include <algorithm>
 #include <list>
 #include <memory>
@@ -161,6 +162,9 @@ namespace RetroFuturaGUI
         /// @brief The native window keyboard input for the given GLFW window's widgets arrives at, see GetKeyboardWindow. Widgets
         ///        only hold the GLFW window, so they ask through this. A GLFW window without a Window answers for itself.
         static GLFWwindow* KeyboardWindowOf(GLFWwindow* glfwWindow);
+
+        /// @brief Asks for the icon the mouse cursor shows this frame, over the current window
+        static void RequestCursorIcon(GLFWwindow* glfwWindow, const PlatformBridge::CursorIcon icon);
 
         /// @brief Where the given GLFW window's (0, 0) lies in the framebuffer being drawn: the corner of the content area while a
         ///        WindowTab's window draws it, otherwise (0, 0). Scissor boxes count framebuffer pixels, so a widget setting one
@@ -327,15 +331,9 @@ namespace RetroFuturaGUI
             _wasMouseButtonDown { false };
         glm::ivec2 _lastSize = { _width, _height };
         bool _windowSizeChanged { false };
-
-        // todo: move the cursor icons into PlatformBridge, see "Cursor icons in PlatformBridge" in the README's ToDos
-        static inline GLFWcursor* _resizeCursorHorizontal { nullptr };
-        static inline GLFWcursor* _resizeCursorVertical { nullptr };
-        static inline GLFWcursor* _resizeCursorTLBR { nullptr };
-        static inline GLFWcursor* _resizeCursorTRBL { nullptr };
-        static inline GLFWcursor* _defaultCursor { nullptr };
-        static inline GLFWcursor* _cursorIcon { nullptr };
-        bool _cursorsInitialized { false };
+        PlatformBridge::CursorIcon
+            _cursorIcon { PlatformBridge::CursorIcon::Arrow }, //the last icon handed to PlatformBridge, which shows the arrow until the first
+            _requestedCursorIcon { PlatformBridge::CursorIcon::Arrow }; //what a widget under the mouse asked for this frame
 
         // widgets
         Lasagna* _lasagna { nullptr };

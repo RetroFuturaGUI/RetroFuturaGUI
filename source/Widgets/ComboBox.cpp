@@ -269,6 +269,9 @@ void RetroFuturaGUI::ComboBox::interact()
 
     if(isHovering) // hover
     {
+        if(isInsideBox || _dropDownItemHovered)
+            requestCursorIcon(PlatformBridge::CursorIcon::Hand); //a disabled row can't be picked, so it keeps the arrow
+
         _whileHoverAsync.EmitAsync();
         _whileHover.Emit();
     }

@@ -155,6 +155,7 @@ void RetroFuturaGUI::ITextBox::interact()
     {
         if(isMouseTextBoxPressed && pointer._HasPosition)
         {
+            requestCursorIcon(PlatformBridge::CursorIcon::Text); //also once the drag leaves the box
             //clamp before the hit-test, so the selection doesn't extend outside the visible text area
             //also consider scrolling when marking goes out of bounds
             _selectedPositionLast = _text->GetBoundaryAtPosition(mousePos);
@@ -186,6 +187,7 @@ void RetroFuturaGUI::ITextBox::interact()
     bool isHovering = _isEnabledFlag && isMouseInside;
     if(isHovering) // hover
     {
+        requestCursorIcon(PlatformBridge::CursorIcon::Text);
         _whileHoverAsync.EmitAsync();
         _whileHover.Emit();
     }

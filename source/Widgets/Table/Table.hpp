@@ -506,6 +506,12 @@ namespace RetroFuturaGUI
         void interactTableText(const MouseState& mouse);
         void interactTableCheckBox(const MouseState& mouse);
 
+        /// @brief Returns whether a press on the text cell would place a caret in it, rather than only select its row.
+        bool pressEditsTextCell(const uSize row, const uSize column) const;
+
+        /// @brief Returns whether the mouse is over a text cell a press would edit, where it shows the text bar.
+        bool isOverEditableText(const MouseState& mouse) const;
+
         /// @brief Returns whether the cell overlaps the scrolled viewport.
         bool isCellDisplayed(const uSize row, const uSize column) const;
 

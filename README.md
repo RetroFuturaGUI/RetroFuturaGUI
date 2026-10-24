@@ -601,7 +601,12 @@ The framework is designed for cross-platform use, and its logic can be compiled 
   </ul>
 <li>Text</li>
   <ul>
-  <li>Emoji support</li>
+  <li>Color emoji</li>
+    <ul>
+    <li>FontManager renders every glyph in gray into one-channel pages (GL_R8), so emoji show as outlines in the text color. FreeType gives color bitmaps with FT_LOAD_COLOR, which need four-channel pages and a text shader that keeps a color glyph's own colors instead of tinting it</li>
+    <li>FreeType draws COLR version 0 fonts (flat color layers) by itself. Segoe UI Emoji also has COLR version 1, the gradient look Windows 11 shows; FreeType only describes those (FT_Get_Color_Glyph_Paint) and leaves the drawing to us</li>
+    <li>Emoji made of several characters - flags like 🏳️‍⚧️, skin tones, keycaps, families - need text shaping (HarfBuzz, MIT licensed) to become one glyph. Without it they draw as their separate parts</li>
+    </ul>
   <li>Vertical text flow</li>
   <li>Text Shaders with all shader options</li>
   <li>Text Border</li>
@@ -621,11 +626,15 @@ The framework is designed for cross-platform use, and its logic can be compiled 
     </ul>
   </ul>
 <li>Font Manager</li>
-<li>Cursor icons in PlatformBridge instead of GLFW</li>
+<li>Shared SVG icons take their projection, place and colors when they draw</li>
   <ul>
-  <li>Window creates and sets them through GLFW today (glfwCreateStandardCursor, glfwSetCursor, the static GLFWcursor members in Window.hpp), and only for its resize arrows. They belong in PlatformBridge beside Input: LoadCursor/SetCursor on Windows, XCreateFontCursor/XDefineCursor on X11</li>
-  <li>GLFW answers WM_SETCURSOR with its own cursor on every mouse move, so a cursor PlatformBridge sets lasts until the mouse moves. PlatformBridge has to take that message over, the way Input's window subclass takes the keys</li>
-  <li>One place decides each frame's icon: widgets ask for one (an I-beam over a text box, resize arrows near a window's edge), and only the window the mouse reaches (Window::_hasPointer) applies it</li>
+  <li>ResourceManager hands every CheckBox, Table and drop-down the same SvgTexture for the checkmark and the arrow, and that SvgTexture holds the projection, the matrices and the path colors. So each widget sets them all again right before every draw (CheckBox::Draw, TableCheckBox::Draw, IDropDown::updateDropDownArrowGeometry) and rebuilds matrices whose geometry hasn't changed</li>
+  <li>An SvgTexture::Draw that takes the projection, the matrices and the path fills, the way Mesh::Draw takes its matrices, lets each widget keep its own and build them only when its geometry or colors change. The shared SvgTexture keeps only what is shared: the rasterized layers and the quad</li>
+  <li>Needs adjustments to ResourceManager first</li>
+  <li>Fixes colors leaking between widgets: SetPathFill on the shared icon recolors it for everyone, and the Table reapplies its own fill only when that fill changes. The fills already go to the shader on every draw, but SetPathFill re-rasterizes the base layer on every call, which is only needed when a path's override is switched on or off, not when its colors change</li>
+  </ul>
+<li>Cursor icons: PlatformBridge::Cursor sets them, widgets ask through Window::RequestCursorIcon (the hand over buttons, check boxes, radio buttons and combo boxes, the text bar over text boxes and editable table cells), and resize arrows at a window's edge come first</li>
+  <ul>
   <li>Custom icons from images</li>
   </ul>
 <li>A .ini settings file that remembers the window layout, the way imgui.ini does for ImGui</li>

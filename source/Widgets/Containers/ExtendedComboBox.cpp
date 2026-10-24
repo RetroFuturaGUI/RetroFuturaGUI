@@ -321,6 +321,9 @@ void RetroFuturaGUI::ExtendedComboBox::interact()
 
     if(isHovering) // hover
     {
+        if(isInsideBox || _dropDownItemHovered)
+            requestCursorIcon(PlatformBridge::CursorIcon::Hand);
+
         _whileHoverAsync.EmitAsync();
         _whileHover.Emit();
     }

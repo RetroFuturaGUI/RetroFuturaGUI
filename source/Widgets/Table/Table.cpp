@@ -1775,6 +1775,9 @@ void RetroFuturaGUI::Table::interactTableCheckBox(const MouseState& mouse)
 
     _isHoveredCheckBoxHeld = isInteractive && mouse._IsPressed;
 
+    if(isInteractive)
+        requestCursorIcon(PlatformBridge::CursorIcon::Hand);
+
     if(!isInteractive || !mouse._PressedThisFrame)
         return;
 
@@ -1844,8 +1847,35 @@ void RetroFuturaGUI::Table::SetCheckBoxBorderWidth(const f32 width)
         _checkBoxBorder->SetBorderWidth(width);
 }
 
+bool RetroFuturaGUI::Table::pressEditsTextCell(const uSize row, const uSize column) const
+{
+    const bool isSelecting { RowSelection::None != _rowSelection && _isEnabledFlag };
+
+    //resizeTrackReadOnlyFlags() sizes the flags across the axis the orientation doesn't band along
+    const uSize track { _tableOrientation == TableOrientation::Row ? column : row };
+    return !isSelecting || !IsTrackReadOnly(track) || isEditCell(row, column); //a press into a cell EditCell opened places the caret
+}
+
+bool RetroFuturaGUI::Table::isOverEditableText(const MouseState& mouse) const
+{
+    if(!_isEnabledFlag || !mouse._IsInside || !isPointInContent(mouse._Position))
+        return false;
+
+    uSize
+        row { 0 },
+        column { 0 };
+
+    if(!findCellAt(mouse._Position, ITableWidget::TableWidgetTypeID::TableText, row, column))
+        return false;
+
+    return pressEditsTextCell(row, column);
+}
+
 void RetroFuturaGUI::Table::interactTableText(const MouseState& mouse)
 {
+    if(_isMarking || isOverEditableText(mouse))
+        requestCursorIcon(PlatformBridge::CursorIcon::Text); //also all through a drag that marks text
+
     // Dragging extends the selection within the cell that already has focus
     if(_isMarking)
     {
@@ -1882,12 +1912,8 @@ void RetroFuturaGUI::Table::interactTableText(const MouseState& mouse)
         }
         else if(isInContent && findCellAt(mouse._Position, ITableWidget::TableWidgetTypeID::TableText, row, column))
         {
-            // resizeTrackReadOnlyFlags() sizes the flags across the axis the orientation doesn't band along
-            const bool isRowOrientation { _tableOrientation == TableOrientation::Row };
-            const uSize
-                selectableRow { isRowOrientation ? row : column },
-                track { isRowOrientation ? column : row };
-            const bool isEditing { !isSelecting || !IsTrackReadOnly(track) || isEditCell(row, column) }; //a press into a cell EditCell opened places the caret
+            const uSize selectableRow { _tableOrientation == TableOrientation::Row ? row : column };
+            const bool isEditing { pressEditsTextCell(row, column) };
 
             if(isEditing)
             {

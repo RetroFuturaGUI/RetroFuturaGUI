@@ -2,6 +2,7 @@
 #include "PlatformBridge.hpp"
 #include "IDropDown.hpp"
 #include "Tooltip.hpp"
+#include "Window.hpp"
 #include <memory>
 
 #if defined(TARGET_PLATFORM_LINUX)
@@ -149,6 +150,11 @@ RetroFuturaGUI::PointerState RetroFuturaGUI::IWidget::readPointer() const
     filterThroughAncestors(_parentWidget, pointer);
     IDropDown::CaptureUnderOpenList(this, _parentWindow, pointer);
     return pointer;
+}
+
+void RetroFuturaGUI::IWidget::requestCursorIcon(const PlatformBridge::CursorIcon icon) const
+{
+    Window::RequestCursorIcon(_parentWindow, icon);
 }
 
 void RetroFuturaGUI::IWidget::filterThroughAncestors(const IHierarchyNode* node, PointerState& pointer)

@@ -254,6 +254,7 @@ void RetroFuturaGUI::RadioButton::interact()
 
     if(isHovering) // hover
     {
+        requestCursorIcon(PlatformBridge::CursorIcon::Hand);
         _whileHoverAsync.EmitAsync();
         _whileHover.Emit();
     }

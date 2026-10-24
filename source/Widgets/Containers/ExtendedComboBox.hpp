@@ -1,5 +1,6 @@
 #pragma once
 #include <concepts>
+#include <print>
 #include "ComboBox.hpp"
 #include "IDropDown.hpp"
 #include "IncludeHelper.hpp"
@@ -47,6 +48,13 @@ namespace RetroFuturaGUI
         {
             if(!item)
                 return nullptr;
+
+            //An open list blocks the widgets beneath it, and only rows made with this box as their parent count as its own
+            if(item->GetParent() != this)
+            {
+                std::println("ExtendedComboBox::AddItem: \"{}\" was made with another parent, so it is not added", item->GetName());
+                return nullptr;
+            }
 
             /* The widget types delete their copy and move constructors, so an item can only arrive
                as a pointer that is already owning. The raw pointer is kept before the unique_ptr is

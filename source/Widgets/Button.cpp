@@ -137,6 +137,7 @@ void RetroFuturaGUI::Button::interact()
     bool isHovering = _isEnabledFlag && isMouseInside;
     if(isHovering) // hover
     {
+        requestCursorIcon(PlatformBridge::CursorIcon::Hand);
         _whileHoverAsync.EmitAsync();
         _whileHover.Emit();
     }

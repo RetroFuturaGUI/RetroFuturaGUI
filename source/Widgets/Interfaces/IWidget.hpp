@@ -9,6 +9,7 @@
 #include "IWindowAccessor.hpp"
 #include "IHierarchyNode.hpp"
 #include "IPointerFilter.hpp"
+#include "CursorIcon.hpp"
 
 namespace RetroFuturaGUI
 {
@@ -128,6 +129,9 @@ namespace RetroFuturaGUI
         /// @brief Reads the mouse in window coordinates, bottom-up, as this widget should see it: every ancestor that is an
         ///        IPointerFilter may hold the press back, replay it, or take the pointer away entirely while it scrolls.
         PointerState readPointer() const;
+
+        /// @brief change the cursor icon, such as the hand over a button. Call it every frame the mouse is over a widget to visualize an action can be performed. In a frame where no widget calls it, the cursor is the arrow.
+        void requestCursorIcon(const PlatformBridge::CursorIcon icon) const;
 
     private:
         /// @brief Applies the pointer filters from the outermost container down to the closest one. Each container then adjusts

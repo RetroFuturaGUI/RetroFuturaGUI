@@ -34,16 +34,6 @@ RetroFuturaGUI::Window::Window(std::string_view name, const i32 width, const i32
 	//Docking previews and popups are never docking targets
 	if(WindowRole::Normal == _role)
 		allWindows().push_back(this);
-
-	if(_cursorsInitialized)
-		return;
-		
-	_resizeCursorHorizontal = glfwCreateStandardCursor(GLFW_HRESIZE_CURSOR);
-	_resizeCursorVertical = glfwCreateStandardCursor(GLFW_VRESIZE_CURSOR);
-	_resizeCursorTLBR = glfwCreateStandardCursor(GLFW_RESIZE_NWSE_CURSOR);
-	_resizeCursorTRBL = glfwCreateStandardCursor(GLFW_RESIZE_NESW_CURSOR);
-	_defaultCursor = glfwCreateStandardCursor(GLFW_ARROW_CURSOR);
-	_cursorsInitialized = true;
 }
 
 RetroFuturaGUI::Window::~Window()
@@ -203,7 +193,6 @@ void RetroFuturaGUI::Window::pollInput()
 		_hasPointer = isUnderMouse();
 
 	setCursorPosition();
-	setCursorIcon();
 
 	//Once the button is up, a press held from before this window took the mouse is over
 	if(!isMouseButtonDown)
@@ -243,33 +232,49 @@ void RetroFuturaGUI::Window::setCursorPosition()
 
 void RetroFuturaGUI::Window::setCursorIcon()
 {
+	if(!_window)
+		return;
+
 	ResizeEdge edge { resizeEdgeAt(_cursorPosX, _cursorPosY) };
 
 	if(!canResize(edge))
 		edge = ResizeEdge::None;
 
+	PlatformBridge::CursorIcon icon { _requestedCursorIcon }; //the widgets' icon, unless the mouse is at an edge the window resizes from
+	_requestedCursorIcon = PlatformBridge::CursorIcon::Arrow; //each frame's widgets ask anew
+
 	switch(edge)
 	{
 		case ResizeEdge::TopLeft:
 		case ResizeEdge::BottomRight:
-			glfwSetCursor(_window, _resizeCursorTLBR);
+			icon = PlatformBridge::CursorIcon::ResizeTopLeftBottomRight;
 		break;
 		case ResizeEdge::TopRight:
 		case ResizeEdge::BottomLeft:
-			glfwSetCursor(_window, _resizeCursorTRBL);
+			icon = PlatformBridge::CursorIcon::ResizeTopRightBottomLeft;
 		break;
 		case ResizeEdge::Left:
 		case ResizeEdge::Right:
-			glfwSetCursor(_window, _resizeCursorHorizontal);
+			icon = PlatformBridge::CursorIcon::ResizeHorizontal;
 		break;
 		case ResizeEdge::Top:
 		case ResizeEdge::Bottom:
-			glfwSetCursor(_window, _resizeCursorVertical);
+			icon = PlatformBridge::CursorIcon::ResizeVertical;
 		break;
 		default:
-			glfwSetCursor(_window, _defaultCursor);
 		break;
 	}
+
+	if(icon == _cursorIcon)
+		return;
+
+	_cursorIcon = icon;
+
+#if defined(TARGET_PLATFORM_LINUX)
+	PlatformBridge::Cursor::SetIcon(glfwGetX11Display(), glfwGetX11Window(_window), icon);
+#elif defined(TARGET_PLATFORM_WINDOWS)
+	PlatformBridge::Cursor::SetIcon(glfwGetWin32Window(_window), icon);
+#endif
 }
 
 RetroFuturaGUI::Window::ResizeEdge RetroFuturaGUI::Window::resizeEdgeAt(const f64 x, const f64 y) const
@@ -523,6 +528,10 @@ void RetroFuturaGUI::Window::Draw()
 
 	updateProjection();
 	drawContent();
+
+	if(WindowRole::DockPreview != _role)
+		setCursorIcon(); //after the content, whose widgets ask for their icons while they draw
+
 	glfwSwapBuffers(_window);
 
 	if(_showAfterDraw)
@@ -1836,6 +1845,17 @@ GLFWwindow* RetroFuturaGUI::Window::KeyboardWindowOf(GLFWwindow* glfwWindow)
 		return glfwWindow;
 
 	return window->GetKeyboardWindow();
+}
+
+void RetroFuturaGUI::Window::RequestCursorIcon(GLFWwindow* glfwWindow, const PlatformBridge::CursorIcon icon)
+{
+	//The window keys arrive at is the one on screen: the host's while this one sits in a WindowTab
+	Window* window { FromGlfwWindow(KeyboardWindowOf(glfwWindow)) };
+
+	if(!window)
+		return;
+
+	window->_requestedCursorIcon = icon;
 }
 
 glm::ivec2 RetroFuturaGUI::Window::DrawOriginOf(GLFWwindow* glfwWindow)
