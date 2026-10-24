@@ -1614,6 +1614,7 @@ bool RetroFuturaGUI::Window::PushPopup(std::unique_ptr<IPopup> popup)
 	popupWindow->setNativeOwner(owner);
 	popupWindow->centerOver(owner);
 
+	popup->_isOnStack = true;
 	_popups.push_back(std::move(popup));
 	_popups.back()->restoreOpenerContext();
 	return true;
