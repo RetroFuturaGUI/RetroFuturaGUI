@@ -1,7 +1,12 @@
 #include "DynamicLibWidgetManager.hpp"
 #include "Button.hpp"
+#include "FileExplorer.hpp"
 #include "Label.hpp"
 #include "TextBox.hpp"
+#include "Window.hpp"
+#include <memory>
+#include <string>
+#include <vector>
 
 void RetroFuturaGUI::DynamicLibWidgetManager::AddWidget(std::string_view id, IWidget *widgetRef)
 {
@@ -397,12 +402,12 @@ void RetroFuturaGUI::DynamicLibWidgetManager::SetText(const char* id, const char
         case WidgetTypeID::Button:
         {
             Button* button = dynamic_cast<Button*>(widget);
-            button->SetText(text);
+            button->SetText(text, false); //the app already set it
         } break;
         case WidgetTypeID::Label:
         {
             Label* label = dynamic_cast<Label*>(widget);
-            label->SetText(text);
+            label->SetText(text, false);
         } break;
         case WidgetTypeID::TextBox:
         {
@@ -412,6 +417,50 @@ void RetroFuturaGUI::DynamicLibWidgetManager::SetText(const char* id, const char
         default:
             [[unlikely]];
     }
+}
+
+bool RetroFuturaGUI::DynamicLibWidgetManager::OpenFileExplorer(Window* window, std::string_view title, const i32 width, const i32 height, std::string_view startPath, const u32 flags, std::string_view extensions, PathsCallbackType onResult, CallbackType onDismiss)
+{
+    if(!window)
+        return false;
+
+    GLFWwindow* openerContext { glfwGetCurrentContext() }; //the explorer's window makes its own current
+    std::unique_ptr<FileExplorer> explorer { std::make_unique<FileExplorer>(title, width, height) };
+
+    if(!explorer)
+        return false;
+
+    //C strings into the slot's own vector, so they live until onResult returns
+    explorer->Connect_OnResult([onResult](std::vector<std::string> paths)
+        {
+            if(!onResult)
+                return;
+
+            std::vector<const char*> pathPointers {};
+            pathPointers.reserve(paths.size());
+
+            for(const std::string& path : paths)
+                pathPointers.push_back(path.c_str());
+
+            onResult(pathPointers.data(), static_cast<u32>(pathPointers.size()));
+        }, false);
+    explorer->Connect_OnDismiss([onDismiss]()
+        {
+            if(!onDismiss)
+                return;
+
+            onDismiss();
+        }, false);
+
+    //A refused explorer is never pushed. Destroying its window leaves no context current
+    if(!explorer->Open(startPath, static_cast<FileExplorer::FileExplorerFlags>(flags), extensions))
+    {
+        explorer.reset();
+        glfwMakeContextCurrent(openerContext);
+        return false;
+    }
+
+    return window->PushPopup(std::move(explorer));
 }
 
 RetroFuturaGUI::DynamicLibWidgetManager& RetroFuturaGUI::DynamicLibWidgetManager::GetInstance()

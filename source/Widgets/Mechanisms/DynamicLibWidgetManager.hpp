@@ -21,6 +21,9 @@ namespace RetroFuturaGUI
     extern "C"
     {
         typedef void (*CallbackType)();
+
+        /// @brief Takes paths in UTF-8. They are valid during the call only, so a binding copies them before it returns.
+        typedef void (*PathsCallbackType)(const char* const* paths, u32 pathCount);
     }
 
     /// @brief Exposes widgets to consumers of the dynamic library build (DYNLIB_MODE) via string IDs and C-compatible callbacks, since such consumers cannot hold IWidget pointers directly.
@@ -87,6 +90,12 @@ namespace RetroFuturaGUI
 
         /// @brief Sets the text content of the widget with the given ID.
         static void SetText(const char* id, const char* text);
+
+        /// @brief Opens a FileExplorer over the window, as FileExplorer::Open does with the start path, flags and extensions.
+        ///        onResult gets the chosen paths, onDismiss hears it closed without; either may be null.
+        /// @param flags FileExplorer::FileExplorerFlags as their bits.
+        /// @return false when there is no window, Open refuses the flags, or the window can't take the popup.
+        static bool OpenFileExplorer(Window* window, std::string_view title, const i32 width, const i32 height, std::string_view startPath, const u32 flags, std::string_view extensions, PathsCallbackType onResult, CallbackType onDismiss);
 
     private:
         DynamicLibWidgetManager() = default;
