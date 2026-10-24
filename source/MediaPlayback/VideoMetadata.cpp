@@ -13,17 +13,7 @@ std::optional<RetroFuturaGUI::VideoMetadata> RetroFuturaGUI::ReadVideoMetadata(s
     if(!context)
         return std::nullopt;
 
-    //The first moving picture; songs carry their cover art as a one-picture video stream, which doesn't count
-    const AVStream* video { nullptr };
-
-    for(u32 index = 0; index < source.GetStreamCount() && !video; ++index)
-    {
-        const AVStream* stream { source.GetStream(static_cast<i32>(index)) };
-        const bool isPicture { stream && stream->codecpar && AVMEDIA_TYPE_VIDEO == stream->codecpar->codec_type };
-
-        if(isPicture && 0 == (stream->disposition & AV_DISPOSITION_ATTACHED_PIC))
-            video = stream;
-    }
+    const AVStream* video { source.GetStream(source.FindVideoStream()) };
 
     if(!video)
         return std::nullopt;
