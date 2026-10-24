@@ -20,8 +20,8 @@ namespace RetroFuturaGUI
             void SetPosition(const glm::vec3& position) override;
             void SetRotation(const glm::vec3& rotation) override;
 
-            /// @brief Sets the gap between the cell's edge and the box, in pixels. Takes effect on the parent table's next layout pass.
-            void SetCellMargin(const f32 margin);
+            /// @brief Sets the gap/padding between the cell's edge and the box, in pixels. Takes effect on the parent table's next layout pass.
+            void SetPadding(const f32 padding);
 
             /// @brief Sets the checked state.
             void SetValue(const bool value);
@@ -35,6 +35,6 @@ namespace RetroFuturaGUI
                 *_border { nullptr };
             SvgTexture* _checkmark { nullptr };
             bool _isChecked { false };
-            f32 _cellMargin { 4.0f };
+            f32 _padding { 4.0f };
     };
 }

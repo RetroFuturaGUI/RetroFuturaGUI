@@ -35,7 +35,7 @@ void RetroFuturaGUI::TableCheckBox::Draw()
 
     if(_checkmark)
     {
-        _checkmark->SetProjection(_projection); //ToDo: double check if it should be moved to SetSize instead
+        _checkmark->SetProjection(_projection);
         _checkmark->SetSize(_size);
         _checkmark->SetPosition(_position + glm::vec3(0.0f, 0.0f, 0.02f));
         _checkmark->SetRotation(_rotation);
@@ -47,7 +47,7 @@ void RetroFuturaGUI::TableCheckBox::SetSize(const glm::vec3& size)
 {
     const f32
         shortest { size.x < size.y ? size.x : size.y },
-        extent { shortest > _cellMargin * 2.0f ? shortest - _cellMargin * 2.0f : 0.0f };
+        extent { shortest > _padding * 2.0f ? shortest - _padding * 2.0f : 0.0f };
 
     ITableWidget::SetSize(glm::vec3(extent, extent, size.z));
 }
@@ -62,9 +62,9 @@ void RetroFuturaGUI::TableCheckBox::SetRotation(const glm::vec3& rotation)
     ITableWidget::SetRotation(rotation);
 }
 
-void RetroFuturaGUI::TableCheckBox::SetCellMargin(const f32 margin)
+void RetroFuturaGUI::TableCheckBox::SetPadding(const f32 padding)
 {
-    _cellMargin = margin > 0.0f ? margin : 0.0f;
+    _padding = padding > 0.0f ? padding : 0.0f;
 }
 
 void RetroFuturaGUI::TableCheckBox::SetValue(const bool value)
