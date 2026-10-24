@@ -20,7 +20,7 @@ namespace RetroFuturaGUI
 
     private:
         using ITextProperties::SetText; //setting text directly would bypass the value store - SetValue<std::string_view> renders it
-        void renderValueText(std::string_view text, const bool emitSignal) override { ITextProperties::SetText(text, emitSignal); }
+        void renderValueText(std::string_view text, const bool emitSignal) override;
         void emitChange() override;
     };
 }

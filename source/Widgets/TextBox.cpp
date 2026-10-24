@@ -11,3 +11,9 @@ void RetroFuturaGUI::TextBox::emitChange()
     syncValueFromText(GetText());
     ITextEditable::emitChange();
 }
+
+void RetroFuturaGUI::TextBox::renderValueText(std::string_view text, const bool emitSignal)
+{
+    ITextProperties::SetText(text, emitSignal);
+    placeCaretAfterText(); //typing never comes here: it stores what was typed without showing it again
+}
