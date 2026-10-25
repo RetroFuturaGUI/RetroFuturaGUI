@@ -1,6 +1,7 @@
 /* First/last codepoint bounds for each Unicode block, used to request glyph
     ranges from FontManager without hardcoding magic numbers at call sites.
-    Taken from Unicode 18.0's Blocks.txt. The bounds are the whole block, not only its assigned characters, so characters
+    Made by tools/make_unicode_blocks.awk from Unicode 18.0's Blocks.txt: for a new Unicode version, run it again
+    rather than editing this by hand. The bounds are the whole block, not only its assigned characters, so characters
     added to a block later are covered too. Basic Latin is split in two: its control characters are ControlBlock, which
     stays out of UnicodeBlocks because FontManager::blockKeyOf returns 0 for "no block".
 */
