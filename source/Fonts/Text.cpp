@@ -2,23 +2,18 @@
 #include "ShaderManager.hpp"
 #include <algorithm>
 
-#ifndef _MSC_VER
-    using max;
-    using min;
-#endif
-
 RetroFuturaGUI::Text::Text(Projection* projection)
     : _projection(*projection)
 {
     glGenBuffers(1, &_vbo);
     _vertexArray = std::make_unique<VertexArray>([vbo = _vbo]()
-        {
-            glBindBuffer(GL_ARRAY_BUFFER, vbo);
-            glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(f32), nullptr); // position
-            glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(f32), (void*)(2 * sizeof(f32))); // uv
-            glEnableVertexAttribArray(0);
-            glEnableVertexAttribArray(1);
-        });
+    {
+        glBindBuffer(GL_ARRAY_BUFFER, vbo);
+        glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(f32), nullptr); // position
+        glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(f32), (void*)(2 * sizeof(f32))); // uv
+        glEnableVertexAttribArray(0);
+        glEnableVertexAttribArray(1);
+    });
 }
 
 RetroFuturaGUI::Text::~Text()
@@ -258,10 +253,10 @@ void RetroFuturaGUI::Text::updateMesh()
             widgetTop { widgetBottom + _parentSize.y },
             glyphWorldLeft { _positionAligned.x + xPos },
             glyphWorldBottom { _positionAligned.y + yPos },
-            clippedLocalLeft { max(0.0f, widgetLeft - glyphWorldLeft) },
-            clippedLocalRight { min(width, widgetRight - glyphWorldLeft) },
-            clippedLocalBottom { max(0.0f, widgetBottom - glyphWorldBottom) },
-            clippedLocalTop { min(height, widgetTop - glyphWorldBottom) };
+            clippedLocalLeft { std::max(0.0f, widgetLeft - glyphWorldLeft) },
+            clippedLocalRight { std::min(width, widgetRight - glyphWorldLeft) },
+            clippedLocalBottom { std::max(0.0f, widgetBottom - glyphWorldBottom) },
+            clippedLocalTop { std::min(height, widgetTop - glyphWorldBottom) };
 
         if (clippedLocalRight <= clippedLocalLeft || clippedLocalTop <= clippedLocalBottom)
         {
@@ -342,7 +337,7 @@ glm::vec3 RetroFuturaGUI::Text::GetBoundaryPosition(const uSize boundary, const 
 
     if(!_glyphPositions.empty())
     {
-        const uSize index { min(boundary, _glyphPositions.size() - 1) };
+        const uSize index { std::min(boundary, _glyphPositions.size() - 1) };
         x = _glyphPositions[index];
         y = -static_cast<f32>(_glyphLines[index]) * _glyphSize.y * _lineSpacingFactor; //the same step updateMesh moves down per '\n'
     }
@@ -360,7 +355,7 @@ uSize RetroFuturaGUI::Text::GetBoundaryAtPosition(const glm::vec2& worldPosition
     if(0.0f > linesDown)
         return GetBoundaryOnLine(0, worldPosition.x);
 
-    return GetBoundaryOnLine(min(static_cast<uSize>(linesDown), _glyphLines.back()), worldPosition.x);
+    return GetBoundaryOnLine(std::min(static_cast<uSize>(linesDown), _glyphLines.back()), worldPosition.x);
 }
 
 uSize RetroFuturaGUI::Text::GetBoundaryAtPosition(const f32 worldX) const
@@ -440,7 +435,7 @@ void RetroFuturaGUI::Text::calculateTextSpan()
     auto finalizeLine = [&]()
     {
         totalHeight += _glyphSize.y * _lineSpacingFactor;
-        maxLineWidth = max(maxLineWidth, currentLineWidth);
+        maxLineWidth = std::max(maxLineWidth, currentLineWidth);
         currentLineWidth = 0.0f;
         penX = 0.0f;
     };
@@ -464,12 +459,12 @@ void RetroFuturaGUI::Text::calculateTextSpan()
         if (codepoint == U' ')
         {
             penX += advancePx;
-            currentLineWidth = max(currentLineWidth, penX);
+            currentLineWidth = std::max(currentLineWidth, penX);
             continue;
         }
 
         f32 glyphRight = penX + glyph._Bearing[0] * scale + glyph._Size[0] * scale;
-        currentLineWidth = max(currentLineWidth, glyphRight);
+        currentLineWidth = std::max(currentLineWidth, glyphRight);
         penX += advancePx;
     }
 
@@ -536,7 +531,7 @@ uSize RetroFuturaGUI::Text::GetBoundaryLine(const uSize boundary) const
     if(_glyphLines.empty())
         return 0;
 
-    return _glyphLines[min(boundary, _glyphLines.size() - 1)];
+    return _glyphLines[std::min(boundary, _glyphLines.size() - 1)];
 }
 
 uSize RetroFuturaGUI::Text::GetLineLastBoundary(const uSize line) const

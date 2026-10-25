@@ -3,7 +3,7 @@
 #include <string_view>
 #include <string>
 #include <span>
-#include "PlatformBridge.hpp"
+#include "Fonts.hpp"
 #include "Text.hpp"
 
 namespace RetroFuturaGUI

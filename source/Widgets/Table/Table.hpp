@@ -22,6 +22,7 @@
 #include <limits>
 #include <span>
 #include <string>
+#include "Definitions.hpp"
 
 namespace RetroFuturaGUI
 {

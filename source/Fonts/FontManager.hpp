@@ -8,7 +8,7 @@
 #include <list>
 #include <vector>
 #include "UnicodeBlocks.hpp"
-#include "PlatformBridge.hpp"
+#include "Fonts.hpp"
 
 namespace RetroFuturaGUI
 {

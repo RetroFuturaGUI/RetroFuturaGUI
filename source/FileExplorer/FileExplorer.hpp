@@ -20,6 +20,7 @@
 #include <system_error>
 #include <utility>
 #include <vector>
+#include "Definitions.hpp"
 
 namespace RetroFuturaGUI
 {
