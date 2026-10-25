@@ -179,7 +179,7 @@ namespace RetroFuturaGUI
         glm::vec3 spanAlignmentFactors() const;
         glm::vec3 contentToWindow(const glm::vec3& point) const;
         glm::vec3 innerSize() const;
-        void setColors(const ColorState state);
+        void setColors(const ColorState state) override;
 
         /// @brief Moves the content by as much as the pointer moved since the last frame, on every enabled axis but Z.
         void dragScroll(const glm::vec2& mousePosition);

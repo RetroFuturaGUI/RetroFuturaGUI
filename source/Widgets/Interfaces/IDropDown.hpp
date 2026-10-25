@@ -62,7 +62,7 @@ namespace RetroFuturaGUI
         void updateDropDownArrowGeometry();
         void updateDropDownGeometry();
         uSize visibleItemCount() const;
-        virtual void setColors(const ColorState state);
+        void setColors(const ColorState state) override;
         glm::vec3 itemRowCenter(const uSize visibleIndex) const;
 
         /// @brief Returns whether a world space point falls on the open drop down panel.

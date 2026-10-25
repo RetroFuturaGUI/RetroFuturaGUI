@@ -27,6 +27,6 @@ namespace RetroFuturaGUI
     private:
         void interact();
         bool isInsideGraph(const glm::vec2& mousePos);
-        void setColors(const ColorState state);
+        void setColors(const ColorState state) override;
     };
 }

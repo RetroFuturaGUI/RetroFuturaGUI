@@ -53,31 +53,6 @@ void RetroFuturaGUI::CheckBox::Draw()
     _checkmark->Draw();
 }
 
-void RetroFuturaGUI::CheckBox::SetEnabled(const bool enable, const bool emitSignal)
-{
-    _isEnabledFlag = enable;
-
-    if(_isEnabledFlag)
-    {
-        if(emitSignal)
-        {
-            _onEnableAsync.EmitAsync();
-            _onEnable.Emit();
-        }
-
-        setColors(ColorState::Enabled);
-        return;
-    }
-
-    if(emitSignal)
-    {
-        _onDisableAsync.EmitAsync();
-        _onDisable.Emit();
-    }
-        
-    setColors(ColorState::Disabled);
-}
-
 void RetroFuturaGUI::CheckBox::SetSize(const glm::vec3& size)
 {
     IWidget::SetSize(size);

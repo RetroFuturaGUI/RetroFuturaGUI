@@ -73,7 +73,7 @@ namespace RetroFuturaGUI
         /// @brief Returns the widget's type ID.
         WidgetTypeID GetWidgetTypeID() const;
 
-        /// @brief Enables or disables the widget, optionally emitting the associated signal.
+        /// @brief Enables or disables the widget, switching it to that state's colors, and emits OnEnable or OnDisable if emitSignal is set.
         void SetEnabled(const bool enable, const bool emitSignal);
 
         /// @brief Returns whether the widget is currently enabled.
@@ -111,13 +111,13 @@ namespace RetroFuturaGUI
         glm::vec3 _rotation { 0.0f };
 
     //Logic
-        bool _isEnabledFlag { true };
         ColorState _colorState { ColorState::Enabled };
         Signal<>
             _onEnable,
             _onEnableAsync,
             _onDisable,
             _onDisableAsync;
+        bool _isEnabledFlag { true };
 
     // stuff
         std::unique_ptr<Tooltip> _tooltip; //no { nullptr }: with Tooltip only declared here, MSVC can't compile the initializer's cleanup
@@ -132,6 +132,9 @@ namespace RetroFuturaGUI
 
         /// @brief change the cursor icon, such as the hand over a button. Call it every frame the mouse is over a widget to visualize an action can be performed. In a frame where no widget calls it, the cursor is the arrow.
         void requestCursorIcon(const PlatformBridge::CursorIcon icon) const;
+
+        /// @brief Switches the widget to the colors of the given state. Does nothing in a widget without colors per state.
+        virtual void setColors([[maybe_unused]] const ColorState state) {}
 
     private:
         /// @brief Applies the pointer filters from the outermost container down to the closest one. Each container then adjusts

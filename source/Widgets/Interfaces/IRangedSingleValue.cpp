@@ -33,42 +33,42 @@ void RetroFuturaGUI::IRangedSingleValue::Disconnect_OnValueSet(const typename Si
     _onValueSetAsync.Disconnect(slot);
 }
 
-void RetroFuturaGUI::IRangedSingleValue::StepValue(const bool increase)
+void RetroFuturaGUI::IRangedSingleValue::StepValue(const bool increase, const bool emitSignal)
 {
     switch(_valueType)
     {
         case PrimitiveTypeID::Int8:
-            SetValue<i8>(stepToward(_value.Int8, _stepSize.Int8, increase ? _maxValue.Int8 : _minValue.Int8), true);
+            SetValue<i8>(stepToward(_value.Int8, _stepSize.Int8, increase ? _maxValue.Int8 : _minValue.Int8), emitSignal);
         break;
         case PrimitiveTypeID::Int16:
-            SetValue<i16>(stepToward(_value.Int16, _stepSize.Int16, increase ? _maxValue.Int16 : _minValue.Int16), true);
+            SetValue<i16>(stepToward(_value.Int16, _stepSize.Int16, increase ? _maxValue.Int16 : _minValue.Int16), emitSignal);
         break;
         case PrimitiveTypeID::Int32:
-            SetValue<i32>(stepToward(_value.Int32, _stepSize.Int32, increase ? _maxValue.Int32 : _minValue.Int32), true);
+            SetValue<i32>(stepToward(_value.Int32, _stepSize.Int32, increase ? _maxValue.Int32 : _minValue.Int32), emitSignal);
         break;
         case PrimitiveTypeID::Int64:
-            SetValue<i64>(stepToward(_value.Int64, _stepSize.Int64, increase ? _maxValue.Int64 : _minValue.Int64), true);
+            SetValue<i64>(stepToward(_value.Int64, _stepSize.Int64, increase ? _maxValue.Int64 : _minValue.Int64), emitSignal);
         break;
         case PrimitiveTypeID::UInt8:
-            SetValue<u8>(stepToward(_value.UInt8, _stepSize.UInt8, increase ? _maxValue.UInt8 : _minValue.UInt8), true);
+            SetValue<u8>(stepToward(_value.UInt8, _stepSize.UInt8, increase ? _maxValue.UInt8 : _minValue.UInt8), emitSignal);
         break;
         case PrimitiveTypeID::UInt16:
-            SetValue<u16>(stepToward(_value.UInt16, _stepSize.UInt16, increase ? _maxValue.UInt16 : _minValue.UInt16), true);
+            SetValue<u16>(stepToward(_value.UInt16, _stepSize.UInt16, increase ? _maxValue.UInt16 : _minValue.UInt16), emitSignal);
         break;
         case PrimitiveTypeID::UInt32:
-            SetValue<u32>(stepToward(_value.UInt32, _stepSize.UInt32, increase ? _maxValue.UInt32 : _minValue.UInt32), true);
+            SetValue<u32>(stepToward(_value.UInt32, _stepSize.UInt32, increase ? _maxValue.UInt32 : _minValue.UInt32), emitSignal);
         break;
         case PrimitiveTypeID::UInt64:
-            SetValue<u64>(stepToward(_value.UInt64, _stepSize.UInt64, increase ? _maxValue.UInt64 : _minValue.UInt64), true);
+            SetValue<u64>(stepToward(_value.UInt64, _stepSize.UInt64, increase ? _maxValue.UInt64 : _minValue.UInt64), emitSignal);
         break;
         case PrimitiveTypeID::Float32:
-            SetValue<f32>(stepToward(_value.Float32, _stepSize.Float32, increase ? _maxValue.Float32 : _minValue.Float32), true);
+            SetValue<f32>(stepToward(_value.Float32, _stepSize.Float32, increase ? _maxValue.Float32 : _minValue.Float32), emitSignal);
         break;
         case PrimitiveTypeID::Float64:
-            SetValue<f64>(stepToward(_value.Float64, _stepSize.Float64, increase ? _maxValue.Float64 : _minValue.Float64), true);
+            SetValue<f64>(stepToward(_value.Float64, _stepSize.Float64, increase ? _maxValue.Float64 : _minValue.Float64), emitSignal);
         break;
-        default: // Bool
-            SetValue<bool>(increase, true);
+        default:
+            SetValue<bool>(increase, emitSignal);
         break;
     }
 }

@@ -31,31 +31,6 @@ void RetroFuturaGUI::Button::Draw()
     drawText();
 }
 
-void RetroFuturaGUI::Button::SetEnabled(const bool enable, const bool emitSignal)
-{
-    _isEnabledFlag = enable;
-
-    if(_isEnabledFlag)
-    {
-        if(emitSignal)
-        {
-            _onEnableAsync.EmitAsync();
-            _onEnable.Emit();
-        }
-
-        setColors(ColorState::Enabled);
-        return;
-    }
-
-    if(emitSignal)
-    {
-        _onDisableAsync.EmitAsync();
-        _onDisable.Emit();
-    }
-        
-    setColors(ColorState::Disabled);
-}
-
 void RetroFuturaGUI::Button::SetSize(const glm::vec3& size)
 {
     IWidget::SetSize(size);

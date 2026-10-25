@@ -27,9 +27,6 @@ namespace RetroFuturaGUI
         /// @brief Draws the button, including its Inheriet, border and label text.
         void Draw() override;
 
-        /// @brief Enables or disables the RadioButton, optionally emitting the associated signal.
-        void SetEnabled(const bool enable, const bool emitSignal);
-
         /// @brief Sets the size of the button.
         void SetSize(const glm::vec3& size) override;
 
@@ -75,7 +72,7 @@ namespace RetroFuturaGUI
         void SetIndicatorPadding(const f32 pixels);
 
     private:
-        void setColors(const ColorState state);
+        void setColors(const ColorState state) override;
         void setIndicatorColors();
         void interact();
 

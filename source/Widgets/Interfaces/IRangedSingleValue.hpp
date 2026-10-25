@@ -129,7 +129,7 @@ namespace RetroFuturaGUI
 
         
         /// @brief Moves the value one step toward the max (increase) or the min, clamped to the range.
-        void StepValue(const bool increase);
+        void StepValue(const bool increase, const bool emitSignal);
 
     protected:
         /// @brief Clamps the value into the new range and emits OnValueChanged if that moved it.

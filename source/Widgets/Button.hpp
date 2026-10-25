@@ -23,9 +23,6 @@ namespace RetroFuturaGUI
         /// @brief Draws the button, including its background, border and label text.
         void Draw() override;
 
-        /// @brief Enables or disables the button, optionally emitting the associated signal.
-        void SetEnabled(const bool enable, const bool emitSignal);
-
         /// @brief Sets the size of the button.
         void SetSize(const glm::vec3& size) override;
 
@@ -40,6 +37,6 @@ namespace RetroFuturaGUI
 
     private:
         void interact();
-        void setColors(const ColorState state);
+        void setColors(const ColorState state) override;
     };
 }

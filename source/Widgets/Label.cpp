@@ -12,27 +12,6 @@ void RetroFuturaGUI::Label::Draw()
     drawText();
 }
 
-void RetroFuturaGUI::Label::SetEnabled(const bool enable, const bool emitSignal)
-{
-    _isEnabledFlag = enable;
-
-    if(_isEnabledFlag && emitSignal)
-    {
-        _onEnableAsync.EmitAsync();
-        _onEnable.Emit();
-        setColors(ColorState::Enabled);
-        return;
-    }
-
-    if(emitSignal)
-    {
-        _onDisableAsync.EmitAsync();
-        _onDisable.Emit();
-    }
-    
-    setColors(ColorState::Disabled);
-}
-
 void RetroFuturaGUI::Label::setColors(const ColorState state)
 {
     _textColorState = state;
