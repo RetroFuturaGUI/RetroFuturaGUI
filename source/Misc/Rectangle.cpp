@@ -728,12 +728,12 @@ void RetroFuturaGUI::Rectangle::SetBorderGaps(std::span<BorderGap> gaps)
     for(i32 i = 0; i < _borderGapCount; ++i)
     {
         const BorderGap& gap = gaps[i];
-        f32 packedEdge = static_cast<f32>(gap.edge) + (gap.anchorFarCorner ? 4.0f : 0.0f);
+        f32 packedEdge = static_cast<f32>(gap._Edge) + (gap._AnchorFarCorner ? 4.0f : 0.0f);
         _borderGapData[i] = glm::vec4(
             packedEdge,
-            gap.offset,
-            gap.length,
-            static_cast<f32>(gap.repeat)
+            gap._Offset,
+            gap._Length,
+            static_cast<f32>(gap._Repeat)
         );
     }
 }

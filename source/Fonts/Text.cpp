@@ -191,10 +191,10 @@ void RetroFuturaGUI::Text::updateMesh()
         return;
     }
 
-    const GlyphAtlas& _atlas { _fontInfo->_Atlasses.at(_fontIndex) };
+    const GlyphAtlas& atlas { _fontInfo->_Atlasses.at(_fontIndex) };
 
     f32
-        nativeSize { _atlas._FontSize },
+        nativeSize { atlas._FontSize },
         scale { _glyphSize.y / nativeSize },
         currentX { 0.0f },
         currentY { 0.0f },
@@ -422,10 +422,10 @@ void RetroFuturaGUI::Text::calculateTextSpan()
     if(!_fontInfo)
         return;
 
-    const GlyphAtlas& _atlas { _fontInfo->_Atlasses.at(_fontIndex) };
+    const GlyphAtlas& atlas { _fontInfo->_Atlasses.at(_fontIndex) };
 
     f32
-        nativeSize { _atlas._FontSize > 0 ? static_cast<f32>(_atlas._FontSize) : 1.0f },
+        nativeSize { atlas._FontSize > 0 ? static_cast<f32>(atlas._FontSize) : 1.0f },
         scale { _glyphSize.y / nativeSize },
         maxLineWidth { 0.0f },
         totalHeight { 0.0f },

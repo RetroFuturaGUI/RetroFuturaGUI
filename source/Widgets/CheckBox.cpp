@@ -268,16 +268,16 @@ void RetroFuturaGUI::CheckBox::setCheckmarkColors()
     switch(_checkmarkColorState)
     {
         case ColorState::Enabled:
-            _checkmarkPathFill.colors = _checkmarkColorsEnabled;
+            _checkmarkPathFill._Colors = _checkmarkColorsEnabled;
         break;
         case ColorState::Clicked:
-            _checkmarkPathFill.colors = _checkmarkColorsClicked;
+            _checkmarkPathFill._Colors = _checkmarkColorsClicked;
         break;
         case ColorState::Hover:
-            _checkmarkPathFill.colors = _checkmarkColorsHover;
+            _checkmarkPathFill._Colors = _checkmarkColorsHover;
         break;
         default: //Disabled
-            _checkmarkPathFill.colors = _checkmarkColorsDisabled;
+            _checkmarkPathFill._Colors = _checkmarkColorsDisabled;
     }
             
     _checkmark->SetPathFill("CheckmarkPath", _checkmarkPathFill);

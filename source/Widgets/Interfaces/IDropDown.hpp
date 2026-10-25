@@ -165,12 +165,12 @@ namespace RetroFuturaGUI
         {
             SvgPathFill
             {
-                .fillType = FillType::SOLID,
-                .colors = { glm::vec4(1.0f) },
-                .gradientDegree = 35.0f,
-                .gradientOffset = 0.0f,
-                .gradientAnimationSpeed = 0.05f,
-                .gradientRotationSpeed = 5.0f
+                ._FillType = FillType::SOLID,
+                ._Colors = { glm::vec4(1.0f) },
+                ._GradientDegree = 35.0f,
+                ._GradientOffset = 0.0f,
+                ._GradientAnimationSpeed = 0.05f,
+                ._GradientRotationSpeed = 5.0f
             }
         };
         static const constexpr f32

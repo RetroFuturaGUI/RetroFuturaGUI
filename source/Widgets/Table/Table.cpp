@@ -1699,9 +1699,9 @@ void RetroFuturaGUI::Table::setCheckBoxColors(const ColorState state)
         _checkBoxBorder->SetColors(*border);
 
     // SetPathFill re-rasterizes the whole SVG, so only touch it when the fill actually changed
-    if(_checkmark && _checkmarkFill.colors != *checkmark)
+    if(_checkmark && _checkmarkFill._Colors != *checkmark)
     {
-        _checkmarkFill.colors = *checkmark;
+        _checkmarkFill._Colors = *checkmark;
         _checkmark->SetPathFill("CheckmarkPath", _checkmarkFill);
     }
 }

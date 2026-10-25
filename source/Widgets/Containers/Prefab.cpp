@@ -88,26 +88,26 @@ const RetroFuturaGUI::ChildWidget* RetroFuturaGUI::Prefab::findChild(std::string
         return nullptr;
     }
 
-    const ChildWidget& _child { _children[lookupIterator->second] };
+    const ChildWidget& child { _children[lookupIterator->second] };
 
     //Keyed by a 32-bit hash, so without this a collision would hand back a different child silently
-    if(_child._Widget->GetName() != name)
+    if(child._Widget->GetName() != name)
     {
-        std::println("ERROR::PREFAB::CHILD_WIDGET_HASH_COLLISION::{}::resolves to::{}", name, _child._Widget->GetName());
+        std::println("ERROR::PREFAB::CHILD_WIDGET_HASH_COLLISION::{}::resolves to::{}", name, child._Widget->GetName());
         return nullptr;
     }
 
-    return &_child;
+    return &child;
 }
 
 RetroFuturaGUI::LasagnaCell* RetroFuturaGUI::Prefab::findCell(std::string_view name) const
 {
-    const ChildWidget* _child { findChild(name) };
+    const ChildWidget* child { findChild(name) };
 
-    if(!_child || !_lasagna)
+    if(!child || !_lasagna)
         return nullptr;
 
-    return _lasagna->GetCell(TrackIndex { ._Row = _child->_Placement._Row,
-                                          ._Column = _child->_Placement._Column,
-                                          ._Layer = _child->_Placement._Layer });
+    return _lasagna->GetCell(TrackIndex { ._Row = child->_Placement._Row,
+                                          ._Column = child->_Placement._Column,
+                                          ._Layer = child->_Placement._Layer });
 }

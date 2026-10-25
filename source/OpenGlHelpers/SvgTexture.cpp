@@ -79,7 +79,7 @@ void RetroFuturaGUI::SvgTexture::releaseGPUResources()
     glDeleteTextures(1, &_baseLayerTextureId);
 
     for (PathLayer& layer : _layers)
-        glDeleteTextures(1, &layer.maskTextureId);
+        glDeleteTextures(1, &layer._MaskTextureId);
 
     glDeleteBuffers(1, &_vbo);
     glDeleteBuffers(1, &_ebo);
@@ -114,7 +114,7 @@ void RetroFuturaGUI::SvgTexture::Draw()
     glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
 
     for (PathLayer& layer : _layers)
-        if (layer.hasActiveOverride && layer.maskTextureId != 0)
+        if (layer._HasActiveOverride && layer._MaskTextureId != 0)
             drawMaskedLayer(layer);
 
     glEnable(GL_DEPTH_TEST);
@@ -132,11 +132,11 @@ void RetroFuturaGUI::SvgTexture::SetProjection(Projection* projection)
 
 void RetroFuturaGUI::SvgTexture::drawMaskedLayer(PathLayer& layer)
 {
-    if (layer.fill.colors.empty())
+    if (layer._Fill._Colors.empty())
         return;
 
     Shader* shader = nullptr;
-    switch (layer.fill.fillType)
+    switch (layer._Fill._FillType)
     {
         case FillType::LINEAR_GRADIENT:
             shader = &ShaderManager::GetSvgMaskLinearGradientShader();
@@ -158,29 +158,29 @@ void RetroFuturaGUI::SvgTexture::drawMaskedLayer(PathLayer& layer)
     shader->SetUniformMat4("uScaling", _scalingMatrix);
     shader->SetUniformMat4("uRotation", _rotationMatrix);
 
-    if (layer.fill.fillType == FillType::SOLID)
+    if (layer._Fill._FillType == FillType::SOLID)
     {
-        shader->SetUniformVec4("uColor", layer.fill.colors[0]);
+        shader->SetUniformVec4("uColor", layer._Fill._Colors[0]);
     }
     else
     {
-        layer.fill.gradientOffset += layer.fill.gradientAnimationSpeed;
-        if (layer.fill.gradientOffset > 1.0f)
-            layer.fill.gradientOffset = 0.0f;
+        layer._Fill._GradientOffset += layer._Fill._GradientAnimationSpeed;
+        if (layer._Fill._GradientOffset > 1.0f)
+            layer._Fill._GradientOffset = 0.0f;
 
-        layer.fill.gradientDegree += layer.fill.gradientRotationSpeed;
-        if (layer.fill.gradientDegree >= 360.0f)
-            layer.fill.gradientDegree = 0.0f;
+        layer._Fill._GradientDegree += layer._Fill._GradientRotationSpeed;
+        if (layer._Fill._GradientDegree >= 360.0f)
+            layer._Fill._GradientDegree = 0.0f;
 
-        shader->SetUniformVec4("uColors", &layer.fill.colors[0][0], static_cast<u32>(layer.fill.colors.size()));
-        shader->SetUniformInt("uNumColors", static_cast<i32>(layer.fill.colors.size()));
-        shader->SetUniformFloat("uDegree", layer.fill.gradientDegree);
-        shader->SetUniformFloat("uGradientOffset", layer.fill.gradientOffset);
+        shader->SetUniformVec4("uColors", &layer._Fill._Colors[0][0], static_cast<u32>(layer._Fill._Colors.size()));
+        shader->SetUniformInt("uNumColors", static_cast<i32>(layer._Fill._Colors.size()));
+        shader->SetUniformFloat("uDegree", layer._Fill._GradientDegree);
+        shader->SetUniformFloat("uGradientOffset", layer._Fill._GradientOffset);
     }
 
     shader->SetUniformInt("uMask", 1);
     glActiveTexture(GL_TEXTURE1);
-    glBindTexture(GL_TEXTURE_2D, layer.maskTextureId);
+    glBindTexture(GL_TEXTURE_2D, layer._MaskTextureId);
     glActiveTexture(GL_TEXTURE0);
 
     glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
@@ -213,7 +213,7 @@ void RetroFuturaGUI::SvgTexture::Rasterize(glm::i32vec2 targetResolution)
     rasterizeBaseLayer(targetResolution);
 
     for (PathLayer& layer : _layers)
-        if (layer.maskTextureId != 0)
+        if (layer._MaskTextureId != 0)
             materializeMask(layer, targetResolution);
 }
 
@@ -231,10 +231,10 @@ void RetroFuturaGUI::SvgTexture::SetPathFill(std::string_view name, const SvgPat
         return;
     }
 
-    layer->fill = fill;
-    layer->hasActiveOverride = true;
+    layer->_Fill = fill;
+    layer->_HasActiveOverride = true;
 
-    if (layer->maskTextureId == 0)
+    if (layer->_MaskTextureId == 0)
         materializeMask(*layer, _resolution);
 
     rasterizeBaseLayer(_resolution); //enabled alpha-blending
@@ -245,7 +245,7 @@ void RetroFuturaGUI::SvgTexture::ClearPathFill(std::string_view name)
     PathLayer* layer = findLayer(name);
     if (layer)
     {
-        layer->hasActiveOverride = false;
+        layer->_HasActiveOverride = false;
         rasterizeBaseLayer(_resolution);//enabled alpha-blending
     }
 }
@@ -301,8 +301,8 @@ void RetroFuturaGUI::SvgTexture::discoverNamedPaths()
             continue;
 
         lunasvg::Box bounds = element.getGlobalBoundingBox();
-        _layers.push_back(PathLayer{ id, element });
-        _pathInfoCache.push_back(SvgPathInfo{ id, glm::vec4(bounds.x, bounds.y, bounds.w, bounds.h) });
+        _layers.push_back(PathLayer { ._Name = id, ._Element = element });
+        _pathInfoCache.push_back(SvgPathInfo { ._Name = id, ._Bounds = glm::vec4(bounds.x, bounds.y, bounds.w, bounds.h) });
     }
 }
 
@@ -329,12 +329,12 @@ void RetroFuturaGUI::SvgTexture::rasterizeBaseLayer(glm::i32vec2 targetResolutio
 
     for (PathLayer& layer : _layers) //apply alpha-blending
     {
-        if (!layer.hasActiveOverride)
+        if (!layer._HasActiveOverride)
             continue;
 
-        hiddenOverrides.push_back({ layer.element,
-            layer.element.hasAttribute("display") ? layer.element.getAttribute("display") : std::string() });
-        layer.element.setAttribute("display", "none");
+        hiddenOverrides.push_back({ layer._Element,
+            layer._Element.hasAttribute("display") ? layer._Element.getAttribute("display") : std::string() });
+        layer._Element.setAttribute("display", "none");
     }
 
     bitmap.clear(0x00000000);
@@ -374,7 +374,7 @@ void RetroFuturaGUI::SvgTexture::materializeMask(PathLayer& layer, glm::i32vec2 
     // so isolating the element and rendering it through the (already-correct) document path
     // is what keeps a mask aligned with the base layer for any SVG where viewBox != width/height.
     std::vector<lunasvg::Element> ancestorChain;
-    for (lunasvg::Element current = layer.element; !current.isNull(); current = current.parentElement())
+    for (lunasvg::Element current = layer._Element; !current.isNull(); current = current.parentElement())
         ancestorChain.push_back(current);
 
     std::vector<std::pair<lunasvg::Element, std::string>> hiddenSiblings;
@@ -437,10 +437,10 @@ void RetroFuturaGUI::SvgTexture::uploadBaseLayer(const std::vector<u8>& rgba, gl
 
 void RetroFuturaGUI::SvgTexture::uploadMask(PathLayer& layer, const std::vector<u8>& alphaOnly, glm::i32vec2 resolution)
 {
-    if (layer.maskTextureId == 0)
-        glGenTextures(1, &layer.maskTextureId);
+    if (layer._MaskTextureId == 0)
+        glGenTextures(1, &layer._MaskTextureId);
 
-    glBindTexture(GL_TEXTURE_2D, layer.maskTextureId);
+    glBindTexture(GL_TEXTURE_2D, layer._MaskTextureId);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
@@ -482,7 +482,7 @@ void RetroFuturaGUI::SvgTexture::setupQuad()
 RetroFuturaGUI::SvgTexture::PathLayer* RetroFuturaGUI::SvgTexture::findLayer(std::string_view name)
 {
     for (PathLayer& layer : _layers)
-        if (layer.name == name)
+        if (layer._Name == name)
             return &layer;
 
     return nullptr;

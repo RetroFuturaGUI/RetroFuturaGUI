@@ -19,16 +19,16 @@ namespace RetroFuturaGUI
     /// @note ma_node_base must stay the first member - miniaudio casts between the two.
     struct AudioMeterNode
     {
-        ma_node_base base {};
-        std::atomic<f32> levels[MaxMeterChannels] {};
-        u32 channels { 0 };
+        ma_node_base _Base {};
+        std::atomic<f32> _Levels[MaxMeterChannels] {};
+        u32 _Channels { 0 };
 
         /// @brief The mono mix of everything that passed, for the spectrum. Written on the audio thread, read by
         /// GetFrequencyBands - miniaudio's ring buffer is lock-free for exactly one writer and one reader.
-        ma_pcm_rb samples {};
+        ma_pcm_rb _Samples {};
 
-        /// @brief Whether samples is initialized. Set before the node joins the graph and never changed while it is in it.
-        bool hasSamples { false };
+        /// @brief Whether _Samples is initialized. Set before the node joins the graph and never changed while it is in it.
+        bool _HasSamples { false };
     };
 
     /// @brief Plays audio files through miniaudio's high-level engine, which owns the

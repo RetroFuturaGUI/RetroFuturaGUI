@@ -45,11 +45,11 @@ namespace RetroFuturaGUI
     /// @brief Describes a section of a Border-mode rectangle's outline to skip drawing.
     struct BorderGap
     {
-        BorderEdge edge { BorderEdge::Top };
-        f32 offset { 0.0f };             // width of each solid segment
-        f32 length { 0.0f };             // width of each gap segment
-        bool anchorFarCorner { false };  // false: measure from the top/left corner of the edge. true: from the bottom/right corner
-        i32 repeat { 1 };                /* 0: no gap at all (solid border)
+        BorderEdge _Edge { BorderEdge::Top };
+        f32 _Offset { 0.0f };             // width of each solid segment
+        f32 _Length { 0.0f };             // width of each gap segment
+        bool _AnchorFarCorner { false };  // false: measure from the top/left corner of the edge. true: from the bottom/right corner
+        i32 _Repeat { 1 };                /* 0: no gap at all (solid border)
                                             1: a single gap
                                             >1: amount of gaps in a repeating pattern (dashed/dotted lines)
                                             <0: the same repeating pattern, but tiled for the whole edge*/

@@ -347,12 +347,12 @@ void RetroFuturaGUI::WindowTab::SetCloseIconColor(const glm::vec4& color)
 
     _closeIcon->SetPathFill("CloseIcon", SvgPathFill
     {
-        .fillType = FillType::SOLID,
-        .colors = { _closeIconColor },
-        .gradientDegree = 0.0f,
-        .gradientOffset = 0.0f,
-        .gradientAnimationSpeed = 0.0f,
-        .gradientRotationSpeed = 0.0f
+        ._FillType = FillType::SOLID,
+        ._Colors = { _closeIconColor },
+        ._GradientDegree = 0.0f,
+        ._GradientOffset = 0.0f,
+        ._GradientAnimationSpeed = 0.0f,
+        ._GradientRotationSpeed = 0.0f
     });
 }
 

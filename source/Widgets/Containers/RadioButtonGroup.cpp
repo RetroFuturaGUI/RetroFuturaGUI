@@ -135,17 +135,17 @@ void RetroFuturaGUI::RadioButtonGroup::updateLabelLayout()
 
     // single top border's edge gap, sized to fit the label (+ padding on both sides)
     BorderGap textGap {
-        .edge = BorderEdge::Top,
-        .offset = _textLeftPadding,
-        .length = textWidth + textPadding * 2.0f,
-        .anchorFarCorner = false,
-        .repeat = 1
+        ._Edge = BorderEdge::Top,
+        ._Offset = _textLeftPadding,
+        ._Length = textWidth + textPadding * 2.0f,
+        ._AnchorFarCorner = false,
+        ._Repeat = 1
     };
 
     IBorder::SetBorderGaps(std::span<BorderGap>(&textGap, 1));
     _text->SetTextAlignment(TextAlignment::Center);
     _text->SetPosition(glm::vec3(
-        newPos.x - newSize.x * 0.5f + _textLeftPadding + textGap.length * 0.5f,
+        newPos.x - newSize.x * 0.5f + _textLeftPadding + textGap._Length * 0.5f,
         newPos.y + newSize.y * 0.5f,
         newPos.z + 0.01f)
     );
@@ -156,9 +156,9 @@ void RetroFuturaGUI::RadioButtonGroup::SetBorderGaps(std::span<BorderGap> gaps)
     IBorder::SetBorderGaps(gaps);
 
     for(const BorderGap& gap : gaps)
-        if(gap.edge == BorderEdge::Left)
+        if(gap._Edge == BorderEdge::Left)
         {
-            _textLeftPadding = gap.offset;
+            _textLeftPadding = gap._Offset;
             return;
         }
 }

@@ -5,78 +5,78 @@
 RetroFuturaGUI::IPopup::IPopup(std::string_view name, const i32 width, const i32 height)
 : _openerContext(glfwGetCurrentContext())
 {
-	_window = std::unique_ptr<Window>(new Window(name, width, height, Window::WindowRole::Popup));
+    _window = std::unique_ptr<Window>(new Window(name, width, height, Window::WindowRole::Popup));
 }
 
 RetroFuturaGUI::IPopup::~IPopup()
 {
-	if(!_window)
-		return;
+    if(!_window)
+        return;
 
-	GLFWwindow* glfwWindow { _window->GetGlfwWindow() };
+    GLFWwindow* glfwWindow { _window->GetGlfwWindow() };
 
-	if(!glfwWindow)
-		return;
+    if(!glfwWindow)
+        return;
 
-	glfwMakeContextCurrent(glfwWindow);
+    glfwMakeContextCurrent(glfwWindow);
 
-	if(_isOnStack)
-		return; //the window holding the stack makes its own context current once this has gone
+    if(_isOnStack)
+        return; //the window holding the stack makes its own context current once this has gone
 
-	//Never opened (a refused Open() for instance) so nothing else would destroying the window which would leave no context current,
-	//and the one current when the popup was made comes back
-	_scenes.clear();
-	_window.reset();
-	glfwMakeContextCurrent(_openerContext);
+    //Never opened (a refused Open() for instance) so nothing else would destroying the window which would leave no context current,
+    //and the one current when the popup was made comes back
+    _scenes.clear();
+    _window.reset();
+    glfwMakeContextCurrent(_openerContext);
 }
 
 RetroFuturaGUI::Window* RetroFuturaGUI::IPopup::GetWindow() const
 {
-	return _window.get();
+    return _window.get();
 }
 
 void RetroFuturaGUI::IPopup::AddScene(std::unique_ptr<ISceneHost> host)
 {
-	if(!host)
-		return;
+    if(!host)
+        return;
 
-	if(!_window)
-		return;
+    if(!_window)
+        return;
 
-	Scene* scene { host->GetScene() };
+    Scene* scene { host->GetScene() };
 
-	if(!scene)
-		return;
+    if(!scene)
+        return;
 
-	_window->AddScene(scene);
-	_scenes.push_back(std::move(host));
+    _window->AddScene(scene);
+    _scenes.push_back(std::move(host));
 }
 
 bool RetroFuturaGUI::IPopup::requestClose()
 {
-	if(!_window)
-		return false;
+    if(!_window)
+        return false;
 
-	GLFWwindow* glfwWindow { _window->GetGlfwWindow() };
+    GLFWwindow* glfwWindow { _window->GetGlfwWindow() };
 
-	if(!glfwWindow)
-		return false;
+    if(!glfwWindow)
+        return false;
 
-	if(_window->IsBlockedByPopup())
-		return false;
+    if(_window->IsBlockedByPopup())
+        return false;
 
-	_isCloseRequested = true;
-	glfwSetWindowShouldClose(glfwWindow, GLFW_TRUE);
-	return true;
+    _isCloseRequested = true;
+    glfwSetWindowShouldClose(glfwWindow, GLFW_TRUE);
+    return true;
 }
 
 bool RetroFuturaGUI::IPopup::allowsSystemClose()
 {
-	return true;
+    return true;
 }
 
 void RetroFuturaGUI::IPopup::restoreOpenerContext() const
 {
-	//restore context to the state when this window was opening
-	glfwMakeContextCurrent(_openerContext);
+    //restore context to the state when this window was opening
+    glfwMakeContextCurrent(_openerContext);
 }

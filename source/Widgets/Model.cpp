@@ -146,7 +146,7 @@ std::vector<RetroFuturaGUI::MeshTexture> RetroFuturaGUI::Model::loadMaterialText
             texture = _loadedTextures.back().get();
         }
 
-        textures.push_back(MeshTexture{ texture, std::string(typeName), fullPath });
+        textures.push_back(MeshTexture { ._Texture = texture, ._Type = std::string(typeName), ._Path = fullPath });
     }
 
     return textures;

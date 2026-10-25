@@ -80,8 +80,8 @@ namespace RetroFuturaGUI
     // non-owning view used purely to pick which texture to bind when drawing so a video can be a material as well as an image
     struct MeshTexture
     {
-        ITexture* texture { nullptr };
-        std::string 
+        ITexture* _Texture { nullptr };
+        std::string
             _Type,
             _Path;
     };

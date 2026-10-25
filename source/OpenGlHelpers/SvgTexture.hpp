@@ -14,19 +14,19 @@ namespace RetroFuturaGUI
     /// @brief Runtime color-effect override for a single named SVG path.
     struct SvgPathFill
     {
-        FillType fillType { FillType::SOLID };
-        std::vector<glm::vec4> colors;
-        f32 gradientDegree { 0.0f };
-        f32 gradientOffset { 0.0f };
-        f32 gradientAnimationSpeed { 0.0f };
-        f32 gradientRotationSpeed { 0.0f };
+        FillType _FillType { FillType::SOLID };
+        std::vector<glm::vec4> _Colors;
+        f32 _GradientDegree { 0.0f };
+        f32 _GradientOffset { 0.0f };
+        f32 _GradientAnimationSpeed { 0.0f };
+        f32 _GradientRotationSpeed { 0.0f };
     };
 
     /// @brief Identity and placement of a named path/shape discovered inside an SVG document.
     struct SvgPathInfo
     {
-        std::string name;
-        glm::vec4 bounds; // x, y, w, h in the SVG's intrinsic user-space units
+        std::string _Name;
+        glm::vec4 _Bounds; // x, y, w, h in the SVG's intrinsic user-space units
     };
 
     /// @brief Renders an SVG icon whose individually named (id-bearing) paths can be
@@ -91,11 +91,11 @@ namespace RetroFuturaGUI
     private:
         struct PathLayer
         {
-            std::string name;
-            lunasvg::Element element;
-            u32 maskTextureId { 0 };
-            bool hasActiveOverride { false };
-            SvgPathFill fill;
+            std::string _Name;
+            lunasvg::Element _Element;
+            u32 _MaskTextureId { 0 };
+            bool _HasActiveOverride { false };
+            SvgPathFill _Fill;
         };
 
         void loadDocument(std::string_view path);

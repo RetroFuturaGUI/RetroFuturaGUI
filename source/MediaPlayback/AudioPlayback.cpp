@@ -20,7 +20,7 @@ void RetroFuturaGUI::AudioPlayback::writeSpectrumSamples(RetroFuturaGUI::AudioMe
         void* buffer { nullptr };
 
         // Hands out the free part up to the ring's end at most - two pieces when the write wraps around - and nothing when full
-        if(ma_pcm_rb_acquire_write(&meter.samples, &acquiredFrameCount, &buffer) != MA_SUCCESS)
+        if(ma_pcm_rb_acquire_write(&meter._Samples, &acquiredFrameCount, &buffer) != MA_SUCCESS)
             return;
 
         if(0 == acquiredFrameCount)
@@ -39,18 +39,18 @@ void RetroFuturaGUI::AudioPlayback::writeSpectrumSamples(RetroFuturaGUI::AudioMe
             mono[frameIndex] = sum * channelWeight;
         }
 
-        ma_pcm_rb_commit_write(&meter.samples, acquiredFrameCount);
+        ma_pcm_rb_commit_write(&meter._Samples, acquiredFrameCount);
         writtenFrameCount += acquiredFrameCount;
     }
 }
 
 void RetroFuturaGUI::AudioPlayback::uninitSpectrumSamples(RetroFuturaGUI::AudioMeterNode& meter)
 {
-    if(!meter.hasSamples)
+    if(!meter._HasSamples)
         return;
 
-    ma_pcm_rb_uninit(&meter.samples);
-    meter.hasSamples = false;
+    ma_pcm_rb_uninit(&meter._Samples);
+    meter._HasSamples = false;
 }
 
 void RetroFuturaGUI::AudioPlayback::meterProcess(ma_node* node, const float** framesin, ma_uint32* framecountin, float** framesout, ma_uint32* framecountout)
@@ -77,7 +77,7 @@ void RetroFuturaGUI::AudioPlayback::meterProcess(ma_node* node, const float** fr
     }
 
     const u32 framecount = *framecountin < *framecountout ? *framecountin : *framecountout;
-    const u32 channels = meter->channels;
+    const u32 channels = meter->_Channels;
     const f32* input = framesin[0];
 
     for(u32 ch = 0; ch < channels; ++ch)
@@ -91,13 +91,13 @@ void RetroFuturaGUI::AudioPlayback::meterProcess(ma_node* node, const float** fr
         }
 
         const f32 rms = framecount > 0 ? std::sqrt(sumofsquares / static_cast<f32>(framecount)) : 0.0f;
-        const f32 previous = meter->levels[ch].load(std::memory_order_relaxed);
+        const f32 previous = meter->_Levels[ch].load(std::memory_order_relaxed);
         const f32 smoothed = rms > previous ? rms : previous * _meterDecay;
 
-        meter->levels[ch].store(smoothed, std::memory_order_relaxed);
+        meter->_Levels[ch].store(smoothed, std::memory_order_relaxed);
     }
 
-    if(meter->hasSamples)
+    if(meter->_HasSamples)
         writeSpectrumSamples(*meter, input, framecount, channels);
 
     std::memcpy(framesout[0], input, static_cast<size_t>(framecount) * channels * sizeof(f32));
@@ -132,29 +132,29 @@ bool RetroFuturaGUI::AudioPlayback::initMeter()
     if(channels > MaxMeterChannels)
         channels = MaxMeterChannels;
 
-    _meter.channels = channels;
+    _meter._Channels = channels;
 
     for(u32 ch = 0; ch < MaxMeterChannels; ++ch)
-        _meter.levels[ch].store(0.0f, std::memory_order_relaxed);
+        _meter._Levels[ch].store(0.0f, std::memory_order_relaxed);
 
     // Optional as well: without it the spectrum stays empty and the levels still work. Made before the node
     // joins the graph, so the audio thread never sees it half-built.
-    _meter.hasSamples = ma_pcm_rb_init(ma_format_f32, 1, _spectrumBufferFrameCount, nullptr, nullptr, &_meter.samples) == MA_SUCCESS;
+    _meter._HasSamples = ma_pcm_rb_init(ma_format_f32, 1, _spectrumBufferFrameCount, nullptr, nullptr, &_meter._Samples) == MA_SUCCESS;
 
     ma_node_config config = ma_node_config_init();
     config.vtable = &metervtable;
     config.pInputChannels = &channels;
     config.pOutputChannels = &channels;
 
-    if(ma_node_init(ma_engine_get_node_graph(&_engine), &config, nullptr, &_meter.base) != MA_SUCCESS)
+    if(ma_node_init(ma_engine_get_node_graph(&_engine), &config, nullptr, &_meter._Base) != MA_SUCCESS)
     {
         uninitSpectrumSamples(_meter);
         return false;
     }
 
-    if(ma_node_attach_output_bus(&_meter.base, 0, ma_engine_get_endpoint(&_engine), 0) != MA_SUCCESS)
+    if(ma_node_attach_output_bus(&_meter._Base, 0, ma_engine_get_endpoint(&_engine), 0) != MA_SUCCESS)
     {
-        ma_node_uninit(&_meter.base, nullptr);
+        ma_node_uninit(&_meter._Base, nullptr);
         uninitSpectrumSamples(_meter);
         return false;
     }
@@ -168,7 +168,7 @@ void RetroFuturaGUI::AudioPlayback::uninitMeter()
     if(!_meterReady)
         return;
 
-    ma_node_uninit(&_meter.base, nullptr);
+    ma_node_uninit(&_meter._Base, nullptr);
 
     // After the node: ma_node_uninit detaches it and waits for the audio thread to let go, so nothing writes anymore
     uninitSpectrumSamples(_meter);
@@ -274,7 +274,7 @@ bool RetroFuturaGUI::AudioPlayback::OpenAudioFile(std::string_view file)
 
     _soundLoaded = true;
 
-    if(_meterReady && ma_node_attach_output_bus(&_sound, 0, &_meter.base, 0) != MA_SUCCESS)
+    if(_meterReady && ma_node_attach_output_bus(&_sound, 0, &_meter._Base, 0) != MA_SUCCESS)
     {
         unloadSound();
         return false;
@@ -408,7 +408,7 @@ ma_node* RetroFuturaGUI::AudioPlayback::GetOutputNode()
         return nullptr;
 
     if(_meterReady)
-        return &_meter.base;
+        return &_meter._Base;
 
     return ma_engine_get_endpoint(&_engine);
 }
@@ -418,10 +418,10 @@ f32 RetroFuturaGUI::AudioPlayback::GetChannelVolume(const u32 channel) const
     if(!_meterReady)
         return 0.0f;
 
-    if(channel >= _meter.channels)
+    if(channel >= _meter._Channels)
         return 0.0f;
 
-    return _meter.levels[channel].load(std::memory_order_relaxed);
+    return _meter._Levels[channel].load(std::memory_order_relaxed);
 }
 
 u32 RetroFuturaGUI::AudioPlayback::GetChannelCount() const
@@ -429,7 +429,7 @@ u32 RetroFuturaGUI::AudioPlayback::GetChannelCount() const
     if(!_meterReady)
         return 0;
 
-    return _meter.channels;
+    return _meter._Channels;
 }
 
 void RetroFuturaGUI::AudioPlayback::UpdateFrequencyBands()
@@ -437,24 +437,24 @@ void RetroFuturaGUI::AudioPlayback::UpdateFrequencyBands()
     if(!_meterReady)
         return;
 
-    if(!_meter.hasSamples)
+    if(!_meter._HasSamples)
         return;
 
-    ma_uint32 remainingFrameCount { ma_pcm_rb_available_read(&_meter.samples) };
+    ma_uint32 remainingFrameCount { ma_pcm_rb_available_read(&_meter._Samples) };
 
     while(0 < remainingFrameCount)
     {
         ma_uint32 frameCount { remainingFrameCount };
         void* frames { nullptr };
 
-        if(ma_pcm_rb_acquire_read(&_meter.samples, &frameCount, &frames) != MA_SUCCESS)
+        if(ma_pcm_rb_acquire_read(&_meter._Samples, &frameCount, &frames) != MA_SUCCESS)
             break;
 
         if(0 == frameCount)
             break;
 
         _spectrum.AddSamples(std::span<const f32>(static_cast<const f32*>(frames), frameCount));
-        ma_pcm_rb_commit_read(&_meter.samples, frameCount);
+        ma_pcm_rb_commit_read(&_meter._Samples, frameCount);
         remainingFrameCount -= frameCount;
     }
 

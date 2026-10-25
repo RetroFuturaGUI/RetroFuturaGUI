@@ -44,11 +44,11 @@ std::unique_ptr<RetroFuturaGUI::Scene> RetroFuturaGUI::SceneLoader::CreateScene(
 
     //The entry keeps its own copy of the name so a hash collision can be detected on lookup
     const std::string sceneName { name };
-    std::unique_ptr<Scene> _created { std::make_unique<Scene>(sceneName, parentWindow) };
+    std::unique_ptr<Scene> created { std::make_unique<Scene>(sceneName, parentWindow) };
 
     _scenes.push_back(SceneEntry
     {
-        ._Scene = _created.get(),
+        ._Scene = created.get(),
         ._Name = sceneName,
         ._ID = id,
         ._Window = parentWindow,
@@ -57,7 +57,7 @@ std::unique_ptr<RetroFuturaGUI::Scene> RetroFuturaGUI::SceneLoader::CreateScene(
     });
 
     //Ownership goes to the caller. the entry above only borrows
-    return _created;
+    return created;
 }
 
 bool RetroFuturaGUI::SceneLoader::CloseScene(std::string_view name)

@@ -226,9 +226,9 @@ bool RetroFuturaGUI::ExtendedComboBox::isPointInsideItemDropDown(const glm::vec2
         ++visibleIndex;
 
         //only a row that is a drop down itself can have a list of its own standing outside this panel
-        const IDropDown* _dropDownItem { dynamic_cast<const IDropDown*>(item.get()) };
+        const IDropDown* dropDownItem { dynamic_cast<const IDropDown*>(item.get()) };
 
-        if(_dropDownItem && _dropDownItem->IsPointInsideOpenDropDown(point))
+        if(dropDownItem && dropDownItem->IsPointInsideOpenDropDown(point))
             return true;
     }
 

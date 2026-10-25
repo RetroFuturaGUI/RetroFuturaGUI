@@ -771,12 +771,12 @@ namespace RetroFuturaGUI
         static constexpr f32 _widgetZOffset { 0.05f };
         SvgPathFill _checkmarkFill
         {
-            .fillType =  FillType::SOLID,
-            .colors {{ 1.0f, 1.0f, 1.0f, 1.0f }},
-            .gradientDegree = 0.0f,
-            .gradientOffset = 0.0f,
-            .gradientAnimationSpeed = 0.0f,
-            .gradientRotationSpeed = 0.0f
+            ._FillType =  FillType::SOLID,
+            ._Colors {{ 1.0f, 1.0f, 1.0f, 1.0f }},
+            ._GradientDegree = 0.0f,
+            ._GradientOffset = 0.0f,
+            ._GradientAnimationSpeed = 0.0f,
+            ._GradientRotationSpeed = 0.0f
         };
 
     // Logic

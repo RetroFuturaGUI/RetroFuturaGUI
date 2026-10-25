@@ -217,16 +217,16 @@ void RetroFuturaGUI::IDropDown::setDropDownArrowColors()
     switch(_dropDownArrowColorState)
     {
         case ColorState::Enabled:
-            _dropDownArrowPathFill.colors = _dropDownArrowColorsEnabled;
+            _dropDownArrowPathFill._Colors = _dropDownArrowColorsEnabled;
         break;
         case ColorState::Clicked:
-            _dropDownArrowPathFill.colors = _dropDownArrowColorsClicked;
+            _dropDownArrowPathFill._Colors = _dropDownArrowColorsClicked;
         break;
         case ColorState::Hover:
-            _dropDownArrowPathFill.colors = _dropDownArrowColorsHover;
+            _dropDownArrowPathFill._Colors = _dropDownArrowColorsHover;
         break;
         default: //Disabled
-            _dropDownArrowPathFill.colors = _dropDownArrowColorsDisabled;
+            _dropDownArrowPathFill._Colors = _dropDownArrowColorsDisabled;
     }
     
     if(_dropDownArrow)
