@@ -211,7 +211,6 @@ namespace RetroFuturaGUI
         void EnableGraph(const bool value);
 
         /// @brief Sets whether the graph is drawn as a solid fill (Bar) or as a wave (Wave).
-        /// @note GraphMode::Wave currently renders identically to GraphMode::Bar — wave geometry isn't implemented yet.
         void SetGraphMode(const GraphMode mode);
 
         void SetGraphColors(std::span<glm::vec4> colors, const ColorState state);
