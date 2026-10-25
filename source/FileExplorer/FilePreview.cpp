@@ -10,13 +10,13 @@
 #include <array>
 #include <format>
 
-RetroFuturaGUI::FileExplorer::FilePreview::FilePreview(ViewHost& host, Lasagna& grid, const ViewCell& cell, const glm::vec2& windowSize, const ViewFont& font, const FileExplorerFlags flags)
+RetroFuturaGUI::FileExplorer::FilePreview::FilePreview(ViewHost& host, Lasagna& lasagna, const ViewCell& cell, const glm::vec2& windowSize, const ViewFont& font, const FileExplorerFlags flags)
     : _host(host), _font(font), _flags(flags)
 {
     //The pane fills its cell, and its own cells are measured from that
     const glm::vec3 fixedSize { cellSize(_viewAxis, windowSize, cell) };
     const glm::vec2 paneSize { fixedSize.x + 2.0f * _margin, fixedSize.y + 2.0f * _margin };
-    _pane = host.Attach<Lasagna>("PreviewPane", grid, cell, _axis);
+    _pane = host.Attach<Lasagna>("PreviewPane", lasagna, cell, _axis);
 
     if(!_pane)
         return;

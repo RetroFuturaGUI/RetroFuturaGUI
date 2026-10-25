@@ -35,9 +35,9 @@ namespace RetroFuturaGUI
             Other   //a file without a picture: details only
         };
 
-        /// @brief Builds the pane into a cell of the explorer's grid, the image's or the media's kinds only when their flags
+        /// @brief Builds the pane into a cell of the explorer's Lasagna, the image's or the media's kinds only when their flags
         ///        are set.
-        FilePreview(ViewHost& host, Lasagna& grid, const ViewCell& cell, const glm::vec2& windowSize, const ViewFont& font, const FileExplorerFlags flags);
+        FilePreview(ViewHost& host, Lasagna& lasagna, const ViewCell& cell, const glm::vec2& windowSize, const ViewFont& font, const FileExplorerFlags flags);
         FilePreview() = delete;
         FilePreview(const FilePreview&) = delete;
         FilePreview(FilePreview&&) = delete;

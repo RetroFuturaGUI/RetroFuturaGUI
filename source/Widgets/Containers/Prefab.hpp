@@ -36,7 +36,7 @@ namespace RetroFuturaGUI
     {
     public:
         /// @brief Constructs a prefab and the Lasagna its children sit in.
-        /// @param axisDefinition The grid to build. Falls back to a single full-size cell if invalid
+        /// @param axisDefinition The rows, columns and layers of the prefab's Lasagna. Falls back to a single full-size cell if invalid
         Prefab(std::string_view name, Projection* projection, IHierarchyNode* parentWidget, const WidgetTypeID parentWidgetTypeID, GLFWwindow* parentWindow, const AxisDefinition& axisDefinition = SingleCellAxis);
         Prefab() = delete;
         Prefab(const Prefab&) = delete;
@@ -63,7 +63,7 @@ namespace RetroFuturaGUI
 
         /// @brief Constructs a widget of type T, takes ownership of it and places it in the prefab's Lasagna
         /// @param args Extra constructor arguments
-        /// @return The attached widget, or nullptr if the prefab has no grid yet, the name is already taken, or the target cell is out of range or occupied
+        /// @return The attached widget, or nullptr if the prefab has no Lasagna yet, the name is already taken, or the target cell is out of range or occupied
         template<WidgetTypes T, typename... Args>
         T* AttachWidget(std::string_view name, const CellPlacement& placement, Args&&... args)
         {
@@ -103,7 +103,7 @@ namespace RetroFuturaGUI
         /// @brief Looks a child up by name, verifying the stored name so a hash collision cannot silently return the wrong one.
         const ChildWidget* findChild(std::string_view name) const;
 
-        /// @brief The child's current cell. Fetched on demand rather than stored, so it stays correct across grid rebuilds.
+        /// @brief The child's current cell. Fetched on demand rather than stored, so it stays correct when the Lasagna's cells are rebuilt.
         LasagnaCell* findCell(std::string_view name) const;
 
         std::vector<ChildWidget> _children {};

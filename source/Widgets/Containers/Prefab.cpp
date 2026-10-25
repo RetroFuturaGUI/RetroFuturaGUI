@@ -16,13 +16,13 @@ RetroFuturaGUI::Prefab::Prefab(std::string_view name, Projection* projection, IH
     if(!axisDefinitionIsValid)
         std::println("ERROR::PREFAB::INVALID_AXIS_DEFINITION::{}::falling back to a single cell", name);
 
-    //Named after the prefab so grids stay tellable apart in debug output
+    //Named after the prefab so their Lasagnas stay tellable apart in debug output
     const std::string lasagnaName { std::string(name) + "_Lasagna" };
     _lasagna = std::make_unique<Lasagna>(lasagnaName, projection, this, WidgetTypeID::Prefab, parentWindow,
                                          axisDefinitionIsValid ? axisDefinition : SingleCellAxis);
 
     //Lasagna sizes itself to the whole projection in its constructor. Adopt that so GetSize()/GetPosition()
-    //on the prefab report what it actually draws, until a parent grid places it.
+    //on the prefab report what it actually draws, until a parent Lasagna places it.
     _size = _lasagna->GetSize();
     _position = _lasagna->GetPosition();
 }

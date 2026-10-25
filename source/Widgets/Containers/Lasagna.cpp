@@ -119,11 +119,11 @@ bool RetroFuturaGUI::Lasagna::AttachWidget(const u32 row, const u32 col, const u
 
     updateSpanSize(origin, row, col, layer);
 
-    const glm::vec3 gridCorner { gridOrigin() };
+    const glm::vec3 topLeft { topLeftCorner() };
 
-    origin._Widget->SetPosition(glm::vec3(gridCorner.x + origin._PositionPixels.x + origin._SizePixels.x * 0.5f,
-                                          gridCorner.y - origin._PositionPixels.y - origin._SizePixels.y * 0.5f,
-                                          gridCorner.z + origin._PositionPixels.z + origin._SizePixels.z * 0.5f
+    origin._Widget->SetPosition(glm::vec3(topLeft.x + origin._PositionPixels.x + origin._SizePixels.x * 0.5f,
+                                          topLeft.y - origin._PositionPixels.y - origin._SizePixels.y * 0.5f,
+                                          topLeft.z + origin._PositionPixels.z + origin._SizePixels.z * 0.5f
                                         ));
     resizeWidget(origin);
 
@@ -193,9 +193,9 @@ void RetroFuturaGUI::Lasagna::SetPosition(const glm::vec3& position)
     moveWidgets();
 }
 
-glm::vec3 RetroFuturaGUI::Lasagna::gridOrigin() const
+glm::vec3 RetroFuturaGUI::Lasagna::topLeftCorner() const
 {
-    // _position is the grid's center, as it is for every other widget; cells run rightward and downward from the top-left
+    // _position is the Lasagna's center, as it is for every other widget; cells run rightward and downward from the top-left
     return glm::vec3(_position.x - _size.x * 0.5f, _position.y + _size.y * 0.5f, _position.z);
 }
 
@@ -204,9 +204,9 @@ void RetroFuturaGUI::Lasagna::drawDebugLines(const LasagnaCell& cell)
     if(!_debugBorder)
         return;
 
-    const glm::vec3 gridCorner { gridOrigin() };
+    const glm::vec3 topLeft { topLeftCorner() };
 
-    _debugBorder->SetPosition(glm::vec3(gridCorner.x + cell._PositionPixels.x + cell._SizePixels.x * 0.5f, gridCorner.y - (cell._PositionPixels.y + cell._SizePixels.y * 0.5f), gridCorner.z + cell._PositionPixels.z));
+    _debugBorder->SetPosition(glm::vec3(topLeft.x + cell._PositionPixels.x + cell._SizePixels.x * 0.5f, topLeft.y - (cell._PositionPixels.y + cell._SizePixels.y * 0.5f), topLeft.z + cell._PositionPixels.z));
     _debugBorder->SetSize(glm::vec2(cell._SizePixels.x, cell._SizePixels.y));
     _debugBorder->Draw();
 }
@@ -326,7 +326,7 @@ void RetroFuturaGUI::Lasagna::resizeAllWidgets()
 
 void RetroFuturaGUI::Lasagna::moveWidgets()
 {
-    const glm::vec3 gridCorner { gridOrigin() };
+    const glm::vec3 topLeft { topLeftCorner() };
 
     for(auto& row : _lasagna)
         for(auto& column : row)
@@ -335,9 +335,9 @@ void RetroFuturaGUI::Lasagna::moveWidgets()
                 if(!cell._Widget)
                     continue;
 
-                cell._Widget->SetPosition(glm::vec3(gridCorner.x + cell._PositionPixels.x + cell._SizePixels.x * 0.5f,
-                                                    gridCorner.y - cell._PositionPixels.y - cell._SizePixels.y * 0.5f,
-                                                    gridCorner.z + cell._PositionPixels.z + cell._SizePixels.z * 0.5f
+                cell._Widget->SetPosition(glm::vec3(topLeft.x + cell._PositionPixels.x + cell._SizePixels.x * 0.5f,
+                                                    topLeft.y - cell._PositionPixels.y - cell._SizePixels.y * 0.5f,
+                                                    topLeft.z + cell._PositionPixels.z + cell._SizePixels.z * 0.5f
                                                 ));
             }
 }

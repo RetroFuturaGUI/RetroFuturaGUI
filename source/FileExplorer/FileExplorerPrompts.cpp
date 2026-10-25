@@ -19,9 +19,9 @@ RetroFuturaGUI::FileExplorer::NamePrompt::NamePrompt(std::string_view title, std
 
     styleWindow(*window, title);
     std::unique_ptr<ViewHost> host { std::make_unique<ViewHost>(std::format("FileExplorerPromptScene{}", number), window, _axis) };
-    Lasagna* grid { host->GetGrid() };
+    Lasagna* lasagna { host->GetLasagna() };
 
-    if(!grid)
+    if(!lasagna)
         return;
 
     Scene* scene { host->GetScene() };
@@ -36,12 +36,12 @@ RetroFuturaGUI::FileExplorer::NamePrompt::NamePrompt(std::string_view title, std
         okCell { ._Row = 3, ._Column = 4, ._ColumnSpan = 4, ._SizingMode = SizingMode::FIXED, ._Layer = 0 },
         cancelCell { ._Row = 3, ._Column = 8, ._ColumnSpan = 4, ._SizingMode = SizingMode::FIXED, ._Layer = 0 };
 
-    MenuBar* bar { attachBar(*host, *grid, *window, title, 12, _axis._RowDefinition[0] * windowSize.y, windowSize, font) };
-    Label* messageLabel { host->Attach<Label>("Message", *grid, messageCell) };
-    _name = host->Attach<TextBox>("Name", *grid, nameCell);
+    MenuBar* bar { attachBar(*host, *lasagna, *window, title, 12, _axis._RowDefinition[0] * windowSize.y, windowSize, font) };
+    Label* messageLabel { host->Attach<Label>("Message", *lasagna, messageCell) };
+    _name = host->Attach<TextBox>("Name", *lasagna, nameCell);
     Button
-        * ok { host->Attach<Button>("Ok", *grid, okCell) },
-        * cancel { host->Attach<Button>("Cancel", *grid, cancelCell) };
+        * ok { host->Attach<Button>("Ok", *lasagna, okCell) },
+        * cancel { host->Attach<Button>("Cancel", *lasagna, cancelCell) };
 
     Button* close { bar ? bar->GetWidget<Button>(_barCloseIndex) : nullptr };
 
@@ -100,9 +100,9 @@ RetroFuturaGUI::FileExplorer::ConfirmPrompt::ConfirmPrompt(std::string_view titl
 
     styleWindow(*window, title);
     std::unique_ptr<ViewHost> host { std::make_unique<ViewHost>(std::format("FileExplorerPromptScene{}", number), window, _axis) };
-    Lasagna* grid { host->GetGrid() };
+    Lasagna* lasagna { host->GetLasagna() };
 
-    if(!grid)
+    if(!lasagna)
         return;
 
     Scene* scene { host->GetScene() };
@@ -117,13 +117,13 @@ RetroFuturaGUI::FileExplorer::ConfirmPrompt::ConfirmPrompt(std::string_view titl
         confirmCell { ._Row = 3, ._Column = 4, ._ColumnSpan = 4, ._SizingMode = SizingMode::FIXED, ._Layer = 0 },
         cancelCell { ._Row = 3, ._Column = 8, ._ColumnSpan = 4, ._SizingMode = SizingMode::FIXED, ._Layer = 0 };
 
-    MenuBar* bar { attachBar(*host, *grid, *window, title, 12, _axis._RowDefinition[0] * windowSize.y, windowSize, font) };
+    MenuBar* bar { attachBar(*host, *lasagna, *window, title, 12, _axis._RowDefinition[0] * windowSize.y, windowSize, font) };
     Label
-        * messageLabel { host->Attach<Label>("Message", *grid, messageCell) },
-        * detailLabel { host->Attach<Label>("Detail", *grid, detailCell) };
+        * messageLabel { host->Attach<Label>("Message", *lasagna, messageCell) },
+        * detailLabel { host->Attach<Label>("Detail", *lasagna, detailCell) };
     Button
-        * confirmButton { host->Attach<Button>("Confirm", *grid, confirmCell) },
-        * cancel { host->Attach<Button>("Cancel", *grid, cancelCell) };
+        * confirmButton { host->Attach<Button>("Confirm", *lasagna, confirmCell) },
+        * cancel { host->Attach<Button>("Cancel", *lasagna, cancelCell) };
 
     Button* close { bar ? bar->GetWidget<Button>(_barCloseIndex) : nullptr };
 
@@ -187,9 +187,9 @@ RetroFuturaGUI::FileExplorer::ClashPrompt::ClashPrompt(std::string_view name, st
 
     styleWindow(*window, "Name taken");
     std::unique_ptr<ViewHost> host { std::make_unique<ViewHost>(std::format("FileExplorerPromptScene{}", number), window, _axis) };
-    Lasagna* grid { host->GetGrid() };
+    Lasagna* lasagna { host->GetLasagna() };
 
-    if(!grid)
+    if(!lasagna)
         return;
 
     Scene* scene { host->GetScene() };
@@ -206,15 +206,15 @@ RetroFuturaGUI::FileExplorer::ClashPrompt::ClashPrompt(std::string_view name, st
         skipCell { ._Row = 3, ._Column = 4, ._ColumnSpan = 4, ._SizingMode = SizingMode::FIXED, ._Layer = 0 },
         keepBothCell { ._Row = 3, ._Column = 8, ._ColumnSpan = 4, ._SizingMode = SizingMode::FIXED, ._Layer = 0 };
 
-    MenuBar* bar { attachBar(*host, *grid, *window, "Name taken", 12, _axis._RowDefinition[0] * windowSize.y, windowSize, font) };
+    MenuBar* bar { attachBar(*host, *lasagna, *window, "Name taken", 12, _axis._RowDefinition[0] * windowSize.y, windowSize, font) };
     Label
-        * messageLabel { host->Attach<Label>("Message", *grid, messageCell) },
-        * checkLabel { host->Attach<Label>("ForRemainingLabel", *grid, checkLabelCell) };
-    _forRemaining = host->Attach<CheckBox>("ForRemaining", *grid, checkCell);
+        * messageLabel { host->Attach<Label>("Message", *lasagna, messageCell) },
+        * checkLabel { host->Attach<Label>("ForRemainingLabel", *lasagna, checkLabelCell) };
+    _forRemaining = host->Attach<CheckBox>("ForRemaining", *lasagna, checkCell);
     Button
-        * replace { host->Attach<Button>("Replace", *grid, replaceCell) },
-        * skip { host->Attach<Button>("Skip", *grid, skipCell) },
-        * keepBoth { host->Attach<Button>("KeepBoth", *grid, keepBothCell) };
+        * replace { host->Attach<Button>("Replace", *lasagna, replaceCell) },
+        * skip { host->Attach<Button>("Skip", *lasagna, skipCell) },
+        * keepBoth { host->Attach<Button>("KeepBoth", *lasagna, keepBothCell) };
 
     Button* close { bar ? bar->GetWidget<Button>(_barCloseIndex) : nullptr };
 

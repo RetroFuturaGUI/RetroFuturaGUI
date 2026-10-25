@@ -56,7 +56,7 @@ namespace RetroFuturaGUI
         }
     };
 
-    /// @brief One full-size cell on every axis - what a Prefab starts with when no grid is given.
+    /// @brief One full-size cell on every axis - what a Prefab starts with when it's given no axis definition.
     inline const AxisDefinition SingleCellAxis { ._RowDefinition = { 1.0f }, ._ColumnDefinition = { 1.0f }, ._LayerDefinition = { 1.0f } };
 
     class Lasagna final: public IWidget
@@ -78,8 +78,8 @@ namespace RetroFuturaGUI
         /// @return false when the placement is out of range or overlaps an occupied cell, in which case nothing is changed.
         bool AttachWidget(const u32 row, const u32 col, const u32 layer, IWidget* widget, const SizingMode sizingMode = SizingMode::FILL, const u32 rowSpan = 1, const u32 colSpan = 1, const u32 layerSpan = 1);
 
-        /// @brief Returns the cell at the given index, or nullptr when the index is outside the current grid.
-        /// @warning Only valid until the grid is rebuilt
+        /// @brief Returns the cell at the given index, or nullptr when the index is outside the current tracks.
+        /// @warning Only valid until the cells are rebuilt
         LasagnaCell* GetCell(const TrackIndex& index);
         const LasagnaCell* GetCell(const TrackIndex& index) const;
 
@@ -91,10 +91,10 @@ namespace RetroFuturaGUI
         /// @brief Sets whether the cell debug borders
         void ShowDebugLines(const bool show);
 
-        /// @brief Sets the size of the grid, resizing and repositioning all attached widgets.
+        /// @brief Sets the size of the Lasagna, resizing and repositioning all attached widgets.
         void SetSize(const glm::vec3& size) override;
 
-        /// @brief Sets the world position of the grid, repositioning all attached widgets.
+        /// @brief Sets the world position of the Lasagna, repositioning all attached widgets.
         void SetPosition(const glm::vec3& position) override;
 
     private:
@@ -106,8 +106,8 @@ namespace RetroFuturaGUI
         std::vector<glm::vec4> _debugBorderColor { glm::vec4(1.0f) };
         bool _drawDebugLines { false };
 
-        /// @brief Returns the grid's top-left corner in world space. Cell offsets are grid-local, so every placement measures from here rather than from the window.
-        glm::vec3 gridOrigin() const;
+        /// @brief Returns the Lasagna's top-left corner in world space. Cell offsets count from there, so every placement measures from here rather than from the window.
+        glm::vec3 topLeftCorner() const;
 
         void drawDebugLines(const LasagnaCell& cell);
         void updateSpanSize(LasagnaCell& originCell, const uSize row, const uSize column, const uSize layer);

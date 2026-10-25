@@ -265,7 +265,7 @@ namespace RetroFuturaGUI
             PlatformBridge::Fonts::Weight _Weight { PlatformBridge::Fonts::Weight::Normal };
         };
 
-        /// @brief Where a widget sits in the view's grid: one row tall, a number of columns wide.
+        /// @brief Where a widget sits in the view's Lasagna: one row tall, a number of columns wide.
         struct ViewCell
         {
             uSize
@@ -310,8 +310,8 @@ namespace RetroFuturaGUI
         class ViewHost final : public ISceneHost
         {
         public:
-            /// @brief Creates the scene in the window, with the explorer's grid as its root Lasagna.
-            ViewHost(std::string_view sceneName, Window* window, const AxisDefinition& gridAxis);
+            /// @brief Creates the scene in the window, with lasagnaAxis laying out its root Lasagna.
+            ViewHost(std::string_view sceneName, Window* window, const AxisDefinition& lasagnaAxis);
             ViewHost() = delete;
             ViewHost(const ViewHost&) = delete;
             ViewHost(ViewHost&&) = delete;
@@ -322,7 +322,7 @@ namespace RetroFuturaGUI
             Scene* GetScene() const override;
 
             /// @brief The scene's root Lasagna, laid out by _viewAxis.
-            Lasagna* GetGrid() const;
+            Lasagna* GetLasagna() const;
 
             /// @brief Builds a widget in the given cell of a Lasagna and keeps it.
             /// @return The widget, or nullptr, keeping nothing, when the cell is out of range or taken.
@@ -340,7 +340,7 @@ namespace RetroFuturaGUI
                 std::unique_ptr<T> widget { std::make_unique<T>(widgetName, _projection, &lasagna, WidgetTypeID::Lasagna, _glfwWindow, std::forward<Args>(args)...) };
                 T* attached { widget.get() };
 
-                //Lasagna counts in u32; the view's grid is far below its range
+                //Lasagna counts in u32; the view's Lasagna is far below its range
                 if(!lasagna.AttachWidget(static_cast<u32>(cell._Row), static_cast<u32>(cell._Column), static_cast<u32>(cell._Layer), attached, cell._SizingMode, 1, static_cast<u32>(cell._ColumnSpan), 1))
                     return nullptr;
 
@@ -359,9 +359,9 @@ namespace RetroFuturaGUI
         /// @brief The frame every window of the explorer has, its prompts' too: rounded corners and a thin border.
         static void styleWindow(Window& window, std::string_view title);
 
-        /// @brief Builds the bar across a grid's first row: the title, which drags the window, and the close button in cell
+        /// @brief Builds the bar across a Lasagna's first row: the title, which drags the window, and the close button in cell
         ///        _barCloseIndex, which the caller connects.
-        static MenuBar* attachBar(ViewHost& host, Lasagna& grid, Window& window, std::string_view title, const uSize columnCount, const f32 barHeight, const glm::vec2& windowSize, const ViewFont& font);
+        static MenuBar* attachBar(ViewHost& host, Lasagna& lasagna, Window& window, std::string_view title, const uSize columnCount, const f32 barHeight, const glm::vec2& windowSize, const ViewFont& font);
 
         /// @brief Builds the view's widgets, styled, placed and connected, for the mode and flags. Only a feature that is on gets
         ///        its widget.
@@ -396,7 +396,7 @@ namespace RetroFuturaGUI
         ///        With thumbnails, their column comes first.
         static std::vector<Table::TrackDefinition> columnDefinition(const ViewFont& font, const bool hasThumbnails);
 
-        /// @brief The size of a fixed-size widget in a cell of a grid laid out by the axis, a margin smaller than the cell on every side.
+        /// @brief The size of a fixed-size widget in a cell of a Lasagna laid out by the axis, a margin smaller than the cell on every side.
         static glm::vec3 cellSize(const AxisDefinition& axis, const glm::vec2& windowSize, const ViewCell& cell);
         bool hasPreview() const;
 
@@ -841,7 +841,7 @@ namespace RetroFuturaGUI
             _promptCount { 0 }; //part of each prompt's scene name, which the scene loader keys across every window
 
     //Design
-        static constexpr uSize _viewColumnCount { 40 }; //one grid for every row, so each row's split is a set of column spans
+        static constexpr uSize _viewColumnCount { 40 }; //every row shares the same 40 columns, so each row's split is a set of column spans
         inline static const AxisDefinition _viewAxis
         {
             ._RowDefinition = { 0.06f, 0.07f, 0.07f, 0.66f, 0.07f, 0.07f }, //bar, navigation, toolbar, places and files, options, buttons

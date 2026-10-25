@@ -123,7 +123,7 @@ void RetroFuturaGUI::FileExplorer::SetFontFamily(std::string_view fontFamily, co
     _font = ViewFont { ._Family = std::string(fontFamily), ._Size = fontSize, ._Slant = slant, ._Weight = weight };
 }
 
-RetroFuturaGUI::FileExplorer::ViewHost::ViewHost(std::string_view sceneName, Window* window, const AxisDefinition& gridAxis)
+RetroFuturaGUI::FileExplorer::ViewHost::ViewHost(std::string_view sceneName, Window* window, const AxisDefinition& lasagnaAxis)
 {
     if(!window)
         return;
@@ -139,7 +139,7 @@ RetroFuturaGUI::FileExplorer::ViewHost::ViewHost(std::string_view sceneName, Win
     if(!_scene)
         return;
 
-    _scene->SetLasagnaAxis(gridAxis, _projection);
+    _scene->SetLasagnaAxis(lasagnaAxis, _projection);
 }
 
 RetroFuturaGUI::FileExplorer::ViewHost::~ViewHost()
@@ -155,7 +155,7 @@ RetroFuturaGUI::Scene* RetroFuturaGUI::FileExplorer::ViewHost::GetScene() const
     return _scene.get();
 }
 
-RetroFuturaGUI::Lasagna* RetroFuturaGUI::FileExplorer::ViewHost::GetGrid() const
+RetroFuturaGUI::Lasagna* RetroFuturaGUI::FileExplorer::ViewHost::GetLasagna() const
 {
     if(!_scene)
         return nullptr;
@@ -165,9 +165,9 @@ RetroFuturaGUI::Lasagna* RetroFuturaGUI::FileExplorer::ViewHost::GetGrid() const
 
 bool RetroFuturaGUI::FileExplorer::buildView(ViewHost& host, std::string_view title)
 {
-    Lasagna* grid { host.GetGrid() };
+    Lasagna* lasagna { host.GetLasagna() };
 
-    if(!grid)
+    if(!lasagna)
         return false;
 
     Window* window { GetWindow() };
@@ -188,7 +188,7 @@ bool RetroFuturaGUI::FileExplorer::buildView(ViewHost& host, std::string_view ti
     const glm::vec2 windowSize { static_cast<f32>(_width), static_cast<f32>(_height) };
     ViewWidgets built {};
 
-    built._Bar = attachBar(host, *grid, *window, title, _viewColumnCount, _viewAxis._RowDefinition[0] * windowSize.y, windowSize, _font);
+    built._Bar = attachBar(host, *lasagna, *window, title, _viewColumnCount, _viewAxis._RowDefinition[0] * windowSize.y, windowSize, _font);
 
     if(!built._Bar)
         return false;
@@ -206,28 +206,28 @@ bool RetroFuturaGUI::FileExplorer::buildView(ViewHost& host, std::string_view ti
         upCell { ._Row = 1, ._Column = 6, ._ColumnSpan = 3, ._SizingMode = SizingMode::FIXED, ._Layer = 0 },
         addressCell { ._Row = 1, ._Column = 9, ._ColumnSpan = 31, ._SizingMode = SizingMode::FIXED, ._Layer = 0 };
 
-    built._Back = host.Attach<Button>("Back", *grid, backCell);
+    built._Back = host.Attach<Button>("Back", *lasagna, backCell);
 
     if(!built._Back)
         return false;
 
     styleButton(*built._Back, "<", cellSize(_viewAxis, windowSize, backCell), _font);
     built._Back->Connect_OnClick([this]() { on_backButton_click(); }, false);
-    built._Forward = host.Attach<Button>("Forward", *grid, forwardCell);
+    built._Forward = host.Attach<Button>("Forward", *lasagna, forwardCell);
 
     if(!built._Forward)
         return false;
 
     styleButton(*built._Forward, ">", cellSize(_viewAxis, windowSize, forwardCell), _font);
     built._Forward->Connect_OnClick([this]() { on_forwardButton_click(); }, false);
-    built._Up = host.Attach<Button>("Up", *grid, upCell);
+    built._Up = host.Attach<Button>("Up", *lasagna, upCell);
 
     if(!built._Up)
         return false;
 
     styleButton(*built._Up, "Up", cellSize(_viewAxis, windowSize, upCell), _font);
     built._Up->Connect_OnClick([this]() { on_upButton_click(); }, false);
-    built._Address = host.Attach<TextBox>("Address", *grid, addressCell);
+    built._Address = host.Attach<TextBox>("Address", *lasagna, addressCell);
 
     if(!built._Address)
         return false;
@@ -246,7 +246,7 @@ bool RetroFuturaGUI::FileExplorer::buildView(ViewHost& host, std::string_view ti
         renameCell { ._Row = 2, ._Column = 2 * _menuColumnCount, ._ColumnSpan = 4, ._SizingMode = SizingMode::FIXED, ._Layer = 0 };
     const f32 menuListWidth { windowSize.x * static_cast<f32>(_menuListColumnCount) / static_cast<f32>(_viewColumnCount) };
 
-    built._FileMenu = host.Attach<ComboBox>("FileMenu", *grid, fileMenuCell);
+    built._FileMenu = host.Attach<ComboBox>("FileMenu", *lasagna, fileMenuCell);
 
     if(!built._FileMenu)
         return false;
@@ -257,7 +257,7 @@ bool RetroFuturaGUI::FileExplorer::buildView(ViewHost& host, std::string_view ti
     //Edit has nothing in it when the operations are off and only one file can be picked
     if(!_editMenuActions.empty())
     {
-        built._EditMenu = host.Attach<ComboBox>("EditMenu", *grid, editMenuCell);
+        built._EditMenu = host.Attach<ComboBox>("EditMenu", *lasagna, editMenuCell);
 
         if(!built._EditMenu)
             return false;
@@ -268,7 +268,7 @@ bool RetroFuturaGUI::FileExplorer::buildView(ViewHost& host, std::string_view ti
 
     if(HasFlag(_flags, FileExplorerFlags::Rename))
     {
-        built._Rename = host.Attach<Button>("Rename", *grid, renameCell);
+        built._Rename = host.Attach<Button>("Rename", *lasagna, renameCell);
 
         if(!built._Rename)
             return false;
@@ -287,7 +287,7 @@ bool RetroFuturaGUI::FileExplorer::buildView(ViewHost& host, std::string_view ti
     for(const auto& [text, column, isOn, slot] : toggles)
     {
         const ViewCell cell { ._Row = 2, ._Column = column, ._ColumnSpan = 5, ._SizingMode = SizingMode::FIXED, ._Layer = 0 };
-        Button* toggle { host.Attach<Button>(text, *grid, cell) };
+        Button* toggle { host.Attach<Button>(text, *lasagna, cell) };
 
         if(!toggle)
             return false;
@@ -309,13 +309,13 @@ bool RetroFuturaGUI::FileExplorer::buildView(ViewHost& host, std::string_view ti
         filesCell { ._Row = 3, ._Column = _placesColumnCount, ._ColumnSpan = filesColumnCount, ._SizingMode = SizingMode::FILL, ._Layer = 0 },
         scrollCell { ._Row = 3, ._Column = _placesColumnCount + filesColumnCount, ._ColumnSpan = 1, ._SizingMode = SizingMode::FILL, ._Layer = 0 };
 
-    built._Places = host.Attach<ScrollView>("Places", *grid, placesCell);
+    built._Places = host.Attach<ScrollView>("Places", *lasagna, placesCell);
 
     if(!built._Places)
         return false;
 
     built._Places->EnableScrolling(ScrollView::ScrollEnable::Y); //the places stack vertically, the default
-    built._Files = host.Attach<Table>("Files", *grid, filesCell);
+    built._Files = host.Attach<Table>("Files", *lasagna, filesCell);
 
     if(!built._Files)
         return false;
@@ -370,7 +370,7 @@ bool RetroFuturaGUI::FileExplorer::buildView(ViewHost& host, std::string_view ti
         built._Files->Connect_OnCellEditEnded([this](const TrackIndex& index, const Table::EditEnd end, const std::string& text) { on_filesTable_cellEditEnded(index, end, text); }, false);
     }
 
-    built._Scroll = host.Attach<Slider>("Scroll", *grid, scrollCell);
+    built._Scroll = host.Attach<Slider>("Scroll", *lasagna, scrollCell);
 
     if(!built._Scroll)
         return false;
@@ -396,7 +396,7 @@ bool RetroFuturaGUI::FileExplorer::buildView(ViewHost& host, std::string_view ti
     if(hasPreview())
     {
         const ViewCell previewCell { ._Row = 3, ._Column = _placesColumnCount + filesColumnCount + 1, ._ColumnSpan = _previewColumnCount, ._SizingMode = SizingMode::FILL, ._Layer = 0 };
-        _preview = std::make_unique<FilePreview>(host, *grid, previewCell, windowSize, _font, _flags);
+        _preview = std::make_unique<FilePreview>(host, *lasagna, previewCell, windowSize, _font, _flags);
 
         if(!_preview->IsBuilt())
             return false;
@@ -409,7 +409,7 @@ bool RetroFuturaGUI::FileExplorer::buildView(ViewHost& host, std::string_view ti
 
     if(Mode::WriteFile == _mode)
     {
-        built._Name = host.Attach<TextBox>("Name", *grid, nameCell);
+        built._Name = host.Attach<TextBox>("Name", *lasagna, nameCell);
 
         if(!built._Name)
             return false;
@@ -419,7 +419,7 @@ bool RetroFuturaGUI::FileExplorer::buildView(ViewHost& host, std::string_view ti
         built._Name->Connect_OnEnterPressed([this]() { on_okButton_click(); }, false);
     }
 
-    built._Filter = host.Attach<ComboBox>("Filter", *grid, filterCell);
+    built._Filter = host.Attach<ComboBox>("Filter", *lasagna, filterCell);
 
     if(!built._Filter)
         return false;
@@ -440,7 +440,7 @@ bool RetroFuturaGUI::FileExplorer::buildView(ViewHost& host, std::string_view ti
 
     if(hasTransfers)
     {
-        built._Stop = host.Attach<Button>("Stop", *grid, stopCell);
+        built._Stop = host.Attach<Button>("Stop", *lasagna, stopCell);
 
         if(!built._Stop)
             return false;
@@ -448,15 +448,15 @@ bool RetroFuturaGUI::FileExplorer::buildView(ViewHost& host, std::string_view ti
         styleButton(*built._Stop, "Stop", cellSize(_viewAxis, windowSize, stopCell), _font);
         built._Stop->Connect_OnClick([this]() { on_stopButton_click(); }, false);
 
-        LasagnaCell* stopGridCell { grid->GetCell(TrackIndex { ._Row = stopCell._Row, ._Column = stopCell._Column, ._Layer = 0 }) };
+        LasagnaCell* stopLasagnaCell { lasagna->GetCell(TrackIndex { ._Row = stopCell._Row, ._Column = stopCell._Column, ._Layer = 0 }) };
 
-        if(!stopGridCell)
+        if(!stopLasagnaCell)
             return false;
 
-        stopGridCell->_Show = false; //until an operation runs
+        stopLasagnaCell->_Show = false; //until an operation runs
     }
 
-    built._Status = host.Attach<Label>("Status", *grid, statusCell);
+    built._Status = host.Attach<Label>("Status", *lasagna, statusCell);
 
     if(!built._Status)
         return false;
@@ -466,14 +466,14 @@ bool RetroFuturaGUI::FileExplorer::buildView(ViewHost& host, std::string_view ti
     built._Status->SetTextColor(glm::vec4(0.9f, 0.8f, 0.55f, 1.0f), ColorState::Enabled);
     built._Status->SetTextPadding(8.0f);
     built._Status->SetSize(cellSize(_viewAxis, windowSize, statusCell));
-    built._Ok = host.Attach<Button>("Ok", *grid, okCell);
+    built._Ok = host.Attach<Button>("Ok", *lasagna, okCell);
 
     if(!built._Ok)
         return false;
 
     styleButton(*built._Ok, "OK", cellSize(_viewAxis, windowSize, okCell), _font);
     built._Ok->Connect_OnClick([this]() { on_okButton_click(); }, false);
-    built._Cancel = host.Attach<Button>("Cancel", *grid, cancelCell);
+    built._Cancel = host.Attach<Button>("Cancel", *lasagna, cancelCell);
 
     if(!built._Cancel)
         return false;
@@ -485,7 +485,7 @@ bool RetroFuturaGUI::FileExplorer::buildView(ViewHost& host, std::string_view ti
     return true;
 }
 
-RetroFuturaGUI::MenuBar* RetroFuturaGUI::FileExplorer::attachBar(ViewHost& host, Lasagna& grid, Window& window, std::string_view title, const uSize columnCount, const f32 barHeight, const glm::vec2& windowSize, const ViewFont& font)
+RetroFuturaGUI::MenuBar* RetroFuturaGUI::FileExplorer::attachBar(ViewHost& host, Lasagna& lasagna, Window& window, std::string_view title, const uSize columnCount, const f32 barHeight, const glm::vec2& windowSize, const ViewFont& font)
 {
     Projection* projection { window.GetProjection() };
 
@@ -498,7 +498,7 @@ RetroFuturaGUI::MenuBar* RetroFuturaGUI::FileExplorer::attachBar(ViewHost& host,
         return nullptr;
 
     //The title drags the window, the spacer takes what is left, and the close button is a square of the bar's height
-    MenuBar* bar { host.Attach<MenuBar>("Bar", grid, ViewCell { ._Row = 0, ._Column = 0, ._ColumnSpan = columnCount, ._SizingMode = SizingMode::FILL, ._Layer = 0 }) };
+    MenuBar* bar { host.Attach<MenuBar>("Bar", lasagna, ViewCell { ._Row = 0, ._Column = 0, ._ColumnSpan = columnCount, ._SizingMode = SizingMode::FILL, ._Layer = 0 }) };
 
     if(!bar)
         return nullptr;
@@ -2669,12 +2669,12 @@ void RetroFuturaGUI::FileExplorer::showStopButton(const bool isShown)
     if(!_viewHost)
         return;
 
-    Lasagna* grid { _viewHost->GetGrid() };
+    Lasagna* lasagna { _viewHost->GetLasagna() };
 
-    if(!grid)
+    if(!lasagna)
         return;
 
-    LasagnaCell* cell { grid->GetCell(TrackIndex { ._Row = 5, ._Column = _statusColumnCount, ._Layer = 0 }) };
+    LasagnaCell* cell { lasagna->GetCell(TrackIndex { ._Row = 5, ._Column = _statusColumnCount, ._Layer = 0 }) };
 
     if(!cell)
         return;
