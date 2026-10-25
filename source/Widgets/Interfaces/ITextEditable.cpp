@@ -9,9 +9,9 @@
 #endif
 #include <GLFW/glfw3native.h>
 
-void RetroFuturaGUI::ITextEditable::SetReadOnly(const bool readOnly)
+void RetroFuturaGUI::ITextEditable::EnableReadOnly(const bool enable)
 {
-    _readOnly = readOnly;
+    _readOnly = enable;
 }
 
 bool RetroFuturaGUI::ITextEditable::IsReadOnly() const

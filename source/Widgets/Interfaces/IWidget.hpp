@@ -86,7 +86,7 @@ namespace RetroFuturaGUI
         }
 
         void SetTooltipText(std::string_view text);
-        void EnableTooltip(const bool enable);
+        void ShowTooltip(const bool show);
 
         /// @brief Returns the widget's tooltip for styling (font, colors, corner radii), or nullptr until SetTooltipText created it.
         Tooltip* GetTooltip() const;

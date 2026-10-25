@@ -153,9 +153,9 @@ bool RetroFuturaGUI::MenuBar::RemoveWidget(const uSize index)
     return true;
 }
 
-void RetroFuturaGUI::MenuBar::EnableSeparatorLines(const bool enable)
+void RetroFuturaGUI::MenuBar::ShowSeparatorLines(const bool show)
 {
-    _useSeparatorLines = enable;
+    _useSeparatorLines = show;
 
     if(!_useSeparatorLines)
         return;

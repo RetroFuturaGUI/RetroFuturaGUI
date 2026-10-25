@@ -344,9 +344,9 @@ void RetroFuturaGUI::CheckBox::interact()
     _wasClicked = isMouseButtonPressed;
 }
 
-void RetroFuturaGUI::CheckBox::UseInherietedValue(const bool useInheriet)
+void RetroFuturaGUI::CheckBox::EnableInheritedValue(const bool enable)
 {
-    _useInherietValue = useInheriet;
+    _useInherietValue = enable;
 }
 
 void RetroFuturaGUI::CheckBox::SetInnerPadding(const f32 pixels)

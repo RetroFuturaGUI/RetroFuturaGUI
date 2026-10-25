@@ -56,9 +56,8 @@ namespace RetroFuturaGUI
         /// @brief Sets the speed at which the inheriet state fill gradient rotates over time.
         void SetInherietGradientRotationSpeed(const f32 rotationSpeed);
 
-        /// @brief Sets whether an inherieted value should be used.
-        /// @param a boolean value whether to use an inherieted value
-        void UseInherietedValue(const bool useInheriet);
+        /// @brief Sets whether the CheckBox mirrors the bool given to SetInheritValueReference instead of keeping a value of its own.
+        void EnableInheritedValue(const bool enable);
 
         /// @brief Sets the distance between the border and checkmark in pixels
         /// @param a float extressing the distance in pixels

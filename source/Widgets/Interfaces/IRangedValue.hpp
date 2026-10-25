@@ -104,8 +104,8 @@ namespace RetroFuturaGUI
             alignValueToRange();
         }
 
-        /// @brief Enables or disables the indicator marker. Lazily constructs it (background only) on first enable; subsequent toggles just show/hide it.
-        void EnableIndicator(const bool value);
+        /// @brief Shows or hides the indicator marker. Builds it (background only) the first time it's shown.
+        void ShowIndicator(const bool show);
 
         /// @brief Sets the indicator's shape (a plain stroke or a fully-rounded circle).
         void SetIndicatorType(const IndicatorType type);
@@ -207,8 +207,8 @@ namespace RetroFuturaGUI
         /// @brief Sets sections of the indicator's border to skip drawing; see Rectangle::SetBorderGaps.
         void SetIndicatorBorderGaps(std::span<BorderGap> gaps);
 
-        /// @brief Enables or disables the graph (growing fill). Lazily constructs it on first enable; subsequent toggles just show/hide it.
-        void EnableGraph(const bool value);
+        /// @brief Shows or hides the graph (growing fill). Builds it the first time it's shown.
+        void ShowGraph(const bool show);
 
         /// @brief Sets whether the graph is drawn as a solid fill (Bar) or as a wave (Wave).
         void SetGraphMode(const GraphMode mode);

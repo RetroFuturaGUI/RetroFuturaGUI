@@ -41,11 +41,11 @@ namespace RetroFuturaGUI
         }
 
         /// @brief Sets whether a set shorter than the longest holds its last value up to the end of the track, instead of ending where its data does.
-        void SetClampToLastValue(const bool value);
+        void EnableClampToLastValue(const bool enable);
 
         /// @brief Sets whether values are shown in hexadecimal: an integer as its value (17 is 0x11, -1 in an i8 is 0xFF),
         /// a float as its bits in full (1.0f is 0x3F800000, 1.0 is 0x3FF0000000000000).
-        void HexNumbers(const bool value);
+        void ShowHexNumbers(const bool showHex);
 
     protected:
         /// @brief Nothing to clamp: the values belong to the caller and are mapped into the range when drawn.
@@ -68,7 +68,7 @@ namespace RetroFuturaGUI
         f32 getDataValueAsF32(const uSize nthSet, const uSize index) const;
 
         /// @brief The value at index of the nthSet as text, in its own type, so nothing is lost converting it - decimal floats as short as still reads back exactly,
-        /// or hexadecimal while HexNumbers is on.
+        /// or hexadecimal while ShowHexNumbers is on.
         std::string getDataValueAsString(const uSize nthSet, const uSize index) const;
 
         /// @note T must be _valueType, or the buffer is read as the wrong type - getDataValueAsF32 picks it for you.

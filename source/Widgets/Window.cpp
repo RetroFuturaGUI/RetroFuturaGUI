@@ -708,7 +708,7 @@ void RetroFuturaGUI::Window::UpdateLayout()
 
         const ScreenRect strip { reserveEdge(scene->GetReservedEdge(), scene->GetReservedThickness(), client) };
 
-        scene->SetPosition(glm::vec3(strip.Center(), scene->GetPosition().z));
+        scene->SetPosition(glm::vec3(strip.GetCenter(), scene->GetPosition().z));
         scene->SetSize(glm::vec3(strip._Extent, scene->GetSize().z));
     }
 
@@ -720,14 +720,14 @@ void RetroFuturaGUI::Window::UpdateLayout()
         if(!scene || scene->HasReservedEdge())
             continue;
 
-        scene->SetPosition(glm::vec3(client.Center(), scene->GetPosition().z));
+        scene->SetPosition(glm::vec3(client.GetCenter(), scene->GetPosition().z));
         scene->SetSize(glm::vec3(client._Extent, scene->GetSize().z));
     }
 
     if(!_lasagna)
         return;
 
-    _lasagna->SetPosition(glm::vec3(client.Center(), _lasagna->GetPosition().z));
+    _lasagna->SetPosition(glm::vec3(client.GetCenter(), _lasagna->GetPosition().z));
     _lasagna->SetSize(glm::vec3(client._Extent, _lasagna->GetSize().z));
 }
 
@@ -855,9 +855,9 @@ void RetroFuturaGUI::Window::SetDockingPadding(const f32 padding)
     dockRoot()->layoutDockedWindows();
 }
 
-void RetroFuturaGUI::Window::SetNoCornerRadiiWhenDocked(const bool noCornerRadii)
+void RetroFuturaGUI::Window::EnableSquaredCornersWhenDocked(const bool enable)
 {
-    _noCornerRadiiWhenDocked = noCornerRadii;
+    _noCornerRadiiWhenDocked = enable;
 }
 
 RetroFuturaGUI::Window* RetroFuturaGUI::Window::FromGlfwWindow(GLFWwindow* glfwWindow)
@@ -2047,7 +2047,7 @@ bool RetroFuturaGUI::Window::isSceneShown(const Scene* scene) const
     if(!IsInTab())
         return true;
 
-    return !scene->IsHiddenInTab();
+    return scene->IsShownInTab();
 }
 
 bool RetroFuturaGUI::Window::holdsTabbedWindows() const

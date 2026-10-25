@@ -39,11 +39,11 @@ namespace RetroFuturaGUI
         void SetActive(const bool active);
         bool IsActive() const;
 
-        /// @brief Hides the scene, and gives back the strip it reserves, while its window is docked into a WindowTab. Meant for a window's own bar: the tab's field shows the window's title and close button instead.
-        void SetHiddenInTab(const bool hidden);
+        /// @brief Sets whether the scene shows while its window is docked into a WindowTab, which it does by default. A window's own bar turns it off: the tab's field shows the window's title and close button instead, and the strip the bar reserves goes back to the content.
+        void ShowInTab(const bool show);
 
-        /// @brief Whether the scene hides while its window is docked into a WindowTab.
-        bool IsHiddenInTab() const;
+        /// @brief Whether the scene shows while its window is docked into a WindowTab.
+        bool IsShownInTab() const;
         IWidget* GetRootContainer() const;
         const std::string& GetName() const override;
         const IHierarchyNode* GetParent() const override;
@@ -133,7 +133,7 @@ namespace RetroFuturaGUI
         bool
             _hasReservedEdge { false },
             _active { true },
-            _hiddenInTab { false };
+            _shownInTab { true };
 
         /// @brief Asks the parent window to recompute its client area, because what this scene
         ///        reserves from it just changed.

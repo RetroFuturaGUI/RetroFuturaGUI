@@ -24,14 +24,14 @@ void RetroFuturaGUI::IRangedMultiValue::Disconnect_OnDataSet(const typename Sign
     _onDataSetAsync.Disconnect(slot);
 }
 
-void RetroFuturaGUI::IRangedMultiValue::SetClampToLastValue(const bool value)
+void RetroFuturaGUI::IRangedMultiValue::EnableClampToLastValue(const bool enable)
 {
-    _clampToLastValue = value;
+    _clampToLastValue = enable;
 }
 
-void RetroFuturaGUI::IRangedMultiValue::HexNumbers(const bool value)
+void RetroFuturaGUI::IRangedMultiValue::ShowHexNumbers(const bool show)
 {
-    _hexNumbers = value;
+    _hexNumbers = show;
 }
 
 bool RetroFuturaGUI::IRangedMultiValue::setData(const uSize nthSet, const void* data, const uSize count, const PrimitiveTypeID type)

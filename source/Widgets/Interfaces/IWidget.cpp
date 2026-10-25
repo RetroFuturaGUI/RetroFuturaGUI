@@ -214,9 +214,9 @@ void RetroFuturaGUI::IWidget::SetTooltipText(std::string_view text)
     _tooltip->SetText(text, false);
 }
 
-void RetroFuturaGUI::IWidget::EnableTooltip(const bool enable)
+void RetroFuturaGUI::IWidget::ShowTooltip(const bool show)
 {
-    _enableTooltip = enable;
+    _enableTooltip = show;
 }
 
 RetroFuturaGUI::Tooltip* RetroFuturaGUI::IWidget::GetTooltip() const

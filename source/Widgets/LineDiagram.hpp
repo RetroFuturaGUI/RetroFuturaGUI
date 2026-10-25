@@ -26,7 +26,7 @@ namespace RetroFuturaGUI
 
         void Draw() override;
 
-        /// @brief Sets the label of the line drawn for set index - shown at the start of the line (ShowLineLabels) and next to the pointer while it is hovered (ShowHoverLineLabel).
+        /// @brief Sets the label of the line drawn for set index - shown at the start of the line (ShowLineLabels) and next to the pointer while it is hovered (EnableHoverLineLabel).
         void SetLabel(const uSize index, std::string_view labelText);
 
         /// @brief Sets the color of the line drawn for set lineIndex, and of its label. It may be set before the set is bound.
@@ -39,13 +39,13 @@ namespace RetroFuturaGUI
         void SetLabelFontFamily(std::string_view fontFamily, const f32 fontSize, const PlatformBridge::Fonts::Slant slant, const PlatformBridge::Fonts::Weight fontWeight);
 
         /// @brief Shows every line's label at the start of the line. Labels of lines that start close together overlap.
-        void ShowLineLabels(const bool value);
+        void ShowLineLabels(const bool show);
 
         /// @brief Shows the hovered line's label next to the pointer.
-        void ShowHoverLineLabel(const bool value);
+        void EnableHoverLineLabel(const bool enable);
 
-        /// @brief Shows the value at the pointer next to it - "Label: value" together with ShowHoverLineLabel. Hexadecimal while HexNumbers is on.
-        void ShowHoverValue(const bool value);
+        /// @brief Shows the value at the pointer next to it - "Label: value" together with EnableHoverLineLabel. Hexadecimal while ShowHexNumbers is on.
+        void EnableHoverValue(const bool enable);
 
         /// @brief Sets the color of the box behind the text next to the pointer. The text has its line's color, so without the box it would vanish
         /// where it crosses its own line. Translucent black by default.

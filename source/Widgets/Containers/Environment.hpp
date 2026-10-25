@@ -92,7 +92,7 @@ namespace RetroFuturaGUI
         ///        need it to keep overhanging content off neighbouring widgets.
         /// @note  The clip is the unrotated rectangle, because scissoring only cuts along the window's axes. It no longer matches
         ///        once the Environment itself is rotated.
-        void SetClipping(const bool clip);
+        void EnableClipping(const bool enable);
 
         /// @brief Sets whether the box's outline is drawn over the contents, which shows where the fit put it.
         void ShowDebugBox(const bool show);
@@ -129,7 +129,7 @@ namespace RetroFuturaGUI
         std::unique_ptr<Rectangle> _debugBox { nullptr };
         std::vector<glm::vec4> _debugBoxColor { glm::vec4(0.35f, 0.9f, 1.0f, 1.0f) };
         bool
-            _clip { false },
+            _clippingOn { false },
             _drawDebugBox { false };
     };
 }

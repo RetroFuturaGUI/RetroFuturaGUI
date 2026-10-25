@@ -102,7 +102,7 @@ namespace RetroFuturaGUI
         }
 
         bool RemoveWidget(const uSize index);
-        void EnableSeparatorLines(const bool enable);
+        void ShowSeparatorLines(const bool show);
         void SetSeparatorLinesThickness(const f32 thickness);
         /// @brief Sets one sizing policy per flex cell, and resizes the flex to match.
         /// @note Cells beyond the definitions given are dropped, along with the widgets in them. Cells

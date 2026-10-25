@@ -96,9 +96,9 @@ void RetroFuturaGUI::IRangedValue::SetIndicatorSize(const glm::vec2& size, const
     alignElementsToTrack();
 }
 
-void RetroFuturaGUI::IRangedValue::EnableIndicator(const bool value)
+void RetroFuturaGUI::IRangedValue::ShowIndicator(const bool show)
 {
-    _useIndicator = value;
+    _useIndicator = show;
 
     if(_useIndicator && !_indicatorBackground)
     {
@@ -379,9 +379,9 @@ void RetroFuturaGUI::IRangedValue::SetIndicatorBorderGaps(std::span<BorderGap> g
         _indicatorBorder->SetBorderGaps(gaps);
 }
 
-void RetroFuturaGUI::IRangedValue::EnableGraph(const bool value)
+void RetroFuturaGUI::IRangedValue::ShowGraph(const bool show)
 {
-    _useGraph = value;
+    _useGraph = show;
 
     if(_useGraph && !_graph)
     {

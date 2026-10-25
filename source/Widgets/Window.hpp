@@ -22,14 +22,17 @@ namespace RetroFuturaGUI
     class Scene;
     class WindowTab;
 
-    /// @brief An axis-aligned region of the window in projection space, with its origin at the bottom-left corner. Widgets take their position as a centre, so Center() converts.
+    /// @brief An axis-aligned region of the window in projection space, with its origin at the bottom-left corner. Widgets take their position as a centre, so GetCenter() converts.
     struct ScreenRect
     {
         glm::vec2
             _Origin { 0.0f },
             _Extent { 0.0f };
 
-        glm::vec2 Center() const { return _Origin + _Extent * 0.5f; }
+        glm::vec2 GetCenter() const
+        {
+            return _Origin + _Extent * 0.5f;
+        }
     };
 
     class Window final : public IBackground, public IBorder, public IHierarchyNode, public IPointerFilter
@@ -105,7 +108,7 @@ namespace RetroFuturaGUI
         bool IsMaximized() const;
 
         /// @brief Sets the radii of the background's and the border's corners, clockwise from the top-left. Docking may square
-        ///        some of them, see SetNoCornerRadiiWhenDocked.
+        ///        some of them, see EnableSquaredCornersWhenDocked.
         void SetCornerRadii(const glm::vec4& radii);
 
         /// @brief Returns the radii the background and border are drawn with: the ones set, with the corners where docked windows
@@ -133,7 +136,7 @@ namespace RetroFuturaGUI
         void SetDockingPadding(const f32 padding);
 
         /// @brief Sets, for every window, whether the corners where docked windows meet are squared.
-        static void SetNoCornerRadiiWhenDocked(const bool noCornerRadii);
+        static void EnableSquaredCornersWhenDocked(const bool enable);
 
         /// @brief Returns the window that drives the given GLFW window, or nullptr when there is none.
         static Window* FromGlfwWindow(GLFWwindow* glfwWindow);

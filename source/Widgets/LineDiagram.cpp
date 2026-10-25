@@ -96,19 +96,19 @@ void RetroFuturaGUI::LineDiagram::SetLabelFontFamily(std::string_view fontFamily
     applyLabelFont(_hoverText.get());
 }
 
-void RetroFuturaGUI::LineDiagram::ShowLineLabels(const bool value)
+void RetroFuturaGUI::LineDiagram::ShowLineLabels(const bool show)
 {
-    _showLineLabels = value;
+    _showLineLabels = show;
 }
 
-void RetroFuturaGUI::LineDiagram::ShowHoverLineLabel(const bool value)
+void RetroFuturaGUI::LineDiagram::EnableHoverLineLabel(const bool enable)
 {
-    _showHoverLineLabel = value;
+    _showHoverLineLabel = enable;
 }
 
-void RetroFuturaGUI::LineDiagram::ShowHoverValue(const bool value)
+void RetroFuturaGUI::LineDiagram::EnableHoverValue(const bool enable)
 {
-    _showHoverValue = value;
+    _showHoverValue = enable;
 }
 
 void RetroFuturaGUI::LineDiagram::SetHoverTextBackgroundColor(const glm::vec4 color)

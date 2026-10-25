@@ -138,9 +138,9 @@ glm::vec3 RetroFuturaGUI::Environment::ToWindow(const glm::vec3& point) const
     return _position + _orientation * (point * _scale);
 }
 
-void RetroFuturaGUI::Environment::SetClipping(const bool clip)
+void RetroFuturaGUI::Environment::EnableClipping(const bool enable)
 {
-    _clip = clip;
+    _clippingOn = enable;
 }
 
 void RetroFuturaGUI::Environment::ShowDebugBox(const bool show)
@@ -152,7 +152,7 @@ void RetroFuturaGUI::Environment::Draw()
 {
     std::optional<ScissorClip> clip;
 
-    if(_clip)
+    if(_clippingOn)
         clip.emplace(framebufferBox(_position.x - _size.x * 0.5f, _position.y - _size.y * 0.5f, _size.x, _size.y));
 
     for(const EnvironmentEntry& entry : _entries)

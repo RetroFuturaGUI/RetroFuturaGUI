@@ -11,7 +11,7 @@ namespace RetroFuturaGUI
     {
     public:
         /// @brief Sets whether the widget rejects text input/editing while still allowing selection and copy.
-        void SetReadOnly(const bool readOnly);
+        void EnableReadOnly(const bool enable);
 
         /// @brief Returns whether the widget is currently read-only.
         bool IsReadOnly() const;
