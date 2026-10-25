@@ -102,7 +102,10 @@ RetroFuturaGUI::Table::Table(const std::string& name, Projection* projection, IW
     _sharedCheckBox = std::make_unique<TableCheckBox>(this, projection, _checkBoxBackground.get(), _checkBoxBorder.get(), _checkmark.get());
 
     if(_sharedCheckBox)
+    {
         _sharedCheckBox->SetPadding(_checkBoxPadding);
+        _sharedCheckBox->SetInnerPadding(_checkBoxInnerPadding);
+    }
 
     _selectionBand = std::make_unique<Rectangle>(projection);
 
@@ -184,6 +187,16 @@ void RetroFuturaGUI::Table::SetCheckBoxPadding(const f32 padding)
         return;
 
     _sharedCheckBox->SetPadding(padding); //each box is fitted to its cell right before it draws, so the new padding applies from the next frame
+}
+
+void RetroFuturaGUI::Table::SetCheckBoxInnerPadding(const f32 padding)
+{
+    _checkBoxInnerPadding = padding;
+
+    if(!_sharedCheckBox)
+        return;
+
+    _sharedCheckBox->SetInnerPadding(padding);
 }
 
 void RetroFuturaGUI::Table::Draw()

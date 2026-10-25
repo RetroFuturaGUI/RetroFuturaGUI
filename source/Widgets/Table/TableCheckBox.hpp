@@ -23,6 +23,9 @@ namespace RetroFuturaGUI
             /// @brief Sets the gap/padding between the cell's edge and the box, in pixels. Takes effect on the parent table's next layout pass.
             void SetPadding(const f32 padding);
 
+            /// @brief Sets the gap/padding between the box's border and the checkmark in pixels.
+            void SetInnerPadding(const f32 padding);
+
             /// @brief Sets the checked state.
             void SetValue(const bool value);
 
@@ -35,6 +38,8 @@ namespace RetroFuturaGUI
                 *_border { nullptr };
             SvgTexture* _checkmark { nullptr };
             bool _isChecked { false };
-            f32 _padding { 4.0f };
+            f32
+                _padding { 4.0f },
+                _innerPadding { 5.0f };
     };
 }

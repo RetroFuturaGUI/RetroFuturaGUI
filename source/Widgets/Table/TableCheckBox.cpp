@@ -35,8 +35,12 @@ void RetroFuturaGUI::TableCheckBox::Draw()
 
     if(_checkmark)
     {
+        const f32
+            inset { (_border ? _border->GetBorderWidth() : 0.0f) + _innerPadding },
+            extent { _size.x > 2.0f * inset ? _size.x - 2.0f * inset : 0.0f };
+
         _checkmark->SetProjection(_projection);
-        _checkmark->SetSize(_size);
+        _checkmark->SetSize(glm::vec2(extent));
         _checkmark->SetPosition(_position + glm::vec3(0.0f, 0.0f, 0.02f));
         _checkmark->SetRotation(_rotation);
         _checkmark->Draw();
@@ -65,6 +69,11 @@ void RetroFuturaGUI::TableCheckBox::SetRotation(const glm::vec3& rotation)
 void RetroFuturaGUI::TableCheckBox::SetPadding(const f32 padding)
 {
     _padding = padding > 0.0f ? padding : 0.0f;
+}
+
+void RetroFuturaGUI::TableCheckBox::SetInnerPadding(const f32 padding)
+{
+    _innerPadding = 0.0f < padding ? padding : 0.0f;
 }
 
 void RetroFuturaGUI::TableCheckBox::SetValue(const bool value)

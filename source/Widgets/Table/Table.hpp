@@ -94,6 +94,9 @@ namespace RetroFuturaGUI
 
         /// @brief Sets the gap/padding between a cell's edge and the checkbox drawn in it, in pixels. The box stays the largest centered square that fits.
         void SetCheckBoxPadding(const f32 padding);
+
+        /// @brief Sets the gap/padding between a checkbox's border and its checkmark in pixels.
+        void SetCheckBoxInnerPadding(const f32 padding);
         void SetInnerBorderWidth(const f32 width);
         void SetTableOrientation(const TableOrientation orientation);
         void SetTrackAlternatingColorCount(const uSize variantCount);
