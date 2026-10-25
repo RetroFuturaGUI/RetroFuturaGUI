@@ -29,46 +29,49 @@ RetroFuturaGUI::IRangedValue::IRangedValue(std::string_view name, Projection* pr
 
 void RetroFuturaGUI::IRangedValue::SetPosition(const glm::vec3& position)
 {
+    if(!_background)
+        return;
+
+    if(!_border)
+        return;
+
     IWidget::SetPosition(position);
-
-    if (_background)
-        _background->SetPosition(position);
-
-    if (_border)
-        _border->SetPosition(position + glm::vec3(0.0f, 0.0f, 0.01f));
-
+    _background->SetPosition(position);
+    _border->SetPosition(position + glm::vec3(0.0f, 0.0f, 0.01f));
     alignElementsToTrack();
 }
 
 void RetroFuturaGUI::IRangedValue::SetSize(const glm::vec3& size)
 {
-    IWidget::SetSize(size);
+    if(!_background)
+        return;
 
+    if(!_border)
+        return;
+
+    IWidget::SetSize(size);
     const glm::vec3 trackSize { _orientation == Orientation::Vertical
         ? glm::vec3(size.y, size.x, size.z)
         : size };
 
-    if (_background)
-        _background->SetSize(trackSize);
-
-    if (_border)
-        _border->SetSize(trackSize);
-
+    _background->SetSize(trackSize);
+    _border->SetSize(trackSize);
     setIndicatorSize();
     alignElementsToTrack();
 }
 
 void RetroFuturaGUI::IRangedValue::SetRotation(const glm::vec3& rotation)
 {
+    if(!_background)
+        return;
+
+    if(!_border)
+        return;
+
     IWidget::SetRotation(rotation);
-    const glm::vec3 trackRotation { orientedRotation(rotation) }; //use track's orientation
-
-    if (_background)
-        _background->SetRotation(trackRotation);
-
-    if (_border)
-        _border->SetRotation(trackRotation);
-
+    const glm::vec3 trackRotation { orientedRotation(rotation) };
+    _background->SetRotation(trackRotation);
+    _border->SetRotation(trackRotation);
     alignElementsToTrack();
 }
 

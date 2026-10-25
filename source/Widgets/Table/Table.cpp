@@ -22,46 +22,44 @@ RetroFuturaGUI::Table::Table(const std::string& name, Projection* projection, IW
 {
     _widgetTypeID = WidgetTypeID::Table;
     _background = std::make_unique<Rectangle>(projection);
+    _border = std::make_unique<Rectangle>(projection);
+    _highlightedBackgroundCell = std::make_unique<Rectangle>(projection);
+    _highlightedCellBorder = std::make_unique<Rectangle>(projection);
+    _trackColoringOverlay = std::make_unique<Rectangle>(projection);
+    _innerBorder = std::make_unique<Rectangle>(projection);
+    _cellColorPlane = std::make_unique<Rectangle>(projection);
+    _checkBoxBackground = std::make_unique<Rectangle>(projection);
+    _checkBoxBorder = std::make_unique<Rectangle>(projection);
+    _checkmark = ResourceManager::GetCheckmarkIcon();
+    _cellImagePlane = std::make_unique<Rectangle>(projection);
+    _selectionBand = std::make_unique<Rectangle>(projection);
+    _selectionBandBorder = std::make_unique<Rectangle>(projection);
 
     if(_background)
         _background->SetRectangleMode(RectangleMode::Plane);
 
-    _border = std::make_unique<Rectangle>(projection);
-
     if(_border)
         _border->SetRectangleMode(RectangleMode::Border);
-
-    _highlightedBackgroundCell = std::make_unique<Rectangle>(projection);
 
     if(_highlightedBackgroundCell)
         _highlightedBackgroundCell->SetRectangleMode(RectangleMode::Plane);
 
-    _highlightedCellBorder = std::make_unique<Rectangle>(projection);
-
     if(_highlightedCellBorder)
         _highlightedCellBorder->SetRectangleMode(RectangleMode::Border);
 
-    _trackColoringOverlay = std::make_unique<Rectangle>(projection);
-
     if(_trackColoringOverlay)
         _trackColoringOverlay->SetRectangleMode(RectangleMode::Plane);
-    
-    _innerBorder = std::make_unique<Rectangle>(projection);
 
     if(_innerBorder)
         _innerBorder->SetRectangleMode(RectangleMode::Border);
 
     initEditVisuals(projection);
 
-    _cellColorPlane = std::make_unique<Rectangle>(projection);
-
     if(_cellColorPlane)
     {
         _cellColorPlane->SetRectangleMode(RectangleMode::Plane);
         _cellColorPlane->SetFillType(FillType::SOLID);
     }
-
-    _checkBoxBackground = std::make_unique<Rectangle>(projection);
 
     if(_checkBoxBackground)
     {
@@ -70,8 +68,6 @@ RetroFuturaGUI::Table::Table(const std::string& name, Projection* projection, IW
         _checkBoxBackground->SetColors(_checkBoxBackgroundColorEnabled);
     }
 
-    _checkBoxBorder = std::make_unique<Rectangle>(projection);
-
     if(_checkBoxBorder)
     {
         _checkBoxBorder->SetRectangleMode(RectangleMode::Border);
@@ -79,12 +75,8 @@ RetroFuturaGUI::Table::Table(const std::string& name, Projection* projection, IW
         _checkBoxBorder->SetColors(_checkBoxBorderColorEnabled);
     }
 
-    _checkmark = ResourceManager::GetCheckmarkIcon();
-
     if(_checkmark)
         _checkmark->SetProjection(projection);
-
-    _cellImagePlane = std::make_unique<Rectangle>(projection);
 
     if(_cellImagePlane)
     {
@@ -107,15 +99,11 @@ RetroFuturaGUI::Table::Table(const std::string& name, Projection* projection, IW
         _sharedCheckBox->SetInnerPadding(_checkBoxInnerPadding);
     }
 
-    _selectionBand = std::make_unique<Rectangle>(projection);
-
     if(_selectionBand)
     {
         _selectionBand->SetRectangleMode(RectangleMode::Plane);
         _selectionBand->SetFillType(FillType::SOLID);
     }
-
-    _selectionBandBorder = std::make_unique<Rectangle>(projection);
 
     if(_selectionBandBorder)
     {
@@ -425,42 +413,47 @@ void RetroFuturaGUI::Table::popScissor(const ScissorState& state)
 
 void RetroFuturaGUI::Table::SetSize(const glm::vec3& size)
 {
+    if(!_background)
+        return;
+
+    if(!_border)
+        return;
+
     IWidget::SetSize(size);
-
-    if(_background)
-        _background->SetSize(size);
-
-    if(_border)
-        _border->SetSize(size);
-
+    _background->SetSize(size);
+    _border->SetSize(size);
     layoutCells();
 }
 
 void RetroFuturaGUI::Table::SetPosition(const glm::vec3& position)
 {
+    if(!_background)
+        return;
+
+    if(!_border)
+        return;
+
+    if(!_selectedArea)
+        return;
+
     IWidget::SetPosition(position);
-
-    if(_background)
-        _background->SetPosition(position);
-
-    if(_border)
-        _border->SetPosition(position + glm::vec3(0.0f, 0.0f, 0.1f));
-
-    if(_selectedArea)
-        _selectedArea->SetPosition(position + glm::vec3(0.0f, 0.0f, _widgetZOffset - 0.01f));
-
+    _background->SetPosition(position);
+    _border->SetPosition(position + glm::vec3(0.0f, 0.0f, 0.1f));
+    _selectedArea->SetPosition(position + glm::vec3(0.0f, 0.0f, _widgetZOffset - 0.01f));
     layoutCells();
 }
 
 void RetroFuturaGUI::Table::SetRotation(const glm::vec3& rotation)
 {
+    if(!_background)
+        return;
+
+    if(!_border)
+        return;
+
     _rotation = rotation;
-
-    if(_background)
-        _background->SetRotation(rotation);
-
-    if(_border)
-        _border->SetRotation(rotation);
+    _background->SetRotation(rotation);
+    _border->SetRotation(rotation);
 }
 
 void RetroFuturaGUI::Table::SetTrackDefinitions(const std::vector<f32>& rowDefinition, const std::vector<f32>& columnDefinition)
