@@ -591,9 +591,9 @@ void RetroFuturaGUI::FileExplorer::styleCheckBox(CheckBox& checkBox, const f32 s
     checkBox.SetBackgroundColors(backgroundColors, ColorState::Enabled);
     checkBox.SetBackgroundColors(backgroundHoverColors, ColorState::Hover);
     checkBox.SetBackgroundColors(backgroundColors, ColorState::Clicked);
-    checkBox.SetInherietColors(checkedColors, ColorState::Enabled);
-    checkBox.SetInherietColors(checkedHoverColors, ColorState::Hover);
-    checkBox.SetInherietColors(checkedClickedColors, ColorState::Clicked);
+    checkBox.SetInheritColors(checkedColors, ColorState::Enabled);
+    checkBox.SetInheritColors(checkedHoverColors, ColorState::Hover);
+    checkBox.SetInheritColors(checkedClickedColors, ColorState::Clicked);
     checkBox.SetCheckmarkColors(checkmarkColors, ColorState::Enabled);
     checkBox.SetCheckmarkColors(checkmarkColors, ColorState::Hover);
     checkBox.SetCheckmarkColors(checkmarkColors, ColorState::Clicked);

@@ -22,7 +22,7 @@ namespace RetroFuturaGUI
         auto operator =(const CheckBox&) = delete;
         auto operator =(CheckBox&&) = delete;
 
-        /// @brief Draws the button, including its Inheriet, border and label text.
+        /// @brief Draws the button, including its Inherit, border and label text.
         void Draw() override;
 
         /// @brief Sets the size of the button.
@@ -38,23 +38,23 @@ namespace RetroFuturaGUI
         bool GetValue() const;
         void SetCheckmarkColors(std::span<glm::vec4> colors, const ColorState state);
         
-        /// @brief Sets the corner rounding radii of the CheckBox' background, inheriet field and border.
+        /// @brief Sets the corner rounding radii of the CheckBox' background, inherit field and border.
         void SetCornerRadii(const glm::vec4& radii);
 
-        /// @brief Sets multiple inheriet state fill colors (e.g. gradient stops) for the given color state.
-        void SetInherietColors(std::span<glm::vec4> colors, const ColorState state);
+        /// @brief Sets multiple inherit state fill colors (e.g. gradient stops) for the given color state.
+        void SetInheritColors(std::span<glm::vec4> colors, const ColorState state);
 
-        /// @brief Sets the offset applied to the inheriet state fill gradient's start position.
-        void SetInherietGradientOffset(const f32 gradientOffset);
+        /// @brief Sets the offset applied to the inherit state fill gradient's start position.
+        void SetInheritGradientOffset(const f32 gradientOffset);
 
-        /// @brief Sets the speed at which the inheriet state fill gradient animates over time.
-        void SetInherietGradientAnimationSpeed(const f32 animationSpeed);
+        /// @brief Sets the speed at which the inherit state fill gradient animates over time.
+        void SetInheritGradientAnimationSpeed(const f32 animationSpeed);
 
-        /// @brief Sets the angle of the inheriet state fill's linear gradient, in degrees.
-        void SetInherietGradientDegree(const f32 degree);
+        /// @brief Sets the angle of the inherit state fill's linear gradient, in degrees.
+        void SetInheritGradientDegree(const f32 degree);
 
-        /// @brief Sets the speed at which the inheriet state fill gradient rotates over time.
-        void SetInherietGradientRotationSpeed(const f32 rotationSpeed);
+        /// @brief Sets the speed at which the inherit state fill gradient rotates over time.
+        void SetInheritGradientRotationSpeed(const f32 rotationSpeed);
 
         /// @brief Sets whether the CheckBox mirrors the bool given to SetInheritValueReference instead of keeping a value of its own.
         void EnableInheritedValue(const bool enable);
@@ -66,29 +66,29 @@ namespace RetroFuturaGUI
     private:
         void setColors(const ColorState state) override;
         void setCheckmarkColors();
-        void setInherietFillColors();
+        void setInheritFillColors();
         void interact();
 
-        std::unique_ptr<Rectangle> _inherietFill { nullptr };
+        std::unique_ptr<Rectangle> _inheritFill { nullptr };
         std::shared_ptr<SvgTexture> _checkmark { nullptr };
-        bool* _inherietValue { nullptr };
+        bool* _inheritValue { nullptr };
         bool
-            _useInherietValue { false },
+            _useInheritValue { false },
             _isChecked { false };
         f32 _innerPadding { 2.0f };
         glm::vec2 _checkmarkSize { 0.0f };
         ColorState
             _checkmarkColorState { ColorState::Enabled },
-            _inherietFillColorState { ColorState::Enabled };
+            _inheritFillColorState { ColorState::Enabled };
         std::vector<glm::vec4>
             _checkmarkColorsEnabled { { 0.7f, 0.7f, 0.7f, 1.0f } },
             _checkmarkColorsDisabled { { 0.3f, 0.3f, 0.3f, 1.0f } },
             _checkmarkColorsHover { { 0.85f, 0.85f, 0.85f, 1.0f } },
             _checkmarkColorsClicked { { 1.0f, 1.0f, 1.0f, 1.0f } },
-            _inherietFillColorsEnabled { { 0.25f, 0.25f, 0.8f, 1.0f } },
-            _inherietFillColorsDisabled { { 0.1f, 0.1f, 0.45f, 1.0f } },
-            _inherietFillColorsHover { { 0.3f, 0.3f, 0.9f, 1.0f } },
-            _inherietFillColorsClicked { { 0.4f, 0.4f, 1.0f, 1.0f } };
+            _inheritFillColorsEnabled { { 0.25f, 0.25f, 0.8f, 1.0f } },
+            _inheritFillColorsDisabled { { 0.1f, 0.1f, 0.45f, 1.0f } },
+            _inheritFillColorsHover { { 0.3f, 0.3f, 0.9f, 1.0f } },
+            _inheritFillColorsClicked { { 0.4f, 0.4f, 1.0f, 1.0f } };
         SvgPathFill _checkmarkPathFill
         {
             SvgPathFill

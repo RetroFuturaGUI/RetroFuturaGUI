@@ -24,7 +24,7 @@ namespace RetroFuturaGUI
         auto operator =(const RadioButton&) = delete;
         auto operator =(RadioButton&&) = delete;
 
-        /// @brief Draws the button, including its Inheriet, border and label text.
+        /// @brief Draws the button, including its Inherit, border and label text.
         void Draw() override;
 
         /// @brief Sets the size of the button.
