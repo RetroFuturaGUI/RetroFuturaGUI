@@ -40,7 +40,7 @@ RetroFuturaGUI::Shader::Shader(const char* vertexPath, const char* fragmentPath,
 
     //glUseProgram(_programId);
     // -1 for shaders that don't project anything - YuvToRgb, for one, renders into a texture, not onto the screen
-    _projectionLocation = glGetUniformLocation(_programId, "uProjection");
+    _projectionLocation = getUniformLocation("uProjection");
 }
 
 RetroFuturaGUI::Shader::~Shader()
@@ -53,84 +53,84 @@ void RetroFuturaGUI::Shader::UseProgram()
     glUseProgram(_programId);
 }
 
-void RetroFuturaGUI::Shader::SetUniformBool(const std::string& name, bool value) const
+void RetroFuturaGUI::Shader::SetUniformBool(std::string_view name, bool value) const
 {
-    glUniform1i(glGetUniformLocation(_programId, name.c_str()), (int)value);
+    glUniform1i(getUniformLocation(name), (int)value);
 }
 
-void RetroFuturaGUI::Shader::SetUniformInt(const std::string& name, int value) const
+void RetroFuturaGUI::Shader::SetUniformInt(std::string_view name, int value) const
 {
-    glUniform1i(glGetUniformLocation(_programId, name.c_str()), value);
+    glUniform1i(getUniformLocation(name), value);
 }
 
-void RetroFuturaGUI::Shader::SetUniformFloat(const std::string& name, float value) const
+void RetroFuturaGUI::Shader::SetUniformFloat(std::string_view name, float value) const
 {
-    glUniform1f(glGetUniformLocation(_programId, name.c_str()), value);
+    glUniform1f(getUniformLocation(name), value);
 }
 
-void RetroFuturaGUI::Shader::SetUniformFloat(const std::string& name, const f32* values, const u32 count) const
+void RetroFuturaGUI::Shader::SetUniformFloat(std::string_view name, const f32* values, const u32 count) const
 {
-    glUniform1fv(glGetUniformLocation(_programId, name.c_str()), count, values);
+    glUniform1fv(getUniformLocation(name), count, values);
 }
 
-void RetroFuturaGUI::Shader::SetUniformVec2(const std::string& name, const glm::vec2& value) const
+void RetroFuturaGUI::Shader::SetUniformVec2(std::string_view name, const glm::vec2& value) const
 {
-    glUniform2fv(glGetUniformLocation(_programId, name.c_str()), 1, &value[0]);
+    glUniform2fv(getUniformLocation(name), 1, &value[0]);
 }
 
-void RetroFuturaGUI::Shader::SetUniformVec2(const std::string & name, const f32 * value, const u32 count) const
+void RetroFuturaGUI::Shader::SetUniformVec2(std::string_view name, const f32 * value, const u32 count) const
 {
-    glUniform2fv(glGetUniformLocation(_programId, name.c_str()), count, value);
+    glUniform2fv(getUniformLocation(name), count, value);
 }
 
-void RetroFuturaGUI::Shader::SetUniformVec2(const std::string& name, float x, float y) const
+void RetroFuturaGUI::Shader::SetUniformVec2(std::string_view name, float x, float y) const
 {
-    glUniform2f(glGetUniformLocation(_programId, name.c_str()), x, y);
+    glUniform2f(getUniformLocation(name), x, y);
 }
 
-void RetroFuturaGUI::Shader::SetUniformVec3(const std::string& name, const glm::vec3& value) const
+void RetroFuturaGUI::Shader::SetUniformVec3(std::string_view name, const glm::vec3& value) const
 {
-    glUniform3fv(glGetUniformLocation(_programId, name.c_str()), 1, &value[0]);
+    glUniform3fv(getUniformLocation(name), 1, &value[0]);
 }
 
-void RetroFuturaGUI::Shader::SetUniformVec3(const std::string & name, const f32 * value, const u32 count) const
+void RetroFuturaGUI::Shader::SetUniformVec3(std::string_view name, const f32 * value, const u32 count) const
 {
-    glUniform3fv(glGetUniformLocation(_programId, name.c_str()), count, value);
+    glUniform3fv(getUniformLocation(name), count, value);
 }
 
-void RetroFuturaGUI::Shader::SetUniformVec3(const std::string& name, float x, float y, float z) const
+void RetroFuturaGUI::Shader::SetUniformVec3(std::string_view name, float x, float y, float z) const
 {
-    glUniform3f(glGetUniformLocation(_programId, name.c_str()), x, y, z);
+    glUniform3f(getUniformLocation(name), x, y, z);
 }
 
-void RetroFuturaGUI::Shader::SetUniformVec4(const std::string& name, const glm::vec4& value) const
+void RetroFuturaGUI::Shader::SetUniformVec4(std::string_view name, const glm::vec4& value) const
 {
-    glUniform4fv(glGetUniformLocation(_programId, name.c_str()), 1, &value[0]);
+    glUniform4fv(getUniformLocation(name), 1, &value[0]);
 }
 
-void RetroFuturaGUI::Shader::SetUniformVec4(const std::string& name, const float* value, const u32 count) const
+void RetroFuturaGUI::Shader::SetUniformVec4(std::string_view name, const float* value, const u32 count) const
 {
-    glUniform4fv(glGetUniformLocation(_programId, name.c_str()), count, value);
+    glUniform4fv(getUniformLocation(name), count, value);
 }
 
-void RetroFuturaGUI::Shader::SetUniformVec4(const std::string& name, float x, float y, float z, float w) const
+void RetroFuturaGUI::Shader::SetUniformVec4(std::string_view name, float x, float y, float z, float w) const
 {
-    glUniform4f(glGetUniformLocation(_programId, name.c_str()), x, y, z, w);
+    glUniform4f(getUniformLocation(name), x, y, z, w);
 }
 
-void RetroFuturaGUI::Shader::SetUniformMat2(const std::string& name, const glm::mat2& mat) const
+void RetroFuturaGUI::Shader::SetUniformMat2(std::string_view name, const glm::mat2& mat) const
 {
-    glUniformMatrix2fv(glGetUniformLocation(_programId, name.c_str()), 1, GL_FALSE, &mat[0][0]);
+    glUniformMatrix2fv(getUniformLocation(name), 1, GL_FALSE, &mat[0][0]);
 }
 
-void RetroFuturaGUI::Shader::SetUniformMat3(const std::string& name, const glm::mat3& mat) const
+void RetroFuturaGUI::Shader::SetUniformMat3(std::string_view name, const glm::mat3& mat) const
 {
-    glUniformMatrix3fv(glGetUniformLocation(_programId, name.c_str()), 1, GL_FALSE, &mat[0][0]);
+    glUniformMatrix3fv(getUniformLocation(name), 1, GL_FALSE, &mat[0][0]);
 }
 
-void RetroFuturaGUI::Shader::SetUniformMat4(const std::string& name, const glm::mat4& mat) const
+void RetroFuturaGUI::Shader::SetUniformMat4(std::string_view name, const glm::mat4& mat) const
 {
-    glUniformMatrix4fv(glGetUniformLocation(_programId, name.c_str()), 1, GL_FALSE, &mat[0][0]);
+    glUniformMatrix4fv(getUniformLocation(name), 1, GL_FALSE, &mat[0][0]);
 }
 
 u32 RetroFuturaGUI::Shader::GetProgramId() const
@@ -207,4 +207,17 @@ u32 RetroFuturaGUI::Shader::compileShader(const char* shaderCode, const int shad
 
     glAttachShader(_programId, shaderObject);
     return shaderObject;
+}
+
+i32 RetroFuturaGUI::Shader::getUniformLocation(std::string_view name) const
+{
+    const auto found { _uniformLocations.find(name) };
+
+    if(_uniformLocations.end() != found)
+        return found->second;
+
+    std::string key { name }; //GL wants a terminated string, and the map keeps it
+    const i32 location { glGetUniformLocation(_programId, key.c_str()) };
+    _uniformLocations.emplace(std::move(key), location);
+    return location;
 }
