@@ -133,13 +133,13 @@ namespace RetroFuturaGUI
 
     protected:
         /// @brief Clamps the value into the new range and emits OnValueChanged if that moved it.
-        void alignValueToRange() override;
+        void alignValueToRange() final override;
 
         /// @brief Converts the value and the step from previousType to the new type. A fractional step becomes 0 as an integer type, so StepValue then stays put until SetStepSize.
-        void convertValuesToType(const PrimitiveTypeID previousType) override;
+        void convertValuesToType(const PrimitiveTypeID previousType) final override;
 
         /// @brief Places the indicator and graph at the value.
-        void alignElementsToTrack() override;
+        void alignElementsToTrack() final override;
 
         /// @brief Sets the value to where mousePos falls along the track - the inverse of how the indicator is placed.
         void setValueFromMousePosition(const glm::vec2& mousePos);

@@ -62,10 +62,10 @@ namespace RetroFuturaGUI
         glm::vec3 GetRotation() const;
 
         /// @brief Returns the widget's name.
-        const std::string& GetName() const override;
+        const std::string& GetName() const final override;
 
         /// @brief Returns the widget this one is parented to, or nullptr when it hangs directly off a window.
-        const IHierarchyNode* GetParent() const override;
+        const IHierarchyNode* GetParent() const final override;
 
         /// @brief Sets the widget's name.
         void SetName(std::string_view name);

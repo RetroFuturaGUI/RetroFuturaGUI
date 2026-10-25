@@ -13,7 +13,7 @@ namespace RetroFuturaGUI
     {
     public:
         /// @brief Draws the text box, including its background, border, text, caret and selection highlight.
-        void Draw() override;
+        void Draw() final override;
 
         /// @brief Sets the corner rounding radii of the text box's background and border.
         void SetCornerRadii(const glm::vec4& radii);
@@ -23,20 +23,20 @@ namespace RetroFuturaGUI
 
     //Geometry
         /// @brief Sets the size of the text box.
-        void SetSize(const glm::vec3& size) override;
+        void SetSize(const glm::vec3& size) final override;
 
         /// @brief Sets the world position of the text box.
-        void SetPosition(const glm::vec3& position) override;
+        void SetPosition(const glm::vec3& position) final override;
 
         /// @brief Sets the rotation of the text box.
-        void SetRotation(const glm::vec3& rotation) override;
+        void SetRotation(const glm::vec3& rotation) final override;
 
     protected:
         /// @brief Creates the box, text, placeholder, caret and selection. Protected: only TextBox and MultilineTextBox create one, and set their own widget type.
         ITextBox(std::string_view name, Projection* projection, IHierarchyNode* parentWidget, const WidgetTypeID parentWidgetTypeID, GLFWwindow* parentWindow);
 
         void interact();
-        void setColors(const ColorState state) override;
+        void setColors(const ColorState state) final override;
         TextArea textArea() const override final;
     };
 }

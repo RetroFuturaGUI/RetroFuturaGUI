@@ -26,13 +26,13 @@ namespace RetroFuturaGUI
         const std::string& GetPlaceholderText() const;
 
         /// @brief Sets the font family, size and style used to render the text and placeholder text, loading it if necessary.
-        void SetFontFamily(std::string_view fontFamily, const f32 fontSize, const PlatformBridge::Fonts::Slant slant, const PlatformBridge::Fonts::Weight fontWeight) override;
+        void SetFontFamily(std::string_view fontFamily, const f32 fontSize, const PlatformBridge::Fonts::Slant slant, const PlatformBridge::Fonts::Weight fontWeight) final override;
 
         /// @brief Sets the horizontal alignment of the text and placeholder text.
-        void SetTextAlignment(const TextAlignment alignment) override;
+        void SetTextAlignment(const TextAlignment alignment) final override;
 
         /// @brief Sets the padding applied around the text and placeholder text.
-        void SetTextPadding(const f32 padding) override;
+        void SetTextPadding(const f32 padding) final override;
 
     protected:
     //ITextInteraction hooks: this widget edits the single Text it owns. ITextEditVisuals draws its caret and selection.

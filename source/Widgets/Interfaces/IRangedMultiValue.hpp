@@ -49,17 +49,17 @@ namespace RetroFuturaGUI
 
     protected:
         /// @brief Nothing to clamp: the values belong to the caller and are mapped into the range when drawn.
-        void alignValueToRange() override;
+        void alignValueToRange() final override;
 
         /// @brief Nothing to place yet: multi-value widgets place the indicator and graph per value when they draw.
         void alignElementsToTrack() override;
 
         /// @brief Nothing to convert: the data belongs to the caller and brings its own type.
-        void convertValuesToType(const PrimitiveTypeID previousType) override;
+        void convertValuesToType(const PrimitiveTypeID previousType) final override;
 
         /// @brief The data's type once any set holds values - the buffers can't change type, so a bound set in another type is converted to the data's instead.
         /// Without data, requestedType; the next SetData then converts the range to the data's type.
-        PrimitiveTypeID resolveValueType(const PrimitiveTypeID requestedType) const override;
+        PrimitiveTypeID resolveValueType(const PrimitiveTypeID requestedType) const final override;
 
         /// @return false when another set holds values of a different type, in which case nothing is changed. See SetData.
         bool setData(const uSize nthSet, const void* data, const uSize count, const PrimitiveTypeID type);
