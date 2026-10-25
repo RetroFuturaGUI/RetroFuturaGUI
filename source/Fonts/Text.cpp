@@ -168,7 +168,7 @@ void RetroFuturaGUI::Text::SetTextUTF8(std::string_view text)
 {
     _text = text;
     calculateTextSpan();
-    SetTextAlignment(_textAlignment);
+    alignPosition();
     updateMesh();
 }
 
@@ -176,7 +176,7 @@ void RetroFuturaGUI::Text::SetTextUTF32(std::u32string_view text)
 {
     _text = text;
     calculateTextSpan();
-    SetTextAlignment(_textAlignment);
+    alignPosition();
     updateMesh();
 }
 
