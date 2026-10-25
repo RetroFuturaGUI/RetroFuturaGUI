@@ -33,7 +33,7 @@ list(APPEND RetroFuturaGuiSources
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Fonts/Text.cpp"
 
     "${CMAKE_CURRENT_SOURCE_DIR}/source/MediaPlayback/AudioDecodeThread.cpp"
-    "${CMAKE_CURRENT_SOURCE_DIR}/source/MediaPlayback/AudioMetadata.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/source/MediaPlayback/AudioMetadataReader.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/MediaPlayback/AudioPlayback.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/MediaPlayback/AudioSpectrum.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/MediaPlayback/AudioStream.cpp"

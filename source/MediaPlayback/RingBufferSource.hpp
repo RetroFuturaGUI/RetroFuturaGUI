@@ -40,6 +40,14 @@ namespace RetroFuturaGUI
         static ma_result onGetDataFormat(ma_data_source* dataSource, ma_format* format, ma_uint32* channels, ma_uint32* sampleRate, ma_channel* channelMap, size_t channelMapCap);
         static ma_result onGetCursor(ma_data_source* dataSource, ma_uint64* cursor);
 
+        template<typename T> static void setIfRequested(T* out, const T value)
+        {
+            if(!out)
+                return;
+
+            *out = value;
+        }
+
         ma_data_source_base _base {};
         AudioDecodeThread* _decodeThread { nullptr };
         std::atomic<uSize> _readFramesCount { 0 };

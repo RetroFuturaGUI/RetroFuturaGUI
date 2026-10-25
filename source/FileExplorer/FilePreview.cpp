@@ -1,5 +1,5 @@
 #include "FilePreview.hpp"
-#include "AudioMetadata.hpp"
+#include "AudioMetadataReader.hpp"
 #include "Image.hpp"
 #include "Label.hpp"
 #include "Table.hpp"
@@ -193,7 +193,7 @@ RetroFuturaGUI::FileExplorer::FilePreview::Loaded RetroFuturaGUI::FileExplorer::
         break;
         case Kind::Audio:
         {
-            const std::optional<AudioMetadata> audio { ReadAudioMetadata(path) };
+            const std::optional<AudioMetadata> audio { AudioMetadataReader::Read(path) };
 
             if(!audio)
             {

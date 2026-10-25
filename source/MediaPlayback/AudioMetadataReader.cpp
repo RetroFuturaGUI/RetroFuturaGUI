@@ -1,4 +1,4 @@
-#include "AudioMetadata.hpp"
+#include "AudioMetadataReader.hpp"
 #include "MediaSource.hpp"
 #include <algorithm>
 #include <array>
@@ -16,8 +16,7 @@ extern "C"
     #include <libavutil/intreadwrite.h>
 }
 
-// FFmpeg returns null for names it doesn't know
-static std::string toString(const char* text)
+std::string RetroFuturaGUI::AudioMetadataReader::toString(const char* text)
 {
     if(!text)
         return {};
@@ -25,7 +24,7 @@ static std::string toString(const char* text)
     return text;
 }
 
-static std::string toHex(const u8* bytes, const size_t count)
+std::string RetroFuturaGUI::AudioMetadataReader::toHex(const u8* bytes, const size_t count)
 {
     if(!bytes)
         return {};
@@ -38,7 +37,7 @@ static std::string toHex(const u8* bytes, const size_t count)
     return hex;
 }
 
-static std::optional<u64> parseUnsigned(const std::string& text)
+std::optional<u64> RetroFuturaGUI::AudioMetadataReader::parseUnsigned(const std::string& text)
 {
     u64 value { 0 };
     const auto [end, error] = std::from_chars(text.data(), text.data() + text.size(), value);
@@ -49,8 +48,7 @@ static std::optional<u64> parseUnsigned(const std::string& text)
     return value;
 }
 
-// Splits a run of space-separated hexadecimal numbers, stopping at the first that doesn't parse
-static std::vector<u64> parseHexFields(const std::string& text)
+std::vector<u64> RetroFuturaGUI::AudioMetadataReader::parseHexFields(const std::string& text)
 {
     std::vector<u64> fields;
     const char* position = text.data();
@@ -77,7 +75,7 @@ static std::vector<u64> parseHexFields(const std::string& text)
     return fields;
 }
 
-static f64 toSeconds(const u64 samples, const u32 sampleRate)
+f64 RetroFuturaGUI::AudioMetadataReader::toSeconds(const u64 samples, const u32 sampleRate)
 {
     if(sampleRate == 0)
         return 0.0;
@@ -85,7 +83,7 @@ static f64 toSeconds(const u64 samples, const u32 sampleRate)
     return static_cast<f64>(samples) / sampleRate;
 }
 
-static std::string describeLayout(const AVChannelLayout& layout)
+std::string RetroFuturaGUI::AudioMetadataReader::describeLayout(const AVChannelLayout& layout)
 {
     std::array<char, 128> buffer {};
 
@@ -95,16 +93,14 @@ static std::string describeLayout(const AVChannelLayout& layout)
     return buffer.data();
 }
 
-// Opened through std::filesystem::path so a UTF-8 path reaches the wide Win32 file API intact,
-// whatever the process code page is
-static std::ifstream openFile(std::string_view path)
+std::ifstream RetroFuturaGUI::AudioMetadataReader::openFile(std::string_view path)
 {
     const std::u8string utf8(path.begin(), path.end());
 
     return std::ifstream(std::filesystem::path(utf8), std::ios::binary);
 }
 
-static u64 getFileSize(std::ifstream& file)
+u64 RetroFuturaGUI::AudioMetadataReader::getFileSize(std::ifstream& file)
 {
     file.clear();
     file.seekg(0, std::ios::end);
@@ -113,8 +109,7 @@ static u64 getFileSize(std::ifstream& file)
     return size > 0 ? static_cast<u64>(size) : 0;
 }
 
-// Returns fewer bytes than asked for when the file ends first
-static std::vector<u8> readBytes(std::ifstream& file, const u64 offset, const u64 count)
+std::vector<u8> RetroFuturaGUI::AudioMetadataReader::readBytes(std::ifstream& file, const u64 offset, const u64 count)
 {
     std::vector<u8> bytes(static_cast<size_t>(count));
 
@@ -126,7 +121,7 @@ static std::vector<u8> readBytes(std::ifstream& file, const u64 offset, const u6
     return bytes;
 }
 
-static std::string findTag(const AVDictionary* dictionary, const char* key)
+std::string RetroFuturaGUI::AudioMetadataReader::findTag(const AVDictionary* dictionary, const char* key)
 {
     // av_dict_get matches keys case-insensitively, so "title" also finds a Vorbis comment's "TITLE"
     const AVDictionaryEntry* entry = av_dict_get(dictionary, key, nullptr, 0);
@@ -137,9 +132,7 @@ static std::string findTag(const AVDictionary* dictionary, const char* key)
     return toString(entry->value);
 }
 
-// Tries each key in order, in the file's tags first and then the audio stream's - Ogg keeps its
-// comments on the stream, while most other formats keep them on the file
-static std::string findTag(const AVDictionary* fileTags, const AVDictionary* streamTags, const std::initializer_list<const char*> keys)
+std::string RetroFuturaGUI::AudioMetadataReader::findTag(const AVDictionary* fileTags, const AVDictionary* streamTags, const std::initializer_list<const char*> keys)
 {
     for(const char* key : keys)
     {
@@ -155,7 +148,7 @@ static std::string findTag(const AVDictionary* fileTags, const AVDictionary* str
     return {};
 }
 
-static void appendTags(const AVDictionary* dictionary, std::vector<std::pair<std::string, std::string>>& tags)
+void RetroFuturaGUI::AudioMetadataReader::appendTags(const AVDictionary* dictionary, std::vector<std::pair<std::string, std::string>>& tags)
 {
     for(const AVDictionaryEntry* entry = av_dict_iterate(dictionary, nullptr); entry; entry = av_dict_iterate(dictionary, entry))
     {
@@ -171,9 +164,7 @@ static void appendTags(const AVDictionary* dictionary, std::vector<std::pair<std
     }
 }
 
-// The loop-point convention of RPG Maker and many other engines, stored as ordinary tags. It turns
-// up in Ogg Vorbis mostly, but works the same way in Opus and FLAC.
-static std::optional<RetroFuturaGUI::AudioLoop> readLoopTags(const AVDictionary* fileTags, const AVDictionary* streamTags)
+std::optional<RetroFuturaGUI::AudioLoop> RetroFuturaGUI::AudioMetadataReader::readLoopTags(const AVDictionary* fileTags, const AVDictionary* streamTags)
 {
     const std::optional<u64> start = parseUnsigned(findTag(fileTags, streamTags, { "LOOPSTART", "LOOP_START" }));
 
@@ -193,7 +184,7 @@ static std::optional<RetroFuturaGUI::AudioLoop> readLoopTags(const AVDictionary*
     return RetroFuturaGUI::AudioLoop { ._StartSample = *start, ._EndSample = *end, ._Source = "LOOPSTART/LOOPEND tags" };
 }
 
-static std::vector<RetroFuturaGUI::AudioChapter> readChapters(const AVFormatContext* context)
+std::vector<RetroFuturaGUI::AudioChapter> RetroFuturaGUI::AudioMetadataReader::readChapters(const AVFormatContext* context)
 {
     std::vector<RetroFuturaGUI::AudioChapter> chapters;
 
@@ -218,11 +209,7 @@ static std::vector<RetroFuturaGUI::AudioChapter> readChapters(const AVFormatCont
     return chapters;
 }
 
-// FFmpeg exposes embedded cover art as an extra video stream holding a single picture
-// Some taggers leave a stray byte before the picture - an extra null after an ID3 picture's description, say - and FFmpeg
-// keeps it. Readers that follow the standard, Windows Explorer among them, then find no picture. This starts at the
-// picture's own JPEG or PNG signature within the first few bytes, so the cover still shows
-static size_t findPictureStart(const u8* data, const size_t size)
+size_t RetroFuturaGUI::AudioMetadataReader::findPictureStart(const u8* data, const size_t size)
 {
     constexpr size_t searchLimit { 16 };
     constexpr std::array<u8, 3> jpegSignature { 0xFF, 0xD8, 0xFF };
@@ -241,7 +228,7 @@ static size_t findPictureStart(const u8* data, const size_t size)
     return 0; // another format, kept as it is
 }
 
-static void readCoverArt(const AVFormatContext* context, RetroFuturaGUI::AudioMetadata& metadata)
+void RetroFuturaGUI::AudioMetadataReader::readCoverArt(const AVFormatContext* context, RetroFuturaGUI::AudioMetadata& metadata)
 {
     if(!context)
         return;
@@ -276,7 +263,7 @@ static void readCoverArt(const AVFormatContext* context, RetroFuturaGUI::AudioMe
     }
 }
 
-static bool hasVideoStream(const AVFormatContext* context)
+bool RetroFuturaGUI::AudioMetadataReader::hasVideoStream(const AVFormatContext* context)
 {
     if(!context)
         return false;
@@ -304,7 +291,7 @@ static bool hasVideoStream(const AVFormatContext* context)
     return false;
 }
 
-static RetroFuturaGUI::AudioFileFormat classify(const AVFormatContext* context, const AVCodecParameters* audio)
+RetroFuturaGUI::AudioFileFormat RetroFuturaGUI::AudioMetadataReader::classify(const AVFormatContext* context, const AVCodecParameters* audio)
 {
     using RetroFuturaGUI::AudioFileFormat;
 
@@ -328,7 +315,7 @@ static RetroFuturaGUI::AudioFileFormat classify(const AVFormatContext* context, 
     if(container == "mp3")
         return AudioFileFormat::Mp3;
 
-    // AHX goes through the ADX demuxer too; ReadAudioMetadata tells them apart by the encoding type
+    // AHX goes through the ADX demuxer too; Read tells them apart by the encoding type
     if(container == "adx")
         return AudioFileFormat::Adx;
 
@@ -350,9 +337,7 @@ static RetroFuturaGUI::AudioFileFormat classify(const AVFormatContext* context, 
     return AudioFileFormat::Unknown;
 }
 
-// Walks the RIFF chunk list for "smpl", which FFmpeg skips. It often sits after the audio data, so
-// the walk seeks from header to header instead of reading the file.
-static RetroFuturaGUI::WavMetadata readWavDetails(std::string_view path, const AVCodecParameters* audio)
+RetroFuturaGUI::WavMetadata RetroFuturaGUI::AudioMetadataReader::readWavDetails(std::string_view path, const AVCodecParameters* audio)
 {
     RetroFuturaGUI::WavMetadata details;
 
@@ -425,8 +410,7 @@ static RetroFuturaGUI::WavMetadata readWavDetails(std::string_view path, const A
     return details;
 }
 
-// The FLAC demuxer hands over the 34-byte STREAMINFO block as extradata
-static RetroFuturaGUI::FlacMetadata readFlacDetails(const AVCodecParameters* audio)
+RetroFuturaGUI::FlacMetadata RetroFuturaGUI::AudioMetadataReader::readFlacDetails(const AVCodecParameters* audio)
 {
     RetroFuturaGUI::FlacMetadata details;
 
@@ -450,9 +434,7 @@ static RetroFuturaGUI::FlacMetadata readFlacDetails(const AVCodecParameters* aud
     return details;
 }
 
-// FFmpeg reads the Xing and LAME headers for its own use but keeps what it learns private, so the
-// first frame is parsed again here
-static RetroFuturaGUI::Mp3Metadata readMp3Details(std::string_view path)
+RetroFuturaGUI::Mp3Metadata RetroFuturaGUI::AudioMetadataReader::readMp3Details(std::string_view path)
 {
     static constexpr std::array<std::string_view, 4> channelModes { "Stereo", "Joint Stereo", "Dual Channel", "Mono" };
 
@@ -559,9 +541,7 @@ static RetroFuturaGUI::Mp3Metadata readMp3Details(std::string_view path)
     return details;
 }
 
-// The Ogg demuxer packs all three Vorbis headers into extradata, Xiph-laced: a count byte (2), the
-// sizes of the first two headers as runs of bytes ending below 255, then the headers back to back
-static RetroFuturaGUI::OggVorbisMetadata readVorbisDetails(const AVCodecParameters* audio)
+RetroFuturaGUI::OggVorbisMetadata RetroFuturaGUI::AudioMetadataReader::readVorbisDetails(const AVCodecParameters* audio)
 {
     RetroFuturaGUI::OggVorbisMetadata details;
 
@@ -628,8 +608,7 @@ static RetroFuturaGUI::OggVorbisMetadata readVorbisDetails(const AVCodecParamete
     return details;
 }
 
-// Extradata is the OpusHead packet: magic, version, channels, pre-skip, input rate, gain, mapping family
-static RetroFuturaGUI::OpusMetadata readOpusDetails(const AVCodecParameters* audio)
+RetroFuturaGUI::OpusMetadata RetroFuturaGUI::AudioMetadataReader::readOpusDetails(const AVCodecParameters* audio)
 {
     RetroFuturaGUI::OpusMetadata details;
 
@@ -653,7 +632,7 @@ static RetroFuturaGUI::OpusMetadata readOpusDetails(const AVCodecParameters* aud
     return details;
 }
 
-static RetroFuturaGUI::M4aMetadata readM4aDetails(const AVDictionary* fileTags, const AVCodecParameters* audio)
+RetroFuturaGUI::M4aMetadata RetroFuturaGUI::AudioMetadataReader::readM4aDetails(const AVDictionary* fileTags, const AVCodecParameters* audio)
 {
     RetroFuturaGUI::M4aMetadata details;
 
@@ -666,10 +645,7 @@ static RetroFuturaGUI::M4aMetadata readM4aDetails(const AVDictionary* fileTags, 
     return details;
 }
 
-// The ADX demuxer hands over the whole header, up to and including the "(c)CRI" signature. FFmpeg
-// reads channels and sample rate from it and nothing else - loop points included. The loop block
-// offsets follow vgmstream, the reference for CRI formats.
-static RetroFuturaGUI::AdxMetadata readAdxDetails(const AVCodecParameters* audio)
+RetroFuturaGUI::AdxMetadata RetroFuturaGUI::AudioMetadataReader::readAdxDetails(const AVCodecParameters* audio)
 {
     RetroFuturaGUI::AdxMetadata details;
 
@@ -746,7 +722,7 @@ static RetroFuturaGUI::AdxMetadata readAdxDetails(const AVCodecParameters* audio
     return details;
 }
 
-static const AVStream* findAudioStream(const RetroFuturaGUI::MediaSource& source)
+const AVStream* RetroFuturaGUI::AudioMetadataReader::findAudioStream(const RetroFuturaGUI::MediaSource& source)
 {
     const AVStream* best = source.GetStream(source.FindBestStream(AVMEDIA_TYPE_AUDIO));
 
@@ -773,7 +749,7 @@ static const AVStream* findAudioStream(const RetroFuturaGUI::MediaSource& source
     return nullptr;
 }
 
-std::optional<RetroFuturaGUI::AudioMetadata> RetroFuturaGUI::ReadAudioMetadata(std::string_view path)
+std::optional<RetroFuturaGUI::AudioMetadata> RetroFuturaGUI::AudioMetadataReader::Read(std::string_view path)
 {
     MediaSource source;
 

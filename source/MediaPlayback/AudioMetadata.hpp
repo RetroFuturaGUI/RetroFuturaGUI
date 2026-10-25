@@ -216,9 +216,4 @@ namespace RetroFuturaGUI
         std::optional<AudioLoop> _Loop; // from wherever the format keeps its loop points
         std::variant<std::monostate, WavMetadata, FlacMetadata, Mp3Metadata, OggVorbisMetadata, OpusMetadata, M4aMetadata, AdxMetadata> _Details;
     };
-
-    /// @brief Reads what a file says about itself, without playing it. Returns nullopt if 
-    /// the file cannot be opened or it has no audio stream. Files whose codec isn't free read as well - check
-    /// _CodecIsFree before handing one to Decoder.
-    std::optional<AudioMetadata> ReadAudioMetadata(std::string_view path);
 }

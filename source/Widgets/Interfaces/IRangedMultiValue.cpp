@@ -5,30 +5,6 @@
 #include <string>
 #include <type_traits>
 
-namespace
-{
-    template<RetroFuturaGUI::NumericValueType T> std::string formatValue(const T value, const bool hexNumbers)
-    {
-        if constexpr (std::same_as<T, bool>)
-            return hexNumbers ? (value ? "0x1" : "0x0") : (value ? "true" : "false");
-        else if constexpr (std::is_floating_point_v<T>)
-        {
-            if(!hexNumbers)
-                return std::format("{}", value);
-
-            using Bits = std::conditional_t<sizeof(T) == sizeof(u32), u32, u64>;
-            return std::format("0x{:0{}X}", std::bit_cast<Bits>(value), sizeof(T) * 2);
-        }
-        else
-        {
-            if(!hexNumbers)
-                return std::format("{}", value);
-
-            return std::format("0x{:X}", static_cast<std::make_unsigned_t<T>>(value));
-        }
-    }
-}
-
 RetroFuturaGUI::IRangedMultiValue::IRangedMultiValue(std::string_view name, Projection* projection, IHierarchyNode* parentWidget, const WidgetTypeID parentWidgetTypeID, GLFWwindow* parentWindow)
     : IRangedValue(name, projection, parentWidget, parentWidgetTypeID, parentWindow)
 {

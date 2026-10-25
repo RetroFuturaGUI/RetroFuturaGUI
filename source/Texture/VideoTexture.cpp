@@ -8,150 +8,6 @@ extern "C"
     #include <libswscale/swscale.h>
 }
 
-// What the YuvToRgb shader needs for one picture
-struct ColorConversion
-{
-    glm::vec3 _Offset { 0.0f };
-    glm::vec3 _Scale { 1.0f };
-    glm::mat3 _Matrix { 1.0f };
-};
-
-// Kr and Kb are the red and blue weights of the colour space's luma; everything else follows from them
-static ColorConversion makeConversion(const f32 kr, const f32 kb, const bool fullRange)
-{
-    const f32 kg { 1.0f - kr - kb };
-    ColorConversion conversion;
-
-    // Limited range keeps Y within 16..235 and Cb/Cr within 16..240 - full range uses all of 0..255.
-    // The plane textures hand the codes over as code / 255, so offsets and scales are in that unit.
-    if(fullRange)
-    {
-        conversion._Offset = glm::vec3(0.0f, 128.0f / 255.0f, 128.0f / 255.0f);
-        conversion._Scale = glm::vec3(1.0f);
-    }
-    else
-    {
-        conversion._Offset = glm::vec3(16.0f / 255.0f, 128.0f / 255.0f, 128.0f / 255.0f);
-        conversion._Scale = glm::vec3(255.0f / 219.0f, 255.0f / 224.0f, 255.0f / 224.0f);
-    }
-
-    // one column each for what Y, Cb and Cr add to R, G and B
-    conversion._Matrix = glm::mat3(
-        glm::vec3(1.0f, 1.0f, 1.0f),
-        glm::vec3(0.0f, -2.0f * kb * (1.0f - kb) / kg, 2.0f * (1.0f - kb)),
-        glm::vec3(2.0f * (1.0f - kr), -2.0f * kr * (1.0f - kr) / kg, 0.0f));
-
-    return conversion;
-}
-
-static ColorConversion colorConversionFor(const AVFrame* frame)
-{
-    if(!frame)
-        return makeConversion(0.2126f, 0.0722f, false);
-
-    const bool fullRange { frame->color_range == AVCOL_RANGE_JPEG };
-
-    switch(frame->colorspace)
-    {
-        case AVCOL_SPC_BT709:
-            return makeConversion(0.2126f, 0.0722f, fullRange);
-
-        case AVCOL_SPC_BT470BG:
-        case AVCOL_SPC_SMPTE170M:
-            return makeConversion(0.299f, 0.114f, fullRange);
-
-        case AVCOL_SPC_BT2020_NCL:
-            return makeConversion(0.2627f, 0.0593f, fullRange);
-
-        default:
-            // untagged: by convention HD and up is BT.709, anything smaller BT.601
-            return 720 <= frame->height ? makeConversion(0.2126f, 0.0722f, fullRange) : makeConversion(0.299f, 0.114f, fullRange);
-    }
-}
-
-// The GL state the conversion pass changes. Update runs between the draws of other widgets, which
-// expect their state exactly as they left it - so it's saved before the pass and restored after.
-struct SavedGlState
-{
-    i32
-        _DrawFramebuffer { 0 },
-        _ReadFramebuffer { 0 },
-        _Program { 0 },
-        _VertexArray { 0 },
-        _ActiveTexture { 0 },
-        _UnpackRowLength { 0 },
-        _UnpackAlignment { 4 };
-    i32 _Viewport[4] {};
-    i32 _Textures[3] {};
-    GLboolean
-        _Blend { GL_FALSE },
-        _DepthTest { GL_FALSE },
-        _ScissorTest { GL_FALSE },
-        _CullFace { GL_FALSE };
-};
-
-static SavedGlState saveGlState()
-{
-    SavedGlState state;
-    glGetIntegerv(GL_DRAW_FRAMEBUFFER_BINDING, &state._DrawFramebuffer);
-    glGetIntegerv(GL_READ_FRAMEBUFFER_BINDING, &state._ReadFramebuffer);
-    glGetIntegerv(GL_CURRENT_PROGRAM, &state._Program);
-    glGetIntegerv(GL_VERTEX_ARRAY_BINDING, &state._VertexArray);
-    glGetIntegerv(GL_ACTIVE_TEXTURE, &state._ActiveTexture);
-    glGetIntegerv(GL_UNPACK_ROW_LENGTH, &state._UnpackRowLength);
-    glGetIntegerv(GL_UNPACK_ALIGNMENT, &state._UnpackAlignment);
-    glGetIntegerv(GL_VIEWPORT, state._Viewport);
-
-    for(u32 unit = 0; 3 > unit; ++unit)
-    {
-        glActiveTexture(GL_TEXTURE0 + unit);
-        glGetIntegerv(GL_TEXTURE_BINDING_2D, &state._Textures[unit]);
-    }
-
-    state._Blend = glIsEnabled(GL_BLEND);
-    state._DepthTest = glIsEnabled(GL_DEPTH_TEST);
-    state._ScissorTest = glIsEnabled(GL_SCISSOR_TEST);
-    state._CullFace = glIsEnabled(GL_CULL_FACE);
-    return state;
-}
-
-static void setEnabled(const GLenum capability, const GLboolean enabled)
-{
-    if(enabled)
-        glEnable(capability);
-    else
-        glDisable(capability);
-}
-
-static void restoreGlState(const SavedGlState& state)
-{
-    glBindFramebuffer(GL_DRAW_FRAMEBUFFER, static_cast<u32>(state._DrawFramebuffer));
-    glBindFramebuffer(GL_READ_FRAMEBUFFER, static_cast<u32>(state._ReadFramebuffer));
-    glUseProgram(static_cast<u32>(state._Program));
-    glBindVertexArray(static_cast<u32>(state._VertexArray));
-    glPixelStorei(GL_UNPACK_ROW_LENGTH, state._UnpackRowLength);
-    glPixelStorei(GL_UNPACK_ALIGNMENT, state._UnpackAlignment);
-    glViewport(state._Viewport[0], state._Viewport[1], state._Viewport[2], state._Viewport[3]);
-
-    for(u32 unit = 0; 3 > unit; ++unit)
-    {
-        glActiveTexture(GL_TEXTURE0 + unit);
-        glBindTexture(GL_TEXTURE_2D, static_cast<u32>(state._Textures[unit]));
-    }
-
-    glActiveTexture(static_cast<GLenum>(state._ActiveTexture));
-    setEnabled(GL_BLEND, state._Blend);
-    setEnabled(GL_DEPTH_TEST, state._DepthTest);
-    setEnabled(GL_SCISSOR_TEST, state._ScissorTest);
-    setEnabled(GL_CULL_FACE, state._CullFace);
-}
-
-// Width or height of a chroma plane in 4:2:0 - half, rounded up for odd sizes
-static i32 chromaSize(const i32 size)
-{
-    return (size + 1) / 2;
-}
-
 RetroFuturaGUI::VideoTexture::VideoTexture(Projection* projection)
     : ITexture(projection, true) // stored bottom row first, like a Texture loaded with flipVertically
 {
@@ -380,4 +236,117 @@ void RetroFuturaGUI::VideoTexture::convert(const AVFrame* frame)
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, _id);
     glGenerateMipmap(GL_TEXTURE_2D);
+}
+
+RetroFuturaGUI::VideoTexture::ColorConversion RetroFuturaGUI::VideoTexture::makeConversion(const f32 coefficientRed, const f32 coefficientBlue, const bool fullRange)
+{
+    const f32 coefficientGreen { 1.0f - coefficientRed - coefficientBlue };
+    ColorConversion conversion;
+
+    // Limited range keeps Y within 16..235 and Cb/Cr within 16..240 - full range uses all of 0..255.
+    // The plane textures hand the codes over as code / 255, so offsets and scales are in that unit.
+    if(fullRange)
+    {
+        conversion._Offset = glm::vec3(0.0f, 128.0f / 255.0f, 128.0f / 255.0f);
+        conversion._Scale = glm::vec3(1.0f);
+    }
+    else
+    {
+        conversion._Offset = glm::vec3(16.0f / 255.0f, 128.0f / 255.0f, 128.0f / 255.0f);
+        conversion._Scale = glm::vec3(255.0f / 219.0f, 255.0f / 224.0f, 255.0f / 224.0f);
+    }
+
+    // one column each for what Y, Cb and Cr add to R, G and B
+    conversion._Matrix = glm::mat3(
+        glm::vec3(1.0f, 1.0f, 1.0f),
+        glm::vec3(0.0f, -2.0f * coefficientBlue * (1.0f - coefficientBlue) / coefficientGreen, 2.0f * (1.0f - coefficientBlue)),
+        glm::vec3(2.0f * (1.0f - coefficientRed), -2.0f * coefficientRed * (1.0f - coefficientRed) / coefficientGreen, 0.0f));
+
+    return conversion;
+}
+
+RetroFuturaGUI::VideoTexture::ColorConversion RetroFuturaGUI::VideoTexture::colorConversionFor(const AVFrame* frame)
+{
+    if(!frame)
+        return makeConversion(0.2126f, 0.0722f, false);
+
+    const bool fullRange { frame->color_range == AVCOL_RANGE_JPEG };
+
+    switch(frame->colorspace)
+    {
+        case AVCOL_SPC_BT709:
+            return makeConversion(0.2126f, 0.0722f, fullRange);
+
+        case AVCOL_SPC_BT470BG:
+        case AVCOL_SPC_SMPTE170M:
+            return makeConversion(0.299f, 0.114f, fullRange);
+
+        case AVCOL_SPC_BT2020_NCL:
+            return makeConversion(0.2627f, 0.0593f, fullRange);
+
+        default:
+            // untagged: by convention HD and up is BT.709, anything smaller BT.601
+            return 720 <= frame->height ? makeConversion(0.2126f, 0.0722f, fullRange) : makeConversion(0.299f, 0.114f, fullRange);
+    }
+}
+
+RetroFuturaGUI::VideoTexture::SavedGlState RetroFuturaGUI::VideoTexture::saveGlState()
+{
+    SavedGlState state;
+    glGetIntegerv(GL_DRAW_FRAMEBUFFER_BINDING, &state._DrawFramebuffer);
+    glGetIntegerv(GL_READ_FRAMEBUFFER_BINDING, &state._ReadFramebuffer);
+    glGetIntegerv(GL_CURRENT_PROGRAM, &state._Program);
+    glGetIntegerv(GL_VERTEX_ARRAY_BINDING, &state._VertexArray);
+    glGetIntegerv(GL_ACTIVE_TEXTURE, &state._ActiveTexture);
+    glGetIntegerv(GL_UNPACK_ROW_LENGTH, &state._UnpackRowLength);
+    glGetIntegerv(GL_UNPACK_ALIGNMENT, &state._UnpackAlignment);
+    glGetIntegerv(GL_VIEWPORT, state._Viewport);
+
+    for(u32 unit = 0; 3 > unit; ++unit)
+    {
+        glActiveTexture(GL_TEXTURE0 + unit);
+        glGetIntegerv(GL_TEXTURE_BINDING_2D, &state._Textures[unit]);
+    }
+
+    state._Blend = glIsEnabled(GL_BLEND);
+    state._DepthTest = glIsEnabled(GL_DEPTH_TEST);
+    state._ScissorTest = glIsEnabled(GL_SCISSOR_TEST);
+    state._CullFace = glIsEnabled(GL_CULL_FACE);
+    return state;
+}
+
+void RetroFuturaGUI::VideoTexture::setEnabled(const GLenum capability, const GLboolean enabled)
+{
+    if(enabled)
+        glEnable(capability);
+    else
+        glDisable(capability);
+}
+
+void RetroFuturaGUI::VideoTexture::restoreGlState(const SavedGlState& state)
+{
+    glBindFramebuffer(GL_DRAW_FRAMEBUFFER, static_cast<u32>(state._DrawFramebuffer));
+    glBindFramebuffer(GL_READ_FRAMEBUFFER, static_cast<u32>(state._ReadFramebuffer));
+    glUseProgram(static_cast<u32>(state._Program));
+    glBindVertexArray(static_cast<u32>(state._VertexArray));
+    glPixelStorei(GL_UNPACK_ROW_LENGTH, state._UnpackRowLength);
+    glPixelStorei(GL_UNPACK_ALIGNMENT, state._UnpackAlignment);
+    glViewport(state._Viewport[0], state._Viewport[1], state._Viewport[2], state._Viewport[3]);
+
+    for(u32 unit = 0; 3 > unit; ++unit)
+    {
+        glActiveTexture(GL_TEXTURE0 + unit);
+        glBindTexture(GL_TEXTURE_2D, static_cast<u32>(state._Textures[unit]));
+    }
+
+    glActiveTexture(static_cast<GLenum>(state._ActiveTexture));
+    setEnabled(GL_BLEND, state._Blend);
+    setEnabled(GL_DEPTH_TEST, state._DepthTest);
+    setEnabled(GL_SCISSOR_TEST, state._ScissorTest);
+    setEnabled(GL_CULL_FACE, state._CullFace);
+}
+
+i32 RetroFuturaGUI::VideoTexture::chromaSize(const i32 size)
+{
+    return (size + 1) / 2;
 }

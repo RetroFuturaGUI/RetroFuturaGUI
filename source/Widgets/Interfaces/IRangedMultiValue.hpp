@@ -100,5 +100,26 @@ namespace RetroFuturaGUI
     private:
         /// @brief Whether a set other than nthSet holds values - those are read as _valueType, so the type can't change while one does.
         bool isOtherSetBound(const uSize nthSet) const;
+
+        template<RetroFuturaGUI::NumericValueType T> static std::string formatValue(const T value, const bool hexNumbers)
+        {
+            if constexpr (std::same_as<T, bool>)
+                return hexNumbers ? (value ? "0x1" : "0x0") : (value ? "true" : "false");
+            else if constexpr (std::is_floating_point_v<T>)
+            {
+                if(!hexNumbers)
+                    return std::format("{}", value);
+
+                using Bits = std::conditional_t<sizeof(T) == sizeof(u32), u32, u64>;
+                return std::format("0x{:0{}X}", std::bit_cast<Bits>(value), sizeof(T) * 2);
+            }
+            else
+            {
+                if(!hexNumbers)
+                    return std::format("{}", value);
+
+                return std::format("0x{:X}", static_cast<std::make_unsigned_t<T>>(value));
+            }
+        }
     };
 }

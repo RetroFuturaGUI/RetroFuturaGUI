@@ -5,15 +5,6 @@
 
 static_assert(std::is_standard_layout_v<RetroFuturaGUI::RingBufferSource>);
 
-template<typename T>
-static void setIfRequested(T* out, const T value)
-{
-    if(!out)
-        return;
-
-    *out = value;
-}
-
 RetroFuturaGUI::RingBufferSource::~RingBufferSource()
 {
     Close();

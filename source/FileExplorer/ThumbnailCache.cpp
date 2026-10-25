@@ -1,5 +1,5 @@
 #include "ThumbnailCache.hpp"
-#include "AudioMetadata.hpp"
+#include "AudioMetadataReader.hpp"
 #include "PlatformBridge.hpp"
 #include "Table.hpp"
 #include "VideoMetadata.hpp"
@@ -79,7 +79,7 @@ RetroFuturaGUI::FileExplorer::ThumbnailCache::Decoded RetroFuturaGUI::FileExplor
         break;
         case FileKind::Audio:
         {
-            const std::optional<AudioMetadata> audio { ReadAudioMetadata(path) };
+            const std::optional<AudioMetadata> audio { AudioMetadataReader::Read(path) };
 
             if(!audio || audio->_CoverArt.empty())
                 break; //no cover art. the icon shows

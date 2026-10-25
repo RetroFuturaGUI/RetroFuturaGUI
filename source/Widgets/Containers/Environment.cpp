@@ -5,28 +5,6 @@
 #include <print>
 #include <utility>
 
-namespace
-{
-    /// @brief Splits a rotation into the X, Y and Z angles, in degrees, that every widget composes as Rz * Ry * Rx (see Model::SetRotation).
-    glm::vec3 toEulerDegrees(const glm::quat& rotation)
-    {
-        // glm matrices are column-major, so matrix[column][row].
-        const glm::mat3 matrix { glm::mat3_cast(rotation) };
-
-        // Z comes out first, then X is solved with that Z already taken out. Near Y = +-90 degrees X and Z turn about the
-        // same axis, so Z is only loosely defined there - but X absorbs whatever Z was found, and the three angles still
-        // rebuild the same rotation. Snapping Z to 0 near the lock instead visibly tilts widgets within a degree of it.
-        const f32
-            angleZ { std::atan2(matrix[0][1], matrix[0][0]) },
-            angleY { std::atan2(-matrix[0][2], std::hypot(matrix[0][0], matrix[0][1])) },
-            sinZ { std::sin(angleZ) },
-            cosZ { std::cos(angleZ) },
-            angleX { std::atan2(sinZ * matrix[2][0] - cosZ * matrix[2][1], cosZ * matrix[1][1] - sinZ * matrix[1][0]) };
-
-        return glm::degrees(glm::vec3(angleX, angleY, angleZ));
-    }
-}
-
 RetroFuturaGUI::Environment::Environment(const std::string& name, Projection* projection, IHierarchyNode* parentWidget, const WidgetTypeID parentWidgetTypeID, GLFWwindow* parentWindow)
     : IWidget(name, projection, parentWidget, parentWidgetTypeID, parentWindow)
 {
@@ -319,4 +297,22 @@ void RetroFuturaGUI::Environment::popScissor(const ScissorState& state)
         glScissor(state._Previous[0], state._Previous[1], state._Previous[2], state._Previous[3]);
     else
         glDisable(GL_SCISSOR_TEST);
+}
+
+glm::vec3 RetroFuturaGUI::Environment::toEulerDegrees(const glm::quat& rotation)
+{
+    // glm matrices are column-major (matrix[column][row])
+    const glm::mat3 matrix { glm::mat3_cast(rotation) };
+
+    // Z comes out first, then X is solved with that Z already taken out. Near Y = +-90 degrees X and Z turn about the
+    // same axis, so Z is only loosely defined there - but X absorbs whatever Z was found, and the three angles still
+    // rebuild the same rotation. Snapping Z to 0 near the lock instead visibly tilts widgets within a degree of it.
+    const f32
+        angleZ { std::atan2(matrix[0][1], matrix[0][0]) },
+        angleY { std::atan2(-matrix[0][2], std::hypot(matrix[0][0], matrix[0][1])) },
+        sinZ { std::sin(angleZ) },
+        cosZ { std::cos(angleZ) },
+        angleX { std::atan2(sinZ * matrix[2][0] - cosZ * matrix[2][1], cosZ * matrix[1][1] - sinZ * matrix[1][0]) };
+
+    return glm::degrees(glm::vec3(angleX, angleY, angleZ));
 }
