@@ -17,16 +17,20 @@ RetroFuturaGUI::RadioButtonGroup::RadioButtonGroup(const std::string& name, Proj
     _border = std::make_unique<Rectangle>(projection);
     _text = std::make_unique<Text>(projection);
 
-    if (_border)
-        _border->SetRectangleMode(RectangleMode::Border);
+    if(!_border)
+        return;
+
+    _border->SetRectangleMode(RectangleMode::Border);
 }
 
 void RetroFuturaGUI::RadioButtonGroup::Draw()
 {
+    if(!_text)
+        return;
+
     drawBorder();
 
-    if(_text)
-        _text->Draw();
+    _text->Draw();
 
     for(const auto& row : _grid)
         for(const auto& column: row)
@@ -61,13 +65,16 @@ void RetroFuturaGUI::RadioButtonGroup::SetPosition(const glm::vec3& position)
 
 void RetroFuturaGUI::RadioButtonGroup::SetRotation(const glm::vec3& rotation)
 {
+    if(!_border)
+        return;
+
+    if(!_text)
+        return;
+
     IWidget::SetRotation(rotation);
 
-    if(_border)
-        _border->SetRotation(rotation);
-
-    if(_text)
-        _text->SetRotation(rotation);
+    _border->SetRotation(rotation);
+    _text->SetRotation(rotation);
 }
 
 void RetroFuturaGUI::RadioButtonGroup::DeselectOthers(RadioButton* activeRadioButton)

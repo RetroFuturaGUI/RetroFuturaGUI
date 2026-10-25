@@ -383,6 +383,9 @@ namespace RetroFuturaGUI
         /// @brief Draws the border over the scenes, when it has a width.
         void drawFrame();
 
+        /// @brief Draws the root Lasagna, when the window has one.
+        void drawLasagna();
+
     //Docking
         /// @brief The list of windows docked to the given edge.
         std::list<Window*>& dockedWindows(const DockEdge edge);

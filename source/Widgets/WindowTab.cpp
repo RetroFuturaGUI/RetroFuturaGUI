@@ -18,23 +18,29 @@ RetroFuturaGUI::WindowTab::WindowTab(std::string_view name, Projection* projecti
     _closeIcon = std::make_unique<SvgTexture>(getCloseIconPath(), true, projection, glm::i32vec2(32));
     _previewTitle = std::make_unique<Text>(projection);
 
-    if(_background)
-        _background->SetRectangleMode(RectangleMode::Plane);
+    if(!_background)
+        return;
 
-    if(_border)
-    {
-        _border->SetRectangleMode(RectangleMode::Border);
-        _border->SetBorderWidth(0.0f); //no frame until one is asked for, since a Rectangle starts with a 5 px border
-    }
+    if(!_border)
+        return;
 
-    if(_fieldBackground)
-        _fieldBackground->SetRectangleMode(RectangleMode::Plane);
+    if(!_fieldBackground)
+        return;
 
-    if(_fieldBorder)
-        _fieldBorder->SetRectangleMode(RectangleMode::Border);
+    if(!_fieldBorder)
+        return;
 
-    if(_closeBackground)
-        _closeBackground->SetRectangleMode(RectangleMode::Plane);
+    if(!_closeBackground)
+        return;
+
+    _background->SetRectangleMode(RectangleMode::Plane);
+
+    _border->SetRectangleMode(RectangleMode::Border);
+    _border->SetBorderWidth(0.0f); //no frame until one is asked for, since a Rectangle starts with a 5 px border
+
+    _fieldBackground->SetRectangleMode(RectangleMode::Plane);
+    _fieldBorder->SetRectangleMode(RectangleMode::Border);
+    _closeBackground->SetRectangleMode(RectangleMode::Plane);
 
     SetBackgroundColor(glm::vec4(0.055f, 0.055f, 0.075f, 1.0f), ColorState::Enabled);
     SetBackgroundColor(glm::vec4(0.055f, 0.055f, 0.075f, 1.0f), ColorState::Disabled);
@@ -90,24 +96,30 @@ void RetroFuturaGUI::WindowTab::Draw()
 
 void RetroFuturaGUI::WindowTab::SetPosition(const glm::vec3& position)
 {
+    if(!_background)
+        return;
+
+    if(!_border)
+        return;
+
     IWidget::SetPosition(position);
 
-    if(_background)
-        _background->SetPosition(position);
-
-    if(_border)
-        _border->SetPosition(position + glm::vec3(0.0f, 0.0f, _zStep * 8.0f)); //over the fields
+    _background->SetPosition(position);
+    _border->SetPosition(position + glm::vec3(0.0f, 0.0f, _zStep * 8.0f)); //over the fields
 }
 
 void RetroFuturaGUI::WindowTab::SetSize(const glm::vec3& size)
 {
+    if(!_background)
+        return;
+
+    if(!_border)
+        return;
+
     IWidget::SetSize(size);
 
-    if(_background)
-        _background->SetSize(glm::vec2(size));
-
-    if(_border)
-        _border->SetSize(glm::vec2(size));
+    _background->SetSize(glm::vec2(size));
+    _border->SetSize(glm::vec2(size));
 }
 
 void RetroFuturaGUI::WindowTab::SetRotation(const glm::vec3& rotation)

@@ -140,25 +140,25 @@ void RetroFuturaGUI::Window::createWindow()
 
     _background = std::make_unique<Rectangle>(_projection.get());
 
-    if(_background)
-    {
-        _background->SetRectangleMode(RectangleMode::Plane);
-        _background->SetPosition(glm::vec3((f32)_width * 0.5f, (f32)_height * 0.5f, -1.0f));
-        _background->SetSize(glm::vec2((f32)_width, (f32)_height));
-        _background->SetRotation(glm::vec3(0.0f));
-    }
+    if(!_background)
+        return;
+
+    _background->SetRectangleMode(RectangleMode::Plane);
+    _background->SetPosition(glm::vec3((f32)_width * 0.5f, (f32)_height * 0.5f, -1.0f));
+    _background->SetSize(glm::vec2((f32)_width, (f32)_height));
+    _background->SetRotation(glm::vec3(0.0f));
 
     _border = std::make_unique<Rectangle>(_projection.get());
 
-    if(_border)
-    {
-        _border->SetRectangleMode(RectangleMode::Border);
-        _border->SetPosition(glm::vec3((f32)_width * 0.5f, (f32)_height * 0.5f, 0.0f));
-        _border->SetSize(glm::vec2((f32)_width, (f32)_height));
-        _border->SetRotation(glm::vec3(0.0f));
-        //No frame until one is asked for, since a Rectangle starts with a 5 px border
-        _border->SetBorderWidth(0.0f);
-    }
+    if(!_border)
+        return;
+
+    _border->SetRectangleMode(RectangleMode::Border);
+    _border->SetPosition(glm::vec3((f32)_width * 0.5f, (f32)_height * 0.5f, 0.0f));
+    _border->SetSize(glm::vec2((f32)_width, (f32)_height));
+    _border->SetRotation(glm::vec3(0.0f));
+    //No frame until one is asked for, since a Rectangle starts with a 5 px border
+    _border->SetBorderWidth(0.0f);
 
     SetBackgroundColor(glm::vec4(0.086f, 0.086f, 0.1137f, 1.0f), ColorState::Enabled);
     setBorderColors();
@@ -468,21 +468,20 @@ bool RetroFuturaGUI::Window::updateSize()
 
     _projection->UpdateProjectionMatrix((f32)_width, (f32)_height);
     UpdateLayout();
-
-    if(_background)
-    {
-        _background->SetSize(glm::vec2((f32)_width, (f32)_height));
-        _background->SetPosition(glm::vec3((f32)_width * 0.5f, (f32)_height * 0.5f, -1.0f));
-    }
-
-    if(_border)
-    {
-        _border->SetSize(glm::vec2((f32)_width, (f32)_height));
-        _border->SetPosition(glm::vec3((f32)_width * 0.5f, (f32)_height * 0.5f, 0.0f));
-    }
-
     _lastSize = { _width, _height };
     _windowSizeChanged = false;
+
+    if(!_background)
+        return true;
+
+    if(!_border)
+        return true;
+
+    _background->SetSize(glm::vec2((f32)_width, (f32)_height));
+    _background->SetPosition(glm::vec3((f32)_width * 0.5f, (f32)_height * 0.5f, -1.0f));
+
+    _border->SetSize(glm::vec2((f32)_width, (f32)_height));
+    _border->SetPosition(glm::vec3((f32)_width * 0.5f, (f32)_height * 0.5f, 0.0f));
     return true;
 }
 
@@ -553,9 +552,7 @@ void RetroFuturaGUI::Window::drawContent()
 {
     applyCornerRadii();
     drawBackground();
-
-    if(_lasagna)
-        _lasagna->Draw();
+    drawLasagna();
 
     for(Scene* scene : _scenes)
     {
@@ -587,6 +584,14 @@ void RetroFuturaGUI::Window::drawFrame()
     //A fresh depth buffer, so the frame lies over every scene
     glClear(GL_DEPTH_BUFFER_BIT);
     drawBorder();
+}
+
+void RetroFuturaGUI::Window::drawLasagna()
+{
+    if(!_lasagna)
+        return;
+
+    _lasagna->Draw();
 }
 
 void RetroFuturaGUI::Window::SetWindowSize(i32 width, i32 height)
@@ -733,10 +738,10 @@ void RetroFuturaGUI::Window::UpdateLayout()
 
 i32 RetroFuturaGUI::Window::GetBackgroundImageId() const
 {
-    if(_backgroundImage)
-        return _backgroundImage->GetID();
+    if(!_backgroundImage)
+        return -1;
 
-    return -1;
+    return _backgroundImage->GetID();
 }
 
 GLFWwindow* RetroFuturaGUI::Window::GetGlfwWindow() const

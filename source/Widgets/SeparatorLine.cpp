@@ -13,20 +13,26 @@ RetroFuturaGUI::SeparatorLine::SeparatorLine(std::string_view name, Projection* 
     _background = std::make_unique<Rectangle>(&_projection);
     _text = std::make_unique<Text>(&_projection);
 
-    if(_background)
-        _background->SetRectangleMode(RectangleMode::Plane);
+    if(!_background)
+        return;
+
+    _background->SetRectangleMode(RectangleMode::Plane);
 }
 
 void RetroFuturaGUI::SeparatorLine::Draw()
 {
-    if(_background)
-        _background->Draw();
+    if(!_background)
+        return;
+
+    if(!_text)
+        return;
+
+    _background->Draw();
 
     if(!_showText)
         return;
 
-    if(_text)
-        _text->Draw();
+    _text->Draw();
 }
 
 void RetroFuturaGUI::SeparatorLine::SetSize(const glm::vec3& size)

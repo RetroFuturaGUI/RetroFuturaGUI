@@ -60,29 +60,38 @@ const std::string& RetroFuturaGUI::ITextEditable::GetPlaceholderText() const
 
 void RetroFuturaGUI::ITextEditable::SetFontFamily(std::string_view fontFamily, const f32 fontSize, const PlatformBridge::Fonts::Slant slant, const PlatformBridge::Fonts::Weight fontWeight)
 {
-    if(_text)
-        _text->SetFontFamily(fontFamily, fontSize, slant, fontWeight);
+    if(!_text)
+        return;
 
-    if(_placeholderText)
-        _placeholderText->SetFontFamily(fontFamily, fontSize, slant, fontWeight);
+    if(!_placeholderText)
+        return;
+
+    _text->SetFontFamily(fontFamily, fontSize, slant, fontWeight);
+    _placeholderText->SetFontFamily(fontFamily, fontSize, slant, fontWeight);
 }
 
 void RetroFuturaGUI::ITextEditable::SetTextAlignment(const TextAlignment alignment)
 {
-    if(_text)
-        _text->SetTextAlignment(alignment);
+    if(!_text)
+        return;
 
-    if(_placeholderText)
-        _placeholderText->SetTextAlignment(alignment);
+    if(!_placeholderText)
+        return;
+
+    _text->SetTextAlignment(alignment);
+    _placeholderText->SetTextAlignment(alignment);
 }
         
 void RetroFuturaGUI::ITextEditable::SetTextPadding(const f32 padding)
 {
-    if(_text)
-        _text->SetTextPadding(padding);
+    if(!_text)
+        return;
 
-    if(_placeholderText)
-        _placeholderText->SetTextPadding(padding);
+    if(!_placeholderText)
+        return;
+
+    _text->SetTextPadding(padding);
+    _placeholderText->SetTextPadding(padding);
 }
 
 

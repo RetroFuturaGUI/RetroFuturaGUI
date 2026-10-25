@@ -44,6 +44,8 @@ AVFrame* RetroFuturaGUI::Frame::operator->() const
 
 void RetroFuturaGUI::Frame::UnrefFrame() 
 { 
-    if(_frame)
-        av_frame_unref(_frame);
+    if(!_frame)
+        return;
+
+    av_frame_unref(_frame);
 }

@@ -233,62 +233,82 @@ void RetroFuturaGUI::ITextEditVisuals::SetCaretColors(std::span<glm::vec4> color
 {
     _caretColors.assign(colors.begin(), colors.end());
 
-    if(_caret)
-        _caret->SetColors(_caretColors);
+    if(!_caret)
+        return;
+
+    _caret->SetColors(_caretColors);
 }
 
 void RetroFuturaGUI::ITextEditVisuals::SetCaretFillType(const FillType fillType)
 {
-    if(_caret)
-        _caret->SetFillType(fillType);
+    if(!_caret)
+        return;
+
+    _caret->SetFillType(fillType);
 }
 
 void RetroFuturaGUI::ITextEditVisuals::SetCaretGradientAnimationSpeed(const f32 speed)
 {
-    if(_caret)
-        _caret->SetGradientAnimationSpeed(speed);
+    if(!_caret)
+        return;
+
+    _caret->SetGradientAnimationSpeed(speed);
 }
 
 void RetroFuturaGUI::ITextEditVisuals::SetSelectedAreaColors(std::span<glm::vec4> colors)
 {
     _selectedAreaColors.assign(colors.begin(), colors.end());
 
-    if(_selectedArea)
-        _selectedArea->SetColors(_selectedAreaColors);
+    if(!_selectedArea)
+        return;
+
+    _selectedArea->SetColors(_selectedAreaColors);
 }
 
 void RetroFuturaGUI::ITextEditVisuals::SetSelectedAreaFillType(const FillType fillType)
 {
-    if(_selectedArea)
-        _selectedArea->SetFillType(fillType);
+    if(!_selectedArea)
+        return;
+
+    _selectedArea->SetFillType(fillType);
 }
 
 void RetroFuturaGUI::ITextEditVisuals::SetSelectedAreaGradientAnimationSpeed(const f32 speed)
 {
-    if(_selectedArea)
-        _selectedArea->SetGradientAnimationSpeed(speed);
+    if(!_selectedArea)
+        return;
+
+    _selectedArea->SetGradientAnimationSpeed(speed);
 }
 
 void RetroFuturaGUI::ITextEditVisuals::SetSelectedAreaGradientOffset(const f32 gradientOffset)
 {
-    if(_selectedArea)
-        _selectedArea->SetGradientOffset(gradientOffset);
+    if(!_selectedArea)
+        return;
+
+    _selectedArea->SetGradientOffset(gradientOffset);
 }
 
 void RetroFuturaGUI::ITextEditVisuals::SetSelectedAreaGradientDegree(const f32 degree)
 {
-    if(_selectedArea)
-        _selectedArea->SetGradientDegree(degree);
+    if(!_selectedArea)
+        return;
+
+    _selectedArea->SetGradientDegree(degree);
 }
 
 void RetroFuturaGUI::ITextEditVisuals::SetSelectedAreaGradientRotationSpeed(const f32 rotationSpeed)
 {
-    if(_selectedArea)
-        _selectedArea->SetGradientRotationSpeed(rotationSpeed);
+    if(!_selectedArea)
+        return;
+
+    _selectedArea->SetGradientRotationSpeed(rotationSpeed);
 }
 
 void RetroFuturaGUI::ITextEditVisuals::SetSelectedAreaCornerRadii(const glm::vec4& radii)
 {
-    if(_selectedArea)
-        _selectedArea->SetCornerRadii(radii);
+    if(!_selectedArea)
+        return;
+
+    _selectedArea->SetCornerRadii(radii);
 }

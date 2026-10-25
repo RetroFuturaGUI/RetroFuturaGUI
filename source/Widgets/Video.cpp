@@ -10,8 +10,10 @@ RetroFuturaGUI::Video::Video(const std::string& name, Projection* projection, IW
     _widgetTypeID = WidgetTypeID::Video;
     _audioPlayback = std::make_unique<AudioPlayback>();
 
-    if(_audioPlayback)
-        _audioPlayback->InitDevice();
+    if(!_audioPlayback)
+        return;
+
+    _audioPlayback->InitDevice();
 
     _videoPlayback = std::make_unique<VideoPlayback>(*_audioPlayback, projection); 
 }
@@ -20,8 +22,10 @@ RetroFuturaGUI::Video::~Video()
 {
     Stop();
 
-    if(_videoPlayback)
-        _videoPlayback->Close();
+    if(!_videoPlayback)
+        return;
+
+    _videoPlayback->Close();
 }
 
 void RetroFuturaGUI::Video::Draw()
@@ -119,14 +123,18 @@ void RetroFuturaGUI::Video::fitGeometryToTexture()
 
 void RetroFuturaGUI::Video::Play()
 {
-    if(_videoPlayback)
-        _videoPlayback->Play();
+    if(!_videoPlayback)
+        return;
+
+    _videoPlayback->Play();
 }
 
 void RetroFuturaGUI::Video::Pause()
 {
-    if(_videoPlayback)
-        _videoPlayback->Pause();
+    if(!_videoPlayback)
+        return;
+
+    _videoPlayback->Pause();
 }
 
 void RetroFuturaGUI::Video::Stop()
@@ -165,10 +173,10 @@ void RetroFuturaGUI::Video::SetFrequencyBandCount(const uSize bandCount)
 
 bool RetroFuturaGUI::Video::Seek(const i64 milliseconds)
 {
-    if(_videoPlayback)
-        return _videoPlayback->Seek(milliseconds);
+    if(!_videoPlayback)
+        return false;
 
-    return false;
+    return _videoPlayback->Seek(milliseconds);
 }
 
 void RetroFuturaGUI::Video::Close()

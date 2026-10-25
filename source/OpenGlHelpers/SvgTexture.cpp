@@ -21,8 +21,10 @@ RetroFuturaGUI::SvgTexture::SvgTexture(std::string_view path, const bool flipVer
 
     rasterizeBaseLayer(targetResolution);
 
-    if (_projection)
-        setupQuad();
+    if(!_projection)
+        return;
+
+    setupQuad();
 }
 
 RetroFuturaGUI::SvgTexture::SvgTexture(SvgTexture&& other) noexcept

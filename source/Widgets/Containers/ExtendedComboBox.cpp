@@ -16,11 +16,14 @@ RetroFuturaGUI::ExtendedComboBox::ExtendedComboBox(std::string_view name, Projec
     _border = std::make_unique<Rectangle>(projection);
     _previewText = std::make_shared<Text>(projection);
 
-    if(_background)
-        _background->SetRectangleMode(RectangleMode::Plane);
+    if(!_background)
+        return;
 
-    if(_border)
-        _border->SetRectangleMode(RectangleMode::Border);
+    if(!_border)
+        return;
+
+    _background->SetRectangleMode(RectangleMode::Plane);
+    _border->SetRectangleMode(RectangleMode::Border);
 
     setColors(ColorState::Enabled);
 }
@@ -34,25 +37,23 @@ void RetroFuturaGUI::ExtendedComboBox::SetDropDownPosition(const DropDownPositio
 
 void RetroFuturaGUI::ExtendedComboBox::Draw()
 {
+    if(!_background)
+        return;
+
+    if(!_border)
+        return;
+
+    if(!_previewText)
+        return;
+
     interact();
+    _background->Draw();
+    _border->Draw();
+    drawDropDownArrow();
 
-    if(_background)
-        _background->Draw();
-
-    if(_border)
-        _border->Draw();
-
-    if(_dropDownArrow)
-    {
-        updateDropDownArrowGeometry();
-        _dropDownArrow->Draw();
-    }
-
-    if(_previewText) //the rows are arbitrary widgets, so the closed box stands in for the selection with its own text
-    {
-        updatePreviewTextGeometry();
-        _previewText->Draw();
-    }
+    //The rows are arbitrary widgets, so the closed box stands in for the selection with its own text
+    updatePreviewTextGeometry();
+    _previewText->Draw();
 
     if(!_showDropDown)
         return;
@@ -62,11 +63,14 @@ void RetroFuturaGUI::ExtendedComboBox::Draw()
 
 void RetroFuturaGUI::ExtendedComboBox::drawDropDown()
 {
-    if(_dropDownBackground)
-        _dropDownBackground->Draw();
+    if(!_dropDownBackground)
+        return;
 
-    if(_dropDownBorder)
-        _dropDownBorder->Draw();
+    if(!_dropDownBorder)
+        return;
+
+    _dropDownBackground->Draw();
+    _dropDownBorder->Draw();
 
     updateItemGeometry(); //a move or a resize only reaches the panel, so every row is placed again before the list is drawn
 
@@ -250,48 +254,60 @@ void RetroFuturaGUI::ExtendedComboBox::updatePreviewTextGeometry() const
 
 void RetroFuturaGUI::ExtendedComboBox::SetSize(const glm::vec3& size)
 {
+    if(!_background)
+        return;
+
+    if(!_border)
+        return;
+
     IWidget::SetSize(size);
 
-    if(_background)
-        _background->SetSize(size);
-
-    if(_border)
-        _border->SetSize(size);
+    _background->SetSize(size);
+    _border->SetSize(size);
 
     updateDropDownGeometry();
 }
 
 void RetroFuturaGUI::ExtendedComboBox::SetPosition(const glm::vec3& position)
 {
+    if(!_background)
+        return;
+
+    if(!_border)
+        return;
+
     IWidget::SetPosition(position);
 
-    if(_background)
-        _background->SetPosition(position);
-
-    if(_border)
-        _border->SetPosition(position + glm::vec3(0.0f, 0.0f, _zStep));
+    _background->SetPosition(position);
+    _border->SetPosition(position + glm::vec3(0.0f, 0.0f, _zStep));
 
     updateDropDownGeometry();
 }
 
 void RetroFuturaGUI::ExtendedComboBox::SetRotation(const glm::vec3& rotation)
 {
+    if(!_background)
+        return;
+
+    if(!_border)
+        return;
+
+    if(!_dropDownBackground)
+        return;
+
+    if(!_dropDownBorder)
+        return;
+
+    if(!_dropDownItemHighlight)
+        return;
+
     IWidget::SetRotation(rotation);
 
-    if(_background)
-        _background->SetRotation(rotation);
-
-    if(_border)
-        _border->SetRotation(rotation);
-
-    if(_dropDownBackground)
-        _dropDownBackground->SetRotation(rotation);
-
-    if(_dropDownBorder)
-        _dropDownBorder->SetRotation(rotation);
-
-    if(_dropDownItemHighlight)
-        _dropDownItemHighlight->SetRotation(rotation);
+    _background->SetRotation(rotation);
+    _border->SetRotation(rotation);
+    _dropDownBackground->SetRotation(rotation);
+    _dropDownBorder->SetRotation(rotation);
+    _dropDownItemHighlight->SetRotation(rotation);
 
     updateDropDownGeometry();
 }
@@ -519,16 +535,16 @@ void RetroFuturaGUI::ExtendedComboBox::RemoveItem(const uSize index)
 
 void RetroFuturaGUI::ExtendedComboBox::SetFontFamily(std::string_view fontFamily, const f32 fontSize, const PlatformBridge::Fonts::Slant slant, const PlatformBridge::Fonts::Weight fontWeight)
 {
+    if(!_previewText)
+        return;
+
     _fontFamily = fontFamily;
     _fontSize = fontSize;
     _slant = slant;
     _fontWeight = fontWeight;
 
-    if(_previewText)
-    {
-        _previewText->SetFontFamily(_fontFamily, _fontSize, _slant, _fontWeight);
-        _previewText->SetTextUTF8(std::string(_previewText->GetTextUTF8())); //a font swap leaves the glyph mesh behind, so the text is laid out again
-    }
+    _previewText->SetFontFamily(_fontFamily, _fontSize, _slant, _fontWeight);
+    _previewText->SetTextUTF8(std::string(_previewText->GetTextUTF8())); //a font swap leaves the glyph mesh behind, so the text is laid out again
 
     for(const auto& item : _itemWidgets)
     {

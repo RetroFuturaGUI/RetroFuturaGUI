@@ -19,13 +19,16 @@ RetroFuturaGUI::ProgressBar::ProgressBar(const std::string& name, Projection* pr
 
 void  RetroFuturaGUI::ProgressBar::Draw()
 {
+    if(!_background)
+        return;
+
+    if(!_border)
+        return;
+
     interact();
 
-    if (_background)
-        _background->Draw();
-
-    if (_border)
-        _border->Draw();
+    _background->Draw();
+    _border->Draw();
 
     drawGraph();
     drawIndicator();

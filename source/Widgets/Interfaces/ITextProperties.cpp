@@ -37,8 +37,10 @@ std::vector<glm::vec4> RetroFuturaGUI::ITextProperties::GetTextColor(const Color
 
 void RetroFuturaGUI::ITextProperties::SetText(std::string_view text, const bool emitSignal)
 {
-    if(_text)
-        _text->SetTextUTF8(text);
+    if(!_text)
+        return;
+
+    _text->SetTextUTF8(text);
 
     if(!emitSignal)
         return;
@@ -57,20 +59,26 @@ const std::string& RetroFuturaGUI::ITextProperties::GetText() const
 
 void RetroFuturaGUI::ITextProperties::SetFontFamily(std::string_view fontFamily, const f32 fontSize, const PlatformBridge::Fonts::Slant slant, const PlatformBridge::Fonts::Weight fontWeight)
 {
-    if(_text)
-        _text->SetFontFamily(fontFamily, fontSize, slant, fontWeight);
+    if(!_text)
+        return;
+
+    _text->SetFontFamily(fontFamily, fontSize, slant, fontWeight);
 }
 
 void RetroFuturaGUI::ITextProperties::SetTextAlignment(const TextAlignment alignment)
 {
-    if(_text)
-        _text->SetTextAlignment(alignment);
+    if(!_text)
+        return;
+
+    _text->SetTextAlignment(alignment);
 }
         
 void RetroFuturaGUI::ITextProperties::SetTextPadding(const f32 padding)
 {
-    if(_text)
-        _text->SetTextPadding(padding);
+    if(!_text)
+        return;
+
+    _text->SetTextPadding(padding);
 }
 
 f32 RetroFuturaGUI::ITextProperties::GetTextPadding() const
@@ -85,8 +93,10 @@ f32 RetroFuturaGUI::ITextProperties::GetTextWidth() const
 
 void RetroFuturaGUI::ITextProperties::setTextColorElement(std::vector<glm::vec4>& color)
 {
-    if(_text) 
-        _text->SetColor(color.front());
+    if(!_text)
+        return;
+
+    _text->SetColor(color.front());
 }
 
 void RetroFuturaGUI::ITextProperties::setTextColors()
@@ -114,8 +124,10 @@ void RetroFuturaGUI::ITextProperties::setTextColors()
 
 void RetroFuturaGUI::ITextProperties::drawText()
 {
-    if(_text)
-        _text->Draw();
+    if(!_text)
+        return;
+
+    _text->Draw();
 }
 
 void RetroFuturaGUI::ITextProperties::Connect_OnTextChange(const typename Signal<>::Slot &slot, const bool async)

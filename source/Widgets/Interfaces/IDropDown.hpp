@@ -60,6 +60,10 @@ namespace RetroFuturaGUI
         f32 getDropDownWidth() const;
 
         void updateDropDownArrowGeometry();
+
+        /// @brief Places the shared arrow on this box and draws it, when its icon loaded.
+        void drawDropDownArrow();
+
         void updateDropDownGeometry();
         uSize getVisibleItemCount() const;
         void setColors(const ColorState state) override;

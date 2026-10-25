@@ -1210,12 +1210,14 @@ void RetroFuturaGUI::FileExplorer::update()
     followTransfer();
     followClipboard();
     showThumbnails(); //after the listing, so a list filled anew gets its thumbnails before it draws
-
-    if(_preview)
-        _preview->Update();
     watchChanges();
     showProgress();
     handleKeys();
+
+    if(!_preview)
+        return;
+
+    _preview->Update();
 }
 
 void RetroFuturaGUI::FileExplorer::watchChanges()

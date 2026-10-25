@@ -7,29 +7,32 @@ RetroFuturaGUI::IDropDown::IDropDown(std::string_view name, Projection* projecti
     : IWidget(name, projection, parentWidget, parentWidgetTypeID, parentWindow)
 {
     _dropDownBackground = std::make_unique<Rectangle>(projection);
-        _dropDownBorder = std::make_unique<Rectangle>(projection);
-        _dropDownItemHighlight = std::make_unique<Rectangle>(projection);
-        _dropDownArrow = ResourceManager::GetDropDownArrowIcon();
+    _dropDownBorder = std::make_unique<Rectangle>(projection);
+    _dropDownItemHighlight = std::make_unique<Rectangle>(projection);
+    _dropDownArrow = ResourceManager::GetDropDownArrowIcon();
 
-    if(_dropDownBackground)
-        _dropDownBackground->SetRectangleMode(RectangleMode::Plane);
+    if(!_dropDownBackground)
+        return;
 
-    if(_dropDownBorder)
-        _dropDownBorder->SetRectangleMode(RectangleMode::Border);
+    if(!_dropDownBorder)
+        return;
 
-    if(_dropDownItemHighlight)
-        _dropDownItemHighlight->SetRectangleMode(RectangleMode::Plane);
+    if(!_dropDownItemHighlight)
+        return;
 
-    if(_dropDownArrow)
-        _dropDownArrow->SetProjection(projection);
-
+    _dropDownBackground->SetRectangleMode(RectangleMode::Plane);
+    _dropDownBorder->SetRectangleMode(RectangleMode::Border);
+    _dropDownItemHighlight->SetRectangleMode(RectangleMode::Plane);
     setDropDownBackgroundColors();
     setDropDownBorderColors();
-
-    if(_dropDownItemHighlight)
-        _dropDownItemHighlight->SetColors(_highLightColor);
-
+    _dropDownItemHighlight->SetColors(_highLightColor);
     _dropDowns.push_back(this);
+
+    //Last, since the shared icon may have failed to load
+    if(!_dropDownArrow)
+        return;
+
+    _dropDownArrow->SetProjection(projection);
 }
 
 RetroFuturaGUI::IDropDown::~IDropDown()
@@ -119,6 +122,9 @@ void RetroFuturaGUI::IDropDown::updateDropDownGeometry()
     if(!_dropDownBorder)
         return;
 
+    if(!_dropDownItemHighlight)
+        return;
+
     const f32 panelHeight { _size.y * static_cast<f32>(getVisibleItemCount()) };
     const glm::vec3 center { getDropDownCenter() };
 
@@ -127,8 +133,7 @@ void RetroFuturaGUI::IDropDown::updateDropDownGeometry()
     _dropDownBorder->SetSize(_dropDownBackground->GetSize());
     _dropDownBorder->SetPosition(center + glm::vec3(0.0f, 0.0f, _zStep * 3.0f));
 
-    if(_dropDownItemHighlight)
-        _dropDownItemHighlight->SetSize(glm::vec2(getDropDownWidth(), _size.y));
+    _dropDownItemHighlight->SetSize(glm::vec2(getDropDownWidth(), _size.y));
 }
 
 void RetroFuturaGUI::IDropDown::SetDropDownWidth(const f32 width)
@@ -167,6 +172,15 @@ glm::vec3 RetroFuturaGUI::IDropDown::getDropDownCenter() const
 
     const glm::vec2 offset { rotateLocalOffset(localOffset) };
     return glm::vec3(_position.x + offset.x, _position.y + offset.y, _position.z + _zOffset);
+}
+
+void RetroFuturaGUI::IDropDown::drawDropDownArrow()
+{
+    if(!_dropDownArrow)
+        return;
+
+    updateDropDownArrowGeometry();
+    _dropDownArrow->Draw();
 }
 
 void RetroFuturaGUI::IDropDown::updateDropDownArrowGeometry()
@@ -228,9 +242,11 @@ void RetroFuturaGUI::IDropDown::setDropDownArrowColors()
         default: //Disabled
             _dropDownArrowPathFill._Colors = _dropDownArrowColorsDisabled;
     }
-    
-    if(_dropDownArrow)
-        _dropDownArrow->SetPathFill("DropDownArrow", _dropDownArrowPathFill);
+
+    if(!_dropDownArrow)
+        return;
+
+    _dropDownArrow->SetPathFill("DropDownArrow", _dropDownArrowPathFill);
 }
 
 void RetroFuturaGUI::IDropDown::setDropDownBackgroundColors()
@@ -421,11 +437,14 @@ void RetroFuturaGUI::IDropDown::SetDropDownBorderColors(std::span<glm::vec4> col
 
 void RetroFuturaGUI::IDropDown::SetDropDownCornerRadii(const glm::vec4& radii)
 {
-    if(_dropDownBackground)
-        _dropDownBackground->SetCornerRadii(radii);
+    if(!_dropDownBackground)
+        return;
 
-    if(_dropDownBorder)
-        _dropDownBorder->SetCornerRadii(radii);
+    if(!_dropDownBorder)
+        return;
+
+    _dropDownBackground->SetCornerRadii(radii);
+    _dropDownBorder->SetCornerRadii(radii);
 }
 
 bool RetroFuturaGUI::IDropDown::IsPointInsideOpenDropDown(const glm::vec2& point) const

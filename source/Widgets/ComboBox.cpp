@@ -21,31 +21,31 @@ RetroFuturaGUI::ComboBox::ComboBox(std::string_view name, Projection* projection
     _widgetTypeID = WidgetTypeID::ComboBox;
     _background = std::make_unique<Rectangle>(projection);
     _border = std::make_unique<Rectangle>(projection);
-    
-    if(_background)
-        _background->SetRectangleMode(RectangleMode::Plane);
 
-    if(_border)
-        _border->SetRectangleMode(RectangleMode::Border);
+    if(!_background)
+        return;
+
+    if(!_border)
+        return;
+
+    _background->SetRectangleMode(RectangleMode::Plane);
+    _border->SetRectangleMode(RectangleMode::Border);
 
     setColors(ColorState::Enabled);
 }
 
 void RetroFuturaGUI::ComboBox::Draw()
 {
+    if(!_background)
+        return;
+
+    if(!_border)
+        return;
+
     interact();
-
-    if(_background)
-        _background->Draw();
-
-    if(_border)
-        _border->Draw();
-
-    if(_dropDownArrow)
-    {
-        updateDropDownArrowGeometry();
-        _dropDownArrow->Draw();
-    }
+    _background->Draw();
+    _border->Draw();
+    drawDropDownArrow();
 
     if(_hasCaption && _previewText)
     {
@@ -72,11 +72,14 @@ void RetroFuturaGUI::ComboBox::Draw()
 
 void RetroFuturaGUI::ComboBox::drawDropDown()
 {
-    if(_dropDownBackground)
-        _dropDownBackground->Draw();
+    if(!_dropDownBackground)
+        return;
 
-    if(_dropDownBorder)
-        _dropDownBorder->Draw();
+    if(!_dropDownBorder)
+        return;
+
+    _dropDownBackground->Draw();
+    _dropDownBorder->Draw();
 
     updateItemGeometry(); //the selected item was just drawn over the closed box, so every row is placed again before the list is drawn
 
@@ -99,13 +102,16 @@ void RetroFuturaGUI::ComboBox::drawDropDown()
 
 void RetroFuturaGUI::ComboBox::SetSize(const glm::vec3& size)
 {
+    if(!_background)
+        return;
+
+    if(!_border)
+        return;
+
     IWidget::SetSize(size);
 
-    if(_background)
-        _background->SetSize(size);
-
-    if(_border)
-        _border->SetSize(size);
+    _background->SetSize(size);
+    _border->SetSize(size);
 
     updateDropDownGeometry();
 }
@@ -130,35 +136,44 @@ void RetroFuturaGUI::ComboBox::placeItemText(Text& item, const glm::vec3& center
 
 void RetroFuturaGUI::ComboBox::SetPosition(const glm::vec3& position)
 {
+    if(!_background)
+        return;
+
+    if(!_border)
+        return;
+
     IWidget::SetPosition(position);
 
-    if(_background)
-        _background->SetPosition(position);
-
-    if(_border)
-        _border->SetPosition(position + glm::vec3(0.0f, 0.0f, _zStep));
+    _background->SetPosition(position);
+    _border->SetPosition(position + glm::vec3(0.0f, 0.0f, _zStep));
 
     updateDropDownGeometry();
 }
 
 void RetroFuturaGUI::ComboBox::SetRotation(const glm::vec3& rotation)
 {
+    if(!_background)
+        return;
+
+    if(!_border)
+        return;
+
+    if(!_dropDownBackground)
+        return;
+
+    if(!_dropDownBorder)
+        return;
+
+    if(!_dropDownItemHighlight)
+        return;
+
     IWidget::SetRotation(rotation);
 
-    if(_background)
-        _background->SetRotation(rotation);
-
-    if(_border)
-        _border->SetRotation(rotation);
-
-    if(_dropDownBackground)
-        _dropDownBackground->SetRotation(rotation);
-
-    if(_dropDownBorder)
-        _dropDownBorder->SetRotation(rotation);
-
-    if(_dropDownItemHighlight)
-        _dropDownItemHighlight->SetRotation(rotation);
+    _background->SetRotation(rotation);
+    _border->SetRotation(rotation);
+    _dropDownBackground->SetRotation(rotation);
+    _dropDownBorder->SetRotation(rotation);
+    _dropDownItemHighlight->SetRotation(rotation);
 
     updateDropDownGeometry();
 }

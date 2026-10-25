@@ -20,23 +20,28 @@ RetroFuturaGUI::CheckBox::CheckBox(const std::string& name, Projection* projecti
     _background = std::make_unique<Rectangle>(projection);
     _border = std::make_unique<Rectangle>(projection);
 
-    if (_background)
-        _background->SetRectangleMode(RectangleMode::Plane);
+    if(!_background)
+        return;
 
-    if (_border)
-        _border->SetRectangleMode(RectangleMode::Border);
+    if(!_border)
+        return;
+
+    _background->SetRectangleMode(RectangleMode::Plane);
+    _border->SetRectangleMode(RectangleMode::Border);
 }
 
 void RetroFuturaGUI::CheckBox::Draw()
 {
+    if(!_inheritFill)
+        return;
+
     interact();
     drawBackground();
     drawBorder();
 
     if(_useInheritValue && _inheritValue)
     {
-        if(_inheritFill)
-            _inheritFill->Draw();
+        _inheritFill->Draw();
     }
 
     if(!_isChecked)
@@ -55,43 +60,54 @@ void RetroFuturaGUI::CheckBox::Draw()
 
 void RetroFuturaGUI::CheckBox::SetSize(const glm::vec3& size)
 {
+    if(!_background)
+        return;
+
+    if(!_border)
+        return;
+
     IWidget::SetSize(size);
 
-    if(_background)
-        _background->SetSize(size);
-
-    if(_border)
-        _border->SetSize(size);
+    _background->SetSize(size);
+    _border->SetSize(size);
 
     SetInnerPadding(_innerPadding);
 }
 
 void RetroFuturaGUI::CheckBox::SetPosition(const glm::vec3& position)
 {
+    if(!_background)
+        return;
+
+    if(!_border)
+        return;
+
+    if(!_inheritFill)
+        return;
+
     IWidget::SetPosition(position);
 
-    if(_background)
-        _background->SetPosition(position);
-
-    if(_border)
-        _border->SetPosition(position + glm::vec3(0.0f, 0.0f, 0.01f));
-
-    if(_inheritFill)
-        _inheritFill->SetPosition(position + glm::vec3(0.0f, 0.0f, 0.02f));
+    _background->SetPosition(position);
+    _border->SetPosition(position + glm::vec3(0.0f, 0.0f, 0.01f));
+    _inheritFill->SetPosition(position + glm::vec3(0.0f, 0.0f, 0.02f));
 }
 
 void RetroFuturaGUI::CheckBox::SetRotation(const glm::vec3& rotation)
 {
+    if(!_background)
+        return;
+
+    if(!_border)
+        return;
+
+    if(!_inheritFill)
+        return;
+
     _rotation = rotation;
 
-    if(_background)
-        _background->SetRotation(rotation);
-
-    if(_border)
-        _border->SetRotation(rotation);
-
-    if(_inheritFill)
-        _inheritFill->SetRotation(rotation);
+    _background->SetRotation(rotation);
+    _border->SetRotation(rotation);
+    _inheritFill->SetRotation(rotation);
 }
 
 void RetroFuturaGUI::CheckBox::SetValue(const bool value, const bool emitSignal)
@@ -167,14 +183,18 @@ void RetroFuturaGUI::CheckBox::SetCheckmarkColors(std::span<glm::vec4> colors, c
         
 void RetroFuturaGUI::CheckBox::SetCornerRadii(const glm::vec4& radii)
 {
-    if(_background)
-        _background->SetCornerRadii(radii);
+    if(!_background)
+        return;
 
-    if(_border)
-        _border->SetCornerRadii(radii);
+    if(!_border)
+        return;
 
-    if(_inheritFill)
-        _inheritFill->SetCornerRadii(radii);
+    if(!_inheritFill)
+        return;
+
+    _background->SetCornerRadii(radii);
+    _border->SetCornerRadii(radii);
+    _inheritFill->SetCornerRadii(radii);
 }
 
 void RetroFuturaGUI::CheckBox::SetInheritColors(std::span<glm::vec4> colors, const ColorState state)
@@ -201,26 +221,34 @@ void RetroFuturaGUI::CheckBox::SetInheritColors(std::span<glm::vec4> colors, con
 
 void RetroFuturaGUI::CheckBox::SetInheritGradientOffset(const f32 gradientOffset)
 {
-    if(_inheritFill)
-        _inheritFill->SetGradientOffset(gradientOffset);
+    if(!_inheritFill)
+        return;
+
+    _inheritFill->SetGradientOffset(gradientOffset);
 }
 
 void RetroFuturaGUI::CheckBox::SetInheritGradientAnimationSpeed(const f32 animationSpeed)
 {
-    if(_inheritFill)
-        _inheritFill->SetRasterAnimationSpeed(animationSpeed);
+    if(!_inheritFill)
+        return;
+
+    _inheritFill->SetRasterAnimationSpeed(animationSpeed);
 }
 
 void RetroFuturaGUI::CheckBox::SetInheritGradientDegree(const f32 degree)
 {
-    if(_inheritFill)
-        _inheritFill->SetGradientDegree(degree);
+    if(!_inheritFill)
+        return;
+
+    _inheritFill->SetGradientDegree(degree);
 }
 
 void RetroFuturaGUI::CheckBox::SetInheritGradientRotationSpeed(const f32 rotationSpeed)
 {
-    if(_inheritFill)
-        _inheritFill->SetGradientRotationSpeed(rotationSpeed);
+    if(!_inheritFill)
+        return;
+
+    _inheritFill->SetGradientRotationSpeed(rotationSpeed);
 }
 
 void RetroFuturaGUI::CheckBox::setColors(const ColorState state)
@@ -351,11 +379,13 @@ void RetroFuturaGUI::CheckBox::EnableInheritedValue(const bool enable)
 
 void RetroFuturaGUI::CheckBox::SetInnerPadding(const f32 pixels)
 {
+    if(!_inheritFill)
+        return;
+
     _innerPadding = pixels;
     glm::vec3 size { _size - glm::vec3(_border->GetBorderWidth() * 2.0f, _border->GetBorderWidth() * 2.0f, 0.0f) };
 
-    if(_inheritFill)
-        _inheritFill->SetSize(size);
+    _inheritFill->SetSize(size);
 
     size -= glm::vec3( _innerPadding * 2.0f,  _innerPadding * 2.0f, 0.0f);
     _checkmarkSize = size;

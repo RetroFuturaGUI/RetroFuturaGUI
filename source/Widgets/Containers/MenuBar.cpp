@@ -18,17 +18,22 @@ RetroFuturaGUI::MenuBar::MenuBar(const std::string& name, Projection* projection
     _itemBackground = std::make_unique<Rectangle>(projection);
     _itemBorder = std::make_unique<Rectangle>(projection);
 
-    if(_background)
-        _background->SetRectangleMode(RectangleMode::Plane);
+    if(!_background)
+        return;
 
-    if(_border)
-        _border->SetRectangleMode(RectangleMode::Border);
+    if(!_border)
+        return;
 
-    if(_itemBackground)
-        _itemBackground->SetRectangleMode(RectangleMode::Plane);
+    if(!_itemBackground)
+        return;
 
-    if(_itemBorder)
-        _itemBorder->SetRectangleMode(RectangleMode::Border);
+    if(!_itemBorder)
+        return;
+
+    _background->SetRectangleMode(RectangleMode::Plane);
+    _border->SetRectangleMode(RectangleMode::Border);
+    _itemBackground->SetRectangleMode(RectangleMode::Plane);
+    _itemBorder->SetRectangleMode(RectangleMode::Border);
 }
 
 void RetroFuturaGUI::MenuBar::Draw()
@@ -43,39 +48,48 @@ void RetroFuturaGUI::MenuBar::Draw()
 
 void RetroFuturaGUI::MenuBar::SetPosition(const glm::vec3& position)
 {
+    if(!_background)
+        return;
+
+    if(!_border)
+        return;
+
     IWidget::SetPosition(position);
 
-    if(_background)
-        _background->SetPosition(position);
-
-    if(_border)
-        _border->SetPosition(position + glm::vec3(0.0f, 0.0f, 0.01f));
+    _background->SetPosition(position);
+    _border->SetPosition(position + glm::vec3(0.0f, 0.0f, 0.01f));
 
     placeItems();
 }
 
 void RetroFuturaGUI::MenuBar::SetSize(const glm::vec3& size)
 {
+    if(!_background)
+        return;
+
+    if(!_border)
+        return;
+
     IWidget::SetSize(size);
 
-    if(_background)
-        _background->SetSize(size);
-
-    if(_border)
-        _border->SetSize(size);
+    _background->SetSize(size);
+    _border->SetSize(size);
 
     updateLayout();
 }
 
 void RetroFuturaGUI::MenuBar::SetRotation(const glm::vec3& rotation)
 {
+    if(!_background)
+        return;
+
+    if(!_border)
+        return;
+
     IWidget::SetRotation(rotation);
 
-    if(_background)
-        _background->SetRotation(rotation);
-
-    if(_border)
-        _border->SetRotation(rotation);
+    _background->SetRotation(rotation);
+    _border->SetRotation(rotation);
 
     for(const std::unique_ptr<IWidget>& item : _itemFlex)
     {
@@ -161,13 +175,12 @@ void RetroFuturaGUI::MenuBar::ShowSeparatorLines(const bool show)
         return;
 
     if(!_separatorLine)
-    {
         _separatorLine = std::make_unique<Rectangle>(&_projection);
 
-        if(_separatorLine)
-            _separatorLine->SetRectangleMode(RectangleMode::Plane);
-    }
+    if(!_separatorLine)
+        return;
 
+    _separatorLine->SetRectangleMode(RectangleMode::Plane);
     setSeparatorLinesColors();
 }
 
@@ -1085,6 +1098,12 @@ RetroFuturaGUI::ColorState RetroFuturaGUI::MenuBar::itemState(const uSize index)
 
 void RetroFuturaGUI::MenuBar::drawItems()
 {
+    if(!_itemBackground)
+        return;
+
+    if(!_itemBorder)
+        return;
+
     uSize index { 0 };
 
     for(const std::unique_ptr<IWidget>& item : _itemFlex)
@@ -1094,21 +1113,15 @@ void RetroFuturaGUI::MenuBar::drawItems()
         setItemColors(itemState(index));
         ++index;
 
-        if(_itemBackground)
-        {
-            _itemBackground->SetSize(cell);
-            _itemBackground->SetPosition(center);
-            _itemBackground->SetRotation(_rotation);
-            _itemBackground->Draw();
-        }
+        _itemBackground->SetSize(cell);
+        _itemBackground->SetPosition(center);
+        _itemBackground->SetRotation(_rotation);
+        _itemBackground->Draw();
 
-        if(_itemBorder)
-        {
-            _itemBorder->SetSize(cell);
-            _itemBorder->SetPosition(center + glm::vec3(0.0f, 0.0f, 0.01f));
-            _itemBorder->SetRotation(_rotation);
-            _itemBorder->Draw();
-        }
+        _itemBorder->SetSize(cell);
+        _itemBorder->SetPosition(center + glm::vec3(0.0f, 0.0f, 0.01f));
+        _itemBorder->SetRotation(_rotation);
+        _itemBorder->Draw();
 
         if(!item)
             continue;

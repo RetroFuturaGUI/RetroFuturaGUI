@@ -16,18 +16,25 @@ RetroFuturaGUI::ITextBox::ITextBox(std::string_view name, Projection* projection
     _placeholderText = std::make_unique<Text>(projection);
     initEditVisuals(projection);
 
-    if (_background)
-        _background->SetRectangleMode(RectangleMode::Plane);
+    if(!_background)
+        return;
 
-    if (_border)
-        _border->SetRectangleMode(RectangleMode::Border);
+    if(!_border)
+        return;
 
-    if(_placeholderText)
-        _placeholderText->SetColor(_placeholderTextColors[0]);
+    if(!_placeholderText)
+        return;
+
+    _background->SetRectangleMode(RectangleMode::Plane);
+    _border->SetRectangleMode(RectangleMode::Border);
+    _placeholderText->SetColor(_placeholderTextColors[0]);
 }
 
 void RetroFuturaGUI::ITextBox::Draw()
 {
+    if(!_placeholderText)
+        return;
+
     interact();
     drawBackground();
     drawBorder();
@@ -40,67 +47,83 @@ void RetroFuturaGUI::ITextBox::Draw()
         return;
     }
 
-    if(_placeholderText)
-        _placeholderText->Draw();
+    _placeholderText->Draw();
 
     drawCaret();
 }
 
 void RetroFuturaGUI::ITextBox::SetSize(const glm::vec3& size)
 {
+    if(!_background)
+        return;
+
+    if(!_border)
+        return;
+
+    if(!_text)
+        return;
+
+    if(!_placeholderText)
+        return;
+
     IWidget::SetSize(size);
 
-    if(_background)
-        _background->SetSize(size);
-
-    if(_border)
-        _border->SetSize(size);
-
-    if(_text)
-        _text->SetParentSize(glm::vec2(size.x, size.y));
-
-    if(_placeholderText)
-        _placeholderText->SetParentSize(glm::vec2(size.x, size.y));
+    _background->SetSize(size);
+    _border->SetSize(size);
+    _text->SetParentSize(glm::vec2(size.x, size.y));
+    _placeholderText->SetParentSize(glm::vec2(size.x, size.y));
 }
 
 void RetroFuturaGUI::ITextBox::SetPosition(const glm::vec3& position)
 {
+    if(!_background)
+        return;
+
+    if(!_selectedArea)
+        return;
+
+    if(!_border)
+        return;
+
+    if(!_text)
+        return;
+
+    if(!_placeholderText)
+        return;
+
+    if(!_caret)
+        return;
+
     IWidget::SetPosition(position);
 
-    if(_background)
-        _background->SetPosition(position);
-
-    if(_selectedArea)
-        _selectedArea->SetPosition(position + glm::vec3(0.0f, 0.0f, 0.1f));
-
-    if(_border)
-        _border->SetPosition(position + glm::vec3(0.0f, 0.0f, 0.2f));
-
-    if(_text)
-        _text->SetPosition(position + glm::vec3(0.0f, 0.0f, 0.3f));
-
-    if(_placeholderText)
-        _placeholderText->SetPosition(position + glm::vec3(0.0f, 0.0f, 0.3f));
-
-    if(_caret)
-        _caret->SetPosition(position + glm::vec3(0.0f, 0.0f, 0.5f));
+    _background->SetPosition(position);
+    _selectedArea->SetPosition(position + glm::vec3(0.0f, 0.0f, 0.1f));
+    _border->SetPosition(position + glm::vec3(0.0f, 0.0f, 0.2f));
+    _text->SetPosition(position + glm::vec3(0.0f, 0.0f, 0.3f));
+    _placeholderText->SetPosition(position + glm::vec3(0.0f, 0.0f, 0.3f));
+    _caret->SetPosition(position + glm::vec3(0.0f, 0.0f, 0.5f));
 }
 
 void RetroFuturaGUI::ITextBox::SetRotation(const glm::vec3& rotation)
 {
+    if(!_background)
+        return;
+
+    if(!_border)
+        return;
+
+    if(!_text)
+        return;
+
+    if(!_placeholderText)
+        return;
+
     _rotation = rotation;
 
-    if(_background)
-        _background->SetRotation(rotation);
-
-    if(_border)
-        _border->SetRotation(rotation);
-
-    if(_text)
-        _text->SetRotation(rotation);
-
-    if(_placeholderText)
-        _placeholderText->SetRotation(rotation);
+    _background->SetRotation(rotation);
+    _border->SetRotation(rotation);
+    _text->SetRotation(rotation);
+    _placeholderText->SetRotation(rotation);
 }
 
 void RetroFuturaGUI::ITextBox::interact()

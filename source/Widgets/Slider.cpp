@@ -20,13 +20,16 @@ RetroFuturaGUI::Slider::Slider(const std::string& name, Projection* projection, 
 
 void  RetroFuturaGUI::Slider::Draw()
 {
+    if(!_background)
+        return;
+
+    if(!_border)
+        return;
+
     interact();
 
-    if (_background)
-        _background->Draw();
-
-    if (_border)
-        _border->Draw();
+    _background->Draw();
+    _border->Draw();
 
     drawIndicator();
     drawGraph();

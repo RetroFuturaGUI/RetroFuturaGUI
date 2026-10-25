@@ -37,24 +37,30 @@ void RetroFuturaGUI::TableText::SetSize(const glm::vec3& size)
 {
     ITableWidget::SetSize(size);
 
-    if(_text)
-        _text->SetParentSize(glm::vec2(size.x, size.y));
+    if(!_text)
+        return;
+
+    _text->SetParentSize(glm::vec2(size.x, size.y));
 }
 
 void RetroFuturaGUI::TableText::SetPosition(const glm::vec3& position)
 {
     ITableWidget::SetPosition(position);
 
-    if(_text)
-        _text->SetPosition(position);
+    if(!_text)
+        return;
+
+    _text->SetPosition(position);
 }
 
 void RetroFuturaGUI::TableText::SetRotation(const glm::vec3& rotation)
 {
     ITableWidget::SetRotation(rotation);
 
-    if(_text)
-        _text->SetRotation(rotation);
+    if(!_text)
+        return;
+
+    _text->SetRotation(rotation);
 }
 
 void RetroFuturaGUI::TableText::renderValueText(std::string_view text, const bool)

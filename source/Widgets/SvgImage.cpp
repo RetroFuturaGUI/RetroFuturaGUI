@@ -23,10 +23,12 @@ void RetroFuturaGUI::SvgImage::SetPosition(const glm::vec3& position)
 
 void RetroFuturaGUI::SvgImage::SetRotation(const glm::vec3& rotation)
 {
+    if(!_svgTexture)
+        return;
+
     IWidget::SetRotation(rotation);
 
-    if(_svgTexture)
-        _svgTexture->SetRotation(rotation);
+    _svgTexture->SetRotation(rotation);
 }
 
 void RetroFuturaGUI::SvgImage::FitGeometryToTexture()
@@ -37,20 +39,26 @@ void RetroFuturaGUI::SvgImage::FitGeometryToTexture()
 
 void RetroFuturaGUI::SvgImage::Draw()
 {
-    if (_svgTexture)
-        _svgTexture->Draw();
+    if(!_svgTexture)
+        return;
+
+    _svgTexture->Draw();
 }
 
 void RetroFuturaGUI::SvgImage::SetPathFill(std::string_view name, const SvgPathFill& fill)
 {
-    if (_svgTexture)
-        _svgTexture->SetPathFill(name, fill);
+    if(!_svgTexture)
+        return;
+
+    _svgTexture->SetPathFill(name, fill);
 }
 
 void RetroFuturaGUI::SvgImage::ClearPathFill(std::string_view name)
 {
-    if (_svgTexture)
-        _svgTexture->ClearPathFill(name);
+    if(!_svgTexture)
+        return;
+
+    _svgTexture->ClearPathFill(name);
 }
 
 const std::vector<RetroFuturaGUI::SvgPathInfo>& RetroFuturaGUI::SvgImage::GetNamedPaths() const

@@ -34,14 +34,17 @@ RetroFuturaGUI::LineDiagram::LineDiagram(std::string_view name, Projection* proj
 
 void RetroFuturaGUI::LineDiagram::Draw()
 {
+    if(!_background)
+        return;
+
+    if(!_border)
+        return;
+
     updatePoints(); // Before interact, so the cursor is tested against the lines
     interact();
 
-    if (_background)
-        _background->Draw();
-
-    if (_border)
-        _border->Draw();
+    _background->Draw();
+    _border->Draw();
 
     drawGraph();
     drawLineLabels();

@@ -93,8 +93,10 @@ bool RetroFuturaGUI::MediaSource::Open(std::string_view path)
 
 void RetroFuturaGUI::MediaSource::Close()
 {
-    if(_formatContext)
-        avformat_close_input(&_formatContext);
+    if(!_formatContext)
+        return;
+
+    avformat_close_input(&_formatContext);
 }
 
 i32 RetroFuturaGUI::MediaSource::ReadPacket(AVPacket* packet)

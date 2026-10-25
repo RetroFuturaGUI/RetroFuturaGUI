@@ -46,26 +46,34 @@ void RetroFuturaGUI::IBackground::SetBackgroundColors(std::span<glm::vec4> color
 
 void RetroFuturaGUI::IBackground::SetBackgroundGradientOffset(const f32 gradientOffset)
 {
-    if(_background)
-        _background->SetGradientOffset(gradientOffset);
+    if(!_background)
+        return;
+
+    _background->SetGradientOffset(gradientOffset);
 }
 
 void RetroFuturaGUI::IBackground::SetBackgroundGradientAnimationSpeed(const f32 animationSpeed)
 {
-    if(_background)
-        _background->SetGradientAnimationSpeed(animationSpeed);
+    if(!_background)
+        return;
+
+    _background->SetGradientAnimationSpeed(animationSpeed);
 }
 
 void RetroFuturaGUI::IBackground::SetBackgroundGradientDegree(const f32 degree)
 {
-    if(_background)
-        _background->SetGradientDegree(degree);
+    if(!_background)
+        return;
+
+    _background->SetGradientDegree(degree);
 }
 
 void RetroFuturaGUI::IBackground::SetBackgroundGradientRotationSpeed(const f32 rotationSpeed)
 {    
-    if(_background)
-        _background->SetGradientRotationSpeed(rotationSpeed);
+    if(!_background)
+        return;
+
+    _background->SetGradientRotationSpeed(rotationSpeed);
 }
 
 const std::vector<glm::vec4>& RetroFuturaGUI::IBackground::GetBackgroundColors(const ColorState state) const
@@ -87,84 +95,110 @@ void RetroFuturaGUI::IBackground::SetBackgroundFillType(const FillType fillType)
 {
     _backgroundFillType = fillType;
 
-    if(_background)
-        _background->SetFillType(fillType);
+    if(!_background)
+        return;
+
+    _background->SetFillType(fillType);
 }
 
 void RetroFuturaGUI::IBackground::SetBackgroundGaps(const BackgroundGap& gap)
 {
-    if(_background)
-        _background->SetBackgroundGaps(gap);
+    if(!_background)
+        return;
+
+    _background->SetBackgroundGaps(gap);
 }
 
 void RetroFuturaGUI::IBackground::SetWindowBackgroundImageTextureID(const u32 textureID)
 {
-    if(_background)
-        _background->SetWindowBackgroundImageTextureID(textureID);
+    if(!_background)
+        return;
+
+    _background->SetWindowBackgroundImageTextureID(textureID);
 }
 
 void RetroFuturaGUI::IBackground::SetBackgroundPrimaryRasterColor(const glm::vec4& color)
 {
-    if(_background)
-        _background->SetPrimaryRasterColor(color);
+    if(!_background)
+        return;
+
+    _background->SetPrimaryRasterColor(color);
 }
 
 void RetroFuturaGUI::IBackground::SetBackgroundDotDistance(const f32 distance)
 {
-    if(_background)
-        _background->SetDotDistance(distance);
+    if(!_background)
+        return;
+
+    _background->SetDotDistance(distance);
 }
 
 void RetroFuturaGUI::IBackground::SetBackgroundRasterDegree(const f32 degree)
 {
-    if(_background)
-        _background->SetRasterDegree(degree);
+    if(!_background)
+        return;
+
+    _background->SetRasterDegree(degree);
 }
 
 void RetroFuturaGUI::IBackground::SetBackgroundPrimaryRasterWidthTransfer(std::span<f32> widthTransfer)
 {
     _backgroundPrimaryRasterWidthTransfer.assign(widthTransfer.begin(), widthTransfer.end());
 
-    if(_background)
-        _background->SetPrimaryRasterWidthTransfer(_backgroundPrimaryRasterWidthTransfer);
+    if(!_background)
+        return;
+
+    _background->SetPrimaryRasterWidthTransfer(_backgroundPrimaryRasterWidthTransfer);
 }
 
 void RetroFuturaGUI::IBackground::SetBackgroundDotTransparencyTransfer(const f32 transparencyTransfer)
 {
-    if(_background)
-        _background->SetDotTransparencyTransfer(transparencyTransfer);
+    if(!_background)
+        return;
+
+    _background->SetDotTransparencyTransfer(transparencyTransfer);
 }
 
 void RetroFuturaGUI::IBackground::SetBackgroundRasterAnimationSpeed(const f32 animationSpeed)
 {
-    if(_background)
-        _background->SetRasterAnimationSpeed(animationSpeed);
+    if(!_background)
+        return;
+
+    _background->SetRasterAnimationSpeed(animationSpeed);
 }
 
 void RetroFuturaGUI::IBackground::SetBackgroundFogAlpha(const f32 alpha)
 {
-    if(_background)
-        _background->SetFogAlpha(alpha);
+    if(!_background)
+        return;
+
+    _background->SetFogAlpha(alpha);
 }
 
 void RetroFuturaGUI::IBackground::SetBackgroundFogSpeed(const f32 speed)
 {
-    if(_background)
-        _background->SetFogSpeed(speed);
+    if(!_background)
+        return;
+
+    _background->SetFogSpeed(speed);
 }
 
 void RetroFuturaGUI::IBackground::SetBackgroundFogDensity(std::span<f32> density)
 {
     _backgroundFogDensity.assign(density.begin(), density.end());
 
-    if(_background)
-        _background->SetFogDensity(_backgroundFogDensity);
+    if(!_background)
+        return;
+
+    _background->SetFogDensity(_backgroundFogDensity);
 }
 
 void RetroFuturaGUI::IBackground::SetBackgroundFogClearing(const f32 clearing)
 {
-    if(_background)
-        _background->SetFogClearing(clearing);
+    if(!_background)
+        return;
+
+    _background->SetFogClearing(clearing);
 }
 
 void RetroFuturaGUI::IBackground::SetBackgroundImage(std::string_view imagePath)
@@ -190,14 +224,18 @@ void RetroFuturaGUI::IBackground::SetBackgroundImagePadding(const f32 padding)
 
 void RetroFuturaGUI::IBackground::setBackgroundCornerRadii(const glm::vec4& radii)
 {
-    if(_background)
-        _background->SetCornerRadii(radii);
+    if(!_background)
+        return;
+
+    _background->SetCornerRadii(radii);
 }
 
 void RetroFuturaGUI::IBackground::setBackgroundColorElement(std::vector<glm::vec4>& color)
 {
-    if(_background) 
-        _background->SetColors(color);
+    if(!_background)
+        return;
+
+    _background->SetColors(color);
 }
 
 void RetroFuturaGUI::IBackground::setBackgroundColors()
@@ -220,6 +258,8 @@ void RetroFuturaGUI::IBackground::setBackgroundColors()
 
 void RetroFuturaGUI::IBackground::drawBackground()
 {
-    if(_background)
-        _background->Draw();
+    if(!_background)
+        return;
+
+    _background->Draw();
 }

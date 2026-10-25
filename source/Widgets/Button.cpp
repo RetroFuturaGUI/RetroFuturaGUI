@@ -16,11 +16,14 @@ RetroFuturaGUI::Button::Button(const std::string& name, Projection* projection, 
     _border = std::make_unique<Rectangle>(projection);
     _text = std::make_unique<Text>(projection);
 
-    if (_background)
-        _background->SetRectangleMode(RectangleMode::Plane);
+    if(!_background)
+        return;
 
-    if (_border)
-        _border->SetRectangleMode(RectangleMode::Border);
+    if(!_border)
+        return;
+
+    _background->SetRectangleMode(RectangleMode::Plane);
+    _border->SetRectangleMode(RectangleMode::Border);
 }
 
 void RetroFuturaGUI::Button::Draw()
@@ -33,47 +36,58 @@ void RetroFuturaGUI::Button::Draw()
 
 void RetroFuturaGUI::Button::SetSize(const glm::vec3& size)
 {
+    if(!_background)
+        return;
+
+    if(!_border)
+        return;
+
+    if(!_text)
+        return;
+
     IWidget::SetSize(size);
 
-    if(_background)
-        _background->SetSize(size);
+    _background->SetSize(size);
+    _border->SetSize(size);
 
-    if(_border)
-        _border->SetSize(size);
-
-    if(_text)
-    {
-        _text->SetParentSize(glm::vec2(size.x, size.y));
-        _text->SetPosition(_position + glm::vec3(0.0f, 0.0f, 0.02f));
-    }
+    _text->SetParentSize(glm::vec2(size.x, size.y));
+    _text->SetPosition(_position + glm::vec3(0.0f, 0.0f, 0.02f));
 }
 
 void RetroFuturaGUI::Button::SetPosition(const glm::vec3& position)
 {
+    if(!_background)
+        return;
+
+    if(!_border)
+        return;
+
+    if(!_text)
+        return;
+
     IWidget::SetPosition(position);
 
-    if(_background)
-        _background->SetPosition(position);
-
-    if(_border)
-        _border->SetPosition(position + glm::vec3(0.0f, 0.0f, 0.01f));
-
-    if(_text)
-        _text->SetPosition(position + glm::vec3(0.0f, 0.0f, 0.02f));
+    _background->SetPosition(position);
+    _border->SetPosition(position + glm::vec3(0.0f, 0.0f, 0.01f));
+    _text->SetPosition(position + glm::vec3(0.0f, 0.0f, 0.02f));
 }
 
 void RetroFuturaGUI::Button::SetRotation(const glm::vec3& rotation)
 {
+    if(!_background)
+        return;
+
+    if(!_border)
+        return;
+
+    if(!_text)
+        return;
+
     _rotation = rotation;
 
-    if(_background)
-        _background->SetRotation(rotation);
-
-    if(_border)
-        _border->SetRotation(rotation);
-
-    if(_text)
-        _text->SetRotation(rotation);
+    _background->SetRotation(rotation);
+    _border->SetRotation(rotation);
+    _text->SetRotation(rotation);
 }
 
 void RetroFuturaGUI::Button::interact()

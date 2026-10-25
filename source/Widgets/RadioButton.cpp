@@ -20,15 +20,21 @@ RetroFuturaGUI::RadioButton::RadioButton(const std::string& name, Projection* pr
     _border = std::make_unique<Rectangle>(projection);
     _parentGroup = parentGroup;
 
-    if (_background)
-        _background->SetRectangleMode(RectangleMode::Plane);
+    if(!_background)
+        return;
 
-    if (_border)
-        _border->SetRectangleMode(RectangleMode::Border);
+    if(!_border)
+        return;
+
+    _background->SetRectangleMode(RectangleMode::Plane);
+    _border->SetRectangleMode(RectangleMode::Border);
 }
 
 void RetroFuturaGUI::RadioButton::Draw()
 {
+    if(!_indicator)
+        return;
+
     interact();
     drawBackground();
     drawBorder();
@@ -36,49 +42,59 @@ void RetroFuturaGUI::RadioButton::Draw()
     if(!_isChecked)
         return;
 
-    if(_indicator)
-        _indicator->Draw();
+    _indicator->Draw();
 }
 
 void RetroFuturaGUI::RadioButton::SetSize(const glm::vec3& size)
 {
+    if(!_background)
+        return;
+
+    if(!_border)
+        return;
+
     IWidget::SetSize(size);
 
-    if(_background)
-        _background->SetSize(size);
-
-    if(_border)
-        _border->SetSize(size);
+    _background->SetSize(size);
+    _border->SetSize(size);
 
     SetIndicatorPadding(_indicatorPadding);
 }
 
 void RetroFuturaGUI::RadioButton::SetPosition(const glm::vec3& position)
 {
+    if(!_background)
+        return;
+
+    if(!_border)
+        return;
+
+    if(!_indicator)
+        return;
+
     IWidget::SetPosition(position);
 
-    if(_background)
-        _background->SetPosition(position);
-
-    if(_border)
-        _border->SetPosition(position + glm::vec3(0.0f, 0.0f, 0.01f));
-
-    if(_indicator)
-        _indicator->SetPosition(position + glm::vec3(0.0f, 0.0f, 0.02f));
+    _background->SetPosition(position);
+    _border->SetPosition(position + glm::vec3(0.0f, 0.0f, 0.01f));
+    _indicator->SetPosition(position + glm::vec3(0.0f, 0.0f, 0.02f));
 }
 
 void RetroFuturaGUI::RadioButton::SetRotation(const glm::vec3& rotation)
 {
+    if(!_background)
+        return;
+
+    if(!_border)
+        return;
+
+    if(!_indicator)
+        return;
+
     _rotation = rotation;
 
-    if(_background)
-        _background->SetRotation(rotation);
-
-    if(_border)
-        _border->SetRotation(rotation);
-
-    if(_indicator)
-        _indicator->SetRotation(rotation);
+    _background->SetRotation(rotation);
+    _border->SetRotation(rotation);
+    _indicator->SetRotation(rotation);
 }
 
 void RetroFuturaGUI::RadioButton::SetValue(const bool value, const bool emitSignal)
@@ -134,6 +150,9 @@ void RetroFuturaGUI::RadioButton::SetCornerRadii(const glm::vec4& radii)
     if(!_background)
         return;
 
+    if(!_indicator)
+        return;
+
     _background->SetCornerRadii(radii);
 
     if(!_border)
@@ -141,32 +160,39 @@ void RetroFuturaGUI::RadioButton::SetCornerRadii(const glm::vec4& radii)
 
     _border->SetCornerRadii(radii);
 
-    if(_indicator)
-        _indicator->SetCornerRadii(radii - _border->GetBorderWidth() - _indicatorPadding);
+    _indicator->SetCornerRadii(radii - _border->GetBorderWidth() - _indicatorPadding);
 }
 
 void RetroFuturaGUI::RadioButton::SetIndicatorGradientOffset(const f32 gradientOffset)
 {
-    if(_indicator)
-        _indicator->SetGradientOffset(gradientOffset);
+    if(!_indicator)
+        return;
+
+    _indicator->SetGradientOffset(gradientOffset);
 }
 
 void RetroFuturaGUI::RadioButton::SetIndicatorGradientAnimationSpeed(const f32 animationSpeed)
 {
-    if(_indicator)
-        _indicator->SetRasterAnimationSpeed(animationSpeed);
+    if(!_indicator)
+        return;
+
+    _indicator->SetRasterAnimationSpeed(animationSpeed);
 }
 
 void RetroFuturaGUI::RadioButton::SetIndicatorGradientDegree(const f32 degree)
 {
-    if(_indicator)
-        _indicator->SetGradientDegree(degree);
+    if(!_indicator)
+        return;
+
+    _indicator->SetGradientDegree(degree);
 }
 
 void RetroFuturaGUI::RadioButton::SetIndicatorGradientRotationSpeed(const f32 rotationSpeed)
 {
-    if(_indicator)
-        _indicator->SetGradientRotationSpeed(rotationSpeed);
+    if(!_indicator)
+        return;
+
+    _indicator->SetGradientRotationSpeed(rotationSpeed);
 }
 
 void RetroFuturaGUI::RadioButton::setColors(const ColorState state)
@@ -268,12 +294,14 @@ void RetroFuturaGUI::RadioButton::interact()
 
 void RetroFuturaGUI::RadioButton::SetIndicatorPadding(const f32 pixels)
 {
+    if(!_indicator)
+        return;
+
     _indicatorPadding = pixels;
     glm::vec3 size { _size - glm::vec3(_border->GetBorderWidth() * 2, _border->GetBorderWidth() * 2, 0.0f) };
     size -= glm::vec3(_indicatorPadding * 2,  _indicatorPadding * 2, 0.0f);
 
-    if(_indicator)
-        _indicator->SetSize(size);
+    _indicator->SetSize(size);
 }
 
 void RetroFuturaGUI::RadioButton::SetParentGroup(RadioButtonGroup* parentGroup)

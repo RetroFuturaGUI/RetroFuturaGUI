@@ -74,16 +74,15 @@ RetroFuturaGUI::Lasagna::Lasagna(const std::string& name, Projection* projection
 
     _debugBorder = std::make_unique<Rectangle>(&_projection);
 
-    if(_debugBorder)
-    {
-        _debugBorder->SetRectangleMode(RectangleMode::Border);
-        _debugBorder->SetPosition(glm::vec3(0.0f));
-        _debugBorder->SetSize(glm::vec3(0.0f));
-        _debugBorder->SetRotation(glm::vec3(0.0f));
-        _debugBorder->SetColors(_debugBorderColor);
-        _debugBorder->SetBorderWidth(5.0f);
-    }
+    if(!_debugBorder)
+        return;
 
+    _debugBorder->SetRectangleMode(RectangleMode::Border);
+    _debugBorder->SetPosition(glm::vec3(0.0f));
+    _debugBorder->SetSize(glm::vec3(0.0f));
+    _debugBorder->SetRotation(glm::vec3(0.0f));
+    _debugBorder->SetColors(_debugBorderColor);
+    _debugBorder->SetBorderWidth(5.0f);
 }
 
 bool RetroFuturaGUI::Lasagna::AttachWidget(const u32 row, const u32 col, const u32 layer, IWidget* widget, const SizingMode sizingMode, const u32 rowSpan, const u32 colSpan, const u32 layerSpan)

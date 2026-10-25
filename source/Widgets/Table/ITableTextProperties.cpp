@@ -15,24 +15,30 @@ void RetroFuturaGUI::ITableTextProperties::SetFontFamily(std::string_view fontFa
     _slant = slant;
     _fontWeight = fontWeight;
 
-    if(_text)
-        _text->SetFontFamily(fontFamily, fontSize, slant, fontWeight);
+    if(!_text)
+        return;
+
+    _text->SetFontFamily(fontFamily, fontSize, slant, fontWeight);
 }
 
 void RetroFuturaGUI::ITableTextProperties::SetTextAlignment(const TextAlignment alignment)
 {
     _textAlignment = alignment;
 
-    if(_text)
-        _text->SetTextAlignment(alignment);
+    if(!_text)
+        return;
+
+    _text->SetTextAlignment(alignment);
 }
 
 void RetroFuturaGUI::ITableTextProperties::SetTextPadding(const f32 padding)
 {
     _textPadding = padding;
 
-    if(_text)
-        _text->SetTextPadding(padding);
+    if(!_text)
+        return;
+
+    _text->SetTextPadding(padding);
 }
 
 f32 RetroFuturaGUI::ITableTextProperties::GetTextWidth() const

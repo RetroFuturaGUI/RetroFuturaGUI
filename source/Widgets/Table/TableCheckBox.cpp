@@ -14,37 +14,37 @@ RetroFuturaGUI::TableCheckBox::TableCheckBox(Table* parentTable, Projection* pro
 
 void RetroFuturaGUI::TableCheckBox::Draw()
 {
-    if(_background)
-    {
-        _background->SetSize(_size);
-        _background->SetPosition(_position);
-        _background->SetRotation(_rotation);
-        _background->Draw();
-    }
+    if(!_background)
+        return;
 
-    if(_border)
-    {
-        _border->SetSize(_size);
-        _border->SetPosition(_position + glm::vec3(0.0f, 0.0f, 0.01f));
-        _border->SetRotation(_rotation);
-        _border->Draw();
-    }
+    if(!_border)
+        return;
+
+    _background->SetSize(_size);
+    _background->SetPosition(_position);
+    _background->SetRotation(_rotation);
+    _background->Draw();
+
+    _border->SetSize(_size);
+    _border->SetPosition(_position + glm::vec3(0.0f, 0.0f, 0.01f));
+    _border->SetRotation(_rotation);
+    _border->Draw();
 
     if(!_isChecked)
         return;
 
-    if(_checkmark)
-    {
-        const f32
-            inset { (_border ? _border->GetBorderWidth() : 0.0f) + _innerPadding },
-            extent { _size.x > 2.0f * inset ? _size.x - 2.0f * inset : 0.0f };
+    if(!_checkmark)
+        return;
 
-        _checkmark->SetProjection(_projection);
-        _checkmark->SetSize(glm::vec2(extent));
-        _checkmark->SetPosition(_position + glm::vec3(0.0f, 0.0f, 0.02f));
-        _checkmark->SetRotation(_rotation);
-        _checkmark->Draw();
-    }
+    const f32
+        inset { _border->GetBorderWidth() + _innerPadding },
+        extent { _size.x > 2.0f * inset ? _size.x - 2.0f * inset : 0.0f };
+
+    _checkmark->SetProjection(_projection);
+    _checkmark->SetSize(glm::vec2(extent));
+    _checkmark->SetPosition(_position + glm::vec3(0.0f, 0.0f, 0.02f));
+    _checkmark->SetRotation(_rotation);
+    _checkmark->Draw();
 }
 
 void RetroFuturaGUI::TableCheckBox::SetSize(const glm::vec3& size)

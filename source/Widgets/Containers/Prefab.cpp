@@ -29,33 +29,41 @@ RetroFuturaGUI::Prefab::Prefab(std::string_view name, Projection* projection, IH
 
 void RetroFuturaGUI::Prefab::Draw()
 {
-    if(_lasagna)
-        _lasagna->Draw();
+    if(!_lasagna)
+        return;
+
+    _lasagna->Draw();
 }
 
 void RetroFuturaGUI::Prefab::SetSize(const glm::vec3& size)
 {
+    if(!_lasagna)
+        return;
+
     //The base call keeps _size in step - without it GetSize() on a prefab stays at its constructed value forever
     IWidget::SetSize(size);
 
-    if(_lasagna)
-        _lasagna->SetSize(size);
+    _lasagna->SetSize(size);
 }
 
 void RetroFuturaGUI::Prefab::SetPosition(const glm::vec3& position)
 {
+    if(!_lasagna)
+        return;
+
     IWidget::SetPosition(position);
 
-    if(_lasagna)
-        _lasagna->SetPosition(position);
+    _lasagna->SetPosition(position);
 }
 
 void RetroFuturaGUI::Prefab::SetRotation(const glm::vec3& rotation)
 {
+    if(!_lasagna)
+        return;
+
     IWidget::SetRotation(rotation);
 
-    if(_lasagna)
-        _lasagna->SetRotation(rotation);
+    _lasagna->SetRotation(rotation);
 }
 
 void RetroFuturaGUI::Prefab::ShowChildWidget(std::string_view name, const bool show)

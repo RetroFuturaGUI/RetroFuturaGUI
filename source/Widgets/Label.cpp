@@ -20,24 +20,30 @@ void RetroFuturaGUI::Label::setColors(const ColorState state)
 
 void RetroFuturaGUI::Label::SetSize(const glm::vec3& size)
 {
+    if(!_text)
+        return;
+
     IWidget::SetSize(size);
 
-    if(_text)
-        _text->SetParentSize(glm::vec2(size.x, size.y));
+    _text->SetParentSize(glm::vec2(size.x, size.y));
 }
 
 void RetroFuturaGUI::Label::SetPosition(const glm::vec3& position)
 {
+    if(!_text)
+        return;
+
     IWidget::SetPosition(position);
 
-    if(_text)
-        _text->SetPosition(position);
+    _text->SetPosition(position);
 }
 
 void RetroFuturaGUI::Label::SetRotation(const glm::vec3& rotation)
 {
+    if(!_text)
+        return;
+
     _rotation = rotation;
 
-    if(_text)
-        _text->SetRotation(rotation);
+    _text->SetRotation(rotation);
 }

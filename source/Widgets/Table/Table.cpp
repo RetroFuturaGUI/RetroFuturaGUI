@@ -36,82 +36,91 @@ RetroFuturaGUI::Table::Table(const std::string& name, Projection* projection, IW
     _selectionBand = std::make_unique<Rectangle>(projection);
     _selectionBandBorder = std::make_unique<Rectangle>(projection);
 
-    if(_background)
-        _background->SetRectangleMode(RectangleMode::Plane);
+    if(!_background)
+        return;
 
-    if(_border)
-        _border->SetRectangleMode(RectangleMode::Border);
+    if(!_border)
+        return;
 
-    if(_highlightedBackgroundCell)
-        _highlightedBackgroundCell->SetRectangleMode(RectangleMode::Plane);
+    if(!_highlightedBackgroundCell)
+        return;
 
-    if(_highlightedCellBorder)
-        _highlightedCellBorder->SetRectangleMode(RectangleMode::Border);
+    if(!_highlightedCellBorder)
+        return;
 
-    if(_trackColoringOverlay)
-        _trackColoringOverlay->SetRectangleMode(RectangleMode::Plane);
+    if(!_trackColoringOverlay)
+        return;
 
-    if(_innerBorder)
-        _innerBorder->SetRectangleMode(RectangleMode::Border);
+    if(!_innerBorder)
+        return;
 
+    if(!_cellColorPlane)
+        return;
+
+    if(!_checkBoxBackground)
+        return;
+
+    if(!_checkBoxBorder)
+        return;
+
+    if(!_cellImagePlane)
+        return;
+
+    if(!_selectionBand)
+        return;
+
+    if(!_selectionBandBorder)
+        return;
+
+    _background->SetRectangleMode(RectangleMode::Plane);
+    _border->SetRectangleMode(RectangleMode::Border);
+    _highlightedBackgroundCell->SetRectangleMode(RectangleMode::Plane);
+    _highlightedCellBorder->SetRectangleMode(RectangleMode::Border);
+    _trackColoringOverlay->SetRectangleMode(RectangleMode::Plane);
+    _innerBorder->SetRectangleMode(RectangleMode::Border);
     initEditVisuals(projection);
 
-    if(_cellColorPlane)
-    {
-        _cellColorPlane->SetRectangleMode(RectangleMode::Plane);
-        _cellColorPlane->SetFillType(FillType::SOLID);
-    }
+    _cellColorPlane->SetRectangleMode(RectangleMode::Plane);
+    _cellColorPlane->SetFillType(FillType::SOLID);
 
-    if(_checkBoxBackground)
-    {
-        _checkBoxBackground->SetRectangleMode(RectangleMode::Plane);
-        _checkBoxBackground->SetFillType(FillType::SOLID);
-        _checkBoxBackground->SetColors(_checkBoxBackgroundColorEnabled);
-    }
+    _checkBoxBackground->SetRectangleMode(RectangleMode::Plane);
+    _checkBoxBackground->SetFillType(FillType::SOLID);
+    _checkBoxBackground->SetColors(_checkBoxBackgroundColorEnabled);
 
-    if(_checkBoxBorder)
-    {
-        _checkBoxBorder->SetRectangleMode(RectangleMode::Border);
-        _checkBoxBorder->SetFillType(FillType::SOLID);
-        _checkBoxBorder->SetColors(_checkBoxBorderColorEnabled);
-    }
+    _checkBoxBorder->SetRectangleMode(RectangleMode::Border);
+    _checkBoxBorder->SetFillType(FillType::SOLID);
+    _checkBoxBorder->SetColors(_checkBoxBorderColorEnabled);
 
-    if(_checkmark)
-        _checkmark->SetProjection(projection);
+    _cellImagePlane->SetRectangleMode(RectangleMode::Plane);
+    _cellImagePlane->SetFillType(FillType::SOLID);
+    _cellImagePlane->SetColors(_imagePlaneColors);
 
-    if(_cellImagePlane)
-    {
-        _cellImagePlane->SetRectangleMode(RectangleMode::Plane);
-        _cellImagePlane->SetFillType(FillType::SOLID);
-        _cellImagePlane->SetColors(_imagePlaneColors);
-    }
+    _selectionBand->SetRectangleMode(RectangleMode::Plane);
+    _selectionBand->SetFillType(FillType::SOLID);
+
+    _selectionBandBorder->SetRectangleMode(RectangleMode::Border);
+    _selectionBandBorder->SetFillType(FillType::SOLID);
+    _selectionBandBorder->SetBorderWidth(1.0f);
 
     _sharedColor = std::make_unique<TableColor>(this, projection, _cellColorPlane.get());
     _sharedImage = std::make_unique<TableImage>(this, projection, _cellImagePlane.get());
-
-    if(_sharedImage)
-        _sharedImage->SetPadding(_imagePadding);
-
     _sharedCheckBox = std::make_unique<TableCheckBox>(this, projection, _checkBoxBackground.get(), _checkBoxBorder.get(), _checkmark.get());
 
-    if(_sharedCheckBox)
-    {
-        _sharedCheckBox->SetPadding(_checkBoxPadding);
-        _sharedCheckBox->SetInnerPadding(_checkBoxInnerPadding);
-    }
+    if(!_sharedImage)
+        return;
 
-    if(_selectionBand)
-    {
-        _selectionBand->SetRectangleMode(RectangleMode::Plane);
-        _selectionBand->SetFillType(FillType::SOLID);
-    }
+    if(!_sharedCheckBox)
+        return;
 
-    if(_selectionBandBorder)
-    {
-        _selectionBandBorder->SetRectangleMode(RectangleMode::Border);
-        _selectionBandBorder->SetFillType(FillType::SOLID);
-        _selectionBandBorder->SetBorderWidth(1.0f);
-    }
+    _sharedImage->SetPadding(_imagePadding);
+    _sharedCheckBox->SetPadding(_checkBoxPadding);
+    _sharedCheckBox->SetInnerPadding(_checkBoxInnerPadding);
+
+    //Last, since the shared icon may have failed to load
+    if(!_checkmark)
+        return;
+
+    _checkmark->SetProjection(projection);
 }
 
 void RetroFuturaGUI::Table::SetCheckBoxBackgroundColors(std::span<glm::vec4> colors, const ColorState state)
@@ -190,6 +199,12 @@ void RetroFuturaGUI::Table::SetCheckBoxInnerPadding(const f32 padding)
 
 void RetroFuturaGUI::Table::Draw()
 {
+    if(!_trackColoringOverlay)
+        return;
+
+    if(!_innerBorder)
+        return;
+
     interact();
     drawBorder();
 
@@ -232,22 +247,16 @@ void RetroFuturaGUI::Table::Draw()
                     isSelected { selectableRow < _selectedRowFlags.size() && _selectedRowFlags[selectableRow] },
                     isDropTarget { _hasDropTargetRow && _dropTargetRow == selectableRow };
 
-                if(_trackColoringOverlay)
-                {
-                    _trackColoringOverlay->SetSize(size);
-                    _trackColoringOverlay->SetPosition(position - glm::vec3(0.0f, 0.0f, _widgetZOffset));
-                    _trackColoringOverlay->SetColors(isDropTarget ? _dropTargetRowBackgroundColors : isSelected ? _selectedRowBackgroundColors : coloring._BackgroundColorEnabled);
-                    _trackColoringOverlay->Draw();
-                }
+                _trackColoringOverlay->SetSize(size);
+                _trackColoringOverlay->SetPosition(position - glm::vec3(0.0f, 0.0f, _widgetZOffset));
+                _trackColoringOverlay->SetColors(isDropTarget ? _dropTargetRowBackgroundColors : isSelected ? _selectedRowBackgroundColors : coloring._BackgroundColorEnabled);
+                _trackColoringOverlay->Draw();
 
-                if(_innerBorder)
-                {
-                    _innerBorder->SetBorderWidth(_innerBorderWidth);
-                    _innerBorder->SetSize(size);
-                    _innerBorder->SetPosition(position - glm::vec3(0.0f, 0.0f, _widgetZOffset - 0.01f));
-                    _innerBorder->SetColors(coloring._InnerBorderColorEnabled);
-                    _innerBorder->Draw();
-                }
+                _innerBorder->SetBorderWidth(_innerBorderWidth);
+                _innerBorder->SetSize(size);
+                _innerBorder->SetPosition(position - glm::vec3(0.0f, 0.0f, _widgetZOffset - 0.01f));
+                _innerBorder->SetColors(coloring._InnerBorderColorEnabled);
+                _innerBorder->Draw();
 
                 switch(cell->_Type)
                 {
@@ -339,6 +348,12 @@ void RetroFuturaGUI::Table::drawImageCell(const BodyCell& cell, const glm::vec3&
 
 void RetroFuturaGUI::Table::drawHeaderBand(std::vector<TableCell>& cells, const uSize first, const uSize end)
 {
+    if(!_trackColoringOverlay)
+        return;
+
+    if(!_innerBorder)
+        return;
+
     for(uSize index = first; index < end && index < cells.size(); ++index)
     {
         TableCell& cell { cells[index] };
@@ -346,22 +361,16 @@ void RetroFuturaGUI::Table::drawHeaderBand(std::vector<TableCell>& cells, const 
         if(!cell._TableWidget)
             continue;
 
-        if(_trackColoringOverlay)
-        {
-            _trackColoringOverlay->SetSize(cell._SizePixels);
-            _trackColoringOverlay->SetPosition(cell._PositionPixels - glm::vec3(0.0f, 0.0f, _widgetZOffset));
-            _trackColoringOverlay->SetColors(_headerBackgroundColorsEnabled);
-            _trackColoringOverlay->Draw();
-        }
+        _trackColoringOverlay->SetSize(cell._SizePixels);
+        _trackColoringOverlay->SetPosition(cell._PositionPixels - glm::vec3(0.0f, 0.0f, _widgetZOffset));
+        _trackColoringOverlay->SetColors(_headerBackgroundColorsEnabled);
+        _trackColoringOverlay->Draw();
 
-        if(_innerBorder)
-        {
-            _innerBorder->SetBorderWidth(_headerInnerBorderWidth);
-            _innerBorder->SetSize(cell._SizePixels);
-            _innerBorder->SetPosition(cell._PositionPixels - glm::vec3(0.0f, 0.0f, _widgetZOffset - 0.01f));
-            _innerBorder->SetColors(_headerBorderColorsEnabled);
-            _innerBorder->Draw();
-        }
+        _innerBorder->SetBorderWidth(_headerInnerBorderWidth);
+        _innerBorder->SetSize(cell._SizePixels);
+        _innerBorder->SetPosition(cell._PositionPixels - glm::vec3(0.0f, 0.0f, _widgetZOffset - 0.01f));
+        _innerBorder->SetColors(_headerBorderColorsEnabled);
+        _innerBorder->Draw();
 
         if(cell._TableWidgetTypeID == ITableWidget::TableWidgetTypeID::TableText)
             static_cast<TableText*>(cell._TableWidget.get())->SetTextColors(_headerTextColorsEnabled, ColorState::Enabled);
@@ -927,8 +936,10 @@ bool RetroFuturaGUI::Table::IsTrackReadOnly(const uSize trackIndex) const
 
 void RetroFuturaGUI::Table::SetCaretSize(const glm::vec2& size)
 {
-    if(_caret)
-        _caret->SetSize(size);
+    if(!_caret)
+        return;
+
+    _caret->SetSize(size);
 }
 
 bool RetroFuturaGUI::Table::GetEditedCell(uSize& outRow, uSize& outColumn) const
@@ -1625,6 +1636,12 @@ RetroFuturaGUI::ColorState RetroFuturaGUI::Table::checkBoxColorState(const uSize
 
 void RetroFuturaGUI::Table::setCheckBoxColors(const ColorState state)
 {
+    if(!_checkBoxBackground)
+        return;
+
+    if(!_checkBoxBorder)
+        return;
+
     std::vector<glm::vec4>
         *background { &_checkBoxBackgroundColorEnabled },
         *border { &_checkBoxBorderColorEnabled },
@@ -1651,11 +1668,8 @@ void RetroFuturaGUI::Table::setCheckBoxColors(const ColorState state)
         break;
     }
 
-    if(_checkBoxBackground)
-        _checkBoxBackground->SetColors(*background);
-
-    if(_checkBoxBorder)
-        _checkBoxBorder->SetColors(*border);
+    _checkBoxBackground->SetColors(*background);
+    _checkBoxBorder->SetColors(*border);
 
     // SetPathFill re-rasterizes the whole SVG, so only touch it when the fill actually changed
     if(_checkmark && _checkmarkFill._Colors != *checkmark)
@@ -1787,29 +1801,39 @@ bool RetroFuturaGUI::Table::GetValue(const TrackIndex& index) const
 
 void RetroFuturaGUI::Table::SetCheckBoxCornerRadii(const glm::vec4& radii)
 {
-    if(_checkBoxBackground)
-        _checkBoxBackground->SetCornerRadii(radii);
-    
-    if(_checkBoxBorder)
-        _checkBoxBorder->SetCornerRadii(radii);
+    if(!_checkBoxBackground)
+        return;
+
+    if(!_checkBoxBorder)
+        return;
+
+    _checkBoxBackground->SetCornerRadii(radii);
+    _checkBoxBorder->SetCornerRadii(radii);
 }
 
 void RetroFuturaGUI::Table::SetCheckBoxSize(const glm::vec3& size)
 {
-    if(_checkBoxBackground)
-        _checkBoxBackground->SetSize(size);
-    
-    if(_checkBoxBorder)
-        _checkBoxBorder->SetSize(size);
-        
-    if(_checkmark)
-        _checkmark->SetSize(size);
+    if(!_checkBoxBackground)
+        return;
+
+    if(!_checkBoxBorder)
+        return;
+
+    _checkBoxBackground->SetSize(size);
+    _checkBoxBorder->SetSize(size);
+
+    if(!_checkmark)
+        return;
+
+    _checkmark->SetSize(size);
 }
 
 void RetroFuturaGUI::Table::SetCheckBoxBorderWidth(const f32 width)
 {
-    if(_checkBoxBorder)
-        _checkBoxBorder->SetBorderWidth(width);
+    if(!_checkBoxBorder)
+        return;
+
+    _checkBoxBorder->SetBorderWidth(width);
 }
 
 bool RetroFuturaGUI::Table::pressEditsTextCell(const uSize row, const uSize column) const

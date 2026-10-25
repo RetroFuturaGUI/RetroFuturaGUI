@@ -63,80 +63,106 @@ void RetroFuturaGUI::IBorder::SetBorderFillType(const FillType fillType)
 {
     _borderFillType = fillType;
 
-    if(_border)
-        _border->SetFillType(fillType);
+    if(!_border)
+        return;
+
+    _border->SetFillType(fillType);
 }
 
 void RetroFuturaGUI::IBorder::SetBorderGradientOffset(const f32 gradientOffset)
 {
-    if(_border) 
-        _border->SetGradientOffset(gradientOffset);
+    if(!_border)
+        return;
+
+    _border->SetGradientOffset(gradientOffset);
 }
 
 void RetroFuturaGUI::IBorder::SetBorderGradientAnimationSpeed(const f32 animationSpeed)
 {
-    if(_border) 
-        _border->SetGradientAnimationSpeed(animationSpeed);
+    if(!_border)
+        return;
+
+    _border->SetGradientAnimationSpeed(animationSpeed);
 }
 
 void RetroFuturaGUI::IBorder::SetBorderGradientDegree(const f32 degree)
 {
-    if(_border) 
-        _border->SetGradientDegree(degree);
+    if(!_border)
+        return;
+
+    _border->SetGradientDegree(degree);
 }
 
 void RetroFuturaGUI::IBorder::SetBorderGradientRotationSpeed(const f32 rotationSpeed)
 {
-    if(_border) 
-        _border->SetGradientRotationSpeed(rotationSpeed);
+    if(!_border)
+        return;
+
+    _border->SetGradientRotationSpeed(rotationSpeed);
 }
 
 void RetroFuturaGUI::IBorder::SetWindowBorderImageTextureID(const u32 textureID)
 {
-    if(_border)
-        _border->SetWindowBackgroundImageTextureID(textureID);
+    if(!_border)
+        return;
+
+    _border->SetWindowBackgroundImageTextureID(textureID);
 }
 
 void RetroFuturaGUI::IBorder::SetBorderPrimaryRasterColor(const glm::vec4& color)
 {
-    if(_border)
-        _border->SetPrimaryRasterColor(color);
+    if(!_border)
+        return;
+
+    _border->SetPrimaryRasterColor(color);
 }
 
 void RetroFuturaGUI::IBorder::SetBorderDotDistance(const f32 distance)
 {
-    if(_border)
-        _border->SetDotDistance(distance);
+    if(!_border)
+        return;
+
+    _border->SetDotDistance(distance);
 }
 
 void RetroFuturaGUI::IBorder::SetBorderRasterDegree(const f32 degree)
 {
-    if(_border)
-        _border->SetRasterDegree(degree);
+    if(!_border)
+        return;
+
+    _border->SetRasterDegree(degree);
 }
 
 void RetroFuturaGUI::IBorder::SetBorderPrimaryRasterWidthTransfer(std::span<f32> widthTransfer)
 {
-    if(_border)
-        _border->SetPrimaryRasterWidthTransfer(widthTransfer);
+    if(!_border)
+        return;
+
+    _border->SetPrimaryRasterWidthTransfer(widthTransfer);
 }
 
 void RetroFuturaGUI::IBorder::SetBorderDotTransparencyTransfer(const f32 transparencyTransfer)
 {
-    if(_border)
-        _border->SetDotTransparencyTransfer(transparencyTransfer);
+    if(!_border)
+        return;
+
+    _border->SetDotTransparencyTransfer(transparencyTransfer);
 }
 
 void RetroFuturaGUI::IBorder::SetBorderRasterAnimationSpeed(const f32 animationSpeed)
 {
-    if(_border)
-        _border->SetRasterAnimationSpeed(animationSpeed);
+    if(!_border)
+        return;
+
+    _border->SetRasterAnimationSpeed(animationSpeed);
 }
 
 void RetroFuturaGUI::IBorder::drawBorder()
 {
-    if(_border)
-        _border->Draw();
+    if(!_border)
+        return;
+
+    _border->Draw();
 }
 
 void RetroFuturaGUI::IBorder::setBorderColors()
@@ -159,24 +185,32 @@ void RetroFuturaGUI::IBorder::setBorderColors()
 
 void RetroFuturaGUI::IBorder::setBorderColorElement(std::vector<glm::vec4>& color)
 {
-    if(_border) 
-        _border->SetColors(color);
+    if(!_border)
+        return;
+
+    _border->SetColors(color);
 }
 
 void RetroFuturaGUI::IBorder::SetBorderWidth(const f32 borderWidth)
 {
-    if(_border)    
-        _border->SetBorderWidth(borderWidth);
+    if(!_border)
+        return;
+
+    _border->SetBorderWidth(borderWidth);
 }
 
 void RetroFuturaGUI::IBorder::setBorderCornerRadii(const glm::vec4& radii)
 {
-    if(_border)
-        _border->SetCornerRadii(radii);
+    if(!_border)
+        return;
+
+    _border->SetCornerRadii(radii);
 }
 
 void RetroFuturaGUI::IBorder::SetBorderGaps(std::span<BorderGap> gaps)
 {
-    if(_border)
-        _border->SetBorderGaps(gaps);
+    if(!_border)
+        return;
+
+    _border->SetBorderGaps(gaps);
 }

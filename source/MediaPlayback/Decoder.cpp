@@ -85,11 +85,13 @@ bool RetroFuturaGUI::Decoder::Open(const AVStream* stream)
 
 void RetroFuturaGUI::Decoder::Close()
 {
-    if(_codecContext)
-        avcodec_free_context(&_codecContext);
-
     _timeBase = { .num = 0, .den = 1 };
     _streamIndex = -1;
+
+    if(!_codecContext)
+        return;
+
+    avcodec_free_context(&_codecContext);
 }
 
 i32 RetroFuturaGUI::Decoder::SendPacket(const AVPacket* packet)
