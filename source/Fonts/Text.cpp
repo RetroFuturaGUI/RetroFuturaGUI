@@ -68,6 +68,7 @@ void RetroFuturaGUI::Text::SetTextPadding(const f32 padding)
 {
     _textPadding = padding;
     alignPosition();
+    updateMesh();
 }
 
 void RetroFuturaGUI::Text::SetParentSize(const glm::vec2 size)
@@ -119,8 +120,8 @@ void RetroFuturaGUI::Text::SetFontFamily(std::string_view fontFamily, const f32 
 void RetroFuturaGUI::Text::SetTextAlignment(TextAlignment textAlignment)
 {
     _textAlignment = textAlignment;
-    calculateTextSpan();
     alignPosition();
+    updateMesh();
 }
 
 void RetroFuturaGUI::Text::SetSize(const glm::vec2& glyphSize)
