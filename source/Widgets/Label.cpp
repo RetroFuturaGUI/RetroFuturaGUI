@@ -12,11 +12,11 @@ void RetroFuturaGUI::Label::Draw()
     drawText();
 }
 
-void RetroFuturaGUI::Label::SetEnabled(const bool enable)
+void RetroFuturaGUI::Label::SetEnabled(const bool enable, const bool emitSignal)
 {
     _isEnabledFlag = enable;
 
-    if(_isEnabledFlag)
+    if(_isEnabledFlag && emitSignal)
     {
         _onEnableAsync.EmitAsync();
         _onEnable.Emit();
@@ -24,8 +24,12 @@ void RetroFuturaGUI::Label::SetEnabled(const bool enable)
         return;
     }
 
-    _onDisableAsync.EmitAsync();
-    _onDisable.Emit();
+    if(emitSignal)
+    {
+        _onDisableAsync.EmitAsync();
+        _onDisable.Emit();
+    }
+    
     setColors(ColorState::Disabled);
 }
 

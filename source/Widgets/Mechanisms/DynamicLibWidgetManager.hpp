@@ -47,7 +47,7 @@ namespace RetroFuturaGUI
         static void SetSize(const char* id, const f32 width, const f32 height);
 
         /// @brief Enables or disables the widget with the given ID.
-        static void SetEnabled(const char* id, const bool enable);
+        static void SetEnabled(const char* id, const bool enable, const bool emitSignal);
 
         /// @brief Sets the background colors of the widget with the given ID, for the given color state.
         static void SetBackgroundColors(const char* id, std::span<glm::vec4> colors, const ColorState colorState);

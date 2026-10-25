@@ -24,7 +24,7 @@ namespace RetroFuturaGUI
         void Draw() override;
 
         /// @brief Enables or disables the button, optionally emitting the associated signal.
-        void SetEnabled(const bool enable, const bool emitSignal = true);
+        void SetEnabled(const bool enable, const bool emitSignal);
 
         /// @brief Sets the size of the button.
         void SetSize(const glm::vec3& size) override;

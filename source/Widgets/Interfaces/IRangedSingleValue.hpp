@@ -31,7 +31,7 @@ namespace RetroFuturaGUI
         void Disconnect_OnValueSet(const typename Signal<>::Slot& slot);
 
         /// @brief Sets the value, clamped to the range. A T different from the range's first converts the range and the step to T (see setValueType).
-        template <NumericValueType T> void SetValue(T value, const bool emitSignal = true)
+        template <NumericValueType T> void SetValue(T value, const bool emitSignal)
         {
             setValueType(GetPrimitiveTypeID<T>());
 

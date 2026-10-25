@@ -28,7 +28,7 @@ namespace RetroFuturaGUI
         void Draw() override;
 
         /// @brief Enables or disables the RadioButton, optionally emitting the associated signal.
-        void SetEnabled(const bool enable, const bool emitSignal = true);
+        void SetEnabled(const bool enable, const bool emitSignal);
 
         /// @brief Sets the size of the button.
         void SetSize(const glm::vec3& size) override;
@@ -42,7 +42,7 @@ namespace RetroFuturaGUI
         /// @brief Sets the RadioButton's value
         /// @param value (const bool): the value set the RadioButton should represent
         /// @param emitSignal (const bool): whether the onSetValue signal should be emitted
-        void SetValue(const bool value, const bool emitSignal = true);
+        void SetValue(const bool value, const bool emitSignal);
 
         /// @brief Sets the parent RadioButtonGroup
         /// @param parentGroup (RadioButtonGroup*): A pointer to the parent RadioButtonGroup

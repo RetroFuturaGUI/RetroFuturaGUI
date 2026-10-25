@@ -16,7 +16,7 @@ namespace RetroFuturaGUI
         void Draw() override;
 
         /// @brief Enables or disables the text box, optionally emitting the associated signal.
-        void SetEnabled(const bool enable, const bool emitSignal = true);
+        void SetEnabled(const bool enable, const bool emitSignal);
 
         /// @brief Sets the corner rounding radii of the text box's background and border.
         void SetCornerRadii(const glm::vec4& radii);

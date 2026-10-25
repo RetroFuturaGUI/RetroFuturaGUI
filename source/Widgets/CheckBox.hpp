@@ -26,7 +26,7 @@ namespace RetroFuturaGUI
         void Draw() override;
 
         /// @brief Enables or disables the button, optionally emitting the associated signal.
-        void SetEnabled(const bool enable, const bool emitSignal = true);
+        void SetEnabled(const bool enable, const bool emitSignal);
 
         /// @brief Sets the size of the button.
         void SetSize(const glm::vec3& size) override;
@@ -36,7 +36,7 @@ namespace RetroFuturaGUI
 
         /// @brief Sets the rotation of the button.
         void SetRotation(const glm::vec3& rotation) override;
-        void SetValue(const bool value, const bool emitSignal = true);
+        void SetValue(const bool value, const bool emitSignal);
         void SetInheritValueReference(bool* ref);
         bool GetValue() const;
         void SetCheckmarkColors(std::span<glm::vec4> colors, const ColorState state);

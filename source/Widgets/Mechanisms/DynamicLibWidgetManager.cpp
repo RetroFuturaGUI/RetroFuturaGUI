@@ -84,7 +84,7 @@ void RetroFuturaGUI::DynamicLibWidgetManager::SetSize(const char *id, const f32 
     widget->SetSize(glm::vec3(width, height, 0.01f));
 }
 
-void RetroFuturaGUI::DynamicLibWidgetManager::SetEnabled(const char* id, const bool enable)
+void RetroFuturaGUI::DynamicLibWidgetManager::SetEnabled(const char* id, const bool enable, const bool emitSignal)
 {
     IWidget* widget { getWidgetPointer(id) };
 
@@ -98,12 +98,12 @@ void RetroFuturaGUI::DynamicLibWidgetManager::SetEnabled(const char* id, const b
         case WidgetTypeID::Button:
         {
             Button* button = dynamic_cast<Button*>(widget);
-            button->SetEnabled(enable);
+            button->SetEnabled(enable, emitSignal);
         } break;
         case WidgetTypeID::Label:
         {
             Label* label = dynamic_cast<Label*>(widget);
-            label->SetEnabled(enable);
+            label->SetEnabled(enable, emitSignal);
         } break;
         default:
             [[unlikely]];
@@ -412,7 +412,7 @@ void RetroFuturaGUI::DynamicLibWidgetManager::SetText(const char* id, const char
         case WidgetTypeID::TextBox:
         {
             TextBox* textBox = dynamic_cast<TextBox*>(widget);
-            textBox->SetValue(std::string_view(text));
+            textBox->SetValue(std::string_view(text), true);
         } break;
         default:
             [[unlikely]];

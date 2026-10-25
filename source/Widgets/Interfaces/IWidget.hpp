@@ -74,7 +74,7 @@ namespace RetroFuturaGUI
         WidgetTypeID GetWidgetTypeID() const;
 
         /// @brief Enables or disables the widget, optionally emitting the associated signal.
-        void SetEnabled(const bool enable, const bool emitSignal = true);
+        void SetEnabled(const bool enable, const bool emitSignal);
 
         /// @brief Returns whether the widget is currently enabled.
         bool IsEnabled() const;

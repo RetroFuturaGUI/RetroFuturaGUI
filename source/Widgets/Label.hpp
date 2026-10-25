@@ -23,7 +23,7 @@ namespace RetroFuturaGUI
         void Draw() override;
 
         /// @brief Enables or disables the label.
-        void SetEnabled(const bool enable);
+        void SetEnabled(const bool enable, const bool emitSignal);
 
         /// @brief Sets the size of the label.
         void SetSize(const glm::vec3& size) override;

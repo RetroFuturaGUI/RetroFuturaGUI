@@ -11,7 +11,7 @@ namespace RetroFuturaGUI
     public:
         /// @brief Sets the value and renders it in the current numeric base and precision.
         template<TextValueType T>
-        void SetValue(const T value, const bool emitSignal = true)
+        void SetValue(const T value, const bool emitSignal)
         {
             ensureValueStore();
             _valueStore->SetValue(value);
@@ -32,13 +32,13 @@ namespace RetroFuturaGUI
         bool HasValueStore() const { return _valueStore != nullptr; }
 
         /// @brief Sets the numeric base used to render the value and re-renders the text.
-        void SetNumericBase(const u32 base, const bool emitSignal = true);
+        void SetNumericBase(const u32 base, const bool emitSignal);
 
         /// @brief Sets how many decimal digits floats render with, negative for full precision, and re-renders the text.
-        void SetDecimalPrecision(const i32 precision, const bool emitSignal = true);
+        void SetDecimalPrecision(const i32 precision, const bool emitSignal);
 
         /// @brief Converts the stored value to another data type and re-renders the text.
-        void ChangeType(const TextTypes::DataTypeID id, const bool emitSignal = true);
+        void ChangeType(const TextTypes::DataTypeID id, const bool emitSignal);
 
     protected:
         /// @brief Shows the given text in the widget without going back through the value store.
