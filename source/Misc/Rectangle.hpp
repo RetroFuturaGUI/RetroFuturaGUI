@@ -293,8 +293,6 @@ namespace RetroFuturaGUI
 
         /// @brief The background image's padding as a fraction of the quad, ready for uImagePadding.
         glm::vec2 getBackgroundImagePaddingUV() const;
-
-        void initColors(std::span<glm::vec4> colors);
         void uploadRasterUniforms(Shader& shader);
         void uploadDotUniforms(Shader& shader);
         void uploadCheckeredUniforms(Shader& shader);

@@ -97,7 +97,8 @@ void RetroFuturaGUI::Rectangle::SetPosition(const glm::vec3& position)
 
 void RetroFuturaGUI::Rectangle::SetColors(std::span<glm::vec4> colors)
 {
-    initColors(colors);
+    _colors = colors;
+    _colorCount = static_cast<i32>(std::min<uSize>(_colors.size(), 255));
 }
 
 void RetroFuturaGUI::Rectangle::SetCornerRadii(const glm::vec4& radii)
@@ -292,12 +293,6 @@ void RetroFuturaGUI::Rectangle::setupMesh()
             glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(f32), nullptr);
             glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
         });
-}
-
-void RetroFuturaGUI::Rectangle::initColors(std::span<glm::vec4> colors)
-{
-    _colors = colors;
-    _colorCount = static_cast<i32>(std::min<uSize>(_colors.size(), 255));
 }
 
 void RetroFuturaGUI::Rectangle::uploadRasterUniforms(Shader& shader)
