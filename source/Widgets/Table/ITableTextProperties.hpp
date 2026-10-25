@@ -37,7 +37,7 @@ namespace RetroFuturaGUI
         void applyTextSettings();
 
     // Elements
-        std::unique_ptr<Text> _text { nullptr }; //built for drawing only, while the cell is in view: a table can hold thousands of cells. ToDo: check foor possible performance loss
+        std::unique_ptr<Text> _text { nullptr }; //built for drawing only, while the cell is in view: a table can hold thousands of cells.
         std::string _content {}; //the text while there is no Text, and what it is built with
 
     // Style
