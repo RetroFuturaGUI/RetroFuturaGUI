@@ -45,8 +45,8 @@ std::optional<RetroFuturaGUI::DecodedImage> RetroFuturaGUI::DecodeVideoFrame(std
     const i64 durationMilliseconds { context && 0 < context->duration ? context->duration / (AV_TIME_BASE / 1000) : 0 };
     const bool isPastEnd { 0 < durationMilliseconds && durationMilliseconds <= milliseconds };
     const i64
-        moment { isPastEnd ? durationMilliseconds : (std::max)(milliseconds, i64 { 0 }) },
-        target { isPastEnd ? (std::numeric_limits<i64>::max)() : av_rescale_q(moment, AVRational { .num = 1, .den = 1000 }, stream->time_base) + (AV_NOPTS_VALUE != stream->start_time ? stream->start_time : 0) };
+        moment { isPastEnd ? durationMilliseconds : std::max(milliseconds, i64 { 0 }) },
+        target { isPastEnd ? std::numeric_limits<i64>::max() : av_rescale_q(moment, AVRational { .num = 1, .den = 1000 }, stream->time_base) + (AV_NOPTS_VALUE != stream->start_time ? stream->start_time : 0) };
 
     //One try: seeks, then decodes forward to the first picture at or past the moment, or the last one if the video ends sooner.
     //It fails when it finds no picture, or when its first picture is already past the moment.
@@ -118,7 +118,7 @@ std::optional<RetroFuturaGUI::DecodedImage> RetroFuturaGUI::DecodeVideoFrame(std
 
     for(i64 back { 0 }; !hasPicture; back = 0 == back ? 1000 : 2 * back)
     {
-        const i64 start { (std::max)(i64 { 0 }, moment - back) };
+        const i64 start { std::max(i64 { 0 }, moment - back) };
         hasPicture = decodeFrom(start);
 
         if(0 == start)
@@ -141,11 +141,11 @@ std::optional<RetroFuturaGUI::DecodedImage> RetroFuturaGUI::DecodeVideoFrame(std
         pixelAspect { 0 < streamPixelAspect.num && 0 < streamPixelAspect.den ? av_q2d(streamPixelAspect) : 0 < framePixelAspect.num && 0 < framePixelAspect.den ? av_q2d(framePixelAspect) : 1.0 },
         displayWidth { static_cast<f64>(picture->width) * pixelAspect },
         displayHeight { static_cast<f64>(picture->height) },
-        longest { (std::max)(displayWidth, displayHeight) },
+        longest { std::max(displayWidth, displayHeight) },
         scale { 0 < maxSide && static_cast<f64>(maxSide) < longest ? static_cast<f64>(maxSide) / longest : 1.0 };
     const i32
-        width { (std::max)(1, static_cast<i32>(std::lround(displayWidth * scale))) },
-        height { (std::max)(1, static_cast<i32>(std::lround(displayHeight * scale))) };
+        width { std::max(1, static_cast<i32>(std::lround(displayWidth * scale))) },
+        height { std::max(1, static_cast<i32>(std::lround(displayHeight * scale))) };
     const AVPixelFormat pixelFormat { static_cast<AVPixelFormat>(picture->format) };
     const AVPixFmtDescriptor* format { av_pix_fmt_desc_get(pixelFormat) };
 

@@ -123,7 +123,7 @@ u32 RetroFuturaGUI::FontManager::generateGlyphAtlas(FT_Face face, const u32 code
             continue;
 
         penX += bitmap->width + 1;
-        rowHeight = (std::max)(rowHeight, static_cast<u32>(bitmap->rows));
+        rowHeight = std::max(rowHeight, static_cast<u32>(bitmap->rows));
     }
 
     //stbi_write_png((std::string("font_output_") + std::to_string(codePointFirst) + "-" + std::to_string(codePointLast) + ".png").c_str(), atlasWidth, atlasHeight, 1, pixels.data(), atlasWidth);
@@ -435,7 +435,7 @@ const RetroFuturaGUI::Glyph* RetroFuturaGUI::FontManager::loadGlyph(GlyphBlock& 
     glyph._TextureID = page->_TextureID;
 
     page->_PenX += bitmap.width + 1; //a pixel between glyphs, so filtering doesn't pick up the neighbor's edge!
-    page->_RowHeight = (std::max)(page->_RowHeight, static_cast<u32>(bitmap.rows));
+    page->_RowHeight = std::max(page->_RowHeight, static_cast<u32>(bitmap.rows));
     return &block._Glyphs.emplace(codePoint, glyph).first->second;
 }
 

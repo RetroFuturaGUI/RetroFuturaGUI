@@ -211,7 +211,7 @@ void RetroFuturaGUI::Environment::applyTransform()
     switch(_fit)
     {
         case EnvironmentFit::Cover:
-            _scale = (std::max)(widthScale, heightScale);
+            _scale = std::max(widthScale, heightScale);
         break;
         case EnvironmentFit::KeepHeight:
             _scale = heightScale;
@@ -221,7 +221,7 @@ void RetroFuturaGUI::Environment::applyTransform()
         break;
         case EnvironmentFit::Contain:
         default:
-            _scale = (std::min)(widthScale, heightScale);
+            _scale = std::min(widthScale, heightScale);
         break;
     }
 
@@ -280,14 +280,14 @@ RetroFuturaGUI::Environment::ScissorState RetroFuturaGUI::Environment::pushSciss
 
     if(state._WasEnabled) // A clip already active, such as an enclosing Table's, stays in force: the Environment only narrows it.
     {
-        clipLeft = (std::max)(clipLeft, state._Previous[0]);
-        clipBottom = (std::max)(clipBottom, state._Previous[1]);
-        clipRight = (std::min)(clipRight, state._Previous[0] + state._Previous[2]);
-        clipTop = (std::min)(clipTop, state._Previous[1] + state._Previous[3]);
+        clipLeft = std::max(clipLeft, state._Previous[0]);
+        clipBottom = std::max(clipBottom, state._Previous[1]);
+        clipRight = std::min(clipRight, state._Previous[0] + state._Previous[2]);
+        clipTop = std::min(clipTop, state._Previous[1] + state._Previous[3]);
     }
 
     glEnable(GL_SCISSOR_TEST);
-    glScissor(clipLeft, clipBottom, (std::max)(clipRight - clipLeft, 0), (std::max)(clipTop - clipBottom, 0));
+    glScissor(clipLeft, clipBottom, std::max(clipRight - clipLeft, 0), std::max(clipTop - clipBottom, 0));
     return state;
 }
 

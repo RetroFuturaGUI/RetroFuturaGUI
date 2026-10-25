@@ -48,7 +48,7 @@ void RetroFuturaGUI::FileExplorer::ThumbnailCache::Update(Table& table, const st
         firstRow { 0 },
         endRow { 0 };
     table.GetDisplayedRows(firstRow, endRow);
-    endRow = (std::min)(endRow, entries.size());
+    endRow = std::min(endRow, entries.size());
 
     //Rows that left the view show their icons again, so a thumbnail let go below is never drawn
     for(uSize row = _shownFirstRow; row < _shownEndRow && row < entries.size(); ++row)

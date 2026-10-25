@@ -268,8 +268,11 @@ target_link_libraries("RetroFuturaGUI" PUBLIC
     PlatformBridge
 )
 
-if(TARGETPLATFORM STREQUAL "x64-Linux")
+string(TOLOWER "${TARGETPLATFORM}" TARGETPLATFORM_LOWER)
+
+if(TARGETPLATFORM_LOWER STREQUAL "x64-linux")
     target_compile_definitions("RetroFuturaGUI" PUBLIC TARGET_PLATFORM_LINUX)
-elseif(TARGETPLATFORM STREQUAL "x64-Windows")
-    target_compile_definitions("RetroFuturaGUI" PUBLIC TARGET_PLATFORM_WINDOWS)
+elseif(TARGETPLATFORM_LOWER STREQUAL "x64-windows")
+    #NOMINMAX: windows.h, which PlatformBridge's headers bring along, would otherwise define min and max as macros
+    target_compile_definitions("RetroFuturaGUI" PUBLIC TARGET_PLATFORM_WINDOWS NOMINMAX)
 endif()

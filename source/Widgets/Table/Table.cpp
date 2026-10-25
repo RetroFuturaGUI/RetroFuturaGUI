@@ -2054,7 +2054,7 @@ void RetroFuturaGUI::Table::SetImagePadding(const f32 padding)
 void RetroFuturaGUI::Table::GetDisplayedRows(uSize& firstOut, uSize& endOut) const
 {
     firstOut = _displayedRows[0];
-    endOut = (std::min)(_displayedRows[1], _rowDefinition.size());
+    endOut = std::min(_displayedRows[1], _rowDefinition.size());
 }
 
 void RetroFuturaGUI::Table::SetRowSelection(const RowSelection selection)

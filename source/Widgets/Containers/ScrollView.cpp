@@ -390,7 +390,7 @@ void RetroFuturaGUI::ScrollView::layoutCells()
             if(axis == stackAxis)
                 contentExtent[axis] += cell._Size[axis];
             else
-                contentExtent[axis] = (std::max)(contentExtent[axis], cell._Size[axis]);
+                contentExtent[axis] = std::max(contentExtent[axis], cell._Size[axis]);
         }
 
         ++cellCount;
@@ -431,7 +431,7 @@ glm::vec3 RetroFuturaGUI::ScrollView::innerSize() const
 
     // The border is drawn inside the widget's rectangle, so the cells scroll through what is left inside it.
     const f32 inset { 2.0f * _border->GetBorderWidth() };
-    return glm::vec3((std::max)(_size.x - inset, 0.0f), (std::max)(_size.y - inset, 0.0f), _size.z);
+    return glm::vec3(std::max(_size.x - inset, 0.0f), std::max(_size.y - inset, 0.0f), _size.z);
 }
 
 glm::vec3 RetroFuturaGUI::ScrollView::contentToWindow(const glm::vec3& point) const

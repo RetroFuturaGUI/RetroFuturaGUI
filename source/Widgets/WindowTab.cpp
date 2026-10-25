@@ -133,7 +133,7 @@ bool RetroFuturaGUI::WindowTab::InsertWindow(Window* window, const uSize index)
 
     std::unique_ptr<Text> title { std::make_unique<Text>(&_projection) };
     applyTitleFont(title.get());
-    _fields.insert(std::next(_fields.begin(), static_cast<i64>((std::min)(index, _fields.size()))), Field { ._Window = window, ._Title = std::move(title), ._ShownTitle = {} });
+    _fields.insert(std::next(_fields.begin(), static_cast<i64>(std::min(index, _fields.size()))), Field { ._Window = window, ._Title = std::move(title), ._ShownTitle = {} });
     syncTitles();
 
     _onWindowAdded.Emit(window);
@@ -249,18 +249,18 @@ void RetroFuturaGUI::WindowTab::Disconnect_OnWindowRemoved(const typename Signal
 
 void RetroFuturaGUI::WindowTab::SetStripHeight(const f32 height)
 {
-    _stripHeight = (std::max)(height, 0.0f);
+    _stripHeight = std::max(height, 0.0f);
 }
 
 void RetroFuturaGUI::WindowTab::SetFieldWidthRange(const f32 minimumWidth, const f32 maximumWidth)
 {
-    _minimumFieldWidth = (std::max)(minimumWidth, 1.0f);
-    _maximumFieldWidth = (std::max)(maximumWidth, _minimumFieldWidth);
+    _minimumFieldWidth = std::max(minimumWidth, 1.0f);
+    _maximumFieldWidth = std::max(maximumWidth, _minimumFieldWidth);
 }
 
 void RetroFuturaGUI::WindowTab::SetFieldSpacing(const f32 spacing)
 {
-    _fieldSpacing = (std::max)(spacing, 0.0f);
+    _fieldSpacing = std::max(spacing, 0.0f);
 }
 
 void RetroFuturaGUI::WindowTab::SetFieldCornerRadii(const glm::vec4& radii)
@@ -290,7 +290,7 @@ void RetroFuturaGUI::WindowTab::SetSelectedFieldBorderColor(const glm::vec4& col
 
 void RetroFuturaGUI::WindowTab::SetFieldBorderWidth(const f32 width)
 {
-    _fieldBorderWidth = (std::max)(width, 0.0f);
+    _fieldBorderWidth = std::max(width, 0.0f);
 }
 
 void RetroFuturaGUI::WindowTab::SetTitleFontFamily(std::string_view fontFamily, const f32 fontSize, const PlatformBridge::Fonts::Slant slant, const PlatformBridge::Fonts::Weight weight)
@@ -318,18 +318,18 @@ void RetroFuturaGUI::WindowTab::SetSelectedTitleColor(const glm::vec4& color)
 
 void RetroFuturaGUI::WindowTab::SetTitlePadding(const f32 padding)
 {
-    _titlePadding = (std::max)(padding, 0.0f);
+    _titlePadding = std::max(padding, 0.0f);
 }
 
 void RetroFuturaGUI::WindowTab::SetCloseButtonSize(const f32 size)
 {
-    _closeButtonSize = (std::max)(size, 0.0f);
+    _closeButtonSize = std::max(size, 0.0f);
 
     if(!_closeIcon)
         return;
 
     //Rasterized at twice the size the cross draws at, so it stays smooth when it is scaled down
-    const i32 resolution { (std::max)(static_cast<i32>(std::lround(_closeButtonSize * _closeIconScale * 2.0f)), 8) };
+    const i32 resolution { std::max(static_cast<i32>(std::lround(_closeButtonSize * _closeIconScale * 2.0f)), 8) };
     _closeIcon->Rasterize(glm::i32vec2(resolution));
 }
 
@@ -458,7 +458,7 @@ void RetroFuturaGUI::WindowTab::dragField(const glm::vec2& point)
     }
 
     const glm::vec2 travel { point - _pressPoint };
-    _sidewaysTravel = (std::max)(_sidewaysTravel, std::abs(travel.x));
+    _sidewaysTravel = std::max(_sidewaysTravel, std::abs(travel.x));
 
     if(!_isDraggingField)
     {
@@ -478,7 +478,7 @@ void RetroFuturaGUI::WindowTab::dragField(const glm::vec2& point)
     const glm::vec4
         first { slotRect(0) },
         last { slotRect(_fields.size() - 1) };
-    _dragLeft = std::clamp(point.x - _grabOffset.x, first.x, (std::max)(first.x, last.x));
+    _dragLeft = std::clamp(point.x - _grabOffset.x, first.x, std::max(first.x, last.x));
     const uSize slot { slotAt(_dragLeft + first.z * 0.5f) };
 
     if(slot == index)
@@ -499,7 +499,7 @@ bool RetroFuturaGUI::WindowTab::isPullingOut(const uSize index, const glm::vec2&
     //Above or below the strip. A long sideways drag raises the threshold, so reordering doesn't pull a field out by accident.
     const f32
         verticalThreshold { _pullOutDistance * fontSize + std::clamp((_sidewaysTravel - 2.0f * fontSize) * 0.2f, 0.0f, 4.0f * fontSize) }, //ImGui's numbers
-        outsideStrip { (std::max)(strip.y - point.y, point.y - (strip.y + strip.w)) };
+        outsideStrip { std::max(strip.y - point.y, point.y - (strip.y + strip.w)) };
 
     if(outsideStrip >= verticalThreshold)
         return true;
@@ -526,9 +526,9 @@ void RetroFuturaGUI::WindowTab::pullOut(const uSize index, const glm::vec2& poin
 
     //The cursor holds the window where it held the field, so the window's top-left lands where the field's was. Never past its
     //right edge, though, when the field was wider than the window.
-    const i32 widest { (std::max)(window->_untabbedSize.x - 1, 0) };
+    const i32 widest { std::max(window->_untabbedSize.x - 1, 0) };
     const glm::ivec2
-        grabPoint { (std::min)(static_cast<i32>(std::lround(_grabOffset.x)), widest), static_cast<i32>(std::lround(_grabOffset.y)) },
+        grabPoint { std::min(static_cast<i32>(std::lround(_grabOffset.x)), widest), static_cast<i32>(std::lround(_grabOffset.y)) },
         position { toScreen(point) - grabPoint };
 
     _pressedWindow = nullptr;
@@ -600,7 +600,7 @@ RetroFuturaGUI::ColorState RetroFuturaGUI::WindowTab::fieldState(const uSize ind
 glm::vec4 RetroFuturaGUI::WindowTab::stripRect() const
 {
     const f32
-        height { (std::min)((std::max)(_stripHeight, 0.0f), (std::max)(_size.y, 0.0f)) },
+        height { std::min(std::max(_stripHeight, 0.0f), std::max(_size.y, 0.0f)) },
         left { _position.x - _size.x * 0.5f },
         top { _position.y + _size.y * 0.5f };
 
@@ -611,7 +611,7 @@ RetroFuturaGUI::ScreenRect RetroFuturaGUI::WindowTab::contentArea() const
 {
     const glm::vec4 strip { stripRect() };
     const f32 bottom { _position.y - _size.y * 0.5f };
-    return ScreenRect { ._Origin = glm::vec2(strip.x, bottom), ._Extent = glm::vec2(strip.z, (std::max)(strip.y - bottom, 0.0f)) };
+    return ScreenRect { ._Origin = glm::vec2(strip.x, bottom), ._Extent = glm::vec2(strip.z, std::max(strip.y - bottom, 0.0f)) };
 }
 
 f32 RetroFuturaGUI::WindowTab::fieldWidth() const
@@ -631,7 +631,7 @@ glm::vec4 RetroFuturaGUI::WindowTab::slotRect(const uSize slot) const
     const f32 width { fieldWidth() };
 
     //The fields stand on the strip's bottom edge, where the content begins, with the spacing above them
-    return glm::vec4(strip.x + _fieldSpacing + static_cast<f32>(slot) * (width + _fieldSpacing), strip.y, width, (std::max)(strip.w - _fieldSpacing, 0.0f));
+    return glm::vec4(strip.x + _fieldSpacing + static_cast<f32>(slot) * (width + _fieldSpacing), strip.y, width, std::max(strip.w - _fieldSpacing, 0.0f));
 }
 
 glm::vec4 RetroFuturaGUI::WindowTab::fieldRect(const uSize index) const
@@ -677,7 +677,7 @@ bool RetroFuturaGUI::WindowTab::fitsInStrip(const glm::vec4& field) const
 glm::vec4 RetroFuturaGUI::WindowTab::closeButtonRect(const glm::vec4& field) const
 {
     const f32
-        size { (std::min)(_closeButtonSize, field.w) },
+        size { std::min(_closeButtonSize, field.w) },
         margin { (field.w - size) * 0.5f }; //as far from the field's right edge as from its top and bottom
 
     return glm::vec4(field.x + field.z - margin - size, field.y + margin, size, size);
@@ -687,7 +687,7 @@ glm::vec4 RetroFuturaGUI::WindowTab::titleRect(const glm::vec4& field) const
 {
     const glm::vec4 closeButton { closeButtonRect(field) };
     const f32 left { field.x + _titlePadding };
-    return glm::vec4(left, field.y, (std::max)(closeButton.x - _fieldSpacing - left, 0.0f), field.w);
+    return glm::vec4(left, field.y, std::max(closeButton.x - _fieldSpacing - left, 0.0f), field.w);
 }
 
 glm::ivec2 RetroFuturaGUI::WindowTab::toScreen(const glm::vec2& point) const
@@ -927,8 +927,8 @@ glm::ivec4 RetroFuturaGUI::WindowTab::contentScreenRect() const
     (
         topLeft.x,
         topLeft.y,
-        (std::max)(static_cast<i32>(std::lround(area._Extent.x)), 1),
-        (std::max)(static_cast<i32>(std::lround(area._Extent.y)), 1)
+        std::max(static_cast<i32>(std::lround(area._Extent.x)), 1),
+        std::max(static_cast<i32>(std::lround(area._Extent.y)), 1)
     );
 }
 
@@ -994,7 +994,7 @@ void RetroFuturaGUI::WindowTab::removeField(const uSize index)
     }
 
     //The field now in its place takes over, or the one before it when it was the last
-    SelectWindow(_fields[(std::min)(index, _fields.size() - 1)]._Window, true);
+    SelectWindow(_fields[std::min(index, _fields.size() - 1)]._Window, true);
 }
 
 glm::vec4 RetroFuturaGUI::WindowTab::colorFor(const FieldColors& colors, const ColorState state, const bool selected)

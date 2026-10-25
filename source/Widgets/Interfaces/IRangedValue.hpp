@@ -337,8 +337,8 @@ namespace RetroFuturaGUI
                 if(value <= static_cast<From>(std::numeric_limits<T>::lowest()))
                     return std::numeric_limits<T>::lowest();
 
-                if(value >= static_cast<From>((std::numeric_limits<T>::max)()))
-                    return (std::numeric_limits<T>::max)();
+                if(value >= static_cast<From>(std::numeric_limits<T>::max()))
+                    return std::numeric_limits<T>::max();
 
                 return static_cast<T>(value);
             }
@@ -347,8 +347,8 @@ namespace RetroFuturaGUI
                 if(std::cmp_less(value, std::numeric_limits<T>::lowest()))
                     return std::numeric_limits<T>::lowest();
 
-                if(std::cmp_greater(value, (std::numeric_limits<T>::max)()))
-                    return (std::numeric_limits<T>::max)();
+                if(std::cmp_greater(value, std::numeric_limits<T>::max()))
+                    return std::numeric_limits<T>::max();
 
                 return static_cast<T>(value);
             }
@@ -357,8 +357,8 @@ namespace RetroFuturaGUI
                 if(value < static_cast<f64>(std::numeric_limits<f32>::lowest()))
                     return std::numeric_limits<f32>::lowest();
 
-                if(value > static_cast<f64>((std::numeric_limits<f32>::max)()))
-                    return (std::numeric_limits<f32>::max)();
+                if(value > static_cast<f64>(std::numeric_limits<f32>::max()))
+                    return std::numeric_limits<f32>::max();
 
                 return static_cast<f32>(value);
             }

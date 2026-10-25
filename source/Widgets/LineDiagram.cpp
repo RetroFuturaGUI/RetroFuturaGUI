@@ -200,7 +200,7 @@ void RetroFuturaGUI::LineDiagram::updateLinePoints(const uSize lineIndex)
     for(uSize i = 0; i < pointCount; ++i)
     {
         // A value beyond the min/max range is drawn at the track's 
-        const f32 value { getDataValueAsF32(lineIndex, (std::min)(i, dataCount - 1)) };
+        const f32 value { getDataValueAsF32(lineIndex, std::min(i, dataCount - 1)) };
         points.emplace_back(static_cast<f32>(i) * xStep - 0.5f, std::clamp(getRangeFraction(value), 0.0f, 1.0f) - 0.5f);
     }
 }
@@ -379,7 +379,7 @@ std::string RetroFuturaGUI::LineDiagram::composeHoverText() const
         return {};
 
     // A point past the end of a shorter set holds its last value
-    const uSize dataIndex { (std::min)(_hoveredPointIndex, _dataCount[_hoveredLineIndex] - 1) };
+    const uSize dataIndex { std::min(_hoveredPointIndex, _dataCount[_hoveredLineIndex] - 1) };
     const std::string
         label { _showHoverLineLabel ? getLineLabelText(_hoveredLineIndex) : std::string {} },
         value { _showHoverValue ? getDataValueAsString(_hoveredLineIndex, dataIndex) : std::string {} };
@@ -528,7 +528,7 @@ uSize RetroFuturaGUI::LineDiagram::nearestPointIndex(const glm::vec2& point, con
         plotFraction { toTrackSpace(point, *track).x / _plotSize.x + 0.5f },
         nearest { std::round(plotFraction * static_cast<f32>(_maxDataCount - 1)) };
 
-    return (std::min)(static_cast<uSize>((std::max)(nearest, 0.0f)), _points[lineIndex].size() - 1);
+    return std::min(static_cast<uSize>(std::max(nearest, 0.0f)), _points[lineIndex].size() - 1);
 }
 
 glm::vec2 RetroFuturaGUI::LineDiagram::toTrackSpace(const glm::vec2& point, const Rectangle& track)

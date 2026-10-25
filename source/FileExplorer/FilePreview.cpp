@@ -130,7 +130,7 @@ void RetroFuturaGUI::FileExplorer::FilePreview::Show(const std::vector<Entry>& s
     if(entry._IsOnlineOnly && Kind::Folder != _kind)
         showMessage("Downloading\nto preview...");
 
-    const i32 pictureSide { (std::max)(_minimumPictureSide, static_cast<i32>((std::max)(_mediaSize.x, _mediaSize.y))) };
+    const i32 pictureSide { std::max(_minimumPictureSide, static_cast<i32>(std::max(_mediaSize.x, _mediaSize.y))) };
     post(Request { ._Generation = _generation, ._Kind = _kind, ._Entry = entry, ._PictureSide = pictureSide });
 }
 

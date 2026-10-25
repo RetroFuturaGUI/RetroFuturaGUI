@@ -99,7 +99,7 @@ std::optional<RetroFuturaGUI::DecodedImage> RetroFuturaGUI::Texture::decodeRaste
     if(bytes.empty())
         return std::nullopt;
 
-    if(static_cast<uSize>((std::numeric_limits<i32>::max)()) < bytes.size())
+    if(static_cast<uSize>(std::numeric_limits<i32>::max()) < bytes.size())
         return std::nullopt; //stb_image takes the length as an int
 
     i32

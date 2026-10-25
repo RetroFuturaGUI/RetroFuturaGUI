@@ -331,7 +331,7 @@ namespace RetroFuturaGUI
         void EndEdit();
 
         /// @brief Starts editing a text cell from code (on a read-only track as well) and scrolls it into view
-        void EditCell(const TrackIndex& index, const uSize selectedLength = (std::numeric_limits<uSize>::max)());
+        void EditCell(const TrackIndex& index, const uSize selectedLength = std::numeric_limits<uSize>::max());
 
         /// @brief Connects a slot to an edit of a text cell ending (key press started or when EditCell() was called). The slot gets the cell, how the edit ended, and the cell's text then.
         void Connect_OnCellEditEnded(const typename Signal<TrackIndex, EditEnd, std::string>::Slot& slot, const bool async);

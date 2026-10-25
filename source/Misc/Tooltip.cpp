@@ -209,8 +209,8 @@ void RetroFuturaGUI::Tooltip::setPosition()
     // and down at the top one. World space runs bottom-up, so above is +Y.
     // Not std::clamp: a tooltip larger than the window would make it undefined.
     const glm::vec3 center {
-        (std::max)(halfSize.x, (std::min)(_pointerPosition.x, resolution.x - halfSize.x)),
-        (std::max)(halfSize.y, (std::min)(_pointerPosition.y + _cursorDistance + halfSize.y, resolution.y - halfSize.y)),
+        std::max(halfSize.x, std::min(_pointerPosition.x, resolution.x - halfSize.x)),
+        std::max(halfSize.y, std::min(_pointerPosition.y + _cursorDistance + halfSize.y, resolution.y - halfSize.y)),
         _widget->GetPosition().z };
 
     _background->SetPosition(center);

@@ -1407,7 +1407,7 @@ uSize RetroFuturaGUI::FileExplorer::nameColumn() const
 
 f32 RetroFuturaGUI::FileExplorer::listRowHeight() const
 {
-    return _showThumbnails ? (std::max)(_thumbnailRowHeight, rowHeight(_font)) : rowHeight(_font);
+    return _showThumbnails ? std::max(_thumbnailRowHeight, rowHeight(_font)) : rowHeight(_font);
 }
 
 void RetroFuturaGUI::FileExplorer::showThumbnails()
@@ -1946,7 +1946,7 @@ void RetroFuturaGUI::FileExplorer::startRename()
 
     //With extensions shown, only the name before the extension is selected, so typing keeps the extension
     const bool hasShownExtension { _showExtensions && PlatformBridge::FileSystem::EntryKind::Directory != entry._Kind && entry._Path.has_extension() };
-    const uSize selectedLength { hasShownExtension ? codePointCount(toUtf8(entry._Path.stem())) : (std::numeric_limits<uSize>::max)() };
+    const uSize selectedLength { hasShownExtension ? codePointCount(toUtf8(entry._Path.stem())) : std::numeric_limits<uSize>::max() };
 
     _renamingPath = entry._Path;
     _widgets._Files->EditCell(TrackIndex { ._Row = row, ._Column = nameColumn(), ._Layer = 0 }, selectedLength);
