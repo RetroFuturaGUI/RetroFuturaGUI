@@ -110,12 +110,6 @@ namespace RetroFuturaGUI
         void SetRotation(const glm::vec3& rotation) override;
 
     private:
-        struct ScissorState
-        {
-            bool _WasEnabled { false };
-            i32 _Previous[4] { 0, 0, 0, 0 };
-        };
-
         EnvironmentEntry* findEntry(const IWidget* widget);
         const EnvironmentEntry* findEntry(const IWidget* widget) const;
 
@@ -126,13 +120,6 @@ namespace RetroFuturaGUI
 
         /// @brief Splits a rotation into the X, Y and Z angles, in degrees, that every widget composes as Rz * Ry * Rx (see Model::SetRotation).
         static glm::vec3 toEulerDegrees(const glm::quat& rotation);
-
-        /// @brief Clips to the given rectangle, intersected with whatever clip is already active, and returns the state to restore.
-        ///        The rectangle is in window pixels; the window's draw origin moves it to where the window lies in the framebuffer.
-        ScissorState pushScissor(const f32 left, const f32 bottom, const f32 width, const f32 height) const;
-
-        /// @brief Restores the clip state captured by pushScissor.
-        static void popScissor(const ScissorState& state);
 
         std::vector<EnvironmentEntry> _entries {};
         glm::vec3 _extent { 1.0f };

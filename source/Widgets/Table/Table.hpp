@@ -556,19 +556,6 @@ namespace RetroFuturaGUI
         /// @brief Draws one header band's cells, with the band's own backgrounds and borders.
         void drawHeaderBand(std::vector<TableCell>& cells, const uSize first, const uSize end);
 
-        struct ScissorState
-        {
-            bool _WasEnabled { false };
-            i32 _Previous[4] { 0, 0, 0, 0 };
-        };
-
-        /// @brief Clips to the given rect, intersected with whatever clip is already active, and returns the state to restore.
-        ///        The rect is in window pixels; the window's draw origin moves it to where the window lies in the framebuffer.
-        ScissorState pushScissor(const f32 left, const f32 bottom, const f32 width, const f32 height) const;
-
-        /// @brief Restores the clip state captured by pushScissor.
-        static void popScissor(const ScissorState& state);
-
         /// @brief Resolves each track to a pixel size: Fixed/Auto take their own value, Star tracks divide what the viewport has left.
         static void resolveTrackSizes(const std::vector<TrackDefinition>& tracks, const f32 viewportExtent, std::vector<f32>& outSizes);
 

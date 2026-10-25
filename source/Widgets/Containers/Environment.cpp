@@ -1,7 +1,9 @@
 #include "Environment.hpp"
+#include "ScissorClip.hpp"
 #include "Window.hpp"
 #include <algorithm>
 #include <cmath>
+#include <optional>
 #include <print>
 #include <utility>
 
@@ -148,10 +150,10 @@ void RetroFuturaGUI::Environment::ShowDebugBox(const bool show)
 
 void RetroFuturaGUI::Environment::Draw()
 {
-    ScissorState scissorState {};
+    std::optional<ScissorClip> clip;
 
     if(_clip)
-        scissorState = pushScissor(_position.x - _size.x * 0.5f, _position.y - _size.y * 0.5f, _size.x, _size.y);
+        clip.emplace(framebufferBox(_position.x - _size.x * 0.5f, _position.y - _size.y * 0.5f, _size.x, _size.y));
 
     for(const EnvironmentEntry& entry : _entries)
     {
@@ -164,9 +166,6 @@ void RetroFuturaGUI::Environment::Draw()
 
     if(_drawDebugBox)
         drawDebugBox();
-
-    if(_clip)
-        popScissor(scissorState);
 }
 
 void RetroFuturaGUI::Environment::SetSize(const glm::vec3& size)
@@ -262,41 +261,6 @@ void RetroFuturaGUI::Environment::drawDebugBox()
 
     if(depthTestWasEnabled)
         glEnable(GL_DEPTH_TEST);
-}
-
-RetroFuturaGUI::Environment::ScissorState RetroFuturaGUI::Environment::pushScissor(const f32 left, const f32 bottom, const f32 width, const f32 height) const
-{
-    ScissorState state {};
-    state._WasEnabled = static_cast<bool>(glIsEnabled(GL_SCISSOR_TEST));
-    glGetIntegerv(GL_SCISSOR_BOX, state._Previous);
-
-    const glm::ivec2 origin { Window::DrawOriginOf(_parentWindow) }; //off the corner while the window is drawn inside another window's tab
-    i32
-        clipLeft { origin.x + static_cast<i32>(left) },
-        clipBottom { origin.y + static_cast<i32>(bottom) },
-        clipRight { clipLeft + static_cast<i32>(width) },
-        clipTop { clipBottom + static_cast<i32>(height) };
-
-
-    if(state._WasEnabled) // A clip already active, such as an enclosing Table's, stays in force: the Environment only narrows it.
-    {
-        clipLeft = std::max(clipLeft, state._Previous[0]);
-        clipBottom = std::max(clipBottom, state._Previous[1]);
-        clipRight = std::min(clipRight, state._Previous[0] + state._Previous[2]);
-        clipTop = std::min(clipTop, state._Previous[1] + state._Previous[3]);
-    }
-
-    glEnable(GL_SCISSOR_TEST);
-    glScissor(clipLeft, clipBottom, std::max(clipRight - clipLeft, 0), std::max(clipTop - clipBottom, 0));
-    return state;
-}
-
-void RetroFuturaGUI::Environment::popScissor(const ScissorState& state)
-{
-    if(state._WasEnabled)
-        glScissor(state._Previous[0], state._Previous[1], state._Previous[2], state._Previous[3]);
-    else
-        glDisable(GL_SCISSOR_TEST);
 }
 
 glm::vec3 RetroFuturaGUI::Environment::toEulerDegrees(const glm::quat& rotation)

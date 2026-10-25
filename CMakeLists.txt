@@ -63,6 +63,7 @@ list(APPEND RetroFuturaGuiSources
 
     "${CMAKE_CURRENT_SOURCE_DIR}/source/OpenGlHelpers/ContextObjects.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/OpenGlHelpers/Projection.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/source/OpenGlHelpers/ScissorClip.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/OpenGlHelpers/SvgTexture.cpp"
 
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Scenes/Scene.cpp"

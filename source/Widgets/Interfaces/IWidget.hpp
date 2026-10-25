@@ -133,6 +133,10 @@ namespace RetroFuturaGUI
         /// @brief change the cursor icon, such as the hand over a button. Call it every frame the mouse is over a widget to visualize an action can be performed. In a frame where no widget calls it, the cursor is the arrow.
         void requestCursorIcon(const PlatformBridge::CursorIcon icon) const;
 
+        /// @brief Turns a box in window coordinates (left, bottom, width, height) into framebuffer pixels for a ScissorClip. A
+        ///        window docked into a WindowTab is drawn by the host window. This framebufer is then ignored.
+        glm::ivec4 framebufferBox(const f32 left, const f32 bottom, const f32 width, const f32 height) const;
+
         /// @brief Switches the widget to the colors of the given state. Does nothing in a widget without colors per state.
         virtual void setColors([[maybe_unused]] const ColorState state) {}
 

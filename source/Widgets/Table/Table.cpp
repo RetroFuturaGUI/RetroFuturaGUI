@@ -2,6 +2,7 @@
 #include "ITableWidget.hpp"
 #include "IncludeHelper.hpp"
 #include "PlatformBridge.hpp"
+#include "ScissorClip.hpp"
 #include "SvgImage.hpp"
 #include "SvgTexture.hpp"
 #include "TableCheckBox.hpp"
@@ -197,79 +198,80 @@ void RetroFuturaGUI::Table::Draw()
 
     const uSize variantCount { _nthTrackColors.size() };
 
-    // clamp contents to viewport
     const glm::vec2 contentOrigin { contentTopLeft() };
-    const ScissorState contentScissor { pushScissor(contentOrigin.x, contentOrigin.y - _innerSize.y, _innerSize.x, _innerSize.y) };
 
-    // only draw cells overlapping the viewport
-    const uSize
-        rowEnd { _displayedRows[1] < _rowDefinition.size() ? _displayedRows[1] : _rowDefinition.size() },
-        columnEnd { _displayedColumns[1] < _columnDefinition.size() ? _displayedColumns[1] : _columnDefinition.size() };
-
-    for(uSize row = _displayedRows[0]; row < rowEnd; ++row)
     {
-        for(uSize column = _displayedColumns[0]; column < columnEnd; ++column)
+        // clamp contents to viewport
+        const ScissorClip contentClip { framebufferBox(contentOrigin.x, contentOrigin.y - _innerSize.y, _innerSize.x, _innerSize.y) };
+
+        // only draw cells overlapping the viewport
+        const uSize
+            rowEnd { _displayedRows[1] < _rowDefinition.size() ? _displayedRows[1] : _rowDefinition.size() },
+            columnEnd { _displayedColumns[1] < _columnDefinition.size() ? _displayedColumns[1] : _columnDefinition.size() };
+
+        for(uSize row = _displayedRows[0]; row < rowEnd; ++row)
         {
-            const BodyCell* cell { cellAt(row, column) };
-
-            if(!cell)
-                continue;
-
-            if(ITableWidget::TableWidgetTypeID::None == cell->_Type)
-                continue; //an empty cell draws nothing, its background neither
-
-            glm::vec3
-                position { 0.0f },
-                size { 0.0f };
-            cellRect(row, column, position, size);
-
-            const uSize selectableRow { _tableOrientation == TableOrientation::Row ? row : column };
-            TrackColoring& coloring { _nthTrackColors[selectableRow % variantCount] };
-            const bool
-                isSelected { selectableRow < _selectedRowFlags.size() && _selectedRowFlags[selectableRow] },
-                isDropTarget { _hasDropTargetRow && _dropTargetRow == selectableRow };
-
-            if(_trackColoringOverlay)
+            for(uSize column = _displayedColumns[0]; column < columnEnd; ++column)
             {
-                _trackColoringOverlay->SetSize(size);
-                _trackColoringOverlay->SetPosition(position - glm::vec3(0.0f, 0.0f, _widgetZOffset));
-                _trackColoringOverlay->SetColors(isDropTarget ? _dropTargetRowBackgroundColors : isSelected ? _selectedRowBackgroundColors : coloring._BackgroundColorEnabled);
-                _trackColoringOverlay->Draw();
-            }
+                const BodyCell* cell { cellAt(row, column) };
 
-            if(_innerBorder)
-            {
-                _innerBorder->SetBorderWidth(_innerBorderWidth);
-                _innerBorder->SetSize(size);
-                _innerBorder->SetPosition(position - glm::vec3(0.0f, 0.0f, _widgetZOffset - 0.01f));
-                _innerBorder->SetColors(coloring._InnerBorderColorEnabled);
-                _innerBorder->Draw();
-            }
+                if(!cell)
+                    continue;
 
-            switch(cell->_Type)
-            {
-                case ITableWidget::TableWidgetTypeID::TableText:
-                    drawTextCell(row, column, isSelected ? _selectedRowTextColors : coloring._TextColorEnabled);
-                break;
-                case ITableWidget::TableWidgetTypeID::TableCheckBox:
-                    drawCheckBoxCell(*cell, row, column, position, size);
-                break;
-                case ITableWidget::TableWidgetTypeID::TableColor:
-                    drawColorCell(*cell, position, size);
-                break;
-                case ITableWidget::TableWidgetTypeID::TableImage:
-                    drawImageCell(*cell, position, size);
-                break;
-                default:
-                break;
+                if(ITableWidget::TableWidgetTypeID::None == cell->_Type)
+                    continue; //an empty cell draws nothing, its background neither
+
+                glm::vec3
+                    position { 0.0f },
+                    size { 0.0f };
+                cellRect(row, column, position, size);
+
+                const uSize selectableRow { _tableOrientation == TableOrientation::Row ? row : column };
+                TrackColoring& coloring { _nthTrackColors[selectableRow % variantCount] };
+                const bool
+                    isSelected { selectableRow < _selectedRowFlags.size() && _selectedRowFlags[selectableRow] },
+                    isDropTarget { _hasDropTargetRow && _dropTargetRow == selectableRow };
+
+                if(_trackColoringOverlay)
+                {
+                    _trackColoringOverlay->SetSize(size);
+                    _trackColoringOverlay->SetPosition(position - glm::vec3(0.0f, 0.0f, _widgetZOffset));
+                    _trackColoringOverlay->SetColors(isDropTarget ? _dropTargetRowBackgroundColors : isSelected ? _selectedRowBackgroundColors : coloring._BackgroundColorEnabled);
+                    _trackColoringOverlay->Draw();
+                }
+
+                if(_innerBorder)
+                {
+                    _innerBorder->SetBorderWidth(_innerBorderWidth);
+                    _innerBorder->SetSize(size);
+                    _innerBorder->SetPosition(position - glm::vec3(0.0f, 0.0f, _widgetZOffset - 0.01f));
+                    _innerBorder->SetColors(coloring._InnerBorderColorEnabled);
+                    _innerBorder->Draw();
+                }
+
+                switch(cell->_Type)
+                {
+                    case ITableWidget::TableWidgetTypeID::TableText:
+                        drawTextCell(row, column, isSelected ? _selectedRowTextColors : coloring._TextColorEnabled);
+                    break;
+                    case ITableWidget::TableWidgetTypeID::TableCheckBox:
+                        drawCheckBoxCell(*cell, row, column, position, size);
+                    break;
+                    case ITableWidget::TableWidgetTypeID::TableColor:
+                        drawColorCell(*cell, position, size);
+                    break;
+                    case ITableWidget::TableWidgetTypeID::TableImage:
+                        drawImageCell(*cell, position, size);
+                    break;
+                    default:
+                    break;
+                }
             }
         }
+
+        drawSelectionBand();
+        drawCaretAndSelection();
     }
-
-    drawSelectionBand();
-    drawCaretAndSelection();
-
-    popScissor(contentScissor);
 
     const f32
         tableLeft { _position.x - _size.x * 0.5f },
@@ -278,17 +280,15 @@ void RetroFuturaGUI::Table::Draw()
     if(_displayHorizontalHeader)
     {
         const uSize headerColumnEnd { _horizontalHeaderCells.size() < _displayedColumns[1] ? _horizontalHeaderCells.size() : _displayedColumns[1] };
-        const ScissorState headerScissor { pushScissor(contentOrigin.x, tableBottom, _innerSize.x, _size.y) };
+        const ScissorClip headerClip { framebufferBox(contentOrigin.x, tableBottom, _innerSize.x, _size.y) };
         drawHeaderBand(_horizontalHeaderCells, _displayedColumns[0], headerColumnEnd);
-        popScissor(headerScissor);
     }
 
     if(_displayVerticalHeader)
     {
         const uSize rowEnd2 { _verticalHeaderCells.size() < _displayedRows[1] ? _verticalHeaderCells.size() : _displayedRows[1] };
-        const ScissorState headerScissor { pushScissor(tableLeft, contentOrigin.y - _innerSize.y, _size.x, _innerSize.y) };
+        const ScissorClip headerClip { framebufferBox(tableLeft, contentOrigin.y - _innerSize.y, _size.x, _innerSize.y) };
         drawHeaderBand(_verticalHeaderCells, _displayedRows[0], rowEnd2);
-        popScissor(headerScissor);
     }
 }
 
@@ -368,47 +368,6 @@ void RetroFuturaGUI::Table::drawHeaderBand(std::vector<TableCell>& cells, const 
 
         cell._TableWidget->Draw();
     }
-}
-
-RetroFuturaGUI::Table::ScissorState RetroFuturaGUI::Table::pushScissor(const f32 left, const f32 bottom, const f32 width, const f32 height) const
-{
-    // axis-aligned scissor box. breaks when rotation is applied
-    ScissorState state {};
-    state._WasEnabled = static_cast<bool>(glIsEnabled(GL_SCISSOR_TEST));
-    glGetIntegerv(GL_SCISSOR_BOX, state._Previous);
-
-    const glm::ivec2 origin { Window::DrawOriginOf(_parentWindow) }; //off the corner while the window is drawn inside another window's tab
-    i32
-        clipLeft { origin.x + static_cast<i32>(left) },
-        clipBottom { origin.y + static_cast<i32>(bottom) },
-        clipRight { clipLeft + static_cast<i32>(width) },
-        clipTop { clipBottom + static_cast<i32>(height) };
-
-    if(state._WasEnabled)
-    {
-        const i32
-            previousRight { state._Previous[0] + state._Previous[2] },
-            previousTop { state._Previous[1] + state._Previous[3] };
-        clipLeft = clipLeft > state._Previous[0] ? clipLeft : state._Previous[0];
-        clipBottom = clipBottom > state._Previous[1] ? clipBottom : state._Previous[1];
-        clipRight = clipRight < previousRight ? clipRight : previousRight;
-        clipTop = clipTop < previousTop ? clipTop : previousTop;
-    }
-
-    glEnable(GL_SCISSOR_TEST);
-    glScissor(clipLeft, clipBottom,
-              clipRight > clipLeft ? clipRight - clipLeft : 0,
-              clipTop > clipBottom ? clipTop - clipBottom : 0);
-    return state;
-}
-
-void RetroFuturaGUI::Table::popScissor(const ScissorState& state)
-{
-    // Scissor state is global, so hand it back exactly as it was found
-    if(state._WasEnabled)
-        glScissor(state._Previous[0], state._Previous[1], state._Previous[2], state._Previous[3]);
-    else
-        glDisable(GL_SCISSOR_TEST);
 }
 
 void RetroFuturaGUI::Table::SetSize(const glm::vec3& size)

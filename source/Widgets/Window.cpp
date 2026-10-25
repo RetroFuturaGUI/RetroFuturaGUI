@@ -2,6 +2,7 @@
 #include "Scene.hpp"
 #include "WindowTab.hpp"
 #include "ContextObjects.hpp"
+#include "ScissorClip.hpp"
 #include "ShaderManager.hpp"
 #include "PlatformBridge.hpp"
 #include "IDropDown.hpp"
@@ -1964,49 +1965,29 @@ void RetroFuturaGUI::Window::drawInHost(const ScreenRect& contentArea, const glm
     if(!PlatformBridge::Input::IsMouseButtonDown(PlatformBridge::MouseButton::Left))
         _ignoreHeldPress = false;
 
-    //The drawing window's viewport and scissor box, given back once this window is drawn
-    GLint
-        viewport[4] {},
-        scissorBox[4] {};
+    //The drawing window's viewport, given back once this window is drawn
+    GLint viewport[4] {};
     glGetIntegerv(GL_VIEWPORT, viewport);
-    glGetIntegerv(GL_SCISSOR_BOX, scissorBox);
-    const bool scissorWasEnabled { GL_TRUE == glIsEnabled(GL_SCISSOR_TEST) };
-
-    //Everything lands in the content area, depth clears included, and an active clip stays in force
-    i32
-        clipLeft { area.x },
-        clipBottom { area.y },
-        clipRight { area.x + area.z },
-        clipTop { area.y + area.w };
-
-    if(scissorWasEnabled)
-    {
-        clipLeft = std::max(clipLeft, scissorBox[0]);
-        clipBottom = std::max(clipBottom, scissorBox[1]);
-        clipRight = std::min(clipRight, scissorBox[0] + scissorBox[2]);
-        clipTop = std::min(clipTop, scissorBox[1] + scissorBox[3]);
-    }
-
     glViewport(area.x, area.y, area.z, area.w);
-    glEnable(GL_SCISSOR_TEST);
-    glScissor(clipLeft, clipBottom, std::max(clipRight - clipLeft, 0), std::max(clipTop - clipBottom, 0));
     _drawOrigin = glm::ivec2(area.x, area.y);
 
     //The drawing window's own tooltip and open lists still draw last in its frame
     Tooltip::setShownAside();
     std::vector<IDropDown*> hostDropDowns { IDropDown::takeShown() };
-    glClear(GL_DEPTH_BUFFER_BIT);
-    drawContent();
-    glClear(GL_DEPTH_BUFFER_BIT); //the drawing window's widgets after the WindowTab aren't tested against this window's content
+
+    {
+        //Everything lands in the content area, depth clears included, and an active clip stays in force
+        const ScissorClip clip { area };
+        glClear(GL_DEPTH_BUFFER_BIT);
+        drawContent();
+        glClear(GL_DEPTH_BUFFER_BIT); //the drawing window's widgets after the WindowTab aren't tested against this window's content
+    }
+
     IDropDown::restoreShown(std::move(hostDropDowns));
     Tooltip::restoreShownFromAside();
 
     _drawOrigin = glm::ivec2(0);
     glViewport(viewport[0], viewport[1], viewport[2], viewport[3]);
-    glScissor(scissorBox[0], scissorBox[1], scissorBox[2], scissorBox[3]);
-
-    if(!scissorWasEnabled)
-        glDisable(GL_SCISSOR_TEST);
 }
 
 void RetroFuturaGUI::Window::beginCursorDrag(const glm::ivec2& grabPoint)

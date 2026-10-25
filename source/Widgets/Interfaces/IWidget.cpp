@@ -177,6 +177,17 @@ void RetroFuturaGUI::IWidget::requestCursorIcon(const PlatformBridge::CursorIcon
     Window::RequestCursorIcon(_parentWindow, icon);
 }
 
+glm::ivec4 RetroFuturaGUI::IWidget::framebufferBox(const f32 left, const f32 bottom, const f32 width, const f32 height) const
+{
+    const glm::ivec2 origin { Window::DrawOriginOf(_parentWindow) };
+
+    return glm::ivec4(
+        origin.x + static_cast<i32>(left),
+        origin.y + static_cast<i32>(bottom),
+        static_cast<i32>(width),
+        static_cast<i32>(height));
+}
+
 void RetroFuturaGUI::IWidget::filterThroughAncestors(const IHierarchyNode* node, PointerState& pointer)
 {
     if(!node)
