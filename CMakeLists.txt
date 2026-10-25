@@ -22,13 +22,6 @@ endif()
 set(RetroFuturaGuiSources)
 
 list(APPEND RetroFuturaGuiSources
-    "${CMAKE_CURRENT_SOURCE_DIR}/source/FileExplorer/FileExplorer.cpp"
-    "${CMAKE_CURRENT_SOURCE_DIR}/source/FileExplorer/FileExplorerPrompts.cpp"
-    "${CMAKE_CURRENT_SOURCE_DIR}/source/FileExplorer/FilePreview.cpp"
-    "${CMAKE_CURRENT_SOURCE_DIR}/source/FileExplorer/FileTransfer.cpp"
-    "${CMAKE_CURRENT_SOURCE_DIR}/source/FileExplorer/FileUndoHistory.cpp"
-    "${CMAKE_CURRENT_SOURCE_DIR}/source/FileExplorer/ThumbnailCache.cpp"
-
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Fonts/FontManager.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Fonts/Text.cpp"
 
@@ -82,7 +75,6 @@ list(APPEND RetroFuturaGuiSources
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/ColorPreview.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/ComboBox.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/Histogram.cpp"
-    "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/IPopup.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/Image.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/Label.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/LineDiagram.cpp"
@@ -95,7 +87,6 @@ list(APPEND RetroFuturaGuiSources
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/SvgImage.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/TextBox.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/Video.cpp"
-    "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/Window.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/WindowTab.cpp"
 
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/Containers/Environment.cpp"
@@ -129,6 +120,23 @@ list(APPEND RetroFuturaGuiSources
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/Table/TableColor.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/Table/TableImage.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/Table/TableText.cpp"
+
+    "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/Window/Window.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/Window/WindowDockDrag.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/Window/WindowDocking.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/Window/WindowInput.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/Window/WindowLayout.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/Window/WindowPopups.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/Window/WindowTabs.cpp"
+
+    "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/Window/Dialog/IPopup.cpp"
+
+    "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/Window/Dialog/FileExplorer/FileExplorer.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/Window/Dialog/FileExplorer/FileExplorerPrompts.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/Window/Dialog/FileExplorer/FilePreview.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/Window/Dialog/FileExplorer/FileTransfer.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/Window/Dialog/FileExplorer/FileUndoHistory.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/Window/Dialog/FileExplorer/ThumbnailCache.cpp"
 )
 
 if(DEFINED DYNLIB_MODE AND DYNLIB_MODE)
@@ -143,7 +151,6 @@ add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/PlatformBridge")
 target_include_directories("RetroFuturaGUI" PUBLIC
     "${CMAKE_CURRENT_SOURCE_DIR}/source"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Borders"
-    "${CMAKE_CURRENT_SOURCE_DIR}/source/FileExplorer"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Fonts"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/MediaPlayback"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Misc"
@@ -153,6 +160,9 @@ target_include_directories("RetroFuturaGUI" PUBLIC
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/Interfaces"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/Mechanisms"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/Table"
+    "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/Window"
+    "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/Window/Dialog"
+    "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/Window/Dialog/FileExplorer"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/Prefabs"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/OpenGlHelpers"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Shaders"
