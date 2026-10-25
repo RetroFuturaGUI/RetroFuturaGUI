@@ -55,7 +55,7 @@ f32 RetroFuturaGUI::Histogram::calculateBarHeight(const uSize index) const
         return 0.0f;
 
     const f32 height { getDataValueAsF32(0, index) };
-    f32 fraction { getRangeFraction(height) < 0.0f ? 0.0f : getRangeFraction(height) > 1.0f ? 1.0f : getRangeFraction(height) };
+    f32 fraction { 0.0f > getRangeFraction(height) ? 0.0f : 1.0f < getRangeFraction(height) ? 1.0f : getRangeFraction(height) };
 
     if(_orientation == Orientation::Horizontal)
         return _size.y * fraction;

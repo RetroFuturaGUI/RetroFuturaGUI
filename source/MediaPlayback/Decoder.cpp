@@ -58,7 +58,7 @@ bool RetroFuturaGUI::Decoder::Open(const AVStream* stream)
     if(!_codecContext)
         return false;
 
-    if(avcodec_parameters_to_context(_codecContext, parameters) < 0)
+    if(0 > avcodec_parameters_to_context(_codecContext, parameters))
     {
         Close();
         return false;
@@ -72,7 +72,7 @@ bool RetroFuturaGUI::Decoder::Open(const AVStream* stream)
 
     _codecContext->pkt_timebase = stream->time_base;
 
-    if(avcodec_open2(_codecContext, codec, nullptr) < 0)
+    if(0 > avcodec_open2(_codecContext, codec, nullptr))
     {
         Close();
         return false;

@@ -278,7 +278,7 @@ void RetroFuturaGUI::Text::updateMesh()
         // If texture changes, flush previous batch
         if (!batching || foundTextureID != lastTextureID)
         {
-            if (batching && vertexCount > 0)
+            if (batching && 0 < vertexCount)
             {
                 _glyphDraws.push_back({lastTextureID, vertexStart, vertexCount});
                 vertexStart += vertexCount;
@@ -323,7 +323,7 @@ void RetroFuturaGUI::Text::updateMesh()
     _meshChanged = true;
 
     // Flush last batch
-    if (batching && vertexCount > 0)
+    if (batching && 0 < vertexCount)
         _glyphDraws.push_back({lastTextureID, vertexStart, vertexCount});
 
     FontManager::FlushGlyphUploads();
@@ -425,7 +425,7 @@ void RetroFuturaGUI::Text::calculateTextSpan()
     const GlyphAtlas& atlas { _fontInfo->_Atlasses.at(_fontIndex) };
 
     f32
-        nativeSize { atlas._FontSize > 0 ? static_cast<f32>(atlas._FontSize) : 1.0f },
+        nativeSize { 0 < atlas._FontSize ? static_cast<f32>(atlas._FontSize) : 1.0f },
         scale { _glyphSize.y / nativeSize },
         maxLineWidth { 0.0f },
         totalHeight { 0.0f },

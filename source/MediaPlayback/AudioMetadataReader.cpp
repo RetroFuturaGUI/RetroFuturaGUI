@@ -24,14 +24,14 @@ std::string RetroFuturaGUI::AudioMetadataReader::toString(const char* text)
     return text;
 }
 
-std::string RetroFuturaGUI::AudioMetadataReader::toHex(const u8* bytes, const size_t count)
+std::string RetroFuturaGUI::AudioMetadataReader::toHex(const u8* bytes, const uSize count)
 {
     if(!bytes)
         return {};
 
     std::string hex;
 
-    for(size_t i = 0; i < count; ++i)
+    for(uSize i = 0; i < count; ++i)
         hex += std::format("{:02x}", bytes[i]);
 
     return hex;
@@ -77,7 +77,7 @@ std::vector<u64> RetroFuturaGUI::AudioMetadataReader::parseHexFields(const std::
 
 f64 RetroFuturaGUI::AudioMetadataReader::toSeconds(const u64 samples, const u32 sampleRate)
 {
-    if(sampleRate == 0)
+    if(0 == sampleRate)
         return 0.0;
 
     return static_cast<f64>(samples) / sampleRate;
@@ -87,7 +87,7 @@ std::string RetroFuturaGUI::AudioMetadataReader::describeLayout(const AVChannelL
 {
     std::array<char, 128> buffer {};
 
-    if(av_channel_layout_describe(&layout, buffer.data(), buffer.size()) <= 0)
+    if(0 >= av_channel_layout_describe(&layout, buffer.data(), buffer.size()))
         return {};
 
     return buffer.data();
@@ -106,17 +106,17 @@ u64 RetroFuturaGUI::AudioMetadataReader::getFileSize(std::ifstream& file)
     file.seekg(0, std::ios::end);
     const std::streamoff size = file.tellg();
 
-    return size > 0 ? static_cast<u64>(size) : 0;
+    return 0 < size ? static_cast<u64>(size) : 0;
 }
 
 std::vector<u8> RetroFuturaGUI::AudioMetadataReader::readBytes(std::ifstream& file, const u64 offset, const u64 count)
 {
-    std::vector<u8> bytes(static_cast<size_t>(count));
+    std::vector<u8> bytes(static_cast<uSize>(count));
 
     file.clear();
     file.seekg(static_cast<std::streamoff>(offset));
     file.read(reinterpret_cast<char*>(bytes.data()), static_cast<std::streamsize>(count));
-    bytes.resize(static_cast<size_t>(std::max<std::streamsize>(file.gcount(), 0)));
+    bytes.resize(static_cast<uSize>(std::max<std::streamsize>(file.gcount(), 0)));
 
     return bytes;
 }
@@ -154,7 +154,7 @@ void RetroFuturaGUI::AudioMetadataReader::appendTags(const AVDictionary* diction
     {
         const bool alreadyListed = std::ranges::any_of(tags, [entry](const std::pair<std::string, std::string>& tag)
         {
-            return av_strcasecmp(tag.first.c_str(), entry->key) == 0;
+            return 0 == av_strcasecmp(tag.first.c_str(), entry->key);
         });
 
         if(alreadyListed)
@@ -209,13 +209,13 @@ std::vector<RetroFuturaGUI::AudioChapter> RetroFuturaGUI::AudioMetadataReader::r
     return chapters;
 }
 
-size_t RetroFuturaGUI::AudioMetadataReader::findPictureStart(const u8* data, const size_t size)
+uSize RetroFuturaGUI::AudioMetadataReader::findPictureStart(const u8* data, const uSize size)
 {
-    constexpr size_t searchLimit { 16 };
+    constexpr uSize searchLimit { 16 };
     constexpr std::array<u8, 3> jpegSignature { 0xFF, 0xD8, 0xFF };
     constexpr std::array<u8, 4> pngSignature { 0x89, 'P', 'N', 'G' };
 
-    for(size_t start = 0; start < searchLimit && start < size; ++start)
+    for(uSize start = 0; start < searchLimit && start < size; ++start)
     {
         const bool
             isJpeg { start + jpegSignature.size() <= size && std::equal(jpegSignature.begin(), jpegSignature.end(), data + start) },
@@ -255,8 +255,8 @@ void RetroFuturaGUI::AudioMetadataReader::readCoverArt(const AVFormatContext* co
         if(!stream->attached_pic.data)
             return;
 
-        const size_t
-            size { static_cast<size_t>(std::max(stream->attached_pic.size, 0)) },
+        const uSize
+            size { static_cast<uSize>(std::max(stream->attached_pic.size, 0)) },
             start { findPictureStart(stream->attached_pic.data, size) };
         metadata._CoverArt.assign(stream->attached_pic.data + start, stream->attached_pic.data + size);
         return; // the first picture only - it's the front cover in practice
@@ -355,7 +355,7 @@ RetroFuturaGUI::WavMetadata RetroFuturaGUI::AudioMetadataReader::readWavDetails(
     const std::vector<u8> riff = readBytes(file, 0, 12);
 
     // Plain little-endian RIFF only - RF64, BW64 and big-endian RIFX keep whatever FFmpeg found
-    if(riff.size() < 12 || std::memcmp(riff.data(), "RIFF", 4) != 0 || std::memcmp(riff.data() + 8, "WAVE", 4) != 0)
+    if(12 > riff.size() || 0 != std::memcmp(riff.data(), "RIFF", 4) || 0 != std::memcmp(riff.data() + 8, "WAVE", 4))
         return details;
 
     u64 offset { 12 };
@@ -364,18 +364,18 @@ RetroFuturaGUI::WavMetadata RetroFuturaGUI::AudioMetadataReader::readWavDetails(
     {
         const std::vector<u8> chunk = readBytes(file, offset, 8);
 
-        if(chunk.size() < 8)
+        if(8 > chunk.size())
             break;
 
         const u64 chunkSize = AV_RL32(chunk.data() + 4);
 
-        if(std::memcmp(chunk.data(), "smpl", 4) == 0)
+        if(0 == std::memcmp(chunk.data(), "smpl", 4))
         {
             const std::vector<u8> sampler = readBytes(file, offset + 8, std::min<u64>(chunkSize, fileSize - offset - 8));
 
             // manufacturer, product, sample period, unity note, pitch fraction, SMPTE format and
             // offset, loop count, sampler data - then 24 bytes per loop
-            if(sampler.size() < 0x24)
+            if(0x24 > sampler.size())
                 break;
 
             details._HasSamplerChunk = true;
@@ -385,7 +385,7 @@ RetroFuturaGUI::WavMetadata RetroFuturaGUI::AudioMetadataReader::readWavDetails(
 
             for(u32 i = 0; i < loopCount; ++i)
             {
-                const size_t loopOffset = 0x24 + static_cast<size_t>(i) * 24;
+                const uSize loopOffset = 0x24 + static_cast<uSize>(i) * 24;
 
                 // the count can claim more loops than the chunk holds
                 if(loopOffset + 24 > sampler.size())
@@ -422,7 +422,7 @@ RetroFuturaGUI::FlacMetadata RetroFuturaGUI::AudioMetadataReader::readFlacDetail
     if(!info)
         return details;
 
-    if(audio->extradata_size < 34)
+    if(34 > audio->extradata_size)
         return details;
 
     details._MinBlockSize = AV_RB16(info);
@@ -447,10 +447,10 @@ RetroFuturaGUI::Mp3Metadata RetroFuturaGUI::AudioMetadataReader::readMp3Details(
     const u64 fileSize = getFileSize(file);
 
     // ID3v1 is the last 128 bytes, starting with "TAG"
-    if(fileSize >= 128)
+    if(128 <= fileSize)
     {
         const std::vector<u8> tail = readBytes(file, fileSize - 128, 3);
-        details._HasId3v1 = tail.size() == 3 && std::memcmp(tail.data(), "TAG", 3) == 0;
+        details._HasId3v1 = 3 == tail.size() && 0 == std::memcmp(tail.data(), "TAG", 3);
     }
 
     // ID3v2 comes first: "ID3", major version, revision, flags, then a 28-bit size spread over four
@@ -458,20 +458,20 @@ RetroFuturaGUI::Mp3Metadata RetroFuturaGUI::AudioMetadataReader::readMp3Details(
     u64 audioStart { 0 };
     const std::vector<u8> id3 = readBytes(file, 0, 10);
 
-    if(id3.size() == 10 && std::memcmp(id3.data(), "ID3", 3) == 0)
+    if(10 == id3.size() && 0 == std::memcmp(id3.data(), "ID3", 3))
     {
         details._Id3v2Version = id3[3];
 
         const u64 tagSize = (static_cast<u64>(id3[6] & 0x7F) << 21) | (static_cast<u64>(id3[7] & 0x7F) << 14)
             | (static_cast<u64>(id3[8] & 0x7F) << 7) | static_cast<u64>(id3[9] & 0x7F);
-        const bool hasFooter = (id3[5] & 0x10) != 0;
+        const bool hasFooter = 0 != (id3[5] & 0x10);
 
         audioStart = 10 + tagSize + (hasFooter ? 10 : 0);
     }
 
     const std::vector<u8> window = readBytes(file, audioStart, 65536);
 
-    for(size_t i = 0; i + 4 <= window.size(); ++i)
+    for(uSize i = 0; i + 4 <= window.size(); ++i)
     {
         const u32 header = AV_RB32(window.data() + i);
 
@@ -485,37 +485,37 @@ RetroFuturaGUI::Mp3Metadata RetroFuturaGUI::AudioMetadataReader::readMp3Details(
         const u32 bitRateIndex = (header >> 12) & 0xF;
         const u32 sampleRateIndex = (header >> 10) & 3;
 
-        if(version == 1 || layer != 1 || bitRateIndex == 0 || bitRateIndex == 0xF || sampleRateIndex == 3)
+        if(1 == version || 1 != layer || 0 == bitRateIndex || 0xF == bitRateIndex || 3 == sampleRateIndex)
             continue;
 
         const u32 channelMode = (header >> 6) & 3;
-        const bool mono = channelMode == 3;
-        const bool hasCrc = ((header >> 16) & 1) == 0;
+        const bool mono = 3 == channelMode;
+        const bool hasCrc = 0 == ((header >> 16) & 1);
 
-        details._MpegVersion = version == 3 ? "1" : version == 2 ? "2" : "2.5";
+        details._MpegVersion = 3 == version ? "1" : 2 == version ? "2" : "2.5";
         details._ChannelMode = channelModes[channelMode];
 
         // The Xing/Info header replaces the audio of the first frame, right after its side information
-        const size_t sideInfoSize = version == 3 ? (mono ? 17 : 32) : (mono ? 9 : 17);
-        const size_t xingOffset = i + 4 + (hasCrc ? 2 : 0) + sideInfoSize;
-        const size_t vbriOffset = i + 4 + 32;
+        const uSize sideInfoSize = 3 == version ? (mono ? 17 : 32) : (mono ? 9 : 17);
+        const uSize xingOffset = i + 4 + (hasCrc ? 2 : 0) + sideInfoSize;
+        const uSize vbriOffset = i + 4 + 32;
 
         if(xingOffset + 8 <= window.size()
-            && (std::memcmp(window.data() + xingOffset, "Xing", 4) == 0 || std::memcmp(window.data() + xingOffset, "Info", 4) == 0))
+            && (0 == std::memcmp(window.data() + xingOffset, "Xing", 4) || 0 == std::memcmp(window.data() + xingOffset, "Info", 4)))
         {
             details._VbrHeader.assign(reinterpret_cast<const char*>(window.data() + xingOffset), 4);
             details._IsVbr = details._VbrHeader == "Xing"; // LAME writes "Info" for constant bit rate
 
             // The LAME tag follows whichever optional Xing fields are present: frames, bytes, TOC, quality
             const u32 flags = AV_RB32(window.data() + xingOffset + 4);
-            const size_t lameOffset = xingOffset + 8 + ((flags & 1) ? 4 : 0) + ((flags & 2) ? 4 : 0) + ((flags & 4) ? 100 : 0) + ((flags & 8) ? 4 : 0);
+            const uSize lameOffset = xingOffset + 8 + ((flags & 1) ? 4 : 0) + ((flags & 2) ? 4 : 0) + ((flags & 4) ? 100 : 0) + ((flags & 8) ? 4 : 0);
 
             if(lameOffset + 24 > window.size())
                 break;
 
             const u8* lame = window.data() + lameOffset;
 
-            if(std::memcmp(lame, "LAME", 4) != 0 && std::memcmp(lame, "Lavf", 4) != 0 && std::memcmp(lame, "Lavc", 4) != 0)
+            if(0 != std::memcmp(lame, "LAME", 4) && 0 != std::memcmp(lame, "Lavf", 4) && 0 != std::memcmp(lame, "Lavc", 4))
                 break;
 
             details._Encoder.assign(reinterpret_cast<const char*>(lame), 9);
@@ -529,7 +529,7 @@ RetroFuturaGUI::Mp3Metadata RetroFuturaGUI::AudioMetadataReader::readMp3Details(
             details._EncoderDelay = delays >> 12;
             details._Padding = delays & 0xFFF;
         }
-        else if(vbriOffset + 4 <= window.size() && std::memcmp(window.data() + vbriOffset, "VBRI", 4) == 0)
+        else if(vbriOffset + 4 <= window.size() && 0 == std::memcmp(window.data() + vbriOffset, "VBRI", 4))
         {
             details._VbrHeader = "VBRI";
             details._IsVbr = true;
@@ -553,17 +553,17 @@ RetroFuturaGUI::OggVorbisMetadata RetroFuturaGUI::AudioMetadataReader::readVorbi
     if(!data)
         return details;
 
-    const size_t size = static_cast<size_t>(std::max(audio->extradata_size, 0));
+    const uSize size = static_cast<uSize>(std::max(audio->extradata_size, 0));
 
-    if(size < 1 || data[0] != 2)
+    if(1 > size || 2 != data[0])
         return details;
 
-    size_t offset { 1 };
-    std::array<size_t, 2> headerSizes {};
+    uSize offset { 1 };
+    std::array<uSize, 2> headerSizes {};
 
-    for(size_t& headerSize : headerSizes)
+    for(uSize& headerSize : headerSizes)
     {
-        while(offset < size && data[offset] == 255)
+        while(offset < size && 255 == data[offset])
         {
             headerSize += 255;
             ++offset;
@@ -578,7 +578,7 @@ RetroFuturaGUI::OggVorbisMetadata RetroFuturaGUI::AudioMetadataReader::readVorbi
     // Identification header: type 1, "vorbis", version, channels, sample rate, three bit rates, block sizes
     const u8* identification = data + offset;
 
-    if(offset + 30 > size || identification[0] != 1 || std::memcmp(identification + 1, "vorbis", 6) != 0)
+    if(offset + 30 > size || 1 != identification[0] || 0 != std::memcmp(identification + 1, "vorbis", 6))
         return details;
 
     details._MaximumBitRate = static_cast<i32>(AV_RL32(identification + 16));
@@ -588,17 +588,17 @@ RetroFuturaGUI::OggVorbisMetadata RetroFuturaGUI::AudioMetadataReader::readVorbi
     details._LongBlockSize = 1u << (identification[28] >> 4);
 
     // Comment header: type 3, "vorbis", then the vendor string FFmpeg reads past without keeping
-    const size_t commentOffset = offset + headerSizes[0];
+    const uSize commentOffset = offset + headerSizes[0];
 
     if(commentOffset + 11 > size)
         return details;
 
     const u8* comment = data + commentOffset;
 
-    if(comment[0] != 3 || std::memcmp(comment + 1, "vorbis", 6) != 0)
+    if(3 != comment[0] || 0 != std::memcmp(comment + 1, "vorbis", 6))
         return details;
 
-    const size_t vendorLength = AV_RL32(comment + 7);
+    const uSize vendorLength = AV_RL32(comment + 7);
 
     if(commentOffset + 11 + vendorLength > size)
         return details;
@@ -620,7 +620,7 @@ RetroFuturaGUI::OpusMetadata RetroFuturaGUI::AudioMetadataReader::readOpusDetail
     if(!head)
         return details;
 
-    if(audio->extradata_size < 19 || std::memcmp(head, "OpusHead", 8) != 0)
+    if(19 > audio->extradata_size || 0 != std::memcmp(head, "OpusHead", 8))
         return details;
 
     details._Version = head[8];
@@ -657,9 +657,9 @@ RetroFuturaGUI::AdxMetadata RetroFuturaGUI::AudioMetadataReader::readAdxDetails(
     if(!header)
         return details;
 
-    const size_t size = static_cast<size_t>(std::max(audio->extradata_size, 0));
+    const uSize size = static_cast<uSize>(std::max(audio->extradata_size, 0));
 
-    if(size < 0x14 || AV_RB16(header) != 0x8000)
+    if(0x14 > size || 0x8000 != AV_RB16(header))
         return details;
 
     details._DataOffset = AV_RB16(header + 0x02) + 4u;
@@ -675,12 +675,12 @@ RetroFuturaGUI::AdxMetadata RetroFuturaGUI::AudioMetadataReader::readAdxDetails(
     const u32 flags = header[0x13];
     const u32 channels = header[0x07];
 
-    details._EncryptionType = (flags == 0x08 || flags == 0x09) ? flags : 0;
-    details._Decodable = details._EncodingType == 3 && details._BlockSize == 18 && details._BitsPerSample == 4 && details._EncryptionType == 0;
+    details._EncryptionType = (0x08 == flags || 0x09 == flags) ? flags : 0;
+    details._Decodable = 3 == details._EncodingType && 18 == details._BlockSize && 4 == details._BitsPerSample && 0 == details._EncryptionType;
 
-    size_t loopsOffset { 0 };
+    uSize loopsOffset { 0 };
 
-    if(details._Version == 3)
+    if(3 == details._Version)
     {
         loopsOffset = 0x14;
 
@@ -688,14 +688,14 @@ RetroFuturaGUI::AdxMetadata RetroFuturaGUI::AudioMetadataReader::readAdxDetails(
         if(details._DataOffset < 6 + loopsOffset + 0x18)
             return details;
     }
-    else if(details._Version == 4)
+    else if(4 == details._Version)
     {
         // Version 4 puts per-channel decoder history first, and optionally an AINF block
-        const size_t historySize = channels > 1 ? 4 * channels : 8;
-        const size_t ainfOffset = 0x18 + historySize + 4;
-        size_t ainfSize { 0 };
+        const uSize historySize = 1 < channels ? 4 * channels : 8;
+        const uSize ainfOffset = 0x18 + historySize + 4;
+        uSize ainfSize { 0 };
 
-        if(ainfOffset + 8 <= size && std::memcmp(header + ainfOffset, "AINF", 4) == 0)
+        if(ainfOffset + 8 <= size && 0 == std::memcmp(header + ainfOffset, "AINF", 4))
             ainfSize = AV_RB32(header + ainfOffset + 4);
 
         loopsOffset = 0x18 + historySize;
@@ -713,7 +713,7 @@ RetroFuturaGUI::AdxMetadata RetroFuturaGUI::AudioMetadataReader::readAdxDetails(
 
     // 16-bit alignment padding and a 16-bit flag first, then the fields below
     details._HasLoopInfo = true;
-    details._LoopEnabled = AV_RB32(header + loopsOffset + 0x04) != 0;
+    details._LoopEnabled = 0 != AV_RB32(header + loopsOffset + 0x04);
     details._LoopStartSample = AV_RB32(header + loopsOffset + 0x08);
     details._LoopStartByte = AV_RB32(header + loopsOffset + 0x0C);
     details._LoopEndSample = AV_RB32(header + loopsOffset + 0x10);
@@ -784,18 +784,18 @@ std::optional<RetroFuturaGUI::AudioMetadata> RetroFuturaGUI::AudioMetadataReader
     metadata._Channels = static_cast<u32>(std::max(audio->ch_layout.nb_channels, 0));
     metadata._ChannelLayout = describeLayout(audio->ch_layout);
     metadata._SampleFormat = toString(av_get_sample_fmt_name(static_cast<AVSampleFormat>(audio->format)));
-    metadata._BitsPerSample = static_cast<u32>(std::max(audio->bits_per_raw_sample > 0 ? audio->bits_per_raw_sample : av_get_bits_per_sample(audio->codec_id), 0));
-    metadata._BitRate = audio->bit_rate > 0 ? audio->bit_rate : context->bit_rate;
+    metadata._BitsPerSample = static_cast<u32>(std::max(0 < audio->bits_per_raw_sample ? audio->bits_per_raw_sample : av_get_bits_per_sample(audio->codec_id), 0));
+    metadata._BitRate = 0 < audio->bit_rate ? audio->bit_rate : context->bit_rate;
 
     // The stream's own duration where the container records one, the file's otherwise
-    if(stream->duration > 0)
+    if(0 < stream->duration)
     {
         metadata._Seconds = static_cast<f64>(stream->duration) * av_q2d(stream->time_base);
 
-        if(audio->sample_rate > 0)
+        if(0 < audio->sample_rate)
             metadata._TotalSamples = static_cast<u64>(av_rescale_q(stream->duration, stream->time_base, AVRational { .num = 1, .den = audio->sample_rate }));
     }
-    else if(context->duration > 0)
+    else if(0 < context->duration)
     {
         metadata._Seconds = static_cast<f64>(context->duration) / AV_TIME_BASE;
         metadata._TotalSamples = static_cast<u64>(std::llround(metadata._Seconds * metadata._SampleRate));
@@ -895,12 +895,12 @@ std::optional<RetroFuturaGUI::AudioMetadata> RetroFuturaGUI::AudioMetadataReader
             // being priming and padding, the fourth the length that's left - the exact one
             const std::vector<u64> gapless = parseHexFields(findTag(fileTags, streamTags, { "iTunSMPB" }));
 
-            if(gapless.size() >= 4)
+            if(4 <= gapless.size())
             {
                 details._EncoderDelay = static_cast<u32>(gapless[1]);
                 details._Padding = static_cast<u32>(gapless[2]);
 
-                if(gapless[3] > 0)
+                if(0 < gapless[3])
                 {
                     metadata._TotalSamples = gapless[3];
                     metadata._Seconds = toSeconds(metadata._TotalSamples, metadata._SampleRate);
@@ -915,7 +915,7 @@ std::optional<RetroFuturaGUI::AudioMetadata> RetroFuturaGUI::AudioMetadataReader
         {
             AdxMetadata details = readAdxDetails(audio);
 
-            if(metadata._Channels == 0)
+            if(0 == metadata._Channels)
             {
                 metadata._Channels = details._Channels;
 
@@ -926,13 +926,13 @@ std::optional<RetroFuturaGUI::AudioMetadata> RetroFuturaGUI::AudioMetadataReader
                 av_channel_layout_uninit(&layout);
             }
 
-            if(metadata._SampleRate == 0)
+            if(0 == metadata._SampleRate)
                 metadata._SampleRate = details._SampleRate;
 
             // AHX shares the ADX header, and the encoding type is the only thing that tells them
             // apart. FFmpeg files it as ADX audio, which it isn't, so its codec, bit depth and bit
             // rate figures don't apply.
-            if(details._EncodingType == 0x10 || details._EncodingType == 0x11)
+            if(0x10 == details._EncodingType || 0x11 == details._EncodingType)
             {
                 metadata._Format = AudioFileFormat::Ahx;
                 metadata._Codec = "ahx";
@@ -942,7 +942,7 @@ std::optional<RetroFuturaGUI::AudioMetadata> RetroFuturaGUI::AudioMetadataReader
 
             // The header's sample count is exact; the demuxer sets no duration, leaving FFmpeg to
             // guess one from the bit rate
-            if(details._TotalSamples > 0 && metadata._SampleRate > 0)
+            if(0 < details._TotalSamples && 0 < metadata._SampleRate)
             {
                 metadata._TotalSamples = details._TotalSamples;
                 metadata._Seconds = toSeconds(details._TotalSamples, metadata._SampleRate);

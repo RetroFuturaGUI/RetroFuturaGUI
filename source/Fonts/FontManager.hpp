@@ -126,8 +126,8 @@ namespace RetroFuturaGUI
         struct AtlasDimension
         {
             u32 _Width { 0 },
-                _Height { 0 },
-                _NumGlyphs { 0 };
+                _Height { 0 };
+            uSize _GlyphCount { 0 };
         };
 
         FontManager() = default;

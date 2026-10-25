@@ -15,7 +15,7 @@ RetroFuturaGUI::SvgTexture::SvgTexture(std::string_view path, const bool flipVer
 
     discoverNamedPaths();
 
-    const glm::i32vec2 targetResolution = (initialResolution.x > 0 && initialResolution.y > 0)
+    const glm::i32vec2 targetResolution = (0 < initialResolution.x && 0 < initialResolution.y)
         ? initialResolution
         : glm::i32vec2(_documentIntrinsicSize);
 
@@ -90,7 +90,7 @@ void RetroFuturaGUI::SvgTexture::Draw()
     if(!_vertexArray)
         return;
 
-    if (!_projection || _baseLayerTextureId == 0)
+    if (!_projection || 0 == _baseLayerTextureId)
         return;
 
     ShaderManager::GetTextureFillShader().UseProgram();
@@ -114,7 +114,7 @@ void RetroFuturaGUI::SvgTexture::Draw()
     glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
 
     for (PathLayer& layer : _layers)
-        if (layer._HasActiveOverride && layer._MaskTextureId != 0)
+        if (layer._HasActiveOverride && 0 != layer._MaskTextureId)
             drawMaskedLayer(layer);
 
     glEnable(GL_DEPTH_TEST);
@@ -165,11 +165,11 @@ void RetroFuturaGUI::SvgTexture::drawMaskedLayer(PathLayer& layer)
     else
     {
         layer._Fill._GradientOffset += layer._Fill._GradientAnimationSpeed;
-        if (layer._Fill._GradientOffset > 1.0f)
+        if (1.0f < layer._Fill._GradientOffset)
             layer._Fill._GradientOffset = 0.0f;
 
         layer._Fill._GradientDegree += layer._Fill._GradientRotationSpeed;
-        if (layer._Fill._GradientDegree >= 360.0f)
+        if (360.0f <= layer._Fill._GradientDegree)
             layer._Fill._GradientDegree = 0.0f;
 
         shader->SetUniformVec4("uColors", &layer._Fill._Colors[0][0], static_cast<u32>(layer._Fill._Colors.size()));
@@ -213,7 +213,7 @@ void RetroFuturaGUI::SvgTexture::Rasterize(glm::i32vec2 targetResolution)
     rasterizeBaseLayer(targetResolution);
 
     for (PathLayer& layer : _layers)
-        if (layer._MaskTextureId != 0)
+        if (0 != layer._MaskTextureId)
             materializeMask(layer, targetResolution);
 }
 
@@ -234,7 +234,7 @@ void RetroFuturaGUI::SvgTexture::SetPathFill(std::string_view name, const SvgPat
     layer->_Fill = fill;
     layer->_HasActiveOverride = true;
 
-    if (layer->_MaskTextureId == 0)
+    if (0 == layer->_MaskTextureId)
         materializeMask(*layer, _resolution);
 
     rasterizeBaseLayer(_resolution); //enabled alpha-blending
@@ -315,7 +315,7 @@ lunasvg::Matrix RetroFuturaGUI::SvgTexture::computeScaleMatrix(glm::i32vec2 targ
 
 void RetroFuturaGUI::SvgTexture::rasterizeBaseLayer(glm::i32vec2 targetResolution)
 {
-    if (!_document || targetResolution.x <= 0 || targetResolution.y <= 0)
+    if (!_document || 0 >= targetResolution.x || 0 >= targetResolution.y)
         return;
 
     lunasvg::Bitmap bitmap(targetResolution.x, targetResolution.y);
@@ -362,7 +362,7 @@ void RetroFuturaGUI::SvgTexture::rasterizeBaseLayer(glm::i32vec2 targetResolutio
 
 void RetroFuturaGUI::SvgTexture::materializeMask(PathLayer& layer, glm::i32vec2 targetResolution)
 {
-    if (!_document || targetResolution.x <= 0 || targetResolution.y <= 0)
+    if (!_document || 0 >= targetResolution.x || 0 >= targetResolution.y)
         return;
 
     lunasvg::Bitmap bitmap(targetResolution.x, targetResolution.y);
@@ -420,7 +420,7 @@ void RetroFuturaGUI::SvgTexture::materializeMask(PathLayer& layer, glm::i32vec2 
 
 void RetroFuturaGUI::SvgTexture::uploadBaseLayer(const std::vector<u8>& rgba, glm::i32vec2 resolution)
 {
-    if (_baseLayerTextureId == 0)
+    if (0 == _baseLayerTextureId)
         glGenTextures(1, &_baseLayerTextureId);
 
     glBindTexture(GL_TEXTURE_2D, _baseLayerTextureId);
@@ -437,7 +437,7 @@ void RetroFuturaGUI::SvgTexture::uploadBaseLayer(const std::vector<u8>& rgba, gl
 
 void RetroFuturaGUI::SvgTexture::uploadMask(PathLayer& layer, const std::vector<u8>& alphaOnly, glm::i32vec2 resolution)
 {
-    if (layer._MaskTextureId == 0)
+    if (0 == layer._MaskTextureId)
         glGenTextures(1, &layer._MaskTextureId);
 
     glBindTexture(GL_TEXTURE_2D, layer._MaskTextureId);

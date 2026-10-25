@@ -90,7 +90,7 @@ void RetroFuturaGUI::AudioPlayback::meterProcess(ma_node* node, const float** fr
             sumofsquares += sample * sample;
         }
 
-        const f32 rms = framecount > 0 ? std::sqrt(sumofsquares / static_cast<f32>(framecount)) : 0.0f;
+        const f32 rms = 0 < framecount ? std::sqrt(sumofsquares / static_cast<f32>(framecount)) : 0.0f;
         const f32 previous = meter->_Levels[ch].load(std::memory_order_relaxed);
         const f32 smoothed = rms > previous ? rms : previous * _meterDecay;
 
@@ -100,7 +100,7 @@ void RetroFuturaGUI::AudioPlayback::meterProcess(ma_node* node, const float** fr
     if(meter->_HasSamples)
         writeSpectrumSamples(*meter, input, framecount, channels);
 
-    std::memcpy(framesout[0], input, static_cast<size_t>(framecount) * channels * sizeof(f32));
+    std::memcpy(framesout[0], input, static_cast<uSize>(framecount) * channels * sizeof(f32));
 
     *framecountin = framecount;
     *framecountout = framecount;
@@ -126,7 +126,7 @@ bool RetroFuturaGUI::AudioPlayback::initMeter()
 
     ma_uint32 channels = ma_engine_get_channels(&_engine);
 
-    if(channels == 0)
+    if(0 == channels)
         return false;
 
     if(channels > MaxMeterChannels)
@@ -388,7 +388,7 @@ void RetroFuturaGUI::AudioPlayback::SetPlaybackSpeed(const f32 factor)
     if(!_soundLoaded)
         return;
 
-    if(factor <= 0.0f)
+    if(0.0f >= factor)
         return;
 
     ma_sound_set_pitch(&_sound, factor);

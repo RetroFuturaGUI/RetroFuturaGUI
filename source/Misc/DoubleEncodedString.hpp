@@ -77,7 +77,7 @@ namespace RetroFuturaGUI
         
             if constexpr (std::same_as<strIn, std::string_view>)
             {
-                size_t end = result.find_last_not_of('\0');
+                uSize end = result.find_last_not_of('\0');
 
                 if (end != std::string::npos)
                     result.erase(end + 1);
@@ -86,7 +86,7 @@ namespace RetroFuturaGUI
             }
             else if constexpr (std::same_as<strIn, std::u32string_view>)
             {
-                size_t end = result.find_last_not_of(U'\0');
+                uSize end = result.find_last_not_of(U'\0');
 
                 if (end != std::u32string::npos)
                     result.erase(end + 1);

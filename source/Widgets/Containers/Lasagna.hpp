@@ -46,7 +46,7 @@ namespace RetroFuturaGUI
                     return false;
 
                 for(const f32 track : axis)
-                    if(track <= 0.0f)
+                    if(0.0f >= track)
                         return false;
 
                 return true;
@@ -74,7 +74,7 @@ namespace RetroFuturaGUI
         auto operator =(const Lasagna&) = delete;
         auto operator =(Lasagna&&) = delete;
 
-        /// @brief Places a widget into the grid at the given row, column and layer, optionally spanning multiple cells along any axis.
+        /// @brief Places a widget at the given row, column and layer, optionally spanning multiple cells along any axis.
         /// @return false when the placement is out of range or overlaps an occupied cell, in which case nothing is changed.
         bool AttachWidget(const u32 row, const u32 col, const u32 layer, IWidget* widget, const SizingMode sizingMode = SizingMode::FILL, const u32 rowSpan = 1, const u32 colSpan = 1, const u32 layerSpan = 1);
 

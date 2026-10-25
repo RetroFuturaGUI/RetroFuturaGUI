@@ -109,7 +109,7 @@ ma_result RetroFuturaGUI::RingBufferSource::onRead(ma_data_source* dataSource, v
         if(ma_pcm_rb_acquire_read(ringBuffer, &count, &samples) != MA_SUCCESS)
             break;
 
-        if(count == 0)
+        if(0 == count)
             break;
 
         ma_copy_pcm_frames(ma_offset_pcm_frames_ptr(framesOut, read, format, channels), samples, count, format, channels);
@@ -128,7 +128,7 @@ ma_result RetroFuturaGUI::RingBufferSource::onRead(ma_data_source* dataSource, v
     if(ended)
     {
         *framesRead = read;
-        return read > 0 ? MA_SUCCESS : MA_AT_END;
+        return 0 < read ? MA_SUCCESS : MA_AT_END;
     }
 
     // Underrun - the decoder is behind. Pad with silence and report the full count

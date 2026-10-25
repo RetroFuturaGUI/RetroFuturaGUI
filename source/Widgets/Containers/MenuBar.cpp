@@ -751,7 +751,7 @@ void RetroFuturaGUI::MenuBar::updateWindowDrag(const MouseState& mouse)
     // How far the cursor has moved from the point it took hold of
     const glm::i32vec2 slip { mouse._WindowPoint - _dragGrabPoint };
 
-    if(slip.x == 0 && slip.y == 0)
+    if(0 == slip.x && 0 == slip.y)
         return;
 
     i32 windowX { 0 }, windowY { 0 };
@@ -991,7 +991,7 @@ void RetroFuturaGUI::MenuBar::resolveCellSizes()
     for(const std::unique_ptr<IWidget>& item : _itemFlex)
     {
         const FlexDefinition& definition { GetFlexDefinition(index) };
-        const f32 value { definition._Width > 0.0f ? definition._Width : 0.0f };
+        const f32 value { 0.0f < definition._Width ? definition._Width : 0.0f };
 
         switch(definition._FlexSizing)
         {
@@ -1025,8 +1025,8 @@ void RetroFuturaGUI::MenuBar::resolveCellSizes()
         if(definition._FlexSizing != FlexSizing::Star)
             continue;
 
-        const f32 value { definition._Width > 0.0f ? definition._Width : 0.0f };
-        _resolvedCellSizes[index] = starWeightTotal > 0.0f ? leftover * (value / starWeightTotal) : 0.0f;
+        const f32 value { 0.0f < definition._Width ? definition._Width : 0.0f };
+        _resolvedCellSizes[index] = 0.0f < starWeightTotal ? leftover * (value / starWeightTotal) : 0.0f;
     }
 }
 
@@ -1126,7 +1126,7 @@ void RetroFuturaGUI::MenuBar::drawSeparatorLines()
     if(!_separatorLine)
         return;
 
-    if(_itemFlex.size() < 2)
+    if(2 > _itemFlex.size())
         return;
 
     const glm::vec2 lineSize { isHorizontal()

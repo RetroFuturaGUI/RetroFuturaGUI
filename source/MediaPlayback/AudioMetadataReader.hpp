@@ -1,6 +1,5 @@
 #pragma once
 #include "AudioMetadata.hpp"
-#include <cstddef>
 #include <initializer_list>
 #include <iosfwd>
 #include <optional>
@@ -39,7 +38,7 @@ namespace RetroFuturaGUI
         static std::string toString(const char* text);
 
         /// @brief Returns the bytes as lowercase hexadecimal digits, two per byte.
-        static std::string toHex(const u8* bytes, const size_t count);
+        static std::string toHex(const u8* bytes, const uSize count);
 
         /// @brief Returns the decimal number the text starts with, or nullopt if it starts with none.
         static std::optional<u64> parseUnsigned(const std::string& text);
@@ -83,7 +82,7 @@ namespace RetroFuturaGUI
         /// @brief Returns where an embedded picture's own JPEG or PNG signature starts within its first bytes, or 0 for another
         ///        format. Some taggers leave a stray byte before the picture - an extra null after an ID3 picture's description, say -
         ///        and FFmpeg keeps it. Readers that follow the standard, Windows Explorer among them, then find no picture.
-        static size_t findPictureStart(const u8* data, const size_t size);
+        static uSize findPictureStart(const u8* data, const uSize size);
 
         /// @brief Fills the cover art fields from the first embedded picture. FFmpeg exposes embedded cover art as an extra video
         ///        stream holding a single picture.

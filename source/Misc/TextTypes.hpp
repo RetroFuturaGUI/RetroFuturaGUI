@@ -206,11 +206,11 @@ namespace RetroFuturaGUI
                 if(result.ec != std::errc {} || result.ptr != end)
                     return false;
 
-                return raw != 0;
+                return 0 != raw;
             }
             else if constexpr (std::floating_point<T>)
             {
-                if(_numericBase == 2 || _numericBase == 16)
+                if(2 == _numericBase || 16 == _numericBase)
                 {
                     std::string digits;
                     digits.reserve(_valueText.size());
@@ -265,13 +265,13 @@ namespace RetroFuturaGUI
         /// @brief Renders a float. Base 2 and 16 show the IEEE-754 bit pattern, every other base shows decimal.
         template<std::floating_point T> std::string parseFloat(const T value) const
         {
-            if(_numericBase == 2 || _numericBase == 16)
+            if(2 == _numericBase || 16 == _numericBase)
             {
                 if constexpr (std::same_as<T, f64>)
                 {
                     const u64 bits = std::bit_cast<u64>(value);
 
-                    if(_numericBase == 16)
+                    if(16 == _numericBase)
                         return std::format("{:016x}", bits);
 
                     const std::string str = std::format("{:064b}", bits);
@@ -281,7 +281,7 @@ namespace RetroFuturaGUI
                 {
                     const u32 bits = std::bit_cast<u32>(value);
 
-                    if(_numericBase == 16)
+                    if(16 == _numericBase)
                         return std::format("{:08x}", bits);
 
                     const std::string str = std::format("{:032b}", bits);
@@ -289,7 +289,7 @@ namespace RetroFuturaGUI
                 }
             }
 
-            if(_precision < 0) //shortest representation that still round-trips
+            if(0 > _precision) //shortest representation that still round-trips
             {
                 std::array<char, 80> buffer {};
                 const std::to_chars_result result =

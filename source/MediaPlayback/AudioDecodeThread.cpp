@@ -132,7 +132,7 @@ bool RetroFuturaGUI::AudioDecodeThread::writeSamples(const uSize offset, const u
         if(ma_pcm_rb_acquire_write(&_ringBuffer, &count, &destination) != MA_SUCCESS)
             return false;
 
-        if(count == 0)
+        if(0 == count)
         {
             std::this_thread::sleep_for(std::chrono::milliseconds(5));
             continue;
@@ -158,7 +158,7 @@ void RetroFuturaGUI::AudioDecodeThread::run()
     while(_queue.PopPacket(packet))
     {
         // only skip corrupt packets rather than ending playback
-        if(_decoder.SendPacket(packet.Get()) < 0)
+        if(0 > _decoder.SendPacket(packet.Get()))
             continue;
 
         if(!receiveFrames(frame))
@@ -177,7 +177,7 @@ void RetroFuturaGUI::AudioDecodeThread::run()
 
     const i32 flushed { _resampler.Flush() };
 
-    if(flushed > 0 && !writeSamples(0, static_cast<uSize>(flushed)))
+    if(0 < flushed && !writeSamples(0, static_cast<uSize>(flushed)))
         return;
 
     _ended = true;
@@ -186,7 +186,7 @@ void RetroFuturaGUI::AudioDecodeThread::run()
 bool RetroFuturaGUI::AudioDecodeThread::receiveFrames(Frame& frame)
 {
     // collect frames until the decoder needs more input
-    while(_decoder.ReceiveFrame(frame.Get()) == 0)
+    while(0 == _decoder.ReceiveFrame(frame.Get()))
     {
         if(!writeFrame(frame))
             return false;

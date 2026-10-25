@@ -28,7 +28,7 @@ i32 RetroFuturaGUI::MediaSource::FindBestStream(const AVMediaType type) const
     const i32 index = av_find_best_stream(_formatContext, type, -1, -1, nullptr, 0);
 
     // av_find_best_stream reports failure as a negative AVERROR code; callers only need "none"
-    return index >= 0 ? index : -1;
+    return 0 <= index ? index : -1;
 }
 
 i32 RetroFuturaGUI::MediaSource::FindVideoStream() const
@@ -50,7 +50,7 @@ const AVStream* RetroFuturaGUI::MediaSource::GetStream(const i32 index) const
     if(!_formatContext)
         return nullptr;
 
-    if(index < 0 || static_cast<u32>(index) >= _formatContext->nb_streams)
+    if(0 > index || static_cast<u32>(index) >= _formatContext->nb_streams)
         return nullptr;
 
     return _formatContext->streams[index];
@@ -75,13 +75,13 @@ bool RetroFuturaGUI::MediaSource::Open(std::string_view path)
 
     const std::string filepath(path);
 
-    if(avformat_open_input(&_formatContext, filepath.c_str(), nullptr, nullptr) < 0)
+    if(0 > avformat_open_input(&_formatContext, filepath.c_str(), nullptr, nullptr))
         return false;
 
     if(!_formatContext)
         return false;
 
-    if(avformat_find_stream_info(_formatContext, nullptr) < 0)
+    if(0 > avformat_find_stream_info(_formatContext, nullptr))
     {
         Close();
         return false;
@@ -118,7 +118,7 @@ i32 RetroFuturaGUI::MediaSource::Seek(const i64 milliseconds)
     if(!_formatContext)
         return AVERROR(EINVAL);
 
-    if(milliseconds < 0)
+    if(0 > milliseconds)
         return AVERROR(EINVAL);
 
     // With stream index -1 FFmpeg reads the timestamp in AV_TIME_BASE units (microseconds)

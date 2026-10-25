@@ -104,9 +104,9 @@ void RetroFuturaGUI::Rectangle::SetCornerRadii(const glm::vec4& radii)
 {
     _cornerRadii = radii;
 
-    for(u32 i = 0; i < 4; ++i)
+    for(u32 i = 0; 4 > i; ++i)
     {
-        if(_cornerRadii[i] > 0.0f)
+        if(0.0f < _cornerRadii[i])
         {
             _shaderFeatureDIP |= ShaderFeatures::RoundedCorners;
             return;
@@ -164,9 +164,9 @@ void RetroFuturaGUI::Rectangle::SetRasterDegree(const f32 degree)
 void RetroFuturaGUI::Rectangle::SetPrimaryRasterWidthTransfer(std::span<f32> widthTransfer)
 {
     _primaryRasterWidthTransfer = widthTransfer;
-    _primaryRasterWidthTransferCount = static_cast<i32>(std::min<size_t>(_primaryRasterWidthTransfer.size(), 255));
+    _primaryRasterWidthTransferCount = static_cast<i32>(std::min<uSize>(_primaryRasterWidthTransfer.size(), 255));
 
-    if(_primaryRasterWidthTransferCount > 0)
+    if(0 < _primaryRasterWidthTransferCount)
         _shaderFeatureDIP |= ShaderFeatures::Raster;
     else
         _shaderFeatureDIP &= ~ShaderFeatures::Raster;
@@ -195,9 +195,9 @@ void RetroFuturaGUI::Rectangle::SetFogSpeed(const f32 speed)
 void RetroFuturaGUI::Rectangle::SetFogDensity(std::span<f32> density)
 {
     _fogDensity = density;
-    _fogDensityCount = static_cast<i32>(std::min<size_t>(_fogDensity.size(), 8));
+    _fogDensityCount = static_cast<i32>(std::min<uSize>(_fogDensity.size(), 8));
 
-    if(_fogDensityCount > 0)
+    if(0 < _fogDensityCount)
         _shaderFeatureDIP |= ShaderFeatures::FogEffect;
     else
         _shaderFeatureDIP &= ~ShaderFeatures::FogEffect;
@@ -257,7 +257,7 @@ void RetroFuturaGUI::Rectangle::SetBackgroundImagePadding(const f32 padding)
 glm::vec2 RetroFuturaGUI::Rectangle::backgroundImagePaddingUV() const
 {
     // image in UV space, so the pixel padding is expressed as a fraction of each axis.
-    if(_scale.x <= 0.0f || _scale.y <= 0.0f)
+    if(0.0f >= _scale.x || 0.0f >= _scale.y)
         return glm::vec2(0.0f);
 
     return glm::vec2(_backgroundImagePadding / _scale.x, _backgroundImagePadding / _scale.y);
@@ -297,7 +297,7 @@ void RetroFuturaGUI::Rectangle::setupMesh()
 void RetroFuturaGUI::Rectangle::initColors(std::span<glm::vec4> colors)
 {
     _colors = colors;
-    _colorCount = static_cast<i32>(std::min<size_t>(_colors.size(), 255));
+    _colorCount = static_cast<i32>(std::min<uSize>(_colors.size(), 255));
 }
 
 void RetroFuturaGUI::Rectangle::uploadRasterUniforms(Shader& shader)
@@ -312,7 +312,7 @@ void RetroFuturaGUI::Rectangle::uploadRasterUniforms(Shader& shader)
     shader.SetUniformFloat("uRasterAnimationOffset", _rasterAnimationOffset);
     shader.SetUniformInt("uPrimaryRasterWidthTransferCount", _primaryRasterWidthTransferCount);
 
-    if(_primaryRasterWidthTransferCount > 0)
+    if(0 < _primaryRasterWidthTransferCount)
         shader.SetUniformFloat("uPrimaryRasterWidthTransfer", _primaryRasterWidthTransfer.data(), static_cast<u32>(_primaryRasterWidthTransferCount));
 
     switch(_rasterPattern)
@@ -348,7 +348,7 @@ void RetroFuturaGUI::Rectangle::uploadFogUniforms(Shader& shader)
     shader.SetUniformFloat("uFogClearing", _fogClearing);
     shader.SetUniformInt("uFogDensityCount", _fogDensityCount);
 
-    if(_fogDensityCount > 0)
+    if(0 < _fogDensityCount)
         shader.SetUniformFloat("uFogDensity", _fogDensity.data(), static_cast<u32>(_fogDensityCount));
 }
 
@@ -410,11 +410,11 @@ void RetroFuturaGUI::Rectangle::drawWithSolidFill()
 void RetroFuturaGUI::Rectangle::drawLinearGradientFill()
 {
     _gradientOffset += _gradientAnimationSpeed;
-    if (_gradientOffset > 1.0f) 
+    if (1.0f < _gradientOffset) 
         _gradientOffset = 0.0f;
 
     _gradientDegree += _gradientRotationSpeed;
-    if(_gradientDegree >= 360.0f)
+    if(360.0f <= _gradientDegree)
         _gradientDegree = 0.0f;
 
     ShaderManager::GetLinearGradientShader().UseProgram();
@@ -458,11 +458,11 @@ void RetroFuturaGUI::Rectangle::drawLinearGradientFill()
 void RetroFuturaGUI::Rectangle::drawRadialGradientFill()
 {
     _gradientOffset += _gradientAnimationSpeed;
-    if (_gradientOffset > 1.0f) 
+    if (1.0f < _gradientOffset) 
         _gradientOffset = 0.0f;
 
     _gradientDegree += _gradientRotationSpeed;
-    if(_gradientDegree >= 360.0f)
+    if(360.0f <= _gradientDegree)
         _gradientDegree = 0.0f;
 
     ShaderManager::GetRadialGradientShader().UseProgram();
@@ -506,11 +506,11 @@ void RetroFuturaGUI::Rectangle::drawRadialGradientFill()
 void RetroFuturaGUI::Rectangle::drawHueStarGradientFill()
 {
     _gradientOffset += _gradientAnimationSpeed;
-    if (_gradientOffset > 1.0f) 
+    if (1.0f < _gradientOffset) 
         _gradientOffset = 0.0f;
 
     _gradientDegree += _gradientRotationSpeed;
-    if(_gradientDegree >= 360.0f)
+    if(360.0f <= _gradientDegree)
         _gradientDegree = 0.0f;
 
     ShaderManager::GetHueStarGradientShader().UseProgram();
@@ -565,7 +565,7 @@ void RetroFuturaGUI::Rectangle::drawSolidBorder()
     ShaderManager::GetBorderSolidFillShader().SetUniformVec2("uScale", _scale);
     ShaderManager::GetBorderSolidFillShader().SetUniformInt("uBorderGapCount", _borderGapCount);
 
-    if(_borderGapCount > 0)
+    if(0 < _borderGapCount)
         ShaderManager::GetBorderSolidFillShader().SetUniformVec4("uBorderGaps", &_borderGapData[0][0], static_cast<u32>(_borderGapCount));
 
     if(_shaderFeatureDIP & ShaderFeatures::Raster)
@@ -586,11 +586,11 @@ void RetroFuturaGUI::Rectangle::drawSolidBorder()
 void RetroFuturaGUI::Rectangle::drawLinearGradientBorder()
 {
     _gradientOffset += _gradientAnimationSpeed;
-    if (_gradientOffset > 1.0f) 
+    if (1.0f < _gradientOffset) 
         _gradientOffset = 0.0f;
 
     _gradientDegree += _gradientRotationSpeed;
-    if(_gradientDegree >= 360.0f)
+    if(360.0f <= _gradientDegree)
         _gradientDegree = 0.0f;
 
     ShaderManager::GetBorderLinearGradientShader().UseProgram();
@@ -609,7 +609,7 @@ void RetroFuturaGUI::Rectangle::drawLinearGradientBorder()
     ShaderManager::GetBorderLinearGradientShader().SetUniformFloat("uBorderWidth", _borderWidth);
     ShaderManager::GetBorderLinearGradientShader().SetUniformInt("uBorderGapCount", _borderGapCount);
 
-    if(_borderGapCount > 0)
+    if(0 < _borderGapCount)
         ShaderManager::GetBorderLinearGradientShader().SetUniformVec4("uBorderGaps", &_borderGapData[0][0], static_cast<u32>(_borderGapCount));
 
     if(_shaderFeatureDIP & ShaderFeatures::Raster)
@@ -630,11 +630,11 @@ void RetroFuturaGUI::Rectangle::drawLinearGradientBorder()
 void RetroFuturaGUI::Rectangle::drawRadialGradientBorder()
 {
     _gradientOffset += _gradientAnimationSpeed;
-    if (_gradientOffset > 1.0f) 
+    if (1.0f < _gradientOffset) 
         _gradientOffset = 0.0f;
 
     _gradientDegree += _gradientRotationSpeed;
-    if(_gradientDegree >= 360.0f)
+    if(360.0f <= _gradientDegree)
         _gradientDegree = 0.0f;
 
     ShaderManager::GetBorderRadialGradientShader().UseProgram();
@@ -653,7 +653,7 @@ void RetroFuturaGUI::Rectangle::drawRadialGradientBorder()
     ShaderManager::GetBorderRadialGradientShader().SetUniformFloat("uBorderWidth", _borderWidth);
     ShaderManager::GetBorderRadialGradientShader().SetUniformInt("uBorderGapCount", _borderGapCount);
 
-    if(_borderGapCount > 0)
+    if(0 < _borderGapCount)
         ShaderManager::GetBorderRadialGradientShader().SetUniformVec4("uBorderGaps", &_borderGapData[0][0], static_cast<u32>(_borderGapCount));
 
     if(_shaderFeatureDIP & ShaderFeatures::Raster)
@@ -674,11 +674,11 @@ void RetroFuturaGUI::Rectangle::drawRadialGradientBorder()
 void RetroFuturaGUI::Rectangle::drawHueStarGradientBorder()
 {
     _gradientOffset += _gradientAnimationSpeed;
-    if (_gradientOffset > 1.0f) 
+    if (1.0f < _gradientOffset) 
         _gradientOffset = 0.0f;
 
     _gradientDegree += _gradientRotationSpeed;
-    if(_gradientDegree >= 360.0f)
+    if(360.0f <= _gradientDegree)
         _gradientDegree = 0.0f;
 
     ShaderManager::GetBorderHueStarGradientShader().UseProgram();
@@ -697,7 +697,7 @@ void RetroFuturaGUI::Rectangle::drawHueStarGradientBorder()
     ShaderManager::GetBorderHueStarGradientShader().SetUniformFloat("uBorderWidth", _borderWidth);
     ShaderManager::GetBorderHueStarGradientShader().SetUniformInt("uBorderGapCount", _borderGapCount);
 
-    if(_borderGapCount > 0)
+    if(0 < _borderGapCount)
         ShaderManager::GetBorderHueStarGradientShader().SetUniformVec4("uBorderGaps", &_borderGapData[0][0], static_cast<u32>(_borderGapCount));
 
     if(_shaderFeatureDIP & ShaderFeatures::Raster)
@@ -722,8 +722,8 @@ void RetroFuturaGUI::Rectangle::SetBorderWidth(const f32 width)
 
 void RetroFuturaGUI::Rectangle::SetBorderGaps(std::span<BorderGap> gaps)
 {
-    _borderGapCount = static_cast<i32>(std::min<size_t>(gaps.size(), _kMaxBorderGaps));
-    _borderGapData.resize(static_cast<size_t>(_borderGapCount));
+    _borderGapCount = static_cast<i32>(std::min<uSize>(gaps.size(), _kMaxBorderGaps));
+    _borderGapData.resize(static_cast<uSize>(_borderGapCount));
 
     for(i32 i = 0; i < _borderGapCount; ++i)
     {
@@ -751,7 +751,7 @@ void RetroFuturaGUI::Rectangle::SetBackgroundGaps(const BackgroundGap& gaps)
 bool RetroFuturaGUI::Rectangle::hasBackgroundGap() const
 {
     // Same test the shader runs: a zero repeat or a zero-width gap leaves the fill solid.
-    return _backgroundGapData.w != 0.0f && _backgroundGapData.z > 0.0f;
+    return 0.0f != _backgroundGapData.w && 0.0f < _backgroundGapData.z;
 }
 
 bool RetroFuturaGUI::Rectangle::isColorField() const

@@ -201,8 +201,8 @@ glm::vec2 RetroFuturaGUI::ExtendedComboBox::contentSize(const f32 width) const
 
     return glm::vec2
     (
-        width - inset > 0.0f ? width - inset : 0.0f,
-        _size.y - inset > 0.0f ? _size.y - inset : 0.0f
+        0.0f < width - inset ? width - inset : 0.0f,
+        0.0f < _size.y - inset ? _size.y - inset : 0.0f
     );
 }
 

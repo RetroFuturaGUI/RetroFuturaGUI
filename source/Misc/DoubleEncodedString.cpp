@@ -4,7 +4,7 @@
 RetroFuturaGUI::DoubleEncodedString::DoubleEncodedString(const uSize maxLength, std::string_view initialString)
     : _capacity(maxLength)
 {
-    if(_capacity == 0)
+    if(0 == _capacity)
         return;
 
     if (initialString.empty())
@@ -17,7 +17,7 @@ RetroFuturaGUI::DoubleEncodedString::DoubleEncodedString(const uSize maxLength, 
 RetroFuturaGUI::DoubleEncodedString::DoubleEncodedString(const uSize maxLength, std::u32string_view initialString)
     : _capacity(maxLength)
 {
-    if(_capacity == 0)
+    if(0 == _capacity)
         return;
 
     if (initialString.empty())
@@ -113,7 +113,7 @@ void RetroFuturaGUI::DoubleEncodedString::Clear()
 
 void RetroFuturaGUI::DoubleEncodedString::Resize(const uSize capacity)
 {
-    if(capacity == 0)
+    if(0 == capacity)
         return;
 
     _capacity = capacity;
@@ -206,32 +206,32 @@ std::string RetroFuturaGUI::DoubleEncodedString::Utf32ToUtf8(std::u32string_view
 {
     std::string utf8;
     utf8.resize(input.size() * sizeof(u32));
-    size_t count { 0 };
+    uSize count { 0 };
     
-    for(size_t i { 0 }; i < input.size(); ++i)
+    for(uSize i { 0 }; i < input.size(); ++i)
     {
-        if(input[i] == 0)
+        if(0 == input[i])
             break;
 
-        if(input[i] < 0x80)
+        if(0x80 > input[i])
         {
             utf8[count] = static_cast<char>(input[i]);
             ++count;
         }
-        else if(input[i] >= 0x80 && input[i] < 0x800)
+        else if(0x80 <= input[i] && 0x800 > input[i])
         {
             utf8[count] = static_cast<char>((input[i] >> 6) | _maskDouble);
             utf8[count+1] = static_cast<char>((input[i] & _invMaskSequence) | _maskSequence);
             count += 2;
         }
-        else if(input[i] >= 0x800 && input[i] < 0x10000)
+        else if(0x800 <= input[i] && 0x10000 > input[i])
         {
             utf8[count] = static_cast<char>((input[i] >> 12) | _maskTriple);
             utf8[count+1] = static_cast<char>(((input[i] >> 6) & _invMaskSequence) | _maskSequence);
             utf8[count+2] = static_cast<char>((input[i] & _invMaskSequence) | _maskSequence);
             count += 3;
         }
-        else if(input[i] >= 0x10000 && input[i] < 0x110000)
+        else if(0x10000 <= input[i] && 0x110000 > input[i])
         {
             utf8[count] = static_cast<char>((input[i] >> 18) | _maskQuadruple);
             utf8[count+1] = static_cast<char>(((input[i] >> 12) & _invMaskSequence) | _maskSequence);

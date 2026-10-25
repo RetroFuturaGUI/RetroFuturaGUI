@@ -118,8 +118,8 @@ void RetroFuturaGUI::ComboBox::placeItemText(Text& item, const glm::vec3& center
         boxBorder { _border ? _border->GetBorderWidth() : 0.0f },
         panelBorder { _dropDownBorder ? _dropDownBorder->GetBorderWidth() : 0.0f },
         inset { (boxBorder > panelBorder ? boxBorder : panelBorder) * 2.0f },
-        parentWidth { width - inset > 0.0f ? width - inset : 0.0f },
-        parentHeight { _size.y - inset > 0.0f ? _size.y - inset : 0.0f };
+        parentWidth { 0.0f < width - inset ? width - inset : 0.0f },
+        parentHeight { 0.0f < _size.y - inset ? _size.y - inset : 0.0f };
 
     item.SetParentSize(glm::vec2(parentWidth, parentHeight));
     item.SetPosition(center);

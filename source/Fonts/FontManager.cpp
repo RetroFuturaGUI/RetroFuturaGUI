@@ -15,7 +15,7 @@ bool RetroFuturaGUI::FontManager::isFontLoaded(std::string_view fontFamily, cons
 {
     for(const auto& fontInfo : _fonts)
         if(fontInfo._FontProperty._Name == fontFamily 
-            && fontInfo._Atlasses.count(integralSize) > 0
+            && 0 < fontInfo._Atlasses.count(integralSize)
             && fontInfo._FontProperty._Slant == slant
             && fontInfo._FontProperty._Weight == weight)
             return true;
@@ -66,10 +66,10 @@ u32 RetroFuturaGUI::FontManager::generateGlyphAtlas(FT_Face face, const u32 code
 {
     FT_Set_Char_Size(face, 0, integralFontSize << 6, 96, 96);
     std::vector<Glyph>& glyphsRef = *glyphs;
-    u32 numGlyphs { codePointLast - codePointFirst + 1 },
-        maxGlyphDimension { (u32)(1 + (face->size->metrics.height >> 6)) * (u32)ceilf(sqrtf(static_cast<float>(numGlyphs))) },
+    const uSize glyphCount { codePointLast - codePointFirst + 1 };
+    u32 maxGlyphDimension { (u32)(1 + (face->size->metrics.height >> 6)) * (u32)ceilf(sqrtf(static_cast<float>(glyphCount))) },
         atlasWidth { 1 };
-    glyphsRef.resize(numGlyphs);
+    glyphsRef.resize(glyphCount);
 
     while(atlasWidth < maxGlyphDimension) 
         atlasWidth <<= 1;
@@ -144,7 +144,7 @@ u32 RetroFuturaGUI::FontManager::generateGlyphAtlas(FT_Face face, const u32 code
     {
         atlasDim->_Width = atlasWidth;
         atlasDim->_Height = atlasHeight;
-        atlasDim->_NumGlyphs = numGlyphs;
+        atlasDim->_GlyphCount = glyphCount;
     }
 
     return textureID;
@@ -229,7 +229,7 @@ RetroFuturaGUI::FontManager::LoadFontResult RetroFuturaGUI::FontManager::LoadFon
         ._PageSide = 0
     };
 
-    for(uSize i = 0; i < atlasDim._NumGlyphs; ++i)
+    for(uSize i = 0; i < atlasDim._GlyphCount; ++i)
     {
         Glyph glyph;
         glyph._Size[0] = glyphs[i]._EndX - glyphs[i]._OriginX;
@@ -253,7 +253,7 @@ i32 RetroFuturaGUI::FontManager::initFreeTypeLibrary()
 {
     i32 err = FT_Init_FreeType(&_ft);
 
-    if (err == 0)
+    if (0 == err)
         return 0;
 
     std::println("ERROR::FREETYPE: Could not init FreeType Library");
@@ -267,7 +267,7 @@ const RetroFuturaGUI::FontInfo* RetroFuturaGUI::FontManager::GetFontInfo(std::st
     for (const auto& font : _fonts)
     {
         if (font._FontProperty._Name == fontFamily
-            && font._Atlasses.count(fontIndex) > 0
+            && 0 < font._Atlasses.count(fontIndex)
             && font._FontProperty._Slant == slant
             && font._FontProperty._Weight == weight)
         {
@@ -276,10 +276,10 @@ const RetroFuturaGUI::FontInfo* RetroFuturaGUI::FontManager::GetFontInfo(std::st
     }
 
     // If not found, load it
-    if (LoadFont(fontFamily, size, slant, weight, BasicLatinFirst, BasicLatinLast) == 0)
+    if (0 == LoadFont(fontFamily, size, slant, weight, BasicLatinFirst, BasicLatinLast))
     {
         for (const auto& font : _fonts)
-            if (font._FontProperty._Name == fontFamily && font._Atlasses.count(fontIndex) > 0)
+            if (font._FontProperty._Name == fontFamily && 0 < font._Atlasses.count(fontIndex))
                 return &font;
     }
 
@@ -294,7 +294,7 @@ void RetroFuturaGUI::FontManager::SetDefaultFont(std::string_view fontFamily, co
 
 u32 RetroFuturaGUI::FontManager::FontSizeToIntegral(const f32 size)
 {
-    return size < 1.0f && size > 0.0f ? 1 : static_cast<u32>(size);
+    return 1.0f > size && 0.0f < size ? 1 : static_cast<u32>(size);
 }
 
 const RetroFuturaGUI::Glyph* RetroFuturaGUI::FontManager::GetGlyph(const GlyphAtlas& atlas, const u32 codePoint)
@@ -501,7 +501,7 @@ void RetroFuturaGUI::FontManager::ExtendFontset(std::string_view fontFamily, std
     for (auto& font : _fonts)
     {
         if (font._FontProperty._Name == fontFamily
-            && font._Atlasses.count(integralFontSize) > 0
+            && 0 < font._Atlasses.count(integralFontSize)
             && font._FontProperty._Slant == slant
             && font._FontProperty._Weight == weight)
         {

@@ -135,7 +135,7 @@ const glm::vec3& RetroFuturaGUI::Scene::GetRotation() const
 
 void RetroFuturaGUI::Scene::SetReservedEdge(const DockEdge edge, const f32 thickness)
 {
-    const f32 clampedThickness { thickness < 0.0f ? 0.0f : thickness };
+    const f32 clampedThickness { 0.0f > thickness ? 0.0f : thickness };
 
     if(_hasReservedEdge && _reservedEdge == edge && _reservedThickness == clampedThickness)
         return;

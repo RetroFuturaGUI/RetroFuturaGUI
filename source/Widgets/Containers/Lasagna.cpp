@@ -89,9 +89,9 @@ RetroFuturaGUI::Lasagna::Lasagna(const std::string& name, Projection* projection
 bool RetroFuturaGUI::Lasagna::AttachWidget(const u32 row, const u32 col, const u32 layer, IWidget* widget, const SizingMode sizingMode, const u32 rowSpan, const u32 colSpan, const u32 layerSpan)
 {
     const u32
-        rowSpanClamped = rowSpan == 0 ? 1 : rowSpan,
-        colSpanClamped = colSpan == 0 ? 1 : colSpan,
-        layerSpanClamped = layerSpan == 0 ? 1 : layerSpan;
+        rowSpanClamped = 0 == rowSpan ? 1 : rowSpan,
+        colSpanClamped = 0 == colSpan ? 1 : colSpan,
+        layerSpanClamped = 0 == layerSpan ? 1 : layerSpan;
 
     if(_axisdefinition._RowDefinition.size() < row + rowSpanClamped
     || _axisdefinition._ColumnDefinition.size() < col + colSpanClamped
@@ -281,7 +281,7 @@ void RetroFuturaGUI::Lasagna::resizeCells()
             {
                 LasagnaCell& cell = _lasagna[row][column][layer];
 
-                if(cell._RowSpan > 1 || cell._ColSpan > 1 || cell._LayerSpan > 1)
+                if(1 < cell._RowSpan || 1 < cell._ColSpan || 1 < cell._LayerSpan)
                     updateSpanSize(cell, row, column, layer);
             }
         }

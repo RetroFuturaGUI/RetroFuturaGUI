@@ -56,7 +56,7 @@ const std::string& RetroFuturaGUI::TextTypes::GetValueText() const
 
 void RetroFuturaGUI::TextTypes::SetNumericBase(const u32 base)
 {
-    if(base > 1 && base < 37)
+    if(1 < base && 37 > base)
         _numericBase = base;
     else
         _numericBase = 10;
@@ -66,7 +66,7 @@ void RetroFuturaGUI::TextTypes::SetNumericBase(const u32 base)
 
 void RetroFuturaGUI::TextTypes::SetDecimalPrecision(const i32 precision)
 {
-    _precision = precision > 32 ? 32 : precision;
+    _precision = 32 < precision ? 32 : precision;
     refreshValueText();
 }
 

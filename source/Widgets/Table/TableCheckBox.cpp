@@ -68,7 +68,7 @@ void RetroFuturaGUI::TableCheckBox::SetRotation(const glm::vec3& rotation)
 
 void RetroFuturaGUI::TableCheckBox::SetPadding(const f32 padding)
 {
-    _padding = padding > 0.0f ? padding : 0.0f;
+    _padding = 0.0f < padding ? padding : 0.0f;
 }
 
 void RetroFuturaGUI::TableCheckBox::SetInnerPadding(const f32 padding)

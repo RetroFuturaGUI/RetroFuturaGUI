@@ -20,7 +20,7 @@ bool RetroFuturaGUI::Resampler::Open(const AVStream* stream)
 
     const i32 channels = parameters->ch_layout.nb_channels;
 
-    if(channels <= 0 || parameters->sample_rate <= 0)
+    if(0 >= channels || 0 >= parameters->sample_rate)
         return false;
 
     // mono and stereo stay as they are; more channels are downmixed to stereo,
@@ -44,7 +44,7 @@ void RetroFuturaGUI::Resampler::Close()
 
 bool RetroFuturaGUI::Resampler::IsOpen() const
 {
-    return _outRate > 0;
+    return 0 < _outRate;
 }
 
 i32 RetroFuturaGUI::Resampler::Convert(const Frame& frame)
@@ -63,7 +63,7 @@ i32 RetroFuturaGUI::Resampler::Convert(const Frame& frame)
 
     const i32 capacity = reserve(source->nb_samples);
 
-    if(capacity <= 0)
+    if(0 >= capacity)
         return capacity;
 
     uint8_t* out[] = { reinterpret_cast<uint8_t*>(_buffer.data()) };
@@ -77,7 +77,7 @@ i32 RetroFuturaGUI::Resampler::Flush()
 
     const i32 capacity = reserve(0);
 
-    if(capacity <= 0)
+    if(0 >= capacity)
         return capacity;
 
     uint8_t* out[] = { reinterpret_cast<uint8_t*>(_buffer.data()) };
@@ -111,11 +111,11 @@ bool RetroFuturaGUI::Resampler::configure(const AVFrame* frame)
 
     const AVSampleFormat format = static_cast<AVSampleFormat>(frame->format);
 
-    if(swr_alloc_set_opts2(&_context, &_outLayout, AV_SAMPLE_FMT_FLT, _outRate,
-        &frame->ch_layout, format, frame->sample_rate, 0, nullptr) < 0)
+    if(0 > swr_alloc_set_opts2(&_context, &_outLayout, AV_SAMPLE_FMT_FLT, _outRate,
+        &frame->ch_layout, format, frame->sample_rate, 0, nullptr))
         return false;
 
-    if(swr_init(_context) < 0 || av_channel_layout_copy(&_inLayout, &frame->ch_layout) < 0)
+    if(0 > swr_init(_context) || 0 > av_channel_layout_copy(&_inLayout, &frame->ch_layout))
     {
         swr_free(&_context);
         return false;
@@ -134,18 +134,18 @@ bool RetroFuturaGUI::Resampler::inputMatches(const AVFrame* frame) const
     return _context != nullptr
         && frame->format == _inFormat
         && frame->sample_rate == _inRate
-        && av_channel_layout_compare(&frame->ch_layout, &_inLayout) == 0;
+        && 0 == av_channel_layout_compare(&frame->ch_layout, &_inLayout);
 }
 
 i32 RetroFuturaGUI::Resampler::reserve(const i32 inSamples)
 {
     const i32 needed = swr_get_out_samples(_context, inSamples);
 
-    if(needed <= 0)
+    if(0 >= needed)
         return needed;
 
-    const size_t channels = static_cast<size_t>(_outLayout.nb_channels);
-    const size_t size = static_cast<size_t>(needed) * channels;
+    const uSize channels = static_cast<uSize>(_outLayout.nb_channels);
+    const uSize size = static_cast<uSize>(needed) * channels;
 
     if(_buffer.size() < size)
         _buffer.resize(size);

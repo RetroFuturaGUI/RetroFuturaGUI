@@ -578,7 +578,7 @@ void RetroFuturaGUI::Table::resolveTrackSizes(const std::vector<TrackDefinition>
 
     for(const TrackDefinition& track : tracks)
     {
-        const f32 value { track._Value > 0.0f ? track._Value : 0.0f };
+        const f32 value { 0.0f < track._Value ? track._Value : 0.0f };
 
         if(track._Sizing == TrackSizing::Star)
             starWeightTotal += value;
@@ -591,7 +591,7 @@ void RetroFuturaGUI::Table::resolveTrackSizes(const std::vector<TrackDefinition>
 
     for(uSize track = 0; track < tracks.size(); ++track)
     {
-        const f32 value { tracks[track]._Value > 0.0f ? tracks[track]._Value : 0.0f };
+        const f32 value { 0.0f < tracks[track]._Value ? tracks[track]._Value : 0.0f };
 
         if(tracks[track]._Sizing != TrackSizing::Star)
         {
@@ -599,7 +599,7 @@ void RetroFuturaGUI::Table::resolveTrackSizes(const std::vector<TrackDefinition>
             continue;
         }
 
-        outSizes[track] = starWeightTotal > 0.0f ? leftover * (value / starWeightTotal) : 0.0f;
+        outSizes[track] = 0.0f < starWeightTotal ? leftover * (value / starWeightTotal) : 0.0f;
     }
 }
 
@@ -670,8 +670,8 @@ void RetroFuturaGUI::Table::layoutView()
         return;
 
     const glm::vec2 maxScroll { GetMaxScroll() };
-    _scrollPosition.x = _scrollPosition.x < 0.0f ? 0.0f : (_scrollPosition.x > maxScroll.x ? maxScroll.x : _scrollPosition.x);
-    _scrollPosition.y = _scrollPosition.y < 0.0f ? 0.0f : (_scrollPosition.y > maxScroll.y ? maxScroll.y : _scrollPosition.y);
+    _scrollPosition.x = 0.0f > _scrollPosition.x ? 0.0f : (_scrollPosition.x > maxScroll.x ? maxScroll.x : _scrollPosition.x);
+    _scrollPosition.y = 0.0f > _scrollPosition.y ? 0.0f : (_scrollPosition.y > maxScroll.y ? maxScroll.y : _scrollPosition.y);
 
     resolveVisibleRange(_rowOffsets, _scrollPosition.y, _innerSize.y, _displayedRows[0], _displayedRows[1]);
     resolveVisibleRange(_columnOffsets, _scrollPosition.x, _innerSize.x, _displayedColumns[0], _displayedColumns[1]);
@@ -941,13 +941,13 @@ void RetroFuturaGUI::Table::SetHeaderOuterBorderColors(std::span<glm::vec4> colo
 
 void RetroFuturaGUI::Table::SetHorizontalHeaderSize(const f32 size)
 {
-    _horizontalHeaderHeight = size > 0.0f ? size : 0.0f;
+    _horizontalHeaderHeight = 0.0f < size ? size : 0.0f;
     layoutCells();
 }
 
 void RetroFuturaGUI::Table::SetVerticalHeaderSize(const f32 size)
 {
-    _verticalHeaderWidth = size > 0.0f ? size : 0.0f;
+    _verticalHeaderWidth = 0.0f < size ? size : 0.0f;
     layoutCells();
 }
 

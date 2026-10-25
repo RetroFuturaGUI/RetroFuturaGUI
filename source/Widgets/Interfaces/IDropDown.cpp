@@ -181,10 +181,10 @@ void RetroFuturaGUI::IDropDown::updateDropDownArrowGeometry()
     const bool isQuarterTurned { _dropDownPosition == DropDownPosition::Right || _dropDownPosition == DropDownPosition::Left };
     const f32
         padding { _size.y * 0.25f < _arrowPadding ? _size.y * 0.25f : _arrowPadding }, //a box under 60 px tall keeps half its height for the arrow, instead of none below 30 px
-        extent { _size.y - padding * 2.0f > 0.0f ? _size.y - padding * 2.0f : 0.0f },
-        aspectRatio { _dropDownArrow->GetAspectRatio() > 0.0f ? _dropDownArrow->GetAspectRatio() : 1.0f },
-        width { aspectRatio > 1.0f ? extent : extent * aspectRatio },
-        height { aspectRatio > 1.0f ? extent / aspectRatio : extent },
+        extent { 0.0f < _size.y - padding * 2.0f ? _size.y - padding * 2.0f : 0.0f },
+        aspectRatio { 0.0f < _dropDownArrow->GetAspectRatio() ? _dropDownArrow->GetAspectRatio() : 1.0f },
+        width { 1.0f < aspectRatio ? extent : extent * aspectRatio },
+        height { 1.0f < aspectRatio ? extent / aspectRatio : extent },
         drawnWidth { isQuarterTurned ? height : width },
         drawnHeight { isQuarterTurned ? width : height },
         rightMargin { (_size.y - drawnHeight) * 0.5f };

@@ -11,11 +11,11 @@ std::string RetroFuturaGUI::IHierarchyNode::GetPath() const
 
     std::string path;
 
-    for(uSize i = chain.size(); i > 0; --i)
+    for(uSize i = chain.size(); 0 < i; --i)
     {
         path += chain[i - 1]->GetName();
 
-        if(i > 1)
+        if(1 < i)
             path += '/';
     }
 

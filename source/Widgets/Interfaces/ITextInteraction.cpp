@@ -116,7 +116,7 @@ uSize RetroFuturaGUI::ITextInteraction::markedEnd() const
 
 bool RetroFuturaGUI::ITextInteraction::shouldRepeat(const u32 holdFrames)
 {
-    return holdFrames >= _keyRepeatInitialDelay && (holdFrames - _keyRepeatInitialDelay) % _keyRepeatInterval == 0;
+    return holdFrames >= _keyRepeatInitialDelay && 0 == (holdFrames - _keyRepeatInitialDelay) % _keyRepeatInterval;
 }
 
 const std::string& RetroFuturaGUI::ITextInteraction::GetCopiedText() const
@@ -191,7 +191,7 @@ void RetroFuturaGUI::ITextInteraction::moveCaretLeft()
 {
     deselect();
 
-    if(_caretPosition > 0)
+    if(0 < _caretPosition)
         --_caretPosition;
 
     updateCaretPosition();
@@ -300,7 +300,7 @@ bool RetroFuturaGUI::ITextInteraction::checkForTextPaste()
             uSize dataSize { 0 };
             PlatformBridge::Clipboard::PasteFromClipboard(PlatformBridge::Clipboard::ClipboardDatatype::Text, dataPtr, &dataSize);
 
-            if(dataSize == 0)
+            if(0 == dataSize)
                 return true;
 
             middlePart = std::u32string(reinterpret_cast<char32_t*>(dataPtr), dataSize / sizeof(char32_t));
@@ -360,7 +360,7 @@ bool RetroFuturaGUI::ITextInteraction::checkForSelectAllText()
     if((PlatformBridge::Input::IsKeyDown(PB_KEY_CONTROL_L) || PlatformBridge::Input::IsKeyDown(PB_KEY_CONTROL_R))
         && (PlatformBridge::Input::GetKeyPressState(PB_KEY_A) == PlatformBridge::KeyPressState::Press))
     {
-        if(text && (_selectedPositionFirst != 0 || _selectedPositionLast != text->GetGlyphCount()))
+        if(text && (0 != _selectedPositionFirst || _selectedPositionLast != text->GetGlyphCount()))
         {
             _selectedPositionFirst = 0;
             _selectedPositionLast = text->GetGlyphCount();
@@ -476,10 +476,10 @@ bool RetroFuturaGUI::ITextInteraction::checkForBackspacePress()
 
     if(shouldDelete)
     {
-        if(text->GetTextUTF32().size() == 0)
+        if(0 == text->GetTextUTF32().size())
             return true;
 
-        if(text->GetTextUTF32().front() == 0)
+        if(0 == text->GetTextUTF32().front())
             return true;
 
         if(_isSelected)
