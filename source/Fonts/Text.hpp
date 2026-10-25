@@ -161,6 +161,7 @@ namespace RetroFuturaGUI
         std::vector<GlyphDraw> _glyphDraws;
         u32 _vbo { 0 };
         std::unique_ptr<VertexArray> _vertexArray { nullptr }; //one VAO per context that draws the text, over the same buffer
+        bool _meshChanged { false };
 
         void updateMesh();
         void alignPosition();

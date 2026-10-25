@@ -43,17 +43,23 @@ void RetroFuturaGUI::Text::Draw()
     ShaderManager::GetFontAtlasFillShader().SetUniformInt("uTexture", 0);
 
     _vertexArray->Bind();
-    glBindBuffer(GL_ARRAY_BUFFER, _vbo);
-    glBufferData(GL_ARRAY_BUFFER, _vertices.size() * sizeof(f32), _vertices.data(), GL_DYNAMIC_DRAW);
-    glActiveTexture(GL_TEXTURE0);
+
+    if(_meshChanged)
+    {
+        glBindBuffer(GL_ARRAY_BUFFER, _vbo);
+        glBufferData(GL_ARRAY_BUFFER, _vertices.size() * sizeof(f32), _vertices.data(), GL_DYNAMIC_DRAW);
+        glBindBuffer(GL_ARRAY_BUFFER, 0);
+        _meshChanged = false;
+    }
     
+    glActiveTexture(GL_TEXTURE0);
+
     for (const auto& draw : _glyphDraws)
     {
         glBindTexture(GL_TEXTURE_2D, draw._TextureID);
         glDrawArrays(GL_TRIANGLES, draw._VertexStart, draw._VertexCount);
     }
 
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
     VertexArray::Unbind();
     glBindTexture(GL_TEXTURE_2D, 0);
 }
@@ -317,6 +323,8 @@ void RetroFuturaGUI::Text::updateMesh()
         currentX += glyph._Advance * scale;
         _glyphPositions.push_back(currentX);
     }
+
+    _meshChanged = true;
 
     // Flush last batch
     if (batching && vertexCount > 0)
