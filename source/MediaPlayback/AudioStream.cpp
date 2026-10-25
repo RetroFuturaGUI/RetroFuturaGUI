@@ -72,7 +72,7 @@ i64 RetroFuturaGUI::AudioStream::readDuration() const
     if(formatContext->duration != AV_NOPTS_VALUE)
         return formatContext->duration / 1000;
 
-    // the stream's own lengt, in its time_base
+    // the stream's own length, in its time_base
     if(stream->duration != AV_NOPTS_VALUE)
         return av_rescale_q(stream->duration, stream->time_base, AVRational { .num = 1, .den = 1000 });
 

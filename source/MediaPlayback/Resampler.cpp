@@ -57,7 +57,7 @@ i32 RetroFuturaGUI::Resampler::Convert(const Frame& frame)
     if(!IsOpen())
         return AVERROR(EINVAL);
 
-    // check for first frame, or changed format and rebuild
+    // set up again for the first frame and whenever the format changes
     if(!inputMatches(source) && !configure(source))
         return AVERROR(EINVAL);
 

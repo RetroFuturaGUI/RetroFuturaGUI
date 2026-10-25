@@ -82,7 +82,7 @@ RetroFuturaGUI::FileExplorer::ThumbnailCache::Decoded RetroFuturaGUI::FileExplor
             const std::optional<AudioMetadata> audio { AudioMetadataReader::Read(path) };
 
             if(!audio || audio->_CoverArt.empty())
-                break; //no cover art. the icon shows
+                break; //no cover art: the icon shows
 
             decoded._Image = Texture::DecodeMemory(audio->_CoverArt, true, _pictureSide);
         }

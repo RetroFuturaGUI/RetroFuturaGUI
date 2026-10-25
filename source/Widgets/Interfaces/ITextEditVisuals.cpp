@@ -91,7 +91,7 @@ void RetroFuturaGUI::ITextEditVisuals::updateSelectedArea()
 
         start = end + 1; //+1 starts the next line after '\n'
 
-        if(0.0f >= width || 0.0f >= height) //skip what ever is outside the visible text area
+        if(0.0f >= width || 0.0f >= height) //skip whatever is outside the visible text area
             continue;
 
         _selectedLineAreas.push_back({ ._Center = glm::vec2(clippedLeftX + width * 0.5f, clippedBottomY + height * 0.5f), ._Size = glm::vec2(width, height) });
