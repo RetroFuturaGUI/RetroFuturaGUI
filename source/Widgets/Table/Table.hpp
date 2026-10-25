@@ -538,10 +538,10 @@ namespace RetroFuturaGUI
         void ensureHeaderWidget(TableCell& cell);
 
         /// @brief Returns the top-left world corner of the content viewport, i.e. the table's corner pushed in by any header bands.
-        glm::vec2 contentTopLeft() const;
+        glm::vec2 getContentTopLeft() const;
 
         /// @brief Returns the space each header band takes out of the table: x for the row header's width, y for the column header's height.
-        glm::vec2 headerExtents() const;
+        glm::vec2 getHeaderExtents() const;
 
         /// @brief Draws a text cell through its pooled TableText, in the row's text colors.
         void drawTextCell(const uSize row, const uSize column, std::span<glm::vec4> textColors);
@@ -568,7 +568,7 @@ namespace RetroFuturaGUI
         void resizeTrackReadOnlyFlags();
 
         /// @brief Returns how many rows can be selected: the rows, or the columns in Column orientation.
-        uSize selectableRowCount() const;
+        uSize getSelectableRowCount() const;
 
         /// @brief Drops the selection, its anchor and a pending double-click, without a signal, sized to the current rows.
         void resetSelection();
@@ -634,7 +634,7 @@ namespace RetroFuturaGUI
         glm::vec2 toContentPoint(const glm::vec2& point) const;
 
         /// @brief The start offsets of the selectable tracks, rows or columns in Column orientation, followed by the content's end.
-        const std::vector<f32>& selectableTrackOffsets() const;
+        const std::vector<f32>& getSelectableTrackOffsets() const;
 
         /// @brief The offset of a point along the selectable tracks in content space.
         f32 selectableAxisOf(const glm::vec2& contentPoint) const;
@@ -647,7 +647,7 @@ namespace RetroFuturaGUI
         void emitSelectionChange(const std::vector<bool>& previousFlags);
 
         /// @brief Returns the TableText of the cell currently being edited, or nullptr when no text cell is.
-        TableText* activeTableText() const;
+        TableText* getActiveTableText() const;
 
         /// @brief Opens a cell for editing: ends another cell's edit, takes the keys and binds the cell's text.
         void openEdit(const uSize row, const uSize column);
@@ -666,14 +666,14 @@ namespace RetroFuturaGUI
         void drawCaretAndSelection();
 
         //ITextInteraction hooks: edits apply to whichever cell is active, and read-only is per track.
-        Text* activeText() const override;
+        Text* getActiveText() const override;
         void emitChange() override;
         bool isTextReadOnly() const override { return isEditedTrackReadOnly(); }
 
         bool isEditedTrackReadOnly() const;
 
         /// @brief The edited cell's bounds, so the caret and selection can't escape it
-        TextArea textArea() const override;
+        TextArea getTextArea() const override;
 
         struct TextDefaults
         {

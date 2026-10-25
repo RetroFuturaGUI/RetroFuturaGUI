@@ -55,10 +55,10 @@ namespace RetroFuturaGUI
 
         /// @brief The names each context holds, by object. Never freed, so an object destroyed late in shutdown can still take
         ///        itself off.
-        static std::unordered_map<GLFWwindow*, std::unordered_map<const ContextObject*, u32>>& names();
+        static std::unordered_map<GLFWwindow*, std::unordered_map<const ContextObject*, u32>>& getNames();
 
-        /// @brief Names of destroyed objects, by the context that has to be current to delete them. Never freed, like names().
-        static std::unordered_map<GLFWwindow*, std::vector<PendingName>>& pendingNames();
+        /// @brief Names of destroyed objects, by the context that has to be current to delete them. Never freed, like getNames().
+        static std::unordered_map<GLFWwindow*, std::vector<PendingName>>& getPendingNames();
 
         static u32 create(const Kind kind);
         static void destroy(const Kind kind, const u32 name);

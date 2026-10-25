@@ -55,7 +55,7 @@ namespace RetroFuturaGUI
         };
 
         /// @brief The world-space area the edited text is visible in. The caret and selection are clipped to it.
-        virtual TextArea textArea() const = 0;
+        virtual TextArea getTextArea() const = 0;
 
         /// @brief Creates the caret and selection rectangles. Owners call it from their constructor.
         void initEditVisuals(Projection* projection);
@@ -74,7 +74,7 @@ namespace RetroFuturaGUI
         f32 keepCaretVisible(const f32 worldX, const f32 halfExtent = 0.0f);
 
         /// @brief Returns the caret's full height for the edited text, before updateCaretPosition clips it to the text area.
-        f32 caretHeight() const;
+        f32 getCaretHeight() const;
 
     //Caret
         std::unique_ptr<Rectangle> _caret {};

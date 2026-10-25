@@ -203,9 +203,9 @@ namespace RetroFuturaGUI
         ColorState fieldState(const uSize index) const;
 
     //Layout, in window coordinates with y running upward. A rectangle is (left, bottom, width, height).
-        glm::vec4 stripRect() const;
-        ScreenRect contentArea() const;
-        f32 fieldWidth() const;
+        glm::vec4 getStripRect() const;
+        ScreenRect getContentArea() const;
+        f32 getFieldWidth() const;
 
         /// @brief Where the field at the given place sits, ignoring a drag.
         glm::vec4 slotRect(const uSize slot) const;
@@ -244,7 +244,7 @@ namespace RetroFuturaGUI
         bool isStripUnder(const glm::ivec2& screenPoint) const;
 
         /// @brief The content area on the screen, with y running downward: left, top, width, height.
-        glm::ivec4 contentScreenRect() const;
+        glm::ivec4 getContentScreenRect() const;
 
         /// @brief Draws a field with the given title at the end of the strip, where a dragged window would drop.
         void showDropPreview(const std::string& title);
@@ -263,7 +263,7 @@ namespace RetroFuturaGUI
         static glm::vec4& colorOf(FieldColors& colors, const ColorState state);
 
         static bool contains(const glm::vec4& rect, const glm::vec2& point);
-        static std::string closeIconPath();
+        static std::string getCloseIconPath();
 
     //Elements
         std::vector<Field> _fields {};

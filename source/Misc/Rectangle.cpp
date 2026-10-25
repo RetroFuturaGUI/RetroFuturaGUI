@@ -254,7 +254,7 @@ void RetroFuturaGUI::Rectangle::SetBackgroundImagePadding(const f32 padding)
     _backgroundImagePadding = padding;
 }
 
-glm::vec2 RetroFuturaGUI::Rectangle::backgroundImagePaddingUV() const
+glm::vec2 RetroFuturaGUI::Rectangle::getBackgroundImagePaddingUV() const
 {
     // image in UV space, so the pixel padding is expressed as a fraction of each axis.
     if(0.0f >= _scale.x || 0.0f >= _scale.y)
@@ -401,7 +401,7 @@ void RetroFuturaGUI::Rectangle::drawWithSolidFill()
     if(_shaderFeatureDIP & ShaderFeatures::GlassEffectWithImage)
     {
         ShaderManager::GetSolidFillShader().SetUniformInt("uBackgroundTexture", 0);
-        ShaderManager::GetSolidFillShader().SetUniformVec2("uImagePadding", backgroundImagePaddingUV());
+        ShaderManager::GetSolidFillShader().SetUniformVec2("uImagePadding", getBackgroundImagePaddingUV());
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, (_windowBackgroundTextureID));
     }
@@ -449,7 +449,7 @@ void RetroFuturaGUI::Rectangle::drawLinearGradientFill()
     if(_shaderFeatureDIP & ShaderFeatures::GlassEffectWithImage)
     {
         ShaderManager::GetLinearGradientShader().SetUniformInt("uBackgroundTexture", 0);
-        ShaderManager::GetLinearGradientShader().SetUniformVec2("uImagePadding", backgroundImagePaddingUV());
+        ShaderManager::GetLinearGradientShader().SetUniformVec2("uImagePadding", getBackgroundImagePaddingUV());
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, (_windowBackgroundTextureID));
     }
@@ -497,7 +497,7 @@ void RetroFuturaGUI::Rectangle::drawRadialGradientFill()
     if(_shaderFeatureDIP & ShaderFeatures::GlassEffectWithImage)
     {
         ShaderManager::GetRadialGradientShader().SetUniformInt("uBackgroundTexture", 0);
-        ShaderManager::GetRadialGradientShader().SetUniformVec2("uImagePadding", backgroundImagePaddingUV());
+        ShaderManager::GetRadialGradientShader().SetUniformVec2("uImagePadding", getBackgroundImagePaddingUV());
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, (_windowBackgroundTextureID));
     }
@@ -545,7 +545,7 @@ void RetroFuturaGUI::Rectangle::drawHueStarGradientFill()
     if(_shaderFeatureDIP & ShaderFeatures::GlassEffectWithImage)
     {
         ShaderManager::GetHueStarGradientShader().SetUniformInt("uBackgroundTexture", 0);
-        ShaderManager::GetHueStarGradientShader().SetUniformVec2("uImagePadding", backgroundImagePaddingUV());
+        ShaderManager::GetHueStarGradientShader().SetUniformVec2("uImagePadding", getBackgroundImagePaddingUV());
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, (_windowBackgroundTextureID));
     }
@@ -577,7 +577,7 @@ void RetroFuturaGUI::Rectangle::drawSolidBorder()
     if(_shaderFeatureDIP & ShaderFeatures::GlassEffectWithImage)
     {
         ShaderManager::GetBorderSolidFillShader().SetUniformInt("uBackgroundTexture", 0);
-        ShaderManager::GetBorderSolidFillShader().SetUniformVec2("uImagePadding", backgroundImagePaddingUV());
+        ShaderManager::GetBorderSolidFillShader().SetUniformVec2("uImagePadding", getBackgroundImagePaddingUV());
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, (_windowBackgroundTextureID));
     }
@@ -621,7 +621,7 @@ void RetroFuturaGUI::Rectangle::drawLinearGradientBorder()
     if(_shaderFeatureDIP & ShaderFeatures::GlassEffectWithImage)
     {
         ShaderManager::GetBorderLinearGradientShader().SetUniformInt("uBackgroundTexture", 0);
-        ShaderManager::GetBorderLinearGradientShader().SetUniformVec2("uImagePadding", backgroundImagePaddingUV());
+        ShaderManager::GetBorderLinearGradientShader().SetUniformVec2("uImagePadding", getBackgroundImagePaddingUV());
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, (_windowBackgroundTextureID));
     }
@@ -665,7 +665,7 @@ void RetroFuturaGUI::Rectangle::drawRadialGradientBorder()
     if(_shaderFeatureDIP & ShaderFeatures::GlassEffectWithImage)
     {
         ShaderManager::GetBorderRadialGradientShader().SetUniformInt("uBackgroundTexture", 0);
-        ShaderManager::GetBorderRadialGradientShader().SetUniformVec2("uImagePadding", backgroundImagePaddingUV());
+        ShaderManager::GetBorderRadialGradientShader().SetUniformVec2("uImagePadding", getBackgroundImagePaddingUV());
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, (_windowBackgroundTextureID));
     }
@@ -709,7 +709,7 @@ void RetroFuturaGUI::Rectangle::drawHueStarGradientBorder()
     if(_shaderFeatureDIP & ShaderFeatures::GlassEffectWithImage)
     {
         ShaderManager::GetBorderHueStarGradientShader().SetUniformInt("uBackgroundTexture", 0);
-        ShaderManager::GetBorderHueStarGradientShader().SetUniformVec2("uImagePadding", backgroundImagePaddingUV());
+        ShaderManager::GetBorderHueStarGradientShader().SetUniformVec2("uImagePadding", getBackgroundImagePaddingUV());
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, (_windowBackgroundTextureID));
     }

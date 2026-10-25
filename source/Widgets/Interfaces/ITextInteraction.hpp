@@ -57,7 +57,7 @@ namespace RetroFuturaGUI
         };
 
         /// @brief The Text edits currently apply to, or nullptr when nothing is editable.
-        virtual Text* activeText() const = 0;
+        virtual Text* getActiveText() const = 0;
 
         /// @brief Repositions the caret visual to _caretPosition.
         virtual void updateCaretPosition() = 0;
@@ -141,10 +141,10 @@ namespace RetroFuturaGUI
         void placeCaretAfterText();
 
         /// @brief Returns the lower end of the marked range, whichever direction it was dragged in.
-        uSize markedStart() const;
+        uSize getMarkedStart() const;
 
         /// @brief Returns the upper end of the marked range, whichever direction it was dragged in.
-        uSize markedEnd() const;
+        uSize getMarkedEnd() const;
 
         static bool shouldRepeat(const u32 holdFrames);
 

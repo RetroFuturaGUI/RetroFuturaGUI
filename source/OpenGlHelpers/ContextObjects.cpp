@@ -11,7 +11,7 @@ RetroFuturaGUI::ContextObject::~ContextObject()
     //Null when no context is current (during shutdown, ...); every name waits
     GLFWwindow* current { glfwGetCurrentContext() };
 
-    for(auto& [context, contextNames] : names())
+    for(auto& [context, contextNames] : getNames())
     {
         const auto found { contextNames.find(this) };
 
@@ -21,7 +21,7 @@ RetroFuturaGUI::ContextObject::~ContextObject()
         if(context == current)
             destroy(_kind, found->second);
         else
-            pendingNames()[context].push_back(PendingName { ._Kind = _kind, ._Name = found->second });
+            getPendingNames()[context].push_back(PendingName { ._Kind = _kind, ._Name = found->second });
 
         contextNames.erase(found);
     }
@@ -35,15 +35,15 @@ void RetroFuturaGUI::ContextObject::DeletePending(GLFWwindow* context)
     if(glfwGetCurrentContext() != context)
         return;
 
-    const auto found { pendingNames().find(context) };
+    const auto found { getPendingNames().find(context) };
 
-    if(found == pendingNames().end())
+    if(found == getPendingNames().end())
         return;
 
     for(const PendingName& pending : found->second)
         destroy(pending._Kind, pending._Name);
 
-    pendingNames().erase(found);
+    getPendingNames().erase(found);
 }
 
 void RetroFuturaGUI::ContextObject::ForgetContext(GLFWwindow* context)
@@ -51,8 +51,8 @@ void RetroFuturaGUI::ContextObject::ForgetContext(GLFWwindow* context)
     if(!context)
         return;
 
-    names().erase(context);
-    pendingNames().erase(context);
+    getNames().erase(context);
+    getPendingNames().erase(context);
 }
 
 void RetroFuturaGUI::ContextObject::bindInCurrentContext()
@@ -62,7 +62,7 @@ void RetroFuturaGUI::ContextObject::bindInCurrentContext()
     if(!context)
         return;
 
-    std::unordered_map<const ContextObject*, u32>& contextNames { names()[context] };
+    std::unordered_map<const ContextObject*, u32>& contextNames { getNames()[context] };
     const auto found { contextNames.find(this) };
 
     if(found != contextNames.end())
@@ -80,13 +80,13 @@ void RetroFuturaGUI::ContextObject::bindInCurrentContext()
         _describe();
 }
 
-std::unordered_map<GLFWwindow*, std::unordered_map<const RetroFuturaGUI::ContextObject*, u32>>& RetroFuturaGUI::ContextObject::names()
+std::unordered_map<GLFWwindow*, std::unordered_map<const RetroFuturaGUI::ContextObject*, u32>>& RetroFuturaGUI::ContextObject::getNames()
 {
     static std::unordered_map<GLFWwindow*, std::unordered_map<const ContextObject*, u32>>* table { new std::unordered_map<GLFWwindow*, std::unordered_map<const ContextObject*, u32>>() };
     return *table;
 }
 
-std::unordered_map<GLFWwindow*, std::vector<RetroFuturaGUI::ContextObject::PendingName>>& RetroFuturaGUI::ContextObject::pendingNames()
+std::unordered_map<GLFWwindow*, std::vector<RetroFuturaGUI::ContextObject::PendingName>>& RetroFuturaGUI::ContextObject::getPendingNames()
 {
     static std::unordered_map<GLFWwindow*, std::vector<PendingName>>* table { new std::unordered_map<GLFWwindow*, std::vector<PendingName>>() };
     return *table;

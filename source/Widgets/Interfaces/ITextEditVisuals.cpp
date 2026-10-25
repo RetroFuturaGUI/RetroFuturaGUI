@@ -22,7 +22,7 @@ void RetroFuturaGUI::ITextEditVisuals::initEditVisuals(Projection* projection)
 
 void RetroFuturaGUI::ITextEditVisuals::updateCaretPosition()
 {
-    Text* text { activeText() };
+    Text* text { getActiveText() };
 
     if(!text)
         return;
@@ -30,7 +30,7 @@ void RetroFuturaGUI::ITextEditVisuals::updateCaretPosition()
     if(!_caret)
         return;
 
-    const f32 fullHeight { caretHeight() };
+    const f32 fullHeight { getCaretHeight() };
     glm::vec3 caretPosition { text->GetBoundaryPosition(_caretPosition, fullHeight) };
     caretPosition.x = keepCaretVisible(caretPosition.x, _caret->GetSize().x * 0.5f);
 
@@ -51,7 +51,7 @@ void RetroFuturaGUI::ITextEditVisuals::updateSelectedArea()
     _isSelected = false;
     _selectedLineAreas.clear();
 
-    Text* text { activeText() };
+    Text* text { getActiveText() };
 
     if(!text)
         return;
@@ -60,8 +60,8 @@ void RetroFuturaGUI::ITextEditVisuals::updateSelectedArea()
         return;
 
     const uSize
-        left { markedStart() },
-        right { markedEnd() };
+        left { getMarkedStart() },
+        right { getMarkedEnd() };
 
     if(left == right) //nothing selected
         return;
@@ -71,7 +71,7 @@ void RetroFuturaGUI::ITextEditVisuals::updateSelectedArea()
         lastLine { text->GetBoundaryLine(right) };
     const f32
         lineHeight { text->GetLineHeight() },
-        fullCaretHeight { caretHeight() }; // highlight where the caret sits, may be clipped shorter
+        fullCaretHeight { getCaretHeight() }; // highlight where the caret sits, may be clipped shorter
     uSize start { left };
 
     for(uSize line = firstLine; line <= lastLine; ++line)
@@ -141,7 +141,7 @@ void RetroFuturaGUI::ITextEditVisuals::drawCaret()
 
 f32 RetroFuturaGUI::ITextEditVisuals::clampToTextBounds(const f32 worldX, const f32 halfExtent) const
 {
-    const TextArea area { textArea() };
+    const TextArea area { getTextArea() };
     const f32
         left { area._Left + halfExtent },
         right { area._Right - halfExtent };
@@ -160,7 +160,7 @@ f32 RetroFuturaGUI::ITextEditVisuals::clampToTextBounds(const f32 worldX, const 
 
 f32 RetroFuturaGUI::ITextEditVisuals::clampToTextBoundsY(const f32 worldY) const
 {
-    const TextArea area { textArea() };
+    const TextArea area { getTextArea() };
 
     if(worldY < area._Bottom)
         return area._Bottom;
@@ -173,12 +173,12 @@ f32 RetroFuturaGUI::ITextEditVisuals::clampToTextBoundsY(const f32 worldY) const
 
 f32 RetroFuturaGUI::ITextEditVisuals::keepCaretVisible(const f32 worldX, const f32 halfExtent)
 {
-    Text* text { activeText() };
+    Text* text { getActiveText() };
 
     if(!text)
         return worldX;
 
-    const TextArea area { textArea() };
+    const TextArea area { getTextArea() };
     const f32
         left { area._Left + halfExtent },
         right { area._Right - halfExtent },
@@ -206,9 +206,9 @@ f32 RetroFuturaGUI::ITextEditVisuals::keepCaretVisible(const f32 worldX, const f
     return clampToTextBounds(worldX, halfExtent); //nothing left to scroll - fall back to a hard clamp
 }
 
-f32 RetroFuturaGUI::ITextEditVisuals::caretHeight() const
+f32 RetroFuturaGUI::ITextEditVisuals::getCaretHeight() const
 {
-    Text* text { activeText() };
+    Text* text { getActiveText() };
 
     if(!text)
         return 0.0f;

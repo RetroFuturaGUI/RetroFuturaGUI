@@ -92,7 +92,7 @@ void RetroFuturaGUI::ITextInteraction::deselect()
 
 void RetroFuturaGUI::ITextInteraction::placeCaretAfterText()
 {
-    Text* text { activeText() };
+    Text* text { getActiveText() };
 
     if(!text)
         return;
@@ -104,12 +104,12 @@ void RetroFuturaGUI::ITextInteraction::placeCaretAfterText()
     updateCaretPosition();
 }
 
-uSize RetroFuturaGUI::ITextInteraction::markedStart() const
+uSize RetroFuturaGUI::ITextInteraction::getMarkedStart() const
 {
     return _selectedPositionFirst < _selectedPositionLast ? _selectedPositionFirst : _selectedPositionLast;
 }
 
-uSize RetroFuturaGUI::ITextInteraction::markedEnd() const
+uSize RetroFuturaGUI::ITextInteraction::getMarkedEnd() const
 {
     return _selectedPositionFirst < _selectedPositionLast ? _selectedPositionLast : _selectedPositionFirst;
 }
@@ -126,7 +126,7 @@ const std::string& RetroFuturaGUI::ITextInteraction::GetCopiedText() const
 
 void RetroFuturaGUI::ITextInteraction::moveCaret()
 {
-    if(!activeText())
+    if(!getActiveText())
         return;
 
     if(!hasInputFocus())
@@ -199,7 +199,7 @@ void RetroFuturaGUI::ITextInteraction::moveCaretLeft()
 
 void RetroFuturaGUI::ITextInteraction::moveCaretRight()
 {
-    Text* text { activeText() };
+    Text* text { getActiveText() };
 
     if(!text)
         return;
@@ -220,7 +220,7 @@ void RetroFuturaGUI::ITextInteraction::setCaretFromBoundary(const uSize boundary
 
 bool RetroFuturaGUI::ITextInteraction::checkForTextCopy()
 {
-    Text* text { activeText() };
+    Text* text { getActiveText() };
 
     if((PlatformBridge::Input::IsKeyDown(PB_KEY_CONTROL_L) || PlatformBridge::Input::IsKeyDown(PB_KEY_CONTROL_R))
         && (PlatformBridge::Input::GetKeyPressState(PB_KEY_C) == PlatformBridge::KeyPressState::Press))
@@ -228,8 +228,8 @@ bool RetroFuturaGUI::ITextInteraction::checkForTextCopy()
         if(_isSelected && !_textCopied && text)
         {
             const uSize
-                selectionStart { markedStart() },
-                selectionEnd { markedEnd() };
+                selectionStart { getMarkedStart() },
+                selectionEnd { getMarkedEnd() };
             std::u32string tempCopy { text->GetTextUTF32().substr(selectionStart, selectionEnd - selectionStart) };
             _copiedText = DoubleEncodedString::Utf32ToUtf8(tempCopy);
             PlatformBridge::Clipboard::CopyToClipboard(PlatformBridge::Clipboard::ClipboardDatatype::Text, static_cast<void*>(tempCopy.data()), tempCopy.size() * sizeof(char32_t));
@@ -246,7 +246,7 @@ bool RetroFuturaGUI::ITextInteraction::checkForTextCopy()
 
 bool RetroFuturaGUI::ITextInteraction::checkForTextCut()
 {
-    Text* text { activeText() };
+    Text* text { getActiveText() };
 
     if((PlatformBridge::Input::IsKeyDown(PB_KEY_CONTROL_L) || PlatformBridge::Input::IsKeyDown(PB_KEY_CONTROL_R))
         && (PlatformBridge::Input::GetKeyPressState(PB_KEY_X) == PlatformBridge::KeyPressState::Press))
@@ -257,8 +257,8 @@ bool RetroFuturaGUI::ITextInteraction::checkForTextCut()
                 return true;
 
             const uSize
-                selectionStart { markedStart() },
-                selectionEnd { markedEnd() };
+                selectionStart { getMarkedStart() },
+                selectionEnd { getMarkedEnd() };
             std::u32string tempCopy { text->GetTextUTF32().substr(selectionStart, selectionEnd - selectionStart) };
             _copiedText = DoubleEncodedString::Utf32ToUtf8(tempCopy);
             PlatformBridge::Clipboard::CopyToClipboard(PlatformBridge::Clipboard::ClipboardDatatype::Text, static_cast<void*>(tempCopy.data()), tempCopy.size() * sizeof(char32_t));
@@ -282,7 +282,7 @@ bool RetroFuturaGUI::ITextInteraction::checkForTextCut()
 
 bool RetroFuturaGUI::ITextInteraction::checkForTextPaste()
 {
-    Text* text { activeText() };
+    Text* text { getActiveText() };
 
     if((PlatformBridge::Input::IsKeyDown(PB_KEY_CONTROL_L) || PlatformBridge::Input::IsKeyDown(PB_KEY_CONTROL_R))
         && (PlatformBridge::Input::GetKeyPressState(PB_KEY_V) == PlatformBridge::KeyPressState::Press))
@@ -290,8 +290,8 @@ bool RetroFuturaGUI::ITextInteraction::checkForTextPaste()
         if(!_textPasted && text)
         {
             const uSize
-                selectionStart { markedStart() },
-                selectionEnd { markedEnd() };
+                selectionStart { getMarkedStart() },
+                selectionEnd { getMarkedEnd() };
             std::u32string
                 middlePart {},
                 rightPart {},
@@ -355,7 +355,7 @@ void RetroFuturaGUI::ITextInteraction::filterPastedText(std::u32string& text) co
 
 bool RetroFuturaGUI::ITextInteraction::checkForSelectAllText()
 {
-    Text* text { activeText() };
+    Text* text { getActiveText() };
 
     if((PlatformBridge::Input::IsKeyDown(PB_KEY_CONTROL_L) || PlatformBridge::Input::IsKeyDown(PB_KEY_CONTROL_R))
         && (PlatformBridge::Input::GetKeyPressState(PB_KEY_A) == PlatformBridge::KeyPressState::Press))
@@ -389,7 +389,7 @@ bool RetroFuturaGUI::ITextInteraction::checkForKeyRelease()
 
 bool RetroFuturaGUI::ITextInteraction::checkForKeyRepeat()
 {
-    Text* text { activeText() };
+    Text* text { getActiveText() };
 
     if(!text || _keyRepeatText.empty())
         return false;
@@ -424,7 +424,7 @@ bool RetroFuturaGUI::ITextInteraction::checkForKeyRepeat()
 
 bool RetroFuturaGUI::ITextInteraction::checkForEnterPress()
 {
-    Text* text { activeText() };
+    Text* text { getActiveText() };
 
     if(!text)
         return false;
@@ -448,7 +448,7 @@ bool RetroFuturaGUI::ITextInteraction::checkForEnterPress()
 
 bool RetroFuturaGUI::ITextInteraction::checkForBackspacePress()
 {
-    Text* text { activeText() };
+    Text* text { getActiveText() };
 
     if(!text)
         return false;
@@ -485,8 +485,8 @@ bool RetroFuturaGUI::ITextInteraction::checkForBackspacePress()
         if(_isSelected)
         {
             const uSize
-                selectionStart { markedStart() },
-                selectionEnd { markedEnd() };
+                selectionStart { getMarkedStart() },
+                selectionEnd { getMarkedEnd() };
             text->SetTextUTF32(text->GetTextUTF32().substr(0, selectionStart) + text->GetTextUTF32().substr(selectionEnd));
             _selectedPositionFirst = 0;
             _selectedPositionLast = 0;
@@ -519,7 +519,7 @@ bool RetroFuturaGUI::ITextInteraction::checkForBackspacePress()
 
 bool RetroFuturaGUI::ITextInteraction::checkForTextInput()
 {
-    Text* text { activeText() };
+    Text* text { getActiveText() };
 
     if(!text)
         return false;
@@ -536,8 +536,8 @@ bool RetroFuturaGUI::ITextInteraction::checkForTextInput()
     if(_isSelected)
     {
         const uSize
-            selectionStart { markedStart() },
-            selectionEnd { markedEnd() };
+            selectionStart { getMarkedStart() },
+            selectionEnd { getMarkedEnd() };
         text->SetTextUTF32(text->GetTextUTF32().substr(0, selectionStart) + keyText + text->GetTextUTF32().substr(selectionEnd));
         _selectedPositionFirst = 0;
         _selectedPositionLast = 0;
@@ -566,7 +566,7 @@ bool RetroFuturaGUI::ITextInteraction::checkForTextInput()
 
 void RetroFuturaGUI::ITextInteraction::editText()
 {
-    Text* text { activeText() };
+    Text* text { getActiveText() };
 
     if(!text)
         return;

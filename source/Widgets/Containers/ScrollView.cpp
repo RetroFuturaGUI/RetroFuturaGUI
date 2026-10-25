@@ -264,7 +264,7 @@ bool RetroFuturaGUI::ScrollView::canScrollAlong(const ScrollEnable axis) const
     if(!isScrollEnabled(axis))
         return false;
 
-    const glm::vec3 overflow { _contentExtent - innerSize() };
+    const glm::vec3 overflow { _contentExtent - getInnerSize() };
 
     switch(axis)
     {
@@ -367,7 +367,7 @@ void RetroFuturaGUI::ScrollView::layoutCells()
 {
     // glm indexes its components with length_t, so the stacking axis is kept in that type.
     const glm::length_t stackAxis { static_cast<glm::length_t>(_alignmentDirection) };
-    const glm::vec3 viewSize { innerSize() };
+    const glm::vec3 viewSize { getInnerSize() };
 
     // First pass, measuring: the cells add up along the stacking axis. Across it, every cell spans the view,
     // or the widest widget when that is wider, so each widget can be aligned within the same span.
@@ -405,7 +405,7 @@ void RetroFuturaGUI::ScrollView::layoutCells()
     _scrollPosition = glm::clamp(_scrollPosition, glm::vec3(0.0f), (glm::max)(contentExtent - viewSize, glm::vec3(0.0f)));
 
     // Second pass, placing: each widget follows the previous one along the stacking axis, and sits in its span by the cell span alignment across it.
-    const glm::vec3 alignment { spanAlignmentFactors() };
+    const glm::vec3 alignment { getSpanAlignmentFactors() };
     f32 offset { 0.0f };
 
     for(ScrollViewCell& cell : _items)
@@ -424,7 +424,7 @@ void RetroFuturaGUI::ScrollView::layoutCells()
     }
 }
 
-glm::vec3 RetroFuturaGUI::ScrollView::innerSize() const
+glm::vec3 RetroFuturaGUI::ScrollView::getInnerSize() const
 {
     if(!_border)
         return _size;
@@ -438,7 +438,7 @@ glm::vec3 RetroFuturaGUI::ScrollView::contentToWindow(const glm::vec3& point) co
 {
     // Content starts at the view's top-left front corner and runs rightward, downward and away from the camera.
     // Scrolling moves it the opposite way, which brings what lies further along into view.
-    const glm::vec3 viewSize { innerSize() };
+    const glm::vec3 viewSize { getInnerSize() };
     const glm::vec3 scrolledPoint { point - _scrollPosition };
 
     return glm::vec3(_position.x - viewSize.x * 0.5f + scrolledPoint.x,
@@ -446,7 +446,7 @@ glm::vec3 RetroFuturaGUI::ScrollView::contentToWindow(const glm::vec3& point) co
                      _position.z + viewSize.z * 0.5f - scrolledPoint.z);
 }
 
-glm::vec3 RetroFuturaGUI::ScrollView::spanAlignmentFactors() const
+glm::vec3 RetroFuturaGUI::ScrollView::getSpanAlignmentFactors() const
 {
     glm::vec3 factors { 0.5f };
 

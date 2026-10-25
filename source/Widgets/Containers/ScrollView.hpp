@@ -176,9 +176,9 @@ namespace RetroFuturaGUI
         ScrollViewCell* findCell(std::string_view name);
         const ScrollViewCell* findCell(std::string_view name) const;
         void layoutCells();
-        glm::vec3 spanAlignmentFactors() const;
+        glm::vec3 getSpanAlignmentFactors() const;
         glm::vec3 contentToWindow(const glm::vec3& point) const;
-        glm::vec3 innerSize() const;
+        glm::vec3 getInnerSize() const;
         void setColors(const ColorState state) override;
 
         /// @brief Moves the content by as much as the pointer moved since the last frame, on every enabled axis but Z.

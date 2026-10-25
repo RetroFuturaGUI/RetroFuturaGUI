@@ -181,7 +181,7 @@ void RetroFuturaGUI::Scene::requestWindowLayout() const
     _parentWindow->UpdateLayout();
 }
 
-GLFWwindow* RetroFuturaGUI::Scene::parentGlfwWindow() const
+GLFWwindow* RetroFuturaGUI::Scene::getParentGlfwWindow() const
 {
     if(!_parentWindow)
         return nullptr;

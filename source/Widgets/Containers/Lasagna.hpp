@@ -107,7 +107,7 @@ namespace RetroFuturaGUI
         bool _drawDebugLines { false };
 
         /// @brief Returns the Lasagna's top-left corner in world space. Cell offsets count from there, so every placement measures from here rather than from the window.
-        glm::vec3 topLeftCorner() const;
+        glm::vec3 getTopLeftCorner() const;
 
         void drawDebugLines(const LasagnaCell& cell);
         void updateSpanSize(LasagnaCell& originCell, const uSize row, const uSize column, const uSize layer);

@@ -77,7 +77,7 @@ void RetroFuturaGUI::ExtendedComboBox::drawDropDown()
 
     for(const auto& item : _itemWidgets)
     {
-        if(visibleIndex >= visibleItemCount())
+        if(visibleIndex >= getVisibleItemCount())
             return;
 
         if(item)
@@ -92,7 +92,7 @@ void RetroFuturaGUI::ExtendedComboBox::drawDropDown()
 
 void RetroFuturaGUI::ExtendedComboBox::placeItemWidget(IWidget* item, const glm::vec3& center) const
 {
-    const glm::vec2 available { contentSize(dropDownWidth()) }; //the rows span the open list which can be wider than the box
+    const glm::vec2 available { contentSize(getDropDownWidth()) }; //the rows span the open list which can be wider than the box
     const f32
         parentWidth { available.x },
         parentHeight { available.y };
@@ -220,7 +220,7 @@ bool RetroFuturaGUI::ExtendedComboBox::isPointInsideItemDropDown(const glm::vec2
 
     for(const auto& item : _itemWidgets)
     {
-        if(visibleIndex >= visibleItemCount())
+        if(visibleIndex >= getVisibleItemCount())
             return false;
 
         ++visibleIndex;
@@ -491,14 +491,14 @@ glm::vec4 RetroFuturaGUI::ExtendedComboBox::GetPreviewTextColor(const ColorState
 
 void RetroFuturaGUI::ExtendedComboBox::updateItemGeometry()
 {
-    if(_dropDownItemHighlight && _nthItemHovered < visibleItemCount())
+    if(_dropDownItemHighlight && _nthItemHovered < getVisibleItemCount())
         _dropDownItemHighlight->SetPosition(itemRowCenter(_nthItemHovered) - glm::vec3(0.0f, 0.0f, _zStep));
 
     uSize visibleIndex { 0 };
 
     for(const auto& item : _itemWidgets)
     {
-        if(visibleIndex >= visibleItemCount())
+        if(visibleIndex >= getVisibleItemCount())
             return;
 
         if(item)

@@ -235,7 +235,7 @@ void RetroFuturaGUI::ITextBox::SetCornerRadii(const glm::vec4& radii)
     _border->SetCornerRadii(radii);
 }
 
-RetroFuturaGUI::ITextEditVisuals::TextArea RetroFuturaGUI::ITextBox::textArea() const
+RetroFuturaGUI::ITextEditVisuals::TextArea RetroFuturaGUI::ITextBox::getTextArea() const
 {
     return { ._Left = _position.x - _size.x * 0.5f, ._Bottom = _position.y - _size.y * 0.5f, ._Right = _position.x + _size.x * 0.5f, ._Top = _position.y + _size.y * 0.5f };
 }

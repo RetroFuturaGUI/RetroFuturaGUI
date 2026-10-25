@@ -415,7 +415,7 @@ RetroFuturaGUI::FileExplorer::FilePreview::Kind RetroFuturaGUI::FileExplorer::Fi
 std::vector<std::pair<std::string, std::string>> RetroFuturaGUI::FileExplorer::FilePreview::fileDetails(const Entry& entry)
 {
     const bool isFolder { PlatformBridge::FileSystem::EntryKind::Directory == entry._Kind };
-    LocalClock clock { ._Zone = localZone(), ._Info = {}, ._HasInfo = false };
+    LocalClock clock { ._Zone = getLocalZone(), ._Info = {}, ._HasInfo = false };
     std::vector<std::pair<std::string, std::string>> details { { "Name", toUtf8(entry._Path.filename()) } };
 
     if(!isFolder)

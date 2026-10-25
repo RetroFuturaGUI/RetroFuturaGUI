@@ -87,7 +87,7 @@ void RetroFuturaGUI::ComboBox::drawDropDown()
 
     for(const auto& item : _itemTexts)
     {
-        if(visibleIndex >= visibleItemCount())
+        if(visibleIndex >= getVisibleItemCount())
             return;
 
         if(item)
@@ -362,18 +362,18 @@ void RetroFuturaGUI::ComboBox::setColors(const ColorState state)
 
 void RetroFuturaGUI::ComboBox::updateItemGeometry()
 {
-    if(_dropDownItemHighlight && _nthItemHovered < visibleItemCount())
+    if(_dropDownItemHighlight && _nthItemHovered < getVisibleItemCount())
         _dropDownItemHighlight->SetPosition(itemRowCenter(_nthItemHovered) - glm::vec3(0.0f, 0.0f, _zStep));
 
     uSize visibleIndex { 0 };
 
     for(const auto& item : _itemTexts)
     {
-        if(visibleIndex >= visibleItemCount())
+        if(visibleIndex >= getVisibleItemCount())
             return;
 
         if(item)
-            placeItemText(*item, itemRowCenter(visibleIndex), dropDownWidth());
+            placeItemText(*item, itemRowCenter(visibleIndex), getDropDownWidth());
 
         ++visibleIndex;
     }

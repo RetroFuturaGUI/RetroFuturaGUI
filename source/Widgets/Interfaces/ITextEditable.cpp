@@ -86,7 +86,7 @@ void RetroFuturaGUI::ITextEditable::SetTextPadding(const f32 padding)
 }
 
 
-RetroFuturaGUI::Text* RetroFuturaGUI::ITextEditable::activeText() const
+RetroFuturaGUI::Text* RetroFuturaGUI::ITextEditable::getActiveText() const
 {
     return _text.get();
 }

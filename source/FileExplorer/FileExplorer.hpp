@@ -474,7 +474,7 @@ namespace RetroFuturaGUI
         void showProgress();
 
         /// @brief The folder the list shows, or the one on its way, which Up goes above.
-        const std::filesystem::path& targetDirectory() const;
+        const std::filesystem::path& getTargetDirectory() const;
 
         /// @brief Fills the list with the shown rows' texts, as the worker wrote them.
         void fillTable();
@@ -493,7 +493,7 @@ namespace RetroFuturaGUI
         void updateHeaderTexts();
 
         /// @brief The paths of the selected rows.
-        std::vector<std::filesystem::path> selectedPaths() const;
+        std::vector<std::filesystem::path> getSelectedPaths() const;
 
         /// @brief Selects the rows showing the given paths, and scrolls the first into view.
         void selectPaths(const std::vector<std::filesystem::path>& paths, const bool emitSignal);
@@ -505,10 +505,10 @@ namespace RetroFuturaGUI
         void updateNameColumn();
 
         /// @brief The column showing the names, after the thumbnails' while they show.
-        uSize nameColumn() const;
+        uSize getNameColumn() const;
 
         /// @brief The rows' height: taller while thumbnails show.
-        f32 listRowHeight() const;
+        f32 getListRowHeight() const;
 
         /// @brief Gives the rows in view their thumbnails, made on the first use.
         void showThumbnails();
@@ -521,14 +521,14 @@ namespace RetroFuturaGUI
         /// @brief Shows a message in the status line: an error, an outcome or a question. It stays until the next one, until
         ///        another folder is opened, or until the user selects other rows. Empty takes it down.
         void setStatus(std::string_view text);
-        const Filter& currentFilter() const;
+        const Filter& getCurrentFilter() const;
 
     //Closing
         void openSelectedFiles();
         void openSelectedFolder();
 
         /// @brief Returns the file the name box names in the current folder, the filter's extension added when it has none.
-        std::filesystem::path nameBoxTarget() const;
+        std::filesystem::path getNameBoxTarget() const;
 
         /// @brief Closes with the file to write, after asking once when it exists already.
         void confirmWrite(const std::filesystem::path& target);
@@ -536,7 +536,7 @@ namespace RetroFuturaGUI
         /// @brief Takes back the question whether to replace a file, since the name it was about changed.
         void disarmReplace();
         void closeWith(const std::vector<std::filesystem::path>& paths);
-        std::string_view okButtonText() const;
+        std::string_view getOkButtonText() const;
 
     //New folder and Rename
         /// @brief Asks for the new folder's name, a free one filled in, and makes the folder in the open folder.
@@ -606,7 +606,7 @@ namespace RetroFuturaGUI
         static void markPlace(Button* place, const bool isMarked);
 
         /// @brief The window's size now, in the coordinates the widgets and the pointer use.
-        glm::vec2 windowSize() const;
+        glm::vec2 getWindowSize() const;
 
         /// @brief Whether dropping the items into the folder moves them: Shift moves and Ctrl copies, otherwise items move
         ///        within their volume and are copied onto another.
@@ -744,7 +744,7 @@ namespace RetroFuturaGUI
         static std::string formatTime(const std::filesystem::file_time_type time, LocalClock& clock);
 
         /// @brief The local time zone, or nullptr when the system has no time zone database.
-        static const std::chrono::time_zone* localZone();
+        static const std::chrono::time_zone* getLocalZone();
         /// @brief "Folder", "File" without an extension, otherwise the extension as the file spells it: "png", "JPG".
         static std::string typeName(const Entry& entry);
 

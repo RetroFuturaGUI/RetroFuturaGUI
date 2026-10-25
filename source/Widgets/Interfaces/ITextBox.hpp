@@ -37,6 +37,6 @@ namespace RetroFuturaGUI
 
         void interact();
         void setColors(const ColorState state) final override;
-        TextArea textArea() const override final;
+        TextArea getTextArea() const override final;
     };
 }

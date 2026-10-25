@@ -14,7 +14,7 @@ RetroFuturaGUI::MultilineTextBox::MultilineTextBox(const std::string& name, Proj
 
 void RetroFuturaGUI::MultilineTextBox::moveCaretUp()
 {
-    Text* text { activeText() };
+    Text* text { getActiveText() };
 
     if(!text)
         return;
@@ -32,7 +32,7 @@ void RetroFuturaGUI::MultilineTextBox::moveCaretUp()
 
 void RetroFuturaGUI::MultilineTextBox::moveCaretDown()
 {
-    Text* text { activeText() };
+    Text* text { getActiveText() };
 
     if(!text)
         return;
@@ -45,7 +45,7 @@ void RetroFuturaGUI::MultilineTextBox::moveCaretDown()
 
 void RetroFuturaGUI::MultilineTextBox::insertLineBreak()
 {
-    Text* text { activeText() };
+    Text* text { getActiveText() };
 
     if(!text)
         return;

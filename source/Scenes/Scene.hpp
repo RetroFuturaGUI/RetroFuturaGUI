@@ -55,7 +55,7 @@ namespace RetroFuturaGUI
             if(!projection)
                 return nullptr;
 
-            GLFWwindow* glfwWindow { parentGlfwWindow() };
+            GLFWwindow* glfwWindow { getParentGlfwWindow() };
 
             if(!glfwWindow)
                 return nullptr;
@@ -141,7 +141,7 @@ namespace RetroFuturaGUI
 
         /// @brief The parent window's GLFW window, or nullptr without a parent window. Defined out of
         ///        line, because Window is only forward-declared here and SetRootContainer cannot reach into it.
-        GLFWwindow* parentGlfwWindow() const;
+        GLFWwindow* getParentGlfwWindow() const;
 
         /// @brief Takes ownership of a new root container and hands it the scene's current geometry.
         void adoptRootContainer(std::unique_ptr<IWidget> container);

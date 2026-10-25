@@ -57,11 +57,11 @@ namespace RetroFuturaGUI
 
     protected:
         /// @brief The open list's width: the one set, or the box's.
-        f32 dropDownWidth() const;
+        f32 getDropDownWidth() const;
 
         void updateDropDownArrowGeometry();
         void updateDropDownGeometry();
-        uSize visibleItemCount() const;
+        uSize getVisibleItemCount() const;
         void setColors(const ColorState state) override;
         glm::vec3 itemRowCenter(const uSize visibleIndex) const;
 
@@ -131,7 +131,7 @@ namespace RetroFuturaGUI
         void setDropDownArrowColors();
         void setDropDownBackgroundColors();
         void setDropDownBorderColors();
-        glm::vec3 dropDownCenter() const;
+        glm::vec3 getDropDownCenter() const;
         glm::vec2 rotateLocalOffset(const glm::vec2& localOffset) const;
 
     //Design

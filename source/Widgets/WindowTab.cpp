@@ -15,7 +15,7 @@ RetroFuturaGUI::WindowTab::WindowTab(std::string_view name, Projection* projecti
     _fieldBackground = std::make_unique<Rectangle>(projection);
     _fieldBorder = std::make_unique<Rectangle>(projection);
     _closeBackground = std::make_unique<Rectangle>(projection);
-    _closeIcon = std::make_unique<SvgTexture>(closeIconPath(), true, projection, glm::i32vec2(32));
+    _closeIcon = std::make_unique<SvgTexture>(getCloseIconPath(), true, projection, glm::i32vec2(32));
     _previewTitle = std::make_unique<Text>(projection);
 
     if(_background)
@@ -54,7 +54,7 @@ RetroFuturaGUI::WindowTab::WindowTab(std::string_view name, Projection* projecti
 RetroFuturaGUI::WindowTab::~WindowTab()
 {
     //Every window becomes a free one again, where the content area was. No signals: whoever connected them may be gone already.
-    const glm::ivec4 content { contentScreenRect() };
+    const glm::ivec4 content { getContentScreenRect() };
     std::vector<Field> fields { std::move(_fields) };
     _fields.clear();
     _selectedWindow = nullptr;
@@ -153,7 +153,7 @@ bool RetroFuturaGUI::WindowTab::RemoveWindow(Window* window)
         return false;
 
     //It stays where its content was
-    const glm::ivec4 content { contentScreenRect() };
+    const glm::ivec4 content { getContentScreenRect() };
     removeField(index);
     window->leaveTab(glm::ivec2(content.x, content.y));
     _onWindowRemoved.Emit(window);
@@ -493,7 +493,7 @@ void RetroFuturaGUI::WindowTab::dragField(const glm::vec2& point)
 
 bool RetroFuturaGUI::WindowTab::isPullingOut(const uSize index, const glm::vec2& point) const
 {
-    const glm::vec4 strip { stripRect() };
+    const glm::vec4 strip { getStripRect() };
     const f32 fontSize { _titleFontSize };
 
     //Above or below the strip. A long sideways drag raises the threshold, so reordering doesn't pull a field out by accident.
@@ -560,7 +560,7 @@ void RetroFuturaGUI::WindowTab::closeWindow(const uSize index) const
 
 uSize RetroFuturaGUI::WindowTab::fieldAt(const glm::vec2& point) const
 {
-    if(!contains(stripRect(), point))
+    if(!contains(getStripRect(), point))
         return _kNoField;
 
     //The dragged field lies over the others
@@ -597,7 +597,7 @@ RetroFuturaGUI::ColorState RetroFuturaGUI::WindowTab::fieldState(const uSize ind
     return ColorState::Enabled;
 }
 
-glm::vec4 RetroFuturaGUI::WindowTab::stripRect() const
+glm::vec4 RetroFuturaGUI::WindowTab::getStripRect() const
 {
     const f32
         height { std::min(std::max(_stripHeight, 0.0f), std::max(_size.y, 0.0f)) },
@@ -607,28 +607,28 @@ glm::vec4 RetroFuturaGUI::WindowTab::stripRect() const
     return glm::vec4(left, top - height, _size.x, height);
 }
 
-RetroFuturaGUI::ScreenRect RetroFuturaGUI::WindowTab::contentArea() const
+RetroFuturaGUI::ScreenRect RetroFuturaGUI::WindowTab::getContentArea() const
 {
-    const glm::vec4 strip { stripRect() };
+    const glm::vec4 strip { getStripRect() };
     const f32 bottom { _position.y - _size.y * 0.5f };
     return ScreenRect { ._Origin = glm::vec2(strip.x, bottom), ._Extent = glm::vec2(strip.z, std::max(strip.y - bottom, 0.0f)) };
 }
 
-f32 RetroFuturaGUI::WindowTab::fieldWidth() const
+f32 RetroFuturaGUI::WindowTab::getFieldWidth() const
 {
     const uSize count { _showsDropPreview ? _fields.size() + 1 : _fields.size() }; //while a window is dragged over the strip, its preview field counts too, so the fields narrow to make room for it
 
     if(0 == count)
         return _maximumFieldWidth;
 
-    const f32 available { stripRect().z - _fieldSpacing * static_cast<f32>(count + 1) };
+    const f32 available { getStripRect().z - _fieldSpacing * static_cast<f32>(count + 1) };
     return std::clamp(available / static_cast<f32>(count), _minimumFieldWidth, _maximumFieldWidth);
 }
 
 glm::vec4 RetroFuturaGUI::WindowTab::slotRect(const uSize slot) const
 {
-    const glm::vec4 strip { stripRect() };
-    const f32 width { fieldWidth() };
+    const glm::vec4 strip { getStripRect() };
+    const f32 width { getFieldWidth() };
 
     //The fields stand on the strip's bottom edge, where the content begins, with the spacing above them
     return glm::vec4(strip.x + _fieldSpacing + static_cast<f32>(slot) * (width + _fieldSpacing), strip.y, width, std::max(strip.w - _fieldSpacing, 0.0f));
@@ -656,9 +656,9 @@ uSize RetroFuturaGUI::WindowTab::slotAt(const f32 x) const
     if(_fields.empty())
         return 0;
 
-    const glm::vec4 strip { stripRect() };
+    const glm::vec4 strip { getStripRect() };
     const f32
-        width { fieldWidth() },
+        width { getFieldWidth() },
         step { width + _fieldSpacing };
 
     if(0.0f >= step)
@@ -670,7 +670,7 @@ uSize RetroFuturaGUI::WindowTab::slotAt(const f32 x) const
 
 bool RetroFuturaGUI::WindowTab::fitsInStrip(const glm::vec4& field) const
 {
-    const glm::vec4 strip { stripRect() };
+    const glm::vec4 strip { getStripRect() };
     return field.x + field.z <= strip.x + strip.z + 0.5f; //half a pixel for rounding
 }
 
@@ -837,12 +837,12 @@ void RetroFuturaGUI::WindowTab::drawSelectedWindow()
     if(!_selectedWindow)
         return;
 
-    const ScreenRect area { contentArea() };
+    const ScreenRect area { getContentArea() };
 
     if(1.0f > area._Extent.x || 1.0f > area._Extent.y)
         return;
 
-    const glm::ivec4 screen { contentScreenRect() };
+    const glm::ivec4 screen { getContentScreenRect() };
     _selectedWindow->drawInHost(area, glm::ivec2(screen.x, screen.y), _contentCornerRadii); //nothing of this WindowTab is used after it: the window's widgets may take it out
 }
 
@@ -916,12 +916,12 @@ bool RetroFuturaGUI::WindowTab::isStripUnder(const glm::ivec2& screenPoint) cons
     glfwGetWindowPos(_parentWindow, &windowPosition.x, &windowPosition.y);
     const glm::ivec2 local { screenPoint - windowPosition };
     const glm::vec2 point { static_cast<f32>(local.x), _projection.GetResolution().y - static_cast<f32>(local.y) };
-    return contains(stripRect(), point);
+    return contains(getStripRect(), point);
 }
 
-glm::ivec4 RetroFuturaGUI::WindowTab::contentScreenRect() const
+glm::ivec4 RetroFuturaGUI::WindowTab::getContentScreenRect() const
 {
-    const ScreenRect area { contentArea() };
+    const ScreenRect area { getContentArea() };
     const glm::ivec2 topLeft { toScreen(glm::vec2(area._Origin.x, area._Origin.y + area._Extent.y)) };
     return glm::ivec4
     (
@@ -1036,7 +1036,7 @@ bool RetroFuturaGUI::WindowTab::contains(const glm::vec4& rect, const glm::vec2&
     return point.x >= rect.x && point.x <= rect.x + rect.z && point.y >= rect.y && point.y <= rect.y + rect.w;
 }
 
-std::string RetroFuturaGUI::WindowTab::closeIconPath()
+std::string RetroFuturaGUI::WindowTab::getCloseIconPath()
 {
     std::filesystem::path path { PlatformBridge::Paths::GetExecutablePathFSPath().parent_path() };
     path /= "Resources";

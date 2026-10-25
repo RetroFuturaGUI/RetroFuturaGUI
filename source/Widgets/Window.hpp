@@ -389,7 +389,7 @@ namespace RetroFuturaGUI
         const std::list<Window*>& dockedWindows(const DockEdge edge) const;
 
         /// @brief The window at the root of this window's docking group, which is this one when it is docked to nothing.
-        Window* dockRoot();
+        Window* getDockRoot();
 
         /// @brief Whether the given window is this one's host, or the host of a window further up the chain.
         bool isDockedTo(const Window* window) const;
@@ -417,7 +417,7 @@ namespace RetroFuturaGUI
         bool isMinimizedOrMaximized() const;
 
         /// @brief The corners where a docked window meets this one, clockwise from the top-left like the radii.
-        glm::bvec4 squaredCorners() const;
+        glm::bvec4 getSquaredCorners() const;
 
         /// @brief Hands the corner radii to the background and border, with the corners where docked windows meet squared.
         void applyCornerRadii();
@@ -432,7 +432,7 @@ namespace RetroFuturaGUI
         bool dockWindowAt(Window* window, const DockEdge edge, const uSize index);
 
         /// @brief Where the window is on screen.
-        DockRect screenRect() const;
+        DockRect getScreenRect() const;
 
         /// @brief The gap on one of this window's edges, in whole pixels: the largest docking padding among this window, the windows
         ///        on that edge, and the one about to join them, if any. So the gap doesn't depend on which window hosts the other.
@@ -476,7 +476,7 @@ namespace RetroFuturaGUI
 
         /// @brief Every window except docking previews and popups' windows, so a dragged window can find the ones it could dock
         ///        to. Never destroyed, so a window destroyed late in shutdown can still take itself off it.
-        static std::vector<Window*>& allWindows();
+        static std::vector<Window*>& getAllWindows();
 
     //Popups
         /// @brief Draws every popup on the stack, bottom first, then closes the top one if it was asked to.
@@ -486,7 +486,7 @@ namespace RetroFuturaGUI
         void closeTopPopup();
 
         /// @brief The window of the top popup, or this window when no popup is open.
-        Window* topPopupWindow();
+        Window* getTopPopupWindow();
 
         /// @brief Drops a request to close while a popup lies over this window.
         void refuseCloseWhileBlocked();
@@ -530,7 +530,7 @@ namespace RetroFuturaGUI
         bool holdsTabbedWindows() const;
 
         /// @brief The window whose WindowTab this one is docked into, or nullptr.
-        Window* tabHostWindow() const;
+        Window* getTabHostWindow() const;
 
         /// @brief Whether the WindowTab still lives in one of the windows, so a pointer kept from an earlier frame is safe to use.
         static bool isRegisteredWindowTab(const WindowTab* tab);

@@ -198,7 +198,7 @@ void RetroFuturaGUI::Table::Draw()
 
     const uSize variantCount { _nthTrackColors.size() };
 
-    const glm::vec2 contentOrigin { contentTopLeft() };
+    const glm::vec2 contentOrigin { getContentTopLeft() };
 
     {
         // clamp contents to viewport
@@ -512,15 +512,15 @@ glm::vec2 RetroFuturaGUI::Table::GetMaxScroll() const
                      _contentExtent.y > _innerSize.y ? _contentExtent.y - _innerSize.y : 0.0f);
 }
 
-glm::vec2 RetroFuturaGUI::Table::headerExtents() const
+glm::vec2 RetroFuturaGUI::Table::getHeaderExtents() const
 {
     return glm::vec2(_displayVerticalHeader ? _verticalHeaderWidth : 0.0f,
                      _displayHorizontalHeader ? _horizontalHeaderHeight : 0.0f);
 }
 
-glm::vec2 RetroFuturaGUI::Table::contentTopLeft() const
+glm::vec2 RetroFuturaGUI::Table::getContentTopLeft() const
 {
-    const glm::vec2 headers { headerExtents() };
+    const glm::vec2 headers { getHeaderExtents() };
 
     // Only a header sitting on that edge pushes the content inwards; Bottom/Right ones take their space off the far side
     return glm::vec2(_position.x - _size.x * 0.5f + (_verticalHeaderPosition == HeaderPosition::Left ? headers.x : 0.0f),
@@ -608,7 +608,7 @@ void RetroFuturaGUI::Table::layoutCells()
     if(_columnDefinition.empty())
         return; //without rows the columns are still laid out, so their headers show over an empty table
 
-    const glm::vec2 headers { headerExtents() };
+    const glm::vec2 headers { getHeaderExtents() };
     _innerSize = glm::vec3(_size.x > headers.x ? _size.x - headers.x : 0.0f,
                            _size.y > headers.y ? _size.y - headers.y : 0.0f,
                            _size.z);
@@ -666,8 +666,8 @@ void RetroFuturaGUI::Table::layoutView()
 void RetroFuturaGUI::Table::layoutHeaders()
 {
     const glm::vec2
-        headers { headerExtents() },
-        contentOrigin { contentTopLeft() };
+        headers { getHeaderExtents() },
+        contentOrigin { getContentTopLeft() };
     const f32
         tableLeft { _position.x - _size.x * 0.5f },
         tableRight { tableLeft + _size.x },
@@ -947,7 +947,7 @@ void RetroFuturaGUI::Table::emitChange()
 
 void RetroFuturaGUI::Table::syncEditedCell()
 {
-    const TableText* text { activeTableText() };
+    const TableText* text { getActiveTableText() };
 
     if(!text)
         return;
@@ -1176,7 +1176,7 @@ void RetroFuturaGUI::Table::SetHeaderBackgroundColors(std::span<glm::vec4> color
         _headerBackgroundColorsEnabled = std::vector<glm::vec4>(colors.begin(), colors.end());
 }
 
-RetroFuturaGUI::TableText* RetroFuturaGUI::Table::activeTableText() const
+RetroFuturaGUI::TableText* RetroFuturaGUI::Table::getActiveTableText() const
 {
     if(!_hasEditCell)
         return nullptr;
@@ -1184,9 +1184,9 @@ RetroFuturaGUI::TableText* RetroFuturaGUI::Table::activeTableText() const
     return shownTextAt(_editRow, _editColumn); //beginEdit bound it, and the layout keeps it bound while it is edited
 }
 
-RetroFuturaGUI::Text* RetroFuturaGUI::Table::activeText() const
+RetroFuturaGUI::Text* RetroFuturaGUI::Table::getActiveText() const
 {
-    TableText* tableText { activeTableText() };
+    TableText* tableText { getActiveTableText() };
     return tableText ? tableText->_text.get() : nullptr;
 }
 
@@ -1203,7 +1203,7 @@ bool RetroFuturaGUI::Table::isEditedTrackReadOnly() const
     return track < _trackReadOnlyFlags.size() ? _trackReadOnlyFlags[track] : false;
 }
 
-RetroFuturaGUI::ITextEditVisuals::TextArea RetroFuturaGUI::Table::textArea() const
+RetroFuturaGUI::ITextEditVisuals::TextArea RetroFuturaGUI::Table::getTextArea() const
 {
     if(!_hasEditCell || !cellAt(_editRow, _editColumn)) //nothing edited: fall back to the whole table
         return { ._Left = _position.x - _size.x * 0.5f, ._Bottom = _position.y - _size.y * 0.5f, ._Right = _position.x + _size.x * 0.5f, ._Top = _position.y + _size.y * 0.5f };
@@ -1242,7 +1242,7 @@ void RetroFuturaGUI::Table::openEdit(const uSize row, const uSize column)
 void RetroFuturaGUI::Table::beginEdit(const uSize row, const uSize column, const f32 worldX)
 {
     openEdit(row, column);
-    Text* text { activeText() };
+    Text* text { getActiveText() };
 
     if(!text)
         return;
@@ -1266,7 +1266,7 @@ void RetroFuturaGUI::Table::EditCell(const TrackIndex& index, const uSize select
     ScrollRowIntoView(_tableOrientation == TableOrientation::Row ? index._Row : index._Column, true); //before the text binds, at its place in view
     openEdit(index._Row, index._Column);
     _isEditFromCode = true;
-    Text* text { activeText() };
+    Text* text { getActiveText() };
 
     if(!text)
         return;
@@ -1294,7 +1294,7 @@ void RetroFuturaGUI::Table::endEdit(const EditEnd end)
     const bool wasEditing { _hasEditCell };
     const TrackIndex index { ._Row = _editRow, ._Column = _editColumn, ._Layer = 0 };
 
-    if(Text* text { activeText() })
+    if(Text* text { getActiveText() })
         text->SetScrollOffset(0.0f); // show the cell from its start again once it loses focus
 
     if(wasEditing && EditEnd::Cancelled == end)
@@ -1460,7 +1460,7 @@ void RetroFuturaGUI::Table::cellRect(const uSize row, const uSize column, glm::v
     if(_rowOffsets.size() <= row + 1 || _columnOffsets.size() <= column + 1)
         return;
 
-    const glm::vec2 contentOrigin { contentTopLeft() };
+    const glm::vec2 contentOrigin { getContentTopLeft() };
     const f32
         width { _columnOffsets[column + 1] - _columnOffsets[column] },
         height { _rowOffsets[row + 1] - _rowOffsets[row] };
@@ -1846,7 +1846,7 @@ void RetroFuturaGUI::Table::interactTableText(const MouseState& mouse)
     {
         if(mouse._IsPressed && mouse._HasPosition)
         {
-            if(Text* text { activeText() })
+            if(Text* text { getActiveText() })
             {
                 _selectedPositionLast = text->GetBoundaryAtPosition(clampToTextBounds(mouse._Position.x));
                 setCaretFromBoundary(_selectedPositionLast);
@@ -2094,7 +2094,7 @@ void RetroFuturaGUI::Table::SetSelectedRowTextColors(std::span<glm::vec4> colors
 
 void RetroFuturaGUI::Table::SetDropTargetRow(const uSize row)
 {
-    if(selectableRowCount() <= row)
+    if(getSelectableRowCount() <= row)
     {
         ClearDropTargetRow();
         return;
@@ -2162,14 +2162,14 @@ void RetroFuturaGUI::Table::SetSlowDoubleClickTime(const std::chrono::millisecon
     _slowDoubleClickLatest = latest < earliest ? earliest : latest;
 }
 
-uSize RetroFuturaGUI::Table::selectableRowCount() const
+uSize RetroFuturaGUI::Table::getSelectableRowCount() const
 {
     return _tableOrientation == TableOrientation::Row ? _rowDefinition.size() : _columnDefinition.size();
 }
 
 void RetroFuturaGUI::Table::resetSelection()
 {
-    _selectedRowFlags.assign(selectableRowCount(), false);
+    _selectedRowFlags.assign(getSelectableRowCount(), false);
     _hasSelectionAnchor = false;
     _hasDropTargetRow = false; //an index into the rows from before
     _hasPendingDoubleClick = false;
@@ -2402,7 +2402,7 @@ void RetroFuturaGUI::Table::cancelPress()
 
 void RetroFuturaGUI::Table::selectBandRows(const glm::vec2& point)
 {
-    const std::vector<f32>& offsets { selectableTrackOffsets() };
+    const std::vector<f32>& offsets { getSelectableTrackOffsets() };
     const std::vector<bool> previousFlags { _selectedRowFlags };
     const f32
         start { selectableAxisOf(_pressContentPoint) },
@@ -2410,7 +2410,7 @@ void RetroFuturaGUI::Table::selectBandRows(const glm::vec2& point)
         low { start < end ? start : end },
         high { start < end ? end : start };
 
-    _selectedRowFlags = _bandBaseFlags.size() == selectableRowCount() ? _bandBaseFlags : std::vector<bool>(selectableRowCount(), false);
+    _selectedRowFlags = _bandBaseFlags.size() == getSelectableRowCount() ? _bandBaseFlags : std::vector<bool>(getSelectableRowCount(), false);
 
     if(2 > offsets.size())
     {
@@ -2436,7 +2436,7 @@ bool RetroFuturaGUI::Table::scrollTowardPointer(const glm::vec2& point)
     const f32 seconds { 0.1f < elapsed ? 0.1f : elapsed }; //a stalled frame doesn't throw the rows far
     _lastAutoScrollTime = now;
 
-    const glm::vec2 contentOrigin { contentTopLeft() };
+    const glm::vec2 contentOrigin { getContentTopLeft() };
     const bool isRowOrientation { _tableOrientation == TableOrientation::Row };
     f32 beyond { 0.0f }; //how far the pointer is past the rows: negative before the first, positive after the last
 
@@ -2487,7 +2487,7 @@ void RetroFuturaGUI::Table::drawSelectionBand()
 
     //The start is kept in content space, so it moves with its row while the table scrolls
     const glm::vec2
-        contentOrigin { contentTopLeft() },
+        contentOrigin { getContentTopLeft() },
         start { contentOrigin.x + _pressContentPoint.x - _scrollPosition.x, contentOrigin.y - _pressContentPoint.y + _scrollPosition.y },
         center { (start + _lastDragPoint) * 0.5f },
         size { glm::abs(_lastDragPoint - start) };
@@ -2525,7 +2525,7 @@ void RetroFuturaGUI::Table::navigateByKeys()
         isTriggered[index] = isKeyTriggered(_navigationKeys[index], 4 > index); //Up, Down, PageUp and PageDown repeat while held
 
     const bool isSelectAllTriggered { isKeyTriggered(_selectAllKey, false) };
-    const uSize rowCount { selectableRowCount() };
+    const uSize rowCount { getSelectableRowCount() };
 
     if(0 == rowCount)
         return;
@@ -2603,7 +2603,7 @@ void RetroFuturaGUI::Table::moveCursorTo(const uSize row, const bool extend)
 
 void RetroFuturaGUI::Table::ScrollRowIntoView(const uSize row, const bool emitSignal)
 {
-    const std::vector<f32>& offsets { selectableTrackOffsets() };
+    const std::vector<f32>& offsets { getSelectableTrackOffsets() };
 
     if(offsets.size() <= row + 1)
         return;
@@ -2684,7 +2684,7 @@ bool RetroFuturaGUI::Table::findHorizontalHeaderAt(const glm::vec2& point, uSize
         return false;
 
     //The band is clipped to the content's width, so a header scrolled under the row header can't be hit
-    const glm::vec2 contentOrigin { contentTopLeft() };
+    const glm::vec2 contentOrigin { getContentTopLeft() };
 
     if(contentOrigin.x > point.x || contentOrigin.x + _innerSize.x < point.x)
         return false;
@@ -2707,7 +2707,7 @@ bool RetroFuturaGUI::Table::findHorizontalHeaderAt(const glm::vec2& point, uSize
 
 bool RetroFuturaGUI::Table::isPointInContent(const glm::vec2& point) const
 {
-    const glm::vec2 contentOrigin { contentTopLeft() };
+    const glm::vec2 contentOrigin { getContentTopLeft() };
 
     return contentOrigin.x <= point.x && contentOrigin.x + _innerSize.x >= point.x
         && contentOrigin.y >= point.y && contentOrigin.y - _innerSize.y <= point.y;
@@ -2715,11 +2715,11 @@ bool RetroFuturaGUI::Table::isPointInContent(const glm::vec2& point) const
 
 glm::vec2 RetroFuturaGUI::Table::toContentPoint(const glm::vec2& point) const
 {
-    const glm::vec2 contentOrigin { contentTopLeft() };
+    const glm::vec2 contentOrigin { getContentTopLeft() };
     return glm::vec2(point.x - contentOrigin.x + _scrollPosition.x, contentOrigin.y - point.y + _scrollPosition.y);
 }
 
-const std::vector<f32>& RetroFuturaGUI::Table::selectableTrackOffsets() const
+const std::vector<f32>& RetroFuturaGUI::Table::getSelectableTrackOffsets() const
 {
     return _tableOrientation == TableOrientation::Row ? _rowOffsets : _columnOffsets;
 }
@@ -2734,7 +2734,7 @@ bool RetroFuturaGUI::Table::GetRowAt(const glm::vec2& point, uSize& outRow) cons
     if(!isPointInContent(point))
         return false;
 
-    return trackAtOffset(selectableTrackOffsets(), selectableAxisOf(toContentPoint(point)), outRow);
+    return trackAtOffset(getSelectableTrackOffsets(), selectableAxisOf(toContentPoint(point)), outRow);
 }
 
 bool RetroFuturaGUI::Table::isAltHeld()

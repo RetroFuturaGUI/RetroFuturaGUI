@@ -36,7 +36,7 @@ namespace RetroFuturaGUI
 
     protected:
     //ITextInteraction hooks: this widget edits the single Text it owns. ITextEditVisuals draws its caret and selection.
-        Text* activeText() const override final;
+        Text* getActiveText() const override final;
         void emitChange() override;
         bool isTextReadOnly() const override final;
 

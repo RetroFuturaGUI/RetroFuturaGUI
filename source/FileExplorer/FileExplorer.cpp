@@ -850,7 +850,7 @@ void RetroFuturaGUI::FileExplorer::applyMode()
         return;
 
     _widgets._Files->SetRowSelection(Mode::MultiFile == _mode ? Table::RowSelection::Multiple : Table::RowSelection::Single);
-    _widgets._Ok->SetText(okButtonText(), false);
+    _widgets._Ok->SetText(getOkButtonText(), false);
 }
 
 void RetroFuturaGUI::FileExplorer::addPlaces()
@@ -1016,7 +1016,7 @@ RetroFuturaGUI::FileExplorer::ListingRequest RetroFuturaGUI::FileExplorer::listi
         ._Generation = 0, //postListing numbers it
         ._Directory = directory,
         ._Entries = {},
-        ._Filter = currentFilter(),
+        ._Filter = getCurrentFilter(),
         ._Mode = _mode,
         ._SortColumn = _sortColumn,
         ._ShowsHidden = _showHidden,
@@ -1057,7 +1057,7 @@ RetroFuturaGUI::FileExplorer::Listing RetroFuturaGUI::FileExplorer::makeListing(
     sortEntries(listing._Shown, request._SortColumn, request._IsSortDescending);
 
     //Every cell's text, which is most of a big folder's fill: both names, so the extensions toggle only picks one
-    LocalClock clock { ._Zone = localZone(), ._Info = {}, ._HasInfo = false };
+    LocalClock clock { ._Zone = getLocalZone(), ._Info = {}, ._HasInfo = false };
     listing._Rows.reserve(listing._Shown.size());
 
     for(const Entry& entry : listing._Shown)
@@ -1130,7 +1130,7 @@ void RetroFuturaGUI::FileExplorer::showListing(Listing&& listing)
         isSameFolder { listing._Directory == _currentDirectory },
         keepsView { pending._Intent._KeepsView && isSameFolder };
     const std::filesystem::path previousDirectory { _currentDirectory };
-    const std::vector<std::filesystem::path> selected { keepsView ? selectedPaths() : std::vector<std::filesystem::path> {} };
+    const std::vector<std::filesystem::path> selected { keepsView ? getSelectedPaths() : std::vector<std::filesystem::path> {} };
     const f32 scroll { keepsView && _widgets._Files ? _widgets._Files->GetVerticalScrollPosition() : 0.0f };
 
     if(pending._Intent._HistoryIndex && *pending._Intent._HistoryIndex < _history.size())
@@ -1271,7 +1271,7 @@ void RetroFuturaGUI::FileExplorer::showProgress()
     updateStatusNote();
 }
 
-const std::filesystem::path& RetroFuturaGUI::FileExplorer::targetDirectory() const
+const std::filesystem::path& RetroFuturaGUI::FileExplorer::getTargetDirectory() const
 {
     return _pending ? _pending->_Directory : _currentDirectory;
 }
@@ -1283,7 +1283,7 @@ void RetroFuturaGUI::FileExplorer::updateHeaderTexts()
 
     constexpr std::array<std::string_view, _fileColumnCount> names { "Name", "Size", "Modified", "Type" };
     constexpr std::array<SortColumn, _fileColumnCount> columns { SortColumn::Name, SortColumn::Size, SortColumn::Modified, SortColumn::Type };
-    const uSize firstColumn { nameColumn() };
+    const uSize firstColumn { getNameColumn() };
 
     if(_showThumbnails)
         _widgets._Files->SetHorizontalHeaderText("", 0); //the thumbnails' column has no name, and may hold the one Name had
@@ -1299,7 +1299,7 @@ void RetroFuturaGUI::FileExplorer::updateHeaderTexts()
     }
 }
 
-std::vector<std::filesystem::path> RetroFuturaGUI::FileExplorer::selectedPaths() const
+std::vector<std::filesystem::path> RetroFuturaGUI::FileExplorer::getSelectedPaths() const
 {
     std::vector<std::filesystem::path> paths {};
 
@@ -1355,14 +1355,14 @@ void RetroFuturaGUI::FileExplorer::fillTable()
     if(!_widgets._Files)
         return;
 
-    const std::vector<Table::TrackDefinition> rowDefinition(_shownRows.size(), Table::TrackDefinition { ._Sizing = Table::TrackSizing::Fixed, ._Value = listRowHeight() });
+    const std::vector<Table::TrackDefinition> rowDefinition(_shownRows.size(), Table::TrackDefinition { ._Sizing = Table::TrackSizing::Fixed, ._Value = getListRowHeight() });
     _widgets._Files->SetTrackDefinitions(rowDefinition, columnDefinition(_font, _showThumbnails));
 
     //The read-only flags follow the columns, which the thumbnails' adds to
-    for(uSize column = 0; column < nameColumn() + _fileColumnCount; ++column)
+    for(uSize column = 0; column < getNameColumn() + _fileColumnCount; ++column)
         _widgets._Files->SetTrackReadOnly(column, true);
 
-    const uSize firstColumn { nameColumn() };
+    const uSize firstColumn { getNameColumn() };
 
     for(uSize row = 0; row < _shownRows.size(); ++row)
     {
@@ -1397,15 +1397,15 @@ void RetroFuturaGUI::FileExplorer::updateNameColumn()
         return;
 
     for(uSize row = 0; row < _shownRows.size(); ++row)
-        _widgets._Files->SetValue(displayName(_shownRows[row]), TrackIndex { ._Row = row, ._Column = nameColumn(), ._Layer = 0 }, false);
+        _widgets._Files->SetValue(displayName(_shownRows[row]), TrackIndex { ._Row = row, ._Column = getNameColumn(), ._Layer = 0 }, false);
 }
 
-uSize RetroFuturaGUI::FileExplorer::nameColumn() const
+uSize RetroFuturaGUI::FileExplorer::getNameColumn() const
 {
     return _showThumbnails ? 1 : 0;
 }
 
-f32 RetroFuturaGUI::FileExplorer::listRowHeight() const
+f32 RetroFuturaGUI::FileExplorer::getListRowHeight() const
 {
     return _showThumbnails ? std::max(_thumbnailRowHeight, rowHeight(_font)) : rowHeight(_font);
 }
@@ -1439,7 +1439,7 @@ void RetroFuturaGUI::FileExplorer::updateScrollSlider()
     _widgets._Scroll->SetValue<f32>(0.0f, false);
     _widgets._Scroll->SetMaxValue<f32>(0.0f < maxScroll ? maxScroll : 1.0f);
     _widgets._Scroll->SetEnabled(0.0f < maxScroll, false);
-    _widgets._Scroll->SetStepSize<f32>(listRowHeight()); //a row, which thumbnails make taller
+    _widgets._Scroll->SetStepSize<f32>(getListRowHeight()); //a row, which thumbnails make taller
 }
 
 void RetroFuturaGUI::FileExplorer::syncScrollSlider()
@@ -1525,7 +1525,7 @@ void RetroFuturaGUI::FileExplorer::showStatus()
     _widgets._Status->SetText(_statusMessage.empty() ? _statusNote : _statusMessage, false);
 }
 
-const RetroFuturaGUI::FileExplorer::Filter& RetroFuturaGUI::FileExplorer::currentFilter() const
+const RetroFuturaGUI::FileExplorer::Filter& RetroFuturaGUI::FileExplorer::getCurrentFilter() const
 {
     //both filtersOf leave at least one
     const uSize index { _widgets._Filter ? _widgets._Filter->GetSelectedIndex() : 0 };
@@ -1590,7 +1590,7 @@ void RetroFuturaGUI::FileExplorer::openSelectedFolder()
     closeWith({ _currentDirectory });
 }
 
-std::filesystem::path RetroFuturaGUI::FileExplorer::nameBoxTarget() const
+std::filesystem::path RetroFuturaGUI::FileExplorer::getNameBoxTarget() const
 {
     if(!_widgets._Name)
         return {};
@@ -1600,7 +1600,7 @@ std::filesystem::path RetroFuturaGUI::FileExplorer::nameBoxTarget() const
     if(name.empty())
         return {};
 
-    const Filter& filter { currentFilter() };
+    const Filter& filter { getCurrentFilter() };
 
     if(!name.has_extension() && !filter._Extensions.empty())
         name += filter._Extensions.front();
@@ -1660,7 +1660,7 @@ void RetroFuturaGUI::FileExplorer::disarmReplace()
 
     _isReplaceArmed = false;
     _replaceTarget.clear();
-    _widgets._Ok->SetText(okButtonText(), false);
+    _widgets._Ok->SetText(getOkButtonText(), false);
     setStatus("");
 }
 
@@ -1675,7 +1675,7 @@ void RetroFuturaGUI::FileExplorer::closeWith(const std::vector<std::filesystem::
     closeAfterAsking([this, results = std::move(results)]() mutable { Close(std::move(results)); });
 }
 
-std::string_view RetroFuturaGUI::FileExplorer::okButtonText() const
+std::string_view RetroFuturaGUI::FileExplorer::getOkButtonText() const
 {
     switch(_mode)
     {
@@ -1708,7 +1708,7 @@ void RetroFuturaGUI::FileExplorer::on_forwardButton_click()
 void RetroFuturaGUI::FileExplorer::on_upButton_click()
 {
     //Above the folder on its way, so pressing Up twice quickly goes up twice
-    const std::filesystem::path directory { targetDirectory() };
+    const std::filesystem::path directory { getTargetDirectory() };
 
     if(!directory.has_relative_path())
         return;
@@ -1830,10 +1830,10 @@ void RetroFuturaGUI::FileExplorer::on_filesTable_headerClicked(const uSize colum
 {
     constexpr std::array<SortColumn, _fileColumnCount> columns { SortColumn::Name, SortColumn::Size, SortColumn::Modified, SortColumn::Type };
 
-    if(nameColumn() > column)
+    if(getNameColumn() > column)
         return; //the thumbnails don't sort
 
-    const uSize fileColumn { column - nameColumn() };
+    const uSize fileColumn { column - getNameColumn() };
 
     if(columns.size() <= fileColumn)
         return;
@@ -1949,7 +1949,7 @@ void RetroFuturaGUI::FileExplorer::startRename()
     const uSize selectedLength { hasShownExtension ? codePointCount(toUtf8(entry._Path.stem())) : std::numeric_limits<uSize>::max() };
 
     _renamingPath = entry._Path;
-    _widgets._Files->EditCell(TrackIndex { ._Row = row, ._Column = nameColumn(), ._Layer = 0 }, selectedLength);
+    _widgets._Files->EditCell(TrackIndex { ._Row = row, ._Column = getNameColumn(), ._Layer = 0 }, selectedLength);
 }
 
 void RetroFuturaGUI::FileExplorer::finishRename(std::string_view text)
@@ -2060,7 +2060,7 @@ void RetroFuturaGUI::FileExplorer::deleteSelected()
     if(!canDo(MenuAction::Delete))
         return;
 
-    startTransfer(FileTransfer::Request { ._Operation = FileTransfer::Operation::MoveToTrash, ._Sources = selectedPaths(), ._Targets = {}, ._Destination = {}, ._ClashRule = FileTransfer::ClashRule::KeepBoth });
+    startTransfer(FileTransfer::Request { ._Operation = FileTransfer::Operation::MoveToTrash, ._Sources = getSelectedPaths(), ._Targets = {}, ._Destination = {}, ._ClashRule = FileTransfer::ClashRule::KeepBoth });
 }
 
 void RetroFuturaGUI::FileExplorer::askDeletePermanently(std::vector<std::filesystem::path>&& paths)
@@ -2093,7 +2093,7 @@ void RetroFuturaGUI::FileExplorer::putSelectedOnClipboard(const PlatformBridge::
     if(!canDo(PlatformBridge::Clipboard::FileOperation::Cut == operation ? MenuAction::Cut : MenuAction::Copy))
         return;
 
-    const std::vector<std::filesystem::path> paths { selectedPaths() };
+    const std::vector<std::filesystem::path> paths { getSelectedPaths() };
 
     if(PlatformBridge::Clipboard::ClipboardErrorCode::Success != PlatformBridge::Clipboard::CopyFilesToClipboard(paths, operation))
     {
@@ -2160,7 +2160,7 @@ void RetroFuturaGUI::FileExplorer::on_filesTable_selectionDrag(const Table::Sele
     if(Table::SelectionDragPhase::Started == phase)
     {
         endDrag();
-        _draggedPaths = selectedPaths();
+        _draggedPaths = getSelectedPaths();
         _isDraggingRows = !_draggedPaths.empty();
         return;
     }
@@ -2206,7 +2206,7 @@ void RetroFuturaGUI::FileExplorer::on_filesTable_selectionDrag(const Table::Sele
     }
 
     //Past the window's edge the system takes the drag over, so the files can land in other programs
-    const glm::vec2 size { windowSize() };
+    const glm::vec2 size { getWindowSize() };
     const bool isOutside { 0.0f > point.x || 0.0f > point.y || size.x < point.x || size.y < point.y };
 
     if(isOutside && PlatformBridge::DragDrop::CanDragFilesOut())
@@ -2329,7 +2329,7 @@ void RetroFuturaGUI::FileExplorer::showDropTarget(const std::optional<uSize> row
     markPlace(_dropTargetPlace, true);
 }
 
-glm::vec2 RetroFuturaGUI::FileExplorer::windowSize() const
+glm::vec2 RetroFuturaGUI::FileExplorer::getWindowSize() const
 {
     const glm::vec2 openedSize { static_cast<f32>(_width), static_cast<f32>(_height) };
     Window* window { GetWindow() };
@@ -2928,7 +2928,7 @@ void RetroFuturaGUI::FileExplorer::runMenuAction(const MenuAction action)
             deleteSelected();
         break;
         case MenuAction::DeletePermanently:
-            askDeletePermanently(selectedPaths());
+            askDeletePermanently(getSelectedPaths());
         break;
         case MenuAction::Cut:
             putSelectedOnClipboard(PlatformBridge::Clipboard::FileOperation::Cut);
@@ -3062,7 +3062,7 @@ void RetroFuturaGUI::FileExplorer::handleKeys()
     else if(isControlHeld && isShiftHeld && isNewFolderPressed)
         askNewFolderName();
     else if(isDeletePressed && isShiftHeld && canDo(MenuAction::DeletePermanently))
-        askDeletePermanently(selectedPaths());
+        askDeletePermanently(getSelectedPaths());
     else if(isDeletePressed && !isShiftHeld)
         deleteSelected();
     else if(isControlHeld && isCopyPressed)
@@ -3168,7 +3168,7 @@ void RetroFuturaGUI::FileExplorer::on_thumbnailsButton_click()
         _widgets._Files->EndEdit();
 
     //The rows change height, so the list keeps the selection in view, or else the row that was at the top
-    const std::vector<std::filesystem::path> selected { selectedPaths() };
+    const std::vector<std::filesystem::path> selected { getSelectedPaths() };
     uSize
         firstRow { 0 },
         endRow { 0 };
@@ -3177,7 +3177,7 @@ void RetroFuturaGUI::FileExplorer::on_thumbnailsButton_click()
     _showThumbnails = !_showThumbnails;
     styleToggle(*_widgets._Thumbnails, _showThumbnails);
     fillTable();
-    _widgets._Files->SetVerticalScrollPosition(static_cast<f32>(firstRow) * listRowHeight());
+    _widgets._Files->SetVerticalScrollPosition(static_cast<f32>(firstRow) * getListRowHeight());
     syncScrollSlider();
     selectPaths(selected, false); //the same rows, so a slot needn't hear of them again
     showThumbnails();
@@ -3193,7 +3193,7 @@ void RetroFuturaGUI::FileExplorer::on_okButton_click()
     switch(_mode)
     {
         case Mode::WriteFile:
-            confirmWrite(nameBoxTarget());
+            confirmWrite(getNameBoxTarget());
             return;
         case Mode::Folder:
             openSelectedFolder();
@@ -3449,7 +3449,7 @@ std::string RetroFuturaGUI::FileExplorer::formatTime(const std::filesystem::file
     return std::format("{:04}-{:02}-{:02} {:02}:{:02}", static_cast<i32>(date.year()), static_cast<u32>(date.month()), static_cast<u32>(date.day()), timeOfDay.hours().count(), timeOfDay.minutes().count());
 }
 
-const std::chrono::time_zone* RetroFuturaGUI::FileExplorer::localZone()
+const std::chrono::time_zone* RetroFuturaGUI::FileExplorer::getLocalZone()
 {
     try
     {

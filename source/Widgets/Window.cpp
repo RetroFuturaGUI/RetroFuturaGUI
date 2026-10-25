@@ -34,7 +34,7 @@ RetroFuturaGUI::Window::Window(std::string_view name, const i32 width, const i32
 
     //Docking previews and popups are never docking targets
     if(WindowRole::Normal == _role)
-        allWindows().push_back(this);
+        getAllWindows().push_back(this);
 }
 
 RetroFuturaGUI::Window::~Window()
@@ -47,7 +47,7 @@ RetroFuturaGUI::Window::~Window()
     if(_dockSnap._Tab && isRegisteredWindowTab(_dockSnap._Tab))
         _dockSnap._Tab->hideDropPreview();
 
-    std::erase(allWindows(), this);
+    std::erase(getAllWindows(), this);
     Undock();
 
     if(!_window)
@@ -852,7 +852,7 @@ bool RetroFuturaGUI::Window::IsDocked() const
 void RetroFuturaGUI::Window::SetDockingPadding(const f32 padding)
 {
     _dockingPadding = std::max(padding, 0.0f);
-    dockRoot()->layoutDockedWindows();
+    getDockRoot()->layoutDockedWindows();
 }
 
 void RetroFuturaGUI::Window::EnableSquaredCornersWhenDocked(const bool enable)
@@ -888,7 +888,7 @@ const std::list<RetroFuturaGUI::Window*>& RetroFuturaGUI::Window::dockedWindows(
     }
 }
 
-RetroFuturaGUI::Window* RetroFuturaGUI::Window::dockRoot()
+RetroFuturaGUI::Window* RetroFuturaGUI::Window::getDockRoot()
 {
     Window* root { this };
 
@@ -977,7 +977,7 @@ void RetroFuturaGUI::Window::layoutDockedWindows()
         return;
     }
 
-    const DockRect host { screenRect() };
+    const DockRect host { getScreenRect() };
     _dockedPosition = host._Position;
     _dockedSize = host._Size;
 
@@ -1006,7 +1006,7 @@ void RetroFuturaGUI::Window::layoutDockedWindows()
     }
 }
 
-RetroFuturaGUI::Window::DockRect RetroFuturaGUI::Window::screenRect() const
+RetroFuturaGUI::Window::DockRect RetroFuturaGUI::Window::getScreenRect() const
 {
     DockRect rect {};
 
@@ -1038,7 +1038,7 @@ i32 RetroFuturaGUI::Window::edgeGap(const DockEdge edge, const Window* joining) 
 
 i32 RetroFuturaGUI::Window::dockDepth(const DockEdge edge) const
 {
-    const DockRect rect { screenRect() };
+    const DockRect rect { getScreenRect() };
     return DockEdge::Left == edge || DockEdge::Right == edge ? rect._Size.x : rect._Size.y;
 }
 
@@ -1106,7 +1106,7 @@ void RetroFuturaGUI::Window::followDocking()
     if(isMinimizedOrMaximized())
         return;
 
-    Window* root { dockRoot() };
+    Window* root { getDockRoot() };
 
     if(_dockingLayoutPending)
     {
@@ -1154,7 +1154,7 @@ bool RetroFuturaGUI::Window::isMinimizedOrMaximized() const
     return GLFW_TRUE == glfwGetWindowAttrib(_window, GLFW_ICONIFIED) || GLFW_TRUE == glfwGetWindowAttrib(_window, GLFW_MAXIMIZED);
 }
 
-glm::bvec4 RetroFuturaGUI::Window::squaredCorners() const
+glm::bvec4 RetroFuturaGUI::Window::getSquaredCorners() const
 {
     glm::bvec4 squared { false };
 
@@ -1195,7 +1195,7 @@ glm::vec4 RetroFuturaGUI::Window::GetDrawnCornerRadii() const
     if(!_noCornerRadiiWhenDocked)
         return radii;
 
-    const glm::bvec4 squared { squaredCorners() };
+    const glm::bvec4 squared { getSquaredCorners() };
 
     for(glm::length_t corner = 0; 4 > corner; ++corner)
     {
@@ -1282,7 +1282,7 @@ void RetroFuturaGUI::Window::EndDrag()
     if(!snap._Target)
         return;
 
-    if(std::ranges::find(allWindows(), snap._Target) == allWindows().end())
+    if(std::ranges::find(getAllWindows(), snap._Target) == getAllWindows().end())
         return;
 
     if(!snap._Tab)
@@ -1318,7 +1318,7 @@ void RetroFuturaGUI::Window::updateDockSnap()
     if(_dockSnap._Tab)
     {
         //get the content area it would fill, and a field with its title at the end of the strip
-        const glm::ivec4 content { _dockSnap._Tab->contentScreenRect() };
+        const glm::ivec4 content { _dockSnap._Tab->getContentScreenRect() };
         _dockSnap._Tab->showDropPreview(_windowTitle);
         showDockPreview(DockRect 
                             { ._Position = glm::ivec2(content.x, content.y), ._Size = glm::ivec2(content.z, content.w) },
@@ -1328,7 +1328,7 @@ void RetroFuturaGUI::Window::updateDockSnap()
     }
 
     //The slot this window would take, with the windows already on that edge making room for it
-    const DockRect host { _dockSnap._Target->screenRect() };
+    const DockRect host { _dockSnap._Target->getScreenRect() };
     const uSize count { _dockSnap._Target->dockedWindows(_dockSnap._Edge).size() + 1 };
     const i32 gap { _dockSnap._Target->edgeGap(_dockSnap._Edge, this) };
     showDockPreview(_dockSnap._Target->dockSlot(host, _dockSnap._Edge, _dockSnap._Index, count, dockDepth(_dockSnap._Edge), gap), cornerRadiiDockedAt(_dockSnap._Edge));
@@ -1349,7 +1349,7 @@ RetroFuturaGUI::Window::DockSnap RetroFuturaGUI::Window::findDockSnap() const
     if(isMinimizedOrMaximized())
         return {};
 
-    const DockRect dragged { screenRect() };
+    const DockRect dragged { getScreenRect() };
 
     //A click on the title is no drag: the window has to have moved
     if(dragged._Position == _dragStartPosition)
@@ -1363,7 +1363,7 @@ RetroFuturaGUI::Window::DockSnap RetroFuturaGUI::Window::findDockSnap() const
     DockSnap snap {};
     i32 closest { _snapDistance + 1 };
 
-    for(Window* target : allWindows())
+    for(Window* target : getAllWindows())
     {
         if(!target)
             continue;
@@ -1384,7 +1384,7 @@ RetroFuturaGUI::Window::DockSnap RetroFuturaGUI::Window::findDockSnap() const
         if(GLFW_FALSE == glfwGetWindowAttrib(target->_window, GLFW_VISIBLE))
             continue;
 
-        const DockRect host { target->screenRect() };
+        const DockRect host { target->getScreenRect() };
 
         for(const DockEdge edge : { DockEdge::Top, DockEdge::Right, DockEdge::Bottom, DockEdge::Left })
         {
@@ -1420,9 +1420,9 @@ RetroFuturaGUI::Window::DockSnap RetroFuturaGUI::Window::findTabSnap() const
     if(!getCursorPosition(cursorX, cursorY))
         return {};
 
-    const glm::ivec2 cursor { screenRect()._Position + glm::ivec2(cursorX, cursorY) };
+    const glm::ivec2 cursor { getScreenRect()._Position + glm::ivec2(cursorX, cursorY) };
 
-    for(Window* target : allWindows())
+    for(Window* target : getAllWindows())
     {
         if(!target)
             continue;
@@ -1469,7 +1469,7 @@ uSize RetroFuturaGUI::Window::dockIndexFor(const DockRect& dragged, const DockEd
         if(!window)
             continue;
 
-        const DockRect docked { window->screenRect() };
+        const DockRect docked { window->getScreenRect() };
 
         if(docked._Position[axis] + docked._Size[axis] / 2 < draggedMiddle)
             ++index;
@@ -1497,7 +1497,7 @@ void RetroFuturaGUI::Window::showDockPreview(const DockRect& slot, const glm::ve
 
     _dockPreview->SetCornerRadii(cornerRadii);
 
-    const DockRect current { _dockPreview->screenRect() };
+    const DockRect current { _dockPreview->getScreenRect() };
 
     if(slot._Size != current._Size)
         glfwSetWindowSize(_dockPreview->_window, slot._Size.x, slot._Size.y);
@@ -1570,7 +1570,7 @@ i32 RetroFuturaGUI::Window::dockOverlap(const DockRect& dragged, const DockRect&
     return end - start;
 }
 
-std::vector<RetroFuturaGUI::Window*>& RetroFuturaGUI::Window::allWindows()
+std::vector<RetroFuturaGUI::Window*>& RetroFuturaGUI::Window::getAllWindows()
 {
     //Deliberately never freed: a window owned by a static is destroyed after every other static, and still takes itself off
     static std::vector<Window*>* windows { new std::vector<Window*>() };
@@ -1585,7 +1585,7 @@ bool RetroFuturaGUI::Window::PushPopup(std::unique_ptr<IPopup> popup)
     //The window holding the tab takes the popups, so they block the tab strip too
     if(IsInTab())
     {
-        Window* host { tabHostWindow() };
+        Window* host { getTabHostWindow() };
 
         if(!host)
             return false;
@@ -1617,7 +1617,7 @@ bool RetroFuturaGUI::Window::PushPopup(std::unique_ptr<IPopup> popup)
         return false; //Already on a stack
 
     //It opens over the current top, which owns it natively
-    Window* owner { topPopupWindow() };
+    Window* owner { getTopPopupWindow() };
     popupWindow->_popupHost = this;
     popupWindow->_ignoreHeldPress = true; //the click that opened it may still be down!
     popupWindow->_showAfterDraw = true;
@@ -1639,7 +1639,7 @@ bool RetroFuturaGUI::Window::IsBlockedByPopup() const
 {
     if(IsInTab())
     {
-        const Window* host { tabHostWindow() };
+        const Window* host { getTabHostWindow() };
 
         if(!host)
             return false;
@@ -1654,7 +1654,7 @@ bool RetroFuturaGUI::Window::IsBlockedByPopup() const
         return false;
 
     //A popup's window is blocked unless it is the top of the stack
-    return _popupHost->topPopupWindow() != this;
+    return _popupHost->getTopPopupWindow() != this;
 }
 
 void RetroFuturaGUI::Window::FilterPointer(PointerState& pointer) const
@@ -1704,7 +1704,7 @@ void RetroFuturaGUI::Window::closeTopPopup()
     if(_popups.empty())
         return;
 
-    Window* topWindow { topPopupWindow() };
+    Window* topWindow { getTopPopupWindow() };
 
     if(topWindow == this)
         return;
@@ -1726,7 +1726,7 @@ void RetroFuturaGUI::Window::closeTopPopup()
 
     std::unique_ptr<IPopup> closing { std::move(_popups.back()) }; //Off the stack before its result goes out, so a slot that opens a follow-up popup puts it on top
     _popups.pop_back();
-    topPopupWindow()->_ignoreHeldPress = true; //The window below takes the mouse again, but not the press on the button that closed the popup
+    getTopPopupWindow()->_ignoreHeldPress = true; //The window below takes the mouse again, but not the press on the button that closed the popup
 
     if(!closing)
         return;
@@ -1738,7 +1738,7 @@ void RetroFuturaGUI::Window::closeTopPopup()
     glfwMakeContextCurrent(_window);
 }
 
-RetroFuturaGUI::Window* RetroFuturaGUI::Window::topPopupWindow()
+RetroFuturaGUI::Window* RetroFuturaGUI::Window::getTopPopupWindow()
 {
     if(_popups.empty())
         return this;
@@ -1779,8 +1779,8 @@ void RetroFuturaGUI::Window::centerOver(const Window* window)
         return;
 
     const DockRect
-        over { window->screenRect() },
-        own { screenRect() };
+        over { window->getScreenRect() },
+        own { getScreenRect() };
     const glm::ivec2 position { over._Position + (over._Size - own._Size) / 2 };
     glfwSetWindowPos(_window, position.x, position.y);
 }
@@ -1815,7 +1815,7 @@ const std::string& RetroFuturaGUI::Window::GetWindowTitle() const
 
 GLFWwindow* RetroFuturaGUI::Window::GetKeyboardWindow() const
 {
-    const Window* host { tabHostWindow() };
+    const Window* host { getTabHostWindow() };
 
     if(!host)
         return _window;
@@ -1939,7 +1939,7 @@ void RetroFuturaGUI::Window::drawInHost(const ScreenRect& contentArea, const glm
     if(!_window)
         return;
 
-    const Window* host { tabHostWindow() };
+    const Window* host { getTabHostWindow() };
 
     if(!host)
         return;
@@ -2064,7 +2064,7 @@ bool RetroFuturaGUI::Window::holdsTabbedWindows() const
     return false;
 }
 
-RetroFuturaGUI::Window* RetroFuturaGUI::Window::tabHostWindow() const
+RetroFuturaGUI::Window* RetroFuturaGUI::Window::getTabHostWindow() const
 {
     if(!_tabHost)
         return nullptr;
@@ -2077,7 +2077,7 @@ bool RetroFuturaGUI::Window::isRegisteredWindowTab(const WindowTab* tab)
     if(!tab)
         return false;
 
-    for(const Window* window : allWindows())
+    for(const Window* window : getAllWindows())
     {
         if(!window)
             continue;
