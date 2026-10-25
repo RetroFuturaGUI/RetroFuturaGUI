@@ -7,7 +7,7 @@
 namespace RetroFuturaGUI
 {
     //A text-based widget that shows information as text
-    class Label : public IWidget, public ITextProperties
+    class Label final : public IWidget, public ITextProperties
     {
     public:
         /// @brief Constructs a Label widget under the given parent widget/window.

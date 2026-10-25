@@ -11,7 +11,7 @@ namespace RetroFuturaGUI
 {
     class RadioButton;
 
-    class RadioButtonGroup : public IWidget, public IBorder, public ITextProperties
+    class RadioButtonGroup final : public IWidget, public IBorder, public ITextProperties
     {
     public:
         /// @brief Constructs a RadioButtonGroup under the given parent widget/window.

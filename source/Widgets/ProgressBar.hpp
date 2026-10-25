@@ -10,7 +10,7 @@
 namespace RetroFuturaGUI
 {
     /// @brief A ProgressBar that visualizes a numeric value
-    class ProgressBar : public IRangedSingleValue
+    class ProgressBar final : public IRangedSingleValue
     {
     public:
         /// @brief Constructs the ProgressBar

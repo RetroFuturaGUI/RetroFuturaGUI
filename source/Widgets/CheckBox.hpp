@@ -10,8 +10,8 @@
 
 namespace RetroFuturaGUI
 {
-    // A widget that visually represents a boolean
-    class CheckBox : public IWidget, public IClickable, public IBackground, public IBorder
+    /// @brief A widget that visually represents a boolean
+    class CheckBox final : public IWidget, public IClickable, public IBackground, public IBorder
     {
     public:
         /// @brief Constructs a CheckBox widget under the given parent widget/window.

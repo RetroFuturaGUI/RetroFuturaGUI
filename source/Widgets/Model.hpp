@@ -8,7 +8,7 @@
 
 namespace RetroFuturaGUI
 {
-    class Model : public IWidget
+    class Model final : public IWidget
     {
         public:
             /// @brief Constructs an empty Model widget under the given parent widget/window. Call LoadModel to populate it.

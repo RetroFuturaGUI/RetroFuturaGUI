@@ -4,7 +4,7 @@
 
 namespace RetroFuturaGUI
 {
-    class SvgImage : public IWidget
+    class SvgImage final : public IWidget
     {
     public:
         /// @brief Constructs an SvgImage widget that loads and displays the texture at SvgImagePath.
