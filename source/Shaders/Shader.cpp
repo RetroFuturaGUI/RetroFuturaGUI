@@ -10,8 +10,8 @@ RetroFuturaGUI::Shader::Shader(const char* vertexPath, const char* fragmentPath,
     const char* vShaderCode = vertexCode.c_str();
     const char* fShaderCode = fragmentCode.c_str();
     _programId = glCreateProgram();
-	u32 vertexShader = compileShader(vShaderCode, GL_VERTEX_SHADER);
-	u32 fragmentShader = compileShader(fShaderCode, GL_FRAGMENT_SHADER);
+    u32 vertexShader = compileShader(vShaderCode, GL_VERTEX_SHADER);
+    u32 fragmentShader = compileShader(fShaderCode, GL_FRAGMENT_SHADER);
     u32 geometryShader = 0;
 
     if (geometryPath)
@@ -167,17 +167,17 @@ std::string RetroFuturaGUI::Shader::loadShaderFile(const char* shaderPath)
 
 u32 RetroFuturaGUI::Shader::compileShader(const char* shaderCode, const int shaderType)
 {
-	if (shaderType != GL_VERTEX_SHADER && shaderType != GL_FRAGMENT_SHADER && shaderType != GL_GEOMETRY_SHADER)
-	{
-		std::println("ERROR::SHADER::INVALID_SHADER_TYPE");
-		return 0;
-	}
+    if (shaderType != GL_VERTEX_SHADER && shaderType != GL_FRAGMENT_SHADER && shaderType != GL_GEOMETRY_SHADER)
+    {
+        std::println("ERROR::SHADER::INVALID_SHADER_TYPE");
+        return 0;
+    }
 
-	if (!shaderCode || shaderCode[0] == '\0')
-	{
-		std::println("ERROR::SHADER::EMPTY_SHADER_CODE");
-		return 0;
-	}
+    if (!shaderCode || shaderCode[0] == '\0')
+    {
+        std::println("ERROR::SHADER::EMPTY_SHADER_CODE");
+        return 0;
+    }
 
     u32 shaderObject;
     i32 success;
