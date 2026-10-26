@@ -22,19 +22,19 @@ RetroFuturaGUI::Table::Table(const std::string& name, Projection* projection, IW
     : IWidget(name, projection, parentWidget, parentWidgetTypeID, parentWindow)
 {
     _widgetTypeID = WidgetTypeID::Table;
-    _background = std::make_unique<Rectangle>(projection);
-    _border = std::make_unique<Rectangle>(projection);
-    _highlightedBackgroundCell = std::make_unique<Rectangle>(projection);
-    _highlightedCellBorder = std::make_unique<Rectangle>(projection);
-    _trackColoringOverlay = std::make_unique<Rectangle>(projection);
-    _innerBorder = std::make_unique<Rectangle>(projection);
-    _cellColorPlane = std::make_unique<Rectangle>(projection);
-    _checkBoxBackground = std::make_unique<Rectangle>(projection);
-    _checkBoxBorder = std::make_unique<Rectangle>(projection);
+    _background = std::make_unique<Plane>(projection);
+    _border = std::make_unique<Frame>(projection);
+    _highlightedBackgroundCell = std::make_unique<Plane>(projection);
+    _highlightedCellBorder = std::make_unique<Frame>(projection);
+    _trackColoringOverlay = std::make_unique<Plane>(projection);
+    _innerBorder = std::make_unique<Frame>(projection);
+    _cellColorPlane = std::make_unique<Plane>(projection);
+    _checkBoxBackground = std::make_unique<Plane>(projection);
+    _checkBoxBorder = std::make_unique<Frame>(projection);
     _checkmark = ResourceManager::GetCheckmarkIcon();
-    _cellImagePlane = std::make_unique<Rectangle>(projection);
-    _selectionBand = std::make_unique<Rectangle>(projection);
-    _selectionBandBorder = std::make_unique<Rectangle>(projection);
+    _cellImagePlane = std::make_unique<Plane>(projection);
+    _selectionBand = std::make_unique<Plane>(projection);
+    _selectionBandBorder = std::make_unique<Frame>(projection);
 
     if(!_background)
         return;
@@ -72,34 +72,22 @@ RetroFuturaGUI::Table::Table(const std::string& name, Projection* projection, IW
     if(!_selectionBandBorder)
         return;
 
-    _background->SetRectangleMode(RectangleMode::Plane);
-    _border->SetRectangleMode(RectangleMode::Border);
-    _highlightedBackgroundCell->SetRectangleMode(RectangleMode::Plane);
-    _highlightedCellBorder->SetRectangleMode(RectangleMode::Border);
-    _trackColoringOverlay->SetRectangleMode(RectangleMode::Plane);
-    _innerBorder->SetRectangleMode(RectangleMode::Border);
     initEditVisuals(projection);
 
-    _cellColorPlane->SetRectangleMode(RectangleMode::Plane);
-    _cellColorPlane->SetFillType(FillType::SOLID);
+    _cellColorPlane->SetFillType(FillType::Solid);
 
-    _checkBoxBackground->SetRectangleMode(RectangleMode::Plane);
-    _checkBoxBackground->SetFillType(FillType::SOLID);
+    _checkBoxBackground->SetFillType(FillType::Solid);
     _checkBoxBackground->SetColors(_checkBoxBackgroundColorEnabled);
 
-    _checkBoxBorder->SetRectangleMode(RectangleMode::Border);
-    _checkBoxBorder->SetFillType(FillType::SOLID);
+    _checkBoxBorder->SetFillType(FillType::Solid);
     _checkBoxBorder->SetColors(_checkBoxBorderColorEnabled);
 
-    _cellImagePlane->SetRectangleMode(RectangleMode::Plane);
-    _cellImagePlane->SetFillType(FillType::SOLID);
+    _cellImagePlane->SetFillType(FillType::Solid);
     _cellImagePlane->SetColors(_imagePlaneColors);
 
-    _selectionBand->SetRectangleMode(RectangleMode::Plane);
-    _selectionBand->SetFillType(FillType::SOLID);
+    _selectionBand->SetFillType(FillType::Solid);
 
-    _selectionBandBorder->SetRectangleMode(RectangleMode::Border);
-    _selectionBandBorder->SetFillType(FillType::SOLID);
+    _selectionBandBorder->SetFillType(FillType::Solid);
     _selectionBandBorder->SetBorderWidth(1.0f);
 
     _sharedColor = std::make_unique<TableColor>(this, projection, _cellColorPlane.get());

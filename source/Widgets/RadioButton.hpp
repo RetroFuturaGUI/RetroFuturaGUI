@@ -2,7 +2,7 @@
 #include "IWidget.hpp"
 #include "IClickable.hpp"
 #include "IncludeHelper.hpp"
-#include "Rectangle.hpp"
+#include "Plane.hpp"
 #include "IBackground.hpp"
 #include "IBorder.hpp"
 #include "RadioButtonGroup.hpp"
@@ -76,7 +76,7 @@ namespace RetroFuturaGUI
         void setIndicatorColors();
         void interact();
 
-        std::unique_ptr<Rectangle> _indicator { nullptr };
+        std::unique_ptr<Plane> _indicator { nullptr };
         RadioButtonGroup* _parentGroup { nullptr };
         bool _isChecked { false };
         f32 _indicatorPadding { 2.0f };

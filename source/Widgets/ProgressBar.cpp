@@ -1,7 +1,6 @@
 #include "ProgressBar.hpp"
 #include "Input.hpp"
 #include "PlatformBridge.hpp"
-#include "Rectangle.hpp"
 #include <memory>
 
 #if defined(TARGET_PLATFORM_LINUX)

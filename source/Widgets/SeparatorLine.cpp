@@ -1,7 +1,6 @@
 #include "SeparatorLine.hpp"
 #include "IWidget.hpp"
 #include "IncludeHelper.hpp"
-#include "Rectangle.hpp"
 #include "Text.hpp"
 #include <algorithm>
 #include <memory>
@@ -10,13 +9,12 @@ RetroFuturaGUI::SeparatorLine::SeparatorLine(std::string_view name, Projection* 
     : IWidget(name, projection, parentWidget, parentWidgetTypeID, parentWindow)
 {
     _widgetTypeID = WidgetTypeID::SeparatorLine;
-    _background = std::make_unique<Rectangle>(&_projection);
+    _background = std::make_unique<Plane>(&_projection);
     _text = std::make_unique<Text>(&_projection);
 
     if(!_background)
         return;
 
-    _background->SetRectangleMode(RectangleMode::Plane);
 }
 
 void RetroFuturaGUI::SeparatorLine::Draw()

@@ -1,15 +1,14 @@
 #include "IRangedValue.hpp"
-#include "Rectangle.hpp"
 #include <memory>
 
 
 RetroFuturaGUI::IRangedValue::IRangedValue(std::string_view name, Projection* projection, IHierarchyNode* parentWidget, const WidgetTypeID parentWidgetTypeID, GLFWwindow* parentWindow)
     : IWidget(name, projection, parentWidget, parentWidgetTypeID, parentWindow)
 {
-    _background = std::make_unique<Rectangle>(projection);
-    _border = std::make_unique<Rectangle>(projection);
-    _indicatorBackground = std::make_unique<Rectangle>(projection);
-    _indicatorBorder = std::make_unique<Rectangle>(projection);
+    _background = std::make_unique<Plane>(projection);
+    _border = std::make_unique<Frame>(projection);
+    _indicatorBackground = std::make_unique<Plane>(projection);
+    _indicatorBorder = std::make_unique<Frame>(projection);
 
     if(!_background)
         return;
@@ -23,10 +22,6 @@ RetroFuturaGUI::IRangedValue::IRangedValue(std::string_view name, Projection* pr
     if(!_indicatorBorder)
         return;
 
-    _background->SetRectangleMode(RectangleMode::Plane);
-    _border->SetRectangleMode(RectangleMode::Border);
-    _indicatorBackground->SetRectangleMode(RectangleMode::Plane);
-    _indicatorBorder->SetRectangleMode(RectangleMode::Border);
 
     _elementProjection = projection;
     _useIndicator = true;
@@ -107,8 +102,7 @@ void RetroFuturaGUI::IRangedValue::ShowIndicator(const bool show)
 
     if(_useIndicator && !_indicatorBackground)
     {
-        _indicatorBackground = std::make_unique<Rectangle>(_elementProjection);
-        _indicatorBackground->SetRectangleMode(RectangleMode::Plane);
+        _indicatorBackground = std::make_unique<Plane>(_elementProjection);
         setIndicatorBackgroundColors();
     }
 
@@ -126,27 +120,9 @@ void RetroFuturaGUI::IRangedValue::SetIndicatorType(const IndicatorType type)
     _indicatorType = type;
     const bool isCircle { _indicatorType == IndicatorType::Circle };
 
-    if(isCircle)
-    {
-        _indicatorBackground->SetShaderFeatures(RoundedCorners);
-        _indicatorBackground->SetCornerRadii(glm::vec4(_indicatorBackground->GetSize().x * 0.5f));
-    }
-    else
-    {
-        _indicatorBackground->SetShaderFeatures(0);
-        _indicatorBackground->SetCornerRadii(glm::vec4(0.0f));
-    }
-
-    if(isCircle)
-    {
-        _indicatorBorder->SetShaderFeatures(RoundedCorners);
-        _indicatorBorder->SetCornerRadii(glm::vec4(_indicatorBorder->GetSize().x * 0.5f));
-    }
-    else
-    {
-        _indicatorBorder->SetShaderFeatures(0);
-        _indicatorBorder->SetCornerRadii(glm::vec4(0.0f));
-    }
+    //Radii above 0 round the corners, 0 squares them
+    _indicatorBackground->SetCornerRadii(glm::vec4(isCircle ? _indicatorBackground->GetSize().x * 0.5f : 0.0f));
+    _indicatorBorder->SetCornerRadii(glm::vec4(isCircle ? _indicatorBorder->GetSize().x * 0.5f : 0.0f));
 }
 
 void RetroFuturaGUI::IRangedValue::SetIndicatorBackgroundColors(std::span<glm::vec4> colors, const ColorState state)
@@ -453,8 +429,7 @@ void RetroFuturaGUI::IRangedValue::ShowGraph(const bool show)
 
     if(_useGraph && !_graph)
     {
-        _graph = std::make_unique<Rectangle>(_elementProjection);
-        _graph->SetRectangleMode(RectangleMode::Plane);
+        _graph = std::make_unique<WavePlane>(_elementProjection);
         setGraphColorsApply();
     }
 
@@ -468,11 +443,7 @@ void RetroFuturaGUI::IRangedValue::SetGraphMode(const GraphMode mode)
     if(!_graph)
         return;
 
-    const u32 features = _graphMode == GraphMode::Wave
-        ? (_graph->GetShaderFeatures() | Wave)
-        : (_graph->GetShaderFeatures() & ~Wave);
-
-    _graph->SetShaderFeatures(features);
+    _graph->ShowWave(_graphMode == GraphMode::Wave);
 }
 
 void RetroFuturaGUI::IRangedValue::SetGraphColors(std::span<glm::vec4> colors, const ColorState state)
@@ -751,7 +722,7 @@ void RetroFuturaGUI::IRangedValue::setIndicatorPosition(const f32 trackFraction)
     if(!_indicatorBorder)
         return;
 
-    Rectangle* track { getTrack() };
+    Plane* track { getTrack() };
 
     if(!track)
         return;
@@ -792,7 +763,7 @@ void RetroFuturaGUI::IRangedValue::setIndicatorPosition(const f32 trackFraction)
 
 void RetroFuturaGUI::IRangedValue::setGraphSize(const f32 trackFraction)
 {
-    Rectangle* track { getTrack() };
+    Plane* track { getTrack() };
 
     if(!track)
         return;
@@ -811,7 +782,7 @@ void RetroFuturaGUI::IRangedValue::setGraphSize(const f32 trackFraction)
 
 void RetroFuturaGUI::IRangedValue::setGraphPosition(const f32 trackFraction)
 {
-    Rectangle* track { getTrack() };
+    Plane* track { getTrack() };
 
     if(!track)
         return;

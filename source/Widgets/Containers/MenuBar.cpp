@@ -13,10 +13,10 @@ RetroFuturaGUI::MenuBar::MenuBar(const std::string& name, Projection* projection
     : IWidget(name, projection, parentWidget, parentWidgetTypeID, parentWindow)
 {
     _widgetTypeID = WidgetTypeID::MenuBar;
-    _background = std::make_unique<Rectangle>(projection);
-    _border = std::make_unique<Rectangle>(projection);
-    _itemBackground = std::make_unique<Rectangle>(projection);
-    _itemBorder = std::make_unique<Rectangle>(projection);
+    _background = std::make_unique<Plane>(projection);
+    _border = std::make_unique<Frame>(projection);
+    _itemBackground = std::make_unique<Plane>(projection);
+    _itemBorder = std::make_unique<Frame>(projection);
 
     if(!_background)
         return;
@@ -30,10 +30,6 @@ RetroFuturaGUI::MenuBar::MenuBar(const std::string& name, Projection* projection
     if(!_itemBorder)
         return;
 
-    _background->SetRectangleMode(RectangleMode::Plane);
-    _border->SetRectangleMode(RectangleMode::Border);
-    _itemBackground->SetRectangleMode(RectangleMode::Plane);
-    _itemBorder->SetRectangleMode(RectangleMode::Border);
 }
 
 void RetroFuturaGUI::MenuBar::Draw()
@@ -175,12 +171,11 @@ void RetroFuturaGUI::MenuBar::ShowSeparatorLines(const bool show)
         return;
 
     if(!_separatorLine)
-        _separatorLine = std::make_unique<Rectangle>(&_projection);
+        _separatorLine = std::make_unique<Plane>(&_projection);
 
     if(!_separatorLine)
         return;
 
-    _separatorLine->SetRectangleMode(RectangleMode::Plane);
     setSeparatorLinesColors();
 }
 
@@ -413,7 +408,7 @@ void RetroFuturaGUI::MenuBar::SetItemBackgroundRasterDegree(const f32 degree)
 
 void RetroFuturaGUI::MenuBar::SetItemBackgroundPrimaryRasterWidthTransfer(std::span<f32> widthTransfer)
 {
-    /* Kept in the member vector because Rectangle holds the curve as a span,
+    /* Kept in the member vector because Plane holds the curve as a span,
        so the caller's container is free to die right after this call. */
     _itemBackgroundPrimaryRasterWidthTransfer.assign(widthTransfer.begin(), widthTransfer.end());
 
@@ -1252,7 +1247,8 @@ void RetroFuturaGUI::MenuBar::setItemBorderColors()
     pushElementColors(_itemBorder.get(), colors);
 }
 
-void RetroFuturaGUI::MenuBar::pushElementColors(Rectangle* element, std::vector<glm::vec4>* colors)
+template<typename RectangleType>
+void RetroFuturaGUI::MenuBar::pushElementColors(RectangleType* element, std::vector<glm::vec4>* colors)
 {
     if(!element)
         return;

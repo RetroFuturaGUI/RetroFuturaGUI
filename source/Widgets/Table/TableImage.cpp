@@ -2,7 +2,7 @@
 #include "ITexture.hpp"
 #include <algorithm>
 
-RetroFuturaGUI::TableImage::TableImage(Table* parentTable, Projection* projection, Rectangle* rectangle)
+RetroFuturaGUI::TableImage::TableImage(Table* parentTable, Projection* projection, Plane* rectangle)
     : ITableWidget(parentTable, projection), _rectangle(rectangle)
 {
     _tableWidgetID = TableWidgetTypeID::TableImage;

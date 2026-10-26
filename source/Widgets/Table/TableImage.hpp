@@ -1,7 +1,7 @@
 #pragma once
 #include "IncludeHelper.hpp"
 #include "ITableWidget.hpp"
-#include "Rectangle.hpp"
+#include "Plane.hpp"
 
 namespace RetroFuturaGUI
 {
@@ -13,7 +13,7 @@ namespace RetroFuturaGUI
     {
     public:
         TableImage() = delete;
-        TableImage(Table* parentTable, Projection* projection, Rectangle* rectangle);
+        TableImage(Table* parentTable, Projection* projection, Plane* rectangle);
         ~TableImage() = default;
         TableImage(const TableImage&) = delete;
         TableImage(TableImage&&) = delete;
@@ -29,7 +29,7 @@ namespace RetroFuturaGUI
 
     private:
         const ITexture* _texture { nullptr };
-        Rectangle* _rectangle { nullptr };
+        Plane* _rectangle { nullptr };
         f32 _padding { 4.0f };
     };
 }

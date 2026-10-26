@@ -1,7 +1,7 @@
 #pragma once
 #include "IWidget.hpp"
 #include "IncludeHelper.hpp"
-#include "Rectangle.hpp"
+#include "Plane.hpp"
 #include <memory>
 #include <vector>
 #include "IBorder.hpp"
@@ -59,20 +59,20 @@ namespace RetroFuturaGUI
             _secondaryCheckeredColor { 0.8f, 0.8f, 0.8f, 1.0f };
         glm::vec4
             _previewColor { 1.0f };
-        std::unique_ptr<Rectangle>
+        std::unique_ptr<Plane>
             _checkeredBackground { nullptr },
             _whiteBackground { nullptr },
             _colorRect { nullptr };
         DualPrevieAlignment _previewAlignment { DualPrevieAlignment::Horizontal };
         bool _useWhiteBackgroundRect { true };
 
-        /// @brief The fill the checkerboard's squares are drawn over. A Rectangle draws nothing at all until it holds a color.
+        /// @brief The fill the checkerboard's squares are drawn over. A Plane draws nothing at all until it holds a color.
         std::vector<glm::vec4> _checkeredFillColor { _primaryCheckeredColor };
 
-        /// @brief The white half's fill, kept here because a Rectangle holds a span over the colors it is given.
+        /// @brief The white half's fill, kept here because a Plane holds a span over the colors it is given.
         std::vector<glm::vec4> _whiteBackgroundColor { glm::vec4(1.0f) };
 
-        /// @brief Side length of every checkerboard square, in pixels. A Rectangle keeps a span over this, so it has to outlive the call.
+        /// @brief Side length of every checkerboard square, in pixels. A Plane keeps a span over this, so it has to outlive the call.
         std::vector<f32> _checkeredSquareWidth { 8.0f };
     };
 }

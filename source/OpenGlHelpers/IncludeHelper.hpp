@@ -40,12 +40,17 @@ namespace RetroFuturaGUI
 
     enum class FillType: u32
     {
-        SOLID,
-        LINEAR_GRADIENT,
-        RADIAL_GRADIENT,
-        HUESTAR_GRADIENT,
-        COLOR_CIRCLE,
-        COLOR_SQUARE
+        Solid,
+        LinearShift,
+        RadialGradient,
+        HueStarGradient
+    };
+
+    /// @brief The shape of the ColorPicker's field of colors.
+    enum class ColorFieldShape : u32
+    {
+        Circle,
+        Square
     };
 
     template<typename T>

@@ -16,9 +16,9 @@ RetroFuturaGUI::CheckBox::CheckBox(const std::string& name, Projection* projecti
 {
     _widgetTypeID = WidgetTypeID::CheckBox;
     _checkmark = ResourceManager::GetCheckmarkIcon();
-    _inheritFill = std::make_unique<Rectangle>(projection);
-    _background = std::make_unique<Rectangle>(projection);
-    _border = std::make_unique<Rectangle>(projection);
+    _inheritFill = std::make_unique<Plane>(projection);
+    _background = std::make_unique<Plane>(projection);
+    _border = std::make_unique<Frame>(projection);
 
     if(!_background)
         return;
@@ -26,8 +26,6 @@ RetroFuturaGUI::CheckBox::CheckBox(const std::string& name, Projection* projecti
     if(!_border)
         return;
 
-    _background->SetRectangleMode(RectangleMode::Plane);
-    _border->SetRectangleMode(RectangleMode::Border);
 }
 
 void RetroFuturaGUI::CheckBox::Draw()

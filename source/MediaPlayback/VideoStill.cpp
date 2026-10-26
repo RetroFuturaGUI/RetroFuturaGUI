@@ -1,6 +1,6 @@
 #include "VideoStill.hpp"
 #include "Decoder.hpp"
-#include "Frame.hpp"
+#include "MediaFrame.hpp"
 #include "MediaSource.hpp"
 #include "Packet.hpp"
 #include <algorithm>
@@ -32,7 +32,7 @@ std::optional<RetroFuturaGUI::DecodedImage> RetroFuturaGUI::DecodeVideoFrame(std
         return std::nullopt;
 
     Packet packet;
-    Frame
+    MediaFrame
         frame,
         latest;
 
@@ -165,7 +165,7 @@ std::optional<RetroFuturaGUI::DecodedImage> RetroFuturaGUI::DecodeVideoFrame(std
         sws_setColorspaceDetails(converter.get(), sws_getCoefficients(picture->colorspace), isFullRange, sws_getCoefficients(SWS_CS_DEFAULT), 1, 0, 1 << 16, 1 << 16);
     }
 
-    Frame converted;
+    MediaFrame converted;
 
     if(!converted.IsValid())
         return std::nullopt;

@@ -6,9 +6,9 @@
 RetroFuturaGUI::IDropDown::IDropDown(std::string_view name, Projection* projection, IHierarchyNode* parentWidget, const WidgetTypeID parentWidgetTypeID, GLFWwindow* parentWindow)
     : IWidget(name, projection, parentWidget, parentWidgetTypeID, parentWindow)
 {
-    _dropDownBackground = std::make_unique<Rectangle>(projection);
-    _dropDownBorder = std::make_unique<Rectangle>(projection);
-    _dropDownItemHighlight = std::make_unique<Rectangle>(projection);
+    _dropDownBackground = std::make_unique<Plane>(projection);
+    _dropDownBorder = std::make_unique<Frame>(projection);
+    _dropDownItemHighlight = std::make_unique<Plane>(projection);
     _dropDownArrow = ResourceManager::GetDropDownArrowIcon();
 
     if(!_dropDownBackground)
@@ -20,9 +20,6 @@ RetroFuturaGUI::IDropDown::IDropDown(std::string_view name, Projection* projecti
     if(!_dropDownItemHighlight)
         return;
 
-    _dropDownBackground->SetRectangleMode(RectangleMode::Plane);
-    _dropDownBorder->SetRectangleMode(RectangleMode::Border);
-    _dropDownItemHighlight->SetRectangleMode(RectangleMode::Plane);
     setDropDownBackgroundColors();
     setDropDownBorderColors();
     _dropDownItemHighlight->SetColors(_highLightColor);

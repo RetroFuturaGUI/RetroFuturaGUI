@@ -60,7 +60,7 @@ namespace RetroFuturaGUI
         void growLinesTo(const uSize lineCount);
 
         /// @brief Places the line over the track, inside its border.
-        void alignLine(const uSize lineIndex, const Rectangle& track);
+        void alignLine(const uSize lineIndex, const Plane& track);
 
         /// @brief Rebuilds every line's points from its set. The data isn't owned and may change in place, so this runs every frame.
         void updatePoints();
@@ -81,12 +81,12 @@ namespace RetroFuturaGUI
         uSize nearestPointIndex(const glm::vec2& point, const uSize lineIndex) const;
 
         void drawLineLabels();
-        void drawLineLabel(const uSize lineIndex, const Rectangle& track);
+        void drawLineLabel(const uSize lineIndex, const Plane& track);
 
         /// @brief Draws the pointer on the hovered line's data point nearest the cursor, and the text next to it.
         void drawHoverPointer();
-        void drawHoverMarker(const glm::vec2& pointerPosition, const Rectangle& track);
-        void drawHoverText(const glm::vec2& pointerPosition, const Rectangle& track);
+        void drawHoverMarker(const glm::vec2& pointerPosition, const Plane& track);
+        void drawHoverText(const glm::vec2& pointerPosition, const Plane& track);
 
         /// @brief "Label: value", or whichever of the two is shown.
         std::string composeHoverText() const;
@@ -100,10 +100,10 @@ namespace RetroFuturaGUI
         static void fitClipBox(Text& text);
 
         /// @brief Window pixels into the track's own frame, in pixels: its position and screen-plane rotation undone, as isPointInsideRect does.
-        static glm::vec2 toTrackSpace(const glm::vec2& point, const Rectangle& track);
+        static glm::vec2 toTrackSpace(const glm::vec2& point, const Plane& track);
 
         /// @brief A point in the track's frame back into the world, zOffset above the track.
-        static glm::vec3 toWorldSpace(const glm::vec2& trackPoint, const Rectangle& track, const f32 zOffset);
+        static glm::vec3 toWorldSpace(const glm::vec2& trackPoint, const Plane& track, const f32 zOffset);
 
         static constexpr const f32
             _hoverThicknessIncrease = 2.0f,
@@ -122,7 +122,7 @@ namespace RetroFuturaGUI
 
     // Labels
         std::unique_ptr<Text> _hoverText { nullptr };
-        std::unique_ptr<Rectangle> _hoverTextBackground { nullptr };
+        std::unique_ptr<Plane> _hoverTextBackground { nullptr };
         std::vector<glm::vec4> _hoverTextBackgroundColor { glm::vec4(0.0f, 0.0f, 0.0f, 0.75f) };
         std::string _labelFontFamily {};
         f32 _labelFontSize { 16.0f };

@@ -12,8 +12,8 @@ RetroFuturaGUI::ExtendedComboBox::ExtendedComboBox(std::string_view name, Projec
     : IDropDown(name, projection, parentWidget, parentWidgetTypeID, parentWindow)
 {
     _widgetTypeID = WidgetTypeID::ExtendedComboBox;
-    _background = std::make_unique<Rectangle>(projection);
-    _border = std::make_unique<Rectangle>(projection);
+    _background = std::make_unique<Plane>(projection);
+    _border = std::make_unique<Frame>(projection);
     _previewText = std::make_shared<Text>(projection);
 
     if(!_background)
@@ -22,8 +22,6 @@ RetroFuturaGUI::ExtendedComboBox::ExtendedComboBox(std::string_view name, Projec
     if(!_border)
         return;
 
-    _background->SetRectangleMode(RectangleMode::Plane);
-    _border->SetRectangleMode(RectangleMode::Border);
 
     setColors(ColorState::Enabled);
 }

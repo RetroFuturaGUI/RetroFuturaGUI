@@ -10,11 +10,11 @@ RetroFuturaGUI::WindowTab::WindowTab(std::string_view name, Projection* projecti
     : IWidget(name, projection, parentWidget, parentWidgetTypeID, parentWindow)
 {
     _widgetTypeID = WidgetTypeID::WindowTab;
-    _background = std::make_unique<Rectangle>(projection);
-    _border = std::make_unique<Rectangle>(projection);
-    _fieldBackground = std::make_unique<Rectangle>(projection);
-    _fieldBorder = std::make_unique<Rectangle>(projection);
-    _closeBackground = std::make_unique<Rectangle>(projection);
+    _background = std::make_unique<Plane>(projection);
+    _border = std::make_unique<Frame>(projection);
+    _fieldBackground = std::make_unique<Plane>(projection);
+    _fieldBorder = std::make_unique<Frame>(projection);
+    _closeBackground = std::make_unique<Plane>(projection);
     _closeIcon = std::make_unique<SvgTexture>(getCloseIconPath(), true, projection, glm::i32vec2(32));
     _previewTitle = std::make_unique<Text>(projection);
 
@@ -33,14 +33,9 @@ RetroFuturaGUI::WindowTab::WindowTab(std::string_view name, Projection* projecti
     if(!_closeBackground)
         return;
 
-    _background->SetRectangleMode(RectangleMode::Plane);
 
-    _border->SetRectangleMode(RectangleMode::Border);
-    _border->SetBorderWidth(0.0f); //no frame until one is asked for, since a Rectangle starts with a 5 px border
+    _border->SetBorderWidth(0.0f); //no frame until one is asked for, since a Frame starts with a 5 px border
 
-    _fieldBackground->SetRectangleMode(RectangleMode::Plane);
-    _fieldBorder->SetRectangleMode(RectangleMode::Border);
-    _closeBackground->SetRectangleMode(RectangleMode::Plane);
 
     SetBackgroundColor(glm::vec4(0.055f, 0.055f, 0.075f, 1.0f), ColorState::Enabled);
     SetBackgroundColor(glm::vec4(0.055f, 0.055f, 0.075f, 1.0f), ColorState::Disabled);
@@ -359,7 +354,7 @@ void RetroFuturaGUI::WindowTab::SetCloseIconColor(const glm::vec4& color)
 
     _closeIcon->SetPathFill("CloseIcon", SvgPathFill
     {
-        ._FillType = FillType::SOLID,
+        ._FillType = FillType::Solid,
         ._Colors = { _closeIconColor },
         ._GradientDegree = 0.0f,
         ._GradientOffset = 0.0f,

@@ -1,7 +1,9 @@
 #pragma once
 #include "IWidget.hpp"
 #include "IncludeHelper.hpp"
-#include "Rectangle.hpp"
+#include "ColorField.hpp"
+#include "Frame.hpp"
+#include "Plane.hpp"
 #include "Texture.hpp"
 #include "config.hpp"
 #include <glm/ext/vector_float4.hpp>
@@ -90,9 +92,8 @@ namespace RetroFuturaGUI
         void pickColorAt(const glm::vec2& fieldPoint, const glm::vec2& fieldSize);
 
     // Color Picker Field
-        std::unique_ptr<Rectangle>
-            _colorPickerBackground { nullptr },
-            _colorPickerBorder { nullptr };
+        std::unique_ptr<ColorField> _colorPickerBackground { nullptr };
+        std::unique_ptr<Frame> _colorPickerBorder { nullptr };
         std::vector<glm::vec4> 
             _colorPickerBorderColorsEnabled {},
             _colorPickerBorderColorsHover {},
@@ -101,11 +102,10 @@ namespace RetroFuturaGUI
         ColorState _colorPickerFieldState { ColorState::Disabled };
 
     // Indicator
-        std::unique_ptr<Rectangle>
-            _indicatorBackground { nullptr },
-            _indicatorBorder { nullptr };
+        std::unique_ptr<Plane> _indicatorBackground { nullptr };
+        std::unique_ptr<Frame> _indicatorBorder { nullptr };
         std::vector<glm::vec4>
-            _indicatorBackgroundColors { glm::vec4(1.0f) }, //the picked color, opaque. Always one element: the indicator's Rectangle keeps a span over it
+            _indicatorBackgroundColors { glm::vec4(1.0f) }, //the picked color, opaque. Always one element: the indicator's Plane keeps a span over it
             _indicatorBorderColorsEnabled {},
             _indicatorBorderColorsHover {},
             _indicatorBorderColorsClicked {},

@@ -3,7 +3,6 @@
 #include "ITextProperties.hpp"
 #include "IWidget.hpp"
 #include "PlatformBridge.hpp"
-#include "Rectangle.hpp"
 #include <algorithm>
 #include <memory>
 #include <string_view>
@@ -12,8 +11,8 @@ RetroFuturaGUI::Tooltip::Tooltip(Projection* projection, IWidget* widget)
 {
     _projection = projection;
     _widget = widget;
-    _background = std::make_unique<Rectangle>(_projection);
-    _border = std::make_unique<Rectangle>(_projection);
+    _background = std::make_unique<Plane>(_projection);
+    _border = std::make_unique<Frame>(_projection);
     _text = std::make_unique<Text>(projection);
 
     if(!_background)
@@ -25,8 +24,6 @@ RetroFuturaGUI::Tooltip::Tooltip(Projection* projection, IWidget* widget)
     if(!_text)
         return;
 
-    _background->SetRectangleMode(RectangleMode::Plane);
-    _border->SetRectangleMode(RectangleMode::Border);
     _border->SetBorderWidth(_defaultBorderWidth);
     _text->SetTextPadding(_defaultTextPadding);
     setBackgroundColors();

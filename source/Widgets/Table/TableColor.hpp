@@ -1,7 +1,7 @@
 #pragma once
 #include "IncludeHelper.hpp"
 #include "ITableWidget.hpp"
-#include "Rectangle.hpp"
+#include "Plane.hpp"
 
 namespace RetroFuturaGUI
 {
@@ -9,7 +9,7 @@ namespace RetroFuturaGUI
     {
     public:
         TableColor() = delete;
-        TableColor(Table* parentTable, Projection* projection, Rectangle* rectangle);
+        TableColor(Table* parentTable, Projection* projection, Plane* rectangle);
         ~TableColor() = default;
         TableColor(const TableColor&) = delete;
         TableColor(TableColor&&) = delete;
@@ -22,6 +22,6 @@ namespace RetroFuturaGUI
     private:
         inline static const glm::vec4 _dummyColor  { 0.5f, 0.0f, 1.0f, 1.0f };
         std::vector<glm::vec4> _color { _dummyColor };
-        Rectangle* _rectangle { nullptr };
+        Plane* _rectangle { nullptr };
     };
 }

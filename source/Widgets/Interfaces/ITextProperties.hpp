@@ -5,7 +5,6 @@
 #include "Signal.hpp"
 #include "Text.hpp"
 #include "IWindowAccessor.hpp"
-#include "Rectangle.hpp"
 
 namespace RetroFuturaGUI
 {

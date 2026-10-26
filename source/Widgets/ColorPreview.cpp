@@ -1,6 +1,5 @@
 #include "ColorPreview.hpp"
 #include "IncludeHelper.hpp"
-#include "Rectangle.hpp"
 #include <memory>
 #include <span>
 
@@ -8,10 +7,10 @@ RetroFuturaGUI::ColorPreview::ColorPreview(std::string_view name, Projection* pr
     : IWidget(name, projection, parentWidget, parentWidgetTypeID, parentWindow)
 {
     _widgetTypeID = WidgetTypeID::ColorPreview;
-    _checkeredBackground = std::make_unique<Rectangle>(&_projection);
-    _whiteBackground = std::make_unique<Rectangle>(&_projection);
-    _colorRect = std::make_unique<Rectangle>(&_projection);
-    _border = std::make_unique<Rectangle>(&_projection);
+    _checkeredBackground = std::make_unique<Plane>(&_projection);
+    _whiteBackground = std::make_unique<Plane>(&_projection);
+    _colorRect = std::make_unique<Plane>(&_projection);
+    _border = std::make_unique<Frame>(&_projection);
 
     if(!_checkeredBackground)
         return;
@@ -25,18 +24,14 @@ RetroFuturaGUI::ColorPreview::ColorPreview(std::string_view name, Projection* pr
     if(!_border)
         return;
 
-    _checkeredBackground->SetRectangleMode(RectangleMode::Plane);
     _checkeredBackground->SetColors(_checkeredFillColor);
     _checkeredBackground->SetRasterPattern(RasterPattern::Checkered);
     _checkeredBackground->SetPrimaryRasterColor(_primaryCheckeredColor);
     _checkeredBackground->SetSecondaryRasterColor(_secondaryCheckeredColor);
     _checkeredBackground->SetPrimaryRasterWidthTransfer(_checkeredSquareWidth);
     _checkeredBackground->SetRasterDegree(0.0f);
-    _whiteBackground->SetRectangleMode(RectangleMode::Plane);
     _whiteBackground->SetColors(_whiteBackgroundColor);
-    _colorRect->SetRectangleMode(RectangleMode::Plane);
     _colorRect->SetColors(std::span<glm::vec4>(&_previewColor, 1));
-    _border->SetRectangleMode(RectangleMode::Border);
     setBorderColors();
 }
 

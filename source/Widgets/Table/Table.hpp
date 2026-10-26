@@ -6,7 +6,8 @@
 #include "IWidget.hpp"
 #include "IncludeHelper.hpp"
 #include "Projection.hpp"
-#include "Rectangle.hpp"
+#include "Frame.hpp"
+#include "Plane.hpp"
 #include "ResourceManager.hpp"
 #include "SvgTexture.hpp"
 #include "config.hpp"
@@ -697,14 +698,15 @@ namespace RetroFuturaGUI
             _horizontalHeaderCells {},
             _verticalHeaderCells {};
         TextDefaults _textDefaults {};
-        std::unique_ptr<Rectangle>
+        std::unique_ptr<Plane>
             _highlightedBackgroundCell { nullptr },
-            _highlightedCellBorder { nullptr },
             _trackColoringOverlay { nullptr },
-            _innerBorder { nullptr },
             _cellColorPlane { nullptr },
             _cellImagePlane { nullptr },
-            _checkBoxBackground { nullptr },
+            _checkBoxBackground { nullptr };
+        std::unique_ptr<Frame>
+            _highlightedCellBorder { nullptr },
+            _innerBorder { nullptr },
             _checkBoxBorder { nullptr };
         std::shared_ptr<SvgTexture> _checkmark { nullptr };
         std::vector<glm::vec4> _imagePlaneColors { glm::vec4(0.0f) }; //transparent, so the plane draws just its image; the plane only keeps a view of it
@@ -758,7 +760,7 @@ namespace RetroFuturaGUI
         static constexpr f32 _widgetZOffset { 0.05f };
         SvgPathFill _checkmarkFill
         {
-            ._FillType =  FillType::SOLID,
+            ._FillType =  FillType::Solid,
             ._Colors {{ 1.0f, 1.0f, 1.0f, 1.0f }},
             ._GradientDegree = 0.0f,
             ._GradientOffset = 0.0f,
@@ -853,9 +855,8 @@ namespace RetroFuturaGUI
             _onRowSlowDoubleClicked,
             _onRowSlowDoubleClickedAsync;
         std::vector<bool> _bandBaseFlags {}; // what the band adds to: the selection from before the press with Alt, nothing without
-        std::unique_ptr<Rectangle>
-            _selectionBand { nullptr },
-            _selectionBandBorder { nullptr };
+        std::unique_ptr<Plane> _selectionBand { nullptr };
+        std::unique_ptr<Frame> _selectionBandBorder { nullptr };
         std::vector<glm::vec4>
             _selectionBandColors {{ 0.3f, 0.45f, 0.85f, 0.25f }},
             _selectionBandBorderColors {{ 0.45f, 0.6f, 1.0f, 0.9f }};

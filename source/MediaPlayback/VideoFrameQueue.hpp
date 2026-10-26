@@ -1,6 +1,6 @@
 #pragma once
 #include "config.hpp"
-#include "Frame.hpp"
+#include "MediaFrame.hpp"
 #include <condition_variable>
 #include <deque>
 #include <mutex>
@@ -11,7 +11,7 @@ namespace RetroFuturaGUI
     /// @brief A decoded picture and when it is due.
     struct VideoFrame
     {
-        Frame _Frame {};
+        MediaFrame _Frame {};
         i64 _Position { 0 }; // ms from the start of the stream
     };
 

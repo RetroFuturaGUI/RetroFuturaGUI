@@ -2,7 +2,7 @@
 #include "ITableWidget.hpp"
 
 
-RetroFuturaGUI::TableCheckBox::TableCheckBox(Table* parentTable, Projection* projection, Rectangle* background, Rectangle* border, SvgTexture* checkmark)
+RetroFuturaGUI::TableCheckBox::TableCheckBox(Table* parentTable, Projection* projection, Plane* background, Frame* border, SvgTexture* checkmark)
     : ITableWidget(parentTable, projection)
 {
     _tableWidgetID = TableWidgetTypeID::TableCheckBox;

@@ -1,7 +1,6 @@
 #include "ColorPicker.hpp"
 #include "IWidget.hpp"
 #include "IncludeHelper.hpp"
-#include "Rectangle.hpp"
 #include <cmath>
 #include <glm/gtc/constants.hpp>
 #include <memory>
@@ -10,10 +9,10 @@ RetroFuturaGUI::ColorPicker::ColorPicker(const std::string& name, Projection* pr
     : IWidget(name, projection, parentWidget, parentWidgetTypeID, parentWindow)
 {
     _widgetTypeID = WidgetTypeID::ColorPicker;
-    _colorPickerBackground = std::make_unique<Rectangle>(projection);
-    _colorPickerBorder = std::make_unique<Rectangle>(projection);
-    _indicatorBackground = std::make_unique<Rectangle>(projection);
-    _indicatorBorder = std::make_unique<Rectangle>(projection);
+    _colorPickerBackground = std::make_unique<ColorField>(projection);
+    _colorPickerBorder = std::make_unique<Frame>(projection);
+    _indicatorBackground = std::make_unique<Plane>(projection);
+    _indicatorBorder = std::make_unique<Frame>(projection);
 
     if(!_colorPickerBackground)
         return;
@@ -27,15 +26,11 @@ RetroFuturaGUI::ColorPicker::ColorPicker(const std::string& name, Projection* pr
     if(!_indicatorBorder)
         return;
 
-    _colorPickerBackground->SetRectangleMode(RectangleMode::Plane);
-    _colorPickerBackground->SetFillType(FillType::COLOR_CIRCLE);
-    _colorPickerBorder->SetRectangleMode(RectangleMode::Border);
+    _colorPickerBackground->SetShape(ColorFieldShape::Circle);
     _colorPickerBorder->SetBorderWidth(2.0f);
-    _indicatorBackground->SetRectangleMode(RectangleMode::Plane);
     _indicatorBackground->SetSize(glm::vec2(_indicatorDiameter));
     _indicatorBackground->SetCornerRadii(glm::vec4(0.5f * _indicatorDiameter));
     _indicatorBackground->SetColors(_indicatorBackgroundColors);
-    _indicatorBorder->SetRectangleMode(RectangleMode::Border);
     _indicatorBorder->SetSize(glm::vec2(_indicatorDiameter));
     _indicatorBorder->SetCornerRadii(glm::vec4(0.5f * _indicatorDiameter));
     _indicatorBorder->SetBorderWidth(2.0f);
@@ -58,7 +53,7 @@ void RetroFuturaGUI::ColorPicker::Draw()
     if(!_indicatorBorder)
         return;
 
-    _colorPickerBackground->SetColorFieldBrightness(_brightness);
+    _colorPickerBackground->SetBrightness(_brightness);
     _colorPickerBackground->Draw();
     _colorPickerBorder->Draw();
     _indicatorBackground->Draw();

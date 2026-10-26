@@ -3,7 +3,6 @@
 #include "IWidget.hpp"
 #include "IncludeHelper.hpp"
 #include "RadioButton.hpp"
-#include "Rectangle.hpp"
 #include "config.hpp"
 #include <algorithm>
 #include <cstddef>
@@ -14,13 +13,12 @@ RetroFuturaGUI::RadioButtonGroup::RadioButtonGroup(const std::string& name, Proj
     : IWidget(name, projection, parentWidget, parentWidgetTypeID, parentWindow)
 {
     _widgetTypeID = WidgetTypeID::RadioButtonGroup;
-    _border = std::make_unique<Rectangle>(projection);
+    _border = std::make_unique<Frame>(projection);
     _text = std::make_unique<Text>(projection);
 
     if(!_border)
         return;
 
-    _border->SetRectangleMode(RectangleMode::Border);
 }
 
 void RetroFuturaGUI::RadioButtonGroup::Draw()

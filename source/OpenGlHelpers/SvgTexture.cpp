@@ -140,16 +140,16 @@ void RetroFuturaGUI::SvgTexture::drawMaskedLayer(PathLayer& layer)
     Shader* shader = nullptr;
     switch (layer._Fill._FillType)
     {
-        case FillType::LINEAR_GRADIENT:
-            shader = &ShaderManager::GetSvgMaskLinearGradientShader();
+        case FillType::LinearShift:
+            shader = &ShaderManager::GetSvgMaskLinearShiftShader();
             break;
-        case FillType::RADIAL_GRADIENT:
+        case FillType::RadialGradient:
             shader = &ShaderManager::GetSvgMaskRadialGradientShader();
             break;
-        case FillType::HUESTAR_GRADIENT:
+        case FillType::HueStarGradient:
             shader = &ShaderManager::GetSvgMaskHueStarGradientShader();
             break;
-        default: // FillType::SOLID
+        default: // FillType::Solid
             shader = &ShaderManager::GetSvgMaskSolidFillShader();
             break;
     }
@@ -160,7 +160,7 @@ void RetroFuturaGUI::SvgTexture::drawMaskedLayer(PathLayer& layer)
     shader->SetUniformMat4("uScaling", _scalingMatrix);
     shader->SetUniformMat4("uRotation", _rotationMatrix);
 
-    if (layer._Fill._FillType == FillType::SOLID)
+    if (layer._Fill._FillType == FillType::Solid)
     {
         shader->SetUniformVec4("uColor", layer._Fill._Colors[0]);
     }

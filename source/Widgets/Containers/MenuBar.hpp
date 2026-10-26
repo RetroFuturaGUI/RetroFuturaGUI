@@ -6,7 +6,8 @@
 #include "IClickable.hpp"
 #include "Label.hpp"
 #include "Button.hpp"
-#include "Rectangle.hpp"
+#include "Frame.hpp"
+#include "Plane.hpp"
 #include "TextBox.hpp"
 #include "SvgImage.hpp"
 #include "Image.hpp"
@@ -135,7 +136,7 @@ namespace RetroFuturaGUI
         /// @brief Sets the speed at which the separator lines' gradient rotates over time.
         void SetSeparatorLinesGradientRotationSpeed(const f32 rotationSpeed);
 
-        /// @brief Sets sections of the separator lines to skip drawing, which is what turns them into dashed lines; see Rectangle::SetBackgroundGaps.
+        /// @brief Sets sections of the separator lines to skip drawing, which is what turns them into dashed lines; see Plane::SetBackgroundGaps.
         void SetSeparatorLinesGaps(const BackgroundGap& gap);
 
         /// @brief Sets the corner rounding radii of the bar's own background and border, clockwise from the top-left.
@@ -199,7 +200,7 @@ namespace RetroFuturaGUI
         /// @brief Sets the coverage threshold above which the item background's fog appears; higher values carve larger clear gaps out of the cloud.
         void SetItemBackgroundFogClearing(const f32 clearing);
 
-        /// @brief Sets sections of the item background to skip drawing; see Rectangle::SetBackgroundGaps.
+        /// @brief Sets sections of the item background to skip drawing; see Plane::SetBackgroundGaps.
         void SetItemBackgroundGaps(const BackgroundGap& gap);
 
     //Item border
@@ -248,7 +249,7 @@ namespace RetroFuturaGUI
         /// @brief Sets the item border's width.
         void SetItemBorderWidth(const f32 borderWidth);
 
-        /// @brief Sets sections of the item border to skip drawing; see Rectangle::SetBorderGaps.
+        /// @brief Sets sections of the item border to skip drawing; see Frame::SetBorderGaps.
         void SetItemBorderGaps(std::span<BorderGap> gaps);
 
 
@@ -329,8 +330,9 @@ namespace RetroFuturaGUI
         /// @brief Makes the given state the one the items draw in, and pushes the matching colors.
         void setItemColors(const ColorState state);
 
-        /// @brief Hands the colors to the element, unless the state they came from was never set.
-        void pushElementColors(Rectangle* element, std::vector<glm::vec4>* colors);
+        /// @brief Hands the colors to the element, a Plane or a Frame, unless the state they came from was never set.
+        template<typename RectangleType>
+        void pushElementColors(RectangleType* element, std::vector<glm::vec4>* colors);
 
         void setSeparatorLinesColors();
         void setItemBackgroundColors();
@@ -339,10 +341,10 @@ namespace RetroFuturaGUI
         void setItemBorderCornerRadii(const glm::vec4& radii);
 
     //Elements
-        std::unique_ptr<Rectangle>
+        std::unique_ptr<Plane>
             _separatorLine { nullptr },
-            _itemBackground { nullptr },
-            _itemBorder { nullptr };
+            _itemBackground { nullptr };
+        std::unique_ptr<Frame> _itemBorder { nullptr };
         std::list<std::unique_ptr<IWidget>> _itemFlex {};
 
     //Design

@@ -3,7 +3,8 @@
 #include "IWidget.hpp"
 #include "IBackground.hpp"
 #include "IBorder.hpp"
-#include "Rectangle.hpp"
+#include "Frame.hpp"
+#include "Plane.hpp"
 #include "SvgTexture.hpp"
 #include "Text.hpp"
 #include "Signal.hpp"
@@ -267,10 +268,10 @@ namespace RetroFuturaGUI
 
     //Elements
         std::vector<Field> _fields {};
-        std::unique_ptr<Rectangle>
+        std::unique_ptr<Plane>
             _fieldBackground { nullptr },
-            _fieldBorder { nullptr },
             _closeBackground { nullptr };
+        std::unique_ptr<Frame> _fieldBorder { nullptr };
         std::unique_ptr<SvgTexture> _closeIcon { nullptr }; //its own, since recoloring a shared one rasterizes it again for every WindowTab that draws it
         std::unique_ptr<Text> _previewTitle { nullptr };
 

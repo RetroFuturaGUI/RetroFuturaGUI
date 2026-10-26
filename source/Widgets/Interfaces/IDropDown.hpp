@@ -2,7 +2,8 @@
 #include "IWidget.hpp"
 #include "IBackground.hpp"
 #include "IBorder.hpp"
-#include "Rectangle.hpp"
+#include "Frame.hpp"
+#include "Plane.hpp"
 #include "SvgTexture.hpp"
 #include "Text.hpp"
 #include <memory>
@@ -84,9 +85,10 @@ namespace RetroFuturaGUI
         void showDropDownLater();
 
     //Elements
-        std::unique_ptr<Rectangle>
+        std::unique_ptr<Plane>
             _dropDownBackground { nullptr },
-            _dropDownItemHighlight { nullptr },
+            _dropDownItemHighlight { nullptr };
+        std::unique_ptr<Frame>
             _dropDownBorder { nullptr },
             _dropDownItemBorder { nullptr };
         std::shared_ptr<Text> _previewText { nullptr };
@@ -169,7 +171,7 @@ namespace RetroFuturaGUI
         {
             SvgPathFill
             {
-                ._FillType = FillType::SOLID,
+                ._FillType = FillType::Solid,
                 ._Colors = { glm::vec4(1.0f) },
                 ._GradientDegree = 35.0f,
                 ._GradientOffset = 0.0f,

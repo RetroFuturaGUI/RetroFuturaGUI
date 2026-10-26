@@ -2,7 +2,7 @@
 #include "IncludeHelper.hpp"
 #include <memory>
 #include <span>
-#include "Rectangle.hpp"
+#include "Frame.hpp"
 
 namespace RetroFuturaGUI
 {
@@ -58,7 +58,7 @@ namespace RetroFuturaGUI
         /// @brief Sets the border width.
         void SetBorderWidth(const f32 borderWidth);
 
-        /// @brief Sets sections of the border to skip drawing; see Rectangle::SetBorderGaps.
+        /// @brief Sets sections of the border to skip drawing; see Frame::SetBorderGaps.
         virtual void SetBorderGaps(std::span<BorderGap> gaps);
 
     protected:
@@ -66,8 +66,8 @@ namespace RetroFuturaGUI
         void setBorderColors();
         void setBorderCornerRadii(const glm::vec4& radii);
 
-        std::unique_ptr<Rectangle> _border;
-        FillType _borderFillType { FillType::SOLID };
+        std::unique_ptr<Frame> _border;
+        FillType _borderFillType { FillType::Solid };
         ColorState _borderColorState { ColorState::Enabled };
 
         std::vector<glm::vec4> 

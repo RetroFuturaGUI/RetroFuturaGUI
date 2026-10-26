@@ -276,26 +276,24 @@ void RetroFuturaGUI::Window::createWindow()
 
     _projection = std::make_unique<Projection>((float)_width, (float)_height);
 
-    _background = std::make_unique<Rectangle>(_projection.get());
+    _background = std::make_unique<Plane>(_projection.get());
 
     if(!_background)
         return;
 
-    _background->SetRectangleMode(RectangleMode::Plane);
     _background->SetPosition(glm::vec3((f32)_width * 0.5f, (f32)_height * 0.5f, -1.0f));
     _background->SetSize(glm::vec2((f32)_width, (f32)_height));
     _background->SetRotation(glm::vec3(0.0f));
 
-    _border = std::make_unique<Rectangle>(_projection.get());
+    _border = std::make_unique<Frame>(_projection.get());
 
     if(!_border)
         return;
 
-    _border->SetRectangleMode(RectangleMode::Border);
     _border->SetPosition(glm::vec3((f32)_width * 0.5f, (f32)_height * 0.5f, 0.0f));
     _border->SetSize(glm::vec2((f32)_width, (f32)_height));
     _border->SetRotation(glm::vec3(0.0f));
-    //No frame until one is asked for, since a Rectangle starts with a 5 px border
+    //No frame until one is asked for, since a Frame starts with a 5 px border
     _border->SetBorderWidth(0.0f);
 
     SetBackgroundColor(glm::vec4(0.086f, 0.086f, 0.1137f, 1.0f), ColorState::Enabled);

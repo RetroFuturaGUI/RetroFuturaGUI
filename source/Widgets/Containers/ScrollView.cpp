@@ -1,7 +1,6 @@
 #include "ScrollView.hpp"
 #include "IWidget.hpp"
 #include "IncludeHelper.hpp"
-#include "Rectangle.hpp"
 #include <memory>
 #include <algorithm>
 #include <cmath>
@@ -343,8 +342,7 @@ void RetroFuturaGUI::ScrollView::EnableBackground(const bool enable)
     
     if(_showBorder)
     {
-        _background = std::make_unique<Rectangle>(&_projection);
-        _background->SetRectangleMode(RectangleMode::Plane);
+        _background = std::make_unique<Plane>(&_projection);
     }
     else
         _background.reset();
@@ -356,8 +354,7 @@ void RetroFuturaGUI::ScrollView::EnableBorder(const bool enable)
 
     if(_showBorder)
     {
-        _border = std::make_unique<Rectangle>(&_projection);
-        _border->SetRectangleMode(RectangleMode::Plane);
+        _border = std::make_unique<Frame>(&_projection);
     }
     else
         _border.reset();

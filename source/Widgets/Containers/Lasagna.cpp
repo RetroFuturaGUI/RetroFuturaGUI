@@ -72,12 +72,11 @@ RetroFuturaGUI::Lasagna::Lasagna(const std::string& name, Projection* projection
         }
     }
 
-    _debugBorder = std::make_unique<Rectangle>(&_projection);
+    _debugBorder = std::make_unique<Frame>(&_projection);
 
     if(!_debugBorder)
         return;
 
-    _debugBorder->SetRectangleMode(RectangleMode::Border);
     _debugBorder->SetPosition(glm::vec3(0.0f));
     _debugBorder->SetSize(glm::vec3(0.0f));
     _debugBorder->SetRotation(glm::vec3(0.0f));

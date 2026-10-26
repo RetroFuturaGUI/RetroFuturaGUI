@@ -1,7 +1,8 @@
 #pragma once
 #include "ITableWidget.hpp"
 #include "IncludeHelper.hpp"
-#include "Rectangle.hpp"
+#include "Frame.hpp"
+#include "Plane.hpp"
 #include "SvgTexture.hpp"
 #include <glm/ext/vector_float4.hpp>
 
@@ -10,7 +11,7 @@ namespace RetroFuturaGUI
     class TableCheckBox final : public ITableWidget
     {
         public:
-            TableCheckBox(Table* parentTable, Projection* projection, Rectangle* background, Rectangle* border, SvgTexture* checkmark);
+            TableCheckBox(Table* parentTable, Projection* projection, Plane* background, Frame* border, SvgTexture* checkmark);
             TableCheckBox() = delete;
 
             void Draw() override;
@@ -33,9 +34,8 @@ namespace RetroFuturaGUI
             bool GetValue() const;
 
         private:
-            Rectangle
-                *_background { nullptr },
-                *_border { nullptr };
+            Plane* _background { nullptr };
+            Frame* _border { nullptr };
             SvgTexture* _checkmark { nullptr };
             bool _isChecked { false };
             f32

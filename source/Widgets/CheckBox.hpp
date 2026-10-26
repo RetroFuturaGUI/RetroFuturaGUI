@@ -2,7 +2,7 @@
 #include "IWidget.hpp"
 #include "IClickable.hpp"
 #include "IncludeHelper.hpp"
-#include "Rectangle.hpp"
+#include "Plane.hpp"
 #include "IBackground.hpp"
 #include "IBorder.hpp"
 #include "SvgTexture.hpp"
@@ -69,7 +69,7 @@ namespace RetroFuturaGUI
         void setInheritFillColors();
         void interact();
 
-        std::unique_ptr<Rectangle> _inheritFill { nullptr };
+        std::unique_ptr<Plane> _inheritFill { nullptr };
         std::shared_ptr<SvgTexture> _checkmark { nullptr };
         bool* _inheritValue { nullptr };
         bool
@@ -93,7 +93,7 @@ namespace RetroFuturaGUI
         {
             SvgPathFill
             {
-                ._FillType = FillType::SOLID,
+                ._FillType = FillType::Solid,
                 ._Colors = { glm::vec4(1.0f) },
                 ._GradientDegree = 35.0f,
                 ._GradientOffset = 0.0f,

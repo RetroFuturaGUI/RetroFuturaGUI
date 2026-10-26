@@ -138,7 +138,7 @@ void RetroFuturaGUI::IRangedSingleValue::alignElementsToTrack()
 
 void RetroFuturaGUI::IRangedSingleValue::setValueFromMousePosition(const glm::vec2& mousePos)
 {
-    Rectangle* track { getTrack() };
+    Plane* track { getTrack() };
 
     if(!track)
         return;

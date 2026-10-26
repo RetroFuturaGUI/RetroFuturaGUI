@@ -10,8 +10,8 @@
 RetroFuturaGUI::ITextBox::ITextBox(std::string_view name, Projection* projection, IHierarchyNode* parentWidget, const WidgetTypeID parentWidgetTypeID, GLFWwindow* parentWindow)
    : IWidget(name, projection, parentWidget, parentWidgetTypeID, parentWindow)
 {
-    _background = std::make_unique<Rectangle>(projection);
-    _border = std::make_unique<Rectangle>(projection);
+    _background = std::make_unique<Plane>(projection);
+    _border = std::make_unique<Frame>(projection);
     _text = std::make_unique<Text>(projection);
     _placeholderText = std::make_unique<Text>(projection);
     initEditVisuals(projection);
@@ -25,8 +25,6 @@ RetroFuturaGUI::ITextBox::ITextBox(std::string_view name, Projection* projection
     if(!_placeholderText)
         return;
 
-    _background->SetRectangleMode(RectangleMode::Plane);
-    _border->SetRectangleMode(RectangleMode::Border);
     _placeholderText->SetColor(_placeholderTextColors[0]);
 }
 

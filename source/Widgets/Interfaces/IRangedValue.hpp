@@ -1,7 +1,9 @@
 #pragma once
 #include "config.hpp"
 #include "IncludeHelper.hpp"
-#include "Rectangle.hpp"
+#include "Frame.hpp"
+#include "Plane.hpp"
+#include "WavePlane.hpp"
 #include <cmath>
 #include <concepts>
 #include <limits>
@@ -204,7 +206,7 @@ namespace RetroFuturaGUI
         /// @brief Sets the indicator's border width.
         void SetIndicatorBorderWidth(const f32 borderWidth);
 
-        /// @brief Sets sections of the indicator's border to skip drawing; see Rectangle::SetBorderGaps.
+        /// @brief Sets sections of the indicator's border to skip drawing; see Frame::SetBorderGaps.
         void SetIndicatorBorderGaps(std::span<BorderGap> gaps);
 
         /// @brief Shows or hides the graph (growing fill). Builds it the first time it's shown.
@@ -274,7 +276,7 @@ namespace RetroFuturaGUI
         Projection* _elementProjection { nullptr };
 
         /// @brief The rectangle the values are laid out along: the widget's background, read each time so a replaced _background can't leave a stale pointer behind.
-        Rectangle* getTrack() const { return _background.get(); }
+        Plane* getTrack() const { return _background.get(); }
 
         /// @brief Folds the orientation into the widget's own rotation.
         /// @return The given rotation for Horizontal, or that rotation turned a quarter turn counter-clockwise for Vertical.
@@ -407,10 +409,9 @@ namespace RetroFuturaGUI
         PrimitiveTypeID _valueType { PrimitiveTypeID::Int32 };
 
         // Elements
-        std::unique_ptr<Rectangle>
-            _indicatorBackground { nullptr },
-            _indicatorBorder { nullptr },
-            _graph { nullptr };
+        std::unique_ptr<Plane> _indicatorBackground { nullptr };
+        std::unique_ptr<Frame> _indicatorBorder { nullptr };
+        std::unique_ptr<WavePlane> _graph { nullptr };
         ElementSizing _indicatorSizingMode { ElementSizing::Percent };
 
         // Settings

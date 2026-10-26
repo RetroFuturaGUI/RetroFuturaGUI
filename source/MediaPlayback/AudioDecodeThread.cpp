@@ -71,7 +71,7 @@ void RetroFuturaGUI::AudioDecodeThread::Stop()
     _ended = false;
 }
 
-bool RetroFuturaGUI::AudioDecodeThread::writeFrame(const Frame& frame)
+bool RetroFuturaGUI::AudioDecodeThread::writeFrame(const MediaFrame& frame)
 {
     if(!frame.IsValid())
         return false;
@@ -150,7 +150,7 @@ bool RetroFuturaGUI::AudioDecodeThread::writeSamples(const uSize offset, const u
 void RetroFuturaGUI::AudioDecodeThread::run()
 {
     Packet packet;
-    Frame frame;
+    MediaFrame frame;
 
     if(!frame.IsValid())
         return;
@@ -183,7 +183,7 @@ void RetroFuturaGUI::AudioDecodeThread::run()
     _ended = true;
 }
 
-bool RetroFuturaGUI::AudioDecodeThread::receiveFrames(Frame& frame)
+bool RetroFuturaGUI::AudioDecodeThread::receiveFrames(MediaFrame& frame)
 {
     // collect frames until the decoder needs more input
     while(0 == _decoder.ReceiveFrame(frame.Get()))

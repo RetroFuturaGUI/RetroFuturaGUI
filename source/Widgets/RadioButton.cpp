@@ -15,9 +15,9 @@ RetroFuturaGUI::RadioButton::RadioButton(const std::string& name, Projection* pr
     : IWidget(name, projection, parentWidget, parentWidgetTypeID, parentWindow)
 {
     _widgetTypeID = WidgetTypeID::RadioButton;
-    _indicator = std::make_unique<Rectangle>(projection);
-    _background = std::make_unique<Rectangle>(projection);
-    _border = std::make_unique<Rectangle>(projection);
+    _indicator = std::make_unique<Plane>(projection);
+    _background = std::make_unique<Plane>(projection);
+    _border = std::make_unique<Frame>(projection);
     _parentGroup = parentGroup;
 
     if(!_background)
@@ -26,8 +26,6 @@ RetroFuturaGUI::RadioButton::RadioButton(const std::string& name, Projection* pr
     if(!_border)
         return;
 
-    _background->SetRectangleMode(RectangleMode::Plane);
-    _border->SetRectangleMode(RectangleMode::Border);
 }
 
 void RetroFuturaGUI::RadioButton::Draw()

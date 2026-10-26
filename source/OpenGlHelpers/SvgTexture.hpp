@@ -14,7 +14,7 @@ namespace RetroFuturaGUI
     /// @brief Runtime color-effect override for a single named SVG path.
     struct SvgPathFill
     {
-        FillType _FillType { FillType::SOLID };
+        FillType _FillType { FillType::Solid };
         std::vector<glm::vec4> _Colors;
         f32 _GradientDegree { 0.0f };
         f32 _GradientOffset { 0.0f };
@@ -30,7 +30,7 @@ namespace RetroFuturaGUI
     };
 
     /// @brief Renders an SVG icon whose individually named (id-bearing) paths can be
-    /// recolored at runtime with the same FillType effects Rectangle uses, without
+    /// recolored at runtime with the same FillType effects Plane and Frame use, without
     /// re-rasterizing the vector data on every color change.
     class SvgTexture
     {

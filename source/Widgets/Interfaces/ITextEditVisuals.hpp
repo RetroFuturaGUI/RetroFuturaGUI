@@ -1,6 +1,6 @@
 #pragma once
 #include "ITextInteraction.hpp"
-#include "Rectangle.hpp"
+#include "Plane.hpp"
 #include <memory>
 #include <span>
 #include <vector>
@@ -77,7 +77,7 @@ namespace RetroFuturaGUI
         f32 getCaretHeight() const;
 
     //Caret
-        std::unique_ptr<Rectangle> _caret {};
+        std::unique_ptr<Plane> _caret {};
         std::vector<glm::vec4> _caretColors { glm::vec4(1.0f) };
         static constexpr f32 _caretHeightFactor { 1.6f };
         bool _isCaretInView { true };
@@ -89,7 +89,7 @@ namespace RetroFuturaGUI
                 _Center { 0.0f },
                 _Size { 0.0f };
         };
-        std::unique_ptr<Rectangle> _selectedArea {};
+        std::unique_ptr<Plane> _selectedArea {};
         std::vector<SelectedLineArea> _selectedLineAreas {};
         std::vector<glm::vec4> _selectedAreaColors { glm::vec4(0.24f, 0.47f, 0.85f, 0.4f) };
     };

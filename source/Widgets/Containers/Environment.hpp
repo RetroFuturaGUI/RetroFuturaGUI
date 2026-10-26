@@ -5,7 +5,7 @@
 #include <memory>
 #include <string>
 #include <vector>
-#include "Rectangle.hpp"
+#include "Frame.hpp"
 
 namespace RetroFuturaGUI
 {
@@ -126,7 +126,7 @@ namespace RetroFuturaGUI
         EnvironmentFit _fit { EnvironmentFit::Contain };
         f32 _scale { 1.0f };
         glm::quat _orientation { glm::vec3(0.0f) };
-        std::unique_ptr<Rectangle> _debugBox { nullptr };
+        std::unique_ptr<Frame> _debugBox { nullptr };
         std::vector<glm::vec4> _debugBoxColor { glm::vec4(0.35f, 0.9f, 1.0f, 1.0f) };
         bool
             _clippingOn { false },

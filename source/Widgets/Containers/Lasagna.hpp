@@ -3,7 +3,7 @@
 #include "IWidget.hpp"
 #include <string>
 #include <vector>
-#include "Rectangle.hpp"
+#include "Frame.hpp"
 #include "TrackIndex.hpp"
 
 namespace RetroFuturaGUI
@@ -102,7 +102,7 @@ namespace RetroFuturaGUI
         std::vector<std::vector<std::vector<LasagnaCell>>> _lasagna {};
         static constinit const u32 _maxCountPerAxis { MaxTracksPerAxis };
         AxisDefinition _axisdefinition {};
-        std::unique_ptr<Rectangle> _debugBorder { nullptr };
+        std::unique_ptr<Frame> _debugBorder { nullptr };
         std::vector<glm::vec4> _debugBorderColor { glm::vec4(1.0f) };
         bool _drawDebugLines { false };
 

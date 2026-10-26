@@ -109,7 +109,7 @@ bool RetroFuturaGUI::VideoDecodeThread::receiveFrames()
 {
     while(true)
     {
-        Frame frame;
+        MediaFrame frame;
 
         if(!frame.IsValid())
             return false;
@@ -122,7 +122,7 @@ bool RetroFuturaGUI::VideoDecodeThread::receiveFrames()
     }
 }
 
-bool RetroFuturaGUI::VideoDecodeThread::writeFrame(Frame&& frame)
+bool RetroFuturaGUI::VideoDecodeThread::writeFrame(MediaFrame&& frame)
 {
     if(!frame.IsValid())
         return false;

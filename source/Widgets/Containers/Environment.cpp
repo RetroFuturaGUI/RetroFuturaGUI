@@ -20,12 +20,11 @@ RetroFuturaGUI::Environment::Environment(const std::string& name, Projection* pr
         applyTransform();
     }
 
-    _debugBox = std::make_unique<Rectangle>(&_projection);
+    _debugBox = std::make_unique<Frame>(&_projection);
 
     if(!_debugBox)
         return;
 
-    _debugBox->SetRectangleMode(RectangleMode::Border);
     _debugBox->SetColors(_debugBoxColor);
     _debugBox->SetBorderWidth(2.0f);
 }

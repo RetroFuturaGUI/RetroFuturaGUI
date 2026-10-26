@@ -47,7 +47,7 @@ bool RetroFuturaGUI::Resampler::IsOpen() const
     return 0 < _outRate;
 }
 
-i32 RetroFuturaGUI::Resampler::Convert(const Frame& frame)
+i32 RetroFuturaGUI::Resampler::Convert(const MediaFrame& frame)
 {
     const AVFrame* source = frame.Get();
 

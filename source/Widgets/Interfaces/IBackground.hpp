@@ -2,7 +2,7 @@
 #include "IncludeHelper.hpp"
 #include <memory>
 #include <span>
-#include "Rectangle.hpp"
+#include "Plane.hpp"
 #include "Texture.hpp"
 
 namespace RetroFuturaGUI
@@ -74,7 +74,7 @@ namespace RetroFuturaGUI
         /// @brief Sets the background fill type (solid, linear/radial/huestar gradient).
         void SetBackgroundFillType(const FillType fillType);
 
-        /// @brief Sets sections of the background to skip drawing; see Rectangle::SetBackgroundGaps.
+        /// @brief Sets sections of the background to skip drawing; see Plane::SetBackgroundGaps.
         virtual void SetBackgroundGaps(const BackgroundGap& gap);
 
     protected:
@@ -83,7 +83,7 @@ namespace RetroFuturaGUI
         void setBackgroundCornerRadii(const glm::vec4& radii);
 
     //Elements
-        std::unique_ptr<Rectangle> _background { nullptr };
+        std::unique_ptr<Plane> _background { nullptr };
         std::unique_ptr<Texture> _backgroundImage { nullptr };
 
     //Style
@@ -92,7 +92,7 @@ namespace RetroFuturaGUI
             _backgroundColorDisabled { glm::vec4(0.25f, 0.25f, 0.25f, 1.0f) },
             _backgroundColorClicked { glm::vec4(0.6f, 0.6f,0.6f, 1.0f) },
             _backgroundColorHover { glm::vec4(0.55f, 0.55f, 0.55f, 1.0f) };
-        FillType _backgroundFillType { FillType::SOLID };
+        FillType _backgroundFillType { FillType::Solid };
         ColorState _backgroundColorState { ColorState::Enabled };
         std::vector<f32> _backgroundPrimaryRasterWidthTransfer;
         std::vector<f32> _backgroundFogDensity;

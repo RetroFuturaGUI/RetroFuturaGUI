@@ -1,7 +1,7 @@
 #pragma once
 #include "config.hpp"
 #include "Decoder.hpp"
-#include "Frame.hpp"
+#include "MediaFrame.hpp"
 #include "PacketQueue.hpp"
 #include "VideoFrameQueue.hpp"
 #include <atomic>
@@ -45,7 +45,7 @@ namespace RetroFuturaGUI
     private:
         void run();
         bool receiveFrames();
-        bool writeFrame(Frame&& frame);
+        bool writeFrame(MediaFrame&& frame);
 
         PacketQueue& _packetQueue;
         VideoFrameQueue _frameQueue { 4 };

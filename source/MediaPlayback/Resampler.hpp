@@ -1,6 +1,6 @@
 #pragma once
 #include "config.hpp"
-#include "Frame.hpp"
+#include "MediaFrame.hpp"
 #include <vector>
 
 extern "C"
@@ -26,7 +26,7 @@ namespace RetroFuturaGUI
         void Close();
         bool IsOpen() const;
 
-        i32 Convert(const Frame& frame);
+        i32 Convert(const MediaFrame& frame);
         i32 Flush();
         const float* GetData() const;
         u32 GetChannels() const;

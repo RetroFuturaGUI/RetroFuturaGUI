@@ -2,8 +2,8 @@
 
 void RetroFuturaGUI::ITextEditVisuals::initEditVisuals(Projection* projection)
 {
-    _caret = std::make_unique<Rectangle>(projection);
-    _selectedArea = std::make_unique<Rectangle>(projection);
+    _caret = std::make_unique<Plane>(projection);
+    _selectedArea = std::make_unique<Plane>(projection);
 
     if(!_caret)
         return;
@@ -11,12 +11,10 @@ void RetroFuturaGUI::ITextEditVisuals::initEditVisuals(Projection* projection)
     if(!_selectedArea)
         return;
 
-    _caret->SetRectangleMode(RectangleMode::Plane);
-    _caret->SetFillType(FillType::SOLID);
+    _caret->SetFillType(FillType::Solid);
     _caret->SetSize(glm::vec2(2.0f, 0.0f)); //updateCaretPosition sets caret size by text size
     _caret->SetColors(_caretColors);
-    _selectedArea->SetRectangleMode(RectangleMode::Plane);
-    _selectedArea->SetFillType(FillType::SOLID);
+    _selectedArea->SetFillType(FillType::Solid);
     _selectedArea->SetColors(_selectedAreaColors);
 }
 
@@ -108,7 +106,7 @@ void RetroFuturaGUI::ITextEditVisuals::drawSelectedArea()
     if(!_isSelected)
         return;
 
-    //Rectangle::Draw() advances the gradient animation on every call
+    //Plane::Draw() advances the gradient animation on every call
     const f32
         gradientOffset { _selectedArea->GetGradientOffset() },
         gradientDegree { _selectedArea->GetGradientDegree() },

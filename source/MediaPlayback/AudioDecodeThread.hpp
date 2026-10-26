@@ -3,7 +3,7 @@
 #include "Resampler.hpp"
 #include "config.hpp"
 #include "Decoder.hpp"
-#include "Frame.hpp"
+#include "MediaFrame.hpp"
 #include "PacketQueue.hpp"
 #include <atomic>
 #include <thread>
@@ -47,9 +47,9 @@ namespace RetroFuturaGUI
         
     private:
         void run();
-        bool receiveFrames(Frame& frame);
+        bool receiveFrames(MediaFrame& frame);
         bool writeSamples(const uSize offset, const uSize frameCount);
-        bool writeFrame(const Frame& frame);
+        bool writeFrame(const MediaFrame& frame);
 
         PacketQueue& _queue;
         Decoder _decoder;

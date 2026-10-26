@@ -12,8 +12,8 @@ RetroFuturaGUI::Button::Button(const std::string& name, Projection* projection, 
    : IWidget(name, projection, parentWidget, parentWidgetTypeID, parentWindow)
 {
     _widgetTypeID = WidgetTypeID::Button;
-    _background = std::make_unique<Rectangle>(projection);
-    _border = std::make_unique<Rectangle>(projection);
+    _background = std::make_unique<Plane>(projection);
+    _border = std::make_unique<Frame>(projection);
     _text = std::make_unique<Text>(projection);
 
     if(!_background)
@@ -22,8 +22,6 @@ RetroFuturaGUI::Button::Button(const std::string& name, Projection* projection, 
     if(!_border)
         return;
 
-    _background->SetRectangleMode(RectangleMode::Plane);
-    _border->SetRectangleMode(RectangleMode::Border);
 }
 
 void RetroFuturaGUI::Button::Draw()
