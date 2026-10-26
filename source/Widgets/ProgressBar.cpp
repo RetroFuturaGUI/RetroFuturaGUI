@@ -26,7 +26,7 @@ void  RetroFuturaGUI::ProgressBar::Draw()
 
     interact();
 
-    _background->Draw();
+    drawBackground();
     _border->Draw();
 
     drawGraph();

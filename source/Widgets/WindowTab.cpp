@@ -1,6 +1,7 @@
 #include "WindowTab.hpp"
 #include "Window.hpp"
 #include "PlatformBridge.hpp"
+#include "ResourceManager.hpp"
 #include <algorithm>
 #include <cmath>
 #include <filesystem>
@@ -15,7 +16,7 @@ RetroFuturaGUI::WindowTab::WindowTab(std::string_view name, Projection* projecti
     _fieldBackground = std::make_unique<Plane>(projection);
     _fieldBorder = std::make_unique<Frame>(projection);
     _closeBackground = std::make_unique<Plane>(projection);
-    _closeIcon = std::make_unique<SvgTexture>(getCloseIconPath(), true, projection, glm::i32vec2(32));
+    _closeIcon = ResourceManager::CreateSvgTexture(getCloseIconPath(), projection, glm::i32vec2(32));
     _previewTitle = std::make_unique<Text>(projection);
 
     if(!_background)
@@ -1049,5 +1050,8 @@ std::string RetroFuturaGUI::WindowTab::getCloseIconPath()
     path /= "Resources";
     path /= "img";
     path /= "CloseIcon.svg";
-    return path.string();
+
+    //Not path.string(): on Windows that goes through the ANSI code page and turns names outside it into '?'
+    const std::u8string text { path.u8string() };
+    return std::string(text.begin(), text.end());
 }

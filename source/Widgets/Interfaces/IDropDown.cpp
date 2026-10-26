@@ -9,7 +9,7 @@ RetroFuturaGUI::IDropDown::IDropDown(std::string_view name, Projection* projecti
     _dropDownBackground = std::make_unique<Plane>(projection);
     _dropDownBorder = std::make_unique<Frame>(projection);
     _dropDownItemHighlight = std::make_unique<Plane>(projection);
-    _dropDownArrow = ResourceManager::GetDropDownArrowIcon();
+    _dropDownArrow = ResourceManager::CreateDropDownArrowIcon(projection);
 
     if(!_dropDownBackground)
         return;
@@ -24,12 +24,6 @@ RetroFuturaGUI::IDropDown::IDropDown(std::string_view name, Projection* projecti
     setDropDownBorderColors();
     _dropDownItemHighlight->SetColors(_highLightColor);
     _dropDowns.push_back(this);
-
-    //Last, since the shared icon may have failed to load
-    if(!_dropDownArrow)
-        return;
-
-    _dropDownArrow->SetProjection(projection);
 }
 
 RetroFuturaGUI::IDropDown::~IDropDown()
@@ -131,6 +125,7 @@ void RetroFuturaGUI::IDropDown::updateDropDownGeometry()
     _dropDownBorder->SetPosition(center + glm::vec3(0.0f, 0.0f, _zStep * 3.0f));
 
     _dropDownItemHighlight->SetSize(glm::vec2(getDropDownWidth(), _size.y));
+    updateDropDownArrowGeometry();
 }
 
 void RetroFuturaGUI::IDropDown::SetDropDownWidth(const f32 width)
@@ -176,7 +171,6 @@ void RetroFuturaGUI::IDropDown::drawDropDownArrow()
     if(!_dropDownArrow)
         return;
 
-    updateDropDownArrowGeometry();
     _dropDownArrow->Draw();
 }
 
@@ -184,10 +178,6 @@ void RetroFuturaGUI::IDropDown::updateDropDownArrowGeometry()
 {
     if(!_dropDownArrow)
         return;
-
-    //Every drop-down in every window shares the arrow, so it takes this window's projection before each draw. Kept from the
-    //constructor alone, it held the last drop-down's, which a closed popup's window left dangling.
-    _dropDownArrow->SetProjection(&_projection);
 
     const bool isQuarterTurned { _dropDownPosition == DropDownPosition::Right || _dropDownPosition == DropDownPosition::Left };
     const f32

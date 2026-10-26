@@ -35,10 +35,11 @@ namespace RetroFuturaGUI
     class SvgTexture
     {
     public:
-        /// @brief Loads an SVG
+        /// @brief Parses an SVG from its text. ResourceManager::CreateSvgTexture makes one from a file, reading the file once however many it makes.
+        /// @param name Names the SVG in error messages, its path for a file.
         /// @param projection Only needed if this texture will draw itself as a standalone quad. Call SetProjection() later if there is no projection available yet
         /// @param initialResolution Target pixel size for the initial rasterization; {0,0} uses the SVG's intrinsic size.
-        SvgTexture(std::string_view path, const bool flipVertically = false, Projection* projection = nullptr, glm::i32vec2 initialResolution = glm::i32vec2(0));
+        SvgTexture(std::string_view source, std::string_view name, const bool flipVertically, Projection* projection = nullptr, glm::i32vec2 initialResolution = glm::i32vec2(0));
         SvgTexture(const SvgTexture&) = delete;
         SvgTexture& operator=(const SvgTexture&) = delete;
         SvgTexture(SvgTexture&& other) noexcept;
@@ -51,13 +52,13 @@ namespace RetroFuturaGUI
         /// @brief Sets the desired Projection
         void SetProjection(Projection* projection);
 
-        /// @brief Sets the size of the standalone quad. Pure GPU-side transform; never re-rasterizes.
+        /// @brief Sets the size of the standalone quad. Pure GPU-side transform; never re-rasterizes. The same size again changes nothing.
         void SetSize(const glm::vec2& size);
 
-        /// @brief Sets the world position of the standalone quad.
+        /// @brief Sets the world position of the standalone quad. The same position again changes nothing.
         void SetPosition(const glm::vec3& position);
 
-        /// @brief Sets the rotation of the standalone quad.
+        /// @brief Sets the rotation of the standalone quad. The same rotation again changes nothing.
         void SetRotation(const glm::vec3& rotation);
 
         /// @brief Re-rasterizes the base layer and every already-materialized path mask at
@@ -70,7 +71,8 @@ namespace RetroFuturaGUI
         const std::vector<SvgPathInfo>& GetNamedPaths() const;
 
         /// @brief Sets or replaces a color-effect override for a named path. Lazily
-        /// materializes that path's alpha mask on first call.
+        /// materializes that path's alpha mask on first call. The base layer is rasterized again only when the path had no
+        /// override yet, since a new color only changes what the mask is drawn with.
         void SetPathFill(std::string_view name, const SvgPathFill& fill);
 
         /// @brief Clears a path's override. Its mask texture (if materialized) stays cached.
@@ -98,7 +100,7 @@ namespace RetroFuturaGUI
             SvgPathFill _Fill;
         };
 
-        void loadDocument(std::string_view path);
+        void loadDocument(std::string_view source);
         void discoverNamedPaths();
         void rasterizeBaseLayer(glm::i32vec2 targetResolution);
         void materializeMask(PathLayer& layer, glm::i32vec2 targetResolution);
@@ -140,6 +142,10 @@ namespace RetroFuturaGUI
             _ebo { 0 };
         std::unique_ptr<VertexArray> _vertexArray { nullptr }; //one VAO per context that draws the quad, over the same buffers
         Projection* _projection { nullptr };
+        glm::vec2 _size { 1.0f };
+        glm::vec3
+            _position { 0.0f },
+            _rotation { 0.0f };
         glm::mat4
             _scalingMatrix { 1.0f },
             _translationMatrix { 1.0f },

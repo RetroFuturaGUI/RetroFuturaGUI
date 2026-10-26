@@ -55,8 +55,12 @@ void RetroFuturaGUI::Plane::SetFogClearing(const f32 clearing)
 
 void RetroFuturaGUI::Plane::SetBackgroundImageTextureID(const u32 textureID)
 {
-    _shaderFeatureDIP |= ShaderFeatures::BackgroundImage;
     _backgroundImageTextureID = textureID;
+
+    if(0 != _backgroundImageTextureID)
+        _shaderFeatureDIP |= ShaderFeatures::BackgroundImage;
+    else
+        _shaderFeatureDIP &= ~ShaderFeatures::BackgroundImage;
 }
 
 void RetroFuturaGUI::Plane::SetBackgroundImagePadding(const f32 padding)

@@ -60,11 +60,13 @@ namespace RetroFuturaGUI
         /// @brief The open list's width: the one set, or the box's.
         f32 getDropDownWidth() const;
 
+        /// @brief Places the arrow at the box's right end, turned toward where the list opens. updateDropDownGeometry calls it.
         void updateDropDownArrowGeometry();
 
-        /// @brief Places the shared arrow on this box and draws it, when its icon loaded.
+        /// @brief Draws the arrow, when its icon loaded.
         void drawDropDownArrow();
 
+        /// @brief Places the open list and the arrow for the box's size, place, rotation and list position.
         void updateDropDownGeometry();
         uSize getVisibleItemCount() const;
         void setColors(const ColorState state) override;
@@ -92,7 +94,7 @@ namespace RetroFuturaGUI
             _dropDownBorder { nullptr },
             _dropDownItemBorder { nullptr };
         std::shared_ptr<Text> _previewText { nullptr };
-        std::shared_ptr<SvgTexture> _dropDownArrow { nullptr };
+        std::unique_ptr<SvgTexture> _dropDownArrow { nullptr }; //its own, so its colors and place are this box's alone
 
     //Design
         static constexpr const f32 _zStep { 0.01f };

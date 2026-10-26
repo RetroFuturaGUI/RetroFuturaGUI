@@ -40,7 +40,7 @@ void RetroFuturaGUI::TableCheckBox::Draw()
         inset { _border->GetBorderWidth() + _innerPadding },
         extent { _size.x > 2.0f * inset ? _size.x - 2.0f * inset : 0.0f };
 
-    _checkmark->SetProjection(_projection);
+    //One checkmark for every cell, so it moves to this cell. SvgTexture rebuilds a matrix only for a value that changed
     _checkmark->SetSize(glm::vec2(extent));
     _checkmark->SetPosition(_position + glm::vec3(0.0f, 0.0f, 0.02f));
     _checkmark->SetRotation(_rotation);

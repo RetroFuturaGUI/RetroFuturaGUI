@@ -55,6 +55,11 @@ const glm::vec3& RetroFuturaGUI::IRectangle::GetRotation() const
     return _rotation;
 }
 
+RetroFuturaGUI::Projection& RetroFuturaGUI::IRectangle::GetProjection() const
+{
+    return _projection;
+}
+
 void RetroFuturaGUI::IRectangle::SetColors(std::span<glm::vec4> colors)
 {
     _colors = colors;

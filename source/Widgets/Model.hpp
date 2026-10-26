@@ -39,7 +39,6 @@ namespace RetroFuturaGUI
             Mesh processMesh(aiMesh* unprocessedMesh, const aiScene* scene);
             std::vector<MeshTexture> loadMaterialTextures(aiMaterial* mat, aiTextureType type, std::string_view typeName);
 
-            std::vector<std::unique_ptr<Texture>> _loadedTextures;
             std::vector<Mesh> _meshes;
             std::string _directory;
             glm::mat4

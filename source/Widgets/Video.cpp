@@ -8,14 +8,31 @@ RetroFuturaGUI::Video::Video(const std::string& name, Projection* projection, IW
     : IWidget(name, projection, parentWidget, parentWidgetTypeID, parentWindow)
 {
     _widgetTypeID = WidgetTypeID::Video;
+    _plane = std::make_unique<Plane>(projection);
     _audioPlayback = std::make_unique<AudioPlayback>();
+
+    if(!_plane)
+        return;
+
+    _plane->SetColors(_planeColors);
 
     if(!_audioPlayback)
         return;
 
     _audioPlayback->InitDevice();
 
-    _videoPlayback = std::make_unique<VideoPlayback>(*_audioPlayback, projection); 
+    _videoPlayback = std::make_unique<VideoPlayback>(*_audioPlayback);
+
+    if(!_videoPlayback)
+        return;
+
+    ITexture* texture { _videoPlayback->GetTexture() };
+
+    if(!texture)
+        return;
+
+    //The video's texture keeps its ID for its whole life, so the plane takes it once
+    _plane->SetBackgroundImageTextureID(texture->GetID());
 }
 
 RetroFuturaGUI::Video::~Video()
@@ -30,6 +47,9 @@ RetroFuturaGUI::Video::~Video()
 
 void RetroFuturaGUI::Video::Draw()
 {
+    if(!_plane)
+        return;
+
     if(!_videoPlayback)
         return;
 
@@ -54,7 +74,7 @@ void RetroFuturaGUI::Video::Draw()
         fitGeometryToTexture();
     }
 
-    texture->Draw();
+    _plane->Draw();
 }
 
 void RetroFuturaGUI::Video::SetSize(const glm::vec3& size)
@@ -67,30 +87,20 @@ void RetroFuturaGUI::Video::SetPosition(const glm::vec3& position)
 {
     IWidget::SetPosition(position);
 
-    if(!_videoPlayback)
+    if(!_plane)
         return;
 
-    ITexture* texture { _videoPlayback->GetTexture() };
-
-    if(!texture)
-        return;
-
-    _videoPlayback->GetTexture()->SetPosition(_position);
+    _plane->SetPosition(_position);
 }
 
 void RetroFuturaGUI::Video::SetRotation(const glm::vec3& rotation)
 {
     IWidget::SetRotation(rotation);
 
-    if(!_videoPlayback)
+    if(!_plane)
         return;
 
-    ITexture* texture { _videoPlayback->GetTexture() };
-
-    if(!texture)
-        return;
-
-    _videoPlayback->GetTexture()->SetRotation(_rotation);
+    _plane->SetRotation(_rotation);
 }
 
 bool RetroFuturaGUI::Video::OpenVideoFile(std::string_view file)
@@ -103,22 +113,17 @@ bool RetroFuturaGUI::Video::OpenVideoFile(std::string_view file)
 
 void RetroFuturaGUI::Video::fitGeometryToTexture()
 {
-    if(!_videoPlayback)
-        return;
-
-    ITexture* texture { _videoPlayback->GetTexture() };
-
-    if(!texture)
+    if(!_plane)
         return;
 
     if(0.0f >= _textureAspectRatio)
     {
-        texture->SetSize(glm::vec2(_size));
+        _plane->SetSize(glm::vec2(_size));
         return;
     }
 
     const f32 width { std::min(_size.x, _size.y * _textureAspectRatio) };
-    texture->SetSize(glm::vec2(width, width / _textureAspectRatio));
+    _plane->SetSize(glm::vec2(width, width / _textureAspectRatio));
 }
 
 void RetroFuturaGUI::Video::Play()

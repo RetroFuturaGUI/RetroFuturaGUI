@@ -708,7 +708,7 @@ namespace RetroFuturaGUI
             _highlightedCellBorder { nullptr },
             _innerBorder { nullptr },
             _checkBoxBorder { nullptr };
-        std::shared_ptr<SvgTexture> _checkmark { nullptr };
+        std::unique_ptr<SvgTexture> _checkmark { nullptr }; //the Table's own, drawn by _sharedCheckBox in every cell
         std::vector<glm::vec4> _imagePlaneColors { glm::vec4(0.0f) }; //transparent, so the plane draws just its image; the plane only keeps a view of it
         std::vector<ITableWidget::TableWidgetTypeID> _rowWidgetTypes {};
 

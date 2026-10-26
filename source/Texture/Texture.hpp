@@ -35,14 +35,13 @@ namespace RetroFuturaGUI
     class Texture final : public ITexture
     {
     public:
-        /// @brief Loads a texture from disk and uploads it to the GPU.
+        /// @brief Loads a texture from disk and uploads it to the GPU. ResourceManager::GetTexture loads each file once for
+        ///        every widget that shows it.
         /// @param path UTF-8.
-        /// @param projection Only needed if this texture will draw itself as a standalone quad (e.g. Image).
-        /// Textures used purely as material maps (e.g. Mesh) can omit it.
-        Texture(std::string_view path, const bool flipVertically = true, Projection* projection = nullptr);
+        Texture(std::string_view path, const bool flipVertically = true);
 
         /// @brief Uploads an image decoded before, on whichever thread decoded it. Needs a GL context current.
-        explicit Texture(DecodedImage&& image, Projection* projection = nullptr);
+        explicit Texture(DecodedImage&& image);
         Texture(const Texture&) = delete;
         Texture& operator=(const Texture&) = delete;
         Texture(Texture&& other) noexcept;

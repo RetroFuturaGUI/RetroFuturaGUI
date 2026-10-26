@@ -70,13 +70,12 @@ namespace RetroFuturaGUI
         void interact();
 
         std::unique_ptr<Plane> _inheritFill { nullptr };
-        std::shared_ptr<SvgTexture> _checkmark { nullptr };
+        std::unique_ptr<SvgTexture> _checkmark { nullptr }; //its own, so its colors and place are this box's alone
         bool* _inheritValue { nullptr };
         bool
             _useInheritValue { false },
             _isChecked { false };
         f32 _innerPadding { 2.0f };
-        glm::vec2 _checkmarkSize { 0.0f };
         ColorState
             _checkmarkColorState { ColorState::Enabled },
             _inheritFillColorState { ColorState::Enabled };

@@ -66,6 +66,7 @@ namespace RetroFuturaGUI
 
     //Image
         /// @brief Sets an image of the plane's own, stretched over it behind the fill and inset by SetBackgroundImagePadding.
+        ///        0 shows no image.
         /// @note Unlike SetWindowBackgroundImageTextureID, which shows a window-wide backdrop behind the glass, this belongs to
         ///       the plane alone. The two can be shown together: the image sits in front of the glass.
         void SetBackgroundImageTextureID(const u32 textureID);

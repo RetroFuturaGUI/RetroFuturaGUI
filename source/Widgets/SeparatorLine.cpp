@@ -25,7 +25,7 @@ void RetroFuturaGUI::SeparatorLine::Draw()
     if(!_text)
         return;
 
-    _background->Draw();
+    drawBackground();
 
     if(!_showText)
         return;

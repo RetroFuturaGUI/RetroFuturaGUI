@@ -48,6 +48,9 @@ namespace RetroFuturaGUI
         /// @brief Returns the current world rotation of the rectangle.
         const glm::vec3& GetRotation() const;
 
+        /// @brief Returns the projection the rectangle draws with.
+        Projection& GetProjection() const;
+
     protected:
         /// @brief The features a shader runs, as the bits of uDIP. Each feature's setter switches its own bit.
         enum ShaderFeatures : u32

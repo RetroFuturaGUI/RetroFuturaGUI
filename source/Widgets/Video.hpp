@@ -1,10 +1,12 @@
 #pragma once
 #include "AudioPlayback.hpp"
 #include "IWidget.hpp"
+#include "Plane.hpp"
 #include "VideoPlayback.hpp"
 #include <memory>
 #include <span>
 #include <string_view>
+#include <vector>
 
 namespace RetroFuturaGUI
 {
@@ -51,6 +53,8 @@ namespace RetroFuturaGUI
 
         std::unique_ptr<AudioPlayback> _audioPlayback {};
         std::unique_ptr<VideoPlayback> _videoPlayback {};
+        std::unique_ptr<Plane> _plane { nullptr }; //shows the video's texture as its image
+        std::vector<glm::vec4> _planeColors { glm::vec4(0.0f) }; //transparent, so the picture shows as it is. The plane keeps a span over it
         f32 _textureAspectRatio { 1.777f };
     };
 }

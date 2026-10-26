@@ -8,8 +8,8 @@ extern "C"
     #include <libswscale/swscale.h>
 }
 
-RetroFuturaGUI::VideoTexture::VideoTexture(Projection* projection)
-    : ITexture(projection, true) // stored bottom row first, like a Texture loaded with flipVertically
+RetroFuturaGUI::VideoTexture::VideoTexture()
+    : ITexture(true) // stored bottom row first, like a Texture loaded with flipVertically
 {
     // Every GL object is created once and only resized later: the texture keeps its ID for the whole
     // life of the VideoTexture, so whoever took GetID() once still has the right one after a size change.
@@ -20,12 +20,11 @@ RetroFuturaGUI::VideoTexture::VideoTexture(Projection* projection)
             glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, texture, 0);
         });
     _emptyVertexArray = std::make_unique<VertexArray>([]() {});
-    setupQuad(); // only builds the quad with a Projection
 }
 
 RetroFuturaGUI::VideoTexture::~VideoTexture()
 {
-    releaseVideoResources(); // ITexture deletes the RGBA texture and the quad
+    releaseVideoResources(); // ITexture deletes the RGBA texture
 }
 
 void RetroFuturaGUI::VideoTexture::releaseVideoResources()

@@ -1,5 +1,7 @@
 #pragma once
 #include "ITexture.hpp"
+#include "ContextObjects.hpp"
+#include <memory>
 #include "config.hpp"
 #include <array>
 
@@ -13,9 +15,7 @@ namespace RetroFuturaGUI
     class VideoTexture final : public ITexture
     {
     public:
-        /// @param projection Only needed if this texture will draw itself as a standalone quad (e.g. Image).
-        /// Textures used purely as material maps (e.g. Mesh) can omit it.
-        explicit VideoTexture(Projection* projection = nullptr);
+        VideoTexture();
         VideoTexture(const VideoTexture&) = delete;
         VideoTexture& operator=(const VideoTexture&) = delete;
         VideoTexture(VideoTexture&&) = delete;

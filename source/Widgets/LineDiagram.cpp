@@ -42,7 +42,7 @@ void RetroFuturaGUI::LineDiagram::Draw()
     updatePoints(); // Before interact, so the cursor is tested against the lines
     interact();
 
-    _background->Draw();
+    drawBackground();
     _border->Draw();
 
     drawGraph();

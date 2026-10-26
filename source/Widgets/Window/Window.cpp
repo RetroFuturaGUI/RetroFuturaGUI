@@ -37,11 +37,12 @@ RetroFuturaGUI::Window::~Window()
     if(!_window)
         return;
 
-    //The background's and the border's GL objects belong to this window's context, so they go while it still exists and is current
+    //The background's and the border's GL objects belong to this window's context, so they go while it still exists and is current.
+    //A background picture is ResourceManager's and stays
     glfwMakeContextCurrent(_window);
     ContextObject::DeletePending(_window);
     _background.reset();
-    _backgroundImage.reset();
+    _backgroundSvg.reset();
     _border.reset();
 
     //A later window must not try to share with a destroyed one

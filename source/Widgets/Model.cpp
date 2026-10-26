@@ -1,4 +1,5 @@
 #include "Model.hpp"
+#include "ResourceManager.hpp"
 #include "Texture.hpp"
 #include <glm/gtc/matrix_transform.hpp>
 #include <print>
@@ -129,22 +130,7 @@ std::vector<RetroFuturaGUI::MeshTexture> RetroFuturaGUI::Model::loadMaterialText
         aiString str;
         mat->GetTexture(type, i, &str);
         std::string fullPath { _directory + "/" + str.C_Str() };
-        Texture* texture { nullptr };
-
-        for(const std::unique_ptr<Texture>& loaded : _loadedTextures)
-        {
-            if(loaded->GetPath() == fullPath)
-            {
-                texture = loaded.get();
-                break;
-            }
-        }
-
-        if(!texture)
-        {
-            _loadedTextures.push_back(std::make_unique<Texture>(fullPath, true));
-            texture = _loadedTextures.back().get();
-        }
+        Texture* texture { ResourceManager::GetTexture(fullPath) }; //loaded once, however many meshes and models use it
 
         textures.push_back(MeshTexture { ._Texture = texture, ._Type = std::string(typeName), ._Path = fullPath });
     }

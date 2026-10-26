@@ -264,6 +264,7 @@ namespace RetroFuturaGUI
         static glm::vec4& colorOf(FieldColors& colors, const ColorState state);
 
         static bool contains(const glm::vec4& rect, const glm::vec2& point);
+        /// @brief The UTF-8 path of the close icon, in the Resources/img folder next to the executable.
         static std::string getCloseIconPath();
 
     //Elements
@@ -272,7 +273,7 @@ namespace RetroFuturaGUI
             _fieldBackground { nullptr },
             _closeBackground { nullptr };
         std::unique_ptr<Frame> _fieldBorder { nullptr };
-        std::unique_ptr<SvgTexture> _closeIcon { nullptr }; //its own, since recoloring a shared one rasterizes it again for every WindowTab that draws it
+        std::unique_ptr<SvgTexture> _closeIcon { nullptr }; //its own, so its color and size are this tab's alone
         std::unique_ptr<Text> _previewTitle { nullptr };
 
     //Design

@@ -1,35 +1,21 @@
 #pragma once
 #include "IncludeHelper.hpp"
-#include "Projection.hpp"
-#include "ContextObjects.hpp"
 #include "config.hpp"
-#include <memory>
 
 namespace RetroFuturaGUI
 {
+    /// @brief A texture on the GPU. It doesn't draw itself: a Plane shows one as its image, a Mesh as a material map.
     class ITexture
     {
     public:
         ITexture(const ITexture&) = delete;
         ITexture& operator=(const ITexture&) = delete;
 
-        /// @brief Deletes the texture and the standalone quad.
+        /// @brief Deletes the texture.
         virtual ~ITexture();
 
         /// @brief Binds the texture to a texture unit, for whatever draws next - a mesh, a widget.
         void Bind(const u32 unit) const;
-
-        /// @brief Draws the texture as a standalone quad. Requires a Projection, otherwise does nothing.
-        void Draw() const;
-
-        /// @brief Sets the size of the standalone quad.
-        void SetSize(const glm::vec2& size);
-
-        /// @brief Sets the world position of the standalone quad.
-        void SetPosition(const glm::vec3& position);
-
-        /// @brief Sets the rotation of the standalone quad.
-        void SetRotation(const glm::vec3& rotation);
 
         /// @brief Returns the pixel resolution of the texture.
         glm::i32vec2 GetResolution() const;
@@ -44,44 +30,13 @@ namespace RetroFuturaGUI
         u32 GetID() const;
 
     protected:
-        /// @param projection Only needed if the texture draws itself as a standalone quad (e.g. Image).
-        /// Textures used purely as material maps (e.g. Mesh) can omit it.
-        explicit ITexture(Projection* projection, const bool verticallyFlipped);
+        explicit ITexture(const bool verticallyFlipped);
         ITexture(ITexture&& other) noexcept;
         ITexture& operator=(ITexture&& other) noexcept;
-
-        /// @brief Builds the standalone quad's buffers. Does nothing without a Projection.
-        void setupQuad();
 
         u32 _id { 0 };
         glm::i32vec2 _resolution { 0 };
         f32 _aspectRatio { 0.0f };
         bool _verticallyFlipped { false };
-        Projection* _projection { nullptr };
-
-    private:
-        void releaseGPUResources();
-
-        // Standalone quad rendering (only used with a Projection)
-        static constexpr f32 Vertices[(3 + 2) * 4] =
-        {   //   positions     | tex coords
-            -0.5f, -0.5f, 0.0f, 0.0f, 0.0f,
-             0.5f, -0.5f, 0.0f, 1.0f, 0.0f,
-             0.5f,  0.5f, 0.0f, 1.0f, 1.0f,
-            -0.5f,  0.5f, 0.0f, 0.0f, 1.0f
-        };
-        static constexpr u32 Indices[6] =
-        {
-            0, 1, 2,
-            2, 3, 0
-        };
-        u32
-            _vbo { 0 },
-            _ebo { 0 };
-        std::unique_ptr<VertexArray> _vertexArray { nullptr }; //one VAO per context that draws the quad, over the same buffers
-        glm::mat4
-            _scalingMatrix { 1.0f },
-            _translationMatrix { 1.0f },
-            _rotationMatrix { 1.0f };
     };
 }

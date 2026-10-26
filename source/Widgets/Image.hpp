@@ -1,13 +1,17 @@
 #pragma once
 #include "IWidget.hpp"
+#include "Plane.hpp"
 #include "Texture.hpp"
+#include <memory>
+#include <vector>
 
 namespace RetroFuturaGUI
 {
     class Image final : public IWidget
     {
     public:
-        /// @brief Constructs an Image widget that loads and displays the texture at imagePath (UTF-8).
+        /// @brief Constructs an Image widget that shows the image at imagePath (UTF-8). ResourceManager loads it and keeps it
+        ///        until ResourceManager::Free.
         Image(const std::string& name, Projection* projection, IWidget* parentWidget, const WidgetTypeID parentWidgetTypeID, GLFWwindow* parentWindow, std::string_view imagePath);
 
         /// @brief Constructs an Image widget that shows nothing until SetImage gives it a picture.
@@ -51,6 +55,12 @@ namespace RetroFuturaGUI
 
     private:
         f32 _textureAspectRatio { 0.0f };
-        std::unique_ptr<Texture> _texture;
+        Texture* _texture { nullptr }; //the picture shown: ResourceManager's for a file, _decodedTexture for a decoded picture
+        std::unique_ptr<Texture> _decodedTexture { nullptr };
+        std::unique_ptr<Plane> _plane { nullptr }; //shows the texture as its image
+        std::vector<glm::vec4> _planeColors { glm::vec4(0.0f) }; //transparent, so the picture shows as it is. The plane keeps a span over it
+
+        /// @brief Shows the texture, or nothing for null.
+        void showTexture(Texture* texture);
     };
 }

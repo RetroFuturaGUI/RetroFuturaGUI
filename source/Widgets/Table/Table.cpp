@@ -31,7 +31,7 @@ RetroFuturaGUI::Table::Table(const std::string& name, Projection* projection, IW
     _cellColorPlane = std::make_unique<Plane>(projection);
     _checkBoxBackground = std::make_unique<Plane>(projection);
     _checkBoxBorder = std::make_unique<Frame>(projection);
-    _checkmark = ResourceManager::GetCheckmarkIcon();
+    _checkmark = ResourceManager::CreateCheckmarkIcon(projection);
     _cellImagePlane = std::make_unique<Plane>(projection);
     _selectionBand = std::make_unique<Plane>(projection);
     _selectionBandBorder = std::make_unique<Frame>(projection);
@@ -103,12 +103,6 @@ RetroFuturaGUI::Table::Table(const std::string& name, Projection* projection, IW
     _sharedImage->SetPadding(_imagePadding);
     _sharedCheckBox->SetPadding(_checkBoxPadding);
     _sharedCheckBox->SetInnerPadding(_checkBoxInnerPadding);
-
-    //Last, since the shared icon may have failed to load
-    if(!_checkmark)
-        return;
-
-    _checkmark->SetProjection(projection);
 }
 
 void RetroFuturaGUI::Table::SetCheckBoxBackgroundColors(std::span<glm::vec4> colors, const ColorState state)
@@ -1659,7 +1653,7 @@ void RetroFuturaGUI::Table::setCheckBoxColors(const ColorState state)
     _checkBoxBackground->SetColors(*background);
     _checkBoxBorder->SetColors(*border);
 
-    // SetPathFill re-rasterizes the whole SVG, so only touch it when the fill actually changed
+    // Handed over only when the colors changed, rather than copied every frame
     if(_checkmark && _checkmarkFill._Colors != *checkmark)
     {
         _checkmarkFill._Colors = *checkmark;

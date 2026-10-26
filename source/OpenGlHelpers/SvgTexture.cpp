@@ -4,11 +4,11 @@
 #include <print>
 #include <utility>
 
-RetroFuturaGUI::SvgTexture::SvgTexture(std::string_view path, const bool flipVertically, Projection* projection,
+RetroFuturaGUI::SvgTexture::SvgTexture(std::string_view source, std::string_view name, const bool flipVertically, Projection* projection,
                                         glm::i32vec2 initialResolution)
-    : _verticallyFlipped(flipVertically), _projection(projection)
+    : _verticallyFlipped(flipVertically), _path(name), _projection(projection)
 {
-    loadDocument(path);
+    loadDocument(source);
 
     if (!_document)
         return;
@@ -33,6 +33,7 @@ RetroFuturaGUI::SvgTexture::SvgTexture(SvgTexture&& other) noexcept
       _baseLayerTextureId(other._baseLayerTextureId), _verticallyFlipped(other._verticallyFlipped),
       _resolution(other._resolution), _aspectRatio(other._aspectRatio), _path(std::move(other._path)),
       _vbo(other._vbo), _ebo(other._ebo), _vertexArray(std::move(other._vertexArray)), _projection(other._projection),
+      _size(other._size), _position(other._position), _rotation(other._rotation),
       _scalingMatrix(other._scalingMatrix), _translationMatrix(other._translationMatrix), _rotationMatrix(other._rotationMatrix)
 {
     other._baseLayerTextureId = 0;
@@ -60,6 +61,9 @@ RetroFuturaGUI::SvgTexture& RetroFuturaGUI::SvgTexture::operator=(SvgTexture&& o
     _ebo = other._ebo;
     _vertexArray = std::move(other._vertexArray);
     _projection = other._projection;
+    _size = other._size;
+    _position = other._position;
+    _rotation = other._rotation;
     _scalingMatrix = other._scalingMatrix;
     _translationMatrix = other._translationMatrix;
     _rotationMatrix = other._rotationMatrix;
@@ -190,16 +194,28 @@ void RetroFuturaGUI::SvgTexture::drawMaskedLayer(PathLayer& layer)
 
 void RetroFuturaGUI::SvgTexture::SetSize(const glm::vec2& size)
 {
+    if(size == _size)
+        return;
+
+    _size = size;
     _scalingMatrix = glm::scale(glm::mat4(1.0f), glm::vec3(size, 1.0f));
 }
 
 void RetroFuturaGUI::SvgTexture::SetPosition(const glm::vec3& position)
 {
+    if(position == _position)
+        return;
+
+    _position = position;
     _translationMatrix = glm::translate(glm::mat4(1.0f), position);
 }
 
 void RetroFuturaGUI::SvgTexture::SetRotation(const glm::vec3& rotation)
 {
+    if(rotation == _rotation)
+        return;
+
+    _rotation = rotation;
     glm::vec3 radians = glm::radians(rotation);
     _rotationMatrix =
         glm::rotate(glm::mat4(1.0f), radians.z, glm::vec3(0.0f, 0.0f, 1.0f)) *
@@ -234,22 +250,30 @@ void RetroFuturaGUI::SvgTexture::SetPathFill(std::string_view name, const SvgPat
     }
 
     layer->_Fill = fill;
-    layer->_HasActiveOverride = true;
 
     if (0 == layer->_MaskTextureId)
         materializeMask(*layer, _resolution);
 
-    rasterizeBaseLayer(_resolution); //enabled alpha-blending
+    if(layer->_HasActiveOverride)
+        return;
+
+    //The base layer leaves out every overridden path, so it changes only when a path gains or loses its override
+    layer->_HasActiveOverride = true;
+    rasterizeBaseLayer(_resolution);
 }
 
 void RetroFuturaGUI::SvgTexture::ClearPathFill(std::string_view name)
 {
     PathLayer* layer = findLayer(name);
-    if (layer)
-    {
-        layer->_HasActiveOverride = false;
-        rasterizeBaseLayer(_resolution);//enabled alpha-blending
-    }
+
+    if(!layer)
+        return;
+
+    if(!layer->_HasActiveOverride)
+        return;
+
+    layer->_HasActiveOverride = false;
+    rasterizeBaseLayer(_resolution);
 }
 
 glm::i32vec2 RetroFuturaGUI::SvgTexture::GetResolution() const
@@ -272,14 +296,13 @@ u32 RetroFuturaGUI::SvgTexture::GetBaseLayerTextureID() const
     return _baseLayerTextureId;
 }
 
-void RetroFuturaGUI::SvgTexture::loadDocument(std::string_view path)
+void RetroFuturaGUI::SvgTexture::loadDocument(std::string_view source)
 {
-    _path = path;
-    _document = lunasvg::Document::loadFromFile(std::string(path));
+    _document = lunasvg::Document::loadFromData(source.data(), source.size());
 
     if (!_document)
     {
-        std::println("Error loading SVG: {}", path);
+        std::println("Error loading SVG: {}", _path);
         return;
     }
 

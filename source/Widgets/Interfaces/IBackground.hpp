@@ -3,6 +3,7 @@
 #include <memory>
 #include <span>
 #include "Plane.hpp"
+#include "SvgTexture.hpp"
 #include "Texture.hpp"
 
 namespace RetroFuturaGUI
@@ -62,11 +63,19 @@ namespace RetroFuturaGUI
         /// @brief Sets the coverage threshold above which the background's fog appears; higher values carve larger clear gaps out of the cloud.
         void SetBackgroundFogClearing(const f32 clearing);
 
-        /// @brief Loads an image (png, jpg or svg) from disk and applies it as the background's texture. ToDo: store SVGs as SvgImage
+        /// @brief Shows an image file (UTF-8) on the background. A picture (png, jpg, ...) sits behind the fill, and comes from
+        ///        ResourceManager, which keeps it until ResourceManager::Free. An SVG sits over the fill as an SvgTexture of the
+        ///        background's own, so SetBackgroundImagePathFill can recolor its paths.
         virtual void SetBackgroundImage(std::string_view imagePath);
 
         /// @brief Sets how far the background image stays clear of the widget's edges
         void SetBackgroundImagePadding(const f32 padding);
+
+        /// @brief Sets or replaces the color override of a named path in an SVG background image. Does nothing for a picture.
+        void SetBackgroundImagePathFill(std::string_view name, const SvgPathFill& fill);
+
+        /// @brief Gives a named path in an SVG background image its own color back.
+        void ClearBackgroundImagePathFill(std::string_view name);
 
         /// @brief Returns the background colors configured for the given color state.
         const std::vector<glm::vec4>& GetBackgroundColors(const ColorState state) const;
@@ -84,7 +93,9 @@ namespace RetroFuturaGUI
 
     //Elements
         std::unique_ptr<Plane> _background { nullptr };
-        std::unique_ptr<Texture> _backgroundImage { nullptr };
+        Texture* _backgroundImage { nullptr }; //a picture borrowed from ResourceManager, shown by _background
+        std::unique_ptr<SvgTexture> _backgroundSvg { nullptr }; //an SVG background image, drawn over the fill
+        f32 _backgroundImagePadding { 0.0f };
 
     //Style
         std::vector<glm::vec4> 
@@ -99,5 +110,11 @@ namespace RetroFuturaGUI
 
     private:
         void setBackgroundColorElement(std::vector<glm::vec4>& color);
+
+        /// @brief Draws the SVG background image over the fill, inset by the padding wherever the widget put _background.
+        void drawBackgroundSvg();
+
+        /// @brief Whether the path names an SVG file, by its extension in any case.
+        static bool isSvgPath(std::string_view path);
     };
 }

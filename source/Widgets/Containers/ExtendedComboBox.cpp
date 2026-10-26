@@ -45,7 +45,7 @@ void RetroFuturaGUI::ExtendedComboBox::Draw()
         return;
 
     interact();
-    _background->Draw();
+    drawBackground();
     _border->Draw();
     drawDropDownArrow();
 

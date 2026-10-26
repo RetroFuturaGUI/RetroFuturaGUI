@@ -10,8 +10,8 @@
 #include <print>
 #include <lunasvg.h>
 
-RetroFuturaGUI::Texture::Texture(std::string_view path, const bool flipVertically, Projection* projection)
-    : ITexture(projection, flipVertically)
+RetroFuturaGUI::Texture::Texture(std::string_view path, const bool flipVertically)
+    : ITexture(flipVertically)
 {
     _path = path;
 
@@ -34,15 +34,13 @@ RetroFuturaGUI::Texture::Texture(std::string_view path, const bool flipVerticall
         std::println("Error loading image: {}", path);
 
     uploadToGPU();
-    setupQuad(); // only builds the quad with a Projection
 }
 
-RetroFuturaGUI::Texture::Texture(DecodedImage&& image, Projection* projection)
-    : ITexture(projection, image._IsFlipped)
+RetroFuturaGUI::Texture::Texture(DecodedImage&& image)
+    : ITexture(image._IsFlipped)
 {
     takeImage(std::move(image));
     uploadToGPU();
-    setupQuad();
 }
 
 RetroFuturaGUI::Texture::Texture(Texture&& other) noexcept

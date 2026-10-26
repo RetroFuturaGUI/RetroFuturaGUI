@@ -27,7 +27,7 @@ void  RetroFuturaGUI::Slider::Draw()
 
     interact();
 
-    _background->Draw();
+    drawBackground();
     _border->Draw();
 
     drawIndicator();

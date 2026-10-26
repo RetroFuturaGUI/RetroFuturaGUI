@@ -5,10 +5,10 @@
 #include <algorithm>
 #include <optional>
 
-RetroFuturaGUI::VideoPlayback::VideoPlayback(AudioPlayback& output, Projection* projection)
+RetroFuturaGUI::VideoPlayback::VideoPlayback(AudioPlayback& output)
     : _output(output)
 {
-    _texture = std::make_unique<VideoTexture>(projection);
+    _texture = std::make_unique<VideoTexture>();
 }
 
 RetroFuturaGUI::VideoPlayback::~VideoPlayback()

@@ -16,7 +16,7 @@ namespace RetroFuturaGUI
     {
     public:
         /// @param output The engine and meter the sound plays through.
-        explicit VideoPlayback(AudioPlayback& output, Projection* projection = nullptr);
+        explicit VideoPlayback(AudioPlayback& output);
         // copy and move deleted: the threads, miniaudio and meshes hold pointers into it
         VideoPlayback(const VideoPlayback&) = delete;
         VideoPlayback(VideoPlayback&&) = delete;
