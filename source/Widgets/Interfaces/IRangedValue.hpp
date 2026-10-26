@@ -215,6 +215,15 @@ namespace RetroFuturaGUI
         /// @brief Sets whether the graph is drawn as a solid fill (Bar) or as a wave (Wave).
         void SetGraphMode(const GraphMode mode);
 
+        /// @brief Sets the thickness of the graph's wave line in pixels (Wave mode only)
+        void SetGraphWaveThickness(const f32 thickness);
+
+        /// @brief Sets the amplitude of the graph's wave, in pixels (Wave mode only)
+        void SetGraphWaveHeight(const f32 height);
+
+        /// @brief Sets the horizontal distance between the graph's wave peaks in pixels (Wave mode only)
+        void SetGraphWaveLength(const f32 length);
+
         void SetGraphColors(std::span<glm::vec4> colors, const ColorState state);
 
         /// @brief Sets the corner rounding radii of the graph.

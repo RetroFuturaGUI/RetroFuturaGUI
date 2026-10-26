@@ -446,6 +446,30 @@ void RetroFuturaGUI::IRangedValue::SetGraphMode(const GraphMode mode)
     _graph->ShowWave(_graphMode == GraphMode::Wave);
 }
 
+void RetroFuturaGUI::IRangedValue::SetGraphWaveThickness(const f32 thickness)
+{
+    if(!_graph)
+        return;
+
+    _graph->SetWaveThickness(thickness);
+}
+
+void RetroFuturaGUI::IRangedValue::SetGraphWaveHeight(const f32 height)
+{
+    if(!_graph)
+        return;
+
+    _graph->SetWaveHeight(height);
+}
+
+void RetroFuturaGUI::IRangedValue::SetGraphWaveLength(const f32 length)
+{
+    if(!_graph)
+        return;
+
+    _graph->SetWaveLength(length);
+}
+
 void RetroFuturaGUI::IRangedValue::SetGraphColors(std::span<glm::vec4> colors, const ColorState state)
 {
     switch(state)

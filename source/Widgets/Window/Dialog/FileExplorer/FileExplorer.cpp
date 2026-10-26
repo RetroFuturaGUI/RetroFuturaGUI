@@ -381,7 +381,7 @@ bool RetroFuturaGUI::FileExplorer::buildView(ViewHost& host, std::string_view ti
     built._Scroll->SetOrientation(IRangedValue::Orientation::Vertical);
     built._Scroll->SetTrackDirection(IRangedValue::TrackDirection::Inverted); //unscrolled at the top
     built._Scroll->SetBackgroundColor(glm::vec4(0.12f, 0.12f, 0.15f, 1.0f), ColorState::Enabled);
-    built._Scroll->SetBackgroundFillType(FillType::SOLID);
+    built._Scroll->SetBackgroundFillType(FillType::Solid);
     built._Scroll->SetBorderColor(glm::vec4(0.35f, 0.35f, 0.45f, 1.0f), ColorState::Enabled);
     built._Scroll->SetBorderWidth(1.0f);
     built._Scroll->SetIndicatorBackgroundColors(indicatorColors, ColorState::Enabled);
@@ -505,7 +505,7 @@ RetroFuturaGUI::MenuBar* RetroFuturaGUI::FileExplorer::attachBar(ViewHost& host,
 
     bar->SetDockingEdge(MenuBar::DockingEdge::Top);
     bar->SetBackgroundColor(glm::vec4(0.08f, 0.08f, 0.12f, 0.9f), ColorState::Enabled);
-    bar->SetBackgroundFillType(FillType::SOLID);
+    bar->SetBackgroundFillType(FillType::Solid);
     bar->SetBorderColor(glm::vec4(0.35f, 0.35f, 0.45f, 1.0f), ColorState::Enabled);
     bar->SetBorderWidth(1.0f);
     bar->SetCornerRadii(glm::vec4(12.0f, 12.0f, 0.0f, 0.0f)); //the window's top corners, which a popup never squares
@@ -552,7 +552,7 @@ void RetroFuturaGUI::FileExplorer::styleButton(Button& button, std::string_view 
     button.SetBackgroundColor(glm::vec4(0.3f, 0.3f, 0.3f, 1.0f), ColorState::Hover);
     button.SetBackgroundColor(glm::vec4(0.4f, 0.4f, 0.4f, 1.0f), ColorState::Clicked);
     button.SetBackgroundColor(glm::vec4(0.12f, 0.12f, 0.12f, 1.0f), ColorState::Disabled);
-    button.SetBackgroundFillType(FillType::SOLID);
+    button.SetBackgroundFillType(FillType::Solid);
     button.SetBorderColor(glm::vec4(0.5f, 0.5f, 0.5f, 1.0f), ColorState::Enabled);
     button.SetBorderWidth(1.0f);
     button.SetFontFamily(font._Family, font._Size, font._Slant, font._Weight);
@@ -629,7 +629,7 @@ void RetroFuturaGUI::FileExplorer::styleTextBox(TextBox& textBox, std::string_vi
     textBox.SetBackgroundColor(glm::vec4(0.2f, 0.2f, 0.2f, 1.0f), ColorState::Enabled);
     textBox.SetBackgroundColor(glm::vec4(0.3f, 0.3f, 0.3f, 1.0f), ColorState::Hover);
     textBox.SetBackgroundColor(glm::vec4(0.2f, 0.2f, 0.2f, 1.0f), ColorState::Clicked);
-    textBox.SetBackgroundFillType(FillType::SOLID);
+    textBox.SetBackgroundFillType(FillType::Solid);
     textBox.SetBorderColor(glm::vec4(0.5f, 0.5f, 0.5f, 1.0f), ColorState::Enabled);
     textBox.SetBorderWidth(1.0f);
     textBox.SetFontFamily(font._Family, font._Size, font._Slant, font._Weight);
