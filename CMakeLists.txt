@@ -32,7 +32,7 @@ list(APPEND RetroFuturaGuiSources
     "${CMAKE_CURRENT_SOURCE_DIR}/source/MediaPlayback/AudioStream.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/MediaPlayback/AudioTrack.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/MediaPlayback/Decoder.cpp"
-    "${CMAKE_CURRENT_SOURCE_DIR}/source/MediaPlayback/Frame.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/source/MediaPlayback/MediaFrame.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/MediaPlayback/MediaSource.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/MediaPlayback/MiniaudioImpl.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/MediaPlayback/Packet.cpp"
@@ -49,7 +49,6 @@ list(APPEND RetroFuturaGuiSources
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Misc/DoubleEncodedString.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Misc/Mesh.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Misc/Polyline.cpp"
-    "${CMAKE_CURRENT_SOURCE_DIR}/source/Misc/Rectangle.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Misc/ResourceManager.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Misc/TextTypes.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Misc/Tooltip.cpp"
@@ -58,6 +57,12 @@ list(APPEND RetroFuturaGuiSources
     "${CMAKE_CURRENT_SOURCE_DIR}/source/OpenGlHelpers/Projection.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/OpenGlHelpers/ScissorClip.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/OpenGlHelpers/SvgTexture.cpp"
+
+    "${CMAKE_CURRENT_SOURCE_DIR}/source/Rectangles/ColorField.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/source/Rectangles/Frame.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/source/Rectangles/IRectangle.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/source/Rectangles/Plane.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/source/Rectangles/WavePlane.cpp"
 
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Scenes/Scene.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Scenes/SceneLoader.cpp"
@@ -165,6 +170,7 @@ target_include_directories("RetroFuturaGUI" PUBLIC
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/Window/Dialog/FileExplorer"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/Prefabs"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/OpenGlHelpers"
+    "${CMAKE_CURRENT_SOURCE_DIR}/source/Rectangles"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Shaders"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Texture"
 )

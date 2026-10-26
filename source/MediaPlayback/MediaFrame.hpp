@@ -8,15 +8,15 @@ extern "C"
 namespace RetroFuturaGUI
 {
     /// @brief Owns an AVFrame for its whole lifetime
-    class Frame
+    class MediaFrame
     {
     public:
-        Frame();
-        Frame(const Frame&) = delete;
-        Frame(Frame&& other) noexcept;
-        ~Frame();
-        Frame& operator=(const Frame&) = delete;
-        Frame& operator=(Frame&& other) noexcept;
+        MediaFrame();
+        MediaFrame(const MediaFrame&) = delete;
+        MediaFrame(MediaFrame&& other) noexcept;
+        ~MediaFrame();
+        MediaFrame& operator=(const MediaFrame&) = delete;
+        MediaFrame& operator=(MediaFrame&& other) noexcept;
 
         /// @brief Call ofter constructor
         bool IsValid() const;
