@@ -15,6 +15,6 @@ void main()
 {
     vLocalPos = Position.xy; // -0.5 .. 0.5 across the quad
     gl_Position = uProjection * uPosition * uRotation * uScaling * Position;
-    vTexCoord = Position.xy * 0.5 + 0.5; // 0.25 .. 0.75 across the quad, the range the gradients were made with
+    vTexCoord = Position.xy + 0.5; // 0 .. 1 across the quad, like the SVG icons' coordinates
     vUV = (gl_Position.xy * 0.5 + 0.5); // where the pixel sits in the window, 0 .. 1, for the glass
 }
