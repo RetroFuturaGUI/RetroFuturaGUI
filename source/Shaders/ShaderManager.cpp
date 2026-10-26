@@ -2,59 +2,29 @@
 #include "PlatformBridge.hpp"
 #include <print>
 
-RetroFuturaGUI::Shader& RetroFuturaGUI::ShaderManager::GetSolidFillShader()
+RetroFuturaGUI::Shader& RetroFuturaGUI::ShaderManager::GetPlaneShader(FillType fillType)
 {
-    return *_solidFill;
+    return *_planeShaders[static_cast<uSize>(fillType)];
 }
 
-RetroFuturaGUI::Shader& RetroFuturaGUI::ShaderManager::GetLinearGradientShader()
+RetroFuturaGUI::Shader& RetroFuturaGUI::ShaderManager::GetWavePlaneShader(FillType fillType)
 {
-    return *_linearGradient;
+    return *_wavePlaneShaders[static_cast<uSize>(fillType)];
 }
 
-RetroFuturaGUI::Shader& RetroFuturaGUI::ShaderManager::GetRadialGradientShader()
+RetroFuturaGUI::Shader& RetroFuturaGUI::ShaderManager::GetFrameShader(FillType fillType)
 {
-    return *_radialGradient;
+    return *_frameShaders[static_cast<uSize>(fillType)];
 }
 
-RetroFuturaGUI::Shader& RetroFuturaGUI::ShaderManager::GetHueStarGradientShader()
+RetroFuturaGUI::Shader& RetroFuturaGUI::ShaderManager::GetColorFieldShader(ColorFieldShape shape)
 {
-    return *_hueStarGradient;
-}
-
-RetroFuturaGUI::Shader& RetroFuturaGUI::ShaderManager::GetColorCircleShader()
-{
-    return *_colorCircle;
-}
-
-RetroFuturaGUI::Shader& RetroFuturaGUI::ShaderManager::GetColorSquareShader()
-{
-    return *_colorSquare;
+    return *_colorFieldShaders[static_cast<uSize>(shape)];
 }
 
 RetroFuturaGUI::Shader& RetroFuturaGUI::ShaderManager::GetLineFillShader()
 {
     return *_lineFill;
-}
-
-RetroFuturaGUI::Shader& RetroFuturaGUI::ShaderManager::GetBorderSolidFillShader()
-{
-    return *_borderSolidFill;
-}
-
-RetroFuturaGUI::Shader& RetroFuturaGUI::ShaderManager::GetBorderLinearGradientShader()
-{
-    return *_borderLinearGradient;
-}
-
-RetroFuturaGUI::Shader& RetroFuturaGUI::ShaderManager::GetBorderRadialGradientShader()
-{
-    return *_borderRadialGradient;
-}
-
-RetroFuturaGUI::Shader& RetroFuturaGUI::ShaderManager::GetBorderHueStarGradientShader()
-{
-    return *_borderHueStarGradient;
 }
 
 RetroFuturaGUI::Shader& RetroFuturaGUI::ShaderManager::GetFontAtlasFillShader()
@@ -72,9 +42,9 @@ RetroFuturaGUI::Shader& RetroFuturaGUI::ShaderManager::GetSvgMaskSolidFillShader
     return *_svgMaskSolidFill;
 }
 
-RetroFuturaGUI::Shader& RetroFuturaGUI::ShaderManager::GetSvgMaskLinearGradientShader()
+RetroFuturaGUI::Shader& RetroFuturaGUI::ShaderManager::GetSvgMaskLinearShiftShader()
 {
-    return *_svgMaskLinearGradient;
+    return *_svgMaskLinearShift;
 }
 
 RetroFuturaGUI::Shader& RetroFuturaGUI::ShaderManager::GetSvgMaskRadialGradientShader()
@@ -109,55 +79,23 @@ void RetroFuturaGUI::ShaderManager::compileShaders()
     workingDir.append("/ShaderSource/");
 #endif
 
-    _solidFill = std::make_unique<Shader>(
-        std::string(workingDir + "SolidFill.vs").c_str(),
-        std::string(workingDir + "SolidFill.fs").c_str()
-    );
+    //One source per class, built once per fill or shape: the define picks it
+    constexpr std::array<const char*, _fillTypeCount> fillDefines { "FILL_SOLID", "FILL_LINEAR_SHIFT", "FILL_RADIAL_GRADIENT", "FILL_HUESTAR_GRADIENT" };
+    constexpr std::array<const char*, _colorFieldShapeCount> shapeDefines { "SHAPE_CIRCLE", "SHAPE_SQUARE" };
+    const std::string quadPath { workingDir + "Quad.vs" };
+    const std::string planePath { workingDir + "Plane.fs" };
+    const std::string framePath { workingDir + "Frame.fs" };
+    const std::string colorFieldPath { workingDir + "ColorField.fs" };
 
-    _linearGradient = std::make_unique<Shader>(
-        std::string(workingDir + "LinearGradient.vs").c_str(),
-        std::string(workingDir + "LinearGradient.fs").c_str()
-    );
+    for(uSize fill { 0 }; fill < _fillTypeCount; ++fill)
+    {
+        _planeShaders[fill] = std::make_unique<Shader>(quadPath.c_str(), planePath.c_str(), nullptr, std::vector<std::string> { fillDefines[fill] });
+        _wavePlaneShaders[fill] = std::make_unique<Shader>(quadPath.c_str(), planePath.c_str(), nullptr, std::vector<std::string> { fillDefines[fill], "WAVE_PLANE" });
+        _frameShaders[fill] = std::make_unique<Shader>(quadPath.c_str(), framePath.c_str(), nullptr, std::vector<std::string> { fillDefines[fill] });
+    }
 
-    _radialGradient = std::make_unique<Shader>(
-        std::string(workingDir + "RadialGradient.vs").c_str(),
-        std::string(workingDir + "RadialGradient.fs").c_str()
-    );
-
-    _hueStarGradient = std::make_unique<Shader>(
-        std::string(workingDir + "HueStarGradient.vs").c_str(),
-        std::string(workingDir + "HueStarGradient.fs").c_str()
-    );
-
-    _colorCircle = std::make_unique<Shader>(
-        std::string(workingDir + "ColorCircle.vs").c_str(),
-        std::string(workingDir + "ColorCircle.fs").c_str()
-    );
-
-    _colorSquare = std::make_unique<Shader>(
-        std::string(workingDir + "ColorSquare.vs").c_str(),
-        std::string(workingDir + "ColorSquare.fs").c_str()
-    );
-
-    _borderSolidFill = std::make_unique<Shader>(
-        std::string(workingDir + "BorderSolidFill.vs").c_str(),
-        std::string(workingDir + "BorderSolidFill.fs").c_str()
-    );
-
-    _borderLinearGradient = std::make_unique<Shader>(
-        std::string(workingDir + "BorderLinearGradient.vs").c_str(),
-        std::string(workingDir + "BorderLinearGradient.fs").c_str()
-    );
-
-    _borderRadialGradient = std::make_unique<Shader>(
-        std::string(workingDir + "BorderRadialGradient.vs").c_str(),
-        std::string(workingDir + "BorderRadialGradient.fs").c_str()
-    );
-
-    _borderHueStarGradient = std::make_unique<Shader>(
-        std::string(workingDir + "BorderHueStarGradient.vs").c_str(),
-        std::string(workingDir + "BorderHueStarGradient.fs").c_str()
-    );
+    for(uSize shape { 0 }; shape < _colorFieldShapeCount; ++shape)
+        _colorFieldShaders[shape] = std::make_unique<Shader>(quadPath.c_str(), colorFieldPath.c_str(), nullptr, std::vector<std::string> { shapeDefines[shape] });
 
     _lineFill = std::make_unique<Shader>(
         std::string(workingDir + "Line.vs").c_str(),
@@ -180,9 +118,9 @@ void RetroFuturaGUI::ShaderManager::compileShaders()
         std::string(workingDir + "SvgMaskSolidFill.fs").c_str()
     );
 
-    _svgMaskLinearGradient = std::make_unique<Shader>(
+    _svgMaskLinearShift = std::make_unique<Shader>(
         std::string(workingDir + "SvgMask.vs").c_str(),
-        std::string(workingDir + "SvgMaskLinearGradient.fs").c_str()
+        std::string(workingDir + "SvgMaskLinearShift.fs").c_str()
     );
 
     _svgMaskRadialGradient = std::make_unique<Shader>(

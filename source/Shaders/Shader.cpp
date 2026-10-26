@@ -1,12 +1,12 @@
 #include "Shader.hpp"
+#include <format>
 #include <fstream>
-#include <sstream>
 #include <print>
 
-RetroFuturaGUI::Shader::Shader(const char* vertexPath, const char* fragmentPath, const char* geometryPath)
+RetroFuturaGUI::Shader::Shader(const char* vertexPath, const char* fragmentPath, const char* geometryPath, const std::vector<std::string>& defines)
 {
-    std::string vertexCode = loadShaderFile(vertexPath);
-    std::string fragmentCode = loadShaderFile(fragmentPath);
+    std::string vertexCode = loadShaderSource(vertexPath, defines);
+    std::string fragmentCode = loadShaderSource(fragmentPath, defines);
     const char* vShaderCode = vertexCode.c_str();
     const char* fShaderCode = fragmentCode.c_str();
     _programId = glCreateProgram();
@@ -16,7 +16,7 @@ RetroFuturaGUI::Shader::Shader(const char* vertexPath, const char* fragmentPath,
 
     if (geometryPath)
     {
-        std::string geometryCode = loadShaderFile(geometryPath);
+        std::string geometryCode = loadShaderSource(geometryPath, defines);
         const char* gShaderCode = geometryCode.c_str();
         geometryShader = compileShader(gShaderCode, GL_GEOMETRY_SHADER);
     }
@@ -143,26 +143,73 @@ i32 RetroFuturaGUI::Shader::GetProjectionLocation() const
     return _projectionLocation;
 }
 
-std::string RetroFuturaGUI::Shader::loadShaderFile(const char* shaderPath)
+std::string RetroFuturaGUI::Shader::loadShaderSource(const char* shaderPath, const std::vector<std::string>& defines)
 {
-    std::string shaderCode;
-    std::ifstream shaderFile;
-    shaderFile.exceptions(std::ifstream::failbit | std::ifstream::badbit);
+    std::string source;
+    std::unordered_set<std::string> included;
 
-    try
+    if(!appendWithIncludes(shaderPath, included, source))
+        return {};
+
+    if(defines.empty())
+        return source;
+
+    std::string defineLines;
+
+    for(const std::string& define : defines)
+        defineLines += std::format("#define {}\n", define);
+
+    //#version has to stay the first line, so the defines go right below it
+    const uSize versionStart { source.find("#version") };
+    const uSize versionEnd { std::string::npos == versionStart ? std::string::npos : source.find('\n', versionStart) };
+    source.insert(std::string::npos == versionEnd ? 0 : versionEnd + 1, defineLines);
+    return source;
+}
+
+bool RetroFuturaGUI::Shader::appendWithIncludes(const std::filesystem::path& path, std::unordered_set<std::string>& included, std::string& source)
+{
+    std::ifstream file { path };
+
+    if(!file)
     {
-        shaderFile.open(shaderPath);
-        std::stringstream shaderStream;
-        shaderStream << shaderFile.rdbuf();
-        shaderFile.close();
-        shaderCode = shaderStream.str();
-    }
-    catch (const std::ifstream::failure& e)
-    {
-        std::println("ERROR::SHADER::FILE_NOT_SUCCESFULLY_READ: {}, ({})", shaderPath, e.what());
+        std::println("ERROR::SHADER::FILE_NOT_SUCCESFULLY_READ: {}", path.string());
+        return false;
     }
 
-    return shaderCode;
+    included.insert(std::filesystem::weakly_canonical(path).string());
+    std::string line;
+
+    while(std::getline(file, line))
+    {
+        const uSize first { line.find_first_not_of(" \t") };
+
+        if(std::string::npos == first || 0 != line.compare(first, 8, "#include"))
+        {
+            source += line;
+            source += '\n';
+            continue;
+        }
+
+        const uSize
+            open { line.find('"', first) },
+            close { std::string::npos == open ? std::string::npos : line.find('"', open + 1) };
+
+        if(std::string::npos == close)
+        {
+            std::println("ERROR::SHADER::INCLUDE_WITHOUT_QUOTED_FILE: {} in {}", line, path.string());
+            return false;
+        }
+
+        const std::filesystem::path includedPath { path.parent_path() / line.substr(open + 1, close - open - 1) };
+
+        if(included.contains(std::filesystem::weakly_canonical(includedPath).string()))
+            continue;
+
+        if(!appendWithIncludes(includedPath, included, source))
+            return false;
+    }
+
+    return true;
 }
 
 u32 RetroFuturaGUI::Shader::compileShader(const char* shaderCode, const int shaderType)

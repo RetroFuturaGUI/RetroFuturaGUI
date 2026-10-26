@@ -1,10 +1,11 @@
 #version 330 core
+// The ColorPicker's field of colors, a circle (SHAPE_CIRCLE) or a square (SHAPE_SQUARE)
 
 in vec2 vLocalPos;
 out vec4 fragColor;
 
 uniform vec2 uScale;       // the quad's size in pixels
-uniform float uBrightness; // 0..1, darkens the whole circle
+uniform float uBrightness; // 0..1, darkens the whole field
 
 /* The fully saturated color of hue (0..1, 0 = red). Must stay the same formula as ColorPicker::updateColor,
    or the color under the indicator differs from the color picked. */
@@ -13,6 +14,7 @@ vec3 hueToRgb(float hue)
     return clamp(abs(mod(hue * 6.0 + vec3(0.0, 4.0, 2.0), 6.0) - 3.0) - 1.0, 0.0, 1.0);
 }
 
+#if defined(SHAPE_CIRCLE)
 void main()
 {
     const float TAU = 6.28318530718;
@@ -35,3 +37,12 @@ void main()
 
     fragColor = vec4(uBrightness * mix(vec3(1.0), hueToRgb(hue), saturation), coverage);
 }
+#elif defined(SHAPE_SQUARE)
+void main()
+{
+    vec2 uv = vLocalPos + 0.5; // 0..1 across the quad, 0,0 at the bottom left
+
+    // Hue runs left to right, from red back to red. Saturation runs from white at the bottom to full at the top
+    fragColor = vec4(uBrightness * mix(vec3(1.0), hueToRgb(uv.x), uv.y), 1.0);
+}
+#endif

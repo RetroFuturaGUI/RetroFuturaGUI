@@ -1,17 +1,22 @@
 #pragma once
 #include "IncludeHelper.hpp"
+#include <filesystem>
 #include <functional>
 #include <string>
 #include <string_view>
 #include <unordered_map>
+#include <unordered_set>
+#include <vector>
 
 namespace RetroFuturaGUI
 {
     class Shader
     {
     public:
-        /// @brief Loads, compiles and links a shader program from the given shader source files.
-        Shader(const char* vertexPath, const char* fragmentPath, const char* geometryPath = nullptr);
+        /// @brief Loads, compiles and links a shader program from the given shader source files. A source may pull in other files
+        ///        with #include "file", and each define is set right after its #version line, so one source can build several
+        ///        programs, such as one per fill.
+        Shader(const char* vertexPath, const char* fragmentPath, const char* geometryPath = nullptr, const std::vector<std::string>& defines = {});
         ~Shader();
 
         /// @brief Activates this shader program for subsequent draw calls.
@@ -87,8 +92,16 @@ namespace RetroFuturaGUI
         i32 _projectionLocation = -1;
         mutable std::unordered_map<std::string, i32, NameHash, std::equal_to<>> _uniformLocations {}; //asked from GL once per name
 
-        std::string loadShaderFile(const char* shaderPath);
         u32 compileShader(const char* shaderCode, const int shaderType);
+
+        /// @brief Reads a shader source with its #include lines replaced by the files they name, and the defines set right after its #version line. Empty when a file can't be read.
+        static std::string loadShaderSource(const char* shaderPath, const std::vector<std::string>& defines);
+
+        /// @brief Appends the file's lines to source, an #include "file" line by that file's lines in turn. The file is named
+        ///        relative to the one including it, and a file already included is skipped. That holds even when the first include
+        ///        sat in an #if branch the defines drop, since #if is left to the GLSL compiler: a file every branch needs is
+        ///        included before the #if.
+        static bool appendWithIncludes(const std::filesystem::path& path, std::unordered_set<std::string>& included, std::string& source);
 
         /// @brief The location of the uniform with the given name. -1 when the program has none
         i32 getUniformLocation(std::string_view name) const;
