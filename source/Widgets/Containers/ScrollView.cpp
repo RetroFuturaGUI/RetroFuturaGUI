@@ -339,11 +339,9 @@ bool RetroFuturaGUI::ScrollView::isScrollEnabled(const ScrollEnable axis) const
 void RetroFuturaGUI::ScrollView::EnableBackground(const bool enable)
 {
     _showBackground = enable;
-    
-    if(_showBorder)
-    {
+
+    if(_showBackground)
         _background = std::make_unique<Plane>(&_projection);
-    }
     else
         _background.reset();
 }
@@ -353,9 +351,7 @@ void RetroFuturaGUI::ScrollView::EnableBorder(const bool enable)
     _showBorder = enable;
 
     if(_showBorder)
-    {
         _border = std::make_unique<Frame>(&_projection);
-    }
     else
         _border.reset();
 }
