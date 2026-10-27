@@ -1,4 +1,5 @@
 #include "LineDiagram.hpp"
+#include "FillStyle.hpp"
 #include "config.hpp"
 #include "Input.hpp"
 #include "PlatformBridge.hpp"
@@ -24,7 +25,7 @@ RetroFuturaGUI::LineDiagram::LineDiagram(std::string_view name, Projection* proj
     _hoverText = std::make_unique<Text>(_elementProjection);
     _hoverText->SetTextAlignment(TextAlignment::Center);
     _hoverTextBackground = std::make_unique<Plane>(_elementProjection);
-    _hoverTextBackground->SetColors(_hoverTextBackgroundColor);
+    _hoverTextBackground->SetColors(_hoverTextBackgroundColors);
     _hoverTextBackground->SetCornerRadii(glm::vec4(3.0f));
     SetIndicatorSize(glm::vec2(10.0f), ElementSizing::Pixels);
     SetIndicatorType(IndicatorType::Circle);
@@ -113,13 +114,13 @@ void RetroFuturaGUI::LineDiagram::EnableHoverValue(const bool enable)
     _showHoverValue = enable;
 }
 
-void RetroFuturaGUI::LineDiagram::SetHoverTextBackgroundColor(const glm::vec4 color)
+void RetroFuturaGUI::LineDiagram::SetHoverTextBackgroundColors(std::span<const glm::vec4> colors)
 {
     if(!_hoverTextBackground)
         return;
 
-    _hoverTextBackgroundColor = { color };
-    _hoverTextBackground->SetColors(_hoverTextBackgroundColor);
+    _hoverTextBackgroundColors.assign(colors.begin(), colors.end());
+    _hoverTextBackground->SetColors(_hoverTextBackgroundColors);
 }
 
 void RetroFuturaGUI::LineDiagram::alignElementsToTrack()
@@ -282,7 +283,7 @@ void RetroFuturaGUI::LineDiagram::drawLineLabel(const uSize lineIndex, const Pla
 
     // a label's left edge lines up with the line's first point and sits just above that point.
     // Text is centered and therefore offsetted by half of its width
-    label.SetColor(getLineColor(lineIndex));
+    label.SetColors(getLineColors(lineIndex));
     label.SetRotation(track.GetRotation());
     label.SetPosition(toWorldSpace(glm::vec2(start.x + halfWidth, centerY), track, 0.025f));
     label.Draw();
@@ -366,7 +367,7 @@ void RetroFuturaGUI::LineDiagram::drawHoverText(const glm::vec2& pointerPosition
     _hoverTextBackground->SetPosition(toWorldSpace(boxCenter, track, 0.04f));
     _hoverTextBackground->Draw();
 
-    _hoverText->SetColor(getLineColor(_hoveredLineIndex));
+    _hoverText->SetColors(getLineColors(_hoveredLineIndex));
     _hoverText->SetRotation(track.GetRotation());
     _hoverText->SetPosition(toWorldSpace(boxCenter + textOffset, track, 0.045f));
     _hoverText->Draw();
@@ -406,15 +407,17 @@ std::string RetroFuturaGUI::LineDiagram::getLineLabelText(const uSize lineIndex)
     return _labels[lineIndex]->GetTextUTF8();
 }
 
-glm::vec4 RetroFuturaGUI::LineDiagram::getLineColor(const uSize lineIndex) const
+std::span<const glm::vec4> RetroFuturaGUI::LineDiagram::getLineColors(const uSize lineIndex) const
 {
+    static const glm::vec4 noLine { 1.0f };
+
     if(lineIndex >= _lines.size())
-        return glm::vec4(1.0f);
+        return std::span<const glm::vec4>(&noLine, 1);
 
     if(!_lines[lineIndex])
-        return glm::vec4(1.0f);
+        return std::span<const glm::vec4>(&noLine, 1);
 
-    return _lines[lineIndex]->GetColor();
+    return std::span<const glm::vec4>(&_lines[lineIndex]->GetColor(), 1);
 }
 
 void RetroFuturaGUI::LineDiagram::applyLabelFont(Text* text) const

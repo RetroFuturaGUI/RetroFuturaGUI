@@ -1,5 +1,6 @@
 #pragma once
 #include "IRectangle.hpp"
+#include "FogStyle.hpp"
 
 namespace RetroFuturaGUI
 {
@@ -18,7 +19,7 @@ namespace RetroFuturaGUI
 
     /// @brief A filled rectangle, such as a widget's background, a highlight or a track. Besides the fill, the corners, the
     ///        glass and the raster it takes fog, gaps cut out of the fill, and an image of its own.
-    class Plane : public IRectangle
+    class Plane : public IRectangle, public FogStyle
     {
     public:
         /// @brief Constructs a Plane that draws using the given projection.
@@ -41,7 +42,7 @@ namespace RetroFuturaGUI
         using IRectangle::SetRasterPattern;
         using IRectangle::SetPrimaryRasterColor;
         using IRectangle::SetSecondaryRasterColor;
-        using IRectangle::SetDotDistance;
+        using IRectangle::SetRasterSpacing;
         using IRectangle::SetRasterDegree;
         using IRectangle::SetPrimaryRasterWidthTransfer;
         using IRectangle::SetDotTransparencyTransfer;
@@ -51,18 +52,11 @@ namespace RetroFuturaGUI
         /// @brief Sets sections of the fill to skip drawing.
         void SetBackgroundGaps(const BackgroundGap& gaps);
 
-    //Fog
-        /// @brief Sets the overall opacity of the fog.
-        void SetFogAlpha(const f32 alpha);
-
-        /// @brief Sets the speed at which the fog drifts over time.
-        void SetFogSpeed(const f32 speed);
-
-        /// @brief Sets the per-octave density/weight curve driving the fog's fractal noise. Turns the fog on when non-empty.
-        void SetFogDensity(std::span<f32> density);
-
-        /// @brief Sets the coverage threshold above which fog appears; higher values carve larger clear (fog-free) gaps out of the cloud.
-        void SetFogClearing(const f32 clearing);
+    //Fog, from FogStyle
+        using FogStyle::SetFogAlpha;
+        using FogStyle::SetFogSpeed;
+        using FogStyle::SetFogDensity;
+        using FogStyle::SetFogClearing;
 
     //Image
         /// @brief Sets an image of the plane's own, stretched over it behind the fill and inset by SetBackgroundImagePadding.
@@ -81,20 +75,10 @@ namespace RetroFuturaGUI
     private:
         glm::vec4 _backgroundGapData { 0.0f };
 
-    //Fog (ShaderFeatures::FogEffect)
-        std::span<f32> _fogDensity;
-        uSize _fogDensityCount { 0 };
-        f32
-            _fogAlpha { 0.0f },
-            _fogSpeed { 0.0f },
-            _fogClearing { 0.5f },
-            _fogAnimationOffset { 0.0f };
-
     //Image (ShaderFeatures::BackgroundImage)
         u32 _backgroundImageTextureID { 0 };
         f32 _backgroundImagePadding { 0.0f };
 
-        void uploadFog(Shader& shader);
         void uploadImage(Shader& shader) const;
 
         /// @brief The background image's padding as a fraction of the quad, ready for uImagePadding.

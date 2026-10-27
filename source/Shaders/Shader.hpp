@@ -10,6 +10,18 @@
 
 namespace RetroFuturaGUI
 {
+    /// @brief The features a shader runs, as the bits of uDIP
+    enum ShaderFeatures : u32
+    {
+        RoundedCorners = 1,
+        GlassEffect = 1 << 1,
+        GlassEffectWithImage = GlassEffect + (1 << 2),
+        Raster = 1 << 3,
+        FogEffect = 1 << 4,
+        Wave = 1 << 5,
+        BackgroundImage = 1 << 6
+    };
+
     class Shader
     {
     public:

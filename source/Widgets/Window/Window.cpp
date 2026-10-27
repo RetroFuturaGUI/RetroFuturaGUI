@@ -297,7 +297,7 @@ void RetroFuturaGUI::Window::createWindow()
     //No frame until one is asked for, since a Frame starts with a 5 px border
     _border->SetBorderWidth(0.0f);
 
-    SetBackgroundColor(glm::vec4(0.086f, 0.086f, 0.1137f, 1.0f), ColorState::Enabled);
+    SetBackgroundColors(std::array { glm::vec4(0.086f, 0.086f, 0.1137f, 1.0f) }, ColorState::Enabled);
     setBorderColors();
 }
 

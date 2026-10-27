@@ -51,7 +51,7 @@ namespace RetroFuturaGUI
         using IRectangle::SetRasterPattern;
         using IRectangle::SetPrimaryRasterColor;
         using IRectangle::SetSecondaryRasterColor;
-        using IRectangle::SetDotDistance;
+        using IRectangle::SetRasterSpacing;
         using IRectangle::SetRasterDegree;
         using IRectangle::SetPrimaryRasterWidthTransfer;
         using IRectangle::SetDotTransparencyTransfer;

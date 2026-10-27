@@ -12,7 +12,7 @@ namespace RetroFuturaGUI
     {
     public:
         /// @brief Sets the caret color(s).
-        void SetCaretColors(std::span<glm::vec4> colors);
+        void SetCaretColors(std::span<const glm::vec4> colors);
 
         /// @brief Sets the caret fill type (solid, linear/radial/huestar gradient).
         void SetCaretFillType(const FillType fillType);
@@ -24,7 +24,7 @@ namespace RetroFuturaGUI
         void SetCaretBlinkTime(const f64 milliseconds);
 
         /// @brief Sets the selection highlight color(s).
-        void SetSelectedAreaColors(std::span<glm::vec4> colors);
+        void SetSelectedAreaColors(std::span<const glm::vec4> colors);
 
         /// @brief Sets the selection highlight fill type (solid, linear/radial/huestar gradient).
         void SetSelectedAreaFillType(const FillType fillType);

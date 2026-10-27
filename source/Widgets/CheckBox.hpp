@@ -36,13 +36,13 @@ namespace RetroFuturaGUI
         void SetValue(const bool value, const bool emitSignal);
         void SetInheritValueReference(bool* ref);
         bool GetValue() const;
-        void SetCheckmarkColors(std::span<glm::vec4> colors, const ColorState state);
+        void SetCheckmarkColors(std::span<const glm::vec4> colors, const ColorState state);
         
         /// @brief Sets the corner rounding radii of the CheckBox' background, inherit field and border.
         void SetCornerRadii(const glm::vec4& radii);
 
         /// @brief Sets multiple inherit state fill colors (e.g. gradient stops) for the given color state.
-        void SetInheritColors(std::span<glm::vec4> colors, const ColorState state);
+        void SetInheritColors(std::span<const glm::vec4> colors, const ColorState state);
 
         /// @brief Sets the offset applied to the inherit state fill gradient's start position.
         void SetInheritGradientOffset(const f32 gradientOffset);

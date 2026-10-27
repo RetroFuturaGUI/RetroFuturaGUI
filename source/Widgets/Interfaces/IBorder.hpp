@@ -1,5 +1,6 @@
 #pragma once
 #include "IncludeHelper.hpp"
+#include <array>
 #include <memory>
 #include <span>
 #include "Frame.hpp"
@@ -10,11 +11,8 @@ namespace RetroFuturaGUI
     class IBorder
     {
     public:
-        /// @brief Sets a single border color for the given color state.
-        void SetBorderColor(const glm::vec4& color, const ColorState state);
-
-        /// @brief Sets multiple border colors (e.g. gradient stops) for the given color state.
-        void SetBorderColors(std::span<glm::vec4> colors, const ColorState state);
+        /// @brief Sets the border colors for the given color state: one for a solid fill, the stops for a gradient. A single color is written std::array { color }.
+        void SetBorderColors(std::span<const glm::vec4> colors, const ColorState state);
 
         /// @brief Sets the offset applied to the border gradient's start position.
         void SetBorderGradientOffset(const f32 gradientOffset);
@@ -34,8 +32,8 @@ namespace RetroFuturaGUI
         /// @brief Sets the dot color used for the border's Dotted raster pattern.
         void SetBorderPrimaryRasterColor(const glm::vec4& color);
 
-        /// @brief Sets the spacing between dot centers, in pixels, for the border's Dotted raster pattern.
-        void SetBorderDotDistance(const f32 distance);
+        /// @brief Sets the gap, in pixels, between the largest elements of the border's raster: 0 lets them touch. Spreads the grid without changing any element's size.
+        void SetBorderRasterSpacing(const f32 spacing);
 
         /// @brief Sets the direction, in degrees, along which the border's raster widths/animation transfer.
         void SetBorderRasterDegree(const f32 degree);

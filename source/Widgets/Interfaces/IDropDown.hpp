@@ -44,9 +44,9 @@ namespace RetroFuturaGUI
         uSize GetSelectedIndex() const;
         void SetIndex(const uSize index);
         virtual bool IsPointInsideOpenDropDown(const glm::vec2& point) const;
-        void SetDropDownArrowColors(std::span<glm::vec4> colors, const ColorState state);
-        void SetDropDownBackgroundColors(std::span<glm::vec4> colors, const ColorState state);
-        void SetDropDownBorderColors(std::span<glm::vec4> colors, const ColorState state);
+        void SetDropDownArrowColors(std::span<const glm::vec4> colors, const ColorState state);
+        void SetDropDownBackgroundColors(std::span<const glm::vec4> colors, const ColorState state);
+        void SetDropDownBorderColors(std::span<const glm::vec4> colors, const ColorState state);
         void SetDropDownCornerRadii(const glm::vec4& radii);
         virtual void SetFontFamily(std::string_view fontFamily, const f32 fontSize, const PlatformBridge::Fonts::Slant slant, const PlatformBridge::Fonts::Weight fontWeight) = 0;
         virtual void SetTextAlignment(const TextAlignment alignment) = 0;

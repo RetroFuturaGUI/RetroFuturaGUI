@@ -14,6 +14,7 @@ RetroFuturaGUI::Text::Text(Projection* projection)
         glEnableVertexAttribArray(0);
         glEnableVertexAttribArray(1);
     });
+    SetColors(std::span<const glm::vec4>(&_defaultColor, 1));
 }
 
 RetroFuturaGUI::Text::~Text()
@@ -29,13 +30,24 @@ void RetroFuturaGUI::Text::Draw()
     if (_vertices.empty() || !_fontInfo || _glyphDraws.empty())
         return;
 
-    ShaderManager::GetFontAtlasFillShader().UseProgram();
-    ShaderManager::GetFontAtlasFillShader().SetUniformVec3("textColor", _textColor);
-    ShaderManager::GetFontAtlasFillShader().SetUniformMat4("uProjection", _projection.GetProjectionMatrix());
-    ShaderManager::GetFontAtlasFillShader().SetUniformMat4("uPosition", _translationMatrix);
-    ShaderManager::GetFontAtlasFillShader().SetUniformMat4("uRotation", _rotationMatrix);
-    ShaderManager::GetFontAtlasFillShader().SetUniformMat4("uScaling", glm::mat4(1.0f));
-    ShaderManager::GetFontAtlasFillShader().SetUniformInt("uTexture", 0);
+    if(_colors.empty())
+        return;
+
+    Shader& shader { ShaderManager::GetTextShader(_fillType) };
+    shader.UseProgram();
+    shader.SetUniformMat4("uProjection", _projection.GetProjectionMatrix());
+    shader.SetUniformMat4("uPosition", _translationMatrix);
+    shader.SetUniformMat4("uRotation", _rotationMatrix);
+    shader.SetUniformMat4("uScaling", glm::mat4(1.0f));
+    shader.SetUniformInt("uGlyphs", 0);
+
+    //The fill, the raster and the fog run across the whole span, whose top is a glyph height above the first baseline
+    shader.SetUniformVec2("uScale", glm::max(_textSpan, glm::vec2(1.0f)));
+    shader.SetUniformVec2("uSpanCenter", glm::vec2(_textSpan.x * 0.5f, _glyphSize.y - _textSpan.y * 0.5f));
+    uploadFill(shader, getFogFeatures());
+
+    if(0 != getFogFeatures())
+        uploadFog(shader);
 
     _vertexArray->Bind();
 
@@ -148,16 +160,6 @@ void RetroFuturaGUI::Text::SetRotation(const glm::vec3& rotation)
         glm::translate(glm::mat4(1.0f), glm::vec3(halfWidth, halfHeight, 0.0f)) *
         rotation3D *
         glm::translate(glm::mat4(1.0f), glm::vec3(-halfWidth, -halfHeight, 0.0f));
-}
-
-void RetroFuturaGUI::Text::SetColor(const glm::vec4& color)
-{
-    _textColor = color;
-}
-
-glm::vec4 RetroFuturaGUI::Text::GetColor() const
-{
-    return _textColor;
 }
 
 void RetroFuturaGUI::Text::SetTextUTF8(std::string_view text)

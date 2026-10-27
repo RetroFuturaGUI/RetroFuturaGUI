@@ -112,9 +112,9 @@ namespace RetroFuturaGUI
         /// @brief Sets the indicator's shape (a plain stroke or a fully-rounded circle).
         void SetIndicatorType(const IndicatorType type);
 
-        void SetIndicatorBackgroundColors(std::span<glm::vec4> colors, const ColorState state);
+        void SetIndicatorBackgroundColors(std::span<const glm::vec4> colors, const ColorState state);
 
-        void SetIndicatorBorderColors(std::span<glm::vec4> colors, const ColorState state);
+        void SetIndicatorBorderColors(std::span<const glm::vec4> colors, const ColorState state);
 
         /// @brief Sets the corner rounding radii of the indicator's background and border.
         void SetIndicatorCornerRadii(const glm::vec4& radii);
@@ -140,8 +140,8 @@ namespace RetroFuturaGUI
         /// @brief Sets the dot color used for the indicator background's Dotted raster pattern.
         void SetIndicatorBackgroundPrimaryRasterColor(const glm::vec4& color);
 
-        /// @brief Sets the spacing between dot centers, in pixels, for the indicator background's Dotted raster pattern.
-        void SetIndicatorBackgroundDotDistance(const f32 distance);
+        /// @brief Sets the gap, in pixels, between the largest elements of the indicator background's raster: 0 lets them touch. Spreads the grid without changing any element's size.
+        void SetIndicatorBackgroundRasterSpacing(const f32 spacing);
 
         /// @brief Sets the direction, in degrees, along which the indicator background's raster widths/animation transfer.
         void SetIndicatorBackgroundRasterDegree(const f32 degree);
@@ -188,8 +188,8 @@ namespace RetroFuturaGUI
         /// @brief Sets the dot color used for the indicator border's Dotted raster pattern.
         void SetIndicatorBorderPrimaryRasterColor(const glm::vec4& color);
 
-        /// @brief Sets the spacing between dot centers, in pixels, for the indicator border's Dotted raster pattern.
-        void SetIndicatorBorderDotDistance(const f32 distance);
+        /// @brief Sets the gap, in pixels, between the largest elements of the indicator border's raster: 0 lets them touch. Spreads the grid without changing any element's size.
+        void SetIndicatorBorderRasterSpacing(const f32 spacing);
 
         /// @brief Sets the direction, in degrees, along which the indicator border's raster widths/animation transfer.
         void SetIndicatorBorderRasterDegree(const f32 degree);
@@ -224,7 +224,7 @@ namespace RetroFuturaGUI
         /// @brief Sets the horizontal distance between the graph's wave peaks in pixels (Wave mode only)
         void SetGraphWaveLength(const f32 length);
 
-        void SetGraphColors(std::span<glm::vec4> colors, const ColorState state);
+        void SetGraphColors(std::span<const glm::vec4> colors, const ColorState state);
 
         /// @brief Sets the corner rounding radii of the graph.
         void SetGraphCornerRadii(const glm::vec4& radii);
@@ -253,8 +253,8 @@ namespace RetroFuturaGUI
         /// @brief Sets the dot color used for the graph's Dotted raster pattern.
         void SetGraphPrimaryRasterColor(const glm::vec4& color);
 
-        /// @brief Sets the spacing between dot centers, in pixels, for the graph's Dotted raster pattern.
-        void SetGraphDotDistance(const f32 distance);
+        /// @brief Sets the gap, in pixels, between the largest elements of the graph's raster: 0 lets them touch. Spreads the grid without changing any element's size.
+        void SetGraphRasterSpacing(const f32 spacing);
 
         /// @brief Sets the direction, in degrees, along which the graph's raster widths/animation transfer.
         void SetGraphRasterDegree(const f32 degree);

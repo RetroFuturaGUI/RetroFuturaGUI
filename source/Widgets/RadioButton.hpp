@@ -53,7 +53,7 @@ namespace RetroFuturaGUI
         void SetCornerRadii(const glm::vec4& radii);
 
         /// @brief Sets multiple Indicator state fill colors (e.g. gradient stops) for the given color state.
-        void SetIndicatorColors(std::span<glm::vec4> colors, const ColorState state);
+        void SetIndicatorColors(std::span<const glm::vec4> colors, const ColorState state);
 
         /// @brief Sets the offset applied to the Indicator state fill gradient's start position.
         void SetIndicatorGradientOffset(const f32 gradientOffset);

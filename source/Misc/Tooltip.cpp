@@ -93,7 +93,7 @@ void RetroFuturaGUI::Tooltip::draw()
     drawText();
 }
 
-void RetroFuturaGUI::Tooltip::SetBackgroundColors(std::span<glm::vec4> colors)
+void RetroFuturaGUI::Tooltip::SetBackgroundColors(std::span<const glm::vec4> colors)
 {
     if(!_background)
         return;
@@ -102,7 +102,7 @@ void RetroFuturaGUI::Tooltip::SetBackgroundColors(std::span<glm::vec4> colors)
     _background->SetColors(_backgroundColors);
 }
 
-void RetroFuturaGUI::Tooltip::SetBorderColors(std::span<glm::vec4> colors)
+void RetroFuturaGUI::Tooltip::SetBorderColors(std::span<const glm::vec4> colors)
 {
     if(!_border)
         return;

@@ -41,7 +41,7 @@ namespace RetroFuturaGUI
         std::string _content {}; //the text while there is no Text, and what it is built with
 
     // Style
-        std::span<glm::vec4>
+        std::span<const glm::vec4>
             _textColorEnabled {},
             _textColorDisabled {},
             _textColorClicked {},

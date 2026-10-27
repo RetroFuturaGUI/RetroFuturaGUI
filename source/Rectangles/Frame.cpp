@@ -15,7 +15,7 @@ void RetroFuturaGUI::Frame::Draw()
     Shader& shader { ShaderManager::GetFrameShader(_fillType) };
     shader.UseProgram();
     uploadTransform(shader);
-    uploadFill(shader);
+    uploadFill(shader, 0);
     shader.SetUniformFloat("uBorderWidth", _borderWidth);
     shader.SetUniformInt("uBorderGapCount", static_cast<i32>(_borderGapCount));
 

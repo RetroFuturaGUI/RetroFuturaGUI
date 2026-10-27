@@ -3,31 +3,7 @@
 #include <algorithm>
 #include <cctype>
 
-void RetroFuturaGUI::IBackground::SetBackgroundColor(const glm::vec4& color, const ColorState state)
-{
-    switch(state)
-    {
-        case ColorState::Clicked:
-            _backgroundColorClicked.clear();
-            _backgroundColorClicked.resize(1, color);
-        break;
-        case ColorState::Disabled:
-            _backgroundColorDisabled.clear();
-            _backgroundColorDisabled.resize(1, color);
-        break;
-        case ColorState::Hover:
-            _backgroundColorHover.clear();
-            _backgroundColorHover.resize(1, color);
-        break;
-        default: // Enabled
-            _backgroundColorEnabled.clear();
-            _backgroundColorEnabled.resize(1, color);
-    }
-
-    setBackgroundColors();
-}
-
-void RetroFuturaGUI::IBackground::SetBackgroundColors(std::span<glm::vec4> colors, const ColorState state)
+void RetroFuturaGUI::IBackground::SetBackgroundColors(std::span<const glm::vec4> colors, const ColorState state)
 {
     switch(state)
     {
@@ -128,12 +104,12 @@ void RetroFuturaGUI::IBackground::SetBackgroundPrimaryRasterColor(const glm::vec
     _background->SetPrimaryRasterColor(color);
 }
 
-void RetroFuturaGUI::IBackground::SetBackgroundDotDistance(const f32 distance)
+void RetroFuturaGUI::IBackground::SetBackgroundRasterSpacing(const f32 spacing)
 {
     if(!_background)
         return;
 
-    _background->SetDotDistance(distance);
+    _background->SetRasterSpacing(spacing);
 }
 
 void RetroFuturaGUI::IBackground::SetBackgroundRasterDegree(const f32 degree)

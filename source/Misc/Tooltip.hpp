@@ -35,8 +35,8 @@ namespace RetroFuturaGUI
         /// @brief Sets the font of every tooltip, those created before this call included. A tooltip given its own font with SetFontFamily keeps it.
         static void SetDefaultFontFamily(std::string_view fontFamily, const f32 fontSize, const PlatformBridge::Fonts::Slant slant, const PlatformBridge::Fonts::Weight fontWeight);
 
-        void SetBackgroundColors(std::span<glm::vec4> colors);
-        void SetBorderColors(std::span<glm::vec4> colors);
+        void SetBackgroundColors(std::span<const glm::vec4> colors);
+        void SetBorderColors(std::span<const glm::vec4> colors);
         void SetCornerRadii(const glm::vec4& radii);
         void SetText(std::string_view text, bool emitSignal) override;
         void SetFontFamily(std::string_view fontFamily, const f32 fontSize, const PlatformBridge::Fonts::Slant slant, const PlatformBridge::Fonts::Weight fontWeight) override;

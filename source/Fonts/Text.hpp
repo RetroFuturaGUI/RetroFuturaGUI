@@ -1,12 +1,16 @@
 #pragma once
 #include "FontManager.hpp"
 #include "DoubleEncodedString.hpp"
+#include "FillStyle.hpp"
+#include "FogStyle.hpp"
+#include "IncludeHelper.hpp"
 #include "Projection.hpp"
 #include "ContextObjects.hpp"
 #include <memory>
 #include <string>
 #include <vector>
 #include <GL/gl.h>
+#include <span>
 
 namespace RetroFuturaGUI
 {
@@ -25,7 +29,7 @@ namespace RetroFuturaGUI
             _VertexCount { 0 };
     };
 
-    class Text
+    class Text : public FillStyle, public FogStyle
     {
     public:
         /// @brief Constructs a Text object that renders using the given projection.
@@ -51,8 +55,28 @@ namespace RetroFuturaGUI
         /// @brief Sets the rotation of the text.
         void SetRotation(const glm::vec3& rotation);
 
-        /// @brief Sets the text color.
-        void SetColor(const glm::vec4& color);
+    //Fill, glass and raster, from FillStyle, and fog, from FogStyle. White until colors are set
+        using FillStyle::SetColors;
+        using FillStyle::SetFillType;
+        using FillStyle::SetGradientOffset;
+        using FillStyle::SetGradientAnimationSpeed;
+        using FillStyle::SetGradientDegree;
+        using FillStyle::SetGradientRotationSpeed;
+        using FillStyle::GetGradientOffset;
+        using FillStyle::GetGradientDegree;
+        using FillStyle::SetWindowBackgroundImageTextureID;
+        using FillStyle::SetRasterPattern;
+        using FillStyle::SetPrimaryRasterColor;
+        using FillStyle::SetSecondaryRasterColor;
+        using FillStyle::SetRasterSpacing;
+        using FillStyle::SetRasterDegree;
+        using FillStyle::SetPrimaryRasterWidthTransfer;
+        using FillStyle::SetDotTransparencyTransfer;
+        using FillStyle::SetRasterAnimationSpeed;
+        using FogStyle::SetFogAlpha;
+        using FogStyle::SetFogSpeed;
+        using FogStyle::SetFogDensity;
+        using FogStyle::SetFogClearing;
 
         /// @brief Sets the size of the parent widget, used for alignment.
         void SetParentSize(const glm::vec2 size);
@@ -71,9 +95,6 @@ namespace RetroFuturaGUI
 
         /// @brief Returns the current horizontal scroll offset.
         f32 GetScrollOffset() const;
-
-        /// @brief Returns the text color.
-        glm::vec4 GetColor() const;
 
         /// @brief Returns the glyph size.
         float GetGlyphSize() const;
@@ -128,6 +149,10 @@ namespace RetroFuturaGUI
         f32 GetLineHeight() const;
 
     private:
+        void updateMesh();
+        void alignPosition();
+        void calculateTextSpan();
+
         Projection& _projection;
         glm::vec2 _glyphSize { 16.0f };
         f32 _fontSize { 16.0f };
@@ -136,7 +161,6 @@ namespace RetroFuturaGUI
         u32 _fontIndex { 0 };
         const FontInfo* _fontInfo { nullptr };
         DoubleEncodedString _text;
-        glm::vec4 _textColor { 1.0f };
         TextAlignment _textAlignment { TextAlignment::Left };
         f32 _textPadding { 0.0f };
         f32 _scrollOffset { 0.0f };
@@ -152,6 +176,7 @@ namespace RetroFuturaGUI
         glm::mat4 _translationMatrix { 1.0f },
             _rotationMatrix { 1.0f };
         static inline constinit const f32 _1emFraction { 0.00390625f };
+        static inline const glm::vec4 _defaultColor { 1.0f }; //what a text shows before it is given colors
         std::vector<f32> _glyphPositions {};
         std::vector<uSize> _glyphLines {};
         bool _anchorTop { false };
@@ -162,9 +187,5 @@ namespace RetroFuturaGUI
         u32 _vbo { 0 };
         std::unique_ptr<VertexArray> _vertexArray { nullptr }; //one VAO per context that draws the text, over the same buffer
         bool _meshChanged { false };
-
-        void updateMesh();
-        void alignPosition();
-        void calculateTextSpan();
     };
 }

@@ -110,7 +110,7 @@ void RetroFuturaGUI::DynamicLibWidgetManager::SetEnabled(const char* id, const b
     }
 }
 
-void RetroFuturaGUI::DynamicLibWidgetManager::SetBackgroundColors(const char* id, std::span<glm::vec4> colors, const ColorState colorState)
+void RetroFuturaGUI::DynamicLibWidgetManager::SetBackgroundColors(const char* id, std::span<const glm::vec4> colors, const ColorState colorState)
 {
     IWidget* widget { getWidgetPointer(id) };
 
@@ -236,7 +236,7 @@ void RetroFuturaGUI::DynamicLibWidgetManager::SetWindowBackgroundImageTextureID(
     }
 }
 
-void RetroFuturaGUI::DynamicLibWidgetManager::SetBorderColors(const char* id, std::span<glm::vec4> colors, const ColorState colorState)
+void RetroFuturaGUI::DynamicLibWidgetManager::SetBorderColors(const char* id, std::span<const glm::vec4> colors, const ColorState colorState)
 {
     IWidget* widget { getWidgetPointer(id) };
 
@@ -362,7 +362,7 @@ void RetroFuturaGUI::DynamicLibWidgetManager::SetWindowBorderImageTextureID(cons
     }
 }
 
-void RetroFuturaGUI::DynamicLibWidgetManager::SetTextColors(const char *id, std::span<glm::vec4> colors, const ColorState colorState)
+void RetroFuturaGUI::DynamicLibWidgetManager::SetTextColors(const char *id, std::span<const glm::vec4> colors, const ColorState colorState)
 {
     IWidget* widget { getWidgetPointer(id) };
 
@@ -376,12 +376,12 @@ void RetroFuturaGUI::DynamicLibWidgetManager::SetTextColors(const char *id, std:
         case WidgetTypeID::Button:
         {
             Button* button = dynamic_cast<Button*>(widget);
-            button->SetTextColor(colors.front(), colorState);
+            button->SetTextColors(colors, colorState);
         } break;
         case WidgetTypeID::Label:
         {
             Label* label = dynamic_cast<Label*>(widget);
-            label->SetTextColor(colors.front(), colorState);
+            label->SetTextColors(colors, colorState);
         } break;
         default:
             [[unlikely]];

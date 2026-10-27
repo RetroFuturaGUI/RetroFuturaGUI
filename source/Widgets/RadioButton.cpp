@@ -121,7 +121,7 @@ bool RetroFuturaGUI::RadioButton::GetValue() const
     return _isChecked;
 }
 
-void RetroFuturaGUI::RadioButton::SetIndicatorColors(std::span<glm::vec4> colors, const ColorState state)
+void RetroFuturaGUI::RadioButton::SetIndicatorColors(std::span<const glm::vec4> colors, const ColorState state)
 {
     _indicatorColorState = state;
 

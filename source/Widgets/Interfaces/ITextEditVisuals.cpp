@@ -227,7 +227,7 @@ void RetroFuturaGUI::ITextEditVisuals::SetCaretBlinkTime(const f64 milliseconds)
     resetCaretBlink();
 }
 
-void RetroFuturaGUI::ITextEditVisuals::SetCaretColors(std::span<glm::vec4> colors)
+void RetroFuturaGUI::ITextEditVisuals::SetCaretColors(std::span<const glm::vec4> colors)
 {
     _caretColors.assign(colors.begin(), colors.end());
 
@@ -253,7 +253,7 @@ void RetroFuturaGUI::ITextEditVisuals::SetCaretGradientAnimationSpeed(const f32 
     _caret->SetGradientAnimationSpeed(speed);
 }
 
-void RetroFuturaGUI::ITextEditVisuals::SetSelectedAreaColors(std::span<glm::vec4> colors)
+void RetroFuturaGUI::ITextEditVisuals::SetSelectedAreaColors(std::span<const glm::vec4> colors)
 {
     _selectedAreaColors.assign(colors.begin(), colors.end());
 

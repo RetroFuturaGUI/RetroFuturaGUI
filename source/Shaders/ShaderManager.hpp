@@ -28,9 +28,9 @@ namespace RetroFuturaGUI
         /// @return Reference to the line fill Shader object
         static Shader& GetLineFillShader();
 
-        /// @brief Get the font atlas fill shader
-        /// @return Reference to the font atlas fill Shader object
-        static Shader& GetFontAtlasFillShader();
+        /// @brief Get the shader of a Text with the given fill
+        /// @return Reference to the Text Shader object for that fill
+        static Shader& GetTextShader(FillType fillType);
 
         /// @brief Get the texture fill shader
         /// @return Reference to the texture fill Shader object
@@ -79,8 +79,8 @@ namespace RetroFuturaGUI
         static inline std::array<std::unique_ptr<Shader>, _fillTypeCount> _wavePlaneShaders;
         static inline std::array<std::unique_ptr<Shader>, _fillTypeCount> _frameShaders;
         static inline std::array<std::unique_ptr<Shader>, _colorFieldShapeCount> _colorFieldShaders;
+        static inline std::array<std::unique_ptr<Shader>, _fillTypeCount> _textShaders;
         static inline std::unique_ptr<Shader> _lineFill;
-        static inline std::unique_ptr<Shader> _fontAtlasFill;
         static inline std::unique_ptr<Shader> _textureFill;
         static inline std::unique_ptr<Shader> _svgMaskSolidFill;
         static inline std::unique_ptr<Shader> _svgMaskLinearShift;

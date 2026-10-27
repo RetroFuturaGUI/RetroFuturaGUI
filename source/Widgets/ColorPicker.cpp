@@ -388,7 +388,7 @@ void RetroFuturaGUI::ColorPicker::updateColor(const bool emitSignal)
     _onColorChangedAsync.EmitAsync();
 }
 
-void RetroFuturaGUI::ColorPicker::SetColorPickerFieldBorderColors(std::span<glm::vec4> colors, const ColorState state)
+void RetroFuturaGUI::ColorPicker::SetColorPickerFieldBorderColors(std::span<const glm::vec4> colors, const ColorState state)
 {
     switch(state)
     {
@@ -408,7 +408,7 @@ void RetroFuturaGUI::ColorPicker::SetColorPickerFieldBorderColors(std::span<glm:
     setColorPickerFieldBorderColors();
 }
 
-void RetroFuturaGUI::ColorPicker::SetColorPickerIndicatorBorderColors(std::span<glm::vec4> colors, const ColorState state)
+void RetroFuturaGUI::ColorPicker::SetColorPickerIndicatorBorderColors(std::span<const glm::vec4> colors, const ColorState state)
 {
     switch(state)
     {

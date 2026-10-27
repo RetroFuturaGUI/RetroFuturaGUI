@@ -134,7 +134,7 @@ RetroFuturaGUI::FileExplorer::ConfirmPrompt::ConfirmPrompt(std::string_view titl
 
     styleLabel(*messageLabel, message, cellSize(_axis, windowSize, messageCell), font);
     styleLabel(*detailLabel, detail, cellSize(_axis, windowSize, detailCell), font);
-    detailLabel->SetTextColor(glm::vec4(0.75f, 0.75f, 0.8f, 1.0f), ColorState::Enabled);
+    detailLabel->SetTextColors(std::array { glm::vec4(0.75f, 0.75f, 0.8f, 1.0f) }, ColorState::Enabled);
     styleButton(*confirmButton, confirmText, cellSize(_axis, windowSize, confirmCell), font);
     confirmButton->Connect_OnClick([this]() { Close(); }, false);
     styleButton(*cancel, "Cancel", cellSize(_axis, windowSize, cancelCell), font);

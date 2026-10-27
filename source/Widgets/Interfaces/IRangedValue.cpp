@@ -125,7 +125,7 @@ void RetroFuturaGUI::IRangedValue::SetIndicatorType(const IndicatorType type)
     _indicatorBorder->SetCornerRadii(glm::vec4(isCircle ? _indicatorBorder->GetSize().x * 0.5f : 0.0f));
 }
 
-void RetroFuturaGUI::IRangedValue::SetIndicatorBackgroundColors(std::span<glm::vec4> colors, const ColorState state)
+void RetroFuturaGUI::IRangedValue::SetIndicatorBackgroundColors(std::span<const glm::vec4> colors, const ColorState state)
 {
     switch(state)
     {
@@ -145,7 +145,7 @@ void RetroFuturaGUI::IRangedValue::SetIndicatorBackgroundColors(std::span<glm::v
     setIndicatorBackgroundColors();
 }
 
-void RetroFuturaGUI::IRangedValue::SetIndicatorBorderColors(std::span<glm::vec4> colors, const ColorState state)
+void RetroFuturaGUI::IRangedValue::SetIndicatorBorderColors(std::span<const glm::vec4> colors, const ColorState state)
 {
     switch(state)
     {
@@ -233,12 +233,12 @@ void RetroFuturaGUI::IRangedValue::SetIndicatorBackgroundPrimaryRasterColor(cons
     _indicatorBackground->SetPrimaryRasterColor(color);
 }
 
-void RetroFuturaGUI::IRangedValue::SetIndicatorBackgroundDotDistance(const f32 distance)
+void RetroFuturaGUI::IRangedValue::SetIndicatorBackgroundRasterSpacing(const f32 spacing)
 {
     if(!_indicatorBackground)
         return;
 
-    _indicatorBackground->SetDotDistance(distance);
+    _indicatorBackground->SetRasterSpacing(spacing);
 }
 
 void RetroFuturaGUI::IRangedValue::SetIndicatorBackgroundRasterDegree(const f32 degree)
@@ -365,12 +365,12 @@ void RetroFuturaGUI::IRangedValue::SetIndicatorBorderPrimaryRasterColor(const gl
     _indicatorBorder->SetPrimaryRasterColor(color);
 }
 
-void RetroFuturaGUI::IRangedValue::SetIndicatorBorderDotDistance(const f32 distance)
+void RetroFuturaGUI::IRangedValue::SetIndicatorBorderRasterSpacing(const f32 spacing)
 {
     if(!_indicatorBorder)
         return;
 
-    _indicatorBorder->SetDotDistance(distance);
+    _indicatorBorder->SetRasterSpacing(spacing);
 }
 
 void RetroFuturaGUI::IRangedValue::SetIndicatorBorderRasterDegree(const f32 degree)
@@ -470,7 +470,7 @@ void RetroFuturaGUI::IRangedValue::SetGraphWaveLength(const f32 length)
     _graph->SetWaveLength(length);
 }
 
-void RetroFuturaGUI::IRangedValue::SetGraphColors(std::span<glm::vec4> colors, const ColorState state)
+void RetroFuturaGUI::IRangedValue::SetGraphColors(std::span<const glm::vec4> colors, const ColorState state)
 {
     switch(state)
     {
@@ -560,12 +560,12 @@ void RetroFuturaGUI::IRangedValue::SetGraphPrimaryRasterColor(const glm::vec4& c
     _graph->SetPrimaryRasterColor(color);
 }
 
-void RetroFuturaGUI::IRangedValue::SetGraphDotDistance(const f32 distance)
+void RetroFuturaGUI::IRangedValue::SetGraphRasterSpacing(const f32 spacing)
 {
     if(!_graph)
         return;
 
-    _graph->SetDotDistance(distance);
+    _graph->SetRasterSpacing(spacing);
 }
 
 void RetroFuturaGUI::IRangedValue::SetGraphRasterDegree(const f32 degree)

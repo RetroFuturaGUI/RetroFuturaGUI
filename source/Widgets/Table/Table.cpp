@@ -105,7 +105,7 @@ RetroFuturaGUI::Table::Table(const std::string& name, Projection* projection, IW
     _sharedCheckBox->SetInnerPadding(_checkBoxInnerPadding);
 }
 
-void RetroFuturaGUI::Table::SetCheckBoxBackgroundColors(std::span<glm::vec4> colors, const ColorState state)
+void RetroFuturaGUI::Table::SetCheckBoxBackgroundColors(std::span<const glm::vec4> colors, const ColorState state)
 {
     switch(state)
     {
@@ -123,7 +123,7 @@ void RetroFuturaGUI::Table::SetCheckBoxBackgroundColors(std::span<glm::vec4> col
     }
 }
 
-void RetroFuturaGUI::Table::SetCheckBoxBorderColors(std::span<glm::vec4> colors, const ColorState state)
+void RetroFuturaGUI::Table::SetCheckBoxBorderColors(std::span<const glm::vec4> colors, const ColorState state)
 {
     switch(state)
     {
@@ -141,7 +141,7 @@ void RetroFuturaGUI::Table::SetCheckBoxBorderColors(std::span<glm::vec4> colors,
     }
 }
 
-void RetroFuturaGUI::Table::SetCheckBoxCheckmarkColors(std::span<glm::vec4> colors, const ColorState state)
+void RetroFuturaGUI::Table::SetCheckBoxCheckmarkColors(std::span<const glm::vec4> colors, const ColorState state)
 {
     switch(state)
     {
@@ -283,7 +283,7 @@ void RetroFuturaGUI::Table::Draw()
     }
 }
 
-void RetroFuturaGUI::Table::drawTextCell(const uSize row, const uSize column, std::span<glm::vec4> textColors)
+void RetroFuturaGUI::Table::drawTextCell(const uSize row, const uSize column, std::span<const glm::vec4> textColors)
 {
     TableText* text { bindText(row, column) };
 
@@ -856,7 +856,7 @@ void RetroFuturaGUI::Table::SetHeaderTextPadding(const f32 padding)
                 static_cast<TableText*>(cell._TableWidget.get())->SetTextPadding(padding);
 }
 
-void RetroFuturaGUI::Table::SetHeaderTextColors(std::span<glm::vec4> colors, const ColorState state)
+void RetroFuturaGUI::Table::SetHeaderTextColors(std::span<const glm::vec4> colors, const ColorState state)
 {
     std::vector<glm::vec4>& target { state == ColorState::Disabled ? _headerTextColorsDisabled : _headerTextColorsEnabled };
     target.assign(colors.begin(), colors.end());
@@ -877,13 +877,13 @@ void RetroFuturaGUI::Table::SetHeaderOuterBorderWidth(const f32 width)
     _headerOuterBorderWidth = width;
 }
 
-void RetroFuturaGUI::Table::SetHeaderInnerBorderColors(std::span<glm::vec4> colors, const ColorState state)
+void RetroFuturaGUI::Table::SetHeaderInnerBorderColors(std::span<const glm::vec4> colors, const ColorState state)
 {
     std::vector<glm::vec4>& target { state == ColorState::Disabled ? _headerBorderColorsDisabled : _headerBorderColorsEnabled };
     target.assign(colors.begin(), colors.end());
 }
 
-void RetroFuturaGUI::Table::SetHeaderOuterBorderColors(std::span<glm::vec4> colors, const ColorState state)
+void RetroFuturaGUI::Table::SetHeaderOuterBorderColors(std::span<const glm::vec4> colors, const ColorState state)
 {
     std::vector<glm::vec4>& target { state == ColorState::Disabled ? _headerOuterBorderColorsDisabled : _headerOuterBorderColorsEnabled };
     target.assign(colors.begin(), colors.end());
@@ -972,7 +972,7 @@ void RetroFuturaGUI::Table::Disconnect_OnTextChange(const typename Signal<>::Slo
     _onTextChangeAsync.Disconnect(slot);
 }
 
-void RetroFuturaGUI::Table::SetTextColors(std::span<glm::vec4> colors, const ColorState state, const uSize nthIndex)
+void RetroFuturaGUI::Table::SetTextColors(std::span<const glm::vec4> colors, const ColorState state, const uSize nthIndex)
 {
     if(_nthTrackColors.empty())
         _nthTrackColors.resize(1);
@@ -1085,7 +1085,7 @@ void RetroFuturaGUI::Table::restyleTexts()
     }
 }
 
-void RetroFuturaGUI::Table::SetTrackBackgroundColors(std::span<glm::vec4> colors, const ColorState state, const uSize nthIndex)
+void RetroFuturaGUI::Table::SetTrackBackgroundColors(std::span<const glm::vec4> colors, const ColorState state, const uSize nthIndex)
 {
     if(_nthTrackColors.empty())
         return;
@@ -1112,7 +1112,7 @@ void RetroFuturaGUI::Table::SetTrackBackgroundColors(std::span<glm::vec4> colors
     }
 }
 
-void RetroFuturaGUI::Table::SetTrackBorderColors(std::span<glm::vec4> colors, const ColorState state, const uSize nthIndex)
+void RetroFuturaGUI::Table::SetTrackBorderColors(std::span<const glm::vec4> colors, const ColorState state, const uSize nthIndex)
 {
     if(_nthTrackColors.empty())
         return;
@@ -1161,7 +1161,7 @@ void RetroFuturaGUI::Table::SetRowWidgetTypes(const std::vector<ITableWidget::Ta
     _rowWidgetTypes = rowWidgetTypes;
 }
 
-void RetroFuturaGUI::Table::SetHeaderBackgroundColors(std::span<glm::vec4> colors, const ColorState state)
+void RetroFuturaGUI::Table::SetHeaderBackgroundColors(std::span<const glm::vec4> colors, const ColorState state)
 {
     if(state == ColorState::Disabled)
         _headerBackgroundColorsDisabled = std::vector<glm::vec4>(colors.begin(), colors.end());
@@ -2088,12 +2088,12 @@ void RetroFuturaGUI::Table::ClearSelection(const bool emitSignal)
     emitSelectionChange(previousFlags);
 }
 
-void RetroFuturaGUI::Table::SetSelectedRowBackgroundColors(std::span<glm::vec4> colors)
+void RetroFuturaGUI::Table::SetSelectedRowBackgroundColors(std::span<const glm::vec4> colors)
 {
     _selectedRowBackgroundColors.assign(colors.begin(), colors.end());
 }
 
-void RetroFuturaGUI::Table::SetSelectedRowTextColors(std::span<glm::vec4> colors)
+void RetroFuturaGUI::Table::SetSelectedRowTextColors(std::span<const glm::vec4> colors)
 {
     _selectedRowTextColors.assign(colors.begin(), colors.end());
 }
@@ -2115,7 +2115,7 @@ void RetroFuturaGUI::Table::ClearDropTargetRow()
     _hasDropTargetRow = false;
 }
 
-void RetroFuturaGUI::Table::SetDropTargetRowBackgroundColors(std::span<glm::vec4> colors)
+void RetroFuturaGUI::Table::SetDropTargetRowBackgroundColors(std::span<const glm::vec4> colors)
 {
     _dropTargetRowBackgroundColors.assign(colors.begin(), colors.end());
 }
@@ -2758,12 +2758,12 @@ bool RetroFuturaGUI::Table::isControlHeld()
     return PlatformBridge::Input::IsKeyDown(PB_KEY_CONTROL_L) || PlatformBridge::Input::IsKeyDown(PB_KEY_CONTROL_R);
 }
 
-void RetroFuturaGUI::Table::SetSelectionBandColors(std::span<glm::vec4> colors)
+void RetroFuturaGUI::Table::SetSelectionBandColors(std::span<const glm::vec4> colors)
 {
     _selectionBandColors.assign(colors.begin(), colors.end());
 }
 
-void RetroFuturaGUI::Table::SetSelectionBandBorderColors(std::span<glm::vec4> colors)
+void RetroFuturaGUI::Table::SetSelectionBandBorderColors(std::span<const glm::vec4> colors)
 {
     _selectionBandBorderColors.assign(colors.begin(), colors.end());
 }

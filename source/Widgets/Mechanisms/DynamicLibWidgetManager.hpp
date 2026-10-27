@@ -50,7 +50,7 @@ namespace RetroFuturaGUI
         static void SetEnabled(const char* id, const bool enable, const bool emitSignal);
 
         /// @brief Sets the background colors of the widget with the given ID, for the given color state.
-        static void SetBackgroundColors(const char* id, std::span<glm::vec4> colors, const ColorState colorState);
+        static void SetBackgroundColors(const char* id, std::span<const glm::vec4> colors, const ColorState colorState);
 
         /// @brief Sets the background gradient offset of the widget with the given ID.
         static void SetBackgroundGradientOffset(const char* id, const f32 gradientOffset);
@@ -68,7 +68,7 @@ namespace RetroFuturaGUI
         static void SetWindowBackgroundImageTextureID(const char* id, const u32 textureID);
 
         /// @brief Sets the border colors of the widget with the given ID, for the given color state.
-        static void SetBorderColors(const char* id, std::span<glm::vec4> colors, const ColorState colorState);
+        static void SetBorderColors(const char* id, std::span<const glm::vec4> colors, const ColorState colorState);
 
         /// @brief Sets the border gradient offset of the widget with the given ID.
         static void SetBorderGradientOffset(const char* id, const f32 gradientOffset);
@@ -86,7 +86,7 @@ namespace RetroFuturaGUI
         static void SetWindowBorderImageTextureID(const char* id, const u32 textureID);
 
         /// @brief Sets the text colors of the widget with the given ID, for the given color state.
-        static void SetTextColors(const char* id, std::span<glm::vec4> colors, const ColorState colorState);
+        static void SetTextColors(const char* id, std::span<const glm::vec4> colors, const ColorState colorState);
 
         /// @brief Sets the text content of the widget with the given ID.
         static void SetText(const char* id, const char* text);

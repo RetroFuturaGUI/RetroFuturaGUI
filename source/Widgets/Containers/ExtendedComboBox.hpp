@@ -80,11 +80,11 @@ namespace RetroFuturaGUI
         /// @brief Returns the text shown in the closed box.
         const std::string& GetPreviewText() const;
 
-        /// @brief Sets the preview text color for the given color state.
-        void SetPreviewTextColor(const glm::vec4& color, const ColorState state);
+        /// @brief Sets the preview text colors for the given color state.
+        void SetPreviewTextColors(std::span<const glm::vec4> colors, const ColorState state);
 
-        /// @brief Returns the preview text color configured for the given color state.
-        glm::vec4 GetPreviewTextColor(const ColorState state) const;
+        /// @brief Returns the preview text colors configured for the given color state.
+        const std::vector<glm::vec4>& GetPreviewTextColors(const ColorState state) const;
 
         bool IsPointInsideOpenDropDown(const glm::vec2& point) const override;
         void RemoveItem(const uSize index) override;
@@ -117,11 +117,11 @@ namespace RetroFuturaGUI
         inline static const std::string _emptyText { "" };
 
     //Design
-        glm::vec4
-            _previewTextColorEnabled { 1.0f, 1.0f, 1.0f, 1.0f },
-            _previewTextColorDisabled { 0.5f, 0.5f, 0.5f, 1.0f },
-            _previewTextColorHover { 1.0f, 1.0f, 1.0f, 1.0f },
-            _previewTextColorClicked { 1.0f, 1.0f, 1.0f, 1.0f };
+        std::vector<glm::vec4>
+            _previewTextColorsEnabled { glm::vec4(1.0f, 1.0f, 1.0f, 1.0f) },
+            _previewTextColorsDisabled { glm::vec4(0.5f, 0.5f, 0.5f, 1.0f) },
+            _previewTextColorsHover { glm::vec4(1.0f, 1.0f, 1.0f, 1.0f) },
+            _previewTextColorsClicked { glm::vec4(1.0f, 1.0f, 1.0f, 1.0f) };
 
     //Logic
         ColorState _previewTextColorState { ColorState::Enabled };

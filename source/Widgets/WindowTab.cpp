@@ -38,12 +38,12 @@ RetroFuturaGUI::WindowTab::WindowTab(std::string_view name, Projection* projecti
     _border->SetBorderWidth(0.0f); //no frame until one is asked for, since a Frame starts with a 5 px border
 
 
-    SetBackgroundColor(glm::vec4(0.055f, 0.055f, 0.075f, 1.0f), ColorState::Enabled);
-    SetBackgroundColor(glm::vec4(0.055f, 0.055f, 0.075f, 1.0f), ColorState::Disabled);
+    SetBackgroundColors(std::array { glm::vec4(0.055f, 0.055f, 0.075f, 1.0f) }, ColorState::Enabled);
+    SetBackgroundColors(std::array { glm::vec4(0.055f, 0.055f, 0.075f, 1.0f) }, ColorState::Disabled);
     setBackgroundColors();
     setBorderColors();
     applyTitleFont(_previewTitle.get());
-    SetCloseIconColor(_closeIconColor);
+    applyCloseIconColors();
 
     Window* host { GetHostWindow() };
 
@@ -276,24 +276,24 @@ void RetroFuturaGUI::WindowTab::SetFieldCornerRadii(const glm::vec4& radii)
     _fieldCornerRadii = radii;
 }
 
-void RetroFuturaGUI::WindowTab::SetFieldBackgroundColor(const glm::vec4& color, const ColorState state)
+void RetroFuturaGUI::WindowTab::SetFieldBackgroundColors(std::span<const glm::vec4> colors, const ColorState state)
 {
-    colorOf(_fieldBackgroundColors, state) = color;
+    colorOf(_fieldBackgroundColors, state).assign(colors.begin(), colors.end());
 }
 
-void RetroFuturaGUI::WindowTab::SetSelectedFieldBackgroundColor(const glm::vec4& color)
+void RetroFuturaGUI::WindowTab::SetSelectedFieldBackgroundColors(std::span<const glm::vec4> colors)
 {
-    _fieldBackgroundColors._Selected = color;
+    _fieldBackgroundColors._Selected.assign(colors.begin(), colors.end());
 }
 
-void RetroFuturaGUI::WindowTab::SetFieldBorderColor(const glm::vec4& color, const ColorState state)
+void RetroFuturaGUI::WindowTab::SetFieldBorderColors(std::span<const glm::vec4> colors, const ColorState state)
 {
-    colorOf(_fieldBorderColors, state) = color;
+    colorOf(_fieldBorderColors, state).assign(colors.begin(), colors.end());
 }
 
-void RetroFuturaGUI::WindowTab::SetSelectedFieldBorderColor(const glm::vec4& color)
+void RetroFuturaGUI::WindowTab::SetSelectedFieldBorderColors(std::span<const glm::vec4> colors)
 {
-    _fieldBorderColors._Selected = color;
+    _fieldBorderColors._Selected.assign(colors.begin(), colors.end());
 }
 
 void RetroFuturaGUI::WindowTab::SetFieldBorderWidth(const f32 width)
@@ -314,14 +314,14 @@ void RetroFuturaGUI::WindowTab::SetTitleFontFamily(std::string_view fontFamily, 
     applyTitleFont(_previewTitle.get());
 }
 
-void RetroFuturaGUI::WindowTab::SetTitleColor(const glm::vec4& color, const ColorState state)
+void RetroFuturaGUI::WindowTab::SetTitleColors(std::span<const glm::vec4> colors, const ColorState state)
 {
-    colorOf(_titleColors, state) = color;
+    colorOf(_titleColors, state).assign(colors.begin(), colors.end());
 }
 
-void RetroFuturaGUI::WindowTab::SetSelectedTitleColor(const glm::vec4& color)
+void RetroFuturaGUI::WindowTab::SetSelectedTitleColors(std::span<const glm::vec4> colors)
 {
-    _titleColors._Selected = color;
+    _titleColors._Selected.assign(colors.begin(), colors.end());
 }
 
 void RetroFuturaGUI::WindowTab::SetTitlePadding(const f32 padding)
@@ -341,22 +341,26 @@ void RetroFuturaGUI::WindowTab::SetCloseButtonSize(const f32 size)
     _closeIcon->Rasterize(glm::i32vec2(resolution));
 }
 
-void RetroFuturaGUI::WindowTab::SetCloseButtonBackgroundColor(const glm::vec4& color, const ColorState state)
+void RetroFuturaGUI::WindowTab::SetCloseButtonBackgroundColors(std::span<const glm::vec4> colors, const ColorState state)
 {
-    colorOf(_closeBackgroundColors, state) = color;
+    colorOf(_closeBackgroundColors, state).assign(colors.begin(), colors.end());
 }
 
-void RetroFuturaGUI::WindowTab::SetCloseIconColor(const glm::vec4& color)
+void RetroFuturaGUI::WindowTab::SetCloseIconColors(std::span<const glm::vec4> colors)
 {
-    _closeIconColor = color;
+    _closeIconColors.assign(colors.begin(), colors.end());
+    applyCloseIconColors();
+}
 
+void RetroFuturaGUI::WindowTab::applyCloseIconColors()
+{
     if(!_closeIcon)
         return;
 
     _closeIcon->SetPathFill("CloseIcon", SvgPathFill
     {
         ._FillType = FillType::Solid,
-        ._Colors = { _closeIconColor },
+        ._Colors = _closeIconColors,
         ._GradientDegree = 0.0f,
         ._GradientOffset = 0.0f,
         ._GradientAnimationSpeed = 0.0f,
@@ -760,7 +764,7 @@ void RetroFuturaGUI::WindowTab::drawField(const uSize index, const f32 z)
     drawCloseButton(rect, z + _zStep, closeState);
 }
 
-void RetroFuturaGUI::WindowTab::drawFieldShape(const glm::vec4& rect, const f32 z, const glm::vec4& background, const glm::vec4& border)
+void RetroFuturaGUI::WindowTab::drawFieldShape(const glm::vec4& rect, const f32 z, const std::vector<glm::vec4>& background, const std::vector<glm::vec4>& border)
 {
     if(!_fieldBackground)
         return;
@@ -771,21 +775,19 @@ void RetroFuturaGUI::WindowTab::drawFieldShape(const glm::vec4& rect, const f32 
     const glm::vec3 center { rect.x + rect.z * 0.5f, rect.y + rect.w * 0.5f, z };
     const glm::vec2 size { rect.z, rect.w };
 
-    if(0.0f < background.a)
+    if(isVisible(background))
     {
-        glm::vec4 color { background };
-        _fieldBackground->SetColors(std::span<glm::vec4>(&color, 1));
+        _fieldBackground->SetColors(background);
         _fieldBackground->SetCornerRadii(_fieldCornerRadii);
         _fieldBackground->SetSize(size);
         _fieldBackground->SetPosition(center);
         _fieldBackground->Draw();
     }
 
-    if(0.0f >= _fieldBorderWidth || 0.0f >= border.a)
+    if(0.0f >= _fieldBorderWidth || !isVisible(border))
         return;
 
-    glm::vec4 color { border };
-    _fieldBorder->SetColors(std::span<glm::vec4>(&color, 1));
+    _fieldBorder->SetColors(border);
     _fieldBorder->SetBorderWidth(_fieldBorderWidth);
     _fieldBorder->SetCornerRadii(_fieldCornerRadii);
     _fieldBorder->SetSize(size);
@@ -807,11 +809,11 @@ void RetroFuturaGUI::WindowTab::drawCloseButton(const glm::vec4& field, const f3
         return;
 
     const glm::vec3 center { button.x + button.z * 0.5f, button.y + button.w * 0.5f, z };
-    glm::vec4 background { colorFor(_closeBackgroundColors, state, false) };
+    const std::vector<glm::vec4>& background { colorFor(_closeBackgroundColors, state, false) };
 
-    if(0.0f < background.a)
+    if(isVisible(background))
     {
-        _closeBackground->SetColors(std::span<glm::vec4>(&background, 1));
+        _closeBackground->SetColors(background);
         _closeBackground->SetCornerRadii(glm::vec4(button.z * 0.25f));
         _closeBackground->SetSize(glm::vec2(button.z, button.w));
         _closeBackground->SetPosition(center);
@@ -823,7 +825,7 @@ void RetroFuturaGUI::WindowTab::drawCloseButton(const glm::vec4& field, const f3
     _closeIcon->Draw();
 }
 
-void RetroFuturaGUI::WindowTab::drawTitle(Text* title, const glm::vec4& field, const f32 z, const glm::vec4& color)
+void RetroFuturaGUI::WindowTab::drawTitle(Text* title, const glm::vec4& field, const f32 z, const std::vector<glm::vec4>& colors)
 {
     if(!title)
         return;
@@ -836,7 +838,7 @@ void RetroFuturaGUI::WindowTab::drawTitle(Text* title, const glm::vec4& field, c
     //The text is clipped to the area, so a long title ends at the close button
     title->SetParentSize(glm::vec2(area.z, area.w));
     title->SetPosition(glm::vec3(area.x + area.z * 0.5f, area.y + area.w * 0.5f, z));
-    title->SetColor(color);
+    title->SetColors(colors);
     title->Draw();
 }
 
@@ -864,16 +866,20 @@ void RetroFuturaGUI::WindowTab::drawDropPreview()
     if(!fitsInStrip(rect))
         return;
 
-    //See-through, since the window isn't in yet
-    glm::vec4
+    //See-through, since the window isn't in yet. Copies, since the rectangle and the title only point at the colors they draw
+    std::vector<glm::vec4>
         background { _fieldBackgroundColors._Selected },
-        titleColor { _titleColors._Selected };
-    background.a *= 0.5f;
-    titleColor.a *= 0.6f;
+        titleColors { _titleColors._Selected };
+
+    for(glm::vec4& color : background)
+        color.a *= 0.5f;
+
+    for(glm::vec4& color : titleColors)
+        color.a *= 0.6f;
 
     const f32 z { _position.z + _zStep * 2.0f };
     drawFieldShape(rect, z, background, _fieldBorderColors._Selected);
-    drawTitle(_previewTitle.get(), rect, z + _zStep, titleColor);
+    drawTitle(_previewTitle.get(), rect, z + _zStep, titleColors);
 }
 
 void RetroFuturaGUI::WindowTab::syncTitles()
@@ -1005,7 +1011,7 @@ void RetroFuturaGUI::WindowTab::removeField(const uSize index)
     SelectWindow(_fields[std::min(index, _fields.size() - 1)]._Window, true);
 }
 
-glm::vec4 RetroFuturaGUI::WindowTab::colorFor(const FieldColors& colors, const ColorState state, const bool selected)
+const std::vector<glm::vec4>& RetroFuturaGUI::WindowTab::colorFor(const FieldColors& colors, const ColorState state, const bool selected)
 {
     if(ColorState::Disabled == state)
         return colors._Disabled;
@@ -1024,7 +1030,7 @@ glm::vec4 RetroFuturaGUI::WindowTab::colorFor(const FieldColors& colors, const C
     }
 }
 
-glm::vec4& RetroFuturaGUI::WindowTab::colorOf(FieldColors& colors, const ColorState state)
+std::vector<glm::vec4>& RetroFuturaGUI::WindowTab::colorOf(FieldColors& colors, const ColorState state)
 {
     switch(state)
     {
@@ -1037,6 +1043,11 @@ glm::vec4& RetroFuturaGUI::WindowTab::colorOf(FieldColors& colors, const ColorSt
         default:
             return colors._Enabled;
     }
+}
+
+bool RetroFuturaGUI::WindowTab::isVisible(std::span<const glm::vec4> colors)
+{
+    return std::any_of(colors.begin(), colors.end(), [](const glm::vec4& color) { return 0.0f < color.a; });
 }
 
 bool RetroFuturaGUI::WindowTab::contains(const glm::vec4& rect, const glm::vec2& point)

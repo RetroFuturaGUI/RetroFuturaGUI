@@ -356,7 +356,7 @@ void RetroFuturaGUI::IDropDown::SetIndex(const uSize index)
     _currentIndex = index;
 }
 
-void RetroFuturaGUI::IDropDown::SetDropDownArrowColors(std::span<glm::vec4> colors, const ColorState state)
+void RetroFuturaGUI::IDropDown::SetDropDownArrowColors(std::span<const glm::vec4> colors, const ColorState state)
 {
     _dropDownArrowColorState = state;
 
@@ -378,7 +378,7 @@ void RetroFuturaGUI::IDropDown::SetDropDownArrowColors(std::span<glm::vec4> colo
     setDropDownArrowColors();
 }
 
-void RetroFuturaGUI::IDropDown::SetDropDownBackgroundColors(std::span<glm::vec4> colors, const ColorState state)
+void RetroFuturaGUI::IDropDown::SetDropDownBackgroundColors(std::span<const glm::vec4> colors, const ColorState state)
 {
     _dropDownBackgroundColorSate = state;
 
@@ -400,7 +400,7 @@ void RetroFuturaGUI::IDropDown::SetDropDownBackgroundColors(std::span<glm::vec4>
     setDropDownBackgroundColors();
 }
 
-void RetroFuturaGUI::IDropDown::SetDropDownBorderColors(std::span<glm::vec4> colors, const ColorState state)
+void RetroFuturaGUI::IDropDown::SetDropDownBorderColors(std::span<const glm::vec4> colors, const ColorState state)
 {
     _dropDownBorderColorSate = state;
 

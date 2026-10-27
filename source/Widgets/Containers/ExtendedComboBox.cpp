@@ -439,16 +439,16 @@ void RetroFuturaGUI::ExtendedComboBox::setPreviewTextColors()
     switch(_previewTextColorState)
     {
         case ColorState::Clicked:
-            _previewText->SetColor(_previewTextColorClicked);
+            _previewText->SetColors(_previewTextColorsClicked);
         break;
         case ColorState::Hover:
-            _previewText->SetColor(_previewTextColorHover);
+            _previewText->SetColors(_previewTextColorsHover);
         break;
         case ColorState::Disabled:
-            _previewText->SetColor(_previewTextColorDisabled);
+            _previewText->SetColors(_previewTextColorsDisabled);
         break;
         default: //Enabled
-            _previewText->SetColor(_previewTextColorEnabled);
+            _previewText->SetColors(_previewTextColorsEnabled);
     }
 }
 
@@ -468,38 +468,38 @@ const std::string& RetroFuturaGUI::ExtendedComboBox::GetPreviewText() const
     return _previewText->GetTextUTF8();
 }
 
-void RetroFuturaGUI::ExtendedComboBox::SetPreviewTextColor(const glm::vec4& color, const ColorState state)
+void RetroFuturaGUI::ExtendedComboBox::SetPreviewTextColors(std::span<const glm::vec4> colors, const ColorState state)
 {
     switch(state)
     {
         case ColorState::Clicked:
-            _previewTextColorClicked = color;
+            _previewTextColorsClicked.assign(colors.begin(), colors.end());
         break;
         case ColorState::Hover:
-            _previewTextColorHover = color;
+            _previewTextColorsHover.assign(colors.begin(), colors.end());
         break;
         case ColorState::Disabled:
-            _previewTextColorDisabled = color;
+            _previewTextColorsDisabled.assign(colors.begin(), colors.end());
         break;
         default: //Enabled
-            _previewTextColorEnabled = color;
+            _previewTextColorsEnabled.assign(colors.begin(), colors.end());
     }
 
     setPreviewTextColors();
 }
 
-glm::vec4 RetroFuturaGUI::ExtendedComboBox::GetPreviewTextColor(const ColorState state) const
+const std::vector<glm::vec4>& RetroFuturaGUI::ExtendedComboBox::GetPreviewTextColors(const ColorState state) const
 {
     switch(state)
     {
         case ColorState::Clicked:
-            return _previewTextColorClicked;
+            return _previewTextColorsClicked;
         case ColorState::Hover:
-            return _previewTextColorHover;
+            return _previewTextColorsHover;
         case ColorState::Disabled:
-            return _previewTextColorDisabled;
+            return _previewTextColorsDisabled;
         default: //Enabled
-            return _previewTextColorEnabled;
+            return _previewTextColorsEnabled;
     }
 }
 

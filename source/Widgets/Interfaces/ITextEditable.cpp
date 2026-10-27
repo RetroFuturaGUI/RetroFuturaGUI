@@ -28,12 +28,14 @@ void RetroFuturaGUI::ITextEditable::emitChange()
     _onTextChange.Emit();
 }
 
-void RetroFuturaGUI::ITextEditable::SetPlaceholderTextColor(const glm::vec4& color)
+void RetroFuturaGUI::ITextEditable::SetPlaceholderTextColors(std::span<const glm::vec4> colors)
 {
+    _placeholderTextColors.assign(colors.begin(), colors.end());
+
     if(!_placeholderText)
         return;
 
-    _placeholderText->SetColor(color);
+    _placeholderText->SetColors(_placeholderTextColors);
 }
 
 void RetroFuturaGUI::ITextEditable::SetPlaceholderText(std::string_view text)

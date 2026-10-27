@@ -27,32 +27,6 @@ void RetroFuturaGUI::Plane::SetBackgroundGaps(const BackgroundGap& gaps)
     );
 }
 
-void RetroFuturaGUI::Plane::SetFogAlpha(const f32 alpha)
-{
-    _fogAlpha = alpha;
-}
-
-void RetroFuturaGUI::Plane::SetFogSpeed(const f32 speed)
-{
-    _fogSpeed = speed;
-}
-
-void RetroFuturaGUI::Plane::SetFogDensity(std::span<f32> density)
-{
-    _fogDensity = density;
-    _fogDensityCount = std::min<uSize>(_fogDensity.size(), 8);
-
-    if(0 < _fogDensityCount)
-        _shaderFeatureDIP |= ShaderFeatures::FogEffect;
-    else
-        _shaderFeatureDIP &= ~ShaderFeatures::FogEffect;
-}
-
-void RetroFuturaGUI::Plane::SetFogClearing(const f32 clearing)
-{
-    _fogClearing = clearing;
-}
-
 void RetroFuturaGUI::Plane::SetBackgroundImageTextureID(const u32 textureID)
 {
     _backgroundImageTextureID = textureID;
@@ -72,32 +46,19 @@ void RetroFuturaGUI::Plane::uploadPlane(Shader& shader)
 {
     shader.UseProgram();
     uploadTransform(shader);
-    uploadFill(shader);
+    uploadFill(shader, getFogFeatures());
     shader.SetUniformVec4("uBackgroundGap", _backgroundGapData);
 
-    if(_shaderFeatureDIP & ShaderFeatures::FogEffect)
+    if(0 != getFogFeatures())
         uploadFog(shader);
 
     if(_shaderFeatureDIP & ShaderFeatures::BackgroundImage)
         uploadImage(shader);
 }
 
-void RetroFuturaGUI::Plane::uploadFog(Shader& shader)
-{
-    _fogAnimationOffset += _fogSpeed;
-
-    shader.SetUniformFloat("uFogAlpha", _fogAlpha);
-    shader.SetUniformFloat("uFogAnimationOffset", _fogAnimationOffset);
-    shader.SetUniformFloat("uFogClearing", _fogClearing);
-    shader.SetUniformInt("uFogDensityCount", static_cast<i32>(_fogDensityCount));
-
-    if(0 < _fogDensityCount)
-        shader.SetUniformFloat("uFogDensity", _fogDensity.data(), static_cast<u32>(_fogDensityCount));
-}
-
 void RetroFuturaGUI::Plane::uploadImage(Shader& shader) const
 {
-    //Unit 1, so the glass keeps unit 0. Unit 0 is made active again for whatever binds a texture next
+    //Unit 1, apart from the glass. Unit 0 is made active again for whatever binds a texture next
     shader.SetUniformInt("uBackgroundImage", 1);
     shader.SetUniformVec2("uImagePadding", getBackgroundImagePaddingUV());
     glActiveTexture(GL_TEXTURE1);

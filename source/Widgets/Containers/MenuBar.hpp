@@ -115,11 +115,8 @@ namespace RetroFuturaGUI
         const FlexDefinition& GetFlexDefinition(const uSize index) const;
 
     //Separator lines
-        /// @brief Sets a single separator line color for the given color state.
-        void SetSeparatorLinesColor(const glm::vec4& color, const ColorState state);
-
-        /// @brief Sets multiple separator line colors (e.g. gradient stops) for the given color state.
-        void SetSeparatorLinesColors(std::span<glm::vec4> colors, const ColorState state);
+        /// @brief Sets the separator line colors for the given color state: one for a solid fill, the stops for a gradient.
+        void SetSeparatorLinesColors(std::span<const glm::vec4> colors, const ColorState state);
 
         /// @brief Sets the separator lines' fill type (solid, linear/radial/huestar gradient).
         void SetSeparatorLinesFillType(const FillType fillType);
@@ -143,11 +140,8 @@ namespace RetroFuturaGUI
         void SetCornerRadii(const glm::vec4& radii);
 
     //Item background
-        /// @brief Sets a single item background color for the given color state.
-        void SetItemBackgroundColor(const glm::vec4& color, const ColorState state);
-
-        /// @brief Sets multiple item background colors (e.g. gradient stops) for the given color state.
-        void SetItemBackgroundColors(std::span<glm::vec4> colors, const ColorState state);
+        /// @brief Sets the item background colors for the given color state: one for a solid fill, the stops for a gradient.
+        void SetItemBackgroundColors(std::span<const glm::vec4> colors, const ColorState state);
 
         /// @brief Sets the corner rounding radii of the item background and item border.
         void SetItemCornerRadii(const glm::vec4& radii);
@@ -173,8 +167,8 @@ namespace RetroFuturaGUI
         /// @brief Sets the dot color used for the item background's Dotted raster pattern.
         void SetItemBackgroundPrimaryRasterColor(const glm::vec4& color);
 
-        /// @brief Sets the spacing between dot centers, in pixels, for the item background's Dotted raster pattern.
-        void SetItemBackgroundDotDistance(const f32 distance);
+        /// @brief Sets the gap, in pixels, between the largest elements of the item background's raster: 0 lets them touch. Spreads the grid without changing any element's size.
+        void SetItemBackgroundRasterSpacing(const f32 spacing);
 
         /// @brief Sets the direction, in degrees, along which the item background's raster widths/animation transfer.
         void SetItemBackgroundRasterDegree(const f32 degree);
@@ -204,11 +198,8 @@ namespace RetroFuturaGUI
         void SetItemBackgroundGaps(const BackgroundGap& gap);
 
     //Item border
-        /// @brief Sets a single item border color for the given color state.
-        void SetItemBorderColor(const glm::vec4& color, const ColorState state);
-
-        /// @brief Sets multiple item border colors (e.g. gradient stops) for the given color state.
-        void SetItemBorderColors(std::span<glm::vec4> colors, const ColorState state);
+        /// @brief Sets the item border colors for the given color state: one for a solid fill, the stops for a gradient.
+        void SetItemBorderColors(std::span<const glm::vec4> colors, const ColorState state);
 
         /// @brief Sets the item border fill type (solid, linear/radial/huestar gradient).
         void SetItemBorderFillType(const FillType fillType);
@@ -231,8 +222,8 @@ namespace RetroFuturaGUI
         /// @brief Sets the dot color used for the item border's Dotted raster pattern.
         void SetItemBorderPrimaryRasterColor(const glm::vec4& color);
 
-        /// @brief Sets the spacing between dot centers, in pixels, for the item border's Dotted raster pattern.
-        void SetItemBorderDotDistance(const f32 distance);
+        /// @brief Sets the gap, in pixels, between the largest elements of the item border's raster: 0 lets them touch. Spreads the grid without changing any element's size.
+        void SetItemBorderRasterSpacing(const f32 spacing);
 
         /// @brief Sets the direction, in degrees, along which the item border's raster widths/animation transfer.
         void SetItemBorderRasterDegree(const f32 degree);

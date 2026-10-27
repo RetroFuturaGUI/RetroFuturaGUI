@@ -36,13 +36,13 @@ RetroFuturaGUI::FileExplorer::FilePreview::FilePreview(ViewHost& host, Lasagna& 
     _picture->SetSize(_mediaSize);
     styleLabel(*_message, "", _mediaSize, _font);
     _message->SetTextAlignment(TextAlignment::Center);
-    _message->SetTextColor(glm::vec4(0.7f, 0.7f, 0.75f, 1.0f), ColorState::Enabled);
+    _message->SetTextColors(std::array { glm::vec4(0.7f, 0.7f, 0.75f, 1.0f) }, ColorState::Enabled);
 
     //Like the list, without its header
     const glm::vec3 detailsSize { cellSize(_axis, paneSize, detailsCell) };
     _details->SetSize(detailsSize);
     _details->SetBorderWidth(1.0f);
-    _details->SetBorderColor(glm::vec4(0.35f, 0.35f, 0.45f, 1.0f), ColorState::Enabled);
+    _details->SetBorderColors(std::array { glm::vec4(0.35f, 0.35f, 0.45f, 1.0f) }, ColorState::Enabled);
     _details->SetTrackAlternatingColorCount(2);
     std::vector<glm::vec4>
         evenRowColors {{ 0.1f, 0.1f, 0.13f, 1.0f }},

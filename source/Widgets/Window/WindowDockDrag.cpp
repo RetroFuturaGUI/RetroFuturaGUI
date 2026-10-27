@@ -233,9 +233,9 @@ void RetroFuturaGUI::Window::showDockPreview(const DockRect& slot, const glm::ve
     {
         _dockPreview = std::unique_ptr<Window>(new Window("DockPreview", slot._Size.x, slot._Size.y, WindowRole::DockPreview));
         _dockPreview->SetWindowTitle("Dock preview");
-        _dockPreview->SetBackgroundColor(glm::vec4(0.3f, 0.55f, 1.0f, 0.25f), ColorState::Enabled);
+        _dockPreview->SetBackgroundColors(std::array { glm::vec4(0.3f, 0.55f, 1.0f, 0.25f) }, ColorState::Enabled);
         _dockPreview->SetBorderWidth(2.0f);
-        _dockPreview->SetBorderColor(glm::vec4(0.45f, 0.7f, 1.0f, 0.85f), ColorState::Enabled);
+        _dockPreview->SetBorderColors(std::array { glm::vec4(0.45f, 0.7f, 1.0f, 0.85f) }, ColorState::Enabled);
     }
 
     if(!_dockPreview->_window)

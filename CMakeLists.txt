@@ -67,6 +67,8 @@ list(APPEND RetroFuturaGuiSources
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Scenes/Scene.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Scenes/SceneLoader.cpp"
 
+    "${CMAKE_CURRENT_SOURCE_DIR}/source/Shaders/FillStyle.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/source/Shaders/FogStyle.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Shaders/Shader.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Shaders/ShaderManager.cpp"
     

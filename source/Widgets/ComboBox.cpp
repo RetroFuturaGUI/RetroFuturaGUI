@@ -184,7 +184,7 @@ void RetroFuturaGUI::ComboBox::AddItem(std::string_view name)
         _itemTexts.back()->SetFontFamily(_fontFamily, _fontSize, _slant, _fontWeight);
 
     _itemTexts.back()->SetTextUTF8(name);
-    _itemTexts.back()->SetColor(_itemTextColorEnabled);
+    _itemTexts.back()->SetColors(_itemTextColorsEnabled);
     _itemCount = _itemTexts.size();
     updateDropDownGeometry();
 }
@@ -203,7 +203,7 @@ void RetroFuturaGUI::ComboBox::SetCaption(std::string_view caption)
         _previewText->SetFontFamily(_fontFamily, _fontSize, _slant, _fontWeight);
 
     _previewText->SetTextUTF8(caption);
-    _previewText->SetColor(_itemTextColorEnabled);
+    _previewText->SetColors(_itemTextColorsEnabled);
 }
 
 void RetroFuturaGUI::ComboBox::SetItemEnabled(const uSize index, const bool enable)
@@ -220,16 +220,19 @@ bool RetroFuturaGUI::ComboBox::IsItemEnabled(const uSize index) const
     return index < _itemEnabledFlags.size() && _itemEnabledFlags[index];
 }
 
-void RetroFuturaGUI::ComboBox::SetItemTextColors(const glm::vec4& enabled, const glm::vec4& disabled)
+void RetroFuturaGUI::ComboBox::SetItemTextColors(std::span<const glm::vec4> colors, const ColorState state)
 {
-    _itemTextColorEnabled = enabled;
-    _itemTextColorDisabled = disabled;
+    if(ColorState::Disabled == state)
+        _itemTextColorsDisabled.assign(colors.begin(), colors.end());
+    else
+        _itemTextColorsEnabled.assign(colors.begin(), colors.end());
+
     updateItemColors();
 
     if(!_previewText)
         return;
 
-    _previewText->SetColor(_itemTextColorEnabled);
+    _previewText->SetColors(_itemTextColorsEnabled);
 }
 
 void RetroFuturaGUI::ComboBox::updateItemColors()
@@ -239,7 +242,7 @@ void RetroFuturaGUI::ComboBox::updateItemColors()
     for(const auto& item : _itemTexts)
     {
         if(item)
-            item->SetColor(IsItemEnabled(index) ? _itemTextColorEnabled : _itemTextColorDisabled);
+            item->SetColors(IsItemEnabled(index) ? _itemTextColorsEnabled : _itemTextColorsDisabled);
 
         ++index;
     }

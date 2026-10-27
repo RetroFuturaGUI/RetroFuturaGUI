@@ -184,27 +184,7 @@ void RetroFuturaGUI::MenuBar::SetSeparatorLinesThickness(const f32 thickness)
     _separatorLinesThickness = thickness;
 }
 
-void RetroFuturaGUI::MenuBar::SetSeparatorLinesColor(const glm::vec4& color, const ColorState state)
-{
-    switch(state)
-    {
-        case ColorState::Enabled:
-            _separatorLinesColorsEnabled.clear();
-            _separatorLinesColorsEnabled.resize(1, color);
-        break;
-        case ColorState::Disabled:
-            _separatorLinesColorsDisabled.clear();
-            _separatorLinesColorsDisabled.resize(1, color);
-        break;
-        default:
-            [[unlikely]]
-        break;
-    }
-
-    setSeparatorLinesColors();
-}
-
-void RetroFuturaGUI::MenuBar::SetSeparatorLinesColors(std::span<glm::vec4> colors, const ColorState state)
+void RetroFuturaGUI::MenuBar::SetSeparatorLinesColors(std::span<const glm::vec4> colors, const ColorState state)
 {
     switch(state)
     {
@@ -270,35 +250,7 @@ void RetroFuturaGUI::MenuBar::SetSeparatorLinesGaps(const BackgroundGap& gap)
     _separatorLine->SetBackgroundGaps(gap);
 }
 
-void RetroFuturaGUI::MenuBar::SetItemBackgroundColor(const glm::vec4& color, const ColorState state)
-{
-    switch(state)
-    {
-        case ColorState::Enabled:
-            _itemBackgroundColorsEnabled.clear();
-            _itemBackgroundColorsEnabled.resize(1, color);
-        break;
-        case ColorState::Disabled:
-            _itemBackgroundColorsDisabled.clear();
-            _itemBackgroundColorsDisabled.resize(1, color);
-        break;
-        case ColorState::Clicked:
-            _itemBackgroundColorsClick.clear();
-            _itemBackgroundColorsClick.resize(1, color);
-        break;
-        case ColorState::Hover:
-            _itemBackgroundColorsHover.clear();
-            _itemBackgroundColorsHover.resize(1, color);
-        break;
-        default:
-            [[unlikely]]
-        break;
-    }
-
-    setItemBackgroundColors();
-}
-
-void RetroFuturaGUI::MenuBar::SetItemBackgroundColors(std::span<glm::vec4> colors, const ColorState state)
+void RetroFuturaGUI::MenuBar::SetItemBackgroundColors(std::span<const glm::vec4> colors, const ColorState state)
 {
     switch(state)
     {
@@ -390,12 +342,12 @@ void RetroFuturaGUI::MenuBar::SetItemBackgroundPrimaryRasterColor(const glm::vec
     _itemBackground->SetPrimaryRasterColor(color);
 }
 
-void RetroFuturaGUI::MenuBar::SetItemBackgroundDotDistance(const f32 distance)
+void RetroFuturaGUI::MenuBar::SetItemBackgroundRasterSpacing(const f32 spacing)
 {
     if(!_itemBackground)
         return;
 
-    _itemBackground->SetDotDistance(distance);
+    _itemBackground->SetRasterSpacing(spacing);
 }
 
 void RetroFuturaGUI::MenuBar::SetItemBackgroundRasterDegree(const f32 degree)
@@ -478,34 +430,7 @@ void RetroFuturaGUI::MenuBar::SetItemBackgroundGaps(const BackgroundGap& gap)
 
 //Item border
 
-void RetroFuturaGUI::MenuBar::SetItemBorderColor(const glm::vec4& color, const ColorState state)
-{
-    switch(state)
-    {
-        case ColorState::Enabled:
-            _itemBorderColorsEnabled.clear();
-            _itemBorderColorsEnabled.resize(1, color);
-        break;
-        case ColorState::Disabled:
-            _itemBorderColorsDisabled.clear();
-            _itemBorderColorsDisabled.resize(1, color);
-        break;
-        case ColorState::Clicked:
-            _itemBorderColorsClick.clear();
-            _itemBorderColorsClick.resize(1, color);
-        break;
-        case ColorState::Hover:
-            _itemBorderColorsHover.clear();
-            _itemBorderColorsHover.resize(1, color);
-        break;
-        default: [[unlikely]]
-        break;
-    }
-
-    setItemBorderColors();
-}
-
-void RetroFuturaGUI::MenuBar::SetItemBorderColors(std::span<glm::vec4> colors, const ColorState state)
+void RetroFuturaGUI::MenuBar::SetItemBorderColors(std::span<const glm::vec4> colors, const ColorState state)
 {
     switch(state)
     {
@@ -585,12 +510,12 @@ void RetroFuturaGUI::MenuBar::SetItemBorderPrimaryRasterColor(const glm::vec4& c
     _itemBorder->SetPrimaryRasterColor(color);
 }
 
-void RetroFuturaGUI::MenuBar::SetItemBorderDotDistance(const f32 distance)
+void RetroFuturaGUI::MenuBar::SetItemBorderRasterSpacing(const f32 spacing)
 {
     if(!_itemBorder)
         return;
 
-    _itemBorder->SetDotDistance(distance);
+    _itemBorder->SetRasterSpacing(spacing);
 }
 
 void RetroFuturaGUI::MenuBar::SetItemBorderRasterDegree(const f32 degree)

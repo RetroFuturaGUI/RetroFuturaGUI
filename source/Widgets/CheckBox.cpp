@@ -162,7 +162,7 @@ bool RetroFuturaGUI::CheckBox::GetValue() const
     return _isChecked;
 }
 
-void RetroFuturaGUI::CheckBox::SetCheckmarkColors(std::span<glm::vec4> colors, const ColorState state)
+void RetroFuturaGUI::CheckBox::SetCheckmarkColors(std::span<const glm::vec4> colors, const ColorState state)
 {
     _checkmarkColorState = state;
 
@@ -200,7 +200,7 @@ void RetroFuturaGUI::CheckBox::SetCornerRadii(const glm::vec4& radii)
     _inheritFill->SetCornerRadii(radii);
 }
 
-void RetroFuturaGUI::CheckBox::SetInheritColors(std::span<glm::vec4> colors, const ColorState state)
+void RetroFuturaGUI::CheckBox::SetInheritColors(std::span<const glm::vec4> colors, const ColorState state)
 {
     _inheritFillColorState = state;
 

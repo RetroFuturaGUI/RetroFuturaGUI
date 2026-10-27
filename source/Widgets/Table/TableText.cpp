@@ -79,7 +79,7 @@ void RetroFuturaGUI::TableText::SetText(std::string_view text)
     updateValueStore(text);
 }
 
-void RetroFuturaGUI::TableText::SetTextColors(std::span<glm::vec4> colors, const ColorState colorState)
+void RetroFuturaGUI::TableText::SetTextColors(std::span<const glm::vec4> colors, const ColorState colorState)
 {
     switch(colorState)
     {

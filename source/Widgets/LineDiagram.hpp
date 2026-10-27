@@ -47,9 +47,9 @@ namespace RetroFuturaGUI
         /// @brief Shows the value at the pointer next to it - "Label: value" together with EnableHoverLineLabel. Hexadecimal while ShowHexNumbers is on.
         void EnableHoverValue(const bool enable);
 
-        /// @brief Sets the color of the box behind the text next to the pointer. The text has its line's color, so without the box it would vanish
-        /// where it crosses its own line. Translucent black by default.
-        void SetHoverTextBackgroundColor(const glm::vec4 color);
+        /// @brief Sets the colors of the box behind the text next to the pointer. The text has its line's color, so without the box it would
+        /// vanish where it crosses its own line. Translucent black by default.
+        void SetHoverTextBackgroundColors(std::span<const glm::vec4> colors);
 
     private:
         void alignElementsToTrack() override;
@@ -91,7 +91,8 @@ namespace RetroFuturaGUI
         /// @brief "Label: value", or whichever of the two is shown.
         std::string composeHoverText() const;
         std::string getLineLabelText(const uSize lineIndex) const;
-        glm::vec4 getLineColor(const uSize lineIndex) const;
+        /// @brief The line's color, as a span of one for a text: the Polyline's own, so it outlives the text drawing with it.
+        std::span<const glm::vec4> getLineColors(const uSize lineIndex) const;
 
         /// @brief Gives text the label font and lays its content out again in it. Nothing until SetLabelFontFamily.
         void applyLabelFont(Text* text) const;
@@ -123,7 +124,7 @@ namespace RetroFuturaGUI
     // Labels
         std::unique_ptr<Text> _hoverText { nullptr };
         std::unique_ptr<Plane> _hoverTextBackground { nullptr };
-        std::vector<glm::vec4> _hoverTextBackgroundColor { glm::vec4(0.0f, 0.0f, 0.0f, 0.75f) };
+        std::vector<glm::vec4> _hoverTextBackgroundColors { glm::vec4(0.0f, 0.0f, 0.0f, 0.75f) };
         std::string _labelFontFamily {};
         f32 _labelFontSize { 16.0f };
         PlatformBridge::Fonts::Slant _labelFontSlant { PlatformBridge::Fonts::Slant::Roman };

@@ -87,12 +87,12 @@ namespace RetroFuturaGUI
         Table(Table&&) = delete;
         auto operator =(const Table&) = delete;
         auto operator =(Table&&) = delete;
-        void SetBackgroundColors(std::span<glm::vec4> colors, const ColorState state) = delete;
-        void SetTrackBackgroundColors(std::span<glm::vec4> colors, const ColorState state, const uSize nthIndex);
-        void SetTrackBorderColors(std::span<glm::vec4> colors, const ColorState state, const uSize nthIndex);
-        void SetCheckBoxBackgroundColors(std::span<glm::vec4> colors, const ColorState state);
-        void SetCheckBoxBorderColors(std::span<glm::vec4> colors, const ColorState state);
-        void SetCheckBoxCheckmarkColors(std::span<glm::vec4> colors, const ColorState state);
+        void SetBackgroundColors(std::span<const glm::vec4> colors, const ColorState state) = delete;
+        void SetTrackBackgroundColors(std::span<const glm::vec4> colors, const ColorState state, const uSize nthIndex);
+        void SetTrackBorderColors(std::span<const glm::vec4> colors, const ColorState state, const uSize nthIndex);
+        void SetCheckBoxBackgroundColors(std::span<const glm::vec4> colors, const ColorState state);
+        void SetCheckBoxBorderColors(std::span<const glm::vec4> colors, const ColorState state);
+        void SetCheckBoxCheckmarkColors(std::span<const glm::vec4> colors, const ColorState state);
 
         /// @brief Sets the gap/padding between a cell's edge and the checkbox drawn in it, in pixels. The box stays the largest centered square that fits.
         void SetCheckBoxPadding(const f32 padding);
@@ -168,7 +168,7 @@ namespace RetroFuturaGUI
         void Disconnect_OnTextChange(const typename Signal<>::Slot& slot);
 
         /// @brief Sets the text color for the given color state.
-        void SetTextColors(std::span<glm::vec4> colors, const ColorState state, const uSize nthIndex);
+        void SetTextColors(std::span<const glm::vec4> colors, const ColorState state, const uSize nthIndex);
 
         /// @brief Returns the text color configured for the given color state.
         std::vector<glm::vec4> GetTextColor(const ColorState state) const;
@@ -299,17 +299,17 @@ namespace RetroFuturaGUI
 
         void SetHeaderTextPadding(const f32 padding);
 
-        void SetHeaderTextColors(std::span<glm::vec4> colors, const ColorState state);
+        void SetHeaderTextColors(std::span<const glm::vec4> colors, const ColorState state);
 
         void SetHeaderInnerBorderWidth(const f32 width);
 
         void SetHeaderOuterBorderWidth(const f32 width);
 
-        void SetHeaderInnerBorderColors(std::span<glm::vec4> colors, const ColorState state);
+        void SetHeaderInnerBorderColors(std::span<const glm::vec4> colors, const ColorState state);
 
-        void SetHeaderOuterBorderColors(std::span<glm::vec4> colors, const ColorState state);
+        void SetHeaderOuterBorderColors(std::span<const glm::vec4> colors, const ColorState state);
 
-        void SetHeaderBackgroundColors(std::span<glm::vec4> colors, const ColorState state);
+        void SetHeaderBackgroundColors(std::span<const glm::vec4> colors, const ColorState state);
 
         /// @brief Sets the height of the column header band, in pixels. Taken out of the content viewport.
         void SetHorizontalHeaderSize(const f32 size);
@@ -359,9 +359,9 @@ namespace RetroFuturaGUI
 
         void ClearSelection(const bool emitSignal);
 
-        void SetSelectedRowBackgroundColors(std::span<glm::vec4> colors);
+        void SetSelectedRowBackgroundColors(std::span<const glm::vec4> colors);
 
-        void SetSelectedRowTextColors(std::span<glm::vec4> colors);
+        void SetSelectedRowTextColors(std::span<const glm::vec4> colors);
 
         /// @brief Marks the row, or the column in Column orientation, that a drag would drop on: its background is drawn in the
         ///        drop target colors, over its own and the selection's. One row at a time; redefining the tracks takes it away.
@@ -369,7 +369,7 @@ namespace RetroFuturaGUI
 
         void ClearDropTargetRow();
 
-        void SetDropTargetRowBackgroundColors(std::span<glm::vec4> colors);
+        void SetDropTargetRowBackgroundColors(std::span<const glm::vec4> colors);
 
         void Connect_OnSelectionChanged(const typename Signal<>::Slot& slot, const bool async);
 
@@ -392,9 +392,9 @@ namespace RetroFuturaGUI
         void SetSlowDoubleClickTime(const std::chrono::milliseconds earliest, const std::chrono::milliseconds latest);
 
         /// @brief Sets the fill of the band a drag from off the selection draws; translucent, so the rows show through.
-        void SetSelectionBandColors(std::span<glm::vec4> colors);
+        void SetSelectionBandColors(std::span<const glm::vec4> colors);
 
-        void SetSelectionBandBorderColors(std::span<glm::vec4> colors);
+        void SetSelectionBandBorderColors(std::span<const glm::vec4> colors);
 
         /// @brief Connects a slot to the drag of the selected rows: a press on a selected row, or on any row in Single selection,
         ///        that moves past the drag threshold. The slot gets the phase and the pointer in window coordinates.
@@ -545,7 +545,7 @@ namespace RetroFuturaGUI
         glm::vec2 getHeaderExtents() const;
 
         /// @brief Draws a text cell through its pooled TableText, in the row's text colors.
-        void drawTextCell(const uSize row, const uSize column, std::span<glm::vec4> textColors);
+        void drawTextCell(const uSize row, const uSize column, std::span<const glm::vec4> textColors);
 
         /// @brief Draws a checkbox cell through the shared checkbox, fitted to the cell.
         void drawCheckBoxCell(const BodyCell& cell, const uSize row, const uSize column, const glm::vec3& position, const glm::vec3& size);

@@ -68,18 +68,18 @@ void RetroFuturaGUI::ITableTextProperties::setTextColors()
     {
         case ColorState::Enabled:
             if(!_textColorEnabled.empty())
-                _text->SetColor(_textColorEnabled.front());
+                _text->SetColors(_textColorEnabled);
             break;
         case ColorState::Clicked:
             if(!_textColorClicked.empty())
-                _text->SetColor(_textColorClicked.front());
+                _text->SetColors(_textColorClicked);
             break;
         case ColorState::Hover:
             if(!_textColorHover.empty())
-                _text->SetColor(_textColorHover.front());
+                _text->SetColors(_textColorHover);
             break;
         default: //Disabled
             if(!_textColorDisabled.empty())
-                _text->SetColor(_textColorDisabled.front());
+                _text->SetColors(_textColorDisabled);
     }
 }

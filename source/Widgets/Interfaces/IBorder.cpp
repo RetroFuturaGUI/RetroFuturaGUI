@@ -1,30 +1,6 @@
 #include "IBorder.hpp"
 
-void RetroFuturaGUI::IBorder::SetBorderColor(const glm::vec4 & color, const ColorState state)
-{
-        switch(state)
-    {
-        case ColorState::Clicked:
-            _borderColorClicked.clear();
-            _borderColorClicked.resize(1, color);
-        break;
-        case ColorState::Disabled:
-            _borderColorDisabled.clear();
-            _borderColorDisabled.resize(1, color);
-        break;
-        case ColorState::Hover:
-            _borderColorClicked.clear();
-            _borderColorClicked.resize(1, color);
-        break;
-        default: // Enabled
-            _borderColorEnabled.clear();
-            _borderColorEnabled.resize(1, color);
-    }
-
-    setBorderColors();
-}
-
-void RetroFuturaGUI::IBorder::SetBorderColors(std::span<glm::vec4> colors, const ColorState state)
+void RetroFuturaGUI::IBorder::SetBorderColors(std::span<const glm::vec4> colors, const ColorState state)
 {
     switch(state)
     {
@@ -117,12 +93,12 @@ void RetroFuturaGUI::IBorder::SetBorderPrimaryRasterColor(const glm::vec4& color
     _border->SetPrimaryRasterColor(color);
 }
 
-void RetroFuturaGUI::IBorder::SetBorderDotDistance(const f32 distance)
+void RetroFuturaGUI::IBorder::SetBorderRasterSpacing(const f32 spacing)
 {
     if(!_border)
         return;
 
-    _border->SetDotDistance(distance);
+    _border->SetRasterSpacing(spacing);
 }
 
 void RetroFuturaGUI::IBorder::SetBorderRasterDegree(const f32 degree)

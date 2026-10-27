@@ -31,7 +31,7 @@ RetroFuturaGUI::ColorPreview::ColorPreview(std::string_view name, Projection* pr
     _checkeredBackground->SetPrimaryRasterWidthTransfer(_checkeredSquareWidth);
     _checkeredBackground->SetRasterDegree(0.0f);
     _whiteBackground->SetColors(_whiteBackgroundColor);
-    _colorRect->SetColors(std::span<glm::vec4>(&_previewColor, 1));
+    _colorRect->SetColors(std::span<const glm::vec4>(&_previewColor, 1));
     setBorderColors();
 }
 
@@ -67,7 +67,7 @@ void RetroFuturaGUI::ColorPreview::SetPreviewColor(const glm::vec4& color)
     if(!_colorRect)
         return;
 
-    _colorRect->SetColors(std::span<glm::vec4>(&_previewColor, 1));
+    _colorRect->SetColors(std::span<const glm::vec4>(&_previewColor, 1));
 }
 
 void RetroFuturaGUI::ColorPreview::SetSize(const glm::vec3& size)

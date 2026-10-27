@@ -1,5 +1,6 @@
 #pragma once
 #include "IncludeHelper.hpp"
+#include <array>
 #include <memory>
 #include <span>
 #include "Plane.hpp"
@@ -12,11 +13,8 @@ namespace RetroFuturaGUI
     class IBackground
     {
     public:
-        /// @brief Sets a single background color for the given color state.
-        void SetBackgroundColor(const glm::vec4& color, const ColorState state);
-
-        /// @brief Sets multiple background colors (e.g. gradient stops) for the given color state.
-        void SetBackgroundColors(std::span<glm::vec4> colors, const ColorState state);
+        /// @brief Sets the background colors for the given color state: one for a solid fill, the stops for a gradient. A single color is written std::array { color }.
+        void SetBackgroundColors(std::span<const glm::vec4> colors, const ColorState state);
 
         /// @brief Sets the offset applied to the background gradient's start position.
         void SetBackgroundGradientOffset(const f32 gradientOffset);
@@ -30,14 +28,14 @@ namespace RetroFuturaGUI
         /// @brief Sets the speed at which the background gradient rotates over time.
         void SetBackgroundGradientRotationSpeed(const f32 rotationSpeed);
 
-        /// @brief Sets the texture ID sampled for the background's glass-effect-with-image shader feature.
+        /// @brief Sets the texture ID sampled for the background's glass-effect-with-image shader feature. 0 turns the glass off.
         void SetWindowBackgroundImageTextureID(const u32 textureID);
 
         /// @brief Sets the dot color used for the background's Dotted raster pattern.
         void SetBackgroundPrimaryRasterColor(const glm::vec4& color);
 
-        /// @brief Sets the spacing between dot centers, in pixels, for the background's Dotted raster pattern.
-        void SetBackgroundDotDistance(const f32 distance);
+        /// @brief Sets the gap, in pixels, between the largest elements of the background's raster: 0 lets them touch. Spreads the grid without changing any element's size.
+        void SetBackgroundRasterSpacing(const f32 spacing);
 
         /// @brief Sets the direction, in degrees, along which the background's raster widths/animation transfer.
         void SetBackgroundRasterDegree(const f32 degree);

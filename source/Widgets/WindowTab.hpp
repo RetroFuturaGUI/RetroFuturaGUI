@@ -104,17 +104,17 @@ namespace RetroFuturaGUI
         /// @brief Sets the corner radii of a field, clockwise from the top-left.
         void SetFieldCornerRadii(const glm::vec4& radii);
 
-        /// @brief Sets a field's background color for the given state.
-        void SetFieldBackgroundColor(const glm::vec4& color, const ColorState state);
+        /// @brief Sets a field's background colors for the given state.
+        void SetFieldBackgroundColors(std::span<const glm::vec4> colors, const ColorState state);
 
-        /// @brief Sets the selected field's background color, which usually matches the content so the two join.
-        void SetSelectedFieldBackgroundColor(const glm::vec4& color);
+        /// @brief Sets the selected field's background colors, which usually match the content so the two join.
+        void SetSelectedFieldBackgroundColors(std::span<const glm::vec4> colors);
 
-        /// @brief Sets a field's border color for the given state.
-        void SetFieldBorderColor(const glm::vec4& color, const ColorState state);
+        /// @brief Sets a field's border colors for the given state.
+        void SetFieldBorderColors(std::span<const glm::vec4> colors, const ColorState state);
 
-        /// @brief Sets the selected field's border color.
-        void SetSelectedFieldBorderColor(const glm::vec4& color);
+        /// @brief Sets the selected field's border colors.
+        void SetSelectedFieldBorderColors(std::span<const glm::vec4> colors);
 
         /// @brief Sets the width of a field's border. 0, the default, draws none.
         void SetFieldBorderWidth(const f32 width);
@@ -123,11 +123,11 @@ namespace RetroFuturaGUI
         /// @brief Sets the font of the titles. Without one they don't show.
         void SetTitleFontFamily(std::string_view fontFamily, const f32 fontSize, const PlatformBridge::Fonts::Slant slant, const PlatformBridge::Fonts::Weight weight);
 
-        /// @brief Sets a title's color for the given state.
-        void SetTitleColor(const glm::vec4& color, const ColorState state);
+        /// @brief Sets a title's colors for the given state.
+        void SetTitleColors(std::span<const glm::vec4> colors, const ColorState state);
 
-        /// @brief Sets the selected field's title color.
-        void SetSelectedTitleColor(const glm::vec4& color);
+        /// @brief Sets the selected field's title colors.
+        void SetSelectedTitleColors(std::span<const glm::vec4> colors);
 
         /// @brief Sets the space between a field's left edge and its title.
         void SetTitlePadding(const f32 padding);
@@ -136,11 +136,11 @@ namespace RetroFuturaGUI
         /// @brief Sets the width and height of the close buttons.
         void SetCloseButtonSize(const f32 size);
 
-        /// @brief Sets a close button's background color for the given state. It is transparent until hovered by default.
-        void SetCloseButtonBackgroundColor(const glm::vec4& color, const ColorState state);
+        /// @brief Sets a close button's background colors for the given state. It is transparent until hovered by default.
+        void SetCloseButtonBackgroundColors(std::span<const glm::vec4> colors, const ColorState state);
 
-        /// @brief Sets the color of the cross on the close buttons.
-        void SetCloseIconColor(const glm::vec4& color);
+        /// @brief Sets the colors of the cross on the close buttons.
+        void SetCloseIconColors(std::span<const glm::vec4> colors);
 
     //Content
         /// @brief Sets the corner radii of the WindowTab's own background and border, clockwise from the top-left. A WindowTab
@@ -165,15 +165,15 @@ namespace RetroFuturaGUI
             std::string _ShownTitle {}; //what _Title shows, so it is only laid out again when the window's title changes
         };
 
-        /// @brief A color for every state a field and its parts can be in.
+        /// @brief The colors for every state a field and its parts can be in.
         struct FieldColors
         {
-            glm::vec4
-                _Enabled { 0.0f },
-                _Hover { 0.0f },
-                _Clicked { 0.0f },
-                _Disabled { 0.0f },
-                _Selected { 0.0f };
+            std::vector<glm::vec4>
+                _Enabled { glm::vec4(0.0f) },
+                _Hover { glm::vec4(0.0f) },
+                _Clicked { glm::vec4(0.0f) },
+                _Disabled { glm::vec4(0.0f) },
+                _Selected { glm::vec4(0.0f) };
         };
 
     //Interaction
@@ -229,9 +229,9 @@ namespace RetroFuturaGUI
     //Drawing
         void drawFields();
         void drawField(const uSize index, const f32 z);
-        void drawFieldShape(const glm::vec4& rect, const f32 z, const glm::vec4& background, const glm::vec4& border);
+        void drawFieldShape(const glm::vec4& rect, const f32 z, const std::vector<glm::vec4>& background, const std::vector<glm::vec4>& border);
         void drawCloseButton(const glm::vec4& field, const f32 z, const ColorState state);
-        void drawTitle(Text* title, const glm::vec4& field, const f32 z, const glm::vec4& color);
+        void drawTitle(Text* title, const glm::vec4& field, const f32 z, const std::vector<glm::vec4>& colors);
         void drawSelectedWindow();
         void drawDropPreview();
 
@@ -257,11 +257,17 @@ namespace RetroFuturaGUI
         /// @brief Takes the field off the strip. When it was selected, the field now in its place is, or the one before it.
         void removeField(const uSize index);
 
-        /// @brief The color to draw with: the selected one for the selected field unless it is disabled, else the state's.
-        static glm::vec4 colorFor(const FieldColors& colors, const ColorState state, const bool selected);
+        /// @brief The colors to draw with: the selected ones for the selected field unless it is disabled, else the state's.
+        static const std::vector<glm::vec4>& colorFor(const FieldColors& colors, const ColorState state, const bool selected);
 
-        /// @brief The color stored for the state.
-        static glm::vec4& colorOf(FieldColors& colors, const ColorState state);
+        /// @brief The colors stored for the state.
+        static std::vector<glm::vec4>& colorOf(FieldColors& colors, const ColorState state);
+
+        /// @brief Whether any of the colors can be seen, so a fully transparent part isn't drawn at all.
+        static bool isVisible(std::span<const glm::vec4> colors);
+
+        /// @brief Hands the close icon's colors to its SVG path.
+        void applyCloseIconColors();
 
         static bool contains(const glm::vec4& rect, const glm::vec2& point);
         /// @brief The UTF-8 path of the close icon, in the Resources/img folder next to the executable.
@@ -287,40 +293,40 @@ namespace RetroFuturaGUI
             _closeButtonSize { 24.0f };
         glm::vec4
             _fieldCornerRadii { 8.0f, 8.0f, 0.0f, 0.0f },
-            _contentCornerRadii { 0.0f },
-            _closeIconColor { 0.85f, 0.85f, 0.9f, 1.0f };
+            _contentCornerRadii { 0.0f };
+        std::vector<glm::vec4> _closeIconColors { glm::vec4(0.85f, 0.85f, 0.9f, 1.0f) };
         FieldColors
             _fieldBackgroundColors
             {
-                ._Enabled = glm::vec4(0.0f),
-                ._Hover = glm::vec4(1.0f, 1.0f, 1.0f, 0.06f),
-                ._Clicked = glm::vec4(1.0f, 1.0f, 1.0f, 0.1f),
-                ._Disabled = glm::vec4(0.0f),
-                ._Selected = glm::vec4(0.086f, 0.086f, 0.1137f, 1.0f) //a window's default background, so the selected field joins its content
+                ._Enabled = { glm::vec4(0.0f) },
+                ._Hover = { glm::vec4(1.0f, 1.0f, 1.0f, 0.06f) },
+                ._Clicked = { glm::vec4(1.0f, 1.0f, 1.0f, 0.1f) },
+                ._Disabled = { glm::vec4(0.0f) },
+                ._Selected = { glm::vec4(0.086f, 0.086f, 0.1137f, 1.0f) } //a window's default background, so the selected field joins its content
             },
             _fieldBorderColors
             {
-                ._Enabled = glm::vec4(0.35f, 0.35f, 0.45f, 1.0f),
-                ._Hover = glm::vec4(0.45f, 0.45f, 0.55f, 1.0f),
-                ._Clicked = glm::vec4(0.5f, 0.5f, 0.6f, 1.0f),
-                ._Disabled = glm::vec4(0.25f, 0.25f, 0.3f, 1.0f),
-                ._Selected = glm::vec4(0.35f, 0.35f, 0.45f, 1.0f)
+                ._Enabled = { glm::vec4(0.35f, 0.35f, 0.45f, 1.0f) },
+                ._Hover = { glm::vec4(0.45f, 0.45f, 0.55f, 1.0f) },
+                ._Clicked = { glm::vec4(0.5f, 0.5f, 0.6f, 1.0f) },
+                ._Disabled = { glm::vec4(0.25f, 0.25f, 0.3f, 1.0f) },
+                ._Selected = { glm::vec4(0.35f, 0.35f, 0.45f, 1.0f) }
             },
             _titleColors
             {
-                ._Enabled = glm::vec4(0.7f, 0.7f, 0.75f, 1.0f),
-                ._Hover = glm::vec4(0.9f, 0.9f, 0.95f, 1.0f),
-                ._Clicked = glm::vec4(1.0f),
-                ._Disabled = glm::vec4(0.4f, 0.4f, 0.45f, 1.0f),
-                ._Selected = glm::vec4(1.0f)
+                ._Enabled = { glm::vec4(0.7f, 0.7f, 0.75f, 1.0f) },
+                ._Hover = { glm::vec4(0.9f, 0.9f, 0.95f, 1.0f) },
+                ._Clicked = { glm::vec4(1.0f) },
+                ._Disabled = { glm::vec4(0.4f, 0.4f, 0.45f, 1.0f) },
+                ._Selected = { glm::vec4(1.0f) }
             },
             _closeBackgroundColors
             {
-                ._Enabled = glm::vec4(0.0f),
-                ._Hover = glm::vec4(1.0f, 1.0f, 1.0f, 0.15f),
-                ._Clicked = glm::vec4(1.0f, 1.0f, 1.0f, 0.25f),
-                ._Disabled = glm::vec4(0.0f),
-                ._Selected = glm::vec4(0.0f)
+                ._Enabled = { glm::vec4(0.0f) },
+                ._Hover = { glm::vec4(1.0f, 1.0f, 1.0f, 0.15f) },
+                ._Clicked = { glm::vec4(1.0f, 1.0f, 1.0f, 0.25f) },
+                ._Disabled = { glm::vec4(0.0f) },
+                ._Selected = { glm::vec4(0.0f) }
             };
         std::string _titleFontFamily {};
         f32 _titleFontSize { 18.0f };

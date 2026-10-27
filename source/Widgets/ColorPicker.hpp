@@ -61,8 +61,8 @@ namespace RetroFuturaGUI
         /// @brief Sets the picked color from code: moves the indicator and updates brightness and alpha to match.
         void SetColor(const glm::vec3& color, const bool emitSignal);
 
-        void SetColorPickerFieldBorderColors(std::span<glm::vec4> colors, const ColorState state);
-        void SetColorPickerIndicatorBorderColors(std::span<glm::vec4> colors, const ColorState state);
+        void SetColorPickerFieldBorderColors(std::span<const glm::vec4> colors, const ColorState state);
+        void SetColorPickerIndicatorBorderColors(std::span<const glm::vec4> colors, const ColorState state);
 
         /// @brief Connects a slot to be called when the picked color has changed, by dragging or by any setter.
         void Connect_OnColorChanged(const typename Signal<>::Slot& slot, const bool async);

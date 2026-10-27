@@ -42,8 +42,8 @@ namespace RetroFuturaGUI
 
         bool IsItemEnabled(const uSize index) const;
 
-        /// @brief Sets the item texts' colors, for enabled and for disabled items.
-        void SetItemTextColors(const glm::vec4& enabled, const glm::vec4& disabled);
+        /// @brief Sets the item texts' colors: ColorState::Disabled sets the disabled items' colors, every other state the enabled items'.
+        void SetItemTextColors(std::span<const glm::vec4> colors, const ColorState state);
 
     private:
         void interact();
@@ -66,9 +66,9 @@ namespace RetroFuturaGUI
         inline static const std::string _invalidIndex { "" };
 
     //Design
-        glm::vec4
-            _itemTextColorEnabled { 1.0f, 1.0f, 1.0f, 1.0f },
-            _itemTextColorDisabled { 0.5f, 0.5f, 0.5f, 1.0f };
+        std::vector<glm::vec4>
+            _itemTextColorsEnabled { glm::vec4(1.0f, 1.0f, 1.0f, 1.0f) },
+            _itemTextColorsDisabled { glm::vec4(0.5f, 0.5f, 0.5f, 1.0f) };
 
     //Logic
         std::vector<bool> _itemEnabledFlags {}; //one per item

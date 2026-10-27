@@ -25,7 +25,7 @@ RetroFuturaGUI::ITextBox::ITextBox(std::string_view name, Projection* projection
     if(!_placeholderText)
         return;
 
-    _placeholderText->SetColor(_placeholderTextColors[0]);
+    _placeholderText->SetColors(_placeholderTextColors);
 }
 
 void RetroFuturaGUI::ITextBox::Draw()

@@ -16,8 +16,8 @@ namespace RetroFuturaGUI
         /// @brief Returns whether the widget is currently read-only.
         bool IsReadOnly() const;
 
-        /// @brief Sets the placeholder text color for the given color state.
-        void SetPlaceholderTextColor(const glm::vec4& color);
+        /// @brief Sets the placeholder text colors.
+        void SetPlaceholderTextColors(std::span<const glm::vec4> colors);
 
         /// @brief Sets the placeholder text content, in UTF-8.
         void SetPlaceholderText(std::string_view text);
