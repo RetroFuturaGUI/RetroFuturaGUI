@@ -52,6 +52,21 @@ void RetroFuturaGUI::FillStyle::SetWindowBackgroundImageTextureID(const u32 text
         _shaderFeatureDIP |= ShaderFeatures::GlassEffectWithImage;
 }
 
+void RetroFuturaGUI::FillStyle::SetBackgroundImageTextureID(const u32 textureID)
+{
+    _backgroundImageTextureID = textureID;
+
+    if(0 == textureID) //0 is no texture
+        _shaderFeatureDIP &= ~ShaderFeatures::BackgroundImage;
+    else
+        _shaderFeatureDIP |= ShaderFeatures::BackgroundImage;
+}
+
+void RetroFuturaGUI::FillStyle::SetBackgroundImagePadding(const f32 padding)
+{
+    _backgroundImagePadding = padding;
+}
+
 void RetroFuturaGUI::FillStyle::SetRasterPattern(const RasterPattern rasterPattern)
 {
     _rasterPattern = rasterPattern;
@@ -133,6 +148,25 @@ void RetroFuturaGUI::FillStyle::uploadFill(Shader& shader, const u32 extraFeatur
         glBindTexture(GL_TEXTURE_2D, _windowBackgroundTextureID);
         glActiveTexture(GL_TEXTURE0);
     }
+}
+
+void RetroFuturaGUI::FillStyle::uploadImage(Shader& shader, const glm::vec2& size) const
+{
+    if(0 == (_shaderFeatureDIP & ShaderFeatures::BackgroundImage))
+        return;
+
+    //The image is placed in UV space, so the pixel padding goes up as a fraction of each axis
+    glm::vec2 paddingUV { 0.0f };
+
+    if(0.0f < size.x && 0.0f < size.y)
+        paddingUV = glm::vec2(_backgroundImagePadding) / size;
+
+    //Unit 1, apart from the glass. Unit 0 is made active again for whatever binds a texture next
+    shader.SetUniformInt("uBackgroundImage", 1);
+    shader.SetUniformVec2("uImagePadding", paddingUV);
+    glActiveTexture(GL_TEXTURE1);
+    glBindTexture(GL_TEXTURE_2D, _backgroundImageTextureID);
+    glActiveTexture(GL_TEXTURE0);
 }
 
 void RetroFuturaGUI::FillStyle::uploadRaster(Shader& shader)

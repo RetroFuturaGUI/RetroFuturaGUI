@@ -65,6 +65,8 @@ namespace RetroFuturaGUI
         using FillStyle::GetGradientOffset;
         using FillStyle::GetGradientDegree;
         using FillStyle::SetWindowBackgroundImageTextureID;
+        using FillStyle::SetBackgroundImageTextureID;
+        using FillStyle::SetBackgroundImagePadding;
         using FillStyle::SetRasterPattern;
         using FillStyle::SetPrimaryRasterColor;
         using FillStyle::SetSecondaryRasterColor;

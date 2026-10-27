@@ -83,6 +83,22 @@ void RetroFuturaGUI::ITextProperties::SetTextWindowBackgroundImageTextureID(cons
     _text->SetWindowBackgroundImageTextureID(textureID);
 }
 
+void RetroFuturaGUI::ITextProperties::SetTextBackgroundImageTextureID(const u32 textureID)
+{
+    if(!_text)
+        return;
+
+    _text->SetBackgroundImageTextureID(textureID);
+}
+
+void RetroFuturaGUI::ITextProperties::SetTextBackgroundImagePadding(const f32 padding)
+{
+    if(!_text)
+        return;
+
+    _text->SetBackgroundImagePadding(padding);
+}
+
 void RetroFuturaGUI::ITextProperties::SetTextRasterPattern(const RasterPattern rasterPattern)
 {
     if(!_text)

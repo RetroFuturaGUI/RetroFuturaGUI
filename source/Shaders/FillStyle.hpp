@@ -47,6 +47,15 @@ namespace RetroFuturaGUI
         /// @brief Sets the window-wide backdrop the glass shows, which turns the glass on. 0 turns it off.
         void SetWindowBackgroundImageTextureID(const u32 textureID);
 
+        /// @brief Sets an image of its own, stretched over what is drawn and inset by SetBackgroundImagePadding. It sits behind
+        ///        the fill, whose alpha decides how much of it shows: a fill alpha of 0 shows the image alone. 0 shows no image.
+        /// @note Unlike SetWindowBackgroundImageTextureID, which shows a window-wide backdrop behind the glass, this belongs to
+        ///       what is drawn alone. The two can be shown together: the image sits in front of the glass.
+        void SetBackgroundImageTextureID(const u32 textureID);
+
+        /// @brief Sets how far the background image stays clear of the edges, per side in pixels.
+        void SetBackgroundImagePadding(const f32 padding);
+
         /// @brief Sets which pattern the raster draws.
         void SetRasterPattern(const RasterPattern rasterPattern);
 
@@ -75,6 +84,10 @@ namespace RetroFuturaGUI
         ///        gradient moves on by one step. Needs at least one color.
         void uploadFill(Shader& shader, const u32 extraFeatures);
 
+        /// @brief Uploads the background image when it is on, on unit 1. size is what it is stretched over, in pixels, which
+        ///        the padding is measured against.
+        void uploadImage(Shader& shader, const glm::vec2& size) const;
+
     //Fill
         std::span<const glm::vec4> _colors; //this considers the color source may change many during runtime
         FillType _fillType { FillType::Solid };
@@ -87,6 +100,10 @@ namespace RetroFuturaGUI
         u32
             _shaderFeatureDIP { 0 },
             _windowBackgroundTextureID { 0 };
+
+    //Image (ShaderFeatures::BackgroundImage)
+        u32 _backgroundImageTextureID { 0 };
+        f32 _backgroundImagePadding { 0.0f };
 
     //Raster (ShaderFeatures::Raster) - the transfer, the spacing, the colors, the angle and the animation serve every
     //pattern; _dotTransparencyTransfer is Dotted's own.

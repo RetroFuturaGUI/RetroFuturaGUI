@@ -36,6 +36,15 @@ namespace RetroFuturaGUI
         /// @brief Sets the window-wide backdrop the text's glass shows, which turns the glass on. 0 turns it off.
         void SetTextWindowBackgroundImageTextureID(const u32 textureID);
 
+        /// @brief Sets an image shown inside the glyphs, stretched across the whole text behind its fill. The text colors'
+        ///        alpha decides how much of it shows: 0 shows the image alone. 0 shows no image.
+        /// @note The text only borrows the texture. A video's texture changes only while its VideoPlayback is updated, and gets
+        ///       a new ID when its picture size changes, so pass its current ID again then.
+        void SetTextBackgroundImageTextureID(const u32 textureID);
+
+        /// @brief Sets how far the text's image stays clear of the text's edges, per side in pixels.
+        void SetTextBackgroundImagePadding(const f32 padding);
+
         /// @brief Sets which pattern the text's raster draws.
         void SetTextRasterPattern(const RasterPattern rasterPattern);
 

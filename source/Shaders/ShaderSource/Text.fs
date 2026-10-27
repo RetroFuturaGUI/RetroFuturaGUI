@@ -4,14 +4,19 @@
 #include "Modules/Raster.glsl"
 #include "Modules/Fog.glsl"
 #include "Modules/Glass.glsl"
+#include "Modules/Image.glsl"
 
-// Lays a fill color over the window behind the glass
+// Lays a fill color over what shows through it, nearest first: the text's image, stretched across the whole text, then
+// the window behind the glass
 vec4 overBackground(vec4 color)
 {
-    if((uDIP & GLASS_EFFECT) == 0)
-        return color;
+    if((uDIP & BACKGROUND_IMAGE) != 0)
+        color = applyImage(color);
 
-    return applyGlass(color, glassUV());
+    if((uDIP & GLASS_EFFECT) != 0)
+        color = applyGlass(color, glassUV());
+
+    return color;
 }
 
 #ifdef FILL_SOLID

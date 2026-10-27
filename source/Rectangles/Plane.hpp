@@ -58,15 +58,9 @@ namespace RetroFuturaGUI
         using FogStyle::SetFogDensity;
         using FogStyle::SetFogClearing;
 
-    //Image
-        /// @brief Sets an image of the plane's own, stretched over it behind the fill and inset by SetBackgroundImagePadding.
-        ///        0 shows no image.
-        /// @note Unlike SetWindowBackgroundImageTextureID, which shows a window-wide backdrop behind the glass, this belongs to
-        ///       the plane alone. The two can be shown together: the image sits in front of the glass.
-        void SetBackgroundImageTextureID(const u32 textureID);
-
-        /// @brief Sets how far the background image stays clear of the plane's edges, per side in pixels.
-        void SetBackgroundImagePadding(const f32 padding);
+    //Image, from IRectangle
+        using IRectangle::SetBackgroundImageTextureID;
+        using IRectangle::SetBackgroundImagePadding;
 
     protected:
         /// @brief Makes the shader current and uploads everything a plane's shader reads.
@@ -74,14 +68,5 @@ namespace RetroFuturaGUI
 
     private:
         glm::vec4 _backgroundGapData { 0.0f };
-
-    //Image (ShaderFeatures::BackgroundImage)
-        u32 _backgroundImageTextureID { 0 };
-        f32 _backgroundImagePadding { 0.0f };
-
-        void uploadImage(Shader& shader) const;
-
-        /// @brief The background image's padding as a fraction of the quad, ready for uImagePadding.
-        glm::vec2 getBackgroundImagePaddingUV() const;
     };
 }

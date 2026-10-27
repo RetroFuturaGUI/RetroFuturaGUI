@@ -49,6 +49,7 @@ void RetroFuturaGUI::Text::Draw()
     if(0 != getFogFeatures())
         uploadFog(shader);
 
+    uploadImage(shader, glm::max(_textSpan, glm::vec2(1.0f)));
     _vertexArray->Bind();
 
     if(_meshChanged)
