@@ -324,35 +324,28 @@ namespace RetroFuturaGUI
             /// @brief The scene's root Lasagna, laid out by _viewAxis.
             Lasagna* GetLasagna() const;
 
-            /// @brief Builds a widget in the given cell of a Lasagna and keeps it.
-            /// @return The widget, or nullptr, keeping nothing, when the cell is out of range or taken.
+            /// @brief Builds a widget in the given cell of a Lasagna, which owns it.
+            /// @return The widget, or nullptr, building nothing, when the cell is out of range or taken.
             template<typename T, typename... Args>
-            T* Attach(std::string_view name, Lasagna& lasagna, const ViewCell& cell, Args&&... args)
+            static T* Attach(std::string_view name, Lasagna& lasagna, const ViewCell& cell, Args&&... args)
             {
-                if(!_projection)
-                    return nullptr;
-
-                if(!_glfwWindow)
-                    return nullptr;
-
-                //Most widget constructors take the name as const std::string&
-                const std::string widgetName { name };
-                std::unique_ptr<T> widget { std::make_unique<T>(widgetName, _projection, &lasagna, WidgetTypeID::Lasagna, _glfwWindow, std::forward<Args>(args)...) };
-                T* attached { widget.get() };
-
                 //Lasagna counts in u32; the view's Lasagna is far below its range
-                if(!lasagna.AttachWidget(static_cast<u32>(cell._Row), static_cast<u32>(cell._Column), static_cast<u32>(cell._Layer), attached, cell._SizingMode, 1, static_cast<u32>(cell._ColumnSpan), 1))
-                    return nullptr;
+                const CellPlacement placement
+                {
+                    ._Row = static_cast<u32>(cell._Row),
+                    ._Column = static_cast<u32>(cell._Column),
+                    ._Layer = static_cast<u32>(cell._Layer),
+                    ._SizingMode = cell._SizingMode,
+                    ._RowSpan = 1,
+                    ._ColSpan = static_cast<u32>(cell._ColumnSpan),
+                    ._LayerSpan = 1
+                };
 
-                _widgets.push_back(std::move(widget));
-                return attached;
+                return lasagna.AddWidget<T>(name, placement, std::forward<Args>(args)...);
             }
 
         private:
             std::unique_ptr<Scene> _scene { nullptr };
-            std::vector<std::unique_ptr<IWidget>> _widgets {}; //after the scene, so they are destroyed first
-            Projection* _projection { nullptr };
-            GLFWwindow* _glfwWindow { nullptr };
         };
 
     //View
@@ -361,7 +354,7 @@ namespace RetroFuturaGUI
 
         /// @brief Builds the bar across a Lasagna's first row: the title, which drags the window, and the close button in cell
         ///        _barCloseIndex, which the caller connects.
-        static MenuBar* attachBar(ViewHost& host, Lasagna& lasagna, Window& window, std::string_view title, const uSize columnCount, const f32 barHeight, const glm::vec2& windowSize, const ViewFont& font);
+        static MenuBar* attachBar(ViewHost& host, Lasagna& lasagna, std::string_view title, const uSize columnCount, const f32 barHeight, const glm::vec2& windowSize, const ViewFont& font);
 
         /// @brief Builds the view's widgets, styled, placed and connected, for the mode and flags. Only a feature that is on gets
         ///        its widget.

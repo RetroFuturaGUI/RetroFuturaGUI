@@ -1,7 +1,13 @@
 #pragma once
 #include "IncludeHelper.hpp"
 #include "IWidget.hpp"
+#include <concepts>
+#include <memory>
+#include <optional>
+#include <print>
 #include <string>
+#include <string_view>
+#include <utility>
 #include <vector>
 #include "Frame.hpp"
 #include "TrackIndex.hpp"
@@ -21,11 +27,25 @@ namespace RetroFuturaGUI
             _RowSpan { 1 },
             _ColSpan { 1 },
             _LayerSpan { 1 };
-        IWidget* _Widget = nullptr;
+        std::unique_ptr<IWidget> _Widget { nullptr };
         SizingMode _SizingMode { SizingMode::FILL };
         bool
             _SpanOccupied { false },
             _Show { true };
+    };
+
+    /// @brief Where a widget sits in a Lasagna. Aggregate so call-sites can use named initializers (example: AddWidget<Button>("Inc", { ._Row = 0, ._Column = 2 }))
+    struct CellPlacement
+    {
+        u32
+            _Row { 0 },
+            _Column { 0 },
+            _Layer { 0 };
+        SizingMode _SizingMode { SizingMode::FILL };
+        u32
+            _RowSpan { 1 },
+            _ColSpan { 1 },
+            _LayerSpan { 1 };
     };
 
     inline constexpr uSize MaxTracksPerAxis { 64 };
@@ -74,9 +94,55 @@ namespace RetroFuturaGUI
         auto operator =(const Lasagna&) = delete;
         auto operator =(Lasagna&&) = delete;
 
-        /// @brief Places a widget at the given row, column and layer, optionally spanning multiple cells along any axis.
-        /// @return false when the placement is out of range or overlaps an occupied cell, in which case nothing is changed.
-        bool AttachWidget(const u32 row, const u32 col, const u32 layer, IWidget* widget, const SizingMode sizingMode = SizingMode::FILL, const u32 rowSpan = 1, const u32 colSpan = 1, const u32 layerSpan = 1);
+        /// @brief Builds a widget of type T in the given cell, optionally spanning several cells along any axis, and owns it. The Lasagna is its parent, and passes its projection and window on to it.
+        /// @param args Constructor arguments after the parent window, such as an Image's path or a Lasagna's AxisDefinition.
+        /// @return The new widget, or nullptr, building nothing, when the name is taken or the placement is out of range or
+        ///         overlaps a taken cell. The widget lives until it is removed or the Lasagna is destroyed.
+        /// @warning Call from the GUI thread only: a widget creates OpenGL objects, and those must stay on the context's thread.
+        template<std::derived_from<IWidget> T, typename... Args>
+        T* AddWidget(std::string_view name, const CellPlacement& placement, Args&&... args)
+        {
+            if(findCell(name))
+            {
+                std::println("ERROR::LASAGNA::WIDGET_NAME_TAKEN::{}::{}", _name, name);
+                return nullptr;
+            }
+
+            if(!isPlacementFree(placement))
+            {
+                std::println("ERROR::LASAGNA::CELL_UNAVAILABLE::{}::{}::[{},{},{}]", _name, name, placement._Row, placement._Column, placement._Layer);
+                return nullptr;
+            }
+
+            //Most widget constructors take the name as const std::string&, so it is materialised here
+            const std::string widgetName { name };
+            std::unique_ptr<T> widget { std::make_unique<T>(widgetName, &_projection, this, _widgetTypeID, _parentWindow, std::forward<Args>(args)...) };
+            T* attachedWidget { widget.get() };
+            placeWidget(std::move(widget), placement);
+            return attachedWidget;
+        }
+
+        /// @brief Removes the widget with the given name and frees its cells at once, so another widget can take them. The widget
+        ///        itself is destroyed at the start of the next Draw, so a widget's own slot may remove it.
+        /// @return false when no widget has that name.
+        bool RemoveWidget(std::string_view name);
+
+        /// @brief Returns the widget with the given name, or nullptr when there is none or it isn't a T.
+        template<std::derived_from<IWidget> T> T* GetWidget(std::string_view name) const
+        {
+            const LasagnaCell* cell { findCell(name) };
+
+            if(!cell)
+                return nullptr;
+
+            return dynamic_cast<T*>(cell->_Widget.get());
+        }
+
+        /// @brief Shows or hides the widget with the given name. A hidden widget doesn't draw or take input.
+        void ShowWidget(std::string_view name, const bool show);
+
+        /// @brief Whether the widget with the given name is shown. false when there is none.
+        bool IsWidgetShown(std::string_view name) const;
 
         /// @brief Returns the cell at the given index, or nullptr when the index is outside the current tracks.
         /// @warning Only valid until the cells are rebuilt
@@ -105,6 +171,20 @@ namespace RetroFuturaGUI
         std::unique_ptr<Frame> _debugBorder { nullptr };
         std::vector<glm::vec4> _debugBorderColor { glm::vec4(1.0f) };
         bool _drawDebugLines { false };
+        std::vector<std::unique_ptr<IWidget>> _removedWidgets {}; //destroyed at the start of the next Draw
+
+        /// @brief The cell holding the widget with the given name, or nullptr.
+        LasagnaCell* findCell(std::string_view name);
+        const LasagnaCell* findCell(std::string_view name) const;
+
+        /// @brief Where the widget with the given name sits, or nothing.
+        std::optional<TrackIndex> findWidgetIndex(std::string_view name) const;
+
+        /// @brief Whether the placement lies within the tracks and covers no taken cell.
+        bool isPlacementFree(const CellPlacement& placement) const;
+
+        /// @brief Puts the widget into the placement's cells, which isPlacementFree has checked, and lays it out.
+        void placeWidget(std::unique_ptr<IWidget> widget, const CellPlacement& placement);
 
         /// @brief Returns the Lasagna's top-left corner in world space. Cell offsets count from there, so every placement measures from here rather than from the window.
         glm::vec3 getTopLeftCorner() const;

@@ -7,7 +7,10 @@
 #include <algorithm>
 #include <cstddef>
 #include <glm/ext/vector_int2_sized.hpp>
-#include <memory>
+#include #include <print>
+#include <string>
+#include <utility>
+<memory>
 
 RetroFuturaGUI::RadioButtonGroup::RadioButtonGroup(const std::string& name, Projection* projection, IWidget* parentWidget, const WidgetTypeID parentWidgetTypeID, GLFWwindow* parentWindow)
     : IWidget(name, projection, parentWidget, parentWidgetTypeID, parentWindow)
@@ -23,6 +26,8 @@ RetroFuturaGUI::RadioButtonGroup::RadioButtonGroup(const std::string& name, Proj
 
 void RetroFuturaGUI::RadioButtonGroup::Draw()
 {
+    _removedWidgets.clear(); //no slot of theirs runs between frames
+
     if(!_text)
         return;
 
@@ -83,28 +88,109 @@ void RetroFuturaGUI::RadioButtonGroup::DeselectOthers(RadioButton* activeRadioBu
             if(!column._RadioButton)
                 continue;
             
-            if(column._RadioButton != activeRadioButton)
+            if(column._RadioButton.get() != activeRadioButton)
                 column._RadioButton->SetValue(false, false);
         }
 }
 
-void RetroFuturaGUI::RadioButtonGroup::RegisterRadioButton(RadioButton* newRadioButton, Label* label, const glm::i64vec2& index)
+RetroFuturaGUI::RadioButton* RetroFuturaGUI::RadioButtonGroup::AddRadioButton(std::string_view name, const glm::i64vec2& index)
 {
-    _grid[index.x][index.y]._RadioButton = newRadioButton;
-    _grid[index.x][index.y]._Label = label;
+    if(0 > index.x || 0 > index.y || static_cast<uSize>(index.x) >= _grid.size() || static_cast<uSize>(index.y) >= _grid[static_cast<uSize>(index.x)].size())
+    {
+        std::println("ERROR::RADIOBUTTONGROUP::CELL_OUT_OF_RANGE::{}::{}::[{},{}]", _name, name, index.x, index.y);
+        return nullptr;
+    }
+
+    GridCell& cell { _grid[static_cast<uSize>(index.x)][static_cast<uSize>(index.y)] };
+
+    if(cell._RadioButton)
+    {
+        std::println("ERROR::RADIOBUTTONGROUP::CELL_TAKEN::{}::{}::[{},{}]", _name, name, index.x, index.y);
+        return nullptr;
+    }
+
+    if(findCell(name))
+    {
+        std::println("ERROR::RADIOBUTTONGROUP::RADIOBUTTON_NAME_TAKEN::{}::{}", _name, name);
+        return nullptr;
+    }
+
+    //Most widget constructors take the name as const std::string&, so it is materialised here
+    const std::string radioButtonName { name };
+    cell._RadioButton = std::make_unique<RadioButton>(radioButtonName, &_projection, this, _widgetTypeID, _parentWindow, this);
+    cell._Label = std::make_unique<Label>(radioButtonName + "Label", &_projection, this, _widgetTypeID, _parentWindow);
+    updateGridLayout();
+    return cell._RadioButton.get();
+}
+
+void RetroFuturaGUI::RadioButtonGroup::SetLabel(std::string_view name, std::string_view label, const bool emitSignal)
+{
+    GridCell* cell { findCell(name) };
+
+    if(!cell)
+    {
+        std::println("ERROR::RADIOBUTTONGROUP::NO_CELL_FOUND::{}::{}", _name, name);
+        return;
+    }
+
+    cell->_Label->SetText(label, emitSignal);
     updateGridLayout();
 }
 
-void RetroFuturaGUI::RadioButtonGroup::UnregisterRadioButton(RadioButton* obsoleteRadioButton)
+bool RetroFuturaGUI::RadioButtonGroup::RemoveRadioButton(std::string_view name)
 {
-    for(auto& row : _grid)
-        for(auto& column : row)
-            if(column._RadioButton == obsoleteRadioButton)
-            {
-                column._RadioButton = nullptr;
-                column._Label = nullptr;
-                return;
-            }
+    GridCell* cell { findCell(name) };
+
+    if(!cell)
+        return false;
+
+    releaseCell(*cell);
+    return true;
+}
+
+RetroFuturaGUI::RadioButton* RetroFuturaGUI::RadioButtonGroup::GetRadioButton(std::string_view name) const
+{
+    const GridCell* cell { findCell(name) };
+
+    if(!cell)
+        return nullptr;
+
+    return cell->_RadioButton.get();
+}
+
+RetroFuturaGUI::Label* RetroFuturaGUI::RadioButtonGroup::GetRadioButtonLabel(std::string_view radioButtonName) const
+{
+    const GridCell* cell { findCell(radioButtonName) };
+
+    if(!cell)
+        return nullptr;
+
+    return cell->_Label.get();
+}
+
+RetroFuturaGUI::RadioButtonGroup::GridCell* RetroFuturaGUI::RadioButtonGroup::findCell(std::string_view name)
+{
+    return const_cast<GridCell*>(std::as_const(*this).findCell(name));
+}
+
+const RetroFuturaGUI::RadioButtonGroup::GridCell* RetroFuturaGUI::RadioButtonGroup::findCell(std::string_view name) const
+{
+    for(const auto& row : _grid)
+        for(const GridCell& cell : row)
+            if(cell._RadioButton && name == cell._RadioButton->GetName())
+                return &cell;
+
+    return nullptr;
+}
+
+void RetroFuturaGUI::RadioButtonGroup::releaseCell(GridCell& cell)
+{
+    //Kept alive until the next Draw, since one of the button's own slots may be running right now
+    if(cell._RadioButton)
+        _removedWidgets.push_back(std::move(cell._RadioButton));
+
+    if(cell._Label)
+        _removedWidgets.push_back(std::move(cell._Label));
 }
 
 void RetroFuturaGUI::RadioButtonGroup::SetText(std::string_view text, const bool emitSignal)
@@ -172,7 +258,18 @@ void RetroFuturaGUI::RadioButtonGroup::SetAxisDefinitions(std::span<f32> rowDefi
 {
     _rowDefinitions.assign(rowDefinitions.begin(), rowDefinitions.end());
     _columnDefinitions.assign(columnDefinitions.begin(), columnDefinitions.end());
-    _grid.assign(_rowDefinitions.size(), std::vector<GridCell>(_columnDefinitions.size()));
+
+    //Cells the new grid still has keep their buttons; the others give theirs up
+    for(uSize row { 0 }; row < _grid.size(); ++row)
+        for(uSize column { 0 }; column < _grid[row].size(); ++column)
+            if(row >= _rowDefinitions.size() || column >= _columnDefinitions.size())
+                releaseCell(_grid[row][column]);
+
+    _grid.resize(_rowDefinitions.size());
+
+    for(std::vector<GridCell>& row : _grid)
+        row.resize(_columnDefinitions.size());
+
     updateGridLayout();
 }
 

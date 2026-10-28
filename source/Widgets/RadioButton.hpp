@@ -5,7 +5,6 @@
 #include "Plane.hpp"
 #include "IBackground.hpp"
 #include "IBorder.hpp"
-#include "RadioButtonGroup.hpp"
 #include <memory>
 
 namespace RetroFuturaGUI

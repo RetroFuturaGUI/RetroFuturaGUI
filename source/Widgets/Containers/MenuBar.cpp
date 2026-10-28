@@ -34,6 +34,7 @@ RetroFuturaGUI::MenuBar::MenuBar(const std::string& name, Projection* projection
 
 void RetroFuturaGUI::MenuBar::Draw()
 {
+    _removedWidgets.clear(); //no slot of theirs must run
     syncUndockCells();
     interact();
     drawBackground();
@@ -116,10 +117,11 @@ void RetroFuturaGUI::MenuBar::SetEdgeAlignment(const EdgeAlignment edgeAlignment
 
 void RetroFuturaGUI::MenuBar::SetFlexCount(const uSize count)
 {
+    releaseCellsFrom(count);
     _itemFlex.resize(count);
 
     /* Cells added here have no policy of their own, so they take an even share. Cells that already had
-       one keep it, which is what lets a count change follow a SetFlexDefinition without undoing it. */
+       one keep it. An additional call on SetFlexDefinition readjusts all. */
     _flexDefinition.resize(count, _kEvenShare);
 
     if(_hoveredItemIndex >= _itemFlex.size())
@@ -132,7 +134,8 @@ void RetroFuturaGUI::MenuBar::SetFlexDefinition(std::span<FlexDefinition> flexDe
 {
     _flexDefinition.assign(flexDefinitions.begin(), flexDefinitions.end());
 
-    //The definitions are what say how many cells there are, so the flex follows them.
+    //The definitions express how many cells there are, so the flex follows them.
+    releaseCellsFrom(_flexDefinition.size());
     _itemFlex.resize(_flexDefinition.size());
 
     if(_hoveredItemIndex >= _itemFlex.size())
@@ -159,8 +162,28 @@ bool RetroFuturaGUI::MenuBar::RemoveWidget(const uSize index)
     if(!cell)
         return false;
 
-    cell.reset();
+    //Kept alive until the next Draw, since one of its own slots may be running right now!!
+    _removedWidgets.push_back(std::move(cell));
     return true;
+}
+
+bool RetroFuturaGUI::MenuBar::isNameTaken(std::string_view name) const
+{
+    for(const std::unique_ptr<IWidget>& item : _itemFlex)
+        if(item && name == item->GetName())
+            return true;
+
+    return false;
+}
+
+void RetroFuturaGUI::MenuBar::releaseCellsFrom(const uSize count)
+{
+    if(count >= _itemFlex.size())
+        return;
+
+    for(auto iterator { std::next(_itemFlex.begin(), static_cast<i64>(count)) }; iterator != _itemFlex.end(); ++iterator)
+        if(*iterator)
+            _removedWidgets.push_back(std::move(*iterator));
 }
 
 void RetroFuturaGUI::MenuBar::ShowSeparatorLines(const bool show)

@@ -68,54 +68,24 @@ void RetroFuturaGUI::Prefab::SetRotation(const glm::vec3& rotation)
 
 void RetroFuturaGUI::Prefab::ShowChildWidget(std::string_view name, const bool show)
 {
-    RetroFuturaGUI::LasagnaCell* cell = findCell(name);
-
-    if(!cell)
+    if(!_lasagna)
         return;
 
-    cell->_Show = show;
+    _lasagna->ShowWidget(name, show);
 }
 
 bool RetroFuturaGUI::Prefab::IsChildWidgetShown(std::string_view name) const
 {
-    RetroFuturaGUI::LasagnaCell* cell = findCell(name);
-
-    if(!cell)
+    if(!_lasagna)
         return false;
 
-    return cell->_Show;
+    return _lasagna->IsWidgetShown(name);
 }
 
-const RetroFuturaGUI::ChildWidget* RetroFuturaGUI::Prefab::findChild(std::string_view name) const
+bool RetroFuturaGUI::Prefab::RemoveChildWidget(std::string_view name)
 {
-    const auto lookupIterator { _widgetLookup.find(Fnv1aHash(name)) };
+    if(!_lasagna)
+        return false;
 
-    if(lookupIterator == _widgetLookup.end())
-    {
-        std::println("ERROR::PREFAB::CHILD_WIDGET_NOT_FOUND::{}", name);
-        return nullptr;
-    }
-
-    const ChildWidget& child { _children[lookupIterator->second] };
-
-    //Keyed by a 32-bit hash, so without this a collision would hand back a different child silently
-    if(child._Widget->GetName() != name)
-    {
-        std::println("ERROR::PREFAB::CHILD_WIDGET_HASH_COLLISION::{}::resolves to::{}", name, child._Widget->GetName());
-        return nullptr;
-    }
-
-    return &child;
-}
-
-RetroFuturaGUI::LasagnaCell* RetroFuturaGUI::Prefab::findCell(std::string_view name) const
-{
-    const ChildWidget* child { findChild(name) };
-
-    if(!child || !_lasagna)
-        return nullptr;
-
-    return _lasagna->GetCell(TrackIndex { ._Row = child->_Placement._Row,
-                                          ._Column = child->_Placement._Column,
-                                          ._Layer = child->_Placement._Layer });
+    return _lasagna->RemoveWidget(name);
 }

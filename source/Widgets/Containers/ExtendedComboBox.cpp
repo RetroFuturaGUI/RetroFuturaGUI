@@ -35,6 +35,8 @@ void RetroFuturaGUI::ExtendedComboBox::SetDropDownPosition(const DropDownPositio
 
 void RetroFuturaGUI::ExtendedComboBox::Draw()
 {
+    performPendingRemoval(); //no slot of the removed items must run between frames
+
     if(!_background)
         return;
 
@@ -524,9 +526,34 @@ void RetroFuturaGUI::ExtendedComboBox::updateItemGeometry()
 
 void RetroFuturaGUI::ExtendedComboBox::RemoveItem(const uSize index)
 {
-    auto iterator = _itemWidgets.begin();
-    std::advance(iterator, index);
-    _itemWidgets.erase(iterator);
+    if(index >= _itemWidgets.size())
+        return;
+
+    std::unique_ptr<IWidget>& item { *std::next(_itemWidgets.begin(), static_cast<i64>(index)) };
+
+    if(!item)
+        return;
+
+    //Kept alive until the next Draw, since one of its own slots may be running right now!
+    _removedWidgets.push_back(std::move(item));
+}
+
+bool RetroFuturaGUI::ExtendedComboBox::isItemNameTaken(std::string_view name) const
+{
+    for(const std::unique_ptr<IWidget>& item : _itemWidgets)
+        if(item && name == item->GetName())
+            return true;
+
+    return false;
+}
+
+void RetroFuturaGUI::ExtendedComboBox::performPendingRemoval()
+{
+    if(_removedWidgets.empty())
+        return;
+
+    _removedWidgets.clear();
+    std::erase_if(_itemWidgets, [](const std::unique_ptr<IWidget>& item) { return !item; });
     _itemCount = _itemWidgets.size();
     updateDropDownGeometry();
 }
@@ -546,6 +573,9 @@ void RetroFuturaGUI::ExtendedComboBox::SetFontFamily(std::string_view fontFamily
 
     for(const auto& item : _itemWidgets)
     {
+        if(!item)
+            continue;
+
         switch(item->GetWidgetTypeID())
         {
             case WidgetTypeID::Label:

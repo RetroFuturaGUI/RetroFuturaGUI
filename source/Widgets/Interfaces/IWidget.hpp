@@ -14,11 +14,13 @@
 namespace RetroFuturaGUI
 {
     class Tooltip; //not included: its text pulls in windows.h, whose min/max macros would reach every widget
+    template<typename> class WidgetReference;
 
     //An interface with properties that all Widgets must implement.
     class IWidget : virtual public IWindowAccessor, public IHierarchyNode
     {
         friend class Tooltip;
+        template<typename> friend class WidgetReference;
 
     public:
         /// @brief Constructs a widget with the given name, under the given parent widget/window.
@@ -145,5 +147,8 @@ namespace RetroFuturaGUI
         ///        what the containers above it already let through: an inner ScrollView only ever sees a press its outer one passed on,
         ///        and an outer one that scrolls keeps the pointer captured whatever the inner one does.
         static void filterThroughAncestors(const IHierarchyNode* node, PointerState& pointer);
+
+        //Freed with the widget, which empties every WidgetReference to it
+        std::shared_ptr<const bool> _lifetimeToken { std::make_shared<const bool>(true) };
     };
 }

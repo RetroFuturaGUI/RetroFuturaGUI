@@ -1,4 +1,5 @@
 #include "Lasagna.hpp"
+#include <optional>
 #include <utility>
 
 RetroFuturaGUI::Lasagna::Lasagna(const std::string& name, Projection* projection, IHierarchyNode* parentWidget, const WidgetTypeID parentWidgetTypeID, GLFWwindow* parentWindow, const AxisDefinition& axisDefinition)
@@ -84,34 +85,123 @@ RetroFuturaGUI::Lasagna::Lasagna(const std::string& name, Projection* projection
     _debugBorder->SetBorderWidth(5.0f);
 }
 
-bool RetroFuturaGUI::Lasagna::AttachWidget(const u32 row, const u32 col, const u32 layer, IWidget* widget, const SizingMode sizingMode, const u32 rowSpan, const u32 colSpan, const u32 layerSpan)
+bool RetroFuturaGUI::Lasagna::RemoveWidget(std::string_view name)
 {
-    const u32
-        rowSpanClamped = 0 == rowSpan ? 1 : rowSpan,
-        colSpanClamped = 0 == colSpan ? 1 : colSpan,
-        layerSpanClamped = 0 == layerSpan ? 1 : layerSpan;
+    const std::optional<TrackIndex> index { findWidgetIndex(name) };
 
-    if(_axisdefinition._RowDefinition.size() < row + rowSpanClamped
-    || _axisdefinition._ColumnDefinition.size() < col + colSpanClamped
-    || _axisdefinition._LayerDefinition.size() < layer + layerSpanClamped)
+    if(!index)
         return false;
 
-    for(u32 r = row; r < row + rowSpanClamped; ++r)
-        for(u32 c = col; c < col + colSpanClamped; ++c)
-            for(u32 l = layer; l < layer + layerSpanClamped; ++l)
+    LasagnaCell& origin { _lasagna[index->_Row][index->_Column][index->_Layer] };
+
+    //Kept alive until the next Draw, since one of its own slots may be running right now
+    _removedWidgets.push_back(std::move(origin._Widget));
+
+    for(uSize r = index->_Row; r < index->_Row + origin._RowSpan; ++r)
+        for(uSize c = index->_Column; c < index->_Column + origin._ColSpan; ++c)
+            for(uSize l = index->_Layer; l < index->_Layer + origin._LayerSpan; ++l)
+                _lasagna[r][c][l]._SpanOccupied = false;
+
+    origin._RowSpan = 1;
+    origin._ColSpan = 1;
+    origin._LayerSpan = 1;
+    origin._SizingMode = SizingMode::FILL;
+    origin._Show = true;
+    resizeCells(); //the origin cell shrinks back from the span's size to its own
+    return true;
+}
+
+void RetroFuturaGUI::Lasagna::ShowWidget(std::string_view name, const bool show)
+{
+    LasagnaCell* cell { findCell(name) };
+
+    if(!cell)
+        return;
+
+    cell->_Show = show;
+}
+
+bool RetroFuturaGUI::Lasagna::IsWidgetShown(std::string_view name) const
+{
+    const LasagnaCell* cell { findCell(name) };
+
+    if(!cell)
+        return false;
+
+    return cell->_Show;
+}
+
+RetroFuturaGUI::LasagnaCell* RetroFuturaGUI::Lasagna::findCell(std::string_view name)
+{
+    return const_cast<LasagnaCell*>(std::as_const(*this).findCell(name));
+}
+
+const RetroFuturaGUI::LasagnaCell* RetroFuturaGUI::Lasagna::findCell(std::string_view name) const
+{
+    const std::optional<TrackIndex> index { findWidgetIndex(name) };
+
+    if(!index)
+        return nullptr;
+
+    return GetCell(*index);
+}
+
+std::optional<RetroFuturaGUI::TrackIndex> RetroFuturaGUI::Lasagna::findWidgetIndex(std::string_view name) const
+{
+    for(uSize row = 0; row < _lasagna.size(); ++row)
+        for(uSize column = 0; column < _lasagna[row].size(); ++column)
+            for(uSize layer = 0; layer < _lasagna[row][column].size(); ++layer)
+            {
+                const LasagnaCell& cell { _lasagna[row][column][layer] };
+
+                if(cell._Widget && name == cell._Widget->GetName())
+                    return TrackIndex { ._Row = row, ._Column = column, ._Layer = layer };
+            }
+
+    return std::nullopt;
+}
+
+bool RetroFuturaGUI::Lasagna::isPlacementFree(const CellPlacement& placement) const
+{
+    const u32
+        rowSpan { 0 == placement._RowSpan ? 1 : placement._RowSpan },
+        colSpan { 0 == placement._ColSpan ? 1 : placement._ColSpan },
+        layerSpan { 0 == placement._LayerSpan ? 1 : placement._LayerSpan };
+
+    if(_axisdefinition._RowDefinition.size() < placement._Row + rowSpan
+    || _axisdefinition._ColumnDefinition.size() < placement._Column + colSpan
+    || _axisdefinition._LayerDefinition.size() < placement._Layer + layerSpan)
+        return false;
+
+    for(u32 r = placement._Row; r < placement._Row + rowSpan; ++r)
+        for(u32 c = placement._Column; c < placement._Column + colSpan; ++c)
+            for(u32 l = placement._Layer; l < placement._Layer + layerSpan; ++l)
                 if(_lasagna[r][c][l]._SpanOccupied || _lasagna[r][c][l]._Widget)
                     return false;
 
-    LasagnaCell& origin = _lasagna[row][col][layer];
-    origin._RowSpan = rowSpanClamped;
-    origin._ColSpan = colSpanClamped;
-    origin._LayerSpan = layerSpanClamped;
-    origin._SizingMode = sizingMode;
-    origin._Widget = widget;
+    return true;
+}
 
-    for(u32 r = row; r < row + rowSpanClamped; ++r)
-        for(u32 c = col; c < col + colSpanClamped; ++c)
-            for(u32 l = layer; l < layer + layerSpanClamped; ++l)
+void RetroFuturaGUI::Lasagna::placeWidget(std::unique_ptr<IWidget> widget, const CellPlacement& placement)
+{
+    const u32
+        row { placement._Row },
+        col { placement._Column },
+        layer { placement._Layer },
+        rowSpan { 0 == placement._RowSpan ? 1 : placement._RowSpan },
+        colSpan { 0 == placement._ColSpan ? 1 : placement._ColSpan },
+        layerSpan { 0 == placement._LayerSpan ? 1 : placement._LayerSpan };
+
+    LasagnaCell& origin = _lasagna[row][col][layer];
+    origin._RowSpan = rowSpan;
+    origin._ColSpan = colSpan;
+    origin._LayerSpan = layerSpan;
+    origin._SizingMode = placement._SizingMode;
+    origin._Widget = std::move(widget);
+
+    for(u32 r = row; r < row + rowSpan; ++r)
+        for(u32 c = col; c < col + colSpan; ++c)
+            for(u32 l = layer; l < layer + layerSpan; ++l)
                 if(r != row || c != col || l != layer)
                     _lasagna[r][c][l]._SpanOccupied = true;
 
@@ -124,8 +214,6 @@ bool RetroFuturaGUI::Lasagna::AttachWidget(const u32 row, const u32 col, const u
                                           topLeft.z + origin._PositionPixels.z + origin._SizePixels.z * 0.5f
                                         ));
     resizeWidget(origin);
-
-    return true;
 }
 
 RetroFuturaGUI::LasagnaCell* RetroFuturaGUI::Lasagna::GetCell(const TrackIndex& index)
@@ -152,6 +240,8 @@ RetroFuturaGUI::TrackIndex RetroFuturaGUI::Lasagna::GetTrackCounts() const
 
 void RetroFuturaGUI::Lasagna::Draw()
 {
+    _removedWidgets.clear(); //no slot of theirs runs between frames
+
     for(auto& row : _lasagna)
     {
         for(auto& column : row)

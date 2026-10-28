@@ -2,8 +2,12 @@
 #include "IncludeHelper.hpp"
 #include "IWidget.hpp"
 #include <glm/gtc/quaternion.hpp>
+#include <concepts>
 #include <memory>
+#include <print>
 #include <string>
+#include <string_view>
+#include <utility>
 #include <vector>
 #include "Frame.hpp"
 
@@ -29,7 +33,7 @@ namespace RetroFuturaGUI
 
     struct EnvironmentEntry
     {
-        IWidget* _Widget { nullptr };
+        std::unique_ptr<IWidget> _Widget { nullptr };
         EnvironmentPlacement _Placement {};
         bool _Show { true };
     };
@@ -48,26 +52,58 @@ namespace RetroFuturaGUI
         auto operator =(const Environment&) = delete;
         auto operator =(Environment&&) = delete;
 
-        /// @brief Places a widget in the Environment, without taking ownership. Widgets draw in the order they were attached.
-        /// @return false when the widget is null, the Environment itself, or already attached.
-        bool AttachWidget(IWidget* widget, const EnvironmentPlacement& placement = {});
+        /// @brief Builds a widget of type T in the Environment and owns it. The Environment is its parent, and passes its
+        ///        projection and window on to it. Widgets draw in the order they were attached.
+        /// @param args Constructor arguments after the parent window, such as an Image's path.
+        /// @return The new widget, or nullptr, building nothing, when the name is taken. The widget lives until it is removed
+        ///         or the Environment is destroyed.
+        /// @warning Call from the GUI thread only: a widget creates OpenGL objects, and those must stay on the context's thread.
+        template<std::derived_from<IWidget> T, typename... Args>
+        T* AddWidget(std::string_view name, const EnvironmentPlacement& placement, Args&&... args)
+        {
+            if(findEntry(name))
+            {
+                std::println("ERROR::ENVIRONMENT::WIDGET_NAME_TAKEN::{}::{}", _name, name);
+                return nullptr;
+            }
 
-        /// @brief Removes a widget from the Environment. The widget keeps the window position, size and rotation it had last.
-        /// @return false when the widget was not attached.
-        bool DetachWidget(const IWidget* widget);
+            //Most widget constructors take the name as const std::string&, so it is materialised here
+            const std::string widgetName { name };
+            std::unique_ptr<T> widget { std::make_unique<T>(widgetName, &_projection, this, _widgetTypeID, _parentWindow, std::forward<Args>(args)...) };
+            T* attachedWidget { widget.get() };
+            _entries.push_back(EnvironmentEntry { ._Widget = std::move(widget), ._Placement = placement, ._Show = true });
+            placeWidget(_entries.back());
+            return attachedWidget;
+        }
 
-        /// @brief Moves an attached widget within the Environment.
-        /// @return false when the widget is not attached.
-        bool SetPlacement(const IWidget* widget, const EnvironmentPlacement& placement);
+        /// @brief Removes the widget with the given name. It is destroyed at the start of the next Draw, so its own slot may
+        ///        remove it.
+        /// @return false when no widget has that name.
+        bool RemoveWidget(std::string_view name);
 
-        /// @brief Returns where an attached widget sits, or nullptr when the widget is not attached.
-        const EnvironmentPlacement* GetPlacement(const IWidget* widget) const;
+        /// @brief Returns the widget with the given name, or nullptr when there is none or it isn't a T.
+        template<std::derived_from<IWidget> T> T* GetWidget(std::string_view name) const
+        {
+            const EnvironmentEntry* entry { findEntry(name) };
 
-        /// @brief Sets whether an attached widget is drawn. A hidden widget keeps its placement.
-        void ShowWidget(const IWidget* widget, const bool show);
+            if(!entry)
+                return nullptr;
 
-        /// @brief Returns whether an attached widget is drawn. false when the widget is not attached.
-        bool IsWidgetShown(const IWidget* widget) const;
+            return dynamic_cast<T*>(entry->_Widget.get());
+        }
+
+        /// @brief Moves the widget with the given name within the Environment.
+        /// @return false when no widget has that name.
+        bool SetPlacement(std::string_view name, const EnvironmentPlacement& placement);
+
+        /// @brief Returns where the widget with the given name sits, or nullptr when there is none.
+        const EnvironmentPlacement* GetPlacement(std::string_view name) const;
+
+        /// @brief Sets whether the widget with the given name is drawn. A hidden widget keeps its placement.
+        void ShowWidget(std::string_view name, const bool show);
+
+        /// @brief Returns whether the widget with the given name is drawn. false when there is none.
+        bool IsWidgetShown(std::string_view name) const;
 
         /// @brief Sets half the box's size on each axis, in environment units, and refits everything inside.
         /// @return false when any component is not positive, in which case nothing is changed.
@@ -110,8 +146,8 @@ namespace RetroFuturaGUI
         void SetRotation(const glm::vec3& rotation) override;
 
     private:
-        EnvironmentEntry* findEntry(const IWidget* widget);
-        const EnvironmentEntry* findEntry(const IWidget* widget) const;
+        EnvironmentEntry* findEntry(std::string_view name);
+        const EnvironmentEntry* findEntry(std::string_view name) const;
 
         /// @brief Recomputes the scale and orientation from the Environment's size, rotation, extent and fit, then places every widget anew.
         void applyTransform();
@@ -122,6 +158,7 @@ namespace RetroFuturaGUI
         static glm::vec3 toEulerDegrees(const glm::quat& rotation);
 
         std::vector<EnvironmentEntry> _entries {};
+        std::vector<std::unique_ptr<IWidget>> _removedWidgets {}; //destroyed at the start of the next Draw
         glm::vec3 _extent { 1.0f };
         EnvironmentFit _fit { EnvironmentFit::Contain };
         f32 _scale { 1.0f };

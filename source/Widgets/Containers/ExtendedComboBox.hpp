@@ -1,6 +1,12 @@
 #pragma once
 #include <concepts>
+#include <list>
+#include <memory>
 #include <print>
+#include <string>
+#include <string_view>
+#include <utility>
+#include <vector>
 #include "ComboBox.hpp"
 #include "IDropDown.hpp"
 #include "IncludeHelper.hpp"
@@ -42,23 +48,23 @@ namespace RetroFuturaGUI
         void SetRotation(const glm::vec3& rotation) override;
         void SetDropDownPosition(const DropDownPosition position) override;
 
-        /// @brief Takes ownership of a widget and appends it as the last item.
-        /// @return The item, so the caller can carry on configuring it.
-        template<ExtendedComboBoxWidgets T> T* AddItem(std::unique_ptr<T> item)
+        /// @brief Builds a widget of type T as the last item and owns it. The box is its parent, so an open list counts the row
+        ///        as its own instead of blocking it like a widget beneath, and passes its projection and window on to it.
+        /// @param args Constructor arguments after the parent window, such as an SvgImage's path.
+        /// @return The item, so the caller can carry on configuring it, or nullptr, building nothing, when the name is taken.
+        /// @warning Call from the GUI thread only: a widget creates OpenGL objects, and those must stay on the context's thread.
+        template<ExtendedComboBoxWidgets T, typename... Args>
+        T* AddItem(std::string_view name, Args&&... args)
         {
-            if(!item)
-                return nullptr;
-
-            //An open list blocks the widgets beneath it, and only rows made with this box as their parent count as its own
-            if(item->GetParent() != this)
+            if(isItemNameTaken(name))
             {
-                std::println("ExtendedComboBox::AddItem: \"{}\" was made with another parent, so it is not added", item->GetName());
+                std::println("ERROR::EXTENDEDCOMBOBOX::ITEM_NAME_TAKEN::{}::{}", _name, name);
                 return nullptr;
             }
 
-            /* The widget types delete their copy and move constructors, so an item can only arrive
-               as a pointer that is already owning. The raw pointer is kept before the unique_ptr is
-               handed over, because the list stores it as an IWidget and T is what the caller wants back. */
+            //Most widget constructors take the name as const std::string&, so it is materialised here
+            const std::string itemName { name };
+            std::unique_ptr<T> item { std::make_unique<T>(itemName, &_projection, this, _widgetTypeID, _parentWindow, std::forward<Args>(args)...) };
             T* itemPointer { item.get() };
             _itemWidgets.push_back(std::move(item));
 
@@ -87,6 +93,9 @@ namespace RetroFuturaGUI
         const std::vector<glm::vec4>& GetPreviewTextColors(const ColorState state) const;
 
         bool IsPointInsideOpenDropDown(const glm::vec2& point) const override;
+
+        /// @brief Removes the item at the given index. The row goes, and the widget is destroyed, at the start of the next Draw,
+        ///        so the item's own slot may remove it.
         void RemoveItem(const uSize index) override;
         void SetFontFamily(std::string_view fontFamily, const f32 fontSize, const PlatformBridge::Fonts::Slant slant, const PlatformBridge::Fonts::Weight fontWeight) override;
         void SetTextAlignment(const TextAlignment alignment) override;
@@ -113,7 +122,14 @@ namespace RetroFuturaGUI
         void placeItemWidget(IWidget* item, const glm::vec3& center) const;
 
     //Elements
-        std::list<std::unique_ptr<IWidget>> _itemWidgets {};
+        std::list<std::unique_ptr<IWidget>> _itemWidgets {}; //a removed item leaves an empty row until the next Draw
+        std::vector<std::unique_ptr<IWidget>> _removedWidgets {}; //destroyed at the start of the next Draw
+
+        /// @brief Whether an item already has the given name.
+        bool isItemNameTaken(std::string_view name) const;
+
+        /// @brief Drops the rows of removed items, and the widgets with them.
+        void performPendingRemoval();
         inline static const std::string _emptyText { "" };
 
     //Design

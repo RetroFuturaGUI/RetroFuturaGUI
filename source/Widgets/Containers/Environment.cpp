@@ -29,39 +29,22 @@ RetroFuturaGUI::Environment::Environment(const std::string& name, Projection* pr
     _debugBox->SetBorderWidth(2.0f);
 }
 
-bool RetroFuturaGUI::Environment::AttachWidget(IWidget* widget, const EnvironmentPlacement& placement)
+bool RetroFuturaGUI::Environment::RemoveWidget(std::string_view name)
 {
-    if(!widget)
+    EnvironmentEntry* entry { findEntry(name) };
+
+    if(!entry)
         return false;
 
-    if(widget == this) //avoid recursive calls
-        return false;
-
-    if(findEntry(widget))
-    {
-        std::println("ERROR::ENVIRONMENT::WIDGET_ALREADY_ATTACHED::{}::{}", _name, widget->GetName());
-        return false;
-    }
-
-    _entries.push_back(EnvironmentEntry { ._Widget = widget, ._Placement = placement, ._Show = true });
-    placeWidget(_entries.back());
+    //Kept alive until the next Draw, since one of its own slots may be running right now. The emptied entry goes then too,
+    //as Draw may be walking the entries at this moment
+    _removedWidgets.push_back(std::move(entry->_Widget));
     return true;
 }
 
-bool RetroFuturaGUI::Environment::DetachWidget(const IWidget* widget)
+bool RetroFuturaGUI::Environment::SetPlacement(std::string_view name, const EnvironmentPlacement& placement)
 {
-    const auto entryIterator { std::ranges::find(_entries, widget, &EnvironmentEntry::_Widget) };
-
-    if(entryIterator == _entries.end())
-        return false;
-
-    _entries.erase(entryIterator);
-    return true;
-}
-
-bool RetroFuturaGUI::Environment::SetPlacement(const IWidget* widget, const EnvironmentPlacement& placement)
-{
-    EnvironmentEntry* entry { findEntry(widget) };
+    EnvironmentEntry* entry { findEntry(name) };
 
     if(!entry)
         return false;
@@ -71,9 +54,9 @@ bool RetroFuturaGUI::Environment::SetPlacement(const IWidget* widget, const Envi
     return true;
 }
 
-const RetroFuturaGUI::EnvironmentPlacement* RetroFuturaGUI::Environment::GetPlacement(const IWidget* widget) const
+const RetroFuturaGUI::EnvironmentPlacement* RetroFuturaGUI::Environment::GetPlacement(std::string_view name) const
 {
-    const EnvironmentEntry* entry { findEntry(widget) };
+    const EnvironmentEntry* entry { findEntry(name) };
 
     if(!entry)
         return nullptr;
@@ -81,9 +64,9 @@ const RetroFuturaGUI::EnvironmentPlacement* RetroFuturaGUI::Environment::GetPlac
     return &entry->_Placement;
 }
 
-void RetroFuturaGUI::Environment::ShowWidget(const IWidget* widget, const bool show)
+void RetroFuturaGUI::Environment::ShowWidget(std::string_view name, const bool show)
 {
-    EnvironmentEntry* entry { findEntry(widget) };
+    EnvironmentEntry* entry { findEntry(name) };
 
     if(!entry)
         return;
@@ -91,9 +74,9 @@ void RetroFuturaGUI::Environment::ShowWidget(const IWidget* widget, const bool s
     entry->_Show = show;
 }
 
-bool RetroFuturaGUI::Environment::IsWidgetShown(const IWidget* widget) const
+bool RetroFuturaGUI::Environment::IsWidgetShown(std::string_view name) const
 {
-    const EnvironmentEntry* entry { findEntry(widget) };
+    const EnvironmentEntry* entry { findEntry(name) };
 
     if(!entry)
         return false;
@@ -149,18 +132,25 @@ void RetroFuturaGUI::Environment::ShowDebugBox(const bool show)
 
 void RetroFuturaGUI::Environment::Draw()
 {
+    //No slot of the removed widgets runs between frames
+    _removedWidgets.clear();
+    std::erase_if(_entries, [](const EnvironmentEntry& entry) { return !entry._Widget; });
+
     std::optional<ScissorClip> clip;
 
     if(_clippingOn)
         clip.emplace(framebufferBox(_position.x - _size.x * 0.5f, _position.y - _size.y * 0.5f, _size.x, _size.y));
 
-    for(const EnvironmentEntry& entry : _entries)
+    //By index, since a widget's slot may attach another one while it draws, which can move the entries
+    for(uSize index = 0; index < _entries.size(); ++index)
     {
-        if(!entry._Widget || !entry._Show)
+        IWidget* widget { _entries[index]._Widget.get() };
+
+        if(!widget || !_entries[index]._Show)
             continue;
 
-        entry._Widget->UpdateTooltip();
-        entry._Widget->Draw();
+        widget->UpdateTooltip();
+        widget->Draw();
     }
 
     if(_drawDebugBox)
@@ -185,14 +175,14 @@ void RetroFuturaGUI::Environment::SetRotation(const glm::vec3& rotation)
     applyTransform();
 }
 
-RetroFuturaGUI::EnvironmentEntry* RetroFuturaGUI::Environment::findEntry(const IWidget* widget)
+RetroFuturaGUI::EnvironmentEntry* RetroFuturaGUI::Environment::findEntry(std::string_view name)
 {
-    return const_cast<EnvironmentEntry*>(std::as_const(*this).findEntry(widget));
+    return const_cast<EnvironmentEntry*>(std::as_const(*this).findEntry(name));
 }
 
-const RetroFuturaGUI::EnvironmentEntry* RetroFuturaGUI::Environment::findEntry(const IWidget* widget) const
+const RetroFuturaGUI::EnvironmentEntry* RetroFuturaGUI::Environment::findEntry(std::string_view name) const
 {
-    const auto entryIterator { std::ranges::find(_entries, widget, &EnvironmentEntry::_Widget) };
+    const auto entryIterator { std::ranges::find_if(_entries, [name](const EnvironmentEntry& entry) { return entry._Widget && name == entry._Widget->GetName(); }) };
 
     if(entryIterator == _entries.end())
         return nullptr;

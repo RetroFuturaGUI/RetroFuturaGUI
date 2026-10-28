@@ -128,18 +128,17 @@ RetroFuturaGUI::FileExplorer::ViewHost::ViewHost(std::string_view sceneName, Win
     if(!window)
         return;
 
-    _projection = window->GetProjection();
+    Projection* projection { window->GetProjection() };
 
-    if(!_projection)
+    if(!projection)
         return;
 
-    _glfwWindow = window->GetGlfwWindow();
     _scene = SceneLoader::CreateScene(sceneName, window);
 
     if(!_scene)
         return;
 
-    _scene->SetLasagnaAxis(lasagnaAxis, _projection);
+    _scene->SetLasagnaAxis(lasagnaAxis, projection);
 }
 
 RetroFuturaGUI::FileExplorer::ViewHost::~ViewHost()
@@ -188,7 +187,7 @@ bool RetroFuturaGUI::FileExplorer::buildView(ViewHost& host, std::string_view ti
     const glm::vec2 windowSize { static_cast<f32>(_width), static_cast<f32>(_height) };
     ViewWidgets built {};
 
-    built._Bar = attachBar(host, *lasagna, *window, title, _viewColumnCount, _viewAxis._RowDefinition[0] * windowSize.y, windowSize, _font);
+    built._Bar = attachBar(host, *lasagna, title, _viewColumnCount, _viewAxis._RowDefinition[0] * windowSize.y, windowSize, _font);
 
     if(!built._Bar)
         return false;
@@ -485,18 +484,8 @@ bool RetroFuturaGUI::FileExplorer::buildView(ViewHost& host, std::string_view ti
     return true;
 }
 
-RetroFuturaGUI::MenuBar* RetroFuturaGUI::FileExplorer::attachBar(ViewHost& host, Lasagna& lasagna, Window& window, std::string_view title, const uSize columnCount, const f32 barHeight, const glm::vec2& windowSize, const ViewFont& font)
+RetroFuturaGUI::MenuBar* RetroFuturaGUI::FileExplorer::attachBar(ViewHost& host, Lasagna& lasagna, std::string_view title, const uSize columnCount, const f32 barHeight, const glm::vec2& windowSize, const ViewFont& font)
 {
-    Projection* projection { window.GetProjection() };
-
-    if(!projection)
-        return nullptr;
-
-    GLFWwindow* glfwWindow { window.GetGlfwWindow() };
-
-    if(!glfwWindow)
-        return nullptr;
-
     //The title drags the window, the spacer takes what is left, and the close button is a square of the bar's height
     MenuBar* bar { host.Attach<MenuBar>("Bar", lasagna, ViewCell { ._Row = 0, ._Column = 0, ._ColumnSpan = columnCount, ._SizingMode = SizingMode::FILL, ._Layer = 0 }) };
 
@@ -523,16 +512,23 @@ RetroFuturaGUI::MenuBar* RetroFuturaGUI::FileExplorer::attachBar(ViewHost& host,
     };
     bar->SetFlexDefinition(flexDefinition);
 
-    std::unique_ptr<Label> barTitle { std::make_unique<Label>("BarTitle", projection, bar, WidgetTypeID::MenuBar, glfwWindow) };
+    Label* barTitle { bar->AddWidget<Label>("BarTitle", 0) };
+
+    if(!barTitle)
+        return bar;
+
     barTitle->SetFontFamily(font._Family, font._Size, font._Slant, font._Weight);
     barTitle->SetText(title, false);
     barTitle->SetTextAlignment(TextAlignment::Left);
     barTitle->SetTextColors(std::array { glm::vec4(1.0f) }, ColorState::Enabled);
     barTitle->SetTextPadding(8.0f);
     barTitle->SetSize(glm::vec3(0.5f * windowSize.x, barHeight, 0.01f)); //as tall as the bar, since text is clipped to its label
-    bar->AddWidget(std::move(barTitle), 0);
 
-    std::unique_ptr<Button> closeButton { std::make_unique<Button>("BarClose", projection, bar, WidgetTypeID::MenuBar, glfwWindow) };
+    Button* closeButton { bar->AddWidget<Button>("BarClose", _barCloseIndex) };
+
+    if(!closeButton)
+        return bar;
+
     closeButton->SetSize(glm::vec3(barHeight - 2.0f * _margin, barHeight - 2.0f * _margin, 0.01f));
     closeButton->SetBackgroundImage(toUtf8(PlatformBridge::Paths::GetExecutablePathFSPath().parent_path() / "Resources" / "img" / "CloseIcon.svg")); //UTF-8, as Texture reads paths
     closeButton->SetBackgroundImagePadding(4.0f);
@@ -540,7 +536,6 @@ RetroFuturaGUI::MenuBar* RetroFuturaGUI::FileExplorer::attachBar(ViewHost& host,
     closeButton->SetBackgroundColors(std::array { glm::vec4(1.0f, 0.2f, 0.2f, 0.45f) }, ColorState::Hover);
     closeButton->SetBackgroundColors(std::array { glm::vec4(1.0f, 0.3f, 0.3f, 0.6f) }, ColorState::Clicked);
     closeButton->SetBorderWidth(0.0f);
-    bar->AddWidget(std::move(closeButton), _barCloseIndex);
     return bar;
 }
 

@@ -36,7 +36,7 @@ RetroFuturaGUI::FileExplorer::NamePrompt::NamePrompt(std::string_view title, std
         okCell { ._Row = 3, ._Column = 4, ._ColumnSpan = 4, ._SizingMode = SizingMode::FIXED, ._Layer = 0 },
         cancelCell { ._Row = 3, ._Column = 8, ._ColumnSpan = 4, ._SizingMode = SizingMode::FIXED, ._Layer = 0 };
 
-    MenuBar* bar { attachBar(*host, *lasagna, *window, title, 12, _axis._RowDefinition[0] * windowSize.y, windowSize, font) };
+    MenuBar* bar { attachBar(*host, *lasagna, title, 12, _axis._RowDefinition[0] * windowSize.y, windowSize, font) };
     Label* messageLabel { host->Attach<Label>("Message", *lasagna, messageCell) };
     _name = host->Attach<TextBox>("Name", *lasagna, nameCell);
     Button
@@ -117,7 +117,7 @@ RetroFuturaGUI::FileExplorer::ConfirmPrompt::ConfirmPrompt(std::string_view titl
         confirmCell { ._Row = 3, ._Column = 4, ._ColumnSpan = 4, ._SizingMode = SizingMode::FIXED, ._Layer = 0 },
         cancelCell { ._Row = 3, ._Column = 8, ._ColumnSpan = 4, ._SizingMode = SizingMode::FIXED, ._Layer = 0 };
 
-    MenuBar* bar { attachBar(*host, *lasagna, *window, title, 12, _axis._RowDefinition[0] * windowSize.y, windowSize, font) };
+    MenuBar* bar { attachBar(*host, *lasagna, title, 12, _axis._RowDefinition[0] * windowSize.y, windowSize, font) };
     Label
         * messageLabel { host->Attach<Label>("Message", *lasagna, messageCell) },
         * detailLabel { host->Attach<Label>("Detail", *lasagna, detailCell) };
@@ -206,7 +206,7 @@ RetroFuturaGUI::FileExplorer::ClashPrompt::ClashPrompt(std::string_view name, st
         skipCell { ._Row = 3, ._Column = 4, ._ColumnSpan = 4, ._SizingMode = SizingMode::FIXED, ._Layer = 0 },
         keepBothCell { ._Row = 3, ._Column = 8, ._ColumnSpan = 4, ._SizingMode = SizingMode::FIXED, ._Layer = 0 };
 
-    MenuBar* bar { attachBar(*host, *lasagna, *window, "Name taken", 12, _axis._RowDefinition[0] * windowSize.y, windowSize, font) };
+    MenuBar* bar { attachBar(*host, *lasagna, "Name taken", 12, _axis._RowDefinition[0] * windowSize.y, windowSize, font) };
     Label
         * messageLabel { host->Attach<Label>("Message", *lasagna, messageCell) },
         * checkLabel { host->Attach<Label>("ForRemainingLabel", *lasagna, checkLabelCell) };

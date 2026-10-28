@@ -18,6 +18,10 @@
 #include "ComboBox.hpp"
 #include "ColorPreview.hpp"
 #include <memory>
+#include <print>
+#include <string>
+#include <string_view>
+#include <utility>
 #include <vector>
 
 namespace RetroFuturaGUI
@@ -80,17 +84,42 @@ namespace RetroFuturaGUI
         void SetEdgeAlignment(const EdgeAlignment edgeAlignment);
         void SetFlexCount(const uSize count);
 
-        /// @brief Takes ownership of a widget and puts it in the given flex cell
-        template<MenuBarWidgetTypes T> void AddWidget(std::unique_ptr<T> widget, const uSize index)
+        /// @brief Builds a widget of type T in the given flex cell and owns it. The bar is its parent, and passes its projection
+        ///        and window on to it.
+        /// @param args Constructor arguments after the parent window, such as an SvgImage's path.
+        /// @return The new widget, or nullptr, building nothing, when the cell is out of range or taken, or the name is taken.
+        ///         The widget lives until it is removed, its cell is dropped, or the bar is destroyed.
+        /// @warning Call from the GUI thread only: a widget creates OpenGL objects, and those must stay on the context's thread.
+        template<MenuBarWidgetTypes T, typename... Args>
+        T* AddWidget(std::string_view name, const uSize index, Args&&... args)
         {
-            if(!widget)
-                return;
-
             if(index >= _itemFlex.size())
-                return;
+            {
+                std::println("ERROR::MENUBAR::CELL_OUT_OF_RANGE::{}::{}::{}", _name, name, index);
+                return nullptr;
+            }
 
-            *std::next(_itemFlex.begin(), static_cast<i64>(index)) = std::move(widget);
+            std::unique_ptr<IWidget>& cell { *std::next(_itemFlex.begin(), static_cast<i64>(index)) };
+
+            if(cell)
+            {
+                std::println("ERROR::MENUBAR::CELL_TAKEN::{}::{}::{}", _name, name, index);
+                return nullptr;
+            }
+
+            if(isNameTaken(name))
+            {
+                std::println("ERROR::MENUBAR::WIDGET_NAME_TAKEN::{}::{}", _name, name);
+                return nullptr;
+            }
+
+            //Most widget constructors take the name as const std::string&, so it is materialised here
+            const std::string widgetName { name };
+            std::unique_ptr<T> widget { std::make_unique<T>(widgetName, &_projection, this, _widgetTypeID, _parentWindow, std::forward<Args>(args)...) };
+            T* addedWidget { widget.get() };
+            cell = std::move(widget);
             placeItems();
+            return addedWidget;
         }
 
         /// @brief Returns the widget in the given flex cell, or nullptr when the cell is empty, out of range, or holds a widget of another type.
@@ -102,11 +131,15 @@ namespace RetroFuturaGUI
             return dynamic_cast<T*>(std::next(_itemFlex.begin(), static_cast<i64>(index))->get());
         }
 
+        /// @brief Removes the widget in the given flex cell, which is free again at once. The widget is destroyed at the start of
+        ///        the next Draw, so its own slot may remove it.
+        /// @return false when the cell is out of range or empty.
         bool RemoveWidget(const uSize index);
         void ShowSeparatorLines(const bool show);
         void SetSeparatorLinesThickness(const f32 thickness);
         /// @brief Sets one sizing policy per flex cell, and resizes the flex to match.
-        /// @note Cells beyond the definitions given are dropped, along with the widgets in them. Cells
+        /// @note Cells beyond the definitions given are dropped, along with the widgets in them, which are destroyed at the start
+        ///       of the next Draw. Cells
         ///       added past the previous count start empty. Without a definition a cell is Star-weighted
         ///       at 1, so a flex that was only ever given a count divides the bar evenly.
         void SetFlexDefinition(std::span<FlexDefinition> flexDefinitions);
@@ -337,6 +370,13 @@ namespace RetroFuturaGUI
             _itemBackground { nullptr };
         std::unique_ptr<Frame> _itemBorder { nullptr };
         std::list<std::unique_ptr<IWidget>> _itemFlex {};
+        std::vector<std::unique_ptr<IWidget>> _removedWidgets {}; //destroyed at the start of the next Draw
+
+        /// @brief Whether a widget in the flex already has the given name.
+        bool isNameTaken(std::string_view name) const;
+
+        /// @brief Keeps the widgets of the cells from count on until the next Draw, before the flex shrinks to count cells.
+        void releaseCellsFrom(const uSize count);
 
     //Design
         f32 _margin { 0.0f }; //margin from window edge

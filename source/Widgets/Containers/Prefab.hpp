@@ -3,35 +3,13 @@
 #include <string_view>
 #include "IncludeHelper.hpp"
 #include "Lasagna.hpp"
-#include <unordered_map>
-#include <vector>
-#include <string>
 #include <memory>
 #include <utility>
 #include <print>
 
 namespace RetroFuturaGUI
 {
-    /// @brief Where a child widget sits in the prefab's Lasagna. Aggregate so call sites can use designated initializers (example: AttachWidget<Button>("Inc", { ._Row = 0, ._Column = 2 }))
-    struct CellPlacement
-    {
-        u32
-            _Row { 0 },
-            _Column { 0 },
-            _Layer { 0 };
-        SizingMode _SizingMode { SizingMode::FILL };
-        u32
-            _RowSpan { 1 },
-            _ColSpan { 1 },
-            _LayerSpan { 1 };
-    };
-
-    struct ChildWidget
-    {
-        std::unique_ptr<IWidget> _Widget;
-        CellPlacement _Placement;
-    };
-
+    /// @brief A group of widgets laid out in a Lasagna of its own, which builds, owns and parents them.
     class Prefab final : public IWidget
     {
     public:
@@ -51,21 +29,21 @@ namespace RetroFuturaGUI
 
         void ShowChildWidget(std::string_view name, const bool show);
         bool IsChildWidgetShown(std::string_view name) const;
+
+        /// @brief Returns the child with the given name, or nullptr when there is none or it isn't of type T.
         template<WidgetTypes T> T* GetChildWidget(std::string_view name) const
         {
-            RetroFuturaGUI::LasagnaCell* cell = findCell(name);
-
-            if(!cell)
+            if(!_lasagna)
                 return nullptr;
 
-            return dynamic_cast<T*>(cell->_Widget);
+            return _lasagna->GetWidget<T>(name);
         }
 
-        /// @brief Constructs a widget of type T, takes ownership of it and places it in the prefab's Lasagna
+        /// @brief Builds a widget of type T in the prefab's Lasagna, which owns it and is its parent.
         /// @param args Extra constructor arguments
-        /// @return The attached widget, or nullptr if the prefab has no Lasagna yet, the name is already taken, or the target cell is out of range or occupied
+        /// @return The attached widget, or nullptr if the prefab has no Lasagna, the name is already taken, or the target cell is out of range or occupied
         template<WidgetTypes T, typename... Args>
-        T* AttachWidget(std::string_view name, const CellPlacement& placement, Args&&... args)
+        T* AddWidget(std::string_view name, const CellPlacement& placement, Args&&... args)
         {
             if(!_lasagna)
             {
@@ -73,41 +51,14 @@ namespace RetroFuturaGUI
                 return nullptr;
             }
 
-            const u32 key { Fnv1aHash(name) };
-
-            if(_widgetLookup.contains(key))
-            {
-                std::println("ERROR::PREFAB::CHILD_WIDGET_NAME_TAKEN::{}", name);
-                return nullptr;
-            }
-
-            //Concrete widgets take const std::string&, not a view, so the name has to be materialised here
-            const std::string widgetName { name };
-            std::unique_ptr<T> widget { std::make_unique<T>(widgetName, &_projection, this, _widgetTypeID, _parentWindow, std::forward<Args>(args)...) };
-            T* _attached { widget.get() };
-
-            if(!_lasagna->AttachWidget(placement._Row, placement._Column, placement._Layer, _attached,
-                                       placement._SizingMode, placement._RowSpan, placement._ColSpan, placement._LayerSpan))
-            {   //Cell out of range or already taken
-                std::println("ERROR::PREFAB::CELL_UNAVAILABLE::{}::[{},{},{}]", name, placement._Row, placement._Column, placement._Layer);
-                return nullptr;
-            }
-
-            _widgetLookup.emplace(key, _children.size());
-            _children.push_back(ChildWidget { ._Widget = std::move(widget), ._Placement = placement });
-            return _attached;
+            return _lasagna->AddWidget<T>(name, placement, std::forward<Args>(args)...);
         }
 
+        /// @brief Removes the child with the given name. It is destroyed at the start of the next Draw, so its own slot may remove it.
+        /// @return false when no child has that name.
+        bool RemoveChildWidget(std::string_view name);
+
     private:
-
-        /// @brief Looks a child up by name, verifying the stored name so a hash collision cannot silently return the wrong one.
-        const ChildWidget* findChild(std::string_view name) const;
-
-        /// @brief The child's current cell. Fetched on demand rather than stored, so it stays correct when the Lasagna's cells are rebuilt.
-        LasagnaCell* findCell(std::string_view name) const;
-
-        std::vector<ChildWidget> _children {};
-        std::unordered_map<u32, uSize> _widgetLookup {};
         std::unique_ptr<Lasagna> _lasagna { nullptr };
     };
 }
