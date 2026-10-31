@@ -21,9 +21,9 @@ void RetroFuturaGUI::ITextInteraction::takeKeyboardFocus()
     _keyboardFocus = this;
 
     //A key down when the focus comes was typed for something else, like the key that opened this box; it types once pressed again
-    _repeatKeySym = PlatformBridge::Input::GetLastKeySym();
-    _repeatKeyPressCountSeen = PlatformBridge::Input::GetKeyPressCount(_repeatKeySym);
-    _keyRepeatText.clear();
+    _focusKeySym = PlatformBridge::Input::GetLastKeySym();
+    _focusKeyPressCountSeen = PlatformBridge::Input::GetKeyPressCount(_focusKeySym);
+    _enterPressCountSeen = getEnterPressCount();
 
     //Keys arrive at the window that has the focus, which is the host's while this window sits in a tab
 #if defined(TARGET_PLATFORM_LINUX)
@@ -114,9 +114,19 @@ uSize RetroFuturaGUI::ITextInteraction::getMarkedEnd() const
     return _selectedPositionFirst < _selectedPositionLast ? _selectedPositionLast : _selectedPositionFirst;
 }
 
-bool RetroFuturaGUI::ITextInteraction::shouldRepeat(const u32 holdFrames)
+uSize RetroFuturaGUI::ITextInteraction::getKeyStrokeCount(const u32 key) const
 {
-    return holdFrames >= _keyRepeatInitialDelay && 0 == (holdFrames - _keyRepeatInitialDelay) % _keyRepeatInterval;
+    if(key == _focusKeySym && PlatformBridge::Input::GetKeyPressCount(key) == _focusKeyPressCountSeen)
+        return 0; //the key that was down when the focus came
+
+    return PlatformBridge::Input::GetKeyStrokeCount(key);
+}
+
+u32 RetroFuturaGUI::ITextInteraction::getEnterPressCount()
+{
+    return PlatformBridge::Input::GetKeyPressCount(PB_KEY_RETURN)
+        + PlatformBridge::Input::GetKeyPressCount(PB_KEY_KP_ENTER)
+        + PlatformBridge::Input::GetKeyPressCount(PB_KEY_ISO_ENTER);
 }
 
 const std::string& RetroFuturaGUI::ITextInteraction::GetCopiedText() const
@@ -243,59 +253,24 @@ void RetroFuturaGUI::ITextInteraction::moveCaret()
     if(!hasInputFocus())
         return;
 
-   if(PlatformBridge::Input::GetKeyboardUseState() == PlatformBridge::KeyboardUseState::KeyReleased)
-    {
-        _caretKeyWasReleased = true;
-        _caretKeyHoldFrames = 0;
-        _caretRepeatDirection = CaretDirection::None;
-        return;
-    }
+    //One step per stroke, so a held arrow key moves at the system's repeat rate
+    const uSize
+        leftStrokeCount { getKeyStrokeCount(PB_KEY_LEFT) },
+        rightStrokeCount { getKeyStrokeCount(PB_KEY_RIGHT) },
+        upStrokeCount { getKeyStrokeCount(PB_KEY_UP) },
+        downStrokeCount { getKeyStrokeCount(PB_KEY_DOWN) };
 
-    if(!_caretKeyWasReleased)
-    {
-        ++_caretKeyHoldFrames;
+    for(uSize stroke = 0; stroke < leftStrokeCount; ++stroke)
+        moveCaretLeft();
 
-        if(shouldRepeat(_caretKeyHoldFrames))
-            stepCaret(_caretRepeatDirection);
+    for(uSize stroke = 0; stroke < rightStrokeCount; ++stroke)
+        moveCaretRight();
 
-        return;
-    }
+    for(uSize stroke = 0; stroke < upStrokeCount; ++stroke)
+        moveCaretUp();
 
-    if(PlatformBridge::Input::GetKeyPressState(PB_KEY_LEFT) == PlatformBridge::KeyPressState::Press)
-        _caretRepeatDirection = CaretDirection::Left;
-    else if(PlatformBridge::Input::GetKeyPressState(PB_KEY_RIGHT) == PlatformBridge::KeyPressState::Press)
-        _caretRepeatDirection = CaretDirection::Right;
-    else if(PlatformBridge::Input::GetKeyPressState(PB_KEY_UP) == PlatformBridge::KeyPressState::Press)
-        _caretRepeatDirection = CaretDirection::Up;
-    else if(PlatformBridge::Input::GetKeyPressState(PB_KEY_DOWN) == PlatformBridge::KeyPressState::Press)
-        _caretRepeatDirection = CaretDirection::Down;
-    else
-        return;
-
-    stepCaret(_caretRepeatDirection);
-    _caretKeyWasReleased = false;
-    _caretKeyHoldFrames = 0;
-}
-
-void RetroFuturaGUI::ITextInteraction::stepCaret(const CaretDirection direction)
-{
-    switch(direction)
-    {
-        case CaretDirection::Left:
-            moveCaretLeft();
-            break;
-        case CaretDirection::Right:
-            moveCaretRight();
-            break;
-        case CaretDirection::Up:
-            moveCaretUp();
-            break;
-        case CaretDirection::Down:
-            moveCaretDown();
-            break;
-        default: //None
-            break;
-    }
+    for(uSize stroke = 0; stroke < downStrokeCount; ++stroke)
+        moveCaretDown();
 }
 
 void RetroFuturaGUI::ITextInteraction::moveCaretLeft()
@@ -402,193 +377,124 @@ bool RetroFuturaGUI::ITextInteraction::checkForSelectAllText()
     return false;
 }
 
-bool RetroFuturaGUI::ITextInteraction::checkForKeyRelease()
+void RetroFuturaGUI::ITextInteraction::checkForEnterPress()
 {
-    if(PlatformBridge::Input::GetKeyboardUseState() == PlatformBridge::KeyboardUseState::KeyReleased)
-    {
-        _keyHoldFrames = 0;
-        _keyRepeatText.clear();
-        return true;
-    }
+    const u32 enterPressCount { getEnterPressCount() };
 
-    return false;
-}
+    //Once per press: holding Enter repeats the line break (which comes with the typed text, not the signal!)
+    if(enterPressCount == _enterPressCountSeen)
+        return;
 
-bool RetroFuturaGUI::ITextInteraction::checkForKeyRepeat()
-{
-    Text* text { getActiveText() };
-
-    if(!text || _keyRepeatText.empty())
-        return false;
-
-    const bool stillSameKeyPress {
-        PlatformBridge::Input::GetKeyPressState(_repeatKeySym) != PlatformBridge::KeyPressState::Release
-        && PlatformBridge::Input::GetKeyPressCount(_repeatKeySym) == _repeatKeyPressCountSeen
-    };
-
-    if(!stillSameKeyPress)
-    {
-        _keyRepeatText.clear();
-        _keyHoldFrames = 0;
-        return false;
-    }
-
-    ++_keyHoldFrames;
-
-    if(shouldRepeat(_keyHoldFrames))
-    {
-        std::u32string left { text->GetTextUTF32().substr(0, _caretPosition) };
-        std::u32string right { text->GetTextUTF32().substr(_caretPosition) };
-        text->SetTextUTF32(left + _keyRepeatText + right);
-        _caretPosition += _keyRepeatText.size();
-        deselect();
-        updateCaretPosition();
-        emitChange();
-    }
-
-    return true;
-}
-
-bool RetroFuturaGUI::ITextInteraction::checkForEnterPress()
-{
-    Text* text { getActiveText() };
-
-    if(!text)
-        return false;
-
-    const u32 keySym { PlatformBridge::Input::GetLastKeySym() };
-
-    if(PB_KEY_RETURN != keySym && PB_KEY_KP_ENTER != keySym && PB_KEY_ISO_ENTER != keySym)
-        return false;
-
-    if(keySym == _repeatKeySym && PlatformBridge::Input::GetKeyPressCount(keySym) == _repeatKeyPressCountSeen)
-        return true;
-
-    _repeatKeySym = keySym;
-    _repeatKeyPressCountSeen = PlatformBridge::Input::GetKeyPressCount(keySym);
-
-    insertLineBreak();
+    _enterPressCountSeen = enterPressCount;
     emitEnterPressed();
     _enterPressed = true;
-    return true;
 }
 
-bool RetroFuturaGUI::ITextInteraction::checkForBackspacePress()
+void RetroFuturaGUI::ITextInteraction::checkForTextInput()
 {
-    Text* text { getActiveText() };
+    if(PlatformBridge::Input::GetLastKeySym() == _focusKeySym && PlatformBridge::Input::GetKeyPressCount(_focusKeySym) == _focusKeyPressCountSeen)
+        return; //the key that was down when the focus came
 
-    if(!text)
-        return false;
+    const std::u32string keyText { DoubleEncodedString::Utf8ToUtf32(PlatformBridge::Input::GetInputString()) };
+    std::u32string characters {};
 
-    if(!PlatformBridge::Input::IsKeyDown(PB_KEY_BACKSPACE))
+    //In the order typed, the system's repeats of held keys included: Backspace comes as \b and Enter as \r
+    for(const char32_t codepoint : keyText)
     {
-        _backspaceKeyHoldFrames = 0;
-        _backspacePressCountSeen = PlatformBridge::Input::GetKeyPressCount(PB_KEY_BACKSPACE);
-        return false;
-    }
-
-    const u32 currentPressCount { PlatformBridge::Input::GetKeyPressCount(PB_KEY_BACKSPACE) };
-    bool shouldDelete { currentPressCount != _backspacePressCountSeen };
-
-    if(shouldDelete)
-    {
-        _backspacePressCountSeen = currentPressCount;
-        _backspaceKeyHoldFrames = 0;
-    }
-    else
-    {
-        ++_backspaceKeyHoldFrames;
-        shouldDelete = shouldRepeat(_backspaceKeyHoldFrames);
-    }
-
-    if(shouldDelete)
-    {
-        if(0 == text->GetTextUTF32().size())
-            return true;
-
-        if(0 == text->GetTextUTF32().front())
-            return true;
-
-        if(_isSelected)
+        if(U'\b' != codepoint && U'\r' != codepoint)
         {
-            const uSize
-                selectionStart { getMarkedStart() },
-                selectionEnd { getMarkedEnd() };
-            text->SetTextUTF32(text->GetTextUTF32().substr(0, selectionStart) + text->GetTextUTF32().substr(selectionEnd));
-            _selectedPositionFirst = 0;
-            _selectedPositionLast = 0;
-            _isSelected = false;
-            updateSelectedArea();
-            setCaretFromBoundary(selectionStart);
-            emitChange();
-            return true;
+            if(!isInvalidCodepoint(codepoint))
+                characters += codepoint;
+
+            continue;
         }
+
+        insertText(characters);
+        characters.clear();
+
+        if(U'\b' == codepoint)
+            deleteBackward();
         else
-        {
-            if(0 < _caretPosition)
-            {
-                std::u32string left { text->GetTextUTF32().substr(0, _caretPosition - 1) };
-                std::u32string right { text->GetTextUTF32().substr(_caretPosition) };
-
-                text->SetTextUTF32(left + right);
-                --_caretPosition;
-                deselect();
-                updateCaretPosition();
-            }
-        }
-
-        emitChange();
-        return true;
+            insertLineBreak();
     }
 
-    return true;
+    insertText(characters);
 }
 
-bool RetroFuturaGUI::ITextInteraction::checkForTextInput()
+void RetroFuturaGUI::ITextInteraction::insertText(const std::u32string& characters)
 {
+    if(characters.empty())
+        return;
+
     Text* text { getActiveText() };
 
     if(!text)
-        return false;
-
-    if(PlatformBridge::Input::GetLastKeySym() == _repeatKeySym && PlatformBridge::Input::GetKeyPressCount(_repeatKeySym) == _repeatKeyPressCountSeen)
-        return false; //the key that was down when the focus came
-
-    std::u32string keyText { DoubleEncodedString::Utf8ToUtf32(PlatformBridge::Input::GetInputString()) };
-    std::erase_if(keyText, isInvalidCodepoint);
-
-    if(keyText.empty())
-        return false;
+        return;
 
     if(_isSelected)
     {
         const uSize
             selectionStart { getMarkedStart() },
             selectionEnd { getMarkedEnd() };
-        text->SetTextUTF32(text->GetTextUTF32().substr(0, selectionStart) + keyText + text->GetTextUTF32().substr(selectionEnd));
+        text->SetTextUTF32(text->GetTextUTF32().substr(0, selectionStart) + characters + text->GetTextUTF32().substr(selectionEnd));
         _selectedPositionFirst = 0;
         _selectedPositionLast = 0;
         _isSelected = false;
         updateSelectedArea();
-        setCaretFromBoundary(selectionStart + keyText.size());
+        setCaretFromBoundary(selectionStart + characters.size());
     }
     else
     {
         std::u32string left { text->GetTextUTF32().substr(0, _caretPosition) };
         std::u32string right { text->GetTextUTF32().substr(_caretPosition) };
-        text->SetTextUTF32(left + keyText + right);
-        _caretPosition += keyText.size();
+        text->SetTextUTF32(left + characters + right);
+        _caretPosition += characters.size();
         deselect();
         updateCaretPosition();
     }
 
-    //The key's text stays until it is released, so it is the repeating key now; otherwise typing over a selection put the character in twice
-    _keyRepeatText = keyText;
-    _repeatKeySym = PlatformBridge::Input::GetLastKeySym();
-    _repeatKeyPressCountSeen = PlatformBridge::Input::GetKeyPressCount(_repeatKeySym);
-    _keyHoldFrames = 0;
     emitChange();
-    return true;
+}
+
+void RetroFuturaGUI::ITextInteraction::deleteBackward()
+{
+    Text* text { getActiveText() };
+
+    if(!text)
+        return;
+
+    if(0 == text->GetTextUTF32().size())
+        return;
+
+    if(0 == text->GetTextUTF32().front())
+        return;
+
+    if(_isSelected)
+    {
+        const uSize
+            selectionStart { getMarkedStart() },
+            selectionEnd { getMarkedEnd() };
+        text->SetTextUTF32(text->GetTextUTF32().substr(0, selectionStart) + text->GetTextUTF32().substr(selectionEnd));
+        _selectedPositionFirst = 0;
+        _selectedPositionLast = 0;
+        _isSelected = false;
+        updateSelectedArea();
+        setCaretFromBoundary(selectionStart);
+        emitChange();
+        return;
+    }
+
+    if(0 == _caretPosition)
+        return;
+
+    std::u32string left { text->GetTextUTF32().substr(0, _caretPosition - 1) };
+    std::u32string right { text->GetTextUTF32().substr(_caretPosition) };
+
+    text->SetTextUTF32(left + right);
+    --_caretPosition;
+    deselect();
+    updateCaretPosition();
+    emitChange();
 }
 
 void RetroFuturaGUI::ITextInteraction::editText()
@@ -637,20 +543,8 @@ void RetroFuturaGUI::ITextInteraction::editText()
         _enterPressed = false;
     }
 
-    if(checkForKeyRelease())
-        return;
-
-    if(checkForKeyRepeat())
-        return;
-
-    if(checkForEnterPress())
-        return;
-
-    if(checkForBackspacePress())
-        return;
-
-    if(checkForTextInput())
-        return;
+    checkForTextInput();
+    checkForEnterPress(); //after the text, so a multiline box's slot sees the line break
 }
 
 void RetroFuturaGUI::ITextInteraction::emitEnterPressed()

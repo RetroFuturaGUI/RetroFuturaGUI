@@ -97,6 +97,12 @@ namespace RetroFuturaGUI
         /// @brief Asks for the icon the mouse cursor shows this frame, over the current window
         static void RequestCursorIcon(GLFWwindow* glfwWindow, const PlatformBridge::CursorIcon icon);
 
+        /// @brief Fills in the frame's wheel and pinch for a widget in the given window
+        static void ReadWheel(GLFWwindow* glfwWindow, PointerState& pointer);
+
+        /// @brief Takes parts of this frame's wheel and pinch, so the widgets read after this one, like the containers around it
+        static void TakeWheel(GLFWwindow* glfwWindow, const WheelParts parts);
+
         /// @brief Returns the native window keyboard input arrives at: the host's while this window is docked into a WindowTab,
         ///        since its own native window is hidden then and never has the focus, otherwise its own.
         GLFWwindow* GetKeyboardWindow() const;
@@ -491,6 +497,7 @@ namespace RetroFuturaGUI
         PlatformBridge::CursorIcon
             _cursorIcon { PlatformBridge::CursorIcon::Arrow }, //the last icon handed to PlatformBridge, which shows the arrow until the first
             _requestedCursorIcon { PlatformBridge::CursorIcon::Arrow }; //what a widget under the mouse asked for this frame
+        WheelParts _takenWheelParts { WheelParts::None }; //of this frame's wheel and pinch, by the widgets drawn so far
         std::vector<DroppedFiles> _droppedFiles {};
         Signal<std::vector<std::string>, glm::vec2>
             _onFilesDropped,

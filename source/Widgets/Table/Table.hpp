@@ -237,6 +237,9 @@ namespace RetroFuturaGUI
 
         f32 GetVerticalScrollPosition() const;
 
+        /// @brief Sets how far one line of the mouse wheel scrolls, in pixels (20 by default)
+        void SetWheelScrollStep(const f32 step);
+
         /// @brief Returns the value of the cell at the given index, converted to T.
         template<NumericValueType T>
         T GetValue(const TrackIndex& index) const
@@ -583,13 +586,12 @@ namespace RetroFuturaGUI
             SelectionDrag // dragging the selected rows
         };
 
-        /// @brief One key the table polls, so a press is taken once and holding it repeats.
+        /// @brief One key the table polls, so a press is taken once and holding it repeats at the system's rate.
         struct KeyRepeat
         {
             u32
                 _Key { 0 },
-                _PressCountSeen { 0 },
-                _HoldFrames { 0 };
+                _PressCountSeen { 0 };
         };
 
         /// @brief Selects from a press on the given row, by the held Alt and Shift, and fires a double-click on a second press there.
@@ -601,6 +603,9 @@ namespace RetroFuturaGUI
 
         /// @brief Follows a press while it is held: past the drag threshold it becomes a band or a drag, and the release ends it.
         void followPress(const MouseState& mouse);
+
+        /// @brief Scrolls by the frame's wheel while the mouse is over the table, and takes the parts it scrolled by, so a ScrollView around it doesn't scroll too. If scroll step is 0 it scrolls by notch
+        void scrollByWheel(const PointerState& pointer, const MouseState& mouse);
 
         /// @brief Ends the press gesture without its release, emitting Cancelled for a drag.
         void cancelPress();
@@ -619,7 +624,7 @@ namespace RetroFuturaGUI
         /// @brief Moves the selection to a row, extending it from the anchor with Shift, and scrolls it into view.
         void moveCursorTo(const uSize row, const bool extend);
 
-        /// @brief Returns whether the key was pressed since the last call, or is held long enough to repeat.
+        /// @brief Returns whether the key was pressed since the last call, or, when it repeats, whether the system repeated it this frame.
         static bool isKeyTriggered(KeyRepeat& key, const bool repeats);
 
         /// @brief Takes the press counts as seen, so keys pressed before the table had the keyboard do nothing.
@@ -808,8 +813,8 @@ namespace RetroFuturaGUI
             _isEditFromCode { false }; // EditCell started it, so a read-only track takes the edits
         std::string _editStartText {}; // what Escape puts back
         KeyRepeat
-            _editKeepKey { ._Key = PB_KEY_RETURN, ._PressCountSeen = 0, ._HoldFrames = 0 },
-            _editCancelKey { ._Key = PB_KEY_ESCAPE, ._PressCountSeen = 0, ._HoldFrames = 0 };
+            _editKeepKey { ._Key = PB_KEY_RETURN, ._PressCountSeen = 0 },
+            _editCancelKey { ._Key = PB_KEY_ESCAPE, ._PressCountSeen = 0 };
         Signal<TrackIndex, EditEnd, std::string>
             _onCellEditEnded,
             _onCellEditEndedAsync;
@@ -861,6 +866,7 @@ namespace RetroFuturaGUI
             _selectionBandColors {{ 0.3f, 0.45f, 0.85f, 0.25f }},
             _selectionBandBorderColors {{ 0.45f, 0.6f, 1.0f, 0.9f }};
         std::chrono::steady_clock::time_point _lastAutoScrollTime {};
+        f32 _wheelScrollStep { 20.0f }; //pixels per line of the wheel
         Signal<SelectionDragPhase, glm::vec2>
             _onSelectionDrag,
             _onSelectionDragAsync;
@@ -876,16 +882,16 @@ namespace RetroFuturaGUI
             _hadKeyboardFocus { false };
         std::array<KeyRepeat, 6> _navigationKeys
         {{
-            { ._Key = PB_KEY_UP, ._PressCountSeen = 0, ._HoldFrames = 0 },
-            { ._Key = PB_KEY_DOWN, ._PressCountSeen = 0, ._HoldFrames = 0 },
-            { ._Key = PB_KEY_PAGE_UP, ._PressCountSeen = 0, ._HoldFrames = 0 },
-            { ._Key = PB_KEY_PAGE_DOWN, ._PressCountSeen = 0, ._HoldFrames = 0 },
-            { ._Key = PB_KEY_HOME, ._PressCountSeen = 0, ._HoldFrames = 0 },
-            { ._Key = PB_KEY_END, ._PressCountSeen = 0, ._HoldFrames = 0 }
+            { ._Key = PB_KEY_UP, ._PressCountSeen = 0 },
+            { ._Key = PB_KEY_DOWN, ._PressCountSeen = 0 },
+            { ._Key = PB_KEY_PAGE_UP, ._PressCountSeen = 0 },
+            { ._Key = PB_KEY_PAGE_DOWN, ._PressCountSeen = 0 },
+            { ._Key = PB_KEY_HOME, ._PressCountSeen = 0 },
+            { ._Key = PB_KEY_END, ._PressCountSeen = 0 }
         }};
         KeyRepeat
-            _selectAllKey { ._Key = PB_KEY_A, ._PressCountSeen = 0, ._HoldFrames = 0 },
-            _escapeKey { ._Key = PB_KEY_ESCAPE, ._PressCountSeen = 0, ._HoldFrames = 0 };
+            _selectAllKey { ._Key = PB_KEY_A, ._PressCountSeen = 0 },
+            _escapeKey { ._Key = PB_KEY_ESCAPE, ._PressCountSeen = 0 };
 
     // Headers and scrolling
         Signal<uSize>

@@ -1,6 +1,8 @@
 #include "ScrollView.hpp"
 #include "IWidget.hpp"
 #include "IncludeHelper.hpp"
+#include "PlatformBridge.hpp"
+#include "Window.hpp"
 #include <memory>
 #include <algorithm>
 #include <cmath>
@@ -37,6 +39,59 @@ void RetroFuturaGUI::ScrollView::Draw()
         cell._Widget->UpdateTooltip();
         cell._Widget->Draw();
     }
+
+    scrollByWheel();
+}
+
+void RetroFuturaGUI::ScrollView::SetWheelScrollStep(const f32 step)
+{
+    _wheelScrollStep = step;
+}
+
+void RetroFuturaGUI::ScrollView::scrollByWheel()
+{
+    const PointerState pointer { readPointer() };
+
+    if(pointer._IsCaptured)
+        return;
+
+    if(!_isEnabledFlag)
+        return;
+
+    if(!pointer._HasPosition || !isPointInside(pointer._Position))
+        return;
+
+    const u32 linesPerNotch { PlatformBridge::Input::GetWheelScrollLines() };
+    const glm::vec3 innerSize { getInnerSize() };
+    //0 lines means a page per notch: as far as the view shows
+    const glm::vec2 notchDistance { 0 == linesPerNotch ? glm::vec2(innerSize) : glm::vec2(static_cast<f32>(linesPerNotch) * _wheelScrollStep) };
+    glm::vec3 scrollPosition { _scrollPosition };
+    WheelParts takenParts { WheelParts::None };
+
+    if(0.0f != pointer._Wheel.x && canScrollAlong(ScrollEnable::X))
+    {
+        scrollPosition.x += pointer._Wheel.x * notchDistance.x;
+        takenParts = takenParts | WheelParts::Horizontal;
+    }
+
+    if(0.0f != pointer._Wheel.y && canScrollAlong(ScrollEnable::Y))
+    {
+        scrollPosition.y -= pointer._Wheel.y * notchDistance.y; //away from the user scrolls up, toward the start of the content
+        takenParts = takenParts | WheelParts::Vertical;
+    }
+
+    if(1.0f != pointer._PinchScale && canScrollAlong(ScrollEnable::Z))
+    {
+        scrollPosition.z += std::log2(pointer._PinchScale) * innerSize.z; //spreading the fingers to twice the distance goes one view deeper
+        takenParts = takenParts | WheelParts::Pinch;
+    }
+
+    //A part it can't scroll by stays for the containers around it, even over the view
+    if(WheelParts::None == takenParts)
+        return;
+
+    Window::TakeWheel(_parentWindow, takenParts);
+    applyScrollPosition(scrollPosition);
 }
 
 bool RetroFuturaGUI::ScrollView::RemoveWidget(std::string_view name)

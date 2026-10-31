@@ -173,6 +173,7 @@ RetroFuturaGUI::PointerState RetroFuturaGUI::IWidget::readPointer() const
     pointer._Position = glm::vec2(static_cast<f32>(mouseX), _projection.GetResolution().y - static_cast<f32>(mouseY));
     pointer._LeftButtonPressed = PlatformBridge::Input::IsMouseButtonDown(PlatformBridge::MouseButton::Left);
     pointer._RightButtonPressed = PlatformBridge::Input::IsMouseButtonDown(PlatformBridge::MouseButton::Right);
+    Window::ReadWheel(_parentWindow, pointer);
 
     filterThroughAncestors(_parentWidget, pointer);
     IDropDown::CaptureUnderOpenList(this, _parentWindow, pointer);

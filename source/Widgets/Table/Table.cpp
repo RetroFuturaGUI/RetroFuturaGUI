@@ -496,6 +496,52 @@ f32 RetroFuturaGUI::Table::GetVerticalScrollPosition() const
     return _scrollPosition.y;
 }
 
+void RetroFuturaGUI::Table::SetWheelScrollStep(const f32 step)
+{
+    _wheelScrollStep = step;
+}
+
+void RetroFuturaGUI::Table::scrollByWheel(const PointerState& pointer, const MouseState& mouse)
+{
+    if(!_isEnabledFlag)
+        return;
+
+    if(!mouse._IsInside)
+        return;
+
+    const glm::vec2 maxScroll { GetMaxScroll() };
+    const u32 linesPerNotch { PlatformBridge::Input::GetWheelScrollLines() };
+    //0 lines means a page per notch: as far as the viewport shows
+    const glm::vec2 notchDistance { 0 == linesPerNotch ? _innerSize : glm::vec2(static_cast<f32>(linesPerNotch) * _wheelScrollStep) };
+    glm::vec2 scrollPosition { _scrollPosition };
+    WheelParts takenParts { WheelParts::None };
+
+    if(0.0f != pointer._Wheel.x && 0.0f < maxScroll.x)
+    {
+        scrollPosition.x += pointer._Wheel.x * notchDistance.x;
+        takenParts = takenParts | WheelParts::Horizontal;
+    }
+
+    if(0.0f != pointer._Wheel.y && 0.0f < maxScroll.y)
+    {
+        scrollPosition.y -= pointer._Wheel.y * notchDistance.y; //away from the user scrolls up, toward the first row
+        takenParts = takenParts | WheelParts::Vertical;
+    }
+
+    if(WheelParts::None == takenParts) //A part it can't scroll by stays for the containers around it, even over the table!
+        return;
+
+    Window::TakeWheel(_parentWindow, takenParts);
+    const glm::vec2 previousScrollPosition { _scrollPosition };
+    SetScrollPosition(scrollPosition);
+
+    if(previousScrollPosition == _scrollPosition)
+        return;
+
+    _onScrolledAsync.EmitAsync();
+    _onScrolled.Emit();
+}
+
 glm::vec2 RetroFuturaGUI::Table::GetMaxScroll() const
 {
     // Measured against the viewport left over after the headers, not the table's full size
@@ -1710,6 +1756,7 @@ void RetroFuturaGUI::Table::interact()
     interactTableText(mouse);
     interactTableCheckBox(mouse);
     followPress(mouse);
+    scrollByWheel(pointer, mouse);
     navigateByKeys();
 
     if(wasReleasedThisFrame) // a release belongs to the table, not to whichever cell kind happens to run last
@@ -2646,27 +2693,20 @@ bool RetroFuturaGUI::Table::isKeyTriggered(KeyRepeat& key, const bool repeats)
     if(pressCount != key._PressCountSeen)
     {
         key._PressCountSeen = pressCount;
-        key._HoldFrames = 0;
         return true;
     }
 
-    if(!repeats || !PlatformBridge::Input::IsKeyDown(key._Key))
-    {
-        key._HoldFrames = 0;
+    if(!repeats)
         return false;
-    }
 
-    ++key._HoldFrames;
-    return shouldRepeat(key._HoldFrames);
+    //A held key goes down again at the system's repeat rate, which follows the user's keyboard settings, whatever the frame rate
+    return PlatformBridge::Input::IsKeyDown(key._Key) && 0 < PlatformBridge::Input::GetKeyStrokeCount(key._Key);
 }
 
 void RetroFuturaGUI::Table::syncKeyCounts()
 {
     for(KeyRepeat& key : _navigationKeys)
-    {
         key._PressCountSeen = PlatformBridge::Input::GetKeyPressCount(key._Key);
-        key._HoldFrames = 0;
-    }
 
     _selectAllKey._PressCountSeen = PlatformBridge::Input::GetKeyPressCount(_selectAllKey._Key);
     _escapeKey._PressCountSeen = PlatformBridge::Input::GetKeyPressCount(_escapeKey._Key);

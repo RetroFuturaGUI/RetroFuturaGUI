@@ -60,8 +60,6 @@ void RetroFuturaGUI::MultilineTextBox::insertLineBreak()
     deselect();
     updateCaretPosition();
     emitChange();
-    _keyRepeatText = U"\n"; //from the next frame on, checkForKeyRepeat repeats the line break while Enter is held
-    _keyHoldFrames = 0;
 }
 
 void RetroFuturaGUI::MultilineTextBox::filterPastedText(std::u32string& text) const

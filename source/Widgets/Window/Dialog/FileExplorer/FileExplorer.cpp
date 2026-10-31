@@ -300,7 +300,7 @@ bool RetroFuturaGUI::FileExplorer::buildView(ViewHost& host, std::string_view ti
     built._Extensions->Connect_OnClick([this]() { on_extensionsButton_click(); }, false);
     built._Hidden->Connect_OnClick([this]() { on_hiddenButton_click(); }, false);
 
-    //Places, files, the scrollbar, since the table has no wheel or drag scrolling of its own, and the preview pane with ImagePreview
+    //Places, files, the scrollbar, since the table has no drag scrolling of its own, and the preview pane with ImagePreview
     //or MediaPreview; without it the files take its columns.
     const uSize filesColumnCount { hasPreview() ? _filesColumnCount : _filesColumnCount + _previewColumnCount };
     const ViewCell

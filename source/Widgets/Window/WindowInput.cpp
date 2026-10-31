@@ -22,6 +22,42 @@ void RetroFuturaGUI::Window::RequestCursorIcon(GLFWwindow* glfwWindow, const Pla
     window->_requestedCursorIcon = icon;
 }
 
+void RetroFuturaGUI::Window::ReadWheel(GLFWwindow* glfwWindow, PointerState& pointer)
+{
+    pointer._Wheel = glm::vec2(0.0f);
+    pointer._PinchScale = 1.0f;
+
+    //The window on screen, which is the host's while this one sits in a tab. It reads the mouse each frame, so it keeps what was taken
+    const Window* window { FromGlfwWindow(KeyboardWindowOf(glfwWindow)) };
+
+    if(!window)
+        return;
+
+    if(!window->_hasPointer)
+        return;
+
+    const PlatformBridge::WheelDelta wheel { PlatformBridge::Input::GetWheelDelta() };
+
+    if(!HasWheelPart(window->_takenWheelParts, WheelParts::Horizontal))
+        pointer._Wheel.x = wheel._X;
+
+    if(!HasWheelPart(window->_takenWheelParts, WheelParts::Vertical))
+        pointer._Wheel.y = wheel._Y;
+
+    if(!HasWheelPart(window->_takenWheelParts, WheelParts::Pinch))
+        pointer._PinchScale = PlatformBridge::Input::GetPinchScale();
+}
+
+void RetroFuturaGUI::Window::TakeWheel(GLFWwindow* glfwWindow, const WheelParts parts)
+{
+    Window* window { FromGlfwWindow(KeyboardWindowOf(glfwWindow)) };
+
+    if(!window)
+        return;
+
+    window->_takenWheelParts = window->_takenWheelParts | parts;
+}
+
 GLFWwindow* RetroFuturaGUI::Window::GetKeyboardWindow() const
 {
     const Window* host { getTabHostWindow() };
@@ -95,6 +131,7 @@ void RetroFuturaGUI::Window::Disconnect_OnFilesDropped(const typename Signal<std
 void RetroFuturaGUI::Window::pollInput()
 {
     const bool isMouseButtonDown { PlatformBridge::Input::IsMouseButtonDown(PlatformBridge::MouseButton::Left) };
+    _takenWheelParts = WheelParts::None; //a new frame's wheel
 
     //The mouse is read for the whole screen, so only the topmost window under the cursor takes it, and a press stays with the
     //window it landed on until it is let go: a click never reaches a window lying underneath, and a drag carries on over others

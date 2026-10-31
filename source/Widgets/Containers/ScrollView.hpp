@@ -105,6 +105,10 @@ namespace RetroFuturaGUI
         void SetScrollPosition(const ScrollAxis axis, const f32 scrollPosition);
         void SetAlignmentDirection(const ScrollAxis direction);
 
+        /// @brief Sets how far one line of the mouse wheel scrolls, in pixels (20 by default). A notch scrolls as many lines as the
+        ///        system is set to (3 unless changed), or a whole view when it scrolls a page per notch.
+        void SetWheelScrollStep(const f32 step);
+
         /// @brief Decides what the widgets inside see of the mouse: A ScrollView may hide a press while it decides between click and scroll, or take the pointer away while scrolling
         void FilterPointer(PointerState& pointer) const override;
 
@@ -184,6 +188,10 @@ namespace RetroFuturaGUI
         /// @brief Moves the content by as much as the pointer moved since the last frame, on every enabled axis but Z.
         void dragScroll(const glm::vec2& mousePosition);
 
+        /// @brief Scrolls by the frame's wheel, and along Z by its pinch, while the mouse is inside, and takes the parts it scrolled
+        ///        by. Called after the widgets inside drew, so a nested ScrollView takes them first.
+        void scrollByWheel();
+
         /// @brief Emits OnRelease for the view's own press and resets its colors.
         void releasePress(const bool isMouseInside);
 
@@ -205,7 +213,9 @@ namespace RetroFuturaGUI
             _pressPosition {};
         PressPhase _pressPhase { PressPhase::None };
         std::list<ScrollViewCell> _items {};
-        f32 _cellPadding { 0.0f };
+        f32
+            _cellPadding { 0.0f },
+            _wheelScrollStep { 20.0f }; //pixels per line of the wheel
         Signal<>
             _onXScrolled,
             _onXScrolledAsync,

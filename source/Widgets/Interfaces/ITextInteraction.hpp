@@ -56,15 +56,6 @@ namespace RetroFuturaGUI
         void Disconnect_OnPaste(const typename Signal<>::Slot& slot);
 
     protected:
-        enum class CaretDirection : u32
-        {
-            None,
-            Left,
-            Right,
-            Up,
-            Down
-        };
-
         /// @brief The Text edits currently apply to, or nullptr when nothing is editable.
         virtual Text* getActiveText() const = 0;
 
@@ -81,9 +72,10 @@ namespace RetroFuturaGUI
         virtual bool isTextReadOnly() const = 0;
 
     //Editing loop
-        /// @brief Runs one frame of editing: clipboard, then key repeat, Enter, backspace and character input.
+        /// @brief Runs one frame of editing: clipboard, then the frame's typed text and Enter.
         void editText();
 
+        /// @brief Steps the caret once per arrow key stroke this frame, the system's repeats included.
         void moveCaret();
         void moveCaretLeft();
         void moveCaretRight();
@@ -115,11 +107,24 @@ namespace RetroFuturaGUI
         bool checkForTextCut();
         bool checkForTextPaste();
         bool checkForSelectAllText();
-        bool checkForKeyRelease();
-        bool checkForKeyRepeat();
-        bool checkForEnterPress();
-        bool checkForBackspacePress();
-        bool checkForTextInput();
+
+        /// @brief Emits OnEnterPressed once per press of an Enter key. The line breaks come with the typed text.
+        void checkForEnterPress();
+
+        /// @brief Applies the frame's typed text in the order it was typed: characters go in, \b deletes like Backspace and \r breaks the line where the text can have several.
+        void checkForTextInput();
+
+        /// @brief Puts the characters in at the caret' position (over the selection if there is one)
+        void insertText(const std::u32string& characters);
+
+        /// @brief Deletes the selection, or else the character before the caret.
+        void deleteBackward();
+
+        /// @brief Returns how often the key went down this frame, the system's repeats included. None for the key that was down when the focus came, until it is pressed again.
+        uSize getKeyStrokeCount(const u32 key) const;
+
+        /// @brief Returns how often the Enter keys were pressed, all of them together.
+        static u32 getEnterPressCount();
 
         void emitEnterPressed();
         void emitEnterRelease();
@@ -155,15 +160,8 @@ namespace RetroFuturaGUI
         /// @brief Returns the upper end of the marked range, whichever direction it was dragged in.
         uSize getMarkedEnd() const;
 
-        static bool shouldRepeat(const u32 holdFrames);
-
-        void stepCaret(const CaretDirection direction);
-
     //Caret movement
-        CaretDirection _caretRepeatDirection { CaretDirection::None };
         uSize _caretPosition { 0 };
-        bool _caretKeyWasReleased { true };
-        u32 _caretKeyHoldFrames { 0 };
 
     //Input logic
         bool
@@ -172,13 +170,10 @@ namespace RetroFuturaGUI
             _textCopied { false },
             _textCut { false },
             _textPasted { false };
-        u32 _keyHoldFrames { 0 };
-        std::u32string _keyRepeatText {};
         u32
-            _repeatKeySym { 0 },
-            _repeatKeyPressCountSeen { 0 },
-            _backspaceKeyHoldFrames { 0 },
-            _backspacePressCountSeen { 0 };
+            _focusKeySym { 0 }, //the key down when the focus came
+            _focusKeyPressCountSeen { 0 },
+            _enterPressCountSeen { 0 };
         std::string _copiedText {};
 
         Signal<>
@@ -206,11 +201,6 @@ namespace RetroFuturaGUI
         bool
             _isMarking { false },
             _isSelected { false };
-
-    //Key repeat cadence
-        static constexpr u32
-            _keyRepeatInitialDelay { 60 },
-            _keyRepeatInterval { 5 };
 
     private:
         inline static const ITextInteraction* _keyboardFocus { nullptr }; //the text the keystrokes go to: the one clicked last, in any window
