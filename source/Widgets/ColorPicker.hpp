@@ -34,9 +34,6 @@ namespace RetroFuturaGUI
 
         /// @brief Draws the ColorPicker
         void Draw() override;
-        void SetSize(const glm::vec3& size) override;
-        void SetPosition(const glm::vec3& position) override;
-        void SetRotation(const glm::vec3& rotation) override;
         const glm::vec3 GetColorRGBF() const;
         const glm::vec4 GetColorRGBAF() const;
         u32 GetColorRGB() const;
@@ -67,6 +64,13 @@ namespace RetroFuturaGUI
         /// @brief Connects a slot to be called when the picked color has changed, by dragging or by any setter.
         void Connect_OnColorChanged(const typename Signal<>::Slot& slot, const bool async);
         void Disconnect_OnColorChanged(const typename Signal<>::Slot& slot);
+
+    protected:
+        void applySize(const glm::vec3& size) override;
+
+        void applyPosition(const glm::vec3& position) override;
+
+        void applyRotation(const glm::vec3& rotation) override;
 
     private:
         void interact() override;

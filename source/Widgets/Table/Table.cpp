@@ -361,7 +361,7 @@ void RetroFuturaGUI::Table::drawHeaderBand(std::vector<TableCell>& cells, const 
     }
 }
 
-void RetroFuturaGUI::Table::SetSize(const glm::vec3& size)
+void RetroFuturaGUI::Table::applySize(const glm::vec3& size)
 {
     if(!_background)
         return;
@@ -369,13 +369,13 @@ void RetroFuturaGUI::Table::SetSize(const glm::vec3& size)
     if(!_border)
         return;
 
-    IWidget::SetSize(size);
+    IWidget::applySize(size);
     _background->SetSize(size);
     _border->SetSize(size);
     layoutCells();
 }
 
-void RetroFuturaGUI::Table::SetPosition(const glm::vec3& position)
+void RetroFuturaGUI::Table::applyPosition(const glm::vec3& position)
 {
     if(!_background)
         return;
@@ -386,14 +386,14 @@ void RetroFuturaGUI::Table::SetPosition(const glm::vec3& position)
     if(!_selectedArea)
         return;
 
-    IWidget::SetPosition(position);
+    IWidget::applyPosition(position);
     _background->SetPosition(position);
     _border->SetPosition(position + glm::vec3(0.0f, 0.0f, 0.1f));
     _selectedArea->SetPosition(position + glm::vec3(0.0f, 0.0f, _widgetZOffset - 0.01f));
     layoutCells();
 }
 
-void RetroFuturaGUI::Table::SetRotation(const glm::vec3& rotation)
+void RetroFuturaGUI::Table::applyRotation(const glm::vec3& rotation)
 {
     if(!_background)
         return;

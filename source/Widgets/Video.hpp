@@ -22,9 +22,6 @@ namespace RetroFuturaGUI
 
         /// @brief Draws the Video
         void Draw() override;
-        void SetSize(const glm::vec3& size) override;
-        void SetPosition(const glm::vec3& position) override;
-        void SetRotation(const glm::vec3& rotation) override;
         bool OpenVideoFile(std::string_view file);
 
         /// @brief Closes the file, so nothing holds it open, until OpenVideoFile opens one again.
@@ -47,6 +44,13 @@ namespace RetroFuturaGUI
 
         /// @brief Sets how many bands GetFrequencyBands reports - see AudioPlayback::SetFrequencyBandCount.
         void SetFrequencyBandCount(const uSize bandCount);
+
+    protected:
+        void applySize(const glm::vec3& size) override;
+
+        void applyPosition(const glm::vec3& position) override;
+
+        void applyRotation(const glm::vec3& rotation) override;
 
     private:
         /// @brief Moves the picture on to the one due now, also while the Video is hidden or its window sits in a background tab.

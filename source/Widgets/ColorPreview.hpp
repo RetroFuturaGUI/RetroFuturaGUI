@@ -34,21 +34,22 @@ namespace RetroFuturaGUI
 
         void Draw() override;
 
-        /// @brief Sets the size of the whole widget. While the dual preview is on, the two backgrounds split it in half.
-        void SetSize(const glm::vec3& size) override;
-
-        /// @brief Sets the world position, stacking the previewed color and the border in front of the backgrounds.
-        void SetPosition(const glm::vec3& position) override;
-
-        /// @brief Sets the rotation of the backgrounds, the previewed color and the border alike.
-        void SetRotation(const glm::vec3& rotation) override;
-
         /// @brief Enables the dual preview: the checkerboard gives up half the widget to a white background,
         /// so the same color reads against transparency on one half and against white on the other.
         void EnableDualPreviewBackground(const bool enable);
 
         /// @brief Sets which way the dual preview is split: Horizontal puts the halves side by side, Vertical stacks them.
         void SetDualPreviewAlignment(const DualPrevieAlignment alignment);
+
+    protected:
+        /// @brief Sets the size of the whole widget. While the dual preview is on, the two backgrounds split it in half.
+        void applySize(const glm::vec3& size) override;
+
+        /// @brief Sets the world position, stacking the previewed color and the border in front of the backgrounds.
+        void applyPosition(const glm::vec3& position) override;
+
+        /// @brief Sets the rotation of the backgrounds, the previewed color and the border alike.
+        void applyRotation(const glm::vec3& rotation) override;
 
     private:
         /// @brief Sizes and places both backgrounds, the previewed color and the border for the current split.

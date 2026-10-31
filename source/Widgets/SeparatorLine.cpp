@@ -34,9 +34,9 @@ void RetroFuturaGUI::SeparatorLine::Draw()
     _text->Draw();
 }
 
-void RetroFuturaGUI::SeparatorLine::SetSize(const glm::vec3& size)
+void RetroFuturaGUI::SeparatorLine::applySize(const glm::vec3& size)
 {
-    IWidget::SetSize(size);
+    IWidget::applySize(size);
 
     if(!_background)
         return;
@@ -45,9 +45,9 @@ void RetroFuturaGUI::SeparatorLine::SetSize(const glm::vec3& size)
     updateLayout();
 }
 
-void RetroFuturaGUI::SeparatorLine::SetPosition(const glm::vec3& position)
+void RetroFuturaGUI::SeparatorLine::applyPosition(const glm::vec3& position)
 {
-    IWidget::SetPosition(position);
+    IWidget::applyPosition(position);
 
     if(!_background)
         return;
@@ -56,9 +56,9 @@ void RetroFuturaGUI::SeparatorLine::SetPosition(const glm::vec3& position)
     updateLayout();
 }
 
-void RetroFuturaGUI::SeparatorLine::SetRotation(const glm::vec3& rotation)
+void RetroFuturaGUI::SeparatorLine::applyRotation(const glm::vec3& rotation)
 {
-    IWidget::SetRotation(rotation);
+    IWidget::applyRotation(rotation);
 
     if(!_background || !_text)
         return;

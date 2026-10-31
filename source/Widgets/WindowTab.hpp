@@ -37,15 +37,6 @@ namespace RetroFuturaGUI
         /// @brief Handles presses and drags on the strip, then draws the strip and the selected window's content.
         void Draw() override;
 
-        /// @brief Sets the center of the whole WindowTab, strip and content area together.
-        void SetPosition(const glm::vec3& position) override;
-
-        /// @brief Sets the size of the whole WindowTab, strip and content area together.
-        void SetSize(const glm::vec3& size) override;
-
-        /// @brief Stored only: the fields and the content stay upright, since a window's content can't turn.
-        void SetRotation(const glm::vec3& rotation) override;
-
     //Windows
         /// @brief Docks a window into a new tab at the end of the strip, and selects it. A window docked to another window's
         ///        edge leaves that group first, and one in another WindowTab leaves that.
@@ -154,6 +145,16 @@ namespace RetroFuturaGUI
         /// @brief Returns the corner radii of the content area.
         const glm::vec4& GetContentCornerRadii() const;
 
+    protected:
+        /// @brief Sets the center of the whole WindowTab, strip and content area together.
+        void applyPosition(const glm::vec3& position) override;
+
+        /// @brief Sets the size of the whole WindowTab, strip and content area together.
+        void applySize(const glm::vec3& size) override;
+
+        /// @brief Stored only: the fields and the content stay upright, since a window's content can't turn.
+        void applyRotation(const glm::vec3& rotation) override;
+
     private:
         friend class Window; //resets _isShown each frame, finds the strip under a dragged window and shows a preview field for it
 
@@ -163,6 +164,8 @@ namespace RetroFuturaGUI
             Window* _Window { nullptr };
             std::unique_ptr<Text> _Title { nullptr };
             std::string _ShownTitle {}; //what _Title shows, so it is only laid out again when the window's title changes
+            TransitionValue<glm::vec2> _Shown {}; //the field's left edge and width as drawn, on their way to its slot
+            bool _HasShown { false }; //a field not shown yet stands in its slot at once
         };
 
         /// @brief The colors for every state a field and its parts can be in.
@@ -217,8 +220,15 @@ namespace RetroFuturaGUI
         /// @brief Where the field at the given place sits, ignoring a drag.
         glm::vec4 slotRect(const uSize slot) const;
 
-        /// @brief Where the field is drawn: its slot, or under the cursor while it is dragged.
+        /// @brief Where the field is drawn: on its way to its slot, or under the cursor while it is dragged.
         glm::vec4 fieldRect(const uSize index) const;
+
+        /// @brief Returns the left edge and width a field is moving toward: its slot's, or where the cursor drags it.
+        glm::vec2 getFieldTarget(const uSize index) const;
+
+        /// @brief Moves every field and the drop preview's toward their slots over the Position transition. The dragged field
+        ///        follows the cursor at once, and the preview field grows from nothing.
+        void syncFieldRects();
 
         /// @brief The place along the strip whose slot the given x lies over.
         uSize slotAt(const f32 x) const;
@@ -287,6 +297,8 @@ namespace RetroFuturaGUI
         std::unique_ptr<Frame> _fieldBorder { nullptr };
         std::unique_ptr<SvgTexture> _closeIcon { nullptr }; //its own, so its color and size are this tab's alone
         std::unique_ptr<Text> _previewTitle { nullptr };
+        TransitionValue<glm::vec2> _previewShown {}; //the drop preview field's left edge and width as drawn
+        bool _isPreviewShown { false }; //a dropped window's field starts where the preview was
 
     //Design
         f32

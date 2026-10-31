@@ -20,15 +20,15 @@ RetroFuturaGUI::Image::Image(const std::string& name, Projection* projection, IW
     _plane->SetColors(_planeColors);
 }
 
-void RetroFuturaGUI::Image::SetSize(const glm::vec3& size)
+void RetroFuturaGUI::Image::applySize(const glm::vec3& size)
 {
-    IWidget::SetSize(size);
+    IWidget::applySize(size);
     FitGeometryToTexture();
 }
 
-void RetroFuturaGUI::Image::SetPosition(const glm::vec3& position)
+void RetroFuturaGUI::Image::applyPosition(const glm::vec3& position)
 {
-    IWidget::SetPosition(position);
+    IWidget::applyPosition(position);
 
     if(!_plane)
         return;
@@ -36,9 +36,9 @@ void RetroFuturaGUI::Image::SetPosition(const glm::vec3& position)
     _plane->SetPosition(position);
 }
 
-void RetroFuturaGUI::Image::SetRotation(const glm::vec3& rotation)
+void RetroFuturaGUI::Image::applyRotation(const glm::vec3& rotation)
 {
-    IWidget::SetRotation(rotation);
+    IWidget::applyRotation(rotation);
 
     if(!_plane)
         return;

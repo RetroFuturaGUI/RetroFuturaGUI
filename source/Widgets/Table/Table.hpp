@@ -156,9 +156,6 @@ namespace RetroFuturaGUI
         };
 
         void Draw() override;
-        void SetSize(const glm::vec3& size) override;
-        void SetPosition(const glm::vec3& position) override;
-        void SetRotation(const glm::vec3& rotation) override;
                 
         /// @brief Connects a slot to be called when the text content changes.
         /// @param async If true, the slot is invoked asynchronously.
@@ -432,6 +429,12 @@ namespace RetroFuturaGUI
         /// @param emitSignal Whether OnScrolled fires when it scrolled.
         void ScrollRowIntoView(const uSize row, const bool emitSignal);
 
+    protected:
+        void applySize(const glm::vec3& size) override;
+
+        void applyPosition(const glm::vec3& position) override;
+
+        void applyRotation(const glm::vec3& rotation) override;
 
     private:
         struct MouseState

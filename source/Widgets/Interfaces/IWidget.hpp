@@ -57,22 +57,24 @@ namespace RetroFuturaGUI
         /// @brief Disconnects a previously connected OnDisable slot.
         void Disconnect_OnDisable(const typename Signal<>::Slot& slot);
 
-        /// @brief Sets the size of the widget.
-        virtual void SetSize(const glm::vec3& size);
+        /// @brief Sets the size of the widget, moving to it over the widget's size transition when one is set (SetTransition).
+        ///        A container laying the widget out sets it at once.
+        void SetSize(const glm::vec3& size);
 
-        /// @brief Returns the current size of the widget.
+        /// @brief Returns the current size of the widget, midway while a transition runs.
         glm::vec3 GetSize() const;
 
-        /// @brief Sets the world position of the widget.
-        virtual void SetPosition(const glm::vec3& position);
+        /// @brief Sets the world position of the widget, moving to it over the widget's position transition when one is set.
+        ///        A container laying the widget out sets it at once.
+        void SetPosition(const glm::vec3& position);
 
-        /// @brief Returns the current world position of the widget.
+        /// @brief Returns the current world position of the widget, midway while a transition runs.
         glm::vec3 GetPosition() const;
 
-        /// @brief Sets the rotation of the widget.
-        virtual void SetRotation(const glm::vec3& rotation);
+        /// @brief Sets the rotation of the widget, turning to it over the widget's rotation transition when one is set.
+        void SetRotation(const glm::vec3& rotation);
 
-        /// @brief Returns the current rotation of the widget.
+        /// @brief Returns the current rotation of the widget, midway while a transition runs.
         glm::vec3 GetRotation() const;
 
         /// @brief Returns the widget's name.
@@ -183,9 +185,21 @@ namespace RetroFuturaGUI
         ///        again with other colors, like a Table's shared cell checkbox, would restart its transition at every draw.
         void useTransitions(std::initializer_list<FillStyle*> elements);
 
+        /// @brief Takes the size: stores it and fits whatever the widget draws to it. so what the widget resizes along with itself follows at once.
+        virtual void applySize(const glm::vec3& size);
+
+        /// @brief Takes the position as applySize does the size.
+        virtual void applyPosition(const glm::vec3& position);
+
+        /// @brief Takes the rotation on, as applySize does the size.
+        virtual void applyRotation(const glm::vec3& rotation);
+
     private:
         void updateTooltip();
         void updateContextMenu();
+
+        /// @brief Applies the shown size, position and rotation while their transitions run, the targets once they arrive.
+        void updateGeometry();
 
         /// @brief Applies the pointer filters from the outermost container down to the closest one. Each container then adjusts
         ///        what the containers above it already let through: an inner ScrollView only ever sees a press its outer one passed on,
@@ -194,5 +208,16 @@ namespace RetroFuturaGUI
 
         //Freed with the widget, which empties every WidgetReference to it
         std::shared_ptr<const bool> _lifetimeToken { std::make_shared<const bool>(true) };
+
+    //Geometry transitions: _size, _position and _rotation hold what is shown, these where it is going
+        TransitionValue<glm::vec3>
+            _sizeTransition,
+            _positionTransition,
+            _rotationTransition;
+        bool
+            _hasUpdated { false }, //geometry set before the first Update applies at once
+            _isResizing { false },
+            _isMoving { false },
+            _isTurning { false };
     };
 }

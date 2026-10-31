@@ -184,21 +184,21 @@ void RetroFuturaGUI::Environment::update()
     }
 }
 
-void RetroFuturaGUI::Environment::SetSize(const glm::vec3& size)
+void RetroFuturaGUI::Environment::applySize(const glm::vec3& size)
 {
-    IWidget::SetSize(size);
+    IWidget::applySize(size);
     applyTransform();
 }
 
-void RetroFuturaGUI::Environment::SetPosition(const glm::vec3& position)
+void RetroFuturaGUI::Environment::applyPosition(const glm::vec3& position)
 {
-    IWidget::SetPosition(position);
+    IWidget::applyPosition(position);
     applyTransform();
 }
 
-void RetroFuturaGUI::Environment::SetRotation(const glm::vec3& rotation)
+void RetroFuturaGUI::Environment::applyRotation(const glm::vec3& rotation)
 {
-    IWidget::SetRotation(rotation);
+    IWidget::applyRotation(rotation);
     applyTransform();
 }
 
@@ -249,6 +249,7 @@ void RetroFuturaGUI::Environment::applyTransform()
 
 void RetroFuturaGUI::Environment::placeWidget(const EnvironmentEntry& entry) const
 {
+    const Transitions::InstantScope instant { true }; //a container lays its widgets out at once, whatever transitions they have
     if(!entry._Widget)
         return;
 

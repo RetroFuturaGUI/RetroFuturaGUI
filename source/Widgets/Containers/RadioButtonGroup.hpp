@@ -26,15 +26,6 @@ namespace RetroFuturaGUI
 
         void Draw() override;
 
-        /// @brief Sets the size of the radio button group.
-        void SetSize(const glm::vec3& size) override;
-
-        /// @brief Sets the world position of the radio button group.
-        void SetPosition(const glm::vec3& position) override;
-
-        /// @brief Sets the rotation of the radio button group.
-        void SetRotation(const glm::vec3& rotation) override;
-
         /// @brief deselcts all registered RadioButtons except the passed one
         /// @param a pointer of the RadioButton to stay checked
         void DeselectOthers(RadioButton* activeRadioButton);
@@ -74,6 +65,16 @@ namespace RetroFuturaGUI
         /// @brief Sets how much each cell's RadioButton + Label should be away from the border's inner edge
         /// @param pixels (const f32): Distance in pixels
         void SetGridContentPadding(const f32 pixels);
+
+    protected:
+        /// @brief Sets the size of the radio button group.
+        void applySize(const glm::vec3& size) override;
+
+        /// @brief Sets the world position of the radio button group.
+        void applyPosition(const glm::vec3& position) override;
+
+        /// @brief Sets the rotation of the radio button group.
+        void applyRotation(const glm::vec3& rotation) override;
 
     private:
         /// @brief Sweeps the removed buttons, then passes the frame's input on to every button and its label.

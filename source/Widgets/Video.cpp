@@ -79,15 +79,15 @@ void RetroFuturaGUI::Video::Draw()
     _plane->Draw();
 }
 
-void RetroFuturaGUI::Video::SetSize(const glm::vec3& size)
+void RetroFuturaGUI::Video::applySize(const glm::vec3& size)
 {
-    IWidget::SetSize(size);
+    IWidget::applySize(size);
     fitGeometryToTexture();
 }
 
-void RetroFuturaGUI::Video::SetPosition(const glm::vec3& position)
+void RetroFuturaGUI::Video::applyPosition(const glm::vec3& position)
 {
-    IWidget::SetPosition(position);
+    IWidget::applyPosition(position);
 
     if(!_plane)
         return;
@@ -95,9 +95,9 @@ void RetroFuturaGUI::Video::SetPosition(const glm::vec3& position)
     _plane->SetPosition(_position);
 }
 
-void RetroFuturaGUI::Video::SetRotation(const glm::vec3& rotation)
+void RetroFuturaGUI::Video::applyRotation(const glm::vec3& rotation)
 {
-    IWidget::SetRotation(rotation);
+    IWidget::applyRotation(rotation);
 
     if(!_plane)
         return;

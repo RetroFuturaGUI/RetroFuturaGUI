@@ -136,14 +136,15 @@ namespace RetroFuturaGUI
         /// @brief Draws every shown widget in attachment order.
         void Draw() override;
 
+    protected:
         /// @brief Sets the size of the Environment's rectangle, in window pixels, and refits everything inside.
-        void SetSize(const glm::vec3& size) override;
+        void applySize(const glm::vec3& size) override;
 
         /// @brief Sets the window position of the box's center, moving everything inside along.
-        void SetPosition(const glm::vec3& position) override;
+        void applyPosition(const glm::vec3& position) override;
 
         /// @brief Sets the rotation of the box, in degrees, turning everything inside around the box's center.
-        void SetRotation(const glm::vec3& rotation) override;
+        void applyRotation(const glm::vec3& rotation) override;
 
     private:
         /// @brief Sweeps the removed widgets, then passes the frame's input on to the shown ones in attachment order.

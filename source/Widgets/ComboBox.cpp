@@ -100,7 +100,7 @@ void RetroFuturaGUI::ComboBox::drawDropDown()
     }
 }
 
-void RetroFuturaGUI::ComboBox::SetSize(const glm::vec3& size)
+void RetroFuturaGUI::ComboBox::applySize(const glm::vec3& size)
 {
     if(!_background)
         return;
@@ -108,7 +108,7 @@ void RetroFuturaGUI::ComboBox::SetSize(const glm::vec3& size)
     if(!_border)
         return;
 
-    IWidget::SetSize(size);
+    IWidget::applySize(size);
 
     _background->SetSize(size);
     _border->SetSize(size);
@@ -134,7 +134,7 @@ void RetroFuturaGUI::ComboBox::placeItemText(Text& item, const glm::vec3& center
     item.SetTextPadding(_textPadding);
 }
 
-void RetroFuturaGUI::ComboBox::SetPosition(const glm::vec3& position)
+void RetroFuturaGUI::ComboBox::applyPosition(const glm::vec3& position)
 {
     if(!_background)
         return;
@@ -142,7 +142,7 @@ void RetroFuturaGUI::ComboBox::SetPosition(const glm::vec3& position)
     if(!_border)
         return;
 
-    IWidget::SetPosition(position);
+    IWidget::applyPosition(position);
 
     _background->SetPosition(position);
     _border->SetPosition(position + glm::vec3(0.0f, 0.0f, _zStep));
@@ -150,7 +150,7 @@ void RetroFuturaGUI::ComboBox::SetPosition(const glm::vec3& position)
     updateDropDownGeometry();
 }
 
-void RetroFuturaGUI::ComboBox::SetRotation(const glm::vec3& rotation)
+void RetroFuturaGUI::ComboBox::applyRotation(const glm::vec3& rotation)
 {
     if(!_background)
         return;
@@ -167,7 +167,7 @@ void RetroFuturaGUI::ComboBox::SetRotation(const glm::vec3& rotation)
     if(!_dropDownItemHighlight)
         return;
 
-    IWidget::SetRotation(rotation);
+    IWidget::applyRotation(rotation);
 
     _background->SetRotation(rotation);
     _border->SetRotation(rotation);

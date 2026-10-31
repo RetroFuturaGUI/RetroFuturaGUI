@@ -22,14 +22,15 @@ namespace RetroFuturaGUI
         /// @brief Draws the label text.
         void Draw() override;
 
+    protected:
         /// @brief Sets the size of the label.
-        void SetSize(const glm::vec3& size) override;
+        void applySize(const glm::vec3& size) override;
 
         /// @brief Sets the world position of the label.
-        void SetPosition(const glm::vec3& position) override;
+        void applyPosition(const glm::vec3& position) override;
 
         /// @brief Sets the rotation of the label.
-        void SetRotation(const glm::vec3& rotation) override;
+        void applyRotation(const glm::vec3& rotation) override;
 
     private:
         void setColors(const ColorState state) override;

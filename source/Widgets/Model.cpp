@@ -31,21 +31,21 @@ void RetroFuturaGUI::Model::Draw()
         mesh.Draw(_projection.GetProjectionMatrix(), _translationMatrix, _rotationMatrix, _scalingMatrix);
 }
 
-void RetroFuturaGUI::Model::SetSize(const glm::vec3& size)
+void RetroFuturaGUI::Model::applySize(const glm::vec3& size)
 {
-    IWidget::SetSize(size);
+    IWidget::applySize(size);
     _scalingMatrix = glm::scale(glm::mat4(1.0f), size);
 }
 
-void RetroFuturaGUI::Model::SetPosition(const glm::vec3& position)
+void RetroFuturaGUI::Model::applyPosition(const glm::vec3& position)
 {
-    IWidget::SetPosition(position);
+    IWidget::applyPosition(position);
     _translationMatrix = glm::translate(glm::mat4(1.0f), position);
 }
 
-void RetroFuturaGUI::Model::SetRotation(const glm::vec3& rotation)
+void RetroFuturaGUI::Model::applyRotation(const glm::vec3& rotation)
 {
-    IWidget::SetRotation(rotation);
+    IWidget::applyRotation(rotation);
     glm::vec3 radians = glm::radians(rotation);
     _rotationMatrix =
         glm::rotate(glm::mat4(1.0f), radians.z, glm::vec3(0.0f, 0.0f, 1.0f)) *

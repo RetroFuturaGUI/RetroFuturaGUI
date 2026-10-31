@@ -13,16 +13,16 @@ RetroFuturaGUI::SvgImage::SvgImage(const std::string& name, Projection* projecti
     _svgTextureAspectRatio = _svgTexture->GetAspectRatio();
 }
 
-void RetroFuturaGUI::SvgImage::SetSize(const glm::vec3& size)
+void RetroFuturaGUI::SvgImage::applySize(const glm::vec3& size)
 {
-    IWidget::SetSize(size);
+    IWidget::applySize(size);
     _quadSize = glm::vec2(size.x, size.y);
     FitGeometryToTexture();
 }
 
-void RetroFuturaGUI::SvgImage::SetPosition(const glm::vec3& position)
+void RetroFuturaGUI::SvgImage::applyPosition(const glm::vec3& position)
 {
-    IWidget::SetPosition(position);
+    IWidget::applyPosition(position);
 
     if(!_svgTexture)
         return;
@@ -30,12 +30,12 @@ void RetroFuturaGUI::SvgImage::SetPosition(const glm::vec3& position)
     _svgTexture->SetPosition(position);
 }
 
-void RetroFuturaGUI::SvgImage::SetRotation(const glm::vec3& rotation)
+void RetroFuturaGUI::SvgImage::applyRotation(const glm::vec3& rotation)
 {
     if(!_svgTexture)
         return;
 
-    IWidget::SetRotation(rotation);
+    IWidget::applyRotation(rotation);
 
     _svgTexture->SetRotation(rotation);
 }

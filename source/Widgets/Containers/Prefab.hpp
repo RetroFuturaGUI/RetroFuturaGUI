@@ -23,9 +23,6 @@ namespace RetroFuturaGUI
         auto operator =(const Prefab&) = delete;
         auto operator =(Prefab&&) = delete;
         void Draw() override;
-        void SetSize(const glm::vec3& size) override;
-        void SetPosition(const glm::vec3& position) override;
-        void SetRotation(const glm::vec3& rotation) override;
         void SetColumnDefinition(std::vector<f32> columnDefinition);
         void SetRowDefinition(std::vector<f32> rowDefinition);
         void SetLayerDefinition(std::vector<f32> rowDefinition);
@@ -60,6 +57,13 @@ namespace RetroFuturaGUI
         /// @brief Removes the child with the given name. It is destroyed at the start of the next Interact, so its own slot may remove it.
         /// @return false when no child has that name.
         bool RemoveChildWidget(std::string_view name);
+
+    protected:
+        void applySize(const glm::vec3& size) override;
+
+        void applyPosition(const glm::vec3& position) override;
+
+        void applyRotation(const glm::vec3& rotation) override;
 
     private:
         void interact() override;

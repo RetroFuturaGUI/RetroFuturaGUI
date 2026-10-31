@@ -166,21 +166,21 @@ const RetroFuturaGUI::ScrollView::ScrollViewCell* RetroFuturaGUI::ScrollView::fi
     return &*cellIterator;
 }
 
-void RetroFuturaGUI::ScrollView::SetSize(const glm::vec3& size)
+void RetroFuturaGUI::ScrollView::applySize(const glm::vec3& size)
 {
-    IWidget::SetSize(size);
+    IWidget::applySize(size);
     layoutCells();
 }
 
-void RetroFuturaGUI::ScrollView::SetPosition(const glm::vec3& position)
+void RetroFuturaGUI::ScrollView::applyPosition(const glm::vec3& position)
 {
-    IWidget::SetPosition(position);
+    IWidget::applyPosition(position);
     layoutCells();
 }
 
-void RetroFuturaGUI::ScrollView::SetRotation(const glm::vec3& rotation)
+void RetroFuturaGUI::ScrollView::applyRotation(const glm::vec3& rotation)
 {
-    IWidget::SetRotation(rotation);
+    IWidget::applyRotation(rotation);
 }
 
 void RetroFuturaGUI::ScrollView::EnableScrolling(const ScrollEnable enableMask)
@@ -444,6 +444,7 @@ void RetroFuturaGUI::ScrollView::EnableBorder(const bool enable)
 
 void RetroFuturaGUI::ScrollView::layoutCells()
 {
+    const Transitions::InstantScope instant { true }; //a container lays its widgets out at once, whatever transitions they have
     // glm indexes its components with length_t, so the stacking axis is kept in that type.
     const glm::length_t stackAxis { static_cast<glm::length_t>(_alignmentDirection) };
     const glm::vec3 viewSize { getInnerSize() };

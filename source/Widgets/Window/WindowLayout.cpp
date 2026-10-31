@@ -52,6 +52,7 @@ void RetroFuturaGUI::Window::RemoveScene(Scene* scene)
 
 void RetroFuturaGUI::Window::UpdateLayout()
 {
+    const Transitions::InstantScope instant { true }; //the window lays its scenes out at once, whatever transitions their widgets have
     ScreenRect client { ._Origin = glm::vec2(0.0f), ._Extent = glm::vec2((f32)_width, (f32)_height) };
 
     //Docked scenes take their strip in the order they were added, so the first one to claim an edge also owns the corner where two claims meet.
@@ -98,20 +99,12 @@ void RetroFuturaGUI::Window::SetCornerRadii(const glm::vec4& radii)
 
 void RetroFuturaGUI::Window::SetTransition(const TransitionProperty properties, const Transition& transition)
 {
-    if(HasTransitionProperty(properties, TransitionProperty::Colors))
-        _transitionSettings._Colors = transition;
-
-    if(HasTransitionProperty(properties, TransitionProperty::CornerRadii))
-        _transitionSettings._CornerRadii = transition;
+    Transitions::Override(_transitionSettings, properties, transition);
 }
 
 void RetroFuturaGUI::Window::ResetTransition(const TransitionProperty properties)
 {
-    if(HasTransitionProperty(properties, TransitionProperty::Colors))
-        _transitionSettings._Colors.reset();
-
-    if(HasTransitionProperty(properties, TransitionProperty::CornerRadii))
-        _transitionSettings._CornerRadii.reset();
+    Transitions::Reset(_transitionSettings, properties);
 }
 
 RetroFuturaGUI::Transition RetroFuturaGUI::Window::GetTransition(const TransitionProperty property) const

@@ -52,7 +52,23 @@ void RetroFuturaGUI::IWidget::Disconnect_OnDisable(const typename Signal<>::Slot
 
 void RetroFuturaGUI::IWidget::SetSize(const glm::vec3& size)
 {
-    _size = size;
+    const Transition transition { Transitions::Resolve(_transitionSettings, TransitionProperty::Size) };
+
+    //Before the first frame, without a transition, inside an InstantScope (a container laying the widget out) or with nothing to move, it applies at once, as a plain setter would
+    if(!_hasUpdated || 0 >= transition._Duration.count() || (!_isResizing && size == _size))
+    {
+        _isResizing = false;
+        _sizeTransition.Jump(size);
+        const Transitions::InstantScope instant { true };
+        applySize(size);
+        return;
+    }
+
+    if(!_isResizing)
+        _sizeTransition.Jump(_size); //from where it is now
+
+    _sizeTransition.Set(size, transition);
+    _isResizing = true;
 }
 
 glm::vec3 RetroFuturaGUI::IWidget::GetSize() const
@@ -62,7 +78,22 @@ glm::vec3 RetroFuturaGUI::IWidget::GetSize() const
 
 void RetroFuturaGUI::IWidget::SetPosition(const glm::vec3& position)
 {
-    _position = position;
+    const Transition transition { Transitions::Resolve(_transitionSettings, TransitionProperty::Position) };
+
+    if(!_hasUpdated || 0 >= transition._Duration.count() || (!_isMoving && position == _position))
+    {
+        _isMoving = false;
+        _positionTransition.Jump(position);
+        const Transitions::InstantScope instant { true };
+        applyPosition(position);
+        return;
+    }
+
+    if(!_isMoving)
+        _positionTransition.Jump(_position);
+
+    _positionTransition.Set(position, transition);
+    _isMoving = true;
 }
 
 glm::vec3 RetroFuturaGUI::IWidget::GetPosition() const
@@ -72,7 +103,65 @@ glm::vec3 RetroFuturaGUI::IWidget::GetPosition() const
 
 void RetroFuturaGUI::IWidget::SetRotation(const glm::vec3& rotation)
 {
+    const Transition transition { Transitions::Resolve(_transitionSettings, TransitionProperty::Rotation) };
+
+    if(!_hasUpdated || 0 >= transition._Duration.count() || (!_isTurning && rotation == _rotation))
+    {
+        _isTurning = false;
+        _rotationTransition.Jump(rotation);
+        const Transitions::InstantScope instant { true };
+        applyRotation(rotation);
+        return;
+    }
+
+    if(!_isTurning)
+        _rotationTransition.Jump(_rotation);
+
+    _rotationTransition.Set(rotation, transition);
+    _isTurning = true;
+}
+
+void RetroFuturaGUI::IWidget::applySize(const glm::vec3& size)
+{
+    _size = size;
+}
+
+void RetroFuturaGUI::IWidget::applyPosition(const glm::vec3& position)
+{
+    _position = position;
+}
+
+void RetroFuturaGUI::IWidget::applyRotation(const glm::vec3& rotation)
+{
     _rotation = rotation;
+}
+
+void RetroFuturaGUI::IWidget::updateGeometry()
+{
+    //Each value is read before the InstantScope, inside which it would read as arrived
+    if(_isResizing)
+    {
+        const glm::vec3 size { _sizeTransition.Get() };
+        _isResizing = _sizeTransition.IsRunning();
+        const Transitions::InstantScope instant { true };
+        applySize(size);
+    }
+
+    if(_isMoving)
+    {
+        const glm::vec3 position { _positionTransition.Get() };
+        _isMoving = _positionTransition.IsRunning();
+        const Transitions::InstantScope instant { true };
+        applyPosition(position);
+    }
+
+    if(_isTurning)
+    {
+        const glm::vec3 rotation { _rotationTransition.Get() };
+        _isTurning = _rotationTransition.IsRunning();
+        const Transitions::InstantScope instant { true };
+        applyRotation(rotation);
+    }
 }
 
 glm::vec3 RetroFuturaGUI::IWidget::GetRotation() const
@@ -241,6 +330,8 @@ void RetroFuturaGUI::IWidget::Interact()
 
 void RetroFuturaGUI::IWidget::Update()
 {
+    _hasUpdated = true;
+    updateGeometry();
     update();
 }
 
@@ -276,20 +367,12 @@ void RetroFuturaGUI::IWidget::AddContextMenuNode(std::string_view newNodeName, s
 
 void RetroFuturaGUI::IWidget::SetTransition(const TransitionProperty properties, const Transition& transition)
 {
-    if(HasTransitionProperty(properties, TransitionProperty::Colors))
-        _transitionSettings._Colors = transition;
-
-    if(HasTransitionProperty(properties, TransitionProperty::CornerRadii))
-        _transitionSettings._CornerRadii = transition;
+    Transitions::Override(_transitionSettings, properties, transition);
 }
 
 void RetroFuturaGUI::IWidget::ResetTransition(const TransitionProperty properties)
 {
-    if(HasTransitionProperty(properties, TransitionProperty::Colors))
-        _transitionSettings._Colors.reset();
-
-    if(HasTransitionProperty(properties, TransitionProperty::CornerRadii))
-        _transitionSettings._CornerRadii.reset();
+    Transitions::Reset(_transitionSettings, properties);
 }
 
 RetroFuturaGUI::Transition RetroFuturaGUI::IWidget::GetTransition(const TransitionProperty property) const

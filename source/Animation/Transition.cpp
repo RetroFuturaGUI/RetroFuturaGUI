@@ -4,19 +4,62 @@
 
 void RetroFuturaGUI::Transitions::SetDefault(const TransitionProperty properties, const Transition& transition)
 {
-    if(HasTransitionProperty(properties, TransitionProperty::Colors))
-        _defaultColors = transition;
-
-    if(HasTransitionProperty(properties, TransitionProperty::CornerRadii))
-        _defaultCornerRadii = transition;
+    Override(_defaults, properties, transition);
 }
 
 RetroFuturaGUI::Transition RetroFuturaGUI::Transitions::GetDefault(const TransitionProperty property)
 {
-    if(TransitionProperty::CornerRadii == property)
-        return _defaultCornerRadii;
+    return select(_defaults, property).value_or(Transition {});
+}
 
-    return _defaultColors;
+void RetroFuturaGUI::Transitions::Override(TransitionSettings& settings, const TransitionProperty properties, const Transition& transition)
+{
+    for(const TransitionProperty property : AllProperties)
+    {
+        if(!HasTransitionProperty(properties, property))
+            continue;
+
+        select(settings, property) = transition;
+    }
+}
+
+void RetroFuturaGUI::Transitions::Reset(TransitionSettings& settings, const TransitionProperty properties)
+{
+    for(const TransitionProperty property : AllProperties)
+    {
+        if(!HasTransitionProperty(properties, property))
+            continue;
+
+        select(settings, property).reset();
+    }
+}
+
+bool RetroFuturaGUI::Transitions::IsInstant()
+{
+    return _areInstant;
+}
+
+std::optional<RetroFuturaGUI::Transition>& RetroFuturaGUI::Transitions::select(TransitionSettings& settings, const TransitionProperty property)
+{
+    switch(property)
+    {
+        case TransitionProperty::CornerRadii:
+            return settings._CornerRadii;
+        case TransitionProperty::Position:
+            return settings._Position;
+        case TransitionProperty::Size:
+            return settings._Size;
+        case TransitionProperty::Rotation:
+            return settings._Rotation;
+        case TransitionProperty::Colors:
+        default:
+            return settings._Colors;
+    }
+}
+
+const std::optional<RetroFuturaGUI::Transition>& RetroFuturaGUI::Transitions::select(const TransitionSettings& settings, const TransitionProperty property)
+{
+    return select(const_cast<TransitionSettings&>(settings), property);
 }
 
 RetroFuturaGUI::Transitions::InstantScope::InstantScope(const bool active)
@@ -35,8 +78,7 @@ RetroFuturaGUI::Transition RetroFuturaGUI::Transitions::Resolve(const Transition
     if(_areInstant)
         return Transition {};
 
-    const std::optional<Transition>& own { TransitionProperty::CornerRadii == property ? settings._CornerRadii : settings._Colors };
-    return own.value_or(GetDefault(property));
+    return select(settings, property).value_or(GetDefault(property));
 }
 
 f32 RetroFuturaGUI::Transitions::GetProgress(const std::chrono::steady_clock::time_point start, const std::chrono::steady_clock::time_point now, const Transition& transition)

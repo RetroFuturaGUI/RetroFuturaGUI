@@ -76,9 +76,6 @@ namespace RetroFuturaGUI
         ~MenuBar() = default;
 
         void Draw() override;
-        void SetPosition(const glm::vec3& position) override;
-        void SetSize(const glm::vec3& size) override;
-        void SetRotation(const glm::vec3& rotation) override;
         void SetMargin(const f32 margin);
         void SetDockingEdge(const DockingEdge dockingEdge);
         void SetEdgeAlignment(const EdgeAlignment edgeAlignment);
@@ -276,7 +273,12 @@ namespace RetroFuturaGUI
         /// @brief Sets sections of the item border to skip drawing; see Frame::SetBorderGaps.
         void SetItemBorderGaps(std::span<BorderGap> gaps);
 
+    protected:
+        void applyPosition(const glm::vec3& position) override;
 
+        void applySize(const glm::vec3& size) override;
+
+        void applyRotation(const glm::vec3& rotation) override;
 
     private:
         struct MouseState

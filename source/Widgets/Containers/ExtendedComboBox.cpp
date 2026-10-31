@@ -100,6 +100,7 @@ const std::list<std::unique_ptr<RetroFuturaGUI::IWidget>>& RetroFuturaGUI::Exten
 
 void RetroFuturaGUI::ExtendedComboBox::placeItemWidget(IWidget* item, const glm::vec3& center) const
 {
+    const Transitions::InstantScope instant { true }; //a container lays its widgets out at once, whatever transitions they have
     const glm::vec2 available { contentSize(getDropDownWidth()) }; //the rows span the open list which can be wider than the box
     const f32
         parentWidth { available.x },
@@ -265,7 +266,7 @@ void RetroFuturaGUI::ExtendedComboBox::updatePreviewTextGeometry() const
     _previewText->SetTextPadding(_textPadding);
 }
 
-void RetroFuturaGUI::ExtendedComboBox::SetSize(const glm::vec3& size)
+void RetroFuturaGUI::ExtendedComboBox::applySize(const glm::vec3& size)
 {
     if(!_background)
         return;
@@ -273,7 +274,7 @@ void RetroFuturaGUI::ExtendedComboBox::SetSize(const glm::vec3& size)
     if(!_border)
         return;
 
-    IWidget::SetSize(size);
+    IWidget::applySize(size);
 
     _background->SetSize(size);
     _border->SetSize(size);
@@ -281,7 +282,7 @@ void RetroFuturaGUI::ExtendedComboBox::SetSize(const glm::vec3& size)
     updateDropDownGeometry();
 }
 
-void RetroFuturaGUI::ExtendedComboBox::SetPosition(const glm::vec3& position)
+void RetroFuturaGUI::ExtendedComboBox::applyPosition(const glm::vec3& position)
 {
     if(!_background)
         return;
@@ -289,7 +290,7 @@ void RetroFuturaGUI::ExtendedComboBox::SetPosition(const glm::vec3& position)
     if(!_border)
         return;
 
-    IWidget::SetPosition(position);
+    IWidget::applyPosition(position);
 
     _background->SetPosition(position);
     _border->SetPosition(position + glm::vec3(0.0f, 0.0f, _zStep));
@@ -297,7 +298,7 @@ void RetroFuturaGUI::ExtendedComboBox::SetPosition(const glm::vec3& position)
     updateDropDownGeometry();
 }
 
-void RetroFuturaGUI::ExtendedComboBox::SetRotation(const glm::vec3& rotation)
+void RetroFuturaGUI::ExtendedComboBox::applyRotation(const glm::vec3& rotation)
 {
     if(!_background)
         return;
@@ -314,7 +315,7 @@ void RetroFuturaGUI::ExtendedComboBox::SetRotation(const glm::vec3& rotation)
     if(!_dropDownItemHighlight)
         return;
 
-    IWidget::SetRotation(rotation);
+    IWidget::applyRotation(rotation);
 
     _background->SetRotation(rotation);
     _border->SetRotation(rotation);

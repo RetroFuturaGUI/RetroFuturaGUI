@@ -19,15 +19,6 @@ namespace RetroFuturaGUI
         /// @brief Draws the SvgImage.
         void Draw() override;
 
-        /// @brief Sets the size of the SvgImage quad.
-        void SetSize(const glm::vec3& size) override;
-
-        /// @brief Sets the world position of the SvgImage.
-        void SetPosition(const glm::vec3& position) override;
-
-        /// @brief Sets the rotation of the SvgImage.
-        void SetRotation(const glm::vec3& rotation) override;
-
         /// @brief Resizes the widget geometry to match the texture's native aspect ratio.
         void FitGeometryToTexture();
 
@@ -39,6 +30,16 @@ namespace RetroFuturaGUI
 
         /// @brief Returns every named (id-bearing) path/shape discovered in the SVG.
         const std::vector<SvgPathInfo>& GetNamedPaths() const;
+
+    protected:
+        /// @brief Sets the size of the SvgImage quad.
+        void applySize(const glm::vec3& size) override;
+
+        /// @brief Sets the world position of the SvgImage.
+        void applyPosition(const glm::vec3& position) override;
+
+        /// @brief Sets the rotation of the SvgImage.
+        void applyRotation(const glm::vec3& rotation) override;
 
     private:
         glm::vec2 _quadSize { 1.0f };

@@ -84,21 +84,21 @@ void RetroFuturaGUI::RadioButtonGroup::update()
         }
 }
 
-void RetroFuturaGUI::RadioButtonGroup::SetSize(const glm::vec3& size)
+void RetroFuturaGUI::RadioButtonGroup::applySize(const glm::vec3& size)
 {
-    IWidget::SetSize(size);
+    IWidget::applySize(size);
     updateLabelLayout();
     updateGridLayout();
 }
 
-void RetroFuturaGUI::RadioButtonGroup::SetPosition(const glm::vec3& position)
+void RetroFuturaGUI::RadioButtonGroup::applyPosition(const glm::vec3& position)
 {
-    IWidget::SetPosition(position);
+    IWidget::applyPosition(position);
     updateLabelLayout();
     updateGridLayout();
 }
 
-void RetroFuturaGUI::RadioButtonGroup::SetRotation(const glm::vec3& rotation)
+void RetroFuturaGUI::RadioButtonGroup::applyRotation(const glm::vec3& rotation)
 {
     if(!_border)
         return;
@@ -106,7 +106,7 @@ void RetroFuturaGUI::RadioButtonGroup::SetRotation(const glm::vec3& rotation)
     if(!_text)
         return;
 
-    IWidget::SetRotation(rotation);
+    IWidget::applyRotation(rotation);
 
     _border->SetRotation(rotation);
     _text->SetRotation(rotation);
@@ -313,6 +313,7 @@ void RetroFuturaGUI::RadioButtonGroup::SetGridContentAlignment(const TextAlignme
 
 void RetroFuturaGUI::RadioButtonGroup::updateGridLayout()
 {
+    const Transitions::InstantScope instant { true }; //a container lays its widgets out at once, whatever transitions they have
     const f32 leftX { _position.x - _size.x * 0.5f };
     f32 cursorY { _position.y + _size.y * 0.5f };
 

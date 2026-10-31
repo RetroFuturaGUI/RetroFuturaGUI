@@ -157,9 +157,6 @@ namespace RetroFuturaGUI
         /// @brief Sets whether the cell debug borders
         void ShowDebugLines(const bool show);
 
-        /// @brief Sets the size of the Lasagna, resizing and repositioning all attached widgets.
-        void SetSize(const glm::vec3& size) override;
-
         /// @brief Replaces the column track widths and relays out the attached widgets.
         void SetColumnDefinition(std::vector<f32> columnDefinition);
 
@@ -169,8 +166,12 @@ namespace RetroFuturaGUI
         /// @brief Replaces the layer track widths and relays out the attached widgets.
         void SetLayerDefinition(std::vector<f32> layerDefinition);
 
+    protected:
+        /// @brief Sets the size of the Lasagna, resizing and repositioning all attached widgets.
+        void applySize(const glm::vec3& size) override;
+
         /// @brief Sets the world position of the Lasagna, repositioning all attached widgets.
-        void SetPosition(const glm::vec3& position) override;
+        void applyPosition(const glm::vec3& position) override;
 
     private:
         /// @brief Passes the frame's input on to the shown widgets, in the order they draw.

@@ -50,7 +50,7 @@ void RetroFuturaGUI::ITextBox::Draw()
     drawCaret();
 }
 
-void RetroFuturaGUI::ITextBox::SetSize(const glm::vec3& size)
+void RetroFuturaGUI::ITextBox::applySize(const glm::vec3& size)
 {
     if(!_background)
         return;
@@ -64,7 +64,7 @@ void RetroFuturaGUI::ITextBox::SetSize(const glm::vec3& size)
     if(!_placeholderText)
         return;
 
-    IWidget::SetSize(size);
+    IWidget::applySize(size);
 
     _background->SetSize(size);
     _border->SetSize(size);
@@ -72,7 +72,7 @@ void RetroFuturaGUI::ITextBox::SetSize(const glm::vec3& size)
     _placeholderText->SetParentSize(glm::vec2(size.x, size.y));
 }
 
-void RetroFuturaGUI::ITextBox::SetPosition(const glm::vec3& position)
+void RetroFuturaGUI::ITextBox::applyPosition(const glm::vec3& position)
 {
     if(!_background)
         return;
@@ -92,7 +92,7 @@ void RetroFuturaGUI::ITextBox::SetPosition(const glm::vec3& position)
     if(!_caret)
         return;
 
-    IWidget::SetPosition(position);
+    IWidget::applyPosition(position);
 
     _background->SetPosition(position);
     _selectedArea->SetPosition(position + glm::vec3(0.0f, 0.0f, 0.1f));
@@ -102,7 +102,7 @@ void RetroFuturaGUI::ITextBox::SetPosition(const glm::vec3& position)
     _caret->SetPosition(position + glm::vec3(0.0f, 0.0f, 0.5f));
 }
 
-void RetroFuturaGUI::ITextBox::SetRotation(const glm::vec3& rotation)
+void RetroFuturaGUI::ITextBox::applyRotation(const glm::vec3& rotation)
 {
     if(!_background)
         return;

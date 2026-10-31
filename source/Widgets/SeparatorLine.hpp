@@ -18,9 +18,6 @@ namespace RetroFuturaGUI
         auto operator =(SeparatorLine&&) = delete;
 
         void Draw() override;
-        void SetSize(const glm::vec3& size) override;
-        void SetPosition(const glm::vec3& position) override;
-        void SetRotation(const glm::vec3& rotation) override;
 
         /// @brief Sets the text content, in UTF-8, and resizes the gap holding it to match.
         void SetText(std::string_view text, const bool emitSignal) override;
@@ -37,6 +34,13 @@ namespace RetroFuturaGUI
         /// @brief Sets whether the text overlay is drawn. While it is, the line carries a gap sized
         /// to hold it, so the background gap is driven from here rather than set directly.
         void ShowText(const bool enable);
+
+    protected:
+        void applySize(const glm::vec3& size) override;
+
+        void applyPosition(const glm::vec3& position) override;
+
+        void applyRotation(const glm::vec3& rotation) override;
 
     private:
         /// @brief Sizes and places the gap the text sits in, and centers the text inside it.

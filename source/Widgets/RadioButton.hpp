@@ -26,15 +26,6 @@ namespace RetroFuturaGUI
         /// @brief Draws the button, including its Inherit, border and label text.
         void Draw() override;
 
-        /// @brief Sets the size of the button.
-        void SetSize(const glm::vec3& size) override;
-
-        /// @brief Sets the world position of the button.
-        void SetPosition(const glm::vec3& position) override;
-
-        /// @brief Sets the rotation of the button.
-        void SetRotation(const glm::vec3& rotation) override;
-
         /// @brief Sets the RadioButton's value
         /// @param value (const bool): the value set the RadioButton should represent
         /// @param emitSignal (const bool): whether the onSetValue signal should be emitted
@@ -69,6 +60,16 @@ namespace RetroFuturaGUI
         /// @brief Sets the distance between border and Indicator in pixels
         /// @param a float extressing the distance in pixels
         void SetIndicatorPadding(const f32 pixels);
+
+    protected:
+        /// @brief Sets the size of the button.
+        void applySize(const glm::vec3& size) override;
+
+        /// @brief Sets the world position of the button.
+        void applyPosition(const glm::vec3& position) override;
+
+        /// @brief Sets the rotation of the button.
+        void applyRotation(const glm::vec3& rotation) override;
 
     private:
         void setColors(const ColorState state) override;

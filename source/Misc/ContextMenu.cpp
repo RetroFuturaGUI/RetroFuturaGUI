@@ -109,7 +109,8 @@ void RetroFuturaGUI::ContextMenu::Update()
         return;
     }
 
-    //Placed before the items take the input, so they test it where they are drawn
+    //Placed before the items take the input, so they test it where they are drawn, and at once, whatever transitions they have
+    const Transitions::InstantScope instant { true };
     applyDefaultFont();
     setPosition();
     _items->SetSize(glm::vec3(_background->GetSize(), 0.01f));

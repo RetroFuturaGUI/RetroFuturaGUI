@@ -26,15 +26,6 @@ namespace RetroFuturaGUI
         /// @brief Draws the image.
         void Draw() override;
 
-        /// @brief Sets the box the image is fitted into, its aspect ratio kept.
-        void SetSize(const glm::vec3& size) override;
-
-        /// @brief Sets the world position of the image.
-        void SetPosition(const glm::vec3& position) override;
-
-        /// @brief Sets the rotation of the image.
-        void SetRotation(const glm::vec3& rotation) override;
-
         /// @brief Shows a picture decoded before, on any thread (Texture::DecodeFile, DecodeMemory), in place of the one before
         void SetImage(DecodedImage&& image);
 
@@ -52,6 +43,16 @@ namespace RetroFuturaGUI
 
         /// @brief The picture's size in pixels, 0 by 0 without one.
         glm::i32vec2 GetResolution() const;
+
+    protected:
+        /// @brief Sets the box the image is fitted into, its aspect ratio kept.
+        void applySize(const glm::vec3& size) override;
+
+        /// @brief Sets the world position of the image.
+        void applyPosition(const glm::vec3& position) override;
+
+        /// @brief Sets the rotation of the image.
+        void applyRotation(const glm::vec3& rotation) override;
 
     private:
         f32 _textureAspectRatio { 0.0f };

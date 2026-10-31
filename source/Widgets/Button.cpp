@@ -32,7 +32,7 @@ void RetroFuturaGUI::Button::Draw()
     drawText();
 }
 
-void RetroFuturaGUI::Button::SetSize(const glm::vec3& size)
+void RetroFuturaGUI::Button::applySize(const glm::vec3& size)
 {
     if(!_background)
         return;
@@ -43,7 +43,7 @@ void RetroFuturaGUI::Button::SetSize(const glm::vec3& size)
     if(!_text)
         return;
 
-    IWidget::SetSize(size);
+    IWidget::applySize(size);
 
     _background->SetSize(size);
     _border->SetSize(size);
@@ -52,7 +52,7 @@ void RetroFuturaGUI::Button::SetSize(const glm::vec3& size)
     _text->SetPosition(_position + glm::vec3(0.0f, 0.0f, 0.02f));
 }
 
-void RetroFuturaGUI::Button::SetPosition(const glm::vec3& position)
+void RetroFuturaGUI::Button::applyPosition(const glm::vec3& position)
 {
     if(!_background)
         return;
@@ -63,14 +63,14 @@ void RetroFuturaGUI::Button::SetPosition(const glm::vec3& position)
     if(!_text)
         return;
 
-    IWidget::SetPosition(position);
+    IWidget::applyPosition(position);
 
     _background->SetPosition(position);
     _border->SetPosition(position + glm::vec3(0.0f, 0.0f, 0.01f));
     _text->SetPosition(position + glm::vec3(0.0f, 0.0f, 0.02f));
 }
 
-void RetroFuturaGUI::Button::SetRotation(const glm::vec3& rotation)
+void RetroFuturaGUI::Button::applyRotation(const glm::vec3& rotation)
 {
     if(!_background)
         return;

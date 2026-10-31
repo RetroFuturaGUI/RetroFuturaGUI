@@ -184,6 +184,7 @@ bool RetroFuturaGUI::Lasagna::isPlacementFree(const CellPlacement& placement) co
 
 void RetroFuturaGUI::Lasagna::placeWidget(std::unique_ptr<IWidget> widget, const CellPlacement& placement)
 {
+    const Transitions::InstantScope instant { true }; //a container lays its widgets out at once, whatever transitions they have
     const u32
         row { placement._Row },
         col { placement._Column },
@@ -300,7 +301,7 @@ void RetroFuturaGUI::Lasagna::ShowDebugLines(const bool show)
     _drawDebugLines = show;
 }
 
-void RetroFuturaGUI::Lasagna::SetSize(const glm::vec3& size)
+void RetroFuturaGUI::Lasagna::applySize(const glm::vec3& size)
 {
     _size = size;
     resizeCells();
@@ -362,7 +363,7 @@ void RetroFuturaGUI::Lasagna::SetLayerDefinition(std::vector<f32> layerDefinitio
     moveWidgets();
 }
 
-void RetroFuturaGUI::Lasagna::SetPosition(const glm::vec3& position)
+void RetroFuturaGUI::Lasagna::applyPosition(const glm::vec3& position)
 {
     _position = position;
     moveWidgets();
@@ -465,6 +466,7 @@ void RetroFuturaGUI::Lasagna::resizeCells()
 
 void RetroFuturaGUI::Lasagna::resizeWidget(const LasagnaCell& cell)
 {
+    const Transitions::InstantScope instant { true }; //a container lays its widgets out at once, whatever transitions they have
     if(!cell._Widget)
         return;
 
@@ -501,6 +503,7 @@ void RetroFuturaGUI::Lasagna::resizeAllWidgets()
 
 void RetroFuturaGUI::Lasagna::moveWidgets()
 {
+    const Transitions::InstantScope instant { true }; //a container lays its widgets out at once, whatever transitions they have
     const glm::vec3 topLeft { getTopLeftCorner() };
 
     for(auto& row : _lasagna)

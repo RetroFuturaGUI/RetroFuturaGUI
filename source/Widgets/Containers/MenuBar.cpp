@@ -41,7 +41,7 @@ void RetroFuturaGUI::MenuBar::Draw()
     drawItems();
 }
 
-void RetroFuturaGUI::MenuBar::SetPosition(const glm::vec3& position)
+void RetroFuturaGUI::MenuBar::applyPosition(const glm::vec3& position)
 {
     if(!_background)
         return;
@@ -49,7 +49,7 @@ void RetroFuturaGUI::MenuBar::SetPosition(const glm::vec3& position)
     if(!_border)
         return;
 
-    IWidget::SetPosition(position);
+    IWidget::applyPosition(position);
 
     _background->SetPosition(position);
     _border->SetPosition(position + glm::vec3(0.0f, 0.0f, 0.01f));
@@ -57,7 +57,7 @@ void RetroFuturaGUI::MenuBar::SetPosition(const glm::vec3& position)
     placeItems();
 }
 
-void RetroFuturaGUI::MenuBar::SetSize(const glm::vec3& size)
+void RetroFuturaGUI::MenuBar::applySize(const glm::vec3& size)
 {
     if(!_background)
         return;
@@ -65,7 +65,7 @@ void RetroFuturaGUI::MenuBar::SetSize(const glm::vec3& size)
     if(!_border)
         return;
 
-    IWidget::SetSize(size);
+    IWidget::applySize(size);
 
     _background->SetSize(size);
     _border->SetSize(size);
@@ -73,7 +73,7 @@ void RetroFuturaGUI::MenuBar::SetSize(const glm::vec3& size)
     updateLayout();
 }
 
-void RetroFuturaGUI::MenuBar::SetRotation(const glm::vec3& rotation)
+void RetroFuturaGUI::MenuBar::applyRotation(const glm::vec3& rotation)
 {
     if(!_background)
         return;
@@ -81,7 +81,7 @@ void RetroFuturaGUI::MenuBar::SetRotation(const glm::vec3& rotation)
     if(!_border)
         return;
 
-    IWidget::SetRotation(rotation);
+    IWidget::applyRotation(rotation);
 
     _background->SetRotation(rotation);
     _border->SetRotation(rotation);
@@ -874,6 +874,7 @@ void RetroFuturaGUI::MenuBar::updateLayout()
 
 void RetroFuturaGUI::MenuBar::placeItems()
 {
+    const Transitions::InstantScope instant { true }; //a container lays its widgets out at once, whatever transitions they have
     resolveCellSizes();
 
     uSize index { 0 };

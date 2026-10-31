@@ -25,14 +25,15 @@ namespace RetroFuturaGUI
             /// @brief Draws all meshes of the loaded model.
             void Draw() override;
 
+        protected:
             /// @brief Sets the size (scale) of the model.
-            void SetSize(const glm::vec3& size) override;
+            void applySize(const glm::vec3& size) override;
 
             /// @brief Sets the world position of the model.
-            void SetPosition(const glm::vec3& position) override;
+            void applyPosition(const glm::vec3& position) override;
 
             /// @brief Sets the rotation of the model.
-            void SetRotation(const glm::vec3& rotation) override;
+            void applyRotation(const glm::vec3& rotation) override;
 
         private:
             void processNode(aiNode* node, const aiScene* scene);

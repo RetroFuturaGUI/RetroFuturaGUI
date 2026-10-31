@@ -59,9 +59,9 @@ void RetroFuturaGUI::ColorPicker::Draw()
     _indicatorBorder->Draw();
 }
 
-void RetroFuturaGUI::ColorPicker::SetSize(const glm::vec3& size)
+void RetroFuturaGUI::ColorPicker::applySize(const glm::vec3& size)
 {
-    IWidget::SetSize(size);
+    IWidget::applySize(size);
 
     if(!_colorPickerBackground)
         return;
@@ -77,9 +77,9 @@ void RetroFuturaGUI::ColorPicker::SetSize(const glm::vec3& size)
     alignIndicator();
 }
 
-void RetroFuturaGUI::ColorPicker::SetPosition(const glm::vec3& position)
+void RetroFuturaGUI::ColorPicker::applyPosition(const glm::vec3& position)
 {
-    IWidget::SetPosition(position);
+    IWidget::applyPosition(position);
 
     if(!_colorPickerBackground)
         return;
@@ -98,9 +98,9 @@ void RetroFuturaGUI::ColorPicker::SetPosition(const glm::vec3& position)
     alignIndicator();
 }
 
-void RetroFuturaGUI::ColorPicker::SetRotation(const glm::vec3& rotation)
+void RetroFuturaGUI::ColorPicker::applyRotation(const glm::vec3& rotation)
 {
-    IWidget::SetRotation(rotation);
+    IWidget::applyRotation(rotation);
 
     if(!_colorPickerBackground)
         return;

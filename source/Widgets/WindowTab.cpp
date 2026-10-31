@@ -82,6 +82,7 @@ RetroFuturaGUI::WindowTab::~WindowTab()
 void RetroFuturaGUI::WindowTab::Draw()
 {
     syncTitles(); //again, since a widget after this WindowTab may have renamed a window
+    syncFieldRects(); //again, since the pointer may have moved, closed or added a field since
     drawBackground();
     drawBorder();
     drawFields();
@@ -89,7 +90,7 @@ void RetroFuturaGUI::WindowTab::Draw()
     drawSelectedWindow();
 }
 
-void RetroFuturaGUI::WindowTab::SetPosition(const glm::vec3& position)
+void RetroFuturaGUI::WindowTab::applyPosition(const glm::vec3& position)
 {
     if(!_background)
         return;
@@ -97,13 +98,13 @@ void RetroFuturaGUI::WindowTab::SetPosition(const glm::vec3& position)
     if(!_border)
         return;
 
-    IWidget::SetPosition(position);
+    IWidget::applyPosition(position);
 
     _background->SetPosition(position);
     _border->SetPosition(position + glm::vec3(0.0f, 0.0f, _zStep * 8.0f)); //over the fields
 }
 
-void RetroFuturaGUI::WindowTab::SetSize(const glm::vec3& size)
+void RetroFuturaGUI::WindowTab::applySize(const glm::vec3& size)
 {
     if(!_background)
         return;
@@ -111,15 +112,15 @@ void RetroFuturaGUI::WindowTab::SetSize(const glm::vec3& size)
     if(!_border)
         return;
 
-    IWidget::SetSize(size);
+    IWidget::applySize(size);
 
     _background->SetSize(glm::vec2(size));
     _border->SetSize(glm::vec2(size));
 }
 
-void RetroFuturaGUI::WindowTab::SetRotation(const glm::vec3& rotation)
+void RetroFuturaGUI::WindowTab::applyRotation(const glm::vec3& rotation)
 {
-    IWidget::SetRotation(rotation);
+    IWidget::applyRotation(rotation);
 }
 
 bool RetroFuturaGUI::WindowTab::AddWindow(Window* window)
@@ -140,7 +141,13 @@ bool RetroFuturaGUI::WindowTab::InsertWindow(Window* window, const uSize index)
 
     std::unique_ptr<Text> title { std::make_unique<Text>(&_projection) };
     applyTitleFont(title.get());
-    _fields.insert(std::next(_fields.begin(), static_cast<i64>(std::min(index, _fields.size()))), Field { ._Window = window, ._Title = std::move(title), ._ShownTitle = {} });
+
+    //A window dropped on the strip takes its field from where the preview showed, and moves into its slot from there
+    TransitionValue<glm::vec2> shown {};
+    shown.Jump(_previewShown.Get());
+
+    _fields.insert(std::next(_fields.begin(), static_cast<i64>(std::min(index, _fields.size()))),
+                   Field { ._Window = window, ._Title = std::move(title), ._ShownTitle = {}, ._Shown = shown, ._HasShown = _isPreviewShown });
     syncTitles();
 
     _onWindowAdded.Emit(window);
@@ -387,6 +394,7 @@ void RetroFuturaGUI::WindowTab::interact()
 {
     _isShown = true;
     syncTitles();
+    syncFieldRects(); //the pointer meets the fields where they are drawn
     followPointer();
     interactSelectedWindow();
 }
@@ -657,17 +665,74 @@ glm::vec4 RetroFuturaGUI::WindowTab::fieldRect(const uSize index) const
 {
     glm::vec4 field { slotRect(index) };
 
-    if(!_isDraggingField)
-        return field;
-
     if(index >= _fields.size())
         return field;
 
-    if(_pressedWindow != _fields[index]._Window)
-        return field;
-
-    field.x = _dragLeft;
+    const glm::vec2 shown { _fields[index]._HasShown ? _fields[index]._Shown.Get() : getFieldTarget(index) };
+    field.x = shown.x;
+    field.z = shown.y;
     return field;
+}
+
+glm::vec2 RetroFuturaGUI::WindowTab::getFieldTarget(const uSize index) const
+{
+    const glm::vec4 slot { slotRect(index) };
+
+    if(!_isDraggingField)
+        return glm::vec2(slot.x, slot.z);
+
+    if(index >= _fields.size())
+        return glm::vec2(slot.x, slot.z);
+
+    if(_pressedWindow != _fields[index]._Window)
+        return glm::vec2(slot.x, slot.z);
+
+    return glm::vec2(_dragLeft, slot.z);
+}
+
+void RetroFuturaGUI::WindowTab::syncFieldRects()
+{
+    const Transition transition { Transitions::Resolve(_transitionSettings, TransitionProperty::Position) };
+
+    for(uSize index = 0; index < _fields.size(); ++index)
+    {
+        Field& field { _fields[index] };
+        const glm::vec2 target { getFieldTarget(index) };
+        const bool isDragged { _isDraggingField && _pressedWindow == field._Window };
+
+        if(!field._HasShown || isDragged)
+        {
+            field._Shown.Jump(target);
+            field._HasShown = true;
+            continue;
+        }
+
+        if(target == field._Shown.GetTarget())
+            continue;
+
+        field._Shown.Set(target, transition);
+    }
+
+    if(!_showsDropPreview)
+    {
+        _isPreviewShown = false;
+        return;
+    }
+
+    const glm::vec4 slot { slotRect(_fields.size()) };
+    const glm::vec2 target { slot.x, slot.z };
+
+    //The preview field opens from nothing where it will stand, while the others narrow to make room
+    if(!_isPreviewShown)
+    {
+        _previewShown.Jump(glm::vec2(slot.x, 0.0f));
+        _isPreviewShown = true;
+    }
+
+    if(target == _previewShown.GetTarget())
+        return;
+
+    _previewShown.Set(target, transition);
 }
 
 uSize RetroFuturaGUI::WindowTab::slotAt(const f32 x) const
@@ -882,10 +947,14 @@ void RetroFuturaGUI::WindowTab::drawDropPreview()
     if(!_showsDropPreview)
         return;
 
-    const glm::vec4 rect { slotRect(_fields.size()) };
+    glm::vec4 rect { slotRect(_fields.size()) };
 
     if(!fitsInStrip(rect))
         return;
+
+    const glm::vec2 shown { _previewShown.Get() };
+    rect.x = shown.x;
+    rect.z = shown.y;
 
     //See-through, since the window isn't in yet. Copies, since the rectangle and the title only point at the colors they draw
     std::vector<glm::vec4>

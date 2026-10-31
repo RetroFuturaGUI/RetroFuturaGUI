@@ -129,6 +129,7 @@ void RetroFuturaGUI::Scene::SetLasagnaAxis(const AxisDefinition axisdefinition, 
 
 void RetroFuturaGUI::Scene::SetSize(const glm::vec3& size)
 {
+    const Transitions::InstantScope instant { true }; //the root container follows the scene, which the window lays out, at once
     _size = size;
 
     if(!_rootContainer)
@@ -144,6 +145,7 @@ const glm::vec3& RetroFuturaGUI::Scene::GetSize() const
 
 void RetroFuturaGUI::Scene::SetPosition(const glm::vec3& position)
 {
+    const Transitions::InstantScope instant { true }; //the root container follows the scene, which the window lays out, at once
     _position = position;
 
     if(!_rootContainer)
@@ -159,6 +161,7 @@ const glm::vec3& RetroFuturaGUI::Scene::GetPosition() const
 
 void RetroFuturaGUI::Scene::SetRotation(const glm::vec3& rotation)
 {
+    const Transitions::InstantScope instant { true }; //the root container follows the scene, which the window lays out, at once
     _rotation = rotation;
 
     if(!_rootContainer)
@@ -230,6 +233,7 @@ GLFWwindow* RetroFuturaGUI::Scene::getParentGlfwWindow() const
 
 void RetroFuturaGUI::Scene::adoptRootContainer(std::unique_ptr<IWidget> container)
 {
+    const Transitions::InstantScope instant { true }; //the root container follows the scene, which the window lays out, at once
     _rootContainer = std::move(container);
 
     if(!_rootContainer)

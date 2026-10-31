@@ -43,9 +43,6 @@ namespace RetroFuturaGUI
         auto operator =(ExtendedComboBox&&) = delete;
 
         void Draw() override;
-        void SetSize(const glm::vec3& size) override;
-        void SetPosition(const glm::vec3& position) override;
-        void SetRotation(const glm::vec3& rotation) override;
         void SetDropDownPosition(const DropDownPosition position) override;
 
         /// @brief Builds a widget of type T as the last item and owns it. The box is its parent, so an open list counts the row
@@ -101,6 +98,13 @@ namespace RetroFuturaGUI
         void SetTextAlignment(const TextAlignment alignment) override;
         void SetTextPadding(const f32 padding) override;
         const std::list<std::unique_ptr<IWidget>>& GetItems() const;
+
+    protected:
+        void applySize(const glm::vec3& size) override;
+
+        void applyPosition(const glm::vec3& position) override;
+
+        void applyRotation(const glm::vec3& rotation) override;
 
     private:
         /// @brief Sweeps the removed items, follows the pointer for the box and its list, then passes the input on to the rows while the list is open.

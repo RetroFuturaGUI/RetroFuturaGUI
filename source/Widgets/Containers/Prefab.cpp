@@ -51,33 +51,33 @@ void RetroFuturaGUI::Prefab::update()
     _lasagna->Update();
 }
 
-void RetroFuturaGUI::Prefab::SetSize(const glm::vec3& size)
+void RetroFuturaGUI::Prefab::applySize(const glm::vec3& size)
 {
     if(!_lasagna)
         return;
 
     //The base call keeps _size in step - without it GetSize() on a prefab stays at its constructed value forever
-    IWidget::SetSize(size);
+    IWidget::applySize(size);
 
     _lasagna->SetSize(size);
 }
 
-void RetroFuturaGUI::Prefab::SetPosition(const glm::vec3& position)
+void RetroFuturaGUI::Prefab::applyPosition(const glm::vec3& position)
 {
     if(!_lasagna)
         return;
 
-    IWidget::SetPosition(position);
+    IWidget::applyPosition(position);
 
     _lasagna->SetPosition(position);
 }
 
-void RetroFuturaGUI::Prefab::SetRotation(const glm::vec3& rotation)
+void RetroFuturaGUI::Prefab::applyRotation(const glm::vec3& rotation)
 {
     if(!_lasagna)
         return;
 
-    IWidget::SetRotation(rotation);
+    IWidget::applyRotation(rotation);
 
     _lasagna->SetRotation(rotation);
 }

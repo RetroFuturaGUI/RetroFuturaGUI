@@ -65,15 +65,6 @@ namespace RetroFuturaGUI
 
         IRangedValue(std::string_view name, Projection* projection, IHierarchyNode* parentWidget, const WidgetTypeID parentWidgetTypeID, GLFWwindow* parentWindow);
 
-        /// @brief Sets the position
-        void SetPosition(const glm::vec3& position) override final;
-
-        /// @brief Sets the size
-        void SetSize(const glm::vec3& size) override final;
-
-        /// @brief Sets the rotation
-        void SetRotation(const glm::vec3& rotation) override final;
-
         /// @brief Sets whether the track runs horizontally or vertically at 0° rotation.
         void SetOrientation(const Orientation orientation);
 
@@ -458,6 +449,16 @@ namespace RetroFuturaGUI
             _indicatorBorderPrimaryRasterWidthTransfer,
             _graphPrimaryRasterWidthTransfer,
             _graphFogDensity;
+
+    protected:
+        /// @brief Sets the position
+        void applyPosition(const glm::vec3& position) override final;
+
+        /// @brief Sets the size
+        void applySize(const glm::vec3& size) override final;
+
+        /// @brief Sets the rotation
+        void applyRotation(const glm::vec3& rotation) override final;
 
     private:
         void setIndicatorBackgroundColors();

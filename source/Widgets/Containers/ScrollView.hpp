@@ -95,9 +95,6 @@ namespace RetroFuturaGUI
         auto operator =(ScrollView&&) = delete;
 
         void Draw() override;
-        void SetSize(const glm::vec3& size) override;
-        void SetPosition(const glm::vec3& position) override;
-        void SetRotation(const glm::vec3& rotation) override;
         void EnableBackground(const bool enable);
         void EnableBorder(const bool enable);
         void EnableScrolling(const ScrollEnable enableMask);
@@ -150,6 +147,12 @@ namespace RetroFuturaGUI
             return dynamic_cast<T*>(cell->_Widget.get());
         }
 
+    protected:
+        void applySize(const glm::vec3& size) override;
+
+        void applyPosition(const glm::vec3& position) override;
+
+        void applyRotation(const glm::vec3& rotation) override;
 
     private:
         /// @brief What a press inside the view has turned out to be so far.

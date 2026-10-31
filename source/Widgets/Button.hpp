@@ -23,17 +23,18 @@ namespace RetroFuturaGUI
         /// @brief Draws the button, including its background, border and label text.
         void Draw() override;
 
-        /// @brief Sets the size of the button.
-        void SetSize(const glm::vec3& size) override;
-
-        /// @brief Sets the world position of the button.
-        void SetPosition(const glm::vec3& position) override;
-
-        /// @brief Sets the rotation of the button.
-        void SetRotation(const glm::vec3& rotation) override;
-
         /// @brief Sets the corner rounding radii of the button's background and border.
         void SetCornerRadii(const glm::vec4& radii);
+
+    protected:
+        /// @brief Sets the size of the button.
+        void applySize(const glm::vec3& size) override;
+
+        /// @brief Sets the world position of the button.
+        void applyPosition(const glm::vec3& position) override;
+
+        /// @brief Sets the rotation of the button.
+        void applyRotation(const glm::vec3& rotation) override;
 
     private:
         void interact() override;

@@ -71,21 +71,21 @@ void RetroFuturaGUI::ColorPreview::SetPreviewColor(const glm::vec4& color)
     _colorRect->SetColors(std::span<const glm::vec4>(&_previewColor, 1));
 }
 
-void RetroFuturaGUI::ColorPreview::SetSize(const glm::vec3& size)
+void RetroFuturaGUI::ColorPreview::applySize(const glm::vec3& size)
 {
-    IWidget::SetSize(size);
+    IWidget::applySize(size);
     alignColorPreview();
 }
 
-void RetroFuturaGUI::ColorPreview::SetPosition(const glm::vec3& position)
+void RetroFuturaGUI::ColorPreview::applyPosition(const glm::vec3& position)
 {
-    IWidget::SetPosition(position);
+    IWidget::applyPosition(position);
     alignColorPreview();
 }
 
-void RetroFuturaGUI::ColorPreview::SetRotation(const glm::vec3& rotation)
+void RetroFuturaGUI::ColorPreview::applyRotation(const glm::vec3& rotation)
 {
-    IWidget::SetRotation(rotation);
+    IWidget::applyRotation(rotation);
 
     if(!_checkeredBackground)
         return;

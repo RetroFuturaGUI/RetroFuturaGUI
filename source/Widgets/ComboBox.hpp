@@ -22,9 +22,6 @@ namespace RetroFuturaGUI
         auto operator =(ComboBox&&) = delete;
 
         void Draw() override;
-        void SetSize(const glm::vec3& size) override;
-        void SetPosition(const glm::vec3& position) override;
-        void SetRotation(const glm::vec3& rotation) override;
         void AddItem(std::string_view name);
         const std::string& GetSelectedText() const;
         void RemoveItem(const uSize index) override;
@@ -44,6 +41,13 @@ namespace RetroFuturaGUI
 
         /// @brief Sets the item texts' colors: ColorState::Disabled sets the disabled items' colors, every other state the enabled items'.
         void SetItemTextColors(std::span<const glm::vec4> colors, const ColorState state);
+
+    protected:
+        void applySize(const glm::vec3& size) override;
+
+        void applyPosition(const glm::vec3& position) override;
+
+        void applyRotation(const glm::vec3& rotation) override;
 
     private:
         void interact() override;

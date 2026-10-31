@@ -114,15 +114,18 @@ void RetroFuturaGUI::Window::Update()
     if(!getAllWindows().empty() && this == getAllWindows().front())
         AudioPlayback::UpdateAll();
 
-    updateLasagna();
-
-    //Every active scene, those hidden while the window sits in a tab too
-    for(Scene* scene : _scenes)
     {
-        if(!scene)
-            continue;
+        const Transitions::InstantScope instant { _isHidden }; //a hidden window's widgets arrive where they are going at once
+        updateLasagna();
 
-        scene->Update();
+        //Every active scene, those hidden while the window sits in a tab too
+        for(Scene* scene : _scenes)
+        {
+            if(!scene)
+                continue;
+
+            scene->Update();
+        }
     }
 
     updatePopups();

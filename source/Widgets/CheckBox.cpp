@@ -51,7 +51,7 @@ void RetroFuturaGUI::CheckBox::Draw()
     _checkmark->Draw();
 }
 
-void RetroFuturaGUI::CheckBox::SetSize(const glm::vec3& size)
+void RetroFuturaGUI::CheckBox::applySize(const glm::vec3& size)
 {
     if(!_background)
         return;
@@ -59,7 +59,7 @@ void RetroFuturaGUI::CheckBox::SetSize(const glm::vec3& size)
     if(!_border)
         return;
 
-    IWidget::SetSize(size);
+    IWidget::applySize(size);
 
     _background->SetSize(size);
     _border->SetSize(size);
@@ -67,7 +67,7 @@ void RetroFuturaGUI::CheckBox::SetSize(const glm::vec3& size)
     SetInnerPadding(_innerPadding);
 }
 
-void RetroFuturaGUI::CheckBox::SetPosition(const glm::vec3& position)
+void RetroFuturaGUI::CheckBox::applyPosition(const glm::vec3& position)
 {
     if(!_background)
         return;
@@ -78,7 +78,7 @@ void RetroFuturaGUI::CheckBox::SetPosition(const glm::vec3& position)
     if(!_inheritFill)
         return;
 
-    IWidget::SetPosition(position);
+    IWidget::applyPosition(position);
 
     _background->SetPosition(position);
     _border->SetPosition(position + glm::vec3(0.0f, 0.0f, 0.01f));
@@ -90,7 +90,7 @@ void RetroFuturaGUI::CheckBox::SetPosition(const glm::vec3& position)
     _checkmark->SetPosition(position + glm::vec3(0.0f, 0.0f, 0.03f));
 }
 
-void RetroFuturaGUI::CheckBox::SetRotation(const glm::vec3& rotation)
+void RetroFuturaGUI::CheckBox::applyRotation(const glm::vec3& rotation)
 {
     if(!_background)
         return;

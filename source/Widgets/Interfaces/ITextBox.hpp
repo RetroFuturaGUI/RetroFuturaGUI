@@ -22,14 +22,6 @@ namespace RetroFuturaGUI
         void TakeKeyboardFocus();
 
     //Geometry
-        /// @brief Sets the size of the text box.
-        void SetSize(const glm::vec3& size) final override;
-
-        /// @brief Sets the world position of the text box.
-        void SetPosition(const glm::vec3& position) final override;
-
-        /// @brief Sets the rotation of the text box.
-        void SetRotation(const glm::vec3& rotation) final override;
 
     protected:
         /// @brief Creates the box, text, placeholder, caret and selection. Protected: only TextBox and MultilineTextBox create one, and set their own widget type.
@@ -38,5 +30,15 @@ namespace RetroFuturaGUI
         void interact() override;
         void setColors(const ColorState state) final override;
         TextArea getTextArea() const override final;
+    protected:
+        /// @brief Sets the size of the text box.
+        void applySize(const glm::vec3& size) final override;
+
+        /// @brief Sets the world position of the text box.
+        void applyPosition(const glm::vec3& position) final override;
+
+        /// @brief Sets the rotation of the text box.
+        void applyRotation(const glm::vec3& rotation) final override;
+
     };
 }
