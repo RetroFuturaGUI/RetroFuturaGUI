@@ -283,6 +283,19 @@ namespace RetroFuturaGUI
         ///        since its own native window is always hidden; whether its tab shows is told by whether it was drawn.
         bool isHiddenOnScreen() const;
 
+        /// @brief Fades the native window in over its Opacity transition: from transparent while it isn't shown yet, else from
+        ///        where a fade out has got to.
+        void fadeIn();
+
+        /// @brief Fades the native window out over its Opacity transition, at once without one.
+        void fadeOut();
+
+        /// @brief Whether the native window has faded out.
+        bool isFadedOut() const;
+
+        /// @brief Gives the native window the opacity shown now, when it changed.
+        void applyOpacity();
+
     //Input
         /// @brief Reads the mouse for this frame: whether it reaches this window and where the cursor is. Then sets the cursor, and starts or ends a resize on a press or release.
         void pollInput();
@@ -425,8 +438,11 @@ namespace RetroFuturaGUI
         ///        way they will be once it is docked.
         glm::vec4 cornerRadiiDockedAt(const DockEdge edge) const;
 
-        /// @brief Hides the docking preview, if it shows.
+        /// @brief Hides the docking preview, if it shows: fades it out over its Opacity transition, at once without one.
         void hideDockPreview();
+
+        /// @brief Draws the docking preview while it fades out, and hides it once it has.
+        void fadeDockPreview();
 
         /// @brief How far the dragged window is from where it would sit docked to the host's edge, across that edge.
         static i32 dockDistance(const DockRect& dragged, const DockRect& host, const i32 gap, const DockEdge edge);
@@ -444,8 +460,12 @@ namespace RetroFuturaGUI
         /// @brief Draws every popup on the stack, bottom first, then closes the top one if it was asked to.
         void drawPopups();
 
-        /// @brief Closes the top popup if its window was asked to close: takes it off the stack, sends its result, then destroys it.
+        /// @brief Closes the top popup if its window was asked to close: takes it off the stack and sends its result, then fades
+        ///        its window out over its Opacity transition before destroying it, at once without one or while this window is hidden.
         void closeTopPopup();
+
+        /// @brief Draws the closed popups while their windows fade out, and destroys those that have.
+        void drawFadingPopups();
 
         /// @brief The window of the top popup, or this window when no popup is open.
         Window* getTopPopupWindow();
@@ -522,6 +542,8 @@ namespace RetroFuturaGUI
         bool
             _isHidden { true }, //wasn't drawn last frame, or the system doesn't show it: draws without transitions
             _isDrawnSinceUpdate { false };
+        TransitionValue<f32> _opacity {}; //the native window's, for a popup's or the docking preview's fades
+        f32 _appliedOpacity { 1.0f }; //what the native window last got, so it is only set again on a change
 
     //Input
         i32
@@ -589,6 +611,7 @@ namespace RetroFuturaGUI
 
     //Popups
         std::vector<std::unique_ptr<IPopup>> _popups {};
+        std::vector<std::unique_ptr<IPopup>> _fadingPopups {}; //closed, off the stack, kept until their windows have faded out
         Window* _popupHost { nullptr }; //set on popups' windows only: the window holding the popup stack
 
     //Tabs

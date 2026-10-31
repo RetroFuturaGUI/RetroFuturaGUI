@@ -32,7 +32,8 @@ namespace RetroFuturaGUI
         CornerRadii = 1 << 1,
         Position = 1 << 2,
         Size = 1 << 3,
-        Rotation = 1 << 4
+        Rotation = 1 << 4,
+        Opacity = 1 << 5
     };
 
     constexpr TransitionProperty operator |(const TransitionProperty left, const TransitionProperty right)
@@ -53,7 +54,8 @@ namespace RetroFuturaGUI
             _CornerRadii,
             _Position,
             _Size,
-            _Rotation;
+            _Rotation,
+            _Opacity;
     };
 
     /// @brief The global transition defaults, and the arithmetic of a running transition. A transition is worked out from the
@@ -78,13 +80,14 @@ namespace RetroFuturaGUI
         };
 
         /// @brief Every property, one at a time, for going through a mask.
-        static constexpr std::array<TransitionProperty, 5> AllProperties
+        static constexpr std::array<TransitionProperty, 6> AllProperties
         {
             TransitionProperty::Colors,
             TransitionProperty::CornerRadii,
             TransitionProperty::Position,
             TransitionProperty::Size,
-            TransitionProperty::Rotation
+            TransitionProperty::Rotation,
+            TransitionProperty::Opacity
         };
 
         /// @brief Sets the transition of every element and widget that has none of its own for these properties. Off (0 ms) until set.

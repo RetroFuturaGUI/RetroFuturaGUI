@@ -145,7 +145,7 @@ void RetroFuturaGUI::Environment::Draw()
         if(!widget || !_entries[index]._Show)
             continue;
 
-        widget->Draw();
+        widget->DrawAtOpacity();
     }
 
     if(_drawDebugBox)

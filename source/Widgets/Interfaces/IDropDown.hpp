@@ -89,7 +89,8 @@ namespace RetroFuturaGUI
         /// @brief Draws the open list. DrawShown calls it at the end of the frame.
         virtual void drawDropDown() = 0;
 
-        /// @brief Has DrawShown draw the open list at the end of this frame. Called from Draw.
+        /// @brief Has DrawShown draw the list at the end of this frame while it is open or still fading out, and fades it over
+        ///        the Opacity transition. Called from every Draw.
         void showDropDownLater();
 
     //Elements
@@ -129,6 +130,7 @@ namespace RetroFuturaGUI
             _showDropDown { false },
             _dropDownItemHovered { false },
             _holdsPickPress { false }; //the press that picked a row is still down, so the closed list keeps it from the widgets under it
+        TransitionValue<f32> _listOpacity {}; //fades the list in when it opens and out when it closes
 
     private:
         friend class Window; //sets the waiting lists aside while it draws a window docked into one of its tabs

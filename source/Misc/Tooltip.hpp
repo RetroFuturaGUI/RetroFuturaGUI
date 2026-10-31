@@ -70,6 +70,7 @@ namespace RetroFuturaGUI
             _hasOwnFont { false };
         std::chrono::steady_clock::time_point _hoverStart {};
         glm::vec2 _pointerPosition { 0.0f };
+        TransitionValue<f32> _opacity {};
         u32 _appliedDefaultFontVersion { 0 };
 
         //Per window, since every window interacts before any draws: drawn and cleared by DrawShown at the end of its frame

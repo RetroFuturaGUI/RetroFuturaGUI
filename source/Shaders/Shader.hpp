@@ -25,13 +25,29 @@ namespace RetroFuturaGUI
     class Shader
     {
     public:
+        /// @brief While one lives, everything drawn is that much more see-through: its opacity multiplies the one around it, and
+        ///        every shader program in use takes the product as uOpacity. A widget draws inside one at its opacity.
+        class OpacityScope
+        {
+        public:
+            OpacityScope(const f32 opacity);
+            OpacityScope(const OpacityScope&) = delete;
+            OpacityScope(OpacityScope&&) = delete;
+            auto operator =(const OpacityScope&) = delete;
+            auto operator =(OpacityScope&&) = delete;
+            ~OpacityScope();
+
+        private:
+            f32 _outerOpacity { 1.0f };
+        };
+
         /// @brief Loads, compiles and links a shader program from the given shader source files. A source may pull in other files
         ///        with #include "file", and each define is set right after its #version line, so one source can build several
         ///        programs, such as one per fill.
         Shader(const char* vertexPath, const char* fragmentPath, const char* geometryPath = nullptr, const std::vector<std::string>& defines = {});
         ~Shader();
 
-        /// @brief Activates this shader program for subsequent draw calls.
+        /// @brief Activates this shader program for subsequent draw calls, with the opacity of the OpacityScopes around it.
         void UseProgram();
 
         /// @brief Sets a bool uniform.
@@ -117,5 +133,7 @@ namespace RetroFuturaGUI
 
         /// @brief The location of the uniform with the given name. -1 when the program has none
         i32 getUniformLocation(std::string_view name) const;
+
+        static inline f32 _drawOpacity { 1.0f }; //the product of the OpacityScopes around what is drawn now
     };
 }

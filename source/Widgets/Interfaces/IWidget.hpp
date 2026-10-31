@@ -43,6 +43,16 @@ namespace RetroFuturaGUI
         /// @brief Draws the widget. Must be called after Update()!
         virtual void Draw() = 0;
 
+        /// @brief Draws the widget at its opacity, which multiplies the opacity of whatever draws it, and skips it while it is fully transparent. Containers draw their widgets with it.
+        void DrawAtOpacity();
+
+        /// @brief Sets how opaque the widget and everything inside it draw, 0 to 1, fading there over the widget's Opacity
+        ///        transition (SetTransition). A fully transparent widget still takes the input; hide it to stop that.
+        void SetOpacity(const f32 opacity);
+
+        /// @brief Returns how opaque the widget draws now, midway while a fade runs.
+        f32 GetOpacity() const;
+
         /// @brief Connects a slot to be called when the widget is enabled.
         /// @param async If true, the slot is invoked asynchronously.
         void Connect_OnEnable(const typename Signal<>::Slot& slot, const bool async);
@@ -198,7 +208,7 @@ namespace RetroFuturaGUI
         void updateTooltip();
         void updateContextMenu();
 
-        /// @brief Applies the shown size, position and rotation while their transitions run, the targets once they arrive.
+        /// @brief Applies the shown size, position, rotation and opacity while their transitions run, the targets once they arrive.
         void updateGeometry();
 
         /// @brief Applies the pointer filters from the outermost container down to the closest one. Each container then adjusts
@@ -219,5 +229,10 @@ namespace RetroFuturaGUI
             _isResizing { false },
             _isMoving { false },
             _isTurning { false };
+
+    //Opacity: _opacity is drawn, _opacityTransition where it is going
+        f32 _opacity { 1.0f };
+        TransitionValue<f32> _opacityTransition;
+        bool _isFading { false };
     };
 }

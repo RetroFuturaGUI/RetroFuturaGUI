@@ -1,4 +1,5 @@
 #version 330 core
+uniform float uOpacity = 1.0; //Shader::OpacityScope's product, uploaded with every UseProgram
 // A rectangle's outline, uBorderWidth wide. The FILL_ define picks the fill
 #include "Modules/RoundedCorners.glsl"
 #include "Modules/Raster.glsl"
@@ -49,4 +50,5 @@ void main()
         finalColor = applyRaster(finalColor, vLocalPos);
 
     Color = finalColor;
+    Color.a *= uOpacity; //faded with the widget and whatever fades around it
 }

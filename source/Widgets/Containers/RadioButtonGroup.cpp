@@ -39,12 +39,12 @@ void RetroFuturaGUI::RadioButtonGroup::Draw()
             if(!column._RadioButton)
                 continue;
 
-            column._RadioButton->Draw();
+            column._RadioButton->DrawAtOpacity();
 
             if(!column._Label)
                 continue;
 
-            column._Label->Draw();
+            column._Label->DrawAtOpacity();
         }
 }
 

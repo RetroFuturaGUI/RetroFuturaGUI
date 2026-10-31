@@ -57,10 +57,7 @@ void RetroFuturaGUI::ExtendedComboBox::Draw()
         _previewText->Draw();
     }
 
-    if(!_showDropDown)
-        return;
-
-    showDropDownLater(); //drawn at the end of the frame, otherwise the widgets after this box would cover the list
+    showDropDownLater(); //drawn at the end of the frame, otherwise the widgets after this box would cover the list; also while it fades out
 }
 
 void RetroFuturaGUI::ExtendedComboBox::drawDropDown()
@@ -87,7 +84,7 @@ void RetroFuturaGUI::ExtendedComboBox::drawDropDown()
             return;
 
         if(item)
-            item->Draw();
+            item->DrawAtOpacity();
 
         ++visibleIndex;
     }

@@ -64,10 +64,7 @@ void RetroFuturaGUI::ComboBox::Draw()
         }
     }
 
-    if(!_showDropDown)
-        return;
-
-    showDropDownLater(); //drawn at the end of the frame, or the widgets after this box would cover the list
+    showDropDownLater(); //drawn at the end of the frame, or the widgets after this box would cover the list; also while it fades out
 }
 
 void RetroFuturaGUI::ComboBox::drawDropDown()

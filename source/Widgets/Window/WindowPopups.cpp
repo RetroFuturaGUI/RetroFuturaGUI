@@ -1,5 +1,6 @@
 #include "Window.hpp"
 #include "PlatformBridge.hpp"
+#include <algorithm>
 #include <utility>
 
 #if defined(TARGET_PLATFORM_LINUX)
@@ -146,6 +147,7 @@ void RetroFuturaGUI::Window::drawPopups()
     }
 
     closeTopPopup();
+    drawFadingPopups();
 }
 
 void RetroFuturaGUI::Window::closeTopPopup()
@@ -181,10 +183,52 @@ void RetroFuturaGUI::Window::closeTopPopup()
         return;
 
     closing->emitClosed();
+    Window* closingWindow { closing->GetWindow() };
+
+    //Its window fades out before it goes, letting the mouse through to whatever lies under it meanwhile
+    if(closingWindow && !_isHidden && 0 < Transitions::Resolve(closingWindow->_transitionSettings, TransitionProperty::Opacity)._Duration.count())
+    {
+        glfwSetWindowAttrib(closingWindow->_window, GLFW_MOUSE_PASSTHROUGH, GLFW_TRUE);
+        closingWindow->fadeOut();
+        _fadingPopups.push_back(std::move(closing));
+        return;
+    }
+
     closing.reset();
 
     //Destroying the popup's window left no context current
     glfwMakeContextCurrent(_window);
+}
+
+void RetroFuturaGUI::Window::drawFadingPopups()
+{
+    if(_fadingPopups.empty())
+        return;
+
+    for(const std::unique_ptr<IPopup>& popup : _fadingPopups)
+    {
+        if(!popup)
+            continue;
+
+        Window* popupWindow { popup->GetWindow() };
+
+        if(!popupWindow)
+            continue;
+
+        popupWindow->Draw();
+    }
+
+    const uSize fadedCount
+    {
+        std::erase_if(_fadingPopups, [](const std::unique_ptr<IPopup>& popup)
+            {
+                return !popup || !popup->GetWindow() || popup->GetWindow()->isFadedOut();
+            })
+    };
+
+    //Destroying a popup's window left no context current
+    if(0 < fadedCount)
+        glfwMakeContextCurrent(_window);
 }
 
 RetroFuturaGUI::Window* RetroFuturaGUI::Window::getTopPopupWindow()

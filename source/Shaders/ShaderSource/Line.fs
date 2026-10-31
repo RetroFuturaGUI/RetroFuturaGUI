@@ -1,4 +1,5 @@
 #version 330 core
+uniform float uOpacity = 1.0; //Shader::OpacityScope's product, uploaded with every UseProgram
 
 uniform vec4 uColor;
 uniform float uLineThickness; // the line's full width, in pixels
@@ -16,4 +17,5 @@ void main()
         discard;
 
     FragColor = vec4(uColor.rgb, uColor.a * coverage);
+    FragColor.a *= uOpacity; //faded with the widget and whatever fades around it
 }

@@ -1,4 +1,5 @@
 #version 330 core
+uniform float uOpacity = 1.0; //Shader::OpacityScope's product, uploaded with every UseProgram
 // A filled rectangle. The FILL_ define picks the fill, and WAVE_PLANE adds the wave line WavePlane draws
 #include "Modules/RoundedCorners.glsl"
 #include "Modules/Raster.glsl"
@@ -53,4 +54,5 @@ void main()
         discard;
 
     Color = finalColor;
+    Color.a *= uOpacity; //faded with the widget and whatever fades around it
 }

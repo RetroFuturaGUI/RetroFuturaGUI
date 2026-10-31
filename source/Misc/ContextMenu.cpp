@@ -43,6 +43,7 @@ RetroFuturaGUI::ContextMenu::ContextMenu(Projection* projection, IWidget* widget
     if(_items)
     {
         _items->SetLabelHiddenWhenOpen(true);
+        _items->SetTransition(TransitionProperty::Opacity, Transition {}); //its list fades with the menu (not on its own as well)
         _items->Connect_OnItemClicked([this]()
         {
             if(!_items)
@@ -103,11 +104,22 @@ void RetroFuturaGUI::ContextMenu::Update()
 
     interact();
 
-    if(!_isShown)
+    //Fades in once shown and out once dismissed, over the widget's Opacity transition, and draws until it has faded out
+    const f32 target { _isShown ? 1.0f : 0.0f };
+
+    if(target != _opacity.GetTarget())
+        _opacity.Set(target, Transitions::Resolve(_widget->_transitionSettings, TransitionProperty::Opacity));
+
+    if(0.0f >= _opacity.Get())
     {
         std::erase_if(_shownContextMenus, [this](const auto& shown) { return this == shown.second; });
         return;
     }
+
+    _shownContextMenus[_widget->GetParentWindow()] = this;
+
+    if(!_isShown)
+        return; //fading out, it takes no more input
 
     //Placed before the items take the input, so they test it where they are drawn, and at once, whatever transitions they have
     const Transitions::InstantScope instant { true };
@@ -117,8 +129,6 @@ void RetroFuturaGUI::ContextMenu::Update()
     _items->SetPosition(_background->GetPosition() + glm::vec3(0.0f, 0.0f, _zStep * 2.0f));
     _items->SetPreviewText(_text->GetTextUTF8());
     _items->Interact();
-
-    _shownContextMenus[_widget->GetParentWindow()] = this;
 }
 
 void RetroFuturaGUI::ContextMenu::DrawShown(GLFWwindow* window)
@@ -135,6 +145,7 @@ void RetroFuturaGUI::ContextMenu::DrawShown(GLFWwindow* window)
         return;
 
     glClear(GL_DEPTH_BUFFER_BIT);
+    const Shader::OpacityScope opacity { contextMenu->_opacity.Get() };
     contextMenu->draw();
 }
 

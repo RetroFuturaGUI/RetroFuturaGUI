@@ -249,7 +249,7 @@ void RetroFuturaGUI::Window::drawLasagna()
     if(!_lasagna)
         return;
 
-    _lasagna->Draw();
+    _lasagna->DrawAtOpacity();
 }
 
 void RetroFuturaGUI::Window::updateLasagna()

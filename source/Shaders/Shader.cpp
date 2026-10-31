@@ -1,4 +1,5 @@
 #include "Shader.hpp"
+#include <algorithm>
 #include <format>
 #include <fstream>
 #include <print>
@@ -48,9 +49,21 @@ RetroFuturaGUI::Shader::~Shader()
     glDeleteProgram(_programId);
 }
 
+RetroFuturaGUI::Shader::OpacityScope::OpacityScope(const f32 opacity)
+    : _outerOpacity(_drawOpacity)
+{
+    _drawOpacity = _outerOpacity * std::clamp(opacity, 0.0f, 1.0f);
+}
+
+RetroFuturaGUI::Shader::OpacityScope::~OpacityScope()
+{
+    _drawOpacity = _outerOpacity;
+}
+
 void RetroFuturaGUI::Shader::UseProgram()
 {
     glUseProgram(_programId);
+    SetUniformFloat("uOpacity", _drawOpacity); //a program without it, such as YuvToRgb's, ignores it
 }
 
 void RetroFuturaGUI::Shader::SetUniformBool(std::string_view name, bool value) const

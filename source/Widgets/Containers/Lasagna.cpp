@@ -253,7 +253,7 @@ void RetroFuturaGUI::Lasagna::Draw()
                 if(!cell._Widget || cell._SpanOccupied || !cell._Show)
                     continue;
 
-                cell._Widget->Draw();
+                cell._Widget->DrawAtOpacity();
             }
         }
     }

@@ -47,6 +47,7 @@ void RetroFuturaGUI::IDropDown::DrawShown()
             continue;
 
         glClear(GL_DEPTH_BUFFER_BIT); //over everything drawn before, a row's list over its panel too
+        const Shader::OpacityScope opacity { dropDown->_listOpacity.Get() };
         dropDown->drawDropDown();
     }
 
@@ -90,6 +91,15 @@ bool RetroFuturaGUI::IDropDown::isListOver(const IHierarchyNode* reader, GLFWwin
 
 void RetroFuturaGUI::IDropDown::showDropDownLater()
 {
+    //Fades in while open and out once closed, over the drop-down's Opacity transition, and draws until it has faded out
+    const f32 target { _showDropDown ? 1.0f : 0.0f };
+
+    if(target != _listOpacity.GetTarget())
+        _listOpacity.Set(target, Transitions::Resolve(_transitionSettings, TransitionProperty::Opacity));
+
+    if(0.0f >= _listOpacity.Get())
+        return;
+
     if(std::find(_shownDropDowns.begin(), _shownDropDowns.end(), this) != _shownDropDowns.end())
         return;
 

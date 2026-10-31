@@ -251,9 +251,15 @@ void RetroFuturaGUI::Window::showDockPreview(const DockRect& slot, const glm::ve
     if(slot._Position != current._Position)
         glfwSetWindowPos(_dockPreview->_window, slot._Position.x, slot._Position.y);
 
+    const bool isVisible { GLFW_TRUE == glfwGetWindowAttrib(_dockPreview->_window, GLFW_VISIBLE) };
+
+    //Fades in as it shows, or back in from where a fade out has got to
+    if(!isVisible || 1.0f > _dockPreview->_opacity.GetTarget())
+        _dockPreview->fadeIn();
+
     _dockPreview->Draw(); //Drawn before it shows, so it never shows a frame it hasn't drawn
 
-    if(GLFW_FALSE == glfwGetWindowAttrib(_dockPreview->_window, GLFW_VISIBLE))
+    if(!isVisible)
         glfwShowWindow(_dockPreview->_window);
 }
 
@@ -286,6 +292,39 @@ void RetroFuturaGUI::Window::hideDockPreview()
 
     if(GLFW_FALSE == glfwGetWindowAttrib(_dockPreview->_window, GLFW_VISIBLE))
         return;
+
+    //Without a fade it goes at once, and the native window's opacity stays untouched
+    if(0 >= Transitions::Resolve(_dockPreview->_transitionSettings, TransitionProperty::Opacity)._Duration.count())
+    {
+        glfwHideWindow(_dockPreview->_window);
+        return;
+    }
+
+    if(0.0f >= _dockPreview->_opacity.GetTarget())
+        return; //already fading out, which a restart every frame would slow down
+
+    _dockPreview->fadeOut(); //fadeDockPreview hides it once it has faded out
+}
+
+void RetroFuturaGUI::Window::fadeDockPreview()
+{
+    if(!_dockPreview)
+        return;
+
+    if(!_dockPreview->_window)
+        return;
+
+    if(0.0f < _dockPreview->_opacity.GetTarget())
+        return; //it shows, and updateDockSnap draws it
+
+    if(GLFW_FALSE == glfwGetWindowAttrib(_dockPreview->_window, GLFW_VISIBLE))
+        return;
+
+    if(!_dockPreview->isFadedOut())
+    {
+        _dockPreview->Draw();
+        return;
+    }
 
     glfwHideWindow(_dockPreview->_window);
 }

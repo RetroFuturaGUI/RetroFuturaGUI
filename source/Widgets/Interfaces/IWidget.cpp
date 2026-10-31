@@ -5,6 +5,8 @@
 #include "ContextMenu.hpp"
 #include "FillStyle.hpp"
 #include "Window.hpp"
+#include "Shader.hpp"
+#include <algorithm>
 #include <memory>
 
 #if defined(TARGET_PLATFORM_LINUX)
@@ -162,6 +164,46 @@ void RetroFuturaGUI::IWidget::updateGeometry()
         const Transitions::InstantScope instant { true };
         applyRotation(rotation);
     }
+
+    if(_isFading)
+    {
+        _opacity = _opacityTransition.Get();
+        _isFading = _opacityTransition.IsRunning();
+    }
+}
+
+void RetroFuturaGUI::IWidget::DrawAtOpacity()
+{
+    if(0.0f >= _opacity)
+        return; //nothing of it would show
+
+    const Shader::OpacityScope opacity { _opacity };
+    Draw();
+}
+
+void RetroFuturaGUI::IWidget::SetOpacity(const f32 opacity)
+{
+    const f32 target { std::clamp(opacity, 0.0f, 1.0f) };
+    const Transition transition { Transitions::Resolve(_transitionSettings, TransitionProperty::Opacity) };
+
+    if(!_hasUpdated || 0 >= transition._Duration.count())
+    {
+        _isFading = false;
+        _opacityTransition.Jump(target);
+        _opacity = target;
+        return;
+    }
+
+    if(!_isFading)
+        _opacityTransition.Jump(_opacity); //from where it is now
+
+    _opacityTransition.Set(target, transition);
+    _isFading = true;
+}
+
+f32 RetroFuturaGUI::IWidget::GetOpacity() const
+{
+    return _opacity;
 }
 
 glm::vec3 RetroFuturaGUI::IWidget::GetRotation() const

@@ -1,4 +1,5 @@
 #version 330 core
+uniform float uOpacity = 1.0; //Shader::OpacityScope's product, uploaded with every UseProgram
 // The ColorPicker's field of colors, a circle (SHAPE_CIRCLE) or a square (SHAPE_SQUARE)
 
 in vec2 vLocalPos;
@@ -36,6 +37,7 @@ void main()
     float saturation = clamp(dist / radius, 0.0, 1.0); // white at the center, full at the rim
 
     fragColor = vec4(uBrightness * mix(vec3(1.0), hueToRgb(hue), saturation), coverage);
+    fragColor.a *= uOpacity; //faded with the widget and whatever fades around it
 }
 #elif defined(SHAPE_SQUARE)
 void main()
@@ -44,5 +46,6 @@ void main()
 
     // Hue runs left to right, from red back to red. Saturation runs from white at the bottom to full at the top
     fragColor = vec4(uBrightness * mix(vec3(1.0), hueToRgb(uv.x), uv.y), 1.0);
+    fragColor.a *= uOpacity; //faded with the widget and whatever fades around it
 }
 #endif

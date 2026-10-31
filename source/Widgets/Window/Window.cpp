@@ -15,6 +15,7 @@ RetroFuturaGUI::Window::Window(std::string_view name, const i32 width, const i32
 : _width(width), _height(height), _name(name)
 {
     _role = role;
+    _opacity.Jump(1.0f);
     createWindow();
 
     //Docking previews and popups are never docking targets
@@ -28,6 +29,8 @@ RetroFuturaGUI::Window::~Window()
     //don't go out: the slots may be gone by now.
     while(!_popups.empty())
         _popups.pop_back();
+
+    _fadingPopups.clear();
 
     if(_dockSnap._Tab && isRegisteredWindowTab(_dockSnap._Tab))
         _dockSnap._Tab->hideDropPreview();
@@ -52,6 +55,43 @@ RetroFuturaGUI::Window::~Window()
 
     glfwDestroyWindow(_window);
     ContextObject::ForgetContext(_window); //its VAOs and framebuffers went with it
+}
+
+void RetroFuturaGUI::Window::fadeIn()
+{
+    if(!_window)
+        return;
+
+    if(GLFW_FALSE == glfwGetWindowAttrib(_window, GLFW_VISIBLE))
+        _opacity.Jump(0.0f);
+
+    _opacity.Set(1.0f, Transitions::Resolve(_transitionSettings, TransitionProperty::Opacity));
+    applyOpacity();
+}
+
+void RetroFuturaGUI::Window::fadeOut()
+{
+    _opacity.Set(0.0f, Transitions::Resolve(_transitionSettings, TransitionProperty::Opacity));
+    applyOpacity();
+}
+
+bool RetroFuturaGUI::Window::isFadedOut() const
+{
+    return 0.0f >= _opacity.Get();
+}
+
+void RetroFuturaGUI::Window::applyOpacity()
+{
+    if(!_window)
+        return;
+
+    const f32 opacity { _opacity.Get() };
+
+    if(opacity == _appliedOpacity)
+        return;
+
+    _appliedOpacity = opacity;
+    glfwSetWindowOpacity(_window, opacity);
 }
 
 bool RetroFuturaGUI::Window::isHiddenOnScreen() const
@@ -162,14 +202,21 @@ void RetroFuturaGUI::Window::Draw()
     if(_showAfterDraw)
     {
         _showAfterDraw = false;
+
+        if(WindowRole::Popup == _role)
+            fadeIn(); //a popup fades in as it first shows
+
         glfwShowWindow(_window);
     }
+
+    applyOpacity();
 
     glfwPollEvents();
     refuseCloseWhileBlocked();
     followCursor(); //before the docking, which looks at where the window is now
     followDocking(); //After the scenes, because a window bar may have dragged this window while it interacted
     updateDockSnap();
+    fadeDockPreview();
     drawPopups();
 }
 

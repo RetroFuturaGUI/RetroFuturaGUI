@@ -48,7 +48,7 @@ void RetroFuturaGUI::Scene::Draw()
     if(!_rootContainer)
         return;
 
-    _rootContainer->Draw();
+    _rootContainer->DrawAtOpacity();
 }
 
 void RetroFuturaGUI::Scene::Connect_OnInteract(const typename Signal<>::Slot& slot, const bool async)

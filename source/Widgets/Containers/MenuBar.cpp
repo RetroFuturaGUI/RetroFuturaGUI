@@ -1094,7 +1094,7 @@ void RetroFuturaGUI::MenuBar::drawItems()
         if(!item)
             continue;
 
-        item->Draw();
+        item->DrawAtOpacity();
     }
 }
 

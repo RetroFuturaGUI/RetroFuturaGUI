@@ -89,6 +89,7 @@ namespace RetroFuturaGUI
             _wasRightButtonPressed { false },
             _hasPendingItemClose { false };
         glm::vec2 _pointerPosition { 0.0f };
+        TransitionValue<f32> _opacity {};
         u32 _appliedDefaultFontVersion { 0 };
 
         //Per window, since every window interacts before any draws: drawn and cleared by DrawShown at the end of its frame

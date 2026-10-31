@@ -32,7 +32,7 @@ void RetroFuturaGUI::ScrollView::Draw()
         if(!cell._Widget)
             continue;
 
-        cell._Widget->Draw();
+        cell._Widget->DrawAtOpacity();
     }
 }
 

@@ -45,7 +45,13 @@ void RetroFuturaGUI::Tooltip::Update()
 
     interact();
 
-    if(!_isShown)
+    //Fades in once shown and out once hidden, over the widget's Opacity transition, and draws until it has faded out
+    const f32 target { _isShown ? 1.0f : 0.0f };
+
+    if(target != _opacity.GetTarget())
+        _opacity.Set(target, Transitions::Resolve(_widget->_transitionSettings, TransitionProperty::Opacity));
+
+    if(0.0f >= _opacity.Get())
         return;
 
     _shownTooltips[_widget->GetParentWindow()] = this;
@@ -65,6 +71,7 @@ void RetroFuturaGUI::Tooltip::DrawShown(GLFWwindow* window)
         return;
 
     glClear(GL_DEPTH_BUFFER_BIT);
+    const Shader::OpacityScope opacity { tooltip->_opacity.Get() };
     tooltip->draw();
 }
 
