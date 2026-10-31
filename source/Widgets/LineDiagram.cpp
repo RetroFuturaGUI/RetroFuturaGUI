@@ -40,8 +40,7 @@ void RetroFuturaGUI::LineDiagram::Draw()
     if(!_border)
         return;
 
-    updatePoints(); // Before interact, so the cursor is tested against the lines
-    interact();
+    updatePoints(); //again, since a widget drawn before this one may have handed over new data, like a Video its frequency bands
 
     drawBackground();
     _border->Draw();
@@ -445,6 +444,7 @@ void RetroFuturaGUI::LineDiagram::interact()
     if(!_parentWindow)
         return;
 
+    updatePoints(); //so the cursor is tested against the lines of the current data
     const PointerState pointer { readPointer() };
 
     if(pointer._IsCaptured)

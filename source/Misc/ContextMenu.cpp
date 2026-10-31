@@ -77,56 +77,63 @@ RetroFuturaGUI::ContextMenu::ContextMenu(Projection* projection, IWidget* widget
 
 RetroFuturaGUI::ContextMenu::~ContextMenu()
 {
-    if(this == _shownContextMenu)
-        _shownContextMenu = nullptr;
-
-    if(this == _asideContextMenu)
-        _asideContextMenu = nullptr;
+    std::erase_if(_shownContextMenus, [this](const auto& shown) { return this == shown.second; });
 }
 
 void RetroFuturaGUI::ContextMenu::Update()
 {
+    if(!_widget)
+        return;
+
+    if(!_background)
+        return;
+
+    if(!_text)
+        return;
+
+    if(!_items)
+        return;
+
     if(_hasPendingItemClose)
     {
         _hasPendingItemClose = false;
-
-        if(_items)
-            _items->SetDropDownOpen(false);
+        _items->SetDropDownOpen(false);
     }
 
     interact();
 
     if(!_isShown)
     {
-        if(this == _shownContextMenu)
-            _shownContextMenu = nullptr;
-
+        std::erase_if(_shownContextMenus, [this](const auto& shown) { return this == shown.second; });
         return;
     }
 
-    _shownContextMenu = this;
+    //Placed before the items take the input, so they test it where they are drawn
+    applyDefaultFont();
+    setPosition();
+    _items->SetSize(glm::vec3(_background->GetSize(), 0.01f));
+    _items->SetPosition(_background->GetPosition() + glm::vec3(0.0f, 0.0f, _zStep * 2.0f));
+    _items->SetPreviewText(_text->GetTextUTF8());
+    _items->Interact();
+
+    _shownContextMenus[_widget->GetParentWindow()] = this;
 }
 
-void RetroFuturaGUI::ContextMenu::DrawShown()
+void RetroFuturaGUI::ContextMenu::DrawShown(GLFWwindow* window)
 {
-    if(!_shownContextMenu)
+    const auto shown { _shownContextMenus.find(window) };
+
+    if(_shownContextMenus.end() == shown)
+        return;
+
+    ContextMenu* contextMenu { shown->second };
+    _shownContextMenus.erase(shown);
+
+    if(!contextMenu)
         return;
 
     glClear(GL_DEPTH_BUFFER_BIT);
-    _shownContextMenu->draw();
-    _shownContextMenu = nullptr;
-}
-
-void RetroFuturaGUI::ContextMenu::setShownAside()
-{
-    _asideContextMenu = _shownContextMenu;
-    _shownContextMenu = nullptr;
-}
-
-void RetroFuturaGUI::ContextMenu::restoreShownFromAside()
-{
-    _shownContextMenu = _asideContextMenu;
-    _asideContextMenu = nullptr;
+    contextMenu->draw();
 }
 
 void RetroFuturaGUI::ContextMenu::SetDefaultFontFamily(std::string_view fontFamily, const f32 fontSize, const PlatformBridge::Fonts::Slant slant, const PlatformBridge::Fonts::Weight fontWeight)
@@ -142,21 +149,9 @@ void RetroFuturaGUI::ContextMenu::SetDefaultFontFamily(std::string_view fontFami
 
 void RetroFuturaGUI::ContextMenu::draw()
 {
-    if(!_background)
-        return;
-
-    if(!_text)
-        return;
-
     if(!_items)
         return;
 
-    applyDefaultFont();
-    setPosition();
-
-    _items->SetSize(glm::vec3(_background->GetSize(), 0.01f));
-    _items->SetPosition(_background->GetPosition() + glm::vec3(0.0f, 0.0f, _zStep * 2.0f));
-    _items->SetPreviewText(_text->GetTextUTF8());
     _items->Draw();
     IDropDown::DrawShown();
 }

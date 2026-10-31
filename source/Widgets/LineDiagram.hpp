@@ -54,7 +54,7 @@ namespace RetroFuturaGUI
     private:
         void alignElementsToTrack() override;
         void drawGraph() override;
-        void interact();
+        void interact() override;
 
         /// @brief Creates lines, each with its own points, until there are lineCount of them.
         void growLinesTo(const uSize lineCount);

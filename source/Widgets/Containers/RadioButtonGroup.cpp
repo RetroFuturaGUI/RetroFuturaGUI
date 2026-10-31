@@ -25,8 +25,6 @@ RetroFuturaGUI::RadioButtonGroup::RadioButtonGroup(const std::string& name, Proj
 
 void RetroFuturaGUI::RadioButtonGroup::Draw()
 {
-    _removedWidgets.clear(); //no slot of theirs runs between frames
-
     if(!_text)
         return;
 
@@ -40,14 +38,31 @@ void RetroFuturaGUI::RadioButtonGroup::Draw()
             if(!column._RadioButton)
                 continue;
 
-            column._RadioButton->UpdateTooltip();
             column._RadioButton->Draw();
 
             if(!column._Label)
                 continue;
 
-            column._Label->UpdateTooltip();
             column._Label->Draw();
+        }
+}
+
+void RetroFuturaGUI::RadioButtonGroup::interact()
+{
+    _removedWidgets.clear(); //no slot of theirs runs between frames
+
+    for(const auto& row : _grid)
+        for(const auto& column: row)
+        {
+            if(!column._RadioButton)
+                continue;
+
+            column._RadioButton->Interact();
+
+            if(!column._Label)
+                continue;
+
+            column._Label->Interact();
         }
 }
 
@@ -184,7 +199,7 @@ const RetroFuturaGUI::RadioButtonGroup::GridCell* RetroFuturaGUI::RadioButtonGro
 
 void RetroFuturaGUI::RadioButtonGroup::releaseCell(GridCell& cell)
 {
-    //Kept alive until the next Draw, since one of the button's own slots may be running right now
+    //Kept alive until the next Interact, since one of the button's own slots may be running right now
     if(cell._RadioButton)
         _removedWidgets.push_back(std::move(cell._RadioButton));
 

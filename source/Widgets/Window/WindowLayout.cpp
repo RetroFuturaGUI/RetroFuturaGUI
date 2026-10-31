@@ -153,9 +153,7 @@ RetroFuturaGUI::ScreenRect RetroFuturaGUI::Window::reserveEdge(const DockEdge ed
 
 void RetroFuturaGUI::Window::updateProjection()
 {
-    if(!updateSize())
-        return;
-
+    updateSize();
     glViewport(0, 0, _width, _height);
 }
 
@@ -209,8 +207,8 @@ void RetroFuturaGUI::Window::drawContent()
 
     IDropDown::DrawShown(); //after every scene, so an open list covers the widgets drawn after its box
     drawFrame();
-    ContextMenu::DrawShown();
-    Tooltip::DrawShown(); //last, so it covers every scene
+    ContextMenu::DrawShown(_window);
+    Tooltip::DrawShown(_window); //last, so it covers every scene
 }
 
 void RetroFuturaGUI::Window::drawFrame()

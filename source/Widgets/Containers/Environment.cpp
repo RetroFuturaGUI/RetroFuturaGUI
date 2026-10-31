@@ -36,7 +36,7 @@ bool RetroFuturaGUI::Environment::RemoveWidget(std::string_view name)
     if(!entry)
         return false;
 
-    //Kept alive until the next Draw, since one of its own slots may be running right now. The emptied entry goes then too,
+    //Kept alive until the next Interact, since one of its own slots may be running right now. The emptied entry goes then too,
     //as Draw may be walking the entries at this moment
     _removedWidgets.push_back(std::move(entry->_Widget));
     return true;
@@ -132,16 +132,12 @@ void RetroFuturaGUI::Environment::ShowDebugBox(const bool show)
 
 void RetroFuturaGUI::Environment::Draw()
 {
-    //No slot of the removed widgets runs between frames
-    _removedWidgets.clear();
-    std::erase_if(_entries, [](const EnvironmentEntry& entry) { return !entry._Widget; });
-
     std::optional<ScissorClip> clip;
 
     if(_clippingOn)
         clip.emplace(framebufferBox(_position.x - _size.x * 0.5f, _position.y - _size.y * 0.5f, _size.x, _size.y));
 
-    //By index, since a widget's slot may attach another one while it draws, which can move the entries
+    //By index, since a slot that runs while a widget draws, like a Video's, may attach another one
     for(uSize index = 0; index < _entries.size(); ++index)
     {
         IWidget* widget { _entries[index]._Widget.get() };
@@ -149,12 +145,29 @@ void RetroFuturaGUI::Environment::Draw()
         if(!widget || !_entries[index]._Show)
             continue;
 
-        widget->UpdateTooltip();
         widget->Draw();
     }
 
     if(_drawDebugBox)
         drawDebugBox();
+}
+
+void RetroFuturaGUI::Environment::interact()
+{
+    //No slot of the removed widgets runs between frames
+    _removedWidgets.clear();
+    std::erase_if(_entries, [](const EnvironmentEntry& entry) { return !entry._Widget; });
+
+    //By index, since a widget's slot may attach another one, which can move the entries
+    for(uSize index = 0; index < _entries.size(); ++index)
+    {
+        IWidget* widget { _entries[index]._Widget.get() };
+
+        if(!widget || !_entries[index]._Show)
+            continue;
+
+        widget->Interact();
+    }
 }
 
 void RetroFuturaGUI::Environment::SetSize(const glm::vec3& size)

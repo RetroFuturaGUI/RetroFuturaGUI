@@ -134,7 +134,7 @@ namespace RetroFuturaGUI
         }
 
         /// @brief Removes the widget with the given name, and the cells after it move up to close the gap.
-        ///        The widget is destroyed at the start of the next Draw, so a widget's own slot may remove it.
+        ///        The widget is destroyed at the start of the next Interact, so a widget's own slot may remove it.
         /// @return false when no widget has that name.
         /// @warning Call from the GUI thread only, for the same reason as AddWidget.
         bool RemoveWidget(std::string_view name);
@@ -165,7 +165,11 @@ namespace RetroFuturaGUI
         // Windows starts a drag after 4 px (SM_CXDRAG), so 5 px takes a deliberate move without catching the jitter of a click.
         static constexpr f32 _dragThreshold { 5.0f };
 
-        void interact();
+        /// @brief Sweeps the removed cells, follows the view's own press, passes the input on to the widgets, then scrolls by the wheel.
+        void interact() override;
+
+        /// @brief Follows the pointer for the view itself: hover, and the press that becomes a drag scroll or a click.
+        void followPointer();
 
         /// @brief Advances the current press: decides between a scroll and a click, drags the content, and ends the press on release.
         void updatePress(const PointerState& pointer, const bool isMouseInside);
@@ -189,7 +193,7 @@ namespace RetroFuturaGUI
         void dragScroll(const glm::vec2& mousePosition);
 
         /// @brief Scrolls by the frame's wheel, and along Z by its pinch, while the mouse is inside, and takes the parts it scrolled
-        ///        by. Called after the widgets inside drew, so a nested ScrollView takes them first.
+        ///        by. Called after the widgets inside interacted, so a nested ScrollView takes them first.
         void scrollByWheel();
 
         /// @brief Emits OnRelease for the view's own press and resets its colors.
@@ -226,6 +230,6 @@ namespace RetroFuturaGUI
         bool
             _showBackground { false },
             _showBorder { false },
-            _hasPendingRemovals { false }; // RemoveWidget marked a cell, so the next Draw erases it
+            _hasPendingRemovals { false }; // RemoveWidget marked a cell, so the next Interact erases it
     };
 }

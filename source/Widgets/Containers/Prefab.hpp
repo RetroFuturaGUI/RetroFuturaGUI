@@ -57,11 +57,13 @@ namespace RetroFuturaGUI
             return _lasagna->AddWidget<T>(name, placement, std::forward<Args>(args)...);
         }
 
-        /// @brief Removes the child with the given name. It is destroyed at the start of the next Draw, so its own slot may remove it.
+        /// @brief Removes the child with the given name. It is destroyed at the start of the next Interact, so its own slot may remove it.
         /// @return false when no child has that name.
         bool RemoveChildWidget(std::string_view name);
 
     private:
+        void interact() override;
+
         std::unique_ptr<Lasagna> _lasagna { nullptr };
     };
 }

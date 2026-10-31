@@ -62,6 +62,34 @@ bool RetroFuturaGUI::Window::WindowShouldClose()
     return GLFW_TRUE == glfwWindowShouldClose(_window);
 }
 
+void RetroFuturaGUI::Window::Interact()
+{
+    if(!_window)
+        return;
+
+    if(IsInTab())
+        return; //the window holding its WindowTab has it interact
+
+    //Another window may have interacted last, and the GL calls of a slot below have to land in this window's context
+    glfwMakeContextCurrent(_window);
+
+    //Each WindowTab marks itself again when it interacts. One in an inactive scene, which doesn't, takes no dropped windows.
+    for(WindowTab* tab : _windowTabs)
+    {
+        if(!tab)
+            continue;
+
+        tab->_isShown = false;
+    }
+
+    pollInput();
+    emitDroppedFiles(); //before the scenes, so a slot's changes show in this frame
+    updateSize(); //so the widgets test the pointer against the new layout
+    interactContent();
+    setCursorIcon(); //after the content, whose widgets ask for their icons while they interact
+    interactPopups();
+}
+
 void RetroFuturaGUI::Window::Draw()
 {
     if(!_window)
@@ -73,20 +101,6 @@ void RetroFuturaGUI::Window::Draw()
     //Another window may have drawn last, and every GL call below has to land in this window's context
     glfwMakeContextCurrent(_window);
     ContextObject::DeletePending(_window); //VAOs and framebuffers of objects destroyed while another window's context was current
-
-    //Each WindowTab marks itself again when it draws. One in an inactive scene, which doesn't, takes no dropped windows.
-    for(WindowTab* tab : _windowTabs)
-    {
-        if(!tab)
-            continue;
-
-        tab->_isShown = false;
-    }
-
-    if(WindowRole::DockPreview != _role)
-        pollInput();
-
-    emitDroppedFiles(); //before the scenes, so a slot's changes show in this frame
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     //Color blends as usual. Alpha only ever adds up, so a semi-transparent widget on the opaque background leaves the window
@@ -96,10 +110,6 @@ void RetroFuturaGUI::Window::Draw()
 
     updateProjection();
     drawContent();
-
-    if(WindowRole::DockPreview != _role)
-        setCursorIcon(); //after the content, whose widgets ask for their icons while they draw
-
     glfwSwapBuffers(_window);
 
     if(_showAfterDraw)
@@ -111,7 +121,7 @@ void RetroFuturaGUI::Window::Draw()
     glfwPollEvents();
     refuseCloseWhileBlocked();
     followCursor(); //before the docking, which looks at where the window is now
-    followDocking(); //After the scenes, because a window bar may have dragged this window while it drew
+    followDocking(); //After the scenes, because a window bar may have dragged this window while it interacted
     updateDockSnap();
     drawPopups();
 }

@@ -94,7 +94,7 @@ bool RetroFuturaGUI::Lasagna::RemoveWidget(std::string_view name)
 
     LasagnaCell& origin { _lasagna[index->_Row][index->_Column][index->_Layer] };
 
-    //Kept alive until the next Draw, since one of its own slots may be running right now
+    //Kept alive until the next Interact, since one of its own slots may be running right now
     _removedWidgets.push_back(std::move(origin._Widget));
 
     for(uSize r = index->_Row; r < index->_Row + origin._RowSpan; ++r)
@@ -240,8 +240,6 @@ RetroFuturaGUI::TrackIndex RetroFuturaGUI::Lasagna::GetTrackCounts() const
 
 void RetroFuturaGUI::Lasagna::Draw()
 {
-    _removedWidgets.clear(); //no slot of theirs runs between frames
-
     for(auto& row : _lasagna)
     {
         for(auto& column : row)
@@ -251,12 +249,30 @@ void RetroFuturaGUI::Lasagna::Draw()
                 if(_drawDebugLines)
                     drawDebugLines(cell);
 
+                if(!cell._Widget || cell._SpanOccupied || !cell._Show)
+                    continue;
+
+                cell._Widget->Draw();
+            }
+        }
+    }
+}
+
+void RetroFuturaGUI::Lasagna::interact()
+{
+    _removedWidgets.clear(); //no slot of theirs runs between frames
+
+    for(auto& row : _lasagna)
+    {
+        for(auto& column : row)
+        {
+            for(auto& cell : column)
+            {
                                                          // A hidden cell's widget mustn't take input
                 if(!cell._Widget || cell._SpanOccupied || !cell._Show)
                     continue;
 
-                cell._Widget->UpdateTooltip();
-                cell._Widget->Draw();
+                cell._Widget->Interact();
             }
         }
     }

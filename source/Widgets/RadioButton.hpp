@@ -73,7 +73,7 @@ namespace RetroFuturaGUI
     private:
         void setColors(const ColorState state) override;
         void setIndicatorColors();
-        void interact();
+        void interact() override;
 
         std::unique_ptr<Plane> _indicator { nullptr };
         RadioButtonGroup* _parentGroup { nullptr };

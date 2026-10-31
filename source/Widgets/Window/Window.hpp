@@ -53,8 +53,13 @@ namespace RetroFuturaGUI
         ///        stays open, like a native window under a modal dialog.
         bool WindowShouldClose();
 
-        /// @brief Makes the window's GL context current, then handles input and resizing, and draws the window's background, its
-        ///        root Lasagna and its scenes. Then draws its popups, and closes the top one if it was asked to.
+        /// @brief Makes the window's GL context current, reads the mouse, handles resizing and dropped files, and has the root
+        ///        Lasagna's and the scenes' widgets react to the frame's input, then its popups'. Call it once per frame for every
+        ///        window before any of them draws.
+        void Interact();
+
+        /// @brief Makes the window's GL context current and draws the window's background, its root Lasagna and its scenes, then
+        ///        follows docking and draws its popups, and closes the top one if it was asked to. Interact ran before it.
         void Draw();
 
         /// @brief Sets the window's width and height.
@@ -118,7 +123,7 @@ namespace RetroFuturaGUI
         void FilterPointer(PointerState& pointer) const override;
 
         /// @brief Connects a slot to files dropped on the window, from another program or another of the app's windows: their
-        ///        UTF-8 paths, and where the pointer was, in window coordinates. Sent from the next draw, never from inside the
+        ///        UTF-8 paths, and where the pointer was, in window coordinates. Sent from the next Interact, never from inside the
         ///        system's message handling. A window under a popup takes no drops, like a window under a native modal dialog.
         void Connect_OnFilesDropped(const typename Signal<std::vector<std::string>, glm::vec2>::Slot& slot, const bool async);
 
@@ -228,7 +233,7 @@ namespace RetroFuturaGUI
             BottomRight
         };
 
-        /// @brief Files dropped on the window, kept until the next draw sends them.
+        /// @brief Files dropped on the window, kept until the next Interact sends them.
         struct DroppedFiles
         {
             std::vector<std::string> _Paths {};
@@ -281,19 +286,25 @@ namespace RetroFuturaGUI
         ///        only its far edge is left.
         bool canResize(const ResizeEdge edge) const;
 
-        /// @brief GLFW's drop callback: keeps the drop for the next draw.
+        /// @brief GLFW's drop callback: keeps the drop for the next Interact.
         static void dropCallback(GLFWwindow* glfwWindow, const int pathCount, const char* paths[]);
 
-        /// @brief Sends the files dropped since the last draw, unless a popup lies over the window.
+        /// @brief Sends the files dropped since the last frame, unless a popup lies over the window.
         void emitDroppedFiles();
+
+        /// @brief Has the root Lasagna's and the shown scenes' widgets react to the frame's input, in the order they draw.
+        void interactContent();
+
+        /// @brief Has the root Lasagna react to the frame's input, when the window has one.
+        void interactLasagna();
 
     //Layout and drawing
         /// @brief Takes a strip of `thickness` off the given edge of `client` and returns it,
         ///        shrinking `client` by what it took. Never takes more than is left.
         static ScreenRect reserveEdge(const DockEdge edge, const f32 thickness, ScreenRect& client);
 
-        /// @brief Takes over the native window's size when it changed: the projection, the layout and the background's and border's
-        ///        geometry, then the viewport.
+        /// @brief Takes over the native window's size if it changed since Interact took it, then sets the viewport, every frame
+        ///        since Interact usually took the change already.
         void updateProjection();
 
         /// @brief Everything updateProjection does but the viewport, which belongs to whichever window's frame is being drawn.
@@ -405,6 +416,9 @@ namespace RetroFuturaGUI
         static i32 dockOverlap(const DockRect& dragged, const DockRect& host, const DockEdge edge);
 
     //Popups
+        /// @brief Has every popup on the stack react to the frame's input, bottom first.
+        void interactPopups();
+
         /// @brief Draws every popup on the stack, bottom first, then closes the top one if it was asked to.
         void drawPopups();
 
@@ -434,12 +448,22 @@ namespace RetroFuturaGUI
         ///        place on the screen, and shows once it has drawn a frame of its own.
         void leaveTab(const glm::ivec2& position);
 
+        /// @brief Has this window's widgets react to the frame's input while it sits in a WindowTab's content area. The mouse reaches
+        ///        it whenever it reaches the host window.
+        /// @param contentArea the content area in the host window's framebuffer pixels, y running upward
+        /// @param screenPosition the content area's top-left corner on the screen
+        void interactInHost(const ScreenRect& contentArea, const glm::ivec2& screenPosition, const glm::vec4& cornerRadii);
+
         /// @brief Draws this window into its WindowTab's content area, with the WindowTab's window's context current: viewport and
-        ///        scissor box set to the content area, and the hidden native window kept right under it, so the cursor reads the
-        ///        same as on the window itself.
+        ///        scissor box set to the content area.
         /// @param contentArea the content area in the drawing window's framebuffer pixels, y running upward
         /// @param screenPosition the content area's top-left corner on the screen
         void drawInHost(const ScreenRect& contentArea, const glm::ivec2& screenPosition, const glm::vec4& cornerRadii);
+
+        /// @brief Keeps the hidden native window right under the content area, so the cursor reads the same as on the window
+        ///        itself, and lays the window out at the area's size.
+        /// @return the content area in whole framebuffer pixels: left, bottom, width and height
+        glm::ivec4 placeInHost(const ScreenRect& contentArea, const glm::ivec2& screenPosition, const glm::vec4& cornerRadii);
 
         /// @brief Moves the window with the cursor, held at the given point, until the left button is let go, then ends the drag,
         ///        which docks or tabs it where its preview showed. For a window just pulled out of a tab, since the press that

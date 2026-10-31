@@ -232,7 +232,13 @@ RetroFuturaGUI::Tooltip* RetroFuturaGUI::IWidget::GetTooltip() const
     return _tooltip.get();
 }
 
-void RetroFuturaGUI::IWidget::UpdateTooltip()
+void RetroFuturaGUI::IWidget::Interact()
+{
+    updateTooltip();
+    interact();
+}
+
+void RetroFuturaGUI::IWidget::updateTooltip()
 {
     if(_enableTooltip && _tooltip)
         _tooltip->Update();

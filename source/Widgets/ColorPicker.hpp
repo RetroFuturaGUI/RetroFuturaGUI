@@ -69,7 +69,7 @@ namespace RetroFuturaGUI
         void Disconnect_OnColorChanged(const typename Signal<>::Slot& slot);
 
     private:
-        void interact();
+        void interact() override;
         
         /// @brief Rebuilds _rgbaf from hue, saturation, brightness and alpha, then emits OnColorChanged.
         void updateColor(const bool emitSignal);

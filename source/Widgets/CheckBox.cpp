@@ -33,7 +33,6 @@ void RetroFuturaGUI::CheckBox::Draw()
     if(!_inheritFill)
         return;
 
-    interact();
     drawBackground();
     drawBorder();
 

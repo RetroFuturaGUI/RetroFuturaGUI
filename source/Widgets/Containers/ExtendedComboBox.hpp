@@ -94,7 +94,7 @@ namespace RetroFuturaGUI
 
         bool IsPointInsideOpenDropDown(const glm::vec2& point) const override;
 
-        /// @brief Removes the item at the given index. The row goes, and the widget is destroyed, at the start of the next Draw,
+        /// @brief Removes the item at the given index. The row goes, and the widget is destroyed, at the start of the next Interact,
         ///        so the item's own slot may remove it.
         void RemoveItem(const uSize index) override;
         void SetFontFamily(std::string_view fontFamily, const f32 fontSize, const PlatformBridge::Fonts::Slant slant, const PlatformBridge::Fonts::Weight fontWeight) override;
@@ -103,7 +103,11 @@ namespace RetroFuturaGUI
         const std::list<std::unique_ptr<IWidget>>& GetItems() const;
 
     private:
-        void interact();
+        /// @brief Sweeps the removed items, follows the pointer for the box and its list, then passes the input on to the rows while the list is open.
+        void interact() override;
+
+        /// @brief Hover, clicks and picking a row for the box and its open list.
+        void followPointer();
 
         /// @brief Makes the given item the selected one and emits what changed.
         void selectItem(const uSize index) override;
@@ -123,8 +127,8 @@ namespace RetroFuturaGUI
         void placeItemWidget(IWidget* item, const glm::vec3& center) const;
 
     //Elements
-        std::list<std::unique_ptr<IWidget>> _itemWidgets {}; //a removed item leaves an empty row until the next Draw
-        std::vector<std::unique_ptr<IWidget>> _removedWidgets {}; //destroyed at the start of the next Draw
+        std::list<std::unique_ptr<IWidget>> _itemWidgets {}; //a removed item leaves an empty row until the next Interact
+        std::vector<std::unique_ptr<IWidget>> _removedWidgets {}; //destroyed at the start of the next Interact
 
         /// @brief Whether an item already has the given name.
         bool isItemNameTaken(std::string_view name) const;

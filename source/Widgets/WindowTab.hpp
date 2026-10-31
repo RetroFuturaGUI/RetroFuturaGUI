@@ -177,8 +177,14 @@ namespace RetroFuturaGUI
         };
 
     //Interaction
+        /// @brief Marks the WindowTab shown, follows the pointer on the strip, then passes the input on to the selected window.
+        void interact() override;
+
         /// @brief Selects or closes on a press, and drags the pressed field until the button is let go.
-        void interact();
+        void followPointer();
+
+        /// @brief Has the window in the selected tab take the frame's input in the content area.
+        void interactSelectedWindow();
 
         /// @brief Selects the field and remembers where it was grabbed, in case the press turns into a drag.
         void pressField(const uSize index, const glm::vec2& point);
@@ -359,7 +365,7 @@ namespace RetroFuturaGUI
             _isDraggingField { false },
             _wasPressed { false },
             _showsDropPreview { false },
-            _isShown { false }; //drawn since its window's frame began, so a dragged window may drop into it
+            _isShown { false }; //interacted since its window's frame began, so it shows and a dragged window may drop into it
 
     //Signals
         Signal<Window*>

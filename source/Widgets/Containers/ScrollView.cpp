@@ -24,20 +24,33 @@ RetroFuturaGUI::ScrollView::ScrollView(std::string_view name, Projection* projec
 
 void RetroFuturaGUI::ScrollView::Draw()
 {
-    performPendingRemoval();
-    interact();
-
     for(ScrollViewCell& cell : _items)
     {
-        // A cell removed during this loop, by the slot of a widget drawn earlier, is skipped but stays alive until the next frame.
         if(cell._PendingRemoval)
             continue;
 
         if(!cell._Widget)
             continue;
 
-        cell._Widget->UpdateTooltip();
         cell._Widget->Draw();
+    }
+}
+
+void RetroFuturaGUI::ScrollView::interact()
+{
+    performPendingRemoval();
+    followPointer();
+
+    for(ScrollViewCell& cell : _items)
+    {
+        // A cell removed during this loop, by the slot of a widget earlier in it, is skipped but stays alive until the next frame.
+        if(cell._PendingRemoval)
+            continue;
+
+        if(!cell._Widget)
+            continue;
+
+        cell._Widget->Interact();
     }
 
     scrollByWheel();
@@ -182,7 +195,7 @@ void RetroFuturaGUI::ScrollView::SetScrollPosition(const ScrollAxis axis, const 
     applyScrollPosition(newScrollPosition);
 }
 
-void RetroFuturaGUI::ScrollView::interact()
+void RetroFuturaGUI::ScrollView::followPointer()
 {
     const PointerState pointer { readPointer() };
 

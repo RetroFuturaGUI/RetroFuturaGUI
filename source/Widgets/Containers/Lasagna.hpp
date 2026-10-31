@@ -123,7 +123,7 @@ namespace RetroFuturaGUI
         }
 
         /// @brief Removes the widget with the given name and frees its cells at once, so another widget can take them. The widget
-        ///        itself is destroyed at the start of the next Draw, so a widget's own slot may remove it.
+        ///        itself is destroyed at the start of the next Interact, so a widget's own slot may remove it.
         /// @return false when no widget has that name.
         bool RemoveWidget(std::string_view name);
 
@@ -173,6 +173,9 @@ namespace RetroFuturaGUI
         void SetPosition(const glm::vec3& position) override;
 
     private:
+        /// @brief Passes the frame's input on to the shown widgets, in the order they draw.
+        void interact() override;
+
     // Data
         std::vector<std::vector<std::vector<LasagnaCell>>> _lasagna {};
         static constinit const u32 _maxCountPerAxis { MaxTracksPerAxis };
@@ -180,7 +183,7 @@ namespace RetroFuturaGUI
         std::unique_ptr<Frame> _debugBorder { nullptr };
         std::vector<glm::vec4> _debugBorderColor { glm::vec4(1.0f) };
         bool _drawDebugLines { false };
-        std::vector<std::unique_ptr<IWidget>> _removedWidgets {}; //destroyed at the start of the next Draw
+        std::vector<std::unique_ptr<IWidget>> _removedWidgets {}; //destroyed at the start of the next Interact
 
         /// @brief The cell holding the widget with the given name, or nullptr.
         LasagnaCell* findCell(std::string_view name);

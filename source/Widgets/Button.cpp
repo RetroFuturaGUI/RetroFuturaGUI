@@ -26,7 +26,6 @@ RetroFuturaGUI::Button::Button(const std::string& name, Projection* projection, 
 
 void RetroFuturaGUI::Button::Draw()
 {
-    interact();
     drawBackground();
     drawBorder();
     drawText();

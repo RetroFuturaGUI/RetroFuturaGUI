@@ -132,14 +132,14 @@ namespace RetroFuturaGUI
         }
 
         /// @brief Removes the widget in the given flex cell, which is free again at once. The widget is destroyed at the start of
-        ///        the next Draw, so its own slot may remove it.
+        ///        the next Interact, so its own slot may remove it.
         /// @return false when the cell is out of range or empty.
         bool RemoveWidget(const uSize index);
         void ShowSeparatorLines(const bool show);
         void SetSeparatorLinesThickness(const f32 thickness);
         /// @brief Sets one sizing policy per flex cell, and resizes the flex to match.
         /// @note Cells beyond the definitions given are dropped, along with the widgets in them, which are destroyed at the start
-        ///       of the next Draw. Cells
+        ///       of the next Interact. Cells
         ///       added past the previous count start empty. Without a definition a cell is Star-weighted
         ///       at 1, so a flex that was only ever given a count divides the bar evenly.
         void SetFlexDefinition(std::span<FlexDefinition> flexDefinitions);
@@ -288,8 +288,11 @@ namespace RetroFuturaGUI
                 _IsPressed { false };
         };
 
+        /// @brief Sweeps the removed items, follows the pointer for the bar, then passes the input on to the items.
+        void interact() override;
+
         /// @brief Emits the hover/click signals and works out which flex cell the cursor sits in.
-        void interact();
+        void followPointer();
 
         /// @brief Starts, continues or ends dragging the owning window from a cell marked for it.
         void updateWindowDrag(const MouseState& mouse);
@@ -370,12 +373,12 @@ namespace RetroFuturaGUI
             _itemBackground { nullptr };
         std::unique_ptr<Frame> _itemBorder { nullptr };
         std::list<std::unique_ptr<IWidget>> _itemFlex {};
-        std::vector<std::unique_ptr<IWidget>> _removedWidgets {}; //destroyed at the start of the next Draw
+        std::vector<std::unique_ptr<IWidget>> _removedWidgets {}; //destroyed at the start of the next Interact
 
         /// @brief Whether a widget in the flex already has the given name.
         bool isNameTaken(std::string_view name) const;
 
-        /// @brief Keeps the widgets of the cells from count on until the next Draw, before the flex shrinks to count cells.
+        /// @brief Keeps the widgets of the cells from count on until the next Interact, before the flex shrinks to count cells.
         void releaseCellsFrom(const uSize count);
 
     //Design

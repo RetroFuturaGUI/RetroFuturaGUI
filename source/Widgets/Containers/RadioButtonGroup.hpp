@@ -76,6 +76,9 @@ namespace RetroFuturaGUI
         void SetGridContentPadding(const f32 pixels);
 
     private:
+        /// @brief Sweeps the removed buttons, then passes the frame's input on to every button and its label.
+        void interact() override;
+
         struct GridCell
         {
             glm::vec2 _Position {};
@@ -88,7 +91,7 @@ namespace RetroFuturaGUI
         GridCell* findCell(std::string_view name);
         const GridCell* findCell(std::string_view name) const;
 
-        /// @brief Keeps the cell's button and label until the next Draw, and empties the cell.
+        /// @brief Keeps the cell's button and label until the next Interact, and empties the cell.
         void releaseCell(GridCell& cell);
 
         void updateLabelLayout();
@@ -102,6 +105,6 @@ namespace RetroFuturaGUI
             _rowDefinitions {},
             _columnDefinitions {};
         std::vector<std::vector<GridCell>> _grid {};
-        std::vector<std::unique_ptr<IWidget>> _removedWidgets {}; //destroyed at the start of the next Draw
+        std::vector<std::unique_ptr<IWidget>> _removedWidgets {}; //destroyed at the start of the next Interact
     };
 }

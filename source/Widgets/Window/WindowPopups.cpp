@@ -89,6 +89,25 @@ bool RetroFuturaGUI::Window::IsBlockedByPopup() const
     return _popupHost->getTopPopupWindow() != this;
 }
 
+void RetroFuturaGUI::Window::interactPopups()
+{
+    //By index: a button in a popup may open another popup while this loop runs, and push_back would invalidate an iterator
+    for(uSize index = 0; index < _popups.size(); ++index)
+    {
+        IPopup* popup { _popups[index].get() };
+
+        if(!popup)
+            continue;
+
+        Window* popupWindow { popup->GetWindow() };
+
+        if(!popupWindow)
+            continue;
+
+        popupWindow->Interact();
+    }
+}
+
 void RetroFuturaGUI::Window::drawPopups()
 {
     //By index: a button in a popup may open another popup while this loop runs, and push_back would invalidate an iterator

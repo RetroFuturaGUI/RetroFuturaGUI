@@ -39,8 +39,6 @@ void RetroFuturaGUI::ComboBox::Draw()
     if(!_border)
         return;
 
-    interact();
-
     if(!isLabelHidden())
     {
         drawBackground();

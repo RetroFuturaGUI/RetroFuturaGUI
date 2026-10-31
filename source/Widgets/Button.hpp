@@ -36,7 +36,7 @@ namespace RetroFuturaGUI
         void SetCornerRadii(const glm::vec4& radii);
 
     private:
-        void interact();
+        void interact() override;
         void setColors(const ColorState state) override;
     };
 }

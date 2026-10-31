@@ -3,8 +3,6 @@
 #include "ScissorClip.hpp"
 #include "PlatformBridge.hpp"
 #include "IDropDown.hpp"
-#include "ContextMenu.hpp"
-#include "Tooltip.hpp"
 #include <algorithm>
 #include <cmath>
 #include <utility>
@@ -89,7 +87,7 @@ void RetroFuturaGUI::Window::leaveTab(const glm::ivec2& position)
     UpdateLayout(); //the scenes hidden in a tab take their strips again
 }
 
-void RetroFuturaGUI::Window::drawInHost(const ScreenRect& contentArea, const glm::ivec2& screenPosition, const glm::vec4& cornerRadii)
+void RetroFuturaGUI::Window::interactInHost(const ScreenRect& contentArea, const glm::ivec2& screenPosition, const glm::vec4& cornerRadii)
 {
     if(!_window)
         return;
@@ -101,7 +99,47 @@ void RetroFuturaGUI::Window::drawInHost(const ScreenRect& contentArea, const glm
 
     //Its native window is hidden and never under the cursor, so the mouse reaches it whenever it reaches the window drawing it
     _hasPointer = host->_hasPointer;
+    placeInHost(contentArea, screenPosition, cornerRadii);
 
+    //Once the button is up, a press held from before this window took the mouse is over
+    if(!PlatformBridge::Input::IsMouseButtonDown(PlatformBridge::MouseButton::Left))
+        _ignoreHeldPress = false;
+
+    interactContent();
+}
+
+void RetroFuturaGUI::Window::drawInHost(const ScreenRect& contentArea, const glm::ivec2& screenPosition, const glm::vec4& cornerRadii)
+{
+    if(!_window)
+        return;
+
+    const glm::ivec4 area { placeInHost(contentArea, screenPosition, cornerRadii) }; //again, in case the WindowTab moved since it interacted
+
+    //The drawing window's viewport, given back once this window is drawn
+    GLint viewport[4] {};
+    glGetIntegerv(GL_VIEWPORT, viewport);
+    glViewport(area.x, area.y, area.z, area.w);
+    _drawOrigin = glm::ivec2(area.x, area.y);
+
+    //The drawing window's own open lists still draw last in its frame. Its tooltip and context menu wait under its own window.
+    std::vector<IDropDown*> hostDropDowns { IDropDown::takeShown() };
+
+    {
+        //Everything lands in the content area, depth clears included, and an active clip stays in force
+        const ScissorClip clip { area };
+        glClear(GL_DEPTH_BUFFER_BIT);
+        drawContent();
+        glClear(GL_DEPTH_BUFFER_BIT); //the drawing window's widgets after the WindowTab aren't tested against this window's content
+    }
+
+    IDropDown::restoreShown(std::move(hostDropDowns));
+
+    _drawOrigin = glm::ivec2(0);
+    glViewport(viewport[0], viewport[1], viewport[2], viewport[3]);
+}
+
+glm::ivec4 RetroFuturaGUI::Window::placeInHost(const ScreenRect& contentArea, const glm::ivec2& screenPosition, const glm::vec4& cornerRadii)
+{
     //Left, bottom, width and height in the drawing window's framebuffer
     const glm::ivec4 area
     {
@@ -115,36 +153,7 @@ void RetroFuturaGUI::Window::drawInHost(const ScreenRect& contentArea, const glm
     setDockedGeometry(screenPosition, glm::ivec2(area.z, area.w));
     _tabCornerRadii = cornerRadii;
     updateSize();
-
-    //Once the button is up, a press held from before this window took the mouse is over
-    if(!PlatformBridge::Input::IsMouseButtonDown(PlatformBridge::MouseButton::Left))
-        _ignoreHeldPress = false;
-
-    //The drawing window's viewport, given back once this window is drawn
-    GLint viewport[4] {};
-    glGetIntegerv(GL_VIEWPORT, viewport);
-    glViewport(area.x, area.y, area.z, area.w);
-    _drawOrigin = glm::ivec2(area.x, area.y);
-
-    //The drawing window's own tooltip and open lists still draw last in its frame
-    Tooltip::setShownAside();
-    ContextMenu::setShownAside();
-    std::vector<IDropDown*> hostDropDowns { IDropDown::takeShown() };
-
-    {
-        //Everything lands in the content area, depth clears included, and an active clip stays in force
-        const ScissorClip clip { area };
-        glClear(GL_DEPTH_BUFFER_BIT);
-        drawContent();
-        glClear(GL_DEPTH_BUFFER_BIT); //the drawing window's widgets after the WindowTab aren't tested against this window's content
-    }
-
-    IDropDown::restoreShown(std::move(hostDropDowns));
-    ContextMenu::restoreShownFromAside();
-    Tooltip::restoreShownFromAside();
-
-    _drawOrigin = glm::ivec2(0);
-    glViewport(viewport[0], viewport[1], viewport[2], viewport[3]);
+    return area;
 }
 
 void RetroFuturaGUI::Window::beginCursorDrag(const glm::ivec2& grabPoint)

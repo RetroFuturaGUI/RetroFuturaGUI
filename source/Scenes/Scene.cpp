@@ -12,7 +12,7 @@ RetroFuturaGUI::Scene::Scene(std::string_view name, Window* parentWindow)
 
 }
 
-void RetroFuturaGUI::Scene::Draw()
+void RetroFuturaGUI::Scene::Interact()
 {
     if(!_active)
         return;
@@ -22,6 +22,17 @@ void RetroFuturaGUI::Scene::Draw()
 
     _onUpdate.Emit();
     _onUpdateAsync.EmitAsync();
+
+    _rootContainer->Interact();
+}
+
+void RetroFuturaGUI::Scene::Draw()
+{
+    if(!_active)
+        return;
+
+    if(!_rootContainer)
+        return;
 
     _rootContainer->Draw();
 }

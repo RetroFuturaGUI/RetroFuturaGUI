@@ -17,8 +17,6 @@ void RetroFuturaGUI::Histogram::Draw()
     if(!_border)
         return;
 
-    interact();
-
     drawBackground();
     _border->Draw();
 

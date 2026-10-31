@@ -34,43 +34,37 @@ RetroFuturaGUI::Tooltip::Tooltip(Projection* projection, IWidget* widget)
 
 RetroFuturaGUI::Tooltip::~Tooltip()
 {
-    if(this == _shownTooltip)
-        _shownTooltip = nullptr;
-
-    if(this == _asideTooltip)
-        _asideTooltip = nullptr;
+    std::erase_if(_shownTooltips, [this](const auto& shown) { return this == shown.second; });
 }
 
 void RetroFuturaGUI::Tooltip::Update()
 {
+    if(!_widget)
+        return;
+
     interact();
 
     if(!_isShown)
         return;
 
-    _shownTooltip = this;
+    _shownTooltips[_widget->GetParentWindow()] = this;
 }
 
-void RetroFuturaGUI::Tooltip::DrawShown()
+void RetroFuturaGUI::Tooltip::DrawShown(GLFWwindow* window)
 {
-    if(!_shownTooltip)
+    const auto shown { _shownTooltips.find(window) };
+
+    if(_shownTooltips.end() == shown)
+        return;
+
+    Tooltip* tooltip { shown->second };
+    _shownTooltips.erase(shown);
+
+    if(!tooltip)
         return;
 
     glClear(GL_DEPTH_BUFFER_BIT);
-    _shownTooltip->draw();
-    _shownTooltip = nullptr;
-}
-
-void RetroFuturaGUI::Tooltip::setShownAside()
-{
-    _asideTooltip = _shownTooltip;
-    _shownTooltip = nullptr;
-}
-
-void RetroFuturaGUI::Tooltip::restoreShownFromAside()
-{
-    _shownTooltip = _asideTooltip;
-    _asideTooltip = nullptr;
+    tooltip->draw();
 }
 
 void RetroFuturaGUI::Tooltip::SetDefaultFontFamily(std::string_view fontFamily, const f32 fontSize, const PlatformBridge::Fonts::Slant slant, const PlatformBridge::Fonts::Weight fontWeight)

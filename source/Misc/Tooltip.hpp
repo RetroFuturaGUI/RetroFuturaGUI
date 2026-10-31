@@ -6,14 +6,15 @@
 #include <chrono>
 #include <string>
 #include <string_view>
+#include <unordered_map>
 
 namespace RetroFuturaGUI
 {
     class IWidget;
 
     /// @brief Text in a box that shows above the mouse cursor once it has rested on a widget for a while. The widget owns it
-    ///        (IWidget::SetTooltipText), the widget's container updates it every frame, and Window::Draw draws the one
-    ///        that is shown at the end of the frame, over every scene.
+    ///        (IWidget::SetTooltipText) and updates it in its Interact, and Window::Draw draws the one shown in that window at
+    ///        the end of the frame, over every scene.
     class Tooltip final : public IBackground, public IBorder, public ITextProperties
     {
     public:
@@ -29,8 +30,8 @@ namespace RetroFuturaGUI
         /// @brief Tracks the mouse on the widget. Once it has rested there for the show delay, this tooltip is drawn at the end of the frame.
         void Update();
 
-        /// @brief Draws the tooltip shown this frame over everything drawn so far. Window::Draw calls it last.
-        static void DrawShown();
+        /// @brief Draws the tooltip shown this frame in the given window over everything drawn so far. Window::Draw calls it last.
+        static void DrawShown(GLFWwindow* window);
 
         /// @brief Sets the font of every tooltip, those created before this call included. A tooltip given its own font with SetFontFamily keeps it.
         static void SetDefaultFontFamily(std::string_view fontFamily, const f32 fontSize, const PlatformBridge::Fonts::Slant slant, const PlatformBridge::Fonts::Weight fontWeight);
@@ -46,14 +47,6 @@ namespace RetroFuturaGUI
         void SetBorderWidth(const f32 borderWidth);
 
     private:
-        friend class Window; //sets its own waiting tooltip aside while it draws a window docked into one of its tabs
-
-        /// @brief Sets the tooltip waiting for the end of the frame, so a window drawn in the middle of another one's frame draws only its own.
-        static void setShownAside();
-
-        /// @brief Makes the tooltip set aside the waiting one again.
-        static void restoreShownFromAside();
-
         void draw();
         void setSize();
         void setPosition();
@@ -76,8 +69,8 @@ namespace RetroFuturaGUI
         glm::vec2 _pointerPosition { 0.0f };
         u32 _appliedDefaultFontVersion { 0 };
 
-        inline static Tooltip* _shownTooltip { nullptr }; //drawn and cleared by DrawShown at the end of the frame
-        inline static Tooltip* _asideTooltip { nullptr }; //a window's waiting tooltip, while a window docked into its tab draws
+        //Per window, since every window interacts before any draws: drawn and cleared by DrawShown at the end of its frame
+        inline static std::unordered_map<GLFWwindow*, Tooltip*> _shownTooltips {};
         inline static std::string _defaultFontFamily {};
         inline static f32 _defaultFontSize { 16.0f };
         inline static PlatformBridge::Fonts::Slant _defaultFontSlant { PlatformBridge::Fonts::Slant::Roman };

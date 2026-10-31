@@ -187,7 +187,6 @@ void RetroFuturaGUI::Table::Draw()
     if(!_innerBorder)
         return;
 
-    interact();
     drawBorder();
 
     if(_nthTrackColors.empty())

@@ -46,7 +46,7 @@ namespace RetroFuturaGUI
         void SetItemTextColors(std::span<const glm::vec4> colors, const ColorState state);
 
     private:
-        void interact();
+        void interact() override;
 
         /// @brief Makes the given item the selected one and emits what changed.
         void selectItem(const uSize index) override;

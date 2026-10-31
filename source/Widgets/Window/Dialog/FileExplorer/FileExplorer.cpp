@@ -99,7 +99,7 @@ bool RetroFuturaGUI::FileExplorer::openWithFilters(std::string_view startPath, c
     if(!scene)
         return false;
 
-    scene->Connect_OnUpdate([this]() { update(); }, false); //before the widgets draw, so a key the list also takes is seen in the same frame
+    scene->Connect_OnUpdate([this]() { update(); }, false); //before the widgets take the input, so a key the list also takes is seen in the same frame
     _filters = std::move(filters);
     applyMode();
     addFilters();

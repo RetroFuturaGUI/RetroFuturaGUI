@@ -34,9 +34,6 @@ RetroFuturaGUI::MenuBar::MenuBar(const std::string& name, Projection* projection
 
 void RetroFuturaGUI::MenuBar::Draw()
 {
-    _removedWidgets.clear(); //no slot of theirs must run
-    syncUndockCells();
-    interact();
     drawBackground();
     drawBorder();
     drawSeparatorLines();
@@ -162,7 +159,7 @@ bool RetroFuturaGUI::MenuBar::RemoveWidget(const uSize index)
     if(!cell)
         return false;
 
-    //Kept alive until the next Draw, since one of its own slots may be running right now!!
+    //Kept alive until the next Interact, since one of its own slots may be running right now!!
     _removedWidgets.push_back(std::move(cell));
     return true;
 }
@@ -592,6 +589,21 @@ void RetroFuturaGUI::MenuBar::SetItemBorderGaps(std::span<BorderGap> gaps)
 }
 
 void RetroFuturaGUI::MenuBar::interact()
+{
+    _removedWidgets.clear(); //no slot of theirs must run
+    syncUndockCells();
+    followPointer();
+
+    for(const std::unique_ptr<IWidget>& item : _itemFlex)
+    {
+        if(!item)
+            continue;
+
+        item->Interact();
+    }
+}
+
+void RetroFuturaGUI::MenuBar::followPointer()
 {
     const PointerState pointer { readPointer() };
 
@@ -1069,7 +1081,6 @@ void RetroFuturaGUI::MenuBar::drawItems()
         if(!item)
             continue;
 
-        item->UpdateTooltip();
         item->Draw();
     }
 }

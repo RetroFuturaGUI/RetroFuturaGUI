@@ -39,8 +39,6 @@ RetroFuturaGUI::ColorPicker::ColorPicker(const std::string& name, Projection* pr
 
 void RetroFuturaGUI::ColorPicker::Draw()
 {
-    interact();
-
     if(!_colorPickerBackground)
         return;
 

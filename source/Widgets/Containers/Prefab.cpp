@@ -35,6 +35,14 @@ void RetroFuturaGUI::Prefab::Draw()
     _lasagna->Draw();
 }
 
+void RetroFuturaGUI::Prefab::interact()
+{
+    if(!_lasagna)
+        return;
+
+    _lasagna->Interact();
+}
+
 void RetroFuturaGUI::Prefab::SetSize(const glm::vec3& size)
 {
     if(!_lasagna)

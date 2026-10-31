@@ -80,9 +80,7 @@ RetroFuturaGUI::WindowTab::~WindowTab()
 
 void RetroFuturaGUI::WindowTab::Draw()
 {
-    _isShown = true;
-    syncTitles();
-    interact();
+    syncTitles(); //again, since a widget after this WindowTab may have renamed a window
     drawBackground();
     drawBorder();
     drawFields();
@@ -385,6 +383,14 @@ const glm::vec4& RetroFuturaGUI::WindowTab::GetContentCornerRadii() const
 }
 
 void RetroFuturaGUI::WindowTab::interact()
+{
+    _isShown = true;
+    syncTitles();
+    followPointer();
+    interactSelectedWindow();
+}
+
+void RetroFuturaGUI::WindowTab::followPointer()
 {
     const PointerState pointer { readPointer() };
     const bool
@@ -840,6 +846,20 @@ void RetroFuturaGUI::WindowTab::drawTitle(Text* title, const glm::vec4& field, c
     title->SetPosition(glm::vec3(area.x + area.z * 0.5f, area.y + area.w * 0.5f, z));
     title->SetColors(colors);
     title->Draw();
+}
+
+void RetroFuturaGUI::WindowTab::interactSelectedWindow()
+{
+    if(!_selectedWindow)
+        return;
+
+    const ScreenRect area { getContentArea() };
+
+    if(1.0f > area._Extent.x || 1.0f > area._Extent.y)
+        return;
+
+    const glm::ivec4 screen { getContentScreenRect() };
+    _selectedWindow->interactInHost(area, glm::ivec2(screen.x, screen.y), _contentCornerRadii); //nothing of this WindowTab is used after it: the window's widgets may take it out
 }
 
 void RetroFuturaGUI::WindowTab::drawSelectedWindow()

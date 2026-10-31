@@ -510,7 +510,7 @@ namespace RetroFuturaGUI
         /// @brief Finds the track holding an offset, from the tracks' start offsets followed by the content's end.
         static bool trackAtOffset(const std::vector<f32>& offsets, const f32 offset, uSize& outTrack);
         void resizeHeaders();
-        void interact();
+        void interact() override;
         void interactTableText(const MouseState& mouse);
         void interactTableCheckBox(const MouseState& mouse);
 

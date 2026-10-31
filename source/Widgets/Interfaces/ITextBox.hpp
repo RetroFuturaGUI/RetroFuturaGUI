@@ -35,7 +35,7 @@ namespace RetroFuturaGUI
         /// @brief Creates the box, text, placeholder, caret and selection. Protected: only TextBox and MultilineTextBox create one, and set their own widget type.
         ITextBox(std::string_view name, Projection* projection, IHierarchyNode* parentWidget, const WidgetTypeID parentWidgetTypeID, GLFWwindow* parentWindow);
 
-        void interact();
+        void interact() override;
         void setColors(const ColorState state) final override;
         TextArea getTextArea() const override final;
     };

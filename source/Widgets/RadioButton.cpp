@@ -33,7 +33,6 @@ void RetroFuturaGUI::RadioButton::Draw()
     if(!_indicator)
         return;
 
-    interact();
     drawBackground();
     drawBorder();
 

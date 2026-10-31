@@ -67,7 +67,7 @@ namespace RetroFuturaGUI
         void setColors(const ColorState state) override;
         void setCheckmarkColors();
         void setInheritFillColors();
-        void interact();
+        void interact() override;
 
         std::unique_ptr<Plane> _inheritFill { nullptr };
         std::unique_ptr<SvgTexture> _checkmark { nullptr }; //its own, so its colors and place are this box's alone

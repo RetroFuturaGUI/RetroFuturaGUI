@@ -32,7 +32,7 @@ namespace RetroFuturaGUI
         void drawGraph() override;
         glm::vec3 calculateBarPosition(const uSize index) const;
         glm::vec3 calculateBarRotation() const;
-        void interact();
+        void interact() override;
 
         f32
             _barWidth { 20.0f },

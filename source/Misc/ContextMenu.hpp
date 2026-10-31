@@ -8,13 +8,14 @@
 #include <memory>
 #include <string>
 #include <string_view>
+#include <unordered_map>
 
 namespace RetroFuturaGUI
 {
     class IWidget;
 
-    /// @brief Nested dropdown items shown near the cursor after right-clicking the owning widget. The widget's container
-    ///        updates it every frame, and Window::Draw draws the one shown at the end of the frame, over every scene.
+    /// @brief Nested dropdown items shown near the cursor after right-clicking the owning widget. The widget updates it in
+    ///        its Interact, and Window::Draw draws the one shown in that window at the end of the frame, over every scene.
     class ContextMenu final : public IBackground, public IBorder, public ITextProperties
     {
     public:
@@ -27,11 +28,12 @@ namespace RetroFuturaGUI
         auto operator =(const ContextMenu&) = delete;
         auto operator =(ContextMenu&&) = delete;
 
-        /// @brief Tracks right-clicks on the owning widget and queues this ContextMenu for the end of the frame.
+        /// @brief Tracks right-clicks on the owning widget, passes the input on to the items while shown, and queues this
+        ///        ContextMenu for the end of the frame.
         void Update();
 
-        /// @brief Draws the ContextMenu shown this frame over everything drawn so far. Window::Draw calls it last.
-        static void DrawShown();
+        /// @brief Draws the ContextMenu shown this frame in the given window over everything drawn so far. Window::Draw calls it last.
+        static void DrawShown(GLFWwindow* window);
 
         /// @brief Sets the font of every ContextMenu, those created before this call included. A ContextMenu given its own font with SetFontFamily keeps it.
         static void SetDefaultFontFamily(std::string_view fontFamily, const f32 fontSize, const PlatformBridge::Fonts::Slant slant, const PlatformBridge::Fonts::Weight fontWeight);
@@ -57,14 +59,6 @@ namespace RetroFuturaGUI
         uSize GetSelectedIndex() const;
 
     private:
-        friend class Window; //sets its own waiting ContextMenu aside while it draws a window docked into one of its tabs
-
-        /// @brief Sets the ContextMenu waiting for the end of the frame, so a window drawn in the middle of another one's frame draws only its own.
-        static void setShownAside();
-
-        /// @brief Makes the ContextMenu set aside the waiting one again.
-        static void restoreShownFromAside();
-
         void draw();
         void setSize();
         void setPosition();
@@ -94,8 +88,8 @@ namespace RetroFuturaGUI
         glm::vec2 _pointerPosition { 0.0f };
         u32 _appliedDefaultFontVersion { 0 };
 
-        inline static ContextMenu* _shownContextMenu { nullptr }; //drawn and cleared by DrawShown at the end of the frame
-        inline static ContextMenu* _asideContextMenu { nullptr }; //a window's waiting ContextMenu, while a window docked into its tab draws
+        //Per window, since every window interacts before any draws: drawn and cleared by DrawShown at the end of its frame
+        inline static std::unordered_map<GLFWwindow*, ContextMenu*> _shownContextMenus {};
         inline static std::string _defaultFontFamily {};
         inline static f32 _defaultFontSize { 16.0f };
         inline static PlatformBridge::Fonts::Slant _defaultFontSlant { PlatformBridge::Fonts::Slant::Roman };

@@ -30,7 +30,10 @@ namespace RetroFuturaGUI
         IWidget() = delete;
         virtual ~IWidget();
 
-        /// @brief Draws the widget.
+        /// @brief Reacts to all user input (Mouse, keyboard, gamepad, ...). Must be called before Draw()
+        void Interact();
+
+        /// @brief Draws the widget. Must be called after Interact()!
         virtual void Draw() = 0;
 
         /// @brief Connects a slot to be called when the widget is enabled.
@@ -98,9 +101,6 @@ namespace RetroFuturaGUI
         /// @brief Returns the widget's tooltip for styling (font, colors, corner radii), or nullptr until SetTooltipText created it.
         Tooltip* GetTooltip() const;
 
-        /// @brief Updates the widget's tooltip and context menu. Containers call this every frame before drawing the widget.
-        void UpdateTooltip();
-
         void AddContextMenuItem(std::string_view itemName, std::string_view node, std::string_view imagePath, std::string_view text, std::string_view note);
         void AddContextMenuNode(std::string_view newNodeName, std::string_view node);
 
@@ -154,7 +154,12 @@ namespace RetroFuturaGUI
         /// @brief Switches the widget to the colors of the given state. Does nothing in a widget without colors per state.
         virtual void setColors([[maybe_unused]] const ColorState state) {}
 
+    protected:
+        /// @brief The widget's own reaction to the frame's input, after its tooltip and context menu. A container calls its widgets' Interact here.
+        virtual void interact() {}
+
     private:
+        void updateTooltip();
         void updateContextMenu();
 
         /// @brief Applies the pointer filters from the outermost container down to the closest one. Each container then adjusts

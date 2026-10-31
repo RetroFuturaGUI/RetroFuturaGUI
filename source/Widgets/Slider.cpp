@@ -25,8 +25,6 @@ void  RetroFuturaGUI::Slider::Draw()
     if(!_border)
         return;
 
-    interact();
-
     drawBackground();
     _border->Draw();
 

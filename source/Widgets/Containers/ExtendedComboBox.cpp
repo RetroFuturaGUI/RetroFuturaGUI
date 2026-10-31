@@ -36,8 +36,6 @@ void RetroFuturaGUI::ExtendedComboBox::SetDropDownPosition(const DropDownPositio
 
 void RetroFuturaGUI::ExtendedComboBox::Draw()
 {
-    performPendingRemoval(); //no slot of the removed items must run between frames
-
     if(!_background)
         return;
 
@@ -46,8 +44,6 @@ void RetroFuturaGUI::ExtendedComboBox::Draw()
 
     if(!_previewText)
         return;
-
-    interact();
 
     if(!isLabelHidden())
     {
@@ -90,10 +86,7 @@ void RetroFuturaGUI::ExtendedComboBox::drawDropDown()
             return;
 
         if(item)
-        {
-            item->UpdateTooltip();
             item->Draw();
-        }
 
         ++visibleIndex;
     }
@@ -333,6 +326,29 @@ void RetroFuturaGUI::ExtendedComboBox::SetRotation(const glm::vec3& rotation)
 
 void RetroFuturaGUI::ExtendedComboBox::interact()
 {
+    performPendingRemoval(); //no slot of the removed items must run between frames
+    followPointer();
+
+    if(!_showDropDown)
+        return;
+
+    updateItemGeometry(); //the rows are placed in the open list before they test the pointer
+    uSize visibleIndex { 0 };
+
+    for(const auto& item : _itemWidgets)
+    {
+        if(visibleIndex >= getVisibleItemCount())
+            return;
+
+        if(item)
+            item->Interact();
+
+        ++visibleIndex;
+    }
+}
+
+void RetroFuturaGUI::ExtendedComboBox::followPointer()
+{
     const PointerState pointer { readPointer() };
 
     if(pointer._IsCaptured)
@@ -553,7 +569,7 @@ void RetroFuturaGUI::ExtendedComboBox::RemoveItem(const uSize index)
     if(!item)
         return;
 
-    //Kept alive until the next Draw, since one of its own slots may be running right now!
+    //Kept alive until the next Interact, since one of its own slots may be running right now!
     _removedWidgets.push_back(std::move(item));
 }
 

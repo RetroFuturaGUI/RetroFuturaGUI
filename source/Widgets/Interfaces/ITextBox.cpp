@@ -33,7 +33,6 @@ void RetroFuturaGUI::ITextBox::Draw()
     if(!_placeholderText)
         return;
 
-    interact();
     drawBackground();
     drawBorder();
     drawSelectedArea();

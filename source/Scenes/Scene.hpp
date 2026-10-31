@@ -29,8 +29,13 @@ namespace RetroFuturaGUI
         auto operator =(Scene&&) = delete;
         ~Scene() = default;
 
+        /// @brief Emits OnUpdate, then has the widgets react to the frame's input. The window calls it once per frame, before Draw.
+        void Interact();
+
         void Draw();
 
+        /// @brief Connects a slot called once per frame before the scene's widgets take the input.
+        /// @param async If true, the slot is invoked asynchronously.
         void Connect_OnUpdate(const typename Signal<>::Slot& slot, const bool async);
 
         void Disconnect_OnUpdate(const typename Signal<>::Slot& slot);

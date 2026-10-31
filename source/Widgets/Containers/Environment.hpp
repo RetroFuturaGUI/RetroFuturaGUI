@@ -76,7 +76,7 @@ namespace RetroFuturaGUI
             return attachedWidget;
         }
 
-        /// @brief Removes the widget with the given name. It is destroyed at the start of the next Draw, so its own slot may
+        /// @brief Removes the widget with the given name. It is destroyed at the start of the next Interact, so its own slot may
         ///        remove it.
         /// @return false when no widget has that name.
         bool RemoveWidget(std::string_view name);
@@ -146,6 +146,9 @@ namespace RetroFuturaGUI
         void SetRotation(const glm::vec3& rotation) override;
 
     private:
+        /// @brief Sweeps the removed widgets, then passes the frame's input on to the shown ones in attachment order.
+        void interact() override;
+
         EnvironmentEntry* findEntry(std::string_view name);
         const EnvironmentEntry* findEntry(std::string_view name) const;
 
@@ -158,7 +161,7 @@ namespace RetroFuturaGUI
         static glm::vec3 toEulerDegrees(const glm::quat& rotation);
 
         std::vector<EnvironmentEntry> _entries {};
-        std::vector<std::unique_ptr<IWidget>> _removedWidgets {}; //destroyed at the start of the next Draw
+        std::vector<std::unique_ptr<IWidget>> _removedWidgets {}; //destroyed at the start of the next Interact
         glm::vec3 _extent { 1.0f };
         EnvironmentFit _fit { EnvironmentFit::Contain };
         f32 _scale { 1.0f };

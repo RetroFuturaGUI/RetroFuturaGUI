@@ -1,5 +1,6 @@
 #include "Window.hpp"
 #include "WindowTab.hpp"
+#include "Scene.hpp"
 #include "PlatformBridge.hpp"
 #include <algorithm>
 #include <utility>
@@ -446,4 +447,25 @@ void RetroFuturaGUI::Window::emitDroppedFiles()
         _onFilesDroppedAsync.EmitAsync(files._Paths, files._Position);
         _onFilesDropped.Emit(files._Paths, files._Position);
     }
+}
+
+void RetroFuturaGUI::Window::interactContent()
+{
+    interactLasagna();
+
+    for(Scene* scene : _scenes)
+    {
+        if(!isSceneShown(scene))
+            continue;
+
+        scene->Interact();
+    }
+}
+
+void RetroFuturaGUI::Window::interactLasagna()
+{
+    if(!_lasagna)
+        return;
+
+    _lasagna->Interact();
 }
