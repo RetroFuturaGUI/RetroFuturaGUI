@@ -18,6 +18,15 @@ namespace RetroFuturaGUI
         /// @brief Returns the text most recently copied or cut.
         const std::string& GetCopiedText() const;
 
+        /// @brief Copies the current selection to the clipboard.
+        void CopySelectedText();
+
+        /// @brief Cuts the current selection to the clipboard unless the text is read-only.
+        void CutSelectedText();
+
+        /// @brief Replaces the selection, or inserts at the caret, with clipboard text unless the text is read-only.
+        void PasteSelectedText();
+
         /// @brief Connects a slot to be called when the Enter key is pressed.
         /// @param async If true, the slot is invoked asynchronously.
         void Connect_OnEnterPressed(const typename Signal<>::Slot& slot, const bool async);

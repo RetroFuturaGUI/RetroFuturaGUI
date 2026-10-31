@@ -124,6 +124,117 @@ const std::string& RetroFuturaGUI::ITextInteraction::GetCopiedText() const
     return _copiedText;
 }
 
+void RetroFuturaGUI::ITextInteraction::CopySelectedText()
+{
+    Text* text { getActiveText() };
+
+    if(!_isSelected)
+        return;
+
+    if(!text)
+        return;
+
+    const uSize
+        selectionStart { getMarkedStart() },
+        selectionEnd { getMarkedEnd() };
+    std::u32string copiedText { text->GetTextUTF32().substr(selectionStart, selectionEnd - selectionStart) };
+    _copiedText = DoubleEncodedString::Utf32ToUtf8(copiedText);
+    PlatformBridge::Clipboard::CopyToClipboard(PlatformBridge::Clipboard::ClipboardDatatype::Text, copiedText.data(), copiedText.size() * sizeof(char32_t));
+    _textCopied = true;
+    emitCopy();
+}
+
+void RetroFuturaGUI::ITextInteraction::CutSelectedText()
+{
+    if(isTextReadOnly())
+        return;
+
+    Text* text { getActiveText() };
+
+    if(!_isSelected)
+        return;
+
+    if(!text)
+        return;
+
+    const uSize
+        selectionStart { getMarkedStart() },
+        selectionEnd { getMarkedEnd() };
+    std::u32string copiedText { text->GetTextUTF32().substr(selectionStart, selectionEnd - selectionStart) };
+    _copiedText = DoubleEncodedString::Utf32ToUtf8(copiedText);
+    PlatformBridge::Clipboard::CopyToClipboard(PlatformBridge::Clipboard::ClipboardDatatype::Text, copiedText.data(), copiedText.size() * sizeof(char32_t));
+    _textCut = true;
+    text->SetTextUTF32(text->GetTextUTF32().substr(0, selectionStart) + text->GetTextUTF32().substr(selectionEnd));
+    _selectedPositionFirst = 0;
+    _selectedPositionLast = 0;
+    updateSelectedArea();
+    _isSelected = false;
+    setCaretFromBoundary(selectionStart);
+    emitCopy();
+    emitChange();
+}
+
+void RetroFuturaGUI::ITextInteraction::PasteSelectedText()
+{
+    if(isTextReadOnly())
+        return;
+
+    Text* text { getActiveText() };
+
+    if(!text)
+        return;
+
+    const uSize
+        selectionStart { getMarkedStart() },
+        selectionEnd { getMarkedEnd() };
+    std::u32string
+        pastedText {},
+        rightPart {},
+        completeText {};
+    void* data { nullptr };
+    uSize dataSize { 0 };
+    PlatformBridge::Clipboard::PasteFromClipboard(PlatformBridge::Clipboard::ClipboardDatatype::Text, data, &dataSize);
+
+    if(0 == dataSize)
+        return;
+
+    pastedText = std::u32string(static_cast<char32_t*>(data), dataSize / sizeof(char32_t));
+    filterPastedText(pastedText);
+
+    if(pastedText.empty())
+    {
+        PlatformBridge::Clipboard::ClearClipboardDataBuffer();
+        _textPasted = true;
+        return;
+    }
+
+    if(_isSelected)
+    {
+        completeText = text->GetTextUTF32().substr(0, selectionStart);
+        rightPart = text->GetTextUTF32().substr(selectionEnd);
+        completeText += pastedText + rightPart;
+        _isSelected = false;
+        text->SetTextUTF32(completeText);
+        setCaretFromBoundary(selectionStart + pastedText.size());
+        _selectedPositionFirst = 0;
+        _selectedPositionLast = 0;
+        updateSelectedArea();
+    }
+    else
+    {
+        completeText = text->GetTextUTF32().substr(0, _caretPosition);
+        rightPart = text->GetTextUTF32().substr(_caretPosition);
+        completeText += pastedText + rightPart;
+        text->SetTextUTF32(completeText);
+        setCaretFromBoundary(_caretPosition + pastedText.size());
+    }
+
+    PlatformBridge::Clipboard::ClearClipboardDataBuffer();
+    _textPasted = true;
+    emitPaste();
+    emitChange();
+}
+
 void RetroFuturaGUI::ITextInteraction::moveCaret()
 {
     if(!getActiveText())
@@ -220,22 +331,11 @@ void RetroFuturaGUI::ITextInteraction::setCaretFromBoundary(const uSize boundary
 
 bool RetroFuturaGUI::ITextInteraction::checkForTextCopy()
 {
-    Text* text { getActiveText() };
-
     if((PlatformBridge::Input::IsKeyDown(PB_KEY_CONTROL_L) || PlatformBridge::Input::IsKeyDown(PB_KEY_CONTROL_R))
         && (PlatformBridge::Input::GetKeyPressState(PB_KEY_C) == PlatformBridge::KeyPressState::Press))
     {
-        if(_isSelected && !_textCopied && text)
-        {
-            const uSize
-                selectionStart { getMarkedStart() },
-                selectionEnd { getMarkedEnd() };
-            std::u32string tempCopy { text->GetTextUTF32().substr(selectionStart, selectionEnd - selectionStart) };
-            _copiedText = DoubleEncodedString::Utf32ToUtf8(tempCopy);
-            PlatformBridge::Clipboard::CopyToClipboard(PlatformBridge::Clipboard::ClipboardDatatype::Text, static_cast<void*>(tempCopy.data()), tempCopy.size() * sizeof(char32_t));
-            _textCopied = true;
-            emitCopy();
-        }
+        if(!_textCopied)
+            CopySelectedText();
 
         return true;
     }
@@ -246,32 +346,11 @@ bool RetroFuturaGUI::ITextInteraction::checkForTextCopy()
 
 bool RetroFuturaGUI::ITextInteraction::checkForTextCut()
 {
-    Text* text { getActiveText() };
-
     if((PlatformBridge::Input::IsKeyDown(PB_KEY_CONTROL_L) || PlatformBridge::Input::IsKeyDown(PB_KEY_CONTROL_R))
         && (PlatformBridge::Input::GetKeyPressState(PB_KEY_X) == PlatformBridge::KeyPressState::Press))
     {
         if(!_textCut)
-        {
-            if(!_isSelected || !text)
-                return true;
-
-            const uSize
-                selectionStart { getMarkedStart() },
-                selectionEnd { getMarkedEnd() };
-            std::u32string tempCopy { text->GetTextUTF32().substr(selectionStart, selectionEnd - selectionStart) };
-            _copiedText = DoubleEncodedString::Utf32ToUtf8(tempCopy);
-            PlatformBridge::Clipboard::CopyToClipboard(PlatformBridge::Clipboard::ClipboardDatatype::Text, static_cast<void*>(tempCopy.data()), tempCopy.size() * sizeof(char32_t));
-            _textCut = true;
-            text->SetTextUTF32(text->GetTextUTF32().substr(0, selectionStart) + text->GetTextUTF32().substr(selectionEnd));
-            _selectedPositionFirst = 0;
-            _selectedPositionLast = 0;
-            updateSelectedArea();
-            _isSelected = false;
-            setCaretFromBoundary(selectionStart);
-            emitCopy();
-            emitChange();
-        }
+            CutSelectedText();
 
         return true;
     }
@@ -282,63 +361,11 @@ bool RetroFuturaGUI::ITextInteraction::checkForTextCut()
 
 bool RetroFuturaGUI::ITextInteraction::checkForTextPaste()
 {
-    Text* text { getActiveText() };
-
     if((PlatformBridge::Input::IsKeyDown(PB_KEY_CONTROL_L) || PlatformBridge::Input::IsKeyDown(PB_KEY_CONTROL_R))
         && (PlatformBridge::Input::GetKeyPressState(PB_KEY_V) == PlatformBridge::KeyPressState::Press))
     {
-        if(!_textPasted && text)
-        {
-            const uSize
-                selectionStart { getMarkedStart() },
-                selectionEnd { getMarkedEnd() };
-            std::u32string
-                middlePart {},
-                rightPart {},
-                completeText {};
-            void* dataPtr { nullptr };
-            uSize dataSize { 0 };
-            PlatformBridge::Clipboard::PasteFromClipboard(PlatformBridge::Clipboard::ClipboardDatatype::Text, dataPtr, &dataSize);
-
-            if(0 == dataSize)
-                return true;
-
-            middlePart = std::u32string(reinterpret_cast<char32_t*>(dataPtr), dataSize / sizeof(char32_t));
-            filterPastedText(middlePart);
-
-            if(middlePart.empty()) //nothing pasteable left - keep the selection as it is
-            {
-                PlatformBridge::Clipboard::ClearClipboardDataBuffer();
-                _textPasted = true;
-                return true;
-            }
-
-            if(_isSelected)
-            {
-                completeText = text->GetTextUTF32().substr(0, selectionStart);
-                rightPart = text->GetTextUTF32().substr(selectionEnd);
-                completeText += middlePart + rightPart;
-                _isSelected = false;
-                text->SetTextUTF32(completeText);
-                setCaretFromBoundary(selectionStart + middlePart.size());
-                _selectedPositionFirst = 0;
-                _selectedPositionLast = 0;
-                updateSelectedArea();
-            }
-            else // insert at the caret
-            {
-                completeText = text->GetTextUTF32().substr(0, _caretPosition);
-                rightPart = text->GetTextUTF32().substr(_caretPosition);
-                completeText += middlePart + rightPart;
-                text->SetTextUTF32(completeText);
-                setCaretFromBoundary(_caretPosition + middlePart.size());
-            }
-
-            PlatformBridge::Clipboard::ClearClipboardDataBuffer();
-            _textPasted = true;
-            emitPaste();
-            emitChange();
-        }
+        if(!_textPasted)
+            PasteSelectedText();
 
         return true;
     }

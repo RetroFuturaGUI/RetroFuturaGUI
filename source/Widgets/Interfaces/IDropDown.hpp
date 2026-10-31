@@ -43,6 +43,9 @@ namespace RetroFuturaGUI
         uSize GetItemCount() const;
         uSize GetSelectedIndex() const;
         void SetIndex(const uSize index);
+        /// @brief Opens or closes the list without simulating a pointer click.
+        void SetDropDownOpen(const bool open);
+        void SetLabelHiddenWhenOpen(const bool hide);
         virtual bool IsPointInsideOpenDropDown(const glm::vec2& point) const;
         void SetDropDownArrowColors(std::span<const glm::vec4> colors, const ColorState state);
         void SetDropDownBackgroundColors(std::span<const glm::vec4> colors, const ColorState state);
@@ -77,6 +80,9 @@ namespace RetroFuturaGUI
 
         /// @brief Finds the visible drop down row under a world space point.
         bool hoveredItemIndex(const glm::vec2& point, uSize& outIndex) const;
+
+        /// @brief Whether the dropdown's label should be hidden in its current state.
+        bool isLabelHidden() const { return _hideLabelWhenOpen && _showDropDown; }
 
         virtual void selectItem(const uSize index) = 0;
 
@@ -188,5 +194,6 @@ namespace RetroFuturaGUI
     //Logic
         inline static std::vector<IDropDown*> _shownDropDowns {}; //opened in the frame being drawn, drawn and cleared by DrawShown
         inline static std::vector<const IDropDown*> _dropDowns {}; //every drop-down, for the pointer check
+        bool _hideLabelWhenOpen { false };
     };
 }

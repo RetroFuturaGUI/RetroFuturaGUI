@@ -46,6 +46,7 @@ list(APPEND RetroFuturaGuiSources
     "${CMAKE_CURRENT_SOURCE_DIR}/source/MediaPlayback/VideoStill.cpp"
 
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Misc/BackgroundWork.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/source/Misc/ContextMenu.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Misc/DoubleEncodedString.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Misc/Mesh.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Misc/Polyline.cpp"

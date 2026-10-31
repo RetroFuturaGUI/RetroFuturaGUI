@@ -26,6 +26,9 @@ namespace RetroFuturaGUI
         void SetSize(const glm::vec3& size) override;
         void SetPosition(const glm::vec3& position) override;
         void SetRotation(const glm::vec3& rotation) override;
+        void SetColumnDefinition(std::vector<f32> columnDefinition);
+        void SetRowDefinition(std::vector<f32> rowDefinition);
+        void SetLayerDefinition(std::vector<f32> rowDefinition);
 
         void ShowChildWidget(std::string_view name, const bool show);
         bool IsChildWidgetShown(std::string_view name) const;

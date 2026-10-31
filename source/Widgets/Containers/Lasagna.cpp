@@ -275,6 +275,60 @@ void RetroFuturaGUI::Lasagna::SetSize(const glm::vec3& size)
     moveWidgets();
 }
 
+void RetroFuturaGUI::Lasagna::SetColumnDefinition(std::vector<f32> columnDefinition)
+{
+    if(columnDefinition.size() != _axisdefinition._ColumnDefinition.size())
+        return;
+
+    for(const f32 width : columnDefinition)
+        if(0.0f >= width)
+            return;
+
+    if(columnDefinition == _axisdefinition._ColumnDefinition)
+        return;
+
+    _axisdefinition._ColumnDefinition = std::move(columnDefinition);
+    resizeCells();
+    resizeAllWidgets();
+    moveWidgets();
+}
+
+void RetroFuturaGUI::Lasagna::SetRowDefinition(std::vector<f32> rowDefinition)
+{
+    if(rowDefinition.size() != _axisdefinition._RowDefinition.size())
+        return;
+
+    for(const f32 height : rowDefinition)
+        if(0.0f >= height)
+            return;
+
+    if(rowDefinition == _axisdefinition._RowDefinition)
+        return;
+
+    _axisdefinition._RowDefinition = std::move(rowDefinition);
+    resizeCells();
+    resizeAllWidgets();
+    moveWidgets();
+}
+
+void RetroFuturaGUI::Lasagna::SetLayerDefinition(std::vector<f32> layerDefinition)
+{
+    if(layerDefinition.size() != _axisdefinition._LayerDefinition.size())
+        return;
+
+    for(const f32 depth : layerDefinition)
+        if(0.0f >= depth)
+            return;
+
+    if(layerDefinition == _axisdefinition._LayerDefinition)
+        return;
+
+    _axisdefinition._LayerDefinition = std::move(layerDefinition);
+    resizeCells();
+    resizeAllWidgets();
+    moveWidgets();
+}
+
 void RetroFuturaGUI::Lasagna::SetPosition(const glm::vec3& position)
 {
     _position = position;

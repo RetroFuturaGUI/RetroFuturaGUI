@@ -7,10 +7,10 @@
 #include <algorithm>
 #include <cstddef>
 #include <glm/ext/vector_int2_sized.hpp>
-#include #include <print>
+#include <print>
 #include <string>
 #include <utility>
-<memory>
+#include <memory>
 
 RetroFuturaGUI::RadioButtonGroup::RadioButtonGroup(const std::string& name, Projection* projection, IWidget* parentWidget, const WidgetTypeID parentWidgetTypeID, GLFWwindow* parentWindow)
     : IWidget(name, projection, parentWidget, parentWidgetTypeID, parentWindow)
@@ -21,7 +21,6 @@ RetroFuturaGUI::RadioButtonGroup::RadioButtonGroup(const std::string& name, Proj
 
     if(!_border)
         return;
-
 }
 
 void RetroFuturaGUI::RadioButtonGroup::Draw()

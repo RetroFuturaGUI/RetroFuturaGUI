@@ -3,13 +3,14 @@
 
 namespace RetroFuturaGUI
 {
-    /// @brief The mouse position and left button state a widget reacts to. A ScrollView may hide a press while it decides between click and scroll, or take the pointer away while scrolling
+    /// @brief The mouse position and button states a widget reacts to. A ScrollView may hide a press or take the pointer while scrolling.
     struct PointerState
     {
         glm::vec2 _Position { 0.0f }; // Window coordinates
         bool
             _HasPosition { false },
             _LeftButtonPressed { false },
+            _RightButtonPressed { false },
             _IsCaptured { false }; // A container above already uses the pointer, block clicks and hover for this widget this frame
     };
 

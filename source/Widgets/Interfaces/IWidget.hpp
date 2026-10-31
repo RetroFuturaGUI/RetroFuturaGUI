@@ -14,12 +14,14 @@
 namespace RetroFuturaGUI
 {
     class Tooltip; //not included: its text pulls in windows.h, whose min/max macros would reach every widget
+    class ContextMenu;
     template<typename> class WidgetReference;
 
     //An interface with properties that all Widgets must implement.
     class IWidget : virtual public IWindowAccessor, public IHierarchyNode
     {
         friend class Tooltip;
+        friend class ContextMenu;
         template<typename> friend class WidgetReference;
 
     public:
@@ -75,6 +77,9 @@ namespace RetroFuturaGUI
         /// @brief Returns the widget's type ID.
         WidgetTypeID GetWidgetTypeID() const;
 
+        /// @brief Returns the GLFW window that owns this widget.
+        GLFWwindow* GetParentWindow() const;
+
         /// @brief Enables or disables the widget, switching it to that state's colors, and emits OnEnable or OnDisable if emitSignal is set.
         void SetEnabled(const bool enable, const bool emitSignal);
 
@@ -93,11 +98,16 @@ namespace RetroFuturaGUI
         /// @brief Returns the widget's tooltip for styling (font, colors, corner radii), or nullptr until SetTooltipText created it.
         Tooltip* GetTooltip() const;
 
-        /// @brief Tracks the mouse for the widget's tooltip. Containers call it every frame, right before the widget's Draw,
-        ///        so the tooltips of widgets inside this one are updated after it and win.
+        /// @brief Updates the widget's tooltip and context menu. Containers call this every frame before drawing the widget.
         void UpdateTooltip();
 
-    protected:
+        void AddContextMenuItem(std::string_view itemName, std::string_view node, std::string_view imagePath, std::string_view text, std::string_view note);
+        void AddContextMenuNode(std::string_view newNodeName, std::string_view node);
+
+        /// @brief Returns this widget's context menu, or nullptr if it has none.
+        ContextMenu* GetContextMenu() const;
+
+
     //Identity
         std::string _name;
         IHierarchyNode* _parentWidget { nullptr };
@@ -123,6 +133,8 @@ namespace RetroFuturaGUI
 
     // stuff
         std::unique_ptr<Tooltip> _tooltip; //no { nullptr }: with Tooltip only declared here, MSVC can't compile the initializer's cleanup
+        std::unique_ptr<ContextMenu> _contextMenu;
+
         bool _enableTooltip { false };
 
         bool isPointInside(const glm::vec2& point) const;
@@ -143,6 +155,8 @@ namespace RetroFuturaGUI
         virtual void setColors([[maybe_unused]] const ColorState state) {}
 
     private:
+        void updateContextMenu();
+
         /// @brief Applies the pointer filters from the outermost container down to the closest one. Each container then adjusts
         ///        what the containers above it already let through: an inner ScrollView only ever sees a press its outer one passed on,
         ///        and an outer one that scrolls keeps the pointer captured whatever the inner one does.

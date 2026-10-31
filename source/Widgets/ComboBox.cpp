@@ -40,24 +40,28 @@ void RetroFuturaGUI::ComboBox::Draw()
         return;
 
     interact();
-    drawBackground();
-    _border->Draw();
-    drawDropDownArrow();
 
-    if(_hasCaption && _previewText)
+    if(!isLabelHidden())
     {
-        placeItemText(*_previewText, _position + glm::vec3(0.0f, 0.0f, _zStep * 2.0f), _size.x);
-        _previewText->Draw();
-    }
-    else if(_currentIndex < _itemTexts.size())
-    {
-        auto iterator { _itemTexts.begin() };
-        std::advance(iterator, _currentIndex);
+        drawBackground();
+        _border->Draw();
+        drawDropDownArrow();
 
-        if(*iterator)
+        if(_hasCaption && _previewText)
         {
-            placeItemText(**iterator, _position + glm::vec3(0.0f, 0.0f, _zStep * 2.0f), _size.x);
-            iterator->get()->Draw();
+            placeItemText(*_previewText, _position + glm::vec3(0.0f, 0.0f, _zStep * 2.0f), _size.x);
+            _previewText->Draw();
+        }
+        else if(_currentIndex < _itemTexts.size())
+        {
+            auto iterator { _itemTexts.begin() };
+            std::advance(iterator, _currentIndex);
+
+            if(*iterator)
+            {
+                placeItemText(**iterator, _position + glm::vec3(0.0f, 0.0f, _zStep * 2.0f), _size.x);
+                iterator->get()->Draw();
+            }
         }
     }
 

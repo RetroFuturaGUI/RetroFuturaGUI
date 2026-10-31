@@ -2,6 +2,7 @@
 #include "PlatformBridge.hpp"
 #include "IDropDown.hpp"
 #include "Tooltip.hpp"
+#include "ContextMenu.hpp"
 #include "Window.hpp"
 #include <memory>
 
@@ -98,6 +99,11 @@ RetroFuturaGUI::WidgetTypeID RetroFuturaGUI::IWidget::GetWidgetTypeID() const
     return _widgetTypeID;
 }
 
+GLFWwindow* RetroFuturaGUI::IWidget::GetParentWindow() const
+{
+    return _parentWindow;
+}
+
 void RetroFuturaGUI::IWidget::SetEnabled(const bool enable, const bool emitSignal)
 {
     _isEnabledFlag = enable;
@@ -166,6 +172,7 @@ RetroFuturaGUI::PointerState RetroFuturaGUI::IWidget::readPointer() const
     // PlatformBridge reports native, top-down window coordinates; the library's world space runs bottom-up.
     pointer._Position = glm::vec2(static_cast<f32>(mouseX), _projection.GetResolution().y - static_cast<f32>(mouseY));
     pointer._LeftButtonPressed = PlatformBridge::Input::IsMouseButtonDown(PlatformBridge::MouseButton::Left);
+    pointer._RightButtonPressed = PlatformBridge::Input::IsMouseButtonDown(PlatformBridge::MouseButton::Right);
 
     filterThroughAncestors(_parentWidget, pointer);
     IDropDown::CaptureUnderOpenList(this, _parentWindow, pointer);
@@ -226,11 +233,43 @@ RetroFuturaGUI::Tooltip* RetroFuturaGUI::IWidget::GetTooltip() const
 
 void RetroFuturaGUI::IWidget::UpdateTooltip()
 {
-    if(!_enableTooltip)
+    if(_enableTooltip && _tooltip)
+        _tooltip->Update();
+
+    updateContextMenu();
+}
+
+void RetroFuturaGUI::IWidget::AddContextMenuItem(std::string_view itemName, std::string_view node, std::string_view imagePath, std::string_view text, std::string_view note)
+{
+    if(!_contextMenu)
+        _contextMenu = std::make_unique<ContextMenu>(&_projection, this);
+
+    if(!_contextMenu)
         return;
 
-    if(!_tooltip)
+    _contextMenu->AddItem(itemName, node, imagePath, text, note);
+}
+
+void RetroFuturaGUI::IWidget::AddContextMenuNode(std::string_view newNodeName, std::string_view node)
+{
+    if(!_contextMenu)
+        _contextMenu = std::make_unique<ContextMenu>(&_projection, this);
+
+    if(!_contextMenu)
         return;
 
-    _tooltip->Update();
+    _contextMenu->AddNode(newNodeName, node);
+}
+
+RetroFuturaGUI::ContextMenu* RetroFuturaGUI::IWidget::GetContextMenu() const
+{
+    return _contextMenu.get();
+}
+
+void RetroFuturaGUI::IWidget::updateContextMenu()
+{
+    if(!_contextMenu)
+        return;
+
+    _contextMenu->Update();
 }

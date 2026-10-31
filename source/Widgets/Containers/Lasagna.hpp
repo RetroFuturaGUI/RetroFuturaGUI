@@ -160,6 +160,15 @@ namespace RetroFuturaGUI
         /// @brief Sets the size of the Lasagna, resizing and repositioning all attached widgets.
         void SetSize(const glm::vec3& size) override;
 
+        /// @brief Replaces the column track widths and relays out the attached widgets.
+        void SetColumnDefinition(std::vector<f32> columnDefinition);
+
+        /// @brief Replaces the row track widths and relays out the attached widgets.
+        void SetRowDefinition(std::vector<f32> rowDefinition);
+
+        /// @brief Replaces the layer track widths and relays out the attached widgets.
+        void SetLayerDefinition(std::vector<f32> layerDefinition);
+
         /// @brief Sets the world position of the Lasagna, repositioning all attached widgets.
         void SetPosition(const glm::vec3& position) override;
 

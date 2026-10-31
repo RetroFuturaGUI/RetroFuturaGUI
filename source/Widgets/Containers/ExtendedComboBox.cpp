@@ -1,5 +1,6 @@
 #include "ExtendedComboBox.hpp"
 #include "Image.hpp"
+#include <algorithm>
 
 #if defined(TARGET_PLATFORM_LINUX)
     #define GLFW_EXPOSE_NATIVE_X11
@@ -47,13 +48,17 @@ void RetroFuturaGUI::ExtendedComboBox::Draw()
         return;
 
     interact();
-    drawBackground();
-    _border->Draw();
-    drawDropDownArrow();
 
-    //The rows are arbitrary widgets, so the closed box stands in for the selection with its own text
-    updatePreviewTextGeometry();
-    _previewText->Draw();
+    if(!isLabelHidden())
+    {
+        drawBackground();
+        _border->Draw();
+        drawDropDownArrow();
+
+        //The rows are arbitrary widgets, so the closed box stands in for the selection with its own text
+        updatePreviewTextGeometry();
+        _previewText->Draw();
+    }
 
     if(!_showDropDown)
         return;
@@ -92,6 +97,11 @@ void RetroFuturaGUI::ExtendedComboBox::drawDropDown()
 
         ++visibleIndex;
     }
+}
+
+const std::list<std::unique_ptr<RetroFuturaGUI::IWidget>>& RetroFuturaGUI::ExtendedComboBox::GetItems() const
+{
+    return _itemWidgets;
 }
 
 void RetroFuturaGUI::ExtendedComboBox::placeItemWidget(IWidget* item, const glm::vec3& center) const
@@ -168,7 +178,16 @@ void RetroFuturaGUI::ExtendedComboBox::placeItemWidget(IWidget* item, const glm:
         case WidgetTypeID::Prefab:
         {
             Prefab* prefab = dynamic_cast<Prefab*>(item);
+
+            if(!prefab)
+                break;
+
             prefab->SetSize(glm::vec3(parentWidth, parentHeight, 0.01f));
+
+            const f32
+                imageWidth { std::min(parentHeight, parentWidth * 0.4f) },
+                imageFraction { 0.0f < parentWidth ? imageWidth / parentWidth : 0.0f };
+            prefab->SetColumnDefinition({ imageFraction, 0.6f, 0.4f - imageFraction });
             prefab->SetPosition(center);
             prefab->SetRotation(_rotation);
         } break;

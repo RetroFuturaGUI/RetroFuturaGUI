@@ -66,6 +66,22 @@ void RetroFuturaGUI::Prefab::SetRotation(const glm::vec3& rotation)
     _lasagna->SetRotation(rotation);
 }
 
+void RetroFuturaGUI::Prefab::SetColumnDefinition(std::vector<f32> columnDefinition)
+{
+    if(!_lasagna)
+        return;
+
+    _lasagna->SetColumnDefinition(std::move(columnDefinition));
+}
+
+void RetroFuturaGUI::Prefab::SetRowDefinition(std::vector<f32> rowDefinition)
+{
+    if(!_lasagna)
+        return;
+
+    _lasagna->SetRowDefinition(std::move(rowDefinition));
+}
+
 void RetroFuturaGUI::Prefab::ShowChildWidget(std::string_view name, const bool show)
 {
     if(!_lasagna)

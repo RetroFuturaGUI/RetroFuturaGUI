@@ -3,6 +3,7 @@
 #include "ScissorClip.hpp"
 #include "PlatformBridge.hpp"
 #include "IDropDown.hpp"
+#include "ContextMenu.hpp"
 #include "Tooltip.hpp"
 #include <algorithm>
 #include <cmath>
@@ -127,6 +128,7 @@ void RetroFuturaGUI::Window::drawInHost(const ScreenRect& contentArea, const glm
 
     //The drawing window's own tooltip and open lists still draw last in its frame
     Tooltip::setShownAside();
+    ContextMenu::setShownAside();
     std::vector<IDropDown*> hostDropDowns { IDropDown::takeShown() };
 
     {
@@ -138,6 +140,7 @@ void RetroFuturaGUI::Window::drawInHost(const ScreenRect& contentArea, const glm
     }
 
     IDropDown::restoreShown(std::move(hostDropDowns));
+    ContextMenu::restoreShownFromAside();
     Tooltip::restoreShownFromAside();
 
     _drawOrigin = glm::ivec2(0);

@@ -434,6 +434,17 @@ void RetroFuturaGUI::IDropDown::SetDropDownCornerRadii(const glm::vec4& radii)
     _dropDownBorder->SetCornerRadii(radii);
 }
 
+void RetroFuturaGUI::IDropDown::SetDropDownOpen(const bool open)
+{
+    _showDropDown = open;
+    updateDropDownGeometry();
+}
+
+void RetroFuturaGUI::IDropDown::SetLabelHiddenWhenOpen(const bool hide)
+{
+    _hideLabelWhenOpen = hide;
+}
+
 bool RetroFuturaGUI::IDropDown::IsPointInsideOpenDropDown(const glm::vec2& point) const
 {
     if(!_showDropDown)

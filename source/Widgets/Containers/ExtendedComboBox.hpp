@@ -100,6 +100,7 @@ namespace RetroFuturaGUI
         void SetFontFamily(std::string_view fontFamily, const f32 fontSize, const PlatformBridge::Fonts::Slant slant, const PlatformBridge::Fonts::Weight fontWeight) override;
         void SetTextAlignment(const TextAlignment alignment) override;
         void SetTextPadding(const f32 padding) override;
+        const std::list<std::unique_ptr<IWidget>>& GetItems() const;
 
     private:
         void interact();

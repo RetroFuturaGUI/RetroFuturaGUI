@@ -1,6 +1,7 @@
 #include "Window.hpp"
 #include "Scene.hpp"
 #include "IDropDown.hpp"
+#include "ContextMenu.hpp"
 #include "Tooltip.hpp"
 #include <algorithm>
 
@@ -208,6 +209,7 @@ void RetroFuturaGUI::Window::drawContent()
 
     IDropDown::DrawShown(); //after every scene, so an open list covers the widgets drawn after its box
     drawFrame();
+    ContextMenu::DrawShown();
     Tooltip::DrawShown(); //last, so it covers every scene
 }
 
