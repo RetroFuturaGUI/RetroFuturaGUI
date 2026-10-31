@@ -291,6 +291,9 @@ namespace RetroFuturaGUI
         /// @brief Sweeps the removed items, follows the pointer for the bar, then passes the input on to the items.
         void interact() override;
 
+        /// @brief Passes the frame's update on to every widget, hidden ones included.
+        void update() override;
+
         /// @brief Emits the hover/click signals and works out which flex cell the cursor sits in.
         void followPointer();
 

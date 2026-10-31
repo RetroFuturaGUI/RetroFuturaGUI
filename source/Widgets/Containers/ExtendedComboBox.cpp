@@ -16,6 +16,7 @@ RetroFuturaGUI::ExtendedComboBox::ExtendedComboBox(std::string_view name, Projec
     _background = std::make_unique<Plane>(projection);
     _border = std::make_unique<Frame>(projection);
     _previewText = std::make_shared<Text>(projection);
+    useTransitions({ _background.get(), _border.get(), _previewText.get() });
 
     if(!_background)
         return;
@@ -344,6 +345,17 @@ void RetroFuturaGUI::ExtendedComboBox::interact()
             item->Interact();
 
         ++visibleIndex;
+    }
+}
+
+void RetroFuturaGUI::ExtendedComboBox::update()
+{
+    for(const auto& item : _itemWidgets)
+    {
+        if(!item)
+            continue;
+
+        item->Update();
     }
 }
 

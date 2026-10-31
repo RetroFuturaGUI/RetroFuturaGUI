@@ -175,9 +175,26 @@ void RetroFuturaGUI::AudioPlayback::uninitMeter()
     _meterReady = false;
 }
 
+RetroFuturaGUI::AudioPlayback::AudioPlayback()
+{
+    _playbacks.push_back(this);
+}
+
 RetroFuturaGUI::AudioPlayback::~AudioPlayback()
 {
+    std::erase(_playbacks, this);
     UninitDevice();
+}
+
+void RetroFuturaGUI::AudioPlayback::UpdateAll()
+{
+    for(AudioPlayback* playback : _playbacks)
+    {
+        if(!playback)
+            continue;
+
+        playback->UpdateFrequencyBands();
+    }
 }
 
 bool RetroFuturaGUI::AudioPlayback::InitDevice()

@@ -25,6 +25,7 @@ RetroFuturaGUI::LineDiagram::LineDiagram(std::string_view name, Projection* proj
     _hoverText = std::make_unique<Text>(_elementProjection);
     _hoverText->SetTextAlignment(TextAlignment::Center);
     _hoverTextBackground = std::make_unique<Plane>(_elementProjection);
+    useTransitions({ _hoverText.get(), _hoverTextBackground.get() });
     _hoverTextBackground->SetColors(_hoverTextBackgroundColors);
     _hoverTextBackground->SetCornerRadii(glm::vec4(3.0f));
     SetIndicatorSize(glm::vec2(10.0f), ElementSizing::Pixels);
@@ -40,7 +41,7 @@ void RetroFuturaGUI::LineDiagram::Draw()
     if(!_border)
         return;
 
-    updatePoints(); //again, since a widget drawn before this one may have handed over new data, like a Video its frequency bands
+    updatePoints(); //again, since the Update loop may have handed over new data after Interact, like a playback its frequency bands
 
     drawBackground();
     _border->Draw();

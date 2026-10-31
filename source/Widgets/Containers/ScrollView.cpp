@@ -56,6 +56,20 @@ void RetroFuturaGUI::ScrollView::interact()
     scrollByWheel();
 }
 
+void RetroFuturaGUI::ScrollView::update()
+{
+    for(ScrollViewCell& cell : _items)
+    {
+        if(cell._PendingRemoval)
+            continue;
+
+        if(!cell._Widget)
+            continue;
+
+        cell._Widget->Update();
+    }
+}
+
 void RetroFuturaGUI::ScrollView::SetWheelScrollStep(const f32 step)
 {
     _wheelScrollStep = step;
@@ -412,6 +426,8 @@ void RetroFuturaGUI::ScrollView::EnableBackground(const bool enable)
         _background = std::make_unique<Plane>(&_projection);
     else
         _background.reset();
+
+    useTransitions({ _background.get() });
 }
 
 void RetroFuturaGUI::ScrollView::EnableBorder(const bool enable)
@@ -422,6 +438,8 @@ void RetroFuturaGUI::ScrollView::EnableBorder(const bool enable)
         _border = std::make_unique<Frame>(&_projection);
     else
         _border.reset();
+
+    useTransitions({ _border.get() });
 }
 
 void RetroFuturaGUI::ScrollView::layoutCells()

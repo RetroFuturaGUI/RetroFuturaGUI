@@ -10,11 +10,14 @@
 #include "IHierarchyNode.hpp"
 #include "IPointerFilter.hpp"
 #include "CursorIcon.hpp"
+#include "Transition.hpp"
+#include <initializer_list>
 
 namespace RetroFuturaGUI
 {
     class Tooltip; //not included: its text pulls in windows.h, whose min/max macros would reach every widget
     class ContextMenu;
+    class FillStyle;
     template<typename> class WidgetReference;
 
     //An interface with properties that all Widgets must implement.
@@ -30,10 +33,14 @@ namespace RetroFuturaGUI
         IWidget() = delete;
         virtual ~IWidget();
 
-        /// @brief Reacts to all user input (Mouse, keyboard, gamepad, ...). Must be called before Draw()
+        /// @brief Reacts to all user input (Mouse, keyboard, gamepad, ...). Must be called before Update()
         void Interact();
 
-        /// @brief Draws the widget. Must be called after Interact()!
+        /// @brief Does the per-frame work apart from input and drawing, such as a video advancing. Must be called after
+        ///        Interact() and before Draw(). Runs for hidden widgets and windows too.
+        void Update();
+
+        /// @brief Draws the widget. Must be called after Update()!
         virtual void Draw() = 0;
 
         /// @brief Connects a slot to be called when the widget is enabled.
@@ -107,6 +114,15 @@ namespace RetroFuturaGUI
         /// @brief Returns this widget's context menu, or nullptr if it has none.
         ContextMenu* GetContextMenu() const;
 
+        /// @brief Sets how this widget's colors or corner radii move to new values, its hover and pressed colors included, in
+        ///        place of the global default (Transitions::SetDefault): SetTransition(Colors | CornerRadii, { 200ms, EaseInOut }).
+        void SetTransition(const TransitionProperty properties, const Transition& transition);
+
+        /// @brief Has these properties follow the global default again.
+        void ResetTransition(const TransitionProperty properties);
+
+        /// @brief Returns the transition one property follows: the widget's own, or else the global default.
+        Transition GetTransition(const TransitionProperty property) const;
 
     //Identity
         std::string _name;
@@ -137,6 +153,8 @@ namespace RetroFuturaGUI
 
         bool _enableTooltip { false };
 
+        TransitionSettings _transitionSettings {}; //the elements registered by useTransitions read them, the tooltip and context menu too
+
         bool isPointInside(const glm::vec2& point) const;
         bool isPointInsideRect(const glm::vec2& point, const glm::vec3& size, const glm::vec3& position, const glm::vec3& rotation) const;
 
@@ -157,6 +175,13 @@ namespace RetroFuturaGUI
     protected:
         /// @brief The widget's own reaction to the frame's input, after its tooltip and context menu. A container calls its widgets' Interact here.
         virtual void interact() {}
+
+        /// @brief The widget's own per-frame work. A container calls its widgets' Update here, hidden ones included.
+        virtual void update() {}
+
+        /// @brief Has the given elements follow this widget's transitions. Only for elements drawn once per frame: one drawn
+        ///        again with other colors, like a Table's shared cell checkbox, would restart its transition at every draw.
+        void useTransitions(std::initializer_list<FillStyle*> elements);
 
     private:
         void updateTooltip();

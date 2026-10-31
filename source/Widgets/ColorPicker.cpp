@@ -13,6 +13,7 @@ RetroFuturaGUI::ColorPicker::ColorPicker(const std::string& name, Projection* pr
     _colorPickerBorder = std::make_unique<Frame>(projection);
     _indicatorBackground = std::make_unique<Plane>(projection);
     _indicatorBorder = std::make_unique<Frame>(projection);
+    useTransitions({ _colorPickerBackground.get(), _colorPickerBorder.get(), _indicatorBackground.get(), _indicatorBorder.get() });
 
     if(!_colorPickerBackground)
         return;

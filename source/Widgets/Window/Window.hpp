@@ -58,8 +58,11 @@ namespace RetroFuturaGUI
         ///        window before any of them draws.
         void Interact();
 
+        /// @brief Makes the window's GL context current and has the root Lasagna's and the scenes' widgets do their per-frame work, then its popups'. Call it once per frame for every window (even hidden ones) between Interact and Draw. A window that was hidden then draws without transitions, so it shows at once what changed meanwhile.
+        void Update();
+
         /// @brief Makes the window's GL context current and draws the window's background, its root Lasagna and its scenes, then
-        ///        follows docking and draws its popups, and closes the top one if it was asked to. Interact ran before it.
+        ///        follows docking and draws its popups, and closes the top one if it was asked to. Update ran before it.
         void Draw();
 
         /// @brief Sets the window's width and height.
@@ -158,6 +161,15 @@ namespace RetroFuturaGUI
         /// @brief Returns the radii the background and border are drawn with: the ones set, with the corners where docked windows
         ///        meet squared. A widget lining the window's edge, such as a window bar, can match its own corners to them.
         glm::vec4 GetDrawnCornerRadii() const;
+
+        /// @brief Sets how the background's and the border's colors or corner radii move to new values, squaring when docked included, in place of the global default (Transitions::SetDefault).
+        void SetTransition(const TransitionProperty properties, const Transition& transition);
+
+        /// @brief Has these properties follow the global default again.
+        void ResetTransition(const TransitionProperty properties);
+
+        /// @brief Returns the transition one property follows: the window's own, or else the global default.
+        Transition GetTransition(const TransitionProperty property) const;
 
     //Docking
         /// @brief Docks a window to one of this window's edges, after the ones already docked there. The windows on one edge
@@ -267,6 +279,10 @@ namespace RetroFuturaGUI
         ///        to. Never destroyed, so a window destroyed late in shutdown can still take itself off it.
         static std::vector<Window*>& getAllWindows();
 
+        /// @brief Whether the system doesn't show the window now: minimized, or not shown yet. A window in a tab never counts,
+        ///        since its own native window is always hidden; whether its tab shows is told by whether it was drawn.
+        bool isHiddenOnScreen() const;
+
     //Input
         /// @brief Reads the mouse for this frame: whether it reaches this window and where the cursor is. Then sets the cursor, and starts or ends a resize on a press or release.
         void pollInput();
@@ -319,6 +335,9 @@ namespace RetroFuturaGUI
 
         /// @brief Draws the root Lasagna, when the window has one.
         void drawLasagna();
+
+        /// @brief Has the root Lasagna's widgets do their per-frame work, when the window has one.
+        void updateLasagna();
 
         /// @brief Hands the corner radii to the background and border, with the corners where docked windows meet squared.
         void applyCornerRadii();
@@ -419,6 +438,9 @@ namespace RetroFuturaGUI
         /// @brief Has every popup on the stack react to the frame's input, bottom first.
         void interactPopups();
 
+        /// @brief Has every popup on the stack do its per-frame work, bottom first.
+        void updatePopups();
+
         /// @brief Draws every popup on the stack, bottom first, then closes the top one if it was asked to.
         void drawPopups();
 
@@ -497,6 +519,9 @@ namespace RetroFuturaGUI
         WindowRole _role { WindowRole::Normal };
         std::unique_ptr<Projection> _projection;
         bool _showAfterDraw { false }; //a popup's window that just opened, or a window that just left a tab, and shows once it has drawn
+        bool
+            _isHidden { true }, //wasn't drawn last frame, or the system doesn't show it: draws without transitions
+            _isDrawnSinceUpdate { false };
 
     //Input
         i32
@@ -537,6 +562,7 @@ namespace RetroFuturaGUI
         glm::vec4
             _cornerRadii { 0.0f },
             _appliedCornerRadii { -1.0f }; //what the background and border last got, so they are only set again on a change
+        TransitionSettings _transitionSettings {}; //read by the background and the border
 
     //Docking
         std::list<Window*>

@@ -127,10 +127,13 @@ void RetroFuturaGUI::Window::drawInHost(const ScreenRect& contentArea, const glm
     {
         //Everything lands in the content area, depth clears included, and an active clip stays in force
         const ScissorClip clip { area };
+        const Transitions::InstantScope instant { _isHidden }; //a tab just selected shows what changed meanwhile at once
         glClear(GL_DEPTH_BUFFER_BIT);
         drawContent();
         glClear(GL_DEPTH_BUFFER_BIT); //the drawing window's widgets after the WindowTab aren't tested against this window's content
     }
+
+    _isDrawnSinceUpdate = true;
 
     IDropDown::restoreShown(std::move(hostDropDowns));
 

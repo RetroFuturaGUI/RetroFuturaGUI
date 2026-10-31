@@ -1,10 +1,71 @@
 #include "FillStyle.hpp"
 #include <algorithm>
 
+void RetroFuturaGUI::FillStyle::SetTransitionSettings(const TransitionSettings* settings)
+{
+    _transitionSettings = settings;
+}
+
 void RetroFuturaGUI::FillStyle::SetColors(std::span<const glm::vec4> colors)
 {
     _colors = colors;
     _colorCount = std::min<uSize>(_colors.size(), 255);
+}
+
+std::span<const glm::vec4> RetroFuturaGUI::FillStyle::getShownColors()
+{
+    const std::span<const glm::vec4> target { _colors.first(_colorCount) };
+
+    if(!_transitionSettings)
+        return target;
+
+    const std::chrono::steady_clock::time_point now { std::chrono::steady_clock::now() };
+
+    //Compared at every draw, since the widget may change the colors in its own vector without handing them over again
+    if(!_hasShownColors || !std::ranges::equal(target, _targetColors))
+        startColorTransition(target, now);
+
+    if(!_isColorTransitionRunning)
+        return _shownColors;
+
+    const f32 progress { Transitions::GetProgress(_colorTransitionStart, now, Transitions::Resolve(*_transitionSettings, TransitionProperty::Colors)) };
+
+    if(1.0f <= progress)
+    {
+        _isColorTransitionRunning = false;
+        _shownColors = _targetColors;
+        return _shownColors;
+    }
+
+    //Both sides get as many stops as the larger one has, so each stop blends with its partner
+    const uSize stopCount { std::max(_fromColors.size(), _targetColors.size()) };
+    Transitions::ResampleStops(_fromColors, stopCount, _fromStops);
+    Transitions::ResampleStops(_targetColors, stopCount, _targetStops);
+    _shownColors.resize(stopCount);
+
+    for(uSize stop = 0; stop < stopCount; ++stop)
+        _shownColors[stop] = Transitions::BlendColor(_fromStops[stop], _targetStops[stop], progress);
+
+    return _shownColors;
+}
+
+void RetroFuturaGUI::FillStyle::startColorTransition(std::span<const glm::vec4> target, const std::chrono::steady_clock::time_point now)
+{
+    const Transition transition { Transitions::Resolve(*_transitionSettings, TransitionProperty::Colors) };
+    const bool isInstant { !_hasShownColors || _shownColors.empty() || target.empty() || 0 >= transition._Duration.count() };
+    _targetColors.assign(target.begin(), target.end());
+    _hasShownColors = true;
+
+    if(isInstant)
+    {
+        _isColorTransitionRunning = false;
+        _shownColors = _targetColors;
+        return;
+    }
+
+    _fromColors = _shownColors; //from where the colors are now, which is midway when the last transition hasn't arrived yet
+    _colorTransitionStart = now;
+    _isColorTransitionRunning = true;
 }
 
 void RetroFuturaGUI::FillStyle::SetFillType(const FillType fillType)
@@ -116,10 +177,11 @@ void RetroFuturaGUI::FillStyle::SetRasterAnimationSpeed(const f32 animationSpeed
 void RetroFuturaGUI::FillStyle::uploadFill(Shader& shader, const u32 extraFeatures)
 {
     shader.SetUniformInt("uDIP", _shaderFeatureDIP | extraFeatures);
+    const std::span<const glm::vec4> colors { getShownColors() };
 
     if(_fillType == FillType::Solid)
     {
-        shader.SetUniformVec4("uColor", _colors[0]);
+        shader.SetUniformVec4("uColor", colors[0]);
     }
     else
     {
@@ -131,8 +193,8 @@ void RetroFuturaGUI::FillStyle::uploadFill(Shader& shader, const u32 extraFeatur
         if(360.0f <= _gradientDegree)
             _gradientDegree = 0.0f;
 
-        shader.SetUniformVec4("uColors", &_colors[0][0], static_cast<u32>(_colorCount));
-        shader.SetUniformInt("uNumColors", static_cast<i32>(_colorCount));
+        shader.SetUniformVec4("uColors", &colors[0][0], static_cast<u32>(colors.size()));
+        shader.SetUniformInt("uNumColors", static_cast<i32>(colors.size()));
         shader.SetUniformFloat("uDegree", _gradientDegree);
         shader.SetUniformFloat("uGradientOffset", _gradientOffset);
     }

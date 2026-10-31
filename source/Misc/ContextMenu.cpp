@@ -56,6 +56,7 @@ RetroFuturaGUI::ContextMenu::ContextMenu(Projection* projection, IWidget* widget
     _background = std::make_unique<Plane>(_projection);
     _border = std::make_unique<Frame>(_projection);
     _text = std::make_unique<Text>(projection);
+    useWidgetTransitions();
 
     if(!_background)
         return;
@@ -317,6 +318,20 @@ void RetroFuturaGUI::ContextMenu::SetFontFamily(std::string_view fontFamily, con
 
     setItemFont(_items.get());
     setSize();
+}
+
+void RetroFuturaGUI::ContextMenu::useWidgetTransitions()
+{
+    if(!_widget)
+        return;
+
+    for(FillStyle* element : std::initializer_list<FillStyle*> { _background.get(), _border.get(), _text.get() })
+    {
+        if(!element)
+            continue;
+
+        element->SetTransitionSettings(&_widget->_transitionSettings);
+    }
 }
 
 void RetroFuturaGUI::ContextMenu::applyDefaultFont()

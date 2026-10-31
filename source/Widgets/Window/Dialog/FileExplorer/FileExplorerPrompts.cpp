@@ -59,7 +59,7 @@ RetroFuturaGUI::FileExplorer::NamePrompt::NamePrompt(std::string_view title, std
     styleButton(*cancel, "Cancel", cellSize(_axis, windowSize, cancelCell), font);
     cancel->Connect_OnClick([this]() { Dismiss(); }, false);
 
-    scene->Connect_OnUpdate([this]() { update(); }, false);
+    scene->Connect_OnInteract([this]() { handleKeys(); }, false);
     AddScene(std::move(host));
 }
 
@@ -73,7 +73,7 @@ void RetroFuturaGUI::FileExplorer::NamePrompt::TakeKeys()
     _name->TakeKeyboardFocus();
 }
 
-void RetroFuturaGUI::FileExplorer::NamePrompt::update()
+void RetroFuturaGUI::FileExplorer::NamePrompt::handleKeys()
 {
     if(!wasPressed(_escapeKey))
         return;
@@ -140,7 +140,7 @@ RetroFuturaGUI::FileExplorer::ConfirmPrompt::ConfirmPrompt(std::string_view titl
     styleButton(*cancel, "Cancel", cellSize(_axis, windowSize, cancelCell), font);
     cancel->Connect_OnClick([this]() { Dismiss(); }, false);
 
-    scene->Connect_OnUpdate([this]() { update(); }, false);
+    scene->Connect_OnInteract([this]() { handleKeys(); }, false);
     AddScene(std::move(host));
 }
 
@@ -157,7 +157,7 @@ void RetroFuturaGUI::FileExplorer::ConfirmPrompt::TakeKeys()
     window->TakeKeyboardInput();
 }
 
-void RetroFuturaGUI::FileExplorer::ConfirmPrompt::update()
+void RetroFuturaGUI::FileExplorer::ConfirmPrompt::handleKeys()
 {
     //Both taken every frame, so neither fires late
     const bool
@@ -236,7 +236,7 @@ RetroFuturaGUI::FileExplorer::ClashPrompt::ClashPrompt(std::string_view name, st
     styleButton(*keepBoth, "Keep both", cellSize(_axis, windowSize, keepBothCell), font);
     keepBoth->Connect_OnClick([this]() { answer(ClashAnswer::KeepBoth); }, false);
 
-    scene->Connect_OnUpdate([this]() { update(); }, false);
+    scene->Connect_OnInteract([this]() { handleKeys(); }, false);
     AddScene(std::move(host));
 }
 
@@ -253,7 +253,7 @@ void RetroFuturaGUI::FileExplorer::ClashPrompt::TakeKeys()
     window->TakeKeyboardInput();
 }
 
-void RetroFuturaGUI::FileExplorer::ClashPrompt::update()
+void RetroFuturaGUI::FileExplorer::ClashPrompt::handleKeys()
 {
     //Both taken every frame, so neither fires late
     const bool

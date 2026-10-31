@@ -108,6 +108,25 @@ void RetroFuturaGUI::Window::interactPopups()
     }
 }
 
+void RetroFuturaGUI::Window::updatePopups()
+{
+    //By index: a popup's slot may open another popup while this loop runs, and push_back would invalidate an iterator
+    for(uSize index = 0; index < _popups.size(); ++index)
+    {
+        IPopup* popup { _popups[index].get() };
+
+        if(!popup)
+            continue;
+
+        Window* popupWindow { popup->GetWindow() };
+
+        if(!popupWindow)
+            continue;
+
+        popupWindow->Update();
+    }
+}
+
 void RetroFuturaGUI::Window::drawPopups()
 {
     //By index: a button in a popup may open another popup while this loop runs, and push_back would invalidate an iterator

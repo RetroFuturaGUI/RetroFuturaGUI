@@ -3,6 +3,7 @@
 #include "IDropDown.hpp"
 #include "Tooltip.hpp"
 #include "ContextMenu.hpp"
+#include "FillStyle.hpp"
 #include "Window.hpp"
 #include <memory>
 
@@ -238,6 +239,11 @@ void RetroFuturaGUI::IWidget::Interact()
     interact();
 }
 
+void RetroFuturaGUI::IWidget::Update()
+{
+    update();
+}
+
 void RetroFuturaGUI::IWidget::updateTooltip()
 {
     if(_enableTooltip && _tooltip)
@@ -266,6 +272,40 @@ void RetroFuturaGUI::IWidget::AddContextMenuNode(std::string_view newNodeName, s
         return;
 
     _contextMenu->AddNode(newNodeName, node);
+}
+
+void RetroFuturaGUI::IWidget::SetTransition(const TransitionProperty properties, const Transition& transition)
+{
+    if(HasTransitionProperty(properties, TransitionProperty::Colors))
+        _transitionSettings._Colors = transition;
+
+    if(HasTransitionProperty(properties, TransitionProperty::CornerRadii))
+        _transitionSettings._CornerRadii = transition;
+}
+
+void RetroFuturaGUI::IWidget::ResetTransition(const TransitionProperty properties)
+{
+    if(HasTransitionProperty(properties, TransitionProperty::Colors))
+        _transitionSettings._Colors.reset();
+
+    if(HasTransitionProperty(properties, TransitionProperty::CornerRadii))
+        _transitionSettings._CornerRadii.reset();
+}
+
+RetroFuturaGUI::Transition RetroFuturaGUI::IWidget::GetTransition(const TransitionProperty property) const
+{
+    return Transitions::Resolve(_transitionSettings, property);
+}
+
+void RetroFuturaGUI::IWidget::useTransitions(std::initializer_list<FillStyle*> elements)
+{
+    for(FillStyle* element : elements)
+    {
+        if(!element)
+            continue;
+
+        element->SetTransitionSettings(&_transitionSettings);
+    }
 }
 
 RetroFuturaGUI::ContextMenu* RetroFuturaGUI::IWidget::GetContextMenu() const

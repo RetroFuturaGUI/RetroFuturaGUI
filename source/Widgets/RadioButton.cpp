@@ -18,6 +18,7 @@ RetroFuturaGUI::RadioButton::RadioButton(const std::string& name, Projection* pr
     _indicator = std::make_unique<Plane>(projection);
     _background = std::make_unique<Plane>(projection);
     _border = std::make_unique<Frame>(projection);
+    useTransitions({ _indicator.get(), _background.get(), _border.get() });
     _parentGroup = parentGroup;
 
     if(!_background)

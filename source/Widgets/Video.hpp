@@ -42,13 +42,16 @@ namespace RetroFuturaGUI
         f32 GetChannelVolume(const u32 channel) const;
 
         /// @brief The video sound's spectrum, one level per frequency band, 0 to 1 - see AudioPlayback::GetFrequencyBands.
-        /// Draw keeps the levels current in place, so bind a Histogram to it once.
+        /// The Update loop keeps the levels current in place, so bind a Histogram to it once.
         std::span<const f32> GetFrequencyBands() const;
 
         /// @brief Sets how many bands GetFrequencyBands reports - see AudioPlayback::SetFrequencyBandCount.
         void SetFrequencyBandCount(const uSize bandCount);
 
     private:
+        /// @brief Moves the picture on to the one due now, also while the Video is hidden or its window sits in a background tab.
+        void update() override;
+
         void fitGeometryToTexture();
 
         std::unique_ptr<AudioPlayback> _audioPlayback {};

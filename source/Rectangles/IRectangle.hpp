@@ -46,12 +46,13 @@ namespace RetroFuturaGUI
         Projection& GetProjection() const;
 
     protected:
-        /// @brief Sets the per-corner rounding radii. Any radius above 0 rounds the corners. Public on Plane and Frame.
+        /// @brief Sets the per-corner rounding radii. Any radius above 0 rounds the corners. With transition settings the
+        ///        corners move to them over the corner radii transition. Public on Plane and Frame.
         void SetCornerRadii(const glm::vec4& radii);
 
-        /// @brief Uploads the projection, the three matrices, the size in pixels, and the corner radii when the corners are
-        ///        rounded.
-        void uploadTransform(Shader& shader) const;
+        /// @brief Uploads the projection, the three matrices, the size in pixels, and the corner radii shown now when the
+        ///        corners are rounded.
+        void uploadTransform(Shader& shader);
 
         /// @brief Draws the shared quad with the shader in use.
         static void drawQuad();
@@ -66,9 +67,27 @@ namespace RetroFuturaGUI
         glm::vec3
             _position { 0.0f },
             _rotation { 0.0f };
-        glm::vec4 _cornerRadii { 0.0f };
+        glm::vec4 _cornerRadii { 0.0f }; //the radii given; _shownCornerRadii are drawn, on the way to them while a transition runs
 
     private:
+    //Corner radii transition
+        glm::vec4
+            _fromCornerRadii { 0.0f },
+            _shownCornerRadii { 0.0f };
+        std::chrono::steady_clock::time_point _cornerRadiiTransitionStart {};
+        bool
+            _hasShownCornerRadii { false }, //radii given before the first draw show at once
+            _isCornerRadiiTransitionRunning { false };
+
+        /// @brief Moves the shown radii on to where the running transition is now, and ends it once it has arrived.
+        void updateShownCornerRadii();
+
+        /// @brief Switches the rounded corners on or off in the shader.
+        void setRoundedCornersFeature(const bool rounded);
+
+        /// @brief Whether any of the radii is above 0.
+        static bool isRounded(const glm::vec4& radii);
+
     //The quad every rectangle draws, made with the first rectangle and deleted with the last
         static constexpr f32 _quadVertices[3 * 4] =
         {

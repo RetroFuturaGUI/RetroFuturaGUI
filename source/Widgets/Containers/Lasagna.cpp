@@ -278,6 +278,23 @@ void RetroFuturaGUI::Lasagna::interact()
     }
 }
 
+void RetroFuturaGUI::Lasagna::update()
+{
+    for(auto& row : _lasagna)
+    {
+        for(auto& column : row)
+        {
+            for(auto& cell : column)
+            {
+                if(!cell._Widget || cell._SpanOccupied)
+                    continue;
+
+                cell._Widget->Update();
+            }
+        }
+    }
+}
+
 void RetroFuturaGUI::Lasagna::ShowDebugLines(const bool show)
 {
     _drawDebugLines = show;

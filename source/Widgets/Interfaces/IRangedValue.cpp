@@ -9,6 +9,7 @@ RetroFuturaGUI::IRangedValue::IRangedValue(std::string_view name, Projection* pr
     _border = std::make_unique<Frame>(projection);
     _indicatorBackground = std::make_unique<Plane>(projection);
     _indicatorBorder = std::make_unique<Frame>(projection);
+    useTransitions({ _background.get(), _border.get(), _indicatorBackground.get(), _indicatorBorder.get() });
 
     if(!_background)
         return;
@@ -103,6 +104,7 @@ void RetroFuturaGUI::IRangedValue::ShowIndicator(const bool show)
     if(_useIndicator && !_indicatorBackground)
     {
         _indicatorBackground = std::make_unique<Plane>(_elementProjection);
+        useTransitions({ _indicatorBackground.get() });
         setIndicatorBackgroundColors();
     }
 
@@ -430,6 +432,7 @@ void RetroFuturaGUI::IRangedValue::ShowGraph(const bool show)
     if(_useGraph && !_graph)
     {
         _graph = std::make_unique<WavePlane>(_elementProjection);
+        useTransitions({ _graph.get() });
         setGraphColorsApply();
     }
 

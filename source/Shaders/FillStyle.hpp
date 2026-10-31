@@ -1,7 +1,10 @@
 #pragma once
 #include "IncludeHelper.hpp"
 #include "Shader.hpp"
+#include "Transition.hpp"
+#include <chrono>
 #include <span>
+#include <vector>
 
 namespace RetroFuturaGUI
 {
@@ -16,6 +19,11 @@ namespace RetroFuturaGUI
     /// @brief The fill and what is laid over it
     class FillStyle
     {
+    public:
+        /// @brief Has the colors, and a rectangle's corner radii, move to new values over the widget's transitions, or the global
+        ///        default where the widget has none. Without settings they switch at once. The settings must outlive this.
+        void SetTransitionSettings(const TransitionSettings* settings);
+
     protected:
         FillStyle() = default;
         ~FillStyle() = default;
@@ -84,6 +92,9 @@ namespace RetroFuturaGUI
         ///        gradient moves on by one step. Needs at least one color.
         void uploadFill(Shader& shader, const u32 extraFeatures);
 
+        /// @brief Returns the colors to draw now: the colors given, or on the way to them while a transition runs.
+        std::span<const glm::vec4> getShownColors();
+
         /// @brief Uploads the background image when it is on, on unit 1. size is what it is stretched over, in pixels, which
         ///        the padding is measured against.
         void uploadImage(Shader& shader, const glm::vec2& size) const;
@@ -120,7 +131,23 @@ namespace RetroFuturaGUI
             _rasterAnimationSpeed { 0.0f },
             _rasterAnimationOffset { 0.0f };
 
+    //Transition, with settings only: the fill moves from _fromColors to _targetColors, a copy of the colors last given
+        const TransitionSettings* _transitionSettings { nullptr };
+        std::vector<glm::vec4>
+            _targetColors {},
+            _fromColors {},
+            _shownColors {},
+            _fromStops {},
+            _targetStops {};
+        std::chrono::steady_clock::time_point _colorTransitionStart {};
+        bool
+            _hasShownColors { false }, //colors given before the first draw show at once
+            _isColorTransitionRunning { false };
+
     private:
+        /// @brief Takes the colors given as the new target: at once, or from the colors shown now over the transition.
+        void startColorTransition(std::span<const glm::vec4> target, const std::chrono::steady_clock::time_point now);
+
         void uploadRaster(Shader& shader);
         void uploadDotUniforms(Shader& shader) const;
         void uploadCheckeredUniforms(Shader& shader) const;

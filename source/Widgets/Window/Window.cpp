@@ -3,6 +3,7 @@
 #include "WindowTab.hpp"
 #include "ContextObjects.hpp"
 #include "ShaderManager.hpp"
+#include "AudioPlayback.hpp"
 #include <print>
 
 RetroFuturaGUI::Window::Window(std::string_view name, const i32 width, const i32 height)
@@ -53,6 +54,14 @@ RetroFuturaGUI::Window::~Window()
     ContextObject::ForgetContext(_window); //its VAOs and framebuffers went with it
 }
 
+bool RetroFuturaGUI::Window::isHiddenOnScreen() const
+{
+    if(IsInTab())
+        return false;
+
+    return GLFW_FALSE == glfwGetWindowAttrib(_window, GLFW_VISIBLE) || GLFW_TRUE == glfwGetWindowAttrib(_window, GLFW_ICONIFIED);
+}
+
 bool RetroFuturaGUI::Window::WindowShouldClose()
 {
     if(!_window)
@@ -90,6 +99,35 @@ void RetroFuturaGUI::Window::Interact()
     interactPopups();
 }
 
+void RetroFuturaGUI::Window::Update()
+{
+    if(!_window)
+        return;
+
+    glfwMakeContextCurrent(_window); //a widget's update may upload a texture, like a video's next picture
+
+    //Not drawn last frame means its tab didn't show
+    _isHidden = !_isDrawnSinceUpdate || isHiddenOnScreen();
+    _isDrawnSinceUpdate = false;
+
+    //Once per frame, for every playback, those no widget holds too
+    if(!getAllWindows().empty() && this == getAllWindows().front())
+        AudioPlayback::UpdateAll();
+
+    updateLasagna();
+
+    //Every active scene, those hidden while the window sits in a tab too
+    for(Scene* scene : _scenes)
+    {
+        if(!scene)
+            continue;
+
+        scene->Update();
+    }
+
+    updatePopups();
+}
+
 void RetroFuturaGUI::Window::Draw()
 {
     if(!_window)
@@ -109,7 +147,13 @@ void RetroFuturaGUI::Window::Draw()
     glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
 
     updateProjection();
-    drawContent();
+
+    {
+        const Transitions::InstantScope instant { _isHidden }; //what changed while it was hidden shows at once
+        drawContent();
+    }
+
+    _isDrawnSinceUpdate = true;
     glfwSwapBuffers(_window);
 
     if(_showAfterDraw)
@@ -292,6 +336,8 @@ void RetroFuturaGUI::Window::createWindow()
     if(!_background)
         return;
 
+    _background->SetTransitionSettings(&_transitionSettings);
+
     _background->SetPosition(glm::vec3((f32)_width * 0.5f, (f32)_height * 0.5f, -1.0f));
     _background->SetSize(glm::vec2((f32)_width, (f32)_height));
     _background->SetRotation(glm::vec3(0.0f));
@@ -300,6 +346,8 @@ void RetroFuturaGUI::Window::createWindow()
 
     if(!_border)
         return;
+
+    _border->SetTransitionSettings(&_transitionSettings);
 
     _border->SetPosition(glm::vec3((f32)_width * 0.5f, (f32)_height * 0.5f, 0.0f));
     _border->SetSize(glm::vec2((f32)_width, (f32)_height));

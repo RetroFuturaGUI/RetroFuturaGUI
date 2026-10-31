@@ -149,6 +149,9 @@ namespace RetroFuturaGUI
         /// @brief Sweeps the removed widgets, then passes the frame's input on to the shown ones in attachment order.
         void interact() override;
 
+        /// @brief Passes the frame's update on to every widget, hidden ones included.
+        void update() override;
+
         EnvironmentEntry* findEntry(std::string_view name);
         const EnvironmentEntry* findEntry(std::string_view name) const;
 

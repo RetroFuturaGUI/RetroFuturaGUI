@@ -9,6 +9,7 @@ RetroFuturaGUI::IDropDown::IDropDown(std::string_view name, Projection* projecti
     _dropDownBackground = std::make_unique<Plane>(projection);
     _dropDownBorder = std::make_unique<Frame>(projection);
     _dropDownItemHighlight = std::make_unique<Plane>(projection);
+    useTransitions({ _dropDownBackground.get(), _dropDownBorder.get(), _dropDownItemHighlight.get() });
     _dropDownArrow = ResourceManager::CreateDropDownArrowIcon(projection);
 
     if(!_dropDownBackground)

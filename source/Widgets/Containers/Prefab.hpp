@@ -64,6 +64,9 @@ namespace RetroFuturaGUI
     private:
         void interact() override;
 
+        /// @brief Passes the frame's update on to every widget, hidden ones included.
+        void update() override;
+
         std::unique_ptr<Lasagna> _lasagna { nullptr };
     };
 }

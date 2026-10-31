@@ -99,7 +99,8 @@ bool RetroFuturaGUI::FileExplorer::openWithFilters(std::string_view startPath, c
     if(!scene)
         return false;
 
-    scene->Connect_OnUpdate([this]() { update(); }, false); //before the widgets take the input, so a key the list also takes is seen in the same frame
+    scene->Connect_OnInteract([this]() { handleKeys(); }, false); //before the list takes the input, so the Enter that ends a rename doesn't open the file too
+    scene->Connect_OnUpdate([this]() { update(); }, false);
     _filters = std::move(filters);
     applyMode();
     addFilters();
@@ -1207,7 +1208,6 @@ void RetroFuturaGUI::FileExplorer::update()
     showThumbnails(); //after the listing, so a list filled anew gets its thumbnails before it draws
     watchChanges();
     showProgress();
-    handleKeys();
 
     if(!_preview)
         return;

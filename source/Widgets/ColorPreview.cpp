@@ -11,6 +11,7 @@ RetroFuturaGUI::ColorPreview::ColorPreview(std::string_view name, Projection* pr
     _whiteBackground = std::make_unique<Plane>(&_projection);
     _colorRect = std::make_unique<Plane>(&_projection);
     _border = std::make_unique<Frame>(&_projection);
+    useTransitions({ _border.get() }); //the preview color is a value, not a style, so it switches at once
 
     if(!_checkeredBackground)
         return;

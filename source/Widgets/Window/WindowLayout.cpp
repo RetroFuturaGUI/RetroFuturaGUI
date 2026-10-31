@@ -96,6 +96,29 @@ void RetroFuturaGUI::Window::SetCornerRadii(const glm::vec4& radii)
     _cornerRadii = radii;
 }
 
+void RetroFuturaGUI::Window::SetTransition(const TransitionProperty properties, const Transition& transition)
+{
+    if(HasTransitionProperty(properties, TransitionProperty::Colors))
+        _transitionSettings._Colors = transition;
+
+    if(HasTransitionProperty(properties, TransitionProperty::CornerRadii))
+        _transitionSettings._CornerRadii = transition;
+}
+
+void RetroFuturaGUI::Window::ResetTransition(const TransitionProperty properties)
+{
+    if(HasTransitionProperty(properties, TransitionProperty::Colors))
+        _transitionSettings._Colors.reset();
+
+    if(HasTransitionProperty(properties, TransitionProperty::CornerRadii))
+        _transitionSettings._CornerRadii.reset();
+}
+
+RetroFuturaGUI::Transition RetroFuturaGUI::Window::GetTransition(const TransitionProperty property) const
+{
+    return Transitions::Resolve(_transitionSettings, property);
+}
+
 glm::vec4 RetroFuturaGUI::Window::GetDrawnCornerRadii() const
 {
     if(IsInTab())
@@ -234,6 +257,14 @@ void RetroFuturaGUI::Window::drawLasagna()
         return;
 
     _lasagna->Draw();
+}
+
+void RetroFuturaGUI::Window::updateLasagna()
+{
+    if(!_lasagna)
+        return;
+
+    _lasagna->Update();
 }
 
 void RetroFuturaGUI::Window::applyCornerRadii()

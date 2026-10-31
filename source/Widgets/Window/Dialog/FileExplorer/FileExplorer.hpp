@@ -453,7 +453,8 @@ namespace RetroFuturaGUI
         /// @brief The main thread's side: shows a listing that arrived, unless a newer one was asked for since.
         void showListing(Listing&& listing);
 
-        /// @brief Runs each frame from the scene's update: takes arrived listings, shows the progress, then the keys.
+        /// @brief Runs each frame from the scene's OnUpdate, also while the explorer sits under a prompt: takes arrived listings,
+        ///        follows transfers and changes, and shows the thumbnails and the progress.
         void update();
 
         /// @brief Shows the listings that arrived since the last frame.
@@ -679,7 +680,7 @@ namespace RetroFuturaGUI
 
     //Keys
         /// @brief Takes the explorer's keys while the list has the keyboard: Enter, Backspace, Ctrl+Up, Ctrl+Left, Ctrl+Right,
-        ///        Escape and F5. The list moves the selection itself. Runs each frame from the scene's update.
+        ///        Escape and F5. The list moves the selection itself. Runs each frame from the scene's OnInteract, before the list takes the keys.
         void handleKeys();
 
         /// @brief Enter: opens the one selected folder, otherwise does what OK does.

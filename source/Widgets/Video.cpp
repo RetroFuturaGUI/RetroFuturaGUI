@@ -9,6 +9,7 @@ RetroFuturaGUI::Video::Video(const std::string& name, Projection* projection, IW
 {
     _widgetTypeID = WidgetTypeID::Video;
     _plane = std::make_unique<Plane>(projection);
+    useTransitions({ _plane.get() });
     _audioPlayback = std::make_unique<AudioPlayback>();
 
     if(!_plane)
@@ -45,6 +46,14 @@ RetroFuturaGUI::Video::~Video()
     _videoPlayback->Close();
 }
 
+void RetroFuturaGUI::Video::update()
+{
+    if(!_videoPlayback)
+        return;
+
+    _videoPlayback->Update();
+}
+
 void RetroFuturaGUI::Video::Draw()
 {
     if(!_plane)
@@ -53,17 +62,10 @@ void RetroFuturaGUI::Video::Draw()
     if(!_videoPlayback)
         return;
 
-    if(!_audioPlayback)
-        return;
-
-    _audioPlayback->UpdateFrequencyBands();
-
     ITexture* texture { _videoPlayback->GetTexture() };
 
     if(!texture)
         return;
-
-    _videoPlayback->Update();
 
     if(0.0f >= texture->GetAspectRatio())
         return;

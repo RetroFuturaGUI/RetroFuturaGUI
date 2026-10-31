@@ -5,6 +5,7 @@ RetroFuturaGUI::Label::Label(const std::string& name, Projection* projection, IW
 {
     _widgetTypeID = WidgetTypeID::Label;
     _text = std::make_unique<Text>(projection);
+    useTransitions({ _text.get() });
 }
 
 void RetroFuturaGUI::Label::Draw()

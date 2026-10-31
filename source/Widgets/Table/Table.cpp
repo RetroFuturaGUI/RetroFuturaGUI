@@ -35,6 +35,7 @@ RetroFuturaGUI::Table::Table(const std::string& name, Projection* projection, IW
     _cellImagePlane = std::make_unique<Plane>(projection);
     _selectionBand = std::make_unique<Plane>(projection);
     _selectionBandBorder = std::make_unique<Frame>(projection);
+    useTransitions({ _background.get(), _border.get(), _selectionBand.get(), _selectionBandBorder.get() }); //the cell elements draw once per cell, in its colors, so they switch at once
 
     if(!_background)
         return;

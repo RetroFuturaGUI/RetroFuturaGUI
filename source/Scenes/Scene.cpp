@@ -20,10 +20,24 @@ void RetroFuturaGUI::Scene::Interact()
     if(!_rootContainer)
         return;
 
+    _onInteract.Emit();
+    _onInteractAsync.EmitAsync();
+
+    _rootContainer->Interact();
+}
+
+void RetroFuturaGUI::Scene::Update()
+{
+    if(!_active)
+        return;
+
+    if(!_rootContainer)
+        return;
+
     _onUpdate.Emit();
     _onUpdateAsync.EmitAsync();
 
-    _rootContainer->Interact();
+    _rootContainer->Update();
 }
 
 void RetroFuturaGUI::Scene::Draw()
@@ -35,6 +49,20 @@ void RetroFuturaGUI::Scene::Draw()
         return;
 
     _rootContainer->Draw();
+}
+
+void RetroFuturaGUI::Scene::Connect_OnInteract(const typename Signal<>::Slot& slot, const bool async)
+{
+    if(async)
+        _onInteractAsync.Connect(slot);
+    else
+        _onInteract.Connect(slot);
+}
+
+void RetroFuturaGUI::Scene::Disconnect_OnInteract(const typename Signal<>::Slot& slot)
+{
+    _onInteract.Disconnect(slot);
+    _onInteractAsync.Disconnect(slot);
 }
 
 void RetroFuturaGUI::Scene::Connect_OnUpdate(const typename Signal<>::Slot& slot, const bool async)

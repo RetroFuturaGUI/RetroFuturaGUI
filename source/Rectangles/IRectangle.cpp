@@ -61,22 +61,33 @@ RetroFuturaGUI::Projection& RetroFuturaGUI::IRectangle::GetProjection() const
 
 void RetroFuturaGUI::IRectangle::SetCornerRadii(const glm::vec4& radii)
 {
-    _cornerRadii = radii;
+    if(radii == _cornerRadii)
+        return;
 
-    for(u32 i = 0; 4 > i; ++i)
+    _cornerRadii = radii;
+    const bool isInstant
     {
-        if(0.0f < _cornerRadii[i])
-        {
-            _shaderFeatureDIP |= ShaderFeatures::RoundedCorners;
-            return;
-        }
+        !_transitionSettings || !_hasShownCornerRadii
+        || 0 >= Transitions::Resolve(*_transitionSettings, TransitionProperty::CornerRadii)._Duration.count()
+    };
+
+    if(isInstant)
+    {
+        _isCornerRadiiTransitionRunning = false;
+        _shownCornerRadii = _cornerRadii;
+        setRoundedCornersFeature(isRounded(_cornerRadii));
+        return;
     }
 
-    _shaderFeatureDIP &= ~ShaderFeatures::RoundedCorners;
+    _fromCornerRadii = _shownCornerRadii; //from where the corners are now, which is midway when the last transition hasn't arrived yet
+    _cornerRadiiTransitionStart = std::chrono::steady_clock::now();
+    _isCornerRadiiTransitionRunning = true;
+    setRoundedCornersFeature(isRounded(_fromCornerRadii) || isRounded(_cornerRadii));
 }
 
-void RetroFuturaGUI::IRectangle::uploadTransform(Shader& shader) const
+void RetroFuturaGUI::IRectangle::uploadTransform(Shader& shader)
 {
+    updateShownCornerRadii();
     shader.SetUniformMat4("uProjection", _projection.GetProjectionMatrix());
     shader.SetUniformMat4("uPosition", _translationMatrix);
     shader.SetUniformMat4("uScaling", _scalingMatrix);
@@ -84,7 +95,47 @@ void RetroFuturaGUI::IRectangle::uploadTransform(Shader& shader) const
     shader.SetUniformVec2("uScale", _scale);
 
     if(_shaderFeatureDIP & ShaderFeatures::RoundedCorners)
-        shader.SetUniformVec4("uCornerRadii", _cornerRadii);
+        shader.SetUniformVec4("uCornerRadii", _shownCornerRadii);
+}
+
+void RetroFuturaGUI::IRectangle::updateShownCornerRadii()
+{
+    _hasShownCornerRadii = true;
+
+    if(!_isCornerRadiiTransitionRunning)
+        return;
+
+    if(!_transitionSettings)
+        return;
+
+    const f32 progress
+    {
+        Transitions::GetProgress(_cornerRadiiTransitionStart, std::chrono::steady_clock::now(),
+                                 Transitions::Resolve(*_transitionSettings, TransitionProperty::CornerRadii))
+    };
+
+    if(1.0f > progress)
+    {
+        _shownCornerRadii = glm::mix(_fromCornerRadii, _cornerRadii, progress);
+        return;
+    }
+
+    _isCornerRadiiTransitionRunning = false;
+    _shownCornerRadii = _cornerRadii;
+    setRoundedCornersFeature(isRounded(_cornerRadii));
+}
+
+void RetroFuturaGUI::IRectangle::setRoundedCornersFeature(const bool rounded)
+{
+    if(rounded)
+        _shaderFeatureDIP |= ShaderFeatures::RoundedCorners;
+    else
+        _shaderFeatureDIP &= ~ShaderFeatures::RoundedCorners;
+}
+
+bool RetroFuturaGUI::IRectangle::isRounded(const glm::vec4& radii)
+{
+    return 0.0f < radii.x || 0.0f < radii.y || 0.0f < radii.z || 0.0f < radii.w;
 }
 
 void RetroFuturaGUI::IRectangle::drawQuad()

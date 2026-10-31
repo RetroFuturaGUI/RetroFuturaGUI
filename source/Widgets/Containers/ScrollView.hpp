@@ -168,6 +168,9 @@ namespace RetroFuturaGUI
         /// @brief Sweeps the removed cells, follows the view's own press, passes the input on to the widgets, then scrolls by the wheel.
         void interact() override;
 
+        /// @brief Passes the frame's update on to every widget, hidden ones included.
+        void update() override;
+
         /// @brief Follows the pointer for the view itself: hover, and the press that becomes a drag scroll or a click.
         void followPointer();
 

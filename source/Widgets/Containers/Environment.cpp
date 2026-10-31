@@ -170,6 +170,20 @@ void RetroFuturaGUI::Environment::interact()
     }
 }
 
+void RetroFuturaGUI::Environment::update()
+{
+    //By index, since a widget's slot may attach another one, which can move the entries
+    for(uSize index = 0; index < _entries.size(); ++index)
+    {
+        IWidget* widget { _entries[index]._Widget.get() };
+
+        if(!widget)
+            continue;
+
+        widget->Update();
+    }
+}
+
 void RetroFuturaGUI::Environment::SetSize(const glm::vec3& size)
 {
     IWidget::SetSize(size);

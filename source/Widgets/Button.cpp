@@ -15,6 +15,7 @@ RetroFuturaGUI::Button::Button(const std::string& name, Projection* projection, 
     _background = std::make_unique<Plane>(projection);
     _border = std::make_unique<Frame>(projection);
     _text = std::make_unique<Text>(projection);
+    useTransitions({ _background.get(), _border.get(), _text.get() });
 
     if(!_background)
         return;

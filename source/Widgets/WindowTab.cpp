@@ -18,6 +18,7 @@ RetroFuturaGUI::WindowTab::WindowTab(std::string_view name, Projection* projecti
     _closeBackground = std::make_unique<Plane>(projection);
     _closeIcon = ResourceManager::CreateSvgTexture(getCloseIconPath(), projection, glm::i32vec2(32));
     _previewTitle = std::make_unique<Text>(projection);
+    useTransitions({ _background.get(), _border.get() }); //the field elements draw once per field, in its colors, so they switch at once
 
     if(!_background)
         return;

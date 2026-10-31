@@ -18,6 +18,7 @@ RetroFuturaGUI::RadioButtonGroup::RadioButtonGroup(const std::string& name, Proj
     _widgetTypeID = WidgetTypeID::RadioButtonGroup;
     _border = std::make_unique<Frame>(projection);
     _text = std::make_unique<Text>(projection);
+    useTransitions({ _border.get(), _text.get() });
 
     if(!_border)
         return;
@@ -63,6 +64,23 @@ void RetroFuturaGUI::RadioButtonGroup::interact()
                 continue;
 
             column._Label->Interact();
+        }
+}
+
+void RetroFuturaGUI::RadioButtonGroup::update()
+{
+    for(const auto& row : _grid)
+        for(const auto& column: row)
+        {
+            if(!column._RadioButton)
+                continue;
+
+            column._RadioButton->Update();
+
+            if(!column._Label)
+                continue;
+
+            column._Label->Update();
         }
 }
 

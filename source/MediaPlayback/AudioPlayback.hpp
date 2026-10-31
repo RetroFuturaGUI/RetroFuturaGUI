@@ -5,6 +5,7 @@
 #include <atomic>
 #include <span>
 #include <string_view>
+#include <vector>
 #include <miniaudio.h>
 
 namespace RetroFuturaGUI
@@ -39,7 +40,8 @@ namespace RetroFuturaGUI
     class AudioPlayback
     {
     public:
-        AudioPlayback() = default;
+        /// @brief Joins the playbacks the Update loop keeps current (UpdateAll). Construct and destroy it on the windows' thread.
+        AudioPlayback();
         AudioPlayback(const AudioPlayback&) = delete;
         AudioPlayback(AudioPlayback&&) = delete;
         AudioPlayback& operator=(const AudioPlayback&) = delete;
@@ -107,9 +109,12 @@ namespace RetroFuturaGUI
         /// @brief Returns how many channels GetChannelVolume reports on.
         u32 GetChannelCount() const;
 
-        /// @brief Analyzes the audio that arrived since the last call into the bands GetFrequencyBands points at. Call it
-        /// once per frame on the thread that draws - Video::Draw does that for a video. While nothing plays, the bands fall to 0.
+        /// @brief Analyzes the audio that arrived since the last call into the bands GetFrequencyBands points at. The Update
+        /// loop calls it once per frame for every playback (UpdateAll). While nothing plays, the bands fall to 0.
         void UpdateFrequencyBands();
+
+        /// @brief Updates the frequency bands of every playback alive. The first window's Update calls it once per frame.
+        static void UpdateAll();
 
         /// @brief The spectrum of what the meter measures (see GetChannelVolume): one level per frequency band, 0 to 1,
         /// spaced logarithmically from bass to treble. The levels change in place with every UpdateFrequencyBands, so a
@@ -162,5 +167,6 @@ namespace RetroFuturaGUI
             _streamed { false };
         static inline constexpr f32 _meterDecay { 0.85f }; //how smoothly the meter falls when the signal is falling
         static inline constexpr ma_uint32 _spectrumBufferFrameCount { 16384 };
+        static inline std::vector<AudioPlayback*> _playbacks {}; //every playback alive, for UpdateAll
     };
 }

@@ -20,6 +20,7 @@ RetroFuturaGUI::ComboBox::ComboBox(std::string_view name, Projection* projection
     _widgetTypeID = WidgetTypeID::ComboBox;
     _background = std::make_unique<Plane>(projection);
     _border = std::make_unique<Frame>(projection);
+    useTransitions({ _background.get(), _border.get() });
 
     if(!_background)
         return;

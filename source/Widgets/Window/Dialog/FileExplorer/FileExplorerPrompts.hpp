@@ -24,7 +24,8 @@ namespace RetroFuturaGUI
         void TakeKeys();
 
     private:
-        void update();
+        /// @brief Takes the prompt's keys, before its widgets take the input.
+        void handleKeys();
         void confirm();
 
         TextBox* _name { nullptr };
@@ -57,7 +58,8 @@ namespace RetroFuturaGUI
         void TakeKeys();
 
     private:
-        void update();
+        /// @brief Takes the prompt's keys, before its widgets take the input.
+        void handleKeys();
 
         KeyPress
             _enterKey { ._Key = PB_KEY_RETURN, ._PressCountSeen = 0 },
@@ -91,7 +93,8 @@ namespace RetroFuturaGUI
         void TakeKeys();
 
     private:
-        void update();
+        /// @brief Takes the prompt's keys, before its widgets take the input.
+        void handleKeys();
         void answer(const ClashAnswer clashAnswer);
 
         CheckBox* _forRemaining { nullptr };

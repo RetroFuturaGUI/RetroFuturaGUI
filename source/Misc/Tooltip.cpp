@@ -14,6 +14,7 @@ RetroFuturaGUI::Tooltip::Tooltip(Projection* projection, IWidget* widget)
     _background = std::make_unique<Plane>(_projection);
     _border = std::make_unique<Frame>(_projection);
     _text = std::make_unique<Text>(projection);
+    useWidgetTransitions();
 
     if(!_background)
         return;
@@ -128,6 +129,20 @@ void RetroFuturaGUI::Tooltip::SetFontFamily(std::string_view fontFamily, const f
     _hasOwnFont = true;
     ITextProperties::SetFontFamily(fontFamily, fontSize, slant, fontWeight);
     setSize();
+}
+
+void RetroFuturaGUI::Tooltip::useWidgetTransitions()
+{
+    if(!_widget)
+        return;
+
+    for(FillStyle* element : std::initializer_list<FillStyle*> { _background.get(), _border.get(), _text.get() })
+    {
+        if(!element)
+            continue;
+
+        element->SetTransitionSettings(&_widget->_transitionSettings);
+    }
 }
 
 void RetroFuturaGUI::Tooltip::applyDefaultFont()

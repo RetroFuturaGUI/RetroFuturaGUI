@@ -176,6 +176,9 @@ namespace RetroFuturaGUI
         /// @brief Passes the frame's input on to the shown widgets, in the order they draw.
         void interact() override;
 
+        /// @brief Passes the frame's update on to every widget, hidden ones included.
+        void update() override;
+
     // Data
         std::vector<std::vector<std::vector<LasagnaCell>>> _lasagna {};
         static constinit const u32 _maxCountPerAxis { MaxTracksPerAxis };

@@ -11,6 +11,7 @@ RetroFuturaGUI::SeparatorLine::SeparatorLine(std::string_view name, Projection* 
     _widgetTypeID = WidgetTypeID::SeparatorLine;
     _background = std::make_unique<Plane>(&_projection);
     _text = std::make_unique<Text>(&_projection);
+    useTransitions({ _background.get(), _text.get() });
 
     if(!_background)
         return;

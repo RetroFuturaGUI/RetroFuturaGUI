@@ -68,6 +68,9 @@ namespace RetroFuturaGUI
         /// @brief Switches to the default font if it changed since this ContextMenu last took it, unless the ContextMenu has its own font.
         void applyDefaultFont();
 
+        /// @brief Has the box and the text follow the widget's transitions.
+        void useWidgetTransitions();
+
         ExtendedComboBox* iterateNode(ExtendedComboBox* comboBox, std::string_view node);
 
         Projection* _projection { nullptr };

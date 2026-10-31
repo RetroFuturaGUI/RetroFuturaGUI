@@ -106,6 +106,9 @@ namespace RetroFuturaGUI
         /// @brief Sweeps the removed items, follows the pointer for the box and its list, then passes the input on to the rows while the list is open.
         void interact() override;
 
+        /// @brief Passes the frame's update on to every widget, hidden ones included.
+        void update() override;
+
         /// @brief Hover, clicks and picking a row for the box and its open list.
         void followPointer();
 

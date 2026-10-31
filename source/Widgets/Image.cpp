@@ -12,6 +12,7 @@ RetroFuturaGUI::Image::Image(const std::string& name, Projection* projection, IW
 {
     _widgetTypeID = WidgetTypeID::Image;
     _plane = std::make_unique<Plane>(projection);
+    useTransitions({ _plane.get() });
 
     if(!_plane)
         return;

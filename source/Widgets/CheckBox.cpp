@@ -19,6 +19,7 @@ RetroFuturaGUI::CheckBox::CheckBox(const std::string& name, Projection* projecti
     _inheritFill = std::make_unique<Plane>(projection);
     _background = std::make_unique<Plane>(projection);
     _border = std::make_unique<Frame>(projection);
+    useTransitions({ _inheritFill.get(), _background.get(), _border.get() });
 
     if(!_background)
         return;

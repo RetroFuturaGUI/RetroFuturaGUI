@@ -55,6 +55,9 @@ namespace RetroFuturaGUI
         /// @brief Switches to the default font if it changed since this tooltip last took it, unless the tooltip has its own font.
         void applyDefaultFont();
 
+        /// @brief Has the box and the text follow the widget's transitions.
+        void useWidgetTransitions();
+
         Projection* _projection { nullptr };
         IWidget* _widget { nullptr };
         std::vector<glm::vec4>

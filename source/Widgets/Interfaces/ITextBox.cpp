@@ -15,6 +15,7 @@ RetroFuturaGUI::ITextBox::ITextBox(std::string_view name, Projection* projection
     _text = std::make_unique<Text>(projection);
     _placeholderText = std::make_unique<Text>(projection);
     initEditVisuals(projection);
+    useTransitions({ _background.get(), _border.get(), _text.get(), _placeholderText.get(), _caret.get(), _selectedArea.get() });
 
     if(!_background)
         return;
