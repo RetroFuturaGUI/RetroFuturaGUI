@@ -136,6 +136,7 @@ list(APPEND RetroFuturaGuiSources
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/Window/WindowDocking.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/Window/WindowInput.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/Window/WindowLayout.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/Window/WindowLayoutFile.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/Window/WindowPopups.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/Window/WindowTabs.cpp"
 

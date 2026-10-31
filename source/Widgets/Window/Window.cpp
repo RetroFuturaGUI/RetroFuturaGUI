@@ -108,7 +108,16 @@ bool RetroFuturaGUI::Window::WindowShouldClose()
         return true;
 
     refuseCloseWhileBlocked();
-    return GLFW_TRUE == glfwWindowShouldClose(_window);
+    const bool isClosing { GLFW_TRUE == glfwWindowShouldClose(_window) };
+
+    //Written once as it is asked to close, before the app destroys it, so the file still has it where it was
+    if(isClosing && !_wasCloseRequested && WindowRole::Normal == _role)
+    {
+        _wasCloseRequested = true;
+        SaveLayout();
+    }
+
+    return isClosing;
 }
 
 void RetroFuturaGUI::Window::Interact()
@@ -116,11 +125,18 @@ void RetroFuturaGUI::Window::Interact()
     if(!_window)
         return;
 
-    if(IsInTab())
-        return; //the window holding its WindowTab has it interact
-
     //Another window may have interacted last, and the GL calls of a slot below have to land in this window's context
     glfwMakeContextCurrent(_window);
+
+    //The layout file, read on the first frame and written when the last one changed it, by the first window even in a tab
+    if(!getAllWindows().empty() && this == getAllWindows().front())
+    {
+        loadLayoutOnce();
+        saveLayoutIfChanged();
+    }
+
+    if(IsInTab())
+        return;
 
     //Each WindowTab marks itself again when it interacts. One in an inactive scene, which doesn't, takes no dropped windows.
     for(WindowTab* tab : _windowTabs)
@@ -149,6 +165,7 @@ void RetroFuturaGUI::Window::Update()
     //Not drawn last frame means its tab didn't show
     _isHidden = !_isDrawnSinceUpdate || isHiddenOnScreen();
     _isDrawnSinceUpdate = false;
+    watchLayout();
 
     //Once per frame, for every playback, those no widget holds too
     if(!getAllWindows().empty() && this == getAllWindows().front())

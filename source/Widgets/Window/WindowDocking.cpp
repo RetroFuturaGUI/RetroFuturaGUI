@@ -118,6 +118,7 @@ bool RetroFuturaGUI::Window::dockWindowAt(Window* window, const DockEdge edge, c
     docked.insert(std::next(docked.begin(), static_cast<i64>(std::min(index, docked.size()))), window);
 
     layoutDockedWindows();
+    markLayoutChanged();
     return true;
 }
 
@@ -131,6 +132,7 @@ void RetroFuturaGUI::Window::leaveDockHost()
     _dockHost = nullptr;
     restoreUndockedLength();
     host->layoutDockedWindows(); //The windows left on that edge share all of it again, so they grow into the gap
+    markLayoutChanged();
 }
 
 void RetroFuturaGUI::Window::releaseDockedWindows()

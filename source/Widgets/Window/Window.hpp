@@ -223,6 +223,13 @@ namespace RetroFuturaGUI
         ///        adds this.
         static glm::ivec2 DrawOriginOf(GLFWwindow* glfwWindow);
 
+    //Layout file
+        /// @brief Sets the file the windows' layout is kept in
+        static void SetLayoutFile(std::string_view path);
+
+        /// @brief Writes the layout file 
+        static void SaveLayout();
+
     private:
         /// @brief What a window is for. Docking previews and popups' windows start hidden and stay out of docking and the window list.
         enum class WindowRole : u8
@@ -524,6 +531,35 @@ namespace RetroFuturaGUI
         /// @brief Whether the WindowTab still lives in one of the windows, so a pointer kept from an earlier frame is safe to use.
         static bool isRegisteredWindowTab(const WindowTab* tab);
 
+    //Layout file
+        /// @brief Reads the layout file and applies it once, or creates the file if it doesn't exist yet
+        static void loadLayoutOnce();
+
+        /// @brief Puts the windows where the layout file's text tell them
+        static void applyLayout(const std::string& text);
+
+        /// @brief Returns the layout file's text for the windows as they are now.
+        static std::string writeLayout();
+
+        /// @brief Marks the layout changed, so it is written at the start of the next frame.
+        static void markLayoutChanged();
+
+        /// @brief Writes the layout file when it was marked changed. Once per frame, from the first window's Interact.
+        static void saveLayoutIfChanged();
+
+        /// @brief Notices a change of this window's maximized or minimized state, and of its position or size once the mouse
+        ///        button is up, so a drag counts once it ends. Called from Update.
+        void watchLayout();
+
+        /// @brief Moves a window saved where no monitor shows it anymore onto the primary monitor's work area.
+        static glm::ivec4 keepOnMonitors(const glm::ivec4& rect);
+
+        /// @brief Returns the window with the given name, or nullptr.
+        static Window* findWindow(std::string_view name);
+
+        /// @brief Returns the WindowTab with the given path, or nullptr.
+        static WindowTab* findWindowTab(std::string_view path);
+
     //Native window
         GLFWwindow* _window {nullptr};
 
@@ -623,6 +659,22 @@ namespace RetroFuturaGUI
             _cursorGrabPoint { 0 }; //where the cursor holds the window while it follows the cursor after being pulled out of a tab
         glm::vec4 _tabCornerRadii { 0.0f }; //the content area's radii, which the window takes while it is in a tab
         bool _followsCursor { false }; //whether window should move when pulled out off a tab
+
+    //Layout file
+        static inline std::string _layoutFile { "RetroFuturaGUI.ini" };
+        static constexpr i32
+            _grabStripHeight { 32 }, //how much of a saved window's top must lie on a monitor to be grabbed there by its bar
+            _grabStripMinimumWidth { 64 };
+        static inline bool
+            _isLayoutLoaded { false },
+            _isLayoutChanged { false };
+        glm::ivec2
+            _normalPosition { 0 },
+            _normalSize { 0 };
+        bool
+            _wasMaximized { false },
+            _wasMinimized { false },
+            _wasCloseRequested { false }; //the layout is written once when the window is asked to close
 
         friend class IPopup; //creates its window through the private constructor
         friend class WindowTab; //registers itself, docks windows into itself and draws the selected one

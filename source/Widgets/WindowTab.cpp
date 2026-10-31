@@ -188,6 +188,7 @@ void RetroFuturaGUI::WindowTab::SelectWindow(Window* window, const bool emitSign
 
     _selectedWindow = window;
     window->_ignoreHeldPress = true; //the press that selected it may still be down, and isn't a click on what lies under it
+    Window::markLayoutChanged(); //the layout file keeps which tab shows
 
     if(!emitSignal)
         return;
@@ -516,6 +517,8 @@ void RetroFuturaGUI::WindowTab::dragField(const glm::vec2& point)
         std::rotate(std::next(_fields.begin(), static_cast<i64>(slot)), std::next(_fields.begin(), static_cast<i64>(index)), std::next(_fields.begin(), static_cast<i64>(index + 1)));
     else
         std::rotate(std::next(_fields.begin(), static_cast<i64>(index)), std::next(_fields.begin(), static_cast<i64>(index + 1)), std::next(_fields.begin(), static_cast<i64>(slot + 1)));
+
+    Window::markLayoutChanged(); //the layout file keeps the tabs' order
 }
 
 bool RetroFuturaGUI::WindowTab::isPullingOut(const uSize index, const glm::vec2& point) const

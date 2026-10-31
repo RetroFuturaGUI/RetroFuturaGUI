@@ -62,6 +62,7 @@ bool RetroFuturaGUI::Window::enterTab(WindowTab* tab)
     _showAfterDraw = false;
     glfwHideWindow(_window);
     UpdateLayout(); //the scenes hidden in a tab give their strips back
+    markLayoutChanged();
     return true;
 }
 
@@ -85,6 +86,7 @@ void RetroFuturaGUI::Window::leaveTab(const glm::ivec2& position)
     _showAfterDraw = true;
     _lastSize = glm::ivec2(-1);
     UpdateLayout(); //the scenes hidden in a tab take their strips again
+    markLayoutChanged();
 }
 
 void RetroFuturaGUI::Window::interactInHost(const ScreenRect& contentArea, const glm::ivec2& screenPosition, const glm::vec4& cornerRadii)
