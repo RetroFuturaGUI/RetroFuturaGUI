@@ -15,12 +15,32 @@ std::unique_ptr<RetroFuturaGUI::FreeTypeGlyphSource> RetroFuturaGUI::FreeTypeGly
         return nullptr;
 
     setVariableWeight(library, face, weight);
-    return std::unique_ptr<FreeTypeGlyphSource>(new FreeTypeGlyphSource(face));
+    return std::unique_ptr<FreeTypeGlyphSource>(new FreeTypeGlyphSource(face, path, faceIndex));
 }
 
-RetroFuturaGUI::FreeTypeGlyphSource::FreeTypeGlyphSource(FT_Face face)
-    : _face(face)
+RetroFuturaGUI::FreeTypeGlyphSource::FreeTypeGlyphSource(FT_Face face, std::string_view path, const u32 faceIndex)
+    : _face(face), _path(path), _faceIndex(faceIndex)
 {
+}
+
+hb_face_t* RetroFuturaGUI::FreeTypeGlyphSource::getSharedFace(std::string_view path, const u32 faceIndex)
+{
+    const std::string key { std::string(path) + "#" + std::to_string(faceIndex) };
+    const auto found { _sharedFaces.find(key) };
+
+    if(_sharedFaces.end() != found)
+        return found->second;
+
+    //The file read once into a blob the face reads its tables from; a file HarfBuzz can't read gives an empty face
+    hb_blob_t* blob { hb_blob_create_from_file_or_fail(std::string(path).c_str()) };
+
+    if(!blob)
+        return nullptr;
+
+    hb_face_t* face { hb_face_create(blob, faceIndex) };
+    hb_blob_destroy(blob); //the face holds a reference of its own
+    _sharedFaces.emplace(key, face);
+    return face;
 }
 
 void RetroFuturaGUI::FreeTypeGlyphSource::setVariableWeight(FT_Library library, FT_Face face, const PlatformBridge::Fonts::Weight weight)
@@ -189,7 +209,7 @@ bool RetroFuturaGUI::FreeTypeGlyphSource::RenderGlyphIndex(const u32 glyphIndex,
         return false;
 
     //COLR version 1 paint first the gradients the font was drawn with. the flat layers of version 0 are what's left when it fails!
-    if(FT_HAS_COLOR(_face) && ColorGlyphPainter::HasPaint(getPaintFont(), glyphIndex))
+    if(FT_HAS_COLOR(_face) && ColorGlyphPainter::HasPaint(_face, glyphIndex))
     {
         //The advance before painting, which loads the outlines it clips to into the same slot
         if(FT_Load_Glyph(_face, glyphIndex, getLoadFlags()))
@@ -354,8 +374,13 @@ hb_font_t* RetroFuturaGUI::FreeTypeGlyphSource::getPaintFont()
     if(!shapingFont)
         return nullptr;
 
-    //Reads the same face, at the same variable font settings
-    _paintFont = hb_font_create(hb_font_get_face(shapingFont));
+    hb_face_t* face { getSharedFace(_path, _faceIndex) };
+
+    if(!face)
+        return nullptr;
+
+    //The face every source of this font file shares, at this source's size and variable font settings
+    _paintFont = hb_font_create(face);
     const int scale { static_cast<int>(std::lround(_pixelSize * 64.0f)) };
     hb_font_set_scale(_paintFont, scale, scale);
     unsigned int coordinateCount { 0 };

@@ -1,17 +1,19 @@
 #include "ColorGlyphPainter.hpp"
 #include FT_COLOR_H
-#include <hb-ot.h>
 #include <algorithm>
 #include <array>
 #include <cmath>
 #include <numbers>
+#include <utility>
 
-bool RetroFuturaGUI::ColorGlyphPainter::HasPaint(hb_font_t* font, const u32 glyphIndex)
+bool RetroFuturaGUI::ColorGlyphPainter::HasPaint(FT_Face face, const u32 glyphIndex)
 {
-    if(!font)
+    if(!face)
         return false;
 
-    return hb_ot_color_glyph_has_paint(hb_font_get_face(font), glyphIndex);
+    //FreeType reads the COLR table as glyphs are asked for, where HarfBuzz checks all of it first (megabytes for Segoe UI Emoji)
+    FT_OpaquePaint paint { .p = nullptr, .insert_root_transform = 0 };
+    return FT_Get_Color_Glyph_Paint(face, glyphIndex, FT_COLOR_NO_ROOT_TRANSFORM, &paint);
 }
 
 bool RetroFuturaGUI::ColorGlyphPainter::Paint(FT_Face face, hb_font_t* font, const u32 glyphIndex, GlyphBitmap* bitmap)
@@ -82,13 +84,11 @@ bool RetroFuturaGUI::ColorGlyphPainter::Paint(FT_Face face, hb_font_t* font, con
         ._Format = GlyphPixelFormat::Color
     };
 
-    for(uSize pixel = 0; pixel < glyph.size(); ++pixel)
-    {
-        const glm::vec4 color { glm::clamp(glyph[pixel], 0.0f, 1.0f) };
+    const f32* channels { &glyph.data()->x };
+    u8* pixels { bitmap->_Pixels.data() };
 
-        for(uSize channel = 0; channel < 4; ++channel)
-            bitmap->_Pixels[pixel * 4 + channel] = static_cast<u8>(std::lround(color[static_cast<glm::length_t>(channel)] * 255.0f));
-    }
+    for(uSize channel = 0; channel < glyph.size() * 4; ++channel)
+        pixels[channel] = static_cast<u8>(std::clamp(channels[channel], 0.0f, 1.0f) * 255.0f + 0.5f);
 
     return true;
 }
@@ -263,7 +263,14 @@ void RetroFuturaGUI::ColorGlyphPainter::paintColor(hb_paint_funcs_t*, void* data
         return;
 
     const glm::vec4 premultiplied { toPremultiplied(color) };
-    painter->fill([&premultiplied](const glm::vec2&) { return premultiplied; });
+    const f32 solid[4] { premultiplied.r, premultiplied.g, premultiplied.b, premultiplied.a };
+    painter->fill([&solid](const f32, const f32, f32* pixel)
+    {
+        pixel[0] = solid[0];
+        pixel[1] = solid[1];
+        pixel[2] = solid[2];
+        pixel[3] = solid[3];
+    });
 }
 
 void RetroFuturaGUI::ColorGlyphPainter::paintLinearGradient(hb_paint_funcs_t*, void* data, hb_color_line_t* colorLine, float x0, float y0, float x1, float y1, float x2, float y2, void*)
@@ -286,8 +293,12 @@ void RetroFuturaGUI::ColorGlyphPainter::paintLinearGradient(hb_paint_funcs_t*, v
     if(0.0f == directionLengthSquared)
         return;
 
+    //t is the point's distance along the direction, a fraction of its length
     const ColorLine line { readColorLine(colorLine) };
-    painter->fill([&](const glm::vec2& point) { return colorAt(line, glm::dot(point - start, direction) / directionLengthSquared); });
+    const f32
+        stepX { direction.x / directionLengthSquared },
+        stepY { direction.y / directionLengthSquared };
+    painter->fill([&](const f32 x, const f32 y, f32* pixel) { colorAt(line, (x - x0) * stepX + (y - y0) * stepY, pixel); });
 }
 
 void RetroFuturaGUI::ColorGlyphPainter::paintRadialGradient(hb_paint_funcs_t*, void* data, hb_color_line_t* colorLine, float x0, float y0, float r0, float x1, float y1, float r1, void*)
@@ -298,13 +309,17 @@ void RetroFuturaGUI::ColorGlyphPainter::paintRadialGradient(hb_paint_funcs_t*, v
         return;
 
     const ColorLine line { readColorLine(colorLine) };
-    const glm::vec2
-        center0 { x0, y0 },
-        center1 { x1, y1 };
-    painter->fill([&](const glm::vec2& point)
+    painter->fill([&](const f32 x, const f32 y, f32* pixel)
     {
         f32 t { 0.0f };
-        return getRadialPosition(point, center0, r0, center1, r1, &t) ? colorAt(line, t) : glm::vec4(0.0f);
+
+        if(getRadialPosition(x, y, x0, y0, r0, x1, y1, r1, &t))
+        {
+            colorAt(line, t, pixel);
+            return;
+        }
+
+        pixel[0] = pixel[1] = pixel[2] = pixel[3] = 0.0f;
     });
 }
 
@@ -322,14 +337,14 @@ void RetroFuturaGUI::ColorGlyphPainter::paintSweepGradient(hb_paint_funcs_t*, vo
 
     //Angles counter-clockwise from the positive x axis, y up, as the font's own space runs
     const ColorLine line { readColorLine(colorLine) };
-    painter->fill([&](const glm::vec2& point)
+    painter->fill([&](const f32 x, const f32 y, f32* pixel)
     {
-        f32 angle { std::atan2(point.y - y0, point.x - x0) };
+        f32 angle { std::atan2(y - y0, x - x0) };
 
         if(0.0f > angle)
             angle += 2.0f * std::numbers::pi_v<f32>;
 
-        return colorAt(line, (angle - startAngle) / sweep);
+        colorAt(line, (angle - startAngle) / sweep, pixel);
     });
 }
 
@@ -378,29 +393,44 @@ void RetroFuturaGUI::ColorGlyphPainter::popGroup(hb_paint_funcs_t*, void* data, 
         area._Bottom = std::min(area._Bottom, source._Bottom);
     }
 
+    //Plain floats over the four of each pixel, as the fill does
+    f32* sourceColors { &source._Colors.data()->x };
+    f32* backdropColors { &backdrop._Colors.data()->x };
+    const Clip* clip { painter->_clips.empty() ? nullptr : &painter->_clips.back() };
+
     for(u32 row = area._Top; row < area._Bottom; ++row)
     {
+        const f32* coverageRow { clip != nullptr ? clip->_Coverage.data() + static_cast<uSize>(row - clip->_Top) * (clip->_Right - clip->_Left) : nullptr };
+
         for(u32 column = area._Left; column < area._Right; ++column)
         {
-            const f32 coverage { painter->getCoverage(column, row) };
+            const f32 coverage { coverageRow != nullptr ? coverageRow[column - clip->_Left] : 1.0f };
 
             if(0.0f >= coverage)
                 continue;
 
-            const uSize pixel { static_cast<uSize>(row) * painter->_width + column };
-            const glm::vec4& sourceColor { source._Colors[pixel] };
-            glm::vec4& backdropColor { backdrop._Colors[pixel] };
+            const uSize pixel { (static_cast<uSize>(row) * painter->_width + column) * 4 };
+            const f32* sourceColor { sourceColors + pixel };
+            f32* backdropColor { backdropColors + pixel };
 
             //Every layer is a group laid over the ones before, so the plain case goes straight; the coverage scales the
             //source, as laying it over a mixed backdrop comes to the same
             if(HB_PAINT_COMPOSITE_MODE_SRC_OVER == mode)
             {
-                const glm::vec4 covered { sourceColor * coverage };
-                backdropColor = covered + backdropColor * (1.0f - covered.a);
+                const f32 keep { 1.0f - sourceColor[3] * coverage };
+
+                for(uSize channel = 0; channel < 4; ++channel)
+                    backdropColor[channel] = sourceColor[channel] * coverage + backdropColor[channel] * keep;
+
                 continue;
             }
 
-            backdropColor = glm::mix(backdropColor, composite(sourceColor, backdropColor, mode), coverage);
+            const glm::vec4
+                under { backdropColor[0], backdropColor[1], backdropColor[2], backdropColor[3] },
+                laid { glm::mix(under, composite(glm::vec4(sourceColor[0], sourceColor[1], sourceColor[2], sourceColor[3]), under, mode), coverage) };
+
+            for(glm::length_t channel = 0; channel < 4; ++channel)
+                backdropColor[channel] = laid[channel];
         }
     }
 
@@ -409,7 +439,7 @@ void RetroFuturaGUI::ColorGlyphPainter::popGroup(hb_paint_funcs_t*, void* data, 
 
     //Cleared where it drew, ready for the next push
     for(u32 row = source._Top; row < source._Bottom; ++row)
-        std::fill_n(source._Colors.begin() + static_cast<std::ptrdiff_t>(static_cast<uSize>(row) * painter->_width + source._Left), source._Right - source._Left, glm::vec4(0.0f));
+        std::fill_n(sourceColors + (static_cast<uSize>(row) * painter->_width + source._Left) * 4, static_cast<uSize>(source._Right - source._Left) * 4, 0.0f);
 
     source._Left = source._Top = source._Right = source._Bottom = 0;
     painter->_spareGroups.push_back(std::move(source));
@@ -484,9 +514,18 @@ void RetroFuturaGUI::ColorGlyphPainter::pushClipOutline(FT_Outline* outline)
     FT_Outline_Get_Bitmap(_face->glyph->library, outline, &target);
     clip._Coverage.resize(coverage.size());
 
+    //Cut by the clip around it, which covers this rectangle (it was cut to it above), row by row
+    const Clip* outerClip { _clips.empty() ? nullptr : &_clips.back() };
+    const u8* filled { coverage.data() };
+    f32* combined { clip._Coverage.data() };
+
     for(u32 row = 0; row < clipHeight; ++row)
-        for(u32 column = 0; column < clipWidth; ++column)
-            clip._Coverage[static_cast<uSize>(row) * clipWidth + column] = coverage[static_cast<uSize>(row) * clipWidth + column] / 255.0f * getCoverage(clip._Left + column, clip._Top + row);
+    {
+        const f32* outerRow { outerClip != nullptr ? outerClip->_Coverage.data() + static_cast<uSize>(clip._Top + row - outerClip->_Top) * (outerClip->_Right - outerClip->_Left) + (clip._Left - outerClip->_Left) : nullptr };
+
+        for(u32 column = 0; column < clipWidth; ++column, ++filled, ++combined)
+            *combined = *filled / 255.0f * (outerRow != nullptr ? outerRow[column] : 1.0f);
+    }
 
     _clips.push_back(std::move(clip));
 }
@@ -500,21 +539,8 @@ RetroFuturaGUI::ColorGlyphPainter::Clip RetroFuturaGUI::ColorGlyphPainter::getCu
     return Clip { ._Left = clip._Left, ._Top = clip._Top, ._Right = clip._Right, ._Bottom = clip._Bottom, ._Coverage = {} };
 }
 
-f32 RetroFuturaGUI::ColorGlyphPainter::getCoverage(const u32 column, const u32 row) const
-{
-    if(_clips.empty())
-        return 1.0f;
-
-    const Clip& clip { _clips.back() };
-
-    if(column < clip._Left || column >= clip._Right || row < clip._Top || row >= clip._Bottom)
-        return 0.0f;
-
-    return clip._Coverage[static_cast<uSize>(row - clip._Top) * (clip._Right - clip._Left) + (column - clip._Left)];
-}
-
-template<typename PaintAt>
-void RetroFuturaGUI::ColorGlyphPainter::fill(const PaintAt& paintAt)
+template<typename ColorAt>
+void RetroFuturaGUI::ColorGlyphPainter::fill(const ColorAt& colorAt)
 {
     if(_isMeasuring || _groups.empty())
         return;
@@ -525,8 +551,6 @@ void RetroFuturaGUI::ColorGlyphPainter::fill(const PaintAt& paintAt)
     if(0.0f == glm::determinant(transform))
         return;
 
-    const glm::mat3 inverse { glm::inverse(transform) };
-    std::vector<glm::vec4>& target { _groups.back()._Colors };
     const Clip area { getCurrentArea() };
 
     if(area._Left >= area._Right || area._Top >= area._Bottom)
@@ -534,21 +558,48 @@ void RetroFuturaGUI::ColorGlyphPainter::fill(const PaintAt& paintAt)
 
     addDrawnArea(&_groups.back(), area);
 
+    //From the bitmap back into the paint's own space, x' = xx x + xy y + dx and y' = yx x + yy y + dy, so a pixel further
+    //right is a fixed step further
+    const glm::mat3 inverse { glm::inverse(transform) };
+    const f32
+        xx { inverse[0][0] },
+        yx { inverse[0][1] },
+        xy { inverse[1][0] },
+        yy { inverse[1][1] },
+        dx { inverse[2][0] },
+        dy { inverse[2][1] },
+        stepX { xx * 64.0f },
+        stepY { yx * 64.0f };
+    f32* colors { &_groups.back()._Colors.data()->x }; //each pixel's four floats in a row, as glm::vec4 keeps them
+    const Clip* clip { _clips.empty() ? nullptr : &_clips.back() };
+    const u32 areaWidth { area._Right - area._Left };
+    f32 color[4] {};
+
     for(u32 row = area._Top; row < area._Bottom; ++row)
     {
-        for(u32 column = area._Left; column < area._Right; ++column)
+        //The row's first pixel center in 1/64 pixels from the glyph's origin, y up
+        const f32
+            centerX { (static_cast<f32>(_left) + area._Left + 0.5f) * 64.0f },
+            centerY { (static_cast<f32>(_top) - row - 0.5f) * 64.0f };
+        f32
+            x { xx * centerX + xy * centerY + dx },
+            y { yx * centerX + yy * centerY + dy };
+        const f32* coverageRow { clip != nullptr ? clip->_Coverage.data() + static_cast<uSize>(row - clip->_Top) * areaWidth : nullptr };
+        f32* target { colors + (static_cast<uSize>(row) * _width + area._Left) * 4 };
+
+        for(u32 column = 0; column < areaWidth; ++column, x += stepX, y += stepY, target += 4)
         {
-            const f32 coverage { getCoverage(column, row) };
+            const f32 coverage { coverageRow != nullptr ? coverageRow[column] : 1.0f };
 
             if(0.0f >= coverage)
                 continue;
 
-            const uSize pixel { static_cast<uSize>(row) * _width + column };
-
-            //The pixel's center in 1/64 pixels from the glyph's origin, y up, taken back into the paint's own space
-            const glm::vec3 center { (static_cast<f32>(_left) + column + 0.5f) * 64.0f, (static_cast<f32>(_top) - row - 0.5f) * 64.0f, 1.0f };
-            const glm::vec4 color { paintAt(glm::vec2(inverse * center)) * coverage };
-            target[pixel] = color + target[pixel] * (1.0f - color.a);
+            colorAt(x, y, color);
+            const f32 keep { 1.0f - color[3] * coverage };
+            target[0] = color[0] * coverage + target[0] * keep;
+            target[1] = color[1] * coverage + target[1] * keep;
+            target[2] = color[2] * coverage + target[2] * keep;
+            target[3] = color[3] * coverage + target[3] * keep;
         }
     }
 }
@@ -601,61 +652,87 @@ RetroFuturaGUI::ColorGlyphPainter::ColorLine RetroFuturaGUI::ColorGlyphPainter::
     std::vector<hb_color_stop_t> stops(stopCount);
     hb_color_line_get_color_stops(colorLine, 0, &stopCount, stops.data());
 
-    for(unsigned int stop = 0; stop < stopCount; ++stop)
-        line._Stops.emplace_back(stops[stop].offset, toPremultiplied(stops[stop].color)); //a foreground stop comes with the foreground's color
+    //In order of their offsets, a foreground stop coming with the foreground's color
+    std::vector<std::pair<f32, glm::vec4>> sorted {};
 
-    std::ranges::stable_sort(line._Stops, {}, &std::pair<f32, glm::vec4>::first);
+    for(unsigned int stop = 0; stop < stopCount; ++stop)
+        sorted.emplace_back(stops[stop].offset, toPremultiplied(stops[stop].color));
+
+    std::ranges::stable_sort(sorted, {}, &std::pair<f32, glm::vec4>::first);
     line._Extend = hb_color_line_get_extend(colorLine);
+
+    for(const auto& [offset, color] : sorted)
+    {
+        line._Offsets.push_back(offset);
+        line._Colors.insert(line._Colors.end(), { color.r, color.g, color.b, color.a });
+    }
+
+    if(sorted.empty())
+        return line;
+
+    line._First = sorted.front().first;
+    line._Range = sorted.back().first - line._First;
     return line;
 }
 
-glm::vec4 RetroFuturaGUI::ColorGlyphPainter::colorAt(const ColorLine& line, const f32 t)
+void RetroFuturaGUI::ColorGlyphPainter::colorAt(const ColorLine& line, const f32 t, f32* color)
 {
-    if(line._Stops.empty())
-        return glm::vec4(0.0f);
+    const uSize stopCount { line._Offsets.size() };
+
+    if(0 == stopCount)
+    {
+        color[0] = color[1] = color[2] = color[3] = 0.0f;
+        return;
+    }
 
     const f32
-        first { line._Stops.front().first },
-        last { line._Stops.back().first },
-        range { last - first };
+        *offsets { line._Offsets.data() },
+        *colors { line._Colors.data() };
 
-    if(0.0f >= range)
-        return t < first ? line._Stops.front().second : line._Stops.back().second;
+    //Stops all at one offset: the first color before it, the last from it on
+    if(0.0f >= line._Range)
+    {
+        const f32* stopColor { colors + (t < line._First ? 0 : (stopCount - 1) * 4) };
+        color[0] = stopColor[0];
+        color[1] = stopColor[1];
+        color[2] = stopColor[2];
+        color[3] = stopColor[3];
+        return;
+    }
 
-    //Past both ends the stops hold their end colors, repeat, or repeat mirrored
-    f32 position { t };
+    //From the first stop (0) to the last (1); past both ends the stops hold their end colors, repeat, or repeat mirrored
+    f32 position { (t - line._First) / line._Range };
 
     switch(line._Extend)
     {
         case HB_PAINT_EXTEND_REPEAT:
-            position = first + (t - first) - range * std::floor((t - first) / range);
+            position -= std::floor(position);
             break;
         case HB_PAINT_EXTEND_REFLECT:
-        {
-            f32 cycle { (t - first) / (2.0f * range) };
-            cycle = 2.0f * (cycle - std::floor(cycle));
-            position = first + (1.0f < cycle ? 2.0f - cycle : cycle) * range;
+            position -= 2.0f * std::floor(position * 0.5f);
+            position = 1.0f < position ? 2.0f - position : position;
             break;
-        }
         default:
-            position = std::clamp(t, first, last);
+            position = 0.0f > position ? 0.0f : 1.0f < position ? 1.0f : position;
             break;
     }
 
-    for(uSize stop = 1; stop < line._Stops.size(); ++stop)
-    {
-        const std::pair<f32, glm::vec4>
-            &before { line._Stops[stop - 1] },
-            &after { line._Stops[stop] };
+    //The pair of stops around it, the color mixed between them
+    const f32 offset { line._First + position * line._Range };
+    uSize after { 1 };
 
-        if(position > after.first)
-            continue;
+    while(after + 1 < stopCount && offset > offsets[after])
+        ++after;
 
-        const f32 width { after.first - before.first };
-        return 0.0f >= width ? after.second : glm::mix(before.second, after.second, (position - before.first) / width);
-    }
-
-    return line._Stops.back().second;
+    const f32 width { offsets[after] - offsets[after - 1] };
+    const f32 mix { 0.0f >= width ? 1.0f : std::clamp((offset - offsets[after - 1]) / width, 0.0f, 1.0f) };
+    const f32
+        *from { colors + (after - 1) * 4 },
+        *to { colors + after * 4 };
+    color[0] = from[0] + (to[0] - from[0]) * mix;
+    color[1] = from[1] + (to[1] - from[1]) * mix;
+    color[2] = from[2] + (to[2] - from[2]) * mix;
+    color[3] = from[3] + (to[3] - from[3]) * mix;
 }
 
 glm::vec4 RetroFuturaGUI::ColorGlyphPainter::toPremultiplied(const hb_color_t color)
@@ -664,21 +741,22 @@ glm::vec4 RetroFuturaGUI::ColorGlyphPainter::toPremultiplied(const hb_color_t co
     return glm::vec4(hb_color_get_red(color) / 255.0f * alpha, hb_color_get_green(color) / 255.0f * alpha, hb_color_get_blue(color) / 255.0f * alpha, alpha);
 }
 
-bool RetroFuturaGUI::ColorGlyphPainter::getRadialPosition(const glm::vec2& point, const glm::vec2& center0, const f32 radius0, const glm::vec2& center1, const f32 radius1, f32* t)
+bool RetroFuturaGUI::ColorGlyphPainter::getRadialPosition(const f32 x, const f32 y, const f32 x0, const f32 y0, const f32 radius0, const f32 x1, const f32 y1, const f32 radius1, f32* t)
 {
     if(!t)
         return false;
 
     //The circle at t has its center at center0 + t (center1 - center0) and the radius radius0 + t (radius1 - radius0);
     //passing through the point makes a quadratic in t
-    const glm::vec2
-        centerStep { center1 - center0 },
-        fromCenter { point - center0 };
     const f32
+        centerStepX { x1 - x0 },
+        centerStepY { y1 - y0 },
+        fromCenterX { x - x0 },
+        fromCenterY { y - y0 },
         radiusStep { radius1 - radius0 },
-        a { glm::dot(centerStep, centerStep) - radiusStep * radiusStep },
-        b { glm::dot(fromCenter, centerStep) + radius0 * radiusStep },
-        c { glm::dot(fromCenter, fromCenter) - radius0 * radius0 };
+        a { centerStepX * centerStepX + centerStepY * centerStepY - radiusStep * radiusStep },
+        b { fromCenterX * centerStepX + fromCenterY * centerStepY + radius0 * radiusStep },
+        c { fromCenterX * fromCenterX + fromCenterY * fromCenterY - radius0 * radius0 };
 
     if(1e-6f > std::abs(a))
     {

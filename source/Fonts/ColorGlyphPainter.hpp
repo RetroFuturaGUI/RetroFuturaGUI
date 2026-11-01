@@ -5,7 +5,6 @@
 #include FT_OUTLINE_H
 #include <hb.h>
 #include <glm/glm.hpp>
-#include <utility>
 #include <vector>
 
 namespace RetroFuturaGUI
@@ -17,7 +16,7 @@ namespace RetroFuturaGUI
     {
     public:
         /// @brief Returns whether the glyph has COLR version 1 paint to draw.
-        static bool HasPaint(hb_font_t* font, const u32 glyphIndex);
+        static bool HasPaint(FT_Face face, const u32 glyphIndex);
 
         /// @brief Draws the glyph's paint into a color bitmap, premultiplied. The font's scale has to be 64 per pixel, the
         ///        size the face is set to, so its paint and the face's outlines line up.
@@ -28,8 +27,12 @@ namespace RetroFuturaGUI
         /// @brief A gradient's colors premultiplied at their offsets in order, and how they go on past both ends.
         struct ColorLine
         {
-            std::vector<std::pair<f32, glm::vec4>> _Stops {};
+            std::vector<f32>
+                _Offsets {}, // in order
+                _Colors {}; // four floats per stop, premultiplied
             hb_paint_extend_t _Extend { HB_PAINT_EXTEND_PAD };
+            f32 _First { 0.0f }, // the first stop's offset
+                _Range { 0.0f }; // from the first stop to the last
         };
 
         /// @brief Where painting may reach: coverage per pixel within a rectangle of the bitmap, nothing outside it. Each clip is already cut by the ones around it, so only the innermost is asked.
@@ -76,11 +79,8 @@ namespace RetroFuturaGUI
         /// @brief Fills the coverage of an outline already in place (1/64 pixels, y up), cut by the clip around it, and pushes it as the new clip.
         void pushClipOutline(FT_Outline* outline);
 
-        /// @brief The innermost clip, or the whole bitmap when nothing clips.
+        /// @brief The innermost clip's rectangle, without its coverage, or the whole bitmap when nothing clips.
         Clip getCurrentArea() const;
-
-        /// @brief The innermost clip's coverage at a pixel of its rectangle; 1 when nothing clips.
-        f32 getCoverage(const u32 column, const u32 row) const;
 
         /// @brief Grows a group's drawn rectangle to take in an area.
         static void addDrawnArea(Group* group, const Clip& area);
@@ -88,22 +88,24 @@ namespace RetroFuturaGUI
         /// @brief Whether a composite mode leaves the backdrop as it is wherever the group drew nothing.
         static bool keepsUntouchedBackdrop(const hb_paint_composite_mode_t mode);
 
-        /// @brief Lays a paint over the current group inside the current clip. paintAt gives the premultiplied color at a
-        ///        point of the paint's own space, which the current transform takes to the bitmap.
-        template<typename PaintAt>
-        void fill(const PaintAt& paintAt);
+        /// @brief Lays a paint over the current group inside the current clip. colorAt(x, y, color) writes the premultiplied
+        ///        color (four floats) at a point of the paint's own space, which the current transform takes to the bitmap.
+        ///        The pixel loops use plain floats and pointers, as glm and checked indexing cost a call each in Debug.
+        template<typename ColorAt>
+        void fill(const ColorAt& colorAt);
 
-        /// @brief Reads a gradient's stops, sorted, their colors premultiplied.
+        /// @brief Reads a gradient's stops, sorted, their colors premultiplied. Emoji gradients have a handful of stops and
+        ///        often cover fewer pixels than a table of their colors would hold, so a pixel finds its pair of stops itself.
         static ColorLine readColorLine(hb_color_line_t* colorLine);
 
-        /// @brief The color a gradient shows at t, which runs from 0 at its start to 1 at its end.
-        static glm::vec4 colorAt(const ColorLine& line, const f32 t);
+        /// @brief Writes the color (four floats) a gradient shows at t, which runs from 0 at its start to 1 at its end.
+        static void colorAt(const ColorLine& line, const f32 t, f32* color);
 
         static glm::vec4 toPremultiplied(const hb_color_t color);
 
         /// @brief Where a point lies along a gradient between two circles, the largest t whose circle passes through it.
         /// @return false when no circle of the gradient passes through the point, which then shows nothing.
-        static bool getRadialPosition(const glm::vec2& point, const glm::vec2& center0, const f32 radius0, const glm::vec2& center1, const f32 radius1, f32* t);
+        static bool getRadialPosition(const f32 x, const f32 y, const f32 x0, const f32 y0, const f32 radius0, const f32 x1, const f32 y1, const f32 radius1, f32* t);
 
         /// @brief Lays a group (source) onto the one beneath it (backdrop), both premultiplied, as the composite mode says.
         static glm::vec4 composite(const glm::vec4& source, const glm::vec4& backdrop, const hb_paint_composite_mode_t mode);

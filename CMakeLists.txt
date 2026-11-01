@@ -244,6 +244,14 @@ else()
     message(FATAL_ERROR "HarfBuzz is not found. Please install harfbuzz via VCPKG.")
 endif()
 
+# Check for SheenBidi installation: splits right-to-left and left-to-right text into runs (Apache 2.0 licensed)
+find_package(SheenBidi CONFIG REQUIRED)
+if(TARGET SheenBidi::SheenBidi)
+    message(STATUS "SheenBidi is installed and found")
+else()
+    message(FATAL_ERROR "SheenBidi is not found. Please install sheenbidi via VCPKG.")
+endif()
+
 # Check for Stb installation
 find_package(Stb REQUIRED COMPONENTS stb_image)
 if(Stb_FOUND)
@@ -294,6 +302,7 @@ target_link_libraries("RetroFuturaGUI" PUBLIC
     glfw
     Freetype::Freetype
     harfbuzz::harfbuzz
+    SheenBidi::SheenBidi
     glm::glm-header-only
     GLEW::GLEW
     glad::glad

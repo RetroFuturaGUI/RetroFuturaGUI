@@ -9,7 +9,9 @@
 #include <hb.h>
 #include <hb-ft.h>
 #include <memory>
+#include <string>
 #include <string_view>
+#include <unordered_map>
 
 namespace RetroFuturaGUI
 {
@@ -39,7 +41,12 @@ namespace RetroFuturaGUI
         bool RenderGlyphIndexBorder(const u32 glyphIndex, const f32 width, GlyphBitmap* bitmap) override;
 
     private:
-        explicit FreeTypeGlyphSource(FT_Face face);
+        FreeTypeGlyphSource(FT_Face face, std::string_view path, const u32 faceIndex);
+
+        /// @brief The HarfBuzz face of a font file's face made on first use and shared by every source drawing from it, so
+        ///        a big table (Segoe UI Emoji's COLR, megabytes) is read and checked once, not once per Unicode block.
+        /// @return nullptr when the file can't be read.
+        static hb_face_t* getSharedFace(std::string_view path, const u32 faceIndex);
 
         /// @brief Sets a variable font's weight axis to the weight, clamped to the axis; the other axes keep their defaults.
         static void setVariableWeight(FT_Library library, FT_Face face, const PlatformBridge::Fonts::Weight weight);
@@ -63,5 +70,8 @@ namespace RetroFuturaGUI
         hb_font_t* _shapingFont { nullptr }; //HarfBuzz's view of the face, made on the first shaping
         hb_buffer_t* _shapingBuffer { nullptr }; //reused by every shaping
         hb_font_t* _paintFont { nullptr }; //64 per pixel, like FreeType's outlines, so painted glyphs line up with them
+        std::string _path {}; //the font file and its face which the shared HarfBuzz face is found by
+        u32 _faceIndex { 0 };
+        static inline std::unordered_map<std::string, hb_face_t*> _sharedFaces {}; //by path and face index, kept until the program ends
     };
 }
