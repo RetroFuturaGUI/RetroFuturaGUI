@@ -46,6 +46,12 @@ namespace RetroFuturaGUI
         /// @brief How glyphs are loaded, for rendering and for the shaping's advances alike.
         FT_Int32 getLoadFlags() const;
 
+        /// @brief HarfBuzz's view of the face through FreeType made on first use after the size is set.
+        hb_font_t* getShapingFont();
+
+        /// @brief HarfBuzz's own reading of the face at the size set (which walks COLR version 1 paint) made on first use.
+        hb_font_t* getPaintFont();
+
         /// @brief Copies FreeType's bitmap into the glyph's tight rows: gray as it is, one bit per pixel widened to a byte,
         ///        BGRA (color layers and color bitmaps) turned into RGBA.
         /// @return false for a pixel layout no font of ours renders.
@@ -55,5 +61,6 @@ namespace RetroFuturaGUI
         f32 _pixelSize { 0.0f };
         hb_font_t* _shapingFont { nullptr }; //HarfBuzz's view of the face, made on the first shaping
         hb_buffer_t* _shapingBuffer { nullptr }; //reused by every shaping
+        hb_font_t* _paintFont { nullptr }; //64 per pixel, like FreeType's outlines, so painted glyphs line up with them
     };
 }

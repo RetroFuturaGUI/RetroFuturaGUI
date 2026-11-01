@@ -26,6 +26,7 @@ list(APPEND RetroFuturaGuiSources
 
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Fonts/FontManager.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Fonts/FreeTypeGlyphSource.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/source/Fonts/ColorGlyphPainter.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Fonts/Text.cpp"
 
     "${CMAKE_CURRENT_SOURCE_DIR}/source/MediaPlayback/AudioDecodeThread.cpp"

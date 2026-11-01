@@ -1,4 +1,5 @@
 #include "FreeTypeGlyphSource.hpp"
+#include "ColorGlyphPainter.hpp"
 #include <algorithm>
 #include <cmath>
 #include <string>
@@ -57,6 +58,7 @@ void RetroFuturaGUI::FreeTypeGlyphSource::setVariableWeight(FT_Library library, 
 RetroFuturaGUI::FreeTypeGlyphSource::~FreeTypeGlyphSource()
 {
     hb_buffer_destroy(_shapingBuffer);
+    hb_font_destroy(_paintFont);
     hb_font_destroy(_shapingFont);
 
     if(!_face)
@@ -96,6 +98,17 @@ bool RetroFuturaGUI::FreeTypeGlyphSource::SetPixelSize(const f32 pixels)
         return false;
 
     _pixelSize = pixels;
+
+    //HarfBuzz's fonts follow, if they were made at another size
+    if(_shapingFont)
+        hb_ft_font_changed(_shapingFont);
+
+    if(_paintFont)
+    {
+        const int scale { static_cast<int>(std::lround(_pixelSize * 64.0f)) };
+        hb_font_set_scale(_paintFont, scale, scale);
+    }
+
     return true;
 }
 
@@ -166,6 +179,22 @@ bool RetroFuturaGUI::FreeTypeGlyphSource::RenderGlyphIndex(const u32 glyphIndex,
 
     if(!_face)
         return false;
+
+    //COLR version 1 paint first, the gradients the font was drawn with; the flat layers of version 0 are what's left when it fails
+    if(FT_HAS_COLOR(_face) && ColorGlyphPainter::HasPaint(getPaintFont(), glyphIndex))
+    {
+        //The advance before painting, which loads the outlines it clips to into the same slot
+        if(FT_Load_Glyph(_face, glyphIndex, getLoadFlags()))
+            return false;
+
+        const u32 advance { static_cast<u32>(_face->glyph->advance.x >> 6) };
+
+        if(ColorGlyphPainter::Paint(_face, getPaintFont(), glyphIndex, bitmap))
+        {
+            bitmap->_Advance = advance;
+            return true;
+        }
+    }
 
     if(FT_Load_Glyph(_face, glyphIndex, FT_LOAD_RENDER | getLoadFlags()))
         return false;
@@ -247,15 +276,15 @@ bool RetroFuturaGUI::FreeTypeGlyphSource::Shape(std::u32string_view text, const 
     if(!_face)
         return false;
 
-    //Made on the first shaping, after the size is set; its advances come from the same hinting the glyphs are rendered with
-    if(!_shapingFont)
-    {
-        _shapingFont = hb_ft_font_create_referenced(_face);
-        hb_ft_font_set_load_flags(_shapingFont, getLoadFlags());
-        _shapingBuffer = hb_buffer_create();
-    }
+    hb_font_t* shapingFont { getShapingFont() };
 
-    if(!_shapingFont || !hb_buffer_allocation_successful(_shapingBuffer))
+    if(!shapingFont)
+        return false;
+
+    if(!_shapingBuffer)
+        _shapingBuffer = hb_buffer_create();
+
+    if(!hb_buffer_allocation_successful(_shapingBuffer))
         return false;
 
     //The script and language from the text itself, the direction as the text flows
@@ -263,7 +292,7 @@ bool RetroFuturaGUI::FreeTypeGlyphSource::Shape(std::u32string_view text, const 
     hb_buffer_add_utf32(_shapingBuffer, reinterpret_cast<const uint32_t*>(text.data()), static_cast<int>(text.size()), 0, static_cast<int>(text.size()));
     hb_buffer_set_direction(_shapingBuffer, ShapeDirection::TopToBottom == direction ? HB_DIRECTION_TTB : HB_DIRECTION_LTR);
     hb_buffer_guess_segment_properties(_shapingBuffer);
-    hb_shape(_shapingFont, _shapingBuffer, nullptr, 0);
+    hb_shape(shapingFont, _shapingBuffer, nullptr, 0);
 
     unsigned int glyphCount { 0 };
     const hb_glyph_info_t* infos { hb_buffer_get_glyph_infos(_shapingBuffer, &glyphCount) };
@@ -290,6 +319,41 @@ FT_Int32 RetroFuturaGUI::FreeTypeGlyphSource::getLoadFlags() const
 {
     //A color font's layers are drawn as the font made them, unhinted; every other font keeps the light autohinting
     return _face && FT_HAS_COLOR(_face) ? FT_LOAD_COLOR : FT_LOAD_FORCE_AUTOHINT | FT_LOAD_TARGET_LIGHT;
+}
+
+hb_font_t* RetroFuturaGUI::FreeTypeGlyphSource::getShapingFont()
+{
+    if(!_face)
+        return nullptr;
+
+    //Its advances come from the same hinting the glyphs are rendered with
+    if(!_shapingFont)
+    {
+        _shapingFont = hb_ft_font_create_referenced(_face);
+        hb_ft_font_set_load_flags(_shapingFont, getLoadFlags());
+    }
+
+    return _shapingFont;
+}
+
+hb_font_t* RetroFuturaGUI::FreeTypeGlyphSource::getPaintFont()
+{
+    if(_paintFont)
+        return _paintFont;
+
+    hb_font_t* shapingFont { getShapingFont() };
+
+    if(!shapingFont)
+        return nullptr;
+
+    //Reads the same face, at the same variable font settings
+    _paintFont = hb_font_create(hb_font_get_face(shapingFont));
+    const int scale { static_cast<int>(std::lround(_pixelSize * 64.0f)) };
+    hb_font_set_scale(_paintFont, scale, scale);
+    unsigned int coordinateCount { 0 };
+    const int* coordinates { hb_font_get_var_coords_normalized(shapingFont, &coordinateCount) };
+    hb_font_set_var_coords_normalized(_paintFont, coordinates, coordinateCount);
+    return _paintFont;
 }
 
 bool RetroFuturaGUI::FreeTypeGlyphSource::copyBitmap(const FT_Bitmap& rendered, GlyphBitmap* bitmap)
