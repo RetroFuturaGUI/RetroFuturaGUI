@@ -181,7 +181,7 @@ void RetroFuturaGUI::ComboBox::AddItem(std::string_view name)
     _itemEnabledFlags.push_back(true);
 
     if(!_fontFamily.empty())
-        _itemTexts.back()->SetFontFamily(_fontFamily, _fontSize, _slant, _fontWeight);
+        _itemTexts.back()->SetFontFamily(_fontFamily, _fontSize, FontSizeUnit::Pixels, _slant, _fontWeight);
 
     _itemTexts.back()->SetTextUTF8(name);
     _itemTexts.back()->SetColors(_itemTextColorsEnabled);
@@ -200,7 +200,7 @@ void RetroFuturaGUI::ComboBox::SetCaption(std::string_view caption)
         return;
 
     if(!_fontFamily.empty())
-        _previewText->SetFontFamily(_fontFamily, _fontSize, _slant, _fontWeight);
+        _previewText->SetFontFamily(_fontFamily, _fontSize, FontSizeUnit::Pixels, _slant, _fontWeight);
 
     _previewText->SetTextUTF8(caption);
     _previewText->SetColors(_itemTextColorsEnabled);
@@ -410,23 +410,23 @@ void RetroFuturaGUI::ComboBox::RemoveItem(const uSize index)
     updateDropDownGeometry();
 }
 
-void RetroFuturaGUI::ComboBox::SetFontFamily(std::string_view fontFamily, const f32 fontSize, const PlatformBridge::Fonts::Slant slant, const PlatformBridge::Fonts::Weight fontWeight)
+void RetroFuturaGUI::ComboBox::SetFontFamily(std::string_view fontFamily, const f32 fontSize, const FontSizeUnit sizeUnit, const PlatformBridge::Fonts::Slant slant, const PlatformBridge::Fonts::Weight fontWeight)
 {
     _fontFamily = fontFamily;
-    _fontSize = fontSize;
+    _fontSize = FontManager::ToPixels(fontSize, sizeUnit);
     _slant = slant;
     _fontWeight = fontWeight;
 
     for(const auto& item : _itemTexts)
     {
-        item->SetFontFamily(_fontFamily, _fontSize, _slant, _fontWeight);
+        item->SetFontFamily(_fontFamily, _fontSize, FontSizeUnit::Pixels, _slant, _fontWeight);
         item->SetTextUTF8(std::string(item->GetTextUTF8())); //a font swap leaves the glyph mesh behind, so the text is laid out again
     }
 
     if(!_previewText)
         return;
 
-    _previewText->SetFontFamily(_fontFamily, _fontSize, _slant, _fontWeight);
+    _previewText->SetFontFamily(_fontFamily, _fontSize, FontSizeUnit::Pixels, _slant, _fontWeight);
     _previewText->SetTextUTF8(std::string(_previewText->GetTextUTF8()));
 }
 

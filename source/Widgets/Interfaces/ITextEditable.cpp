@@ -60,7 +60,7 @@ const std::string& RetroFuturaGUI::ITextEditable::GetPlaceholderText() const
     return _placeholderText->GetTextUTF8();
 }
 
-void RetroFuturaGUI::ITextEditable::SetFontFamily(std::string_view fontFamily, const f32 fontSize, const PlatformBridge::Fonts::Slant slant, const PlatformBridge::Fonts::Weight fontWeight)
+void RetroFuturaGUI::ITextEditable::SetFontFamily(std::string_view fontFamily, const f32 fontSize, const FontSizeUnit sizeUnit, const PlatformBridge::Fonts::Slant slant, const PlatformBridge::Fonts::Weight fontWeight)
 {
     if(!_text)
         return;
@@ -68,8 +68,8 @@ void RetroFuturaGUI::ITextEditable::SetFontFamily(std::string_view fontFamily, c
     if(!_placeholderText)
         return;
 
-    _text->SetFontFamily(fontFamily, fontSize, slant, fontWeight);
-    _placeholderText->SetFontFamily(fontFamily, fontSize, slant, fontWeight);
+    _text->SetFontFamily(fontFamily, fontSize, sizeUnit, slant, fontWeight);
+    _placeholderText->SetFontFamily(fontFamily, fontSize, sizeUnit, slant, fontWeight);
 }
 
 void RetroFuturaGUI::ITextEditable::SetTextAlignment(const TextAlignment alignment)

@@ -69,6 +69,19 @@ namespace RetroFuturaGUI
         /// @brief Sets how far the background image stays clear of the widget's edges
         void SetBackgroundImagePadding(const f32 padding);
 
+        /// @brief Sets how the background image is laid over the widget: stretched (default), cropped or fitting into it.
+        void SetBackgroundImageFit(const ImageFit fit);
+
+        /// @brief Sets a grayscale mask laid over the background, its red channel the gray: as transparency or as shading
+        ///        (SetBackgroundMaskMode). 0 shows no mask.
+        void SetBackgroundMaskTextureID(const u32 textureID);
+
+        /// @brief Sets what the background mask does: make the background transparent/Alpha (default) or shade it (Shade).
+        void SetBackgroundMaskMode(const MaskMode mode);
+
+        /// @brief Sets how the background mask is laid over the widget: stretched (default) or keeping its proportions.
+        void SetBackgroundMaskFit(const ImageFit fit);
+
         /// @brief Sets or replaces the color override of a named path in an SVG background image. Does nothing for a picture.
         void SetBackgroundImagePathFill(std::string_view name, const SvgPathFill& fill);
 

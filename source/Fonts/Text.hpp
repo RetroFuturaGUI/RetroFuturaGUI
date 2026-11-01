@@ -3,6 +3,7 @@
 #include "DoubleEncodedString.hpp"
 #include "FillStyle.hpp"
 #include "FogStyle.hpp"
+#include "TextBorder.hpp"
 #include "IncludeHelper.hpp"
 #include "Projection.hpp"
 #include "ContextObjects.hpp"
@@ -22,11 +23,20 @@ namespace RetroFuturaGUI
         //Block
     };
 
+    /// @brief How a text's lines run. Vertical lines are columns read top to bottom, one em per glyph, the glyphs upright.
+    enum class TextFlow : u32
+    {
+        Horizontal,
+        VerticalLeftToRight, // the first column leftmost, as Latin or Mongolian vertical text runs
+        VerticalRightToLeft // the first column rightmost, as Japanese and Chinese vertical text runs
+    };
+
     struct GlyphDraw
     {
         u32 _TextureID { 0 };
         i32 _VertexStart { 0 },
             _VertexCount { 0 };
+        bool _IsColor { false }; // color glyphs, drawn in their own colors
     };
 
     class Text : public FillStyle, public FogStyle
@@ -41,7 +51,10 @@ namespace RetroFuturaGUI
         void Draw();
 
         /// @brief Sets the font family, size and style used to render the text, loading it if necessary.
-        void SetFontFamily(std::string_view fontFamily, const f32 glyphSize, PlatformBridge::Fonts::Slant slant, PlatformBridge::Fonts::Weight weight);
+        void SetFontFamily(std::string_view fontFamily, const f32 size, const FontSizeUnit sizeUnit, PlatformBridge::Fonts::Slant slant, PlatformBridge::Fonts::Weight weight);
+
+        /// @brief Returns the font size in the given unit.
+        f32 GetFontSize(const FontSizeUnit sizeUnit) const;
 
         /// @brief Sets the horizontal alignment of the text within its parent.
         void SetTextAlignment(TextAlignment textAlignment);
@@ -67,6 +80,10 @@ namespace RetroFuturaGUI
         using FillStyle::SetWindowBackgroundImageTextureID;
         using FillStyle::SetBackgroundImageTextureID;
         using FillStyle::SetBackgroundImagePadding;
+        using FillStyle::SetBackgroundImageFit;
+        using FillStyle::SetMaskTextureID;
+        using FillStyle::SetMaskMode;
+        using FillStyle::SetMaskFit;
         using FillStyle::SetRasterPattern;
         using FillStyle::SetPrimaryRasterColor;
         using FillStyle::SetSecondaryRasterColor;
@@ -98,10 +115,10 @@ namespace RetroFuturaGUI
         /// @brief Returns the current horizontal scroll offset.
         f32 GetScrollOffset() const;
 
-        /// @brief Returns the glyph size.
+        /// @brief Returns the glyph size: the font size in pixels, unless SetSize scaled the glyphs.
         float GetGlyphSize() const;
 
-        /// @brief Returns the glyph height.
+        /// @brief Returns one line's height from the font's lowest descender to its highest ascender, without the gap between lines.
         float GetHeight() const;
 
         /// @brief Returns the width of the rendered text span.
@@ -150,20 +167,82 @@ namespace RetroFuturaGUI
         /// @brief Returns the distance from one baseline to the next.
         f32 GetLineHeight() const;
 
+        /// @brief Sets how far the border reaches out from every glyph, in pixels. 0, the default, draws no border.
+        void SetBorderWidth(const f32 width);
+
+        /// @brief Returns how far the border reaches out from every glyph, in pixels.
+        f32 GetBorderWidth() const;
+
+        /// @brief Returns the border's style: its colors, fill, raster and image, set like the text's own.
+        TextBorder& GetBorder();
+
+        /// @brief Sets how the lines run: horizontally (default), or as columns. Each '\n' starts the next column. Columns are placed by their top edge: centered on the position, or at the parent's top with SetAnchorTop.
+        void SetTextFlow(const TextFlow textFlow);
+
+        /// @brief Returns how the lines run.
+        TextFlow GetTextFlow() const;
+
+        /// @brief Sets how far color glyphs (emoji) take on the fill's color, from 0, their own colors (the default), to 1, the
+        ///        fill's. The raster, fog, glass and mask apply to them either way; the text's image doesn't, as it would hide them.
+        void SetColorGlyphTint(const f32 tint);
+
+        /// @brief Returns how far color glyphs take on the fill's color.
+        f32 GetColorGlyphTint() const;
+
     private:
+        /// @brief Quads of glyphs on their pages, batched by page, with the buffer and the vertex arrays drawing them.
+        struct GlyphMesh
+        {
+            std::vector<f32> _Vertices {}; // x,y,u,v per vertex
+            std::vector<GlyphDraw> _Draws {};
+            u32 _Vbo { 0 };
+            std::unique_ptr<VertexArray> _VertexArray { nullptr }; //one VAO per context that draws the text, over the same buffer
+            bool _IsChanged { false };
+        };
+
         void updateMesh();
         void alignPosition();
         void calculateTextSpan();
+        static void initMesh(GlyphMesh* mesh);
+
+        /// @brief Adds a glyph's quad at the pen (its baseline origin), clipped to the parent, starting a new batch when its page differs.
+        void appendGlyphQuad(const Glyph& glyph, const glm::vec2& pen, const f32 scale, GlyphMesh* mesh) const;
+
+        /// @brief Uses the shader and uploads where the text is and the span its fill runs across.
+        void uploadPlacement(Shader& shader, const glm::mat4& translation) const;
+        static void drawMesh(Shader& shader, GlyphMesh* mesh);
+        void drawBorder();
+
+        /// @brief How far a glyph placed by itself (its font can't shape) moves the pen along its line: its advance, or one em in a column.
+        f32 getAdvance(const Glyph& glyph, const f32 scale) const;
+
+        /// @brief The baseline origin of a placed glyph so far along a line: from its shaped offsets, or as getPen places one unshaped.
+        glm::vec2 getPlacedPen(const uSize line, const f32 along, const PlacedGlyph& placed, const Glyph* glyph, const f32 scale) const;
+
+        /// @brief How far a placed glyph moves the pen along its line.
+        f32 getPlacedAdvance(const PlacedGlyph& placed, const Glyph* glyph, const f32 scale) const;
+
+        /// @brief The baseline origin of a glyph so far along a line; in a column the glyph is centered across it.
+        glm::vec2 getPen(const uSize line, const f32 along, const f32 horizontalAdvance) const;
+
+        /// @brief The left edge of a line's column, from the text's left edge.
+        f32 getColumnLeft(const uSize line) const;
+        uSize getLineCount() const;
+
+        /// @brief The boundary on a line closest to a distance along it, or the end of the text if there is no such line.
+        uSize getClosestOnLine(const uSize line, const f32 along) const;
 
         Projection& _projection;
         glm::vec2 _glyphSize { 16.0f };
         f32 _fontSize { 16.0f };
         PlatformBridge::Fonts::Slant _fontSlant { PlatformBridge::Fonts::Slant::Roman };
         PlatformBridge::Fonts::Weight _fontWeight { PlatformBridge::Fonts::Weight::Normal };
-        u32 _fontIndex { 0 };
+        u32 _fontKey { 0 }; // the size's key among the font's atlasses
         const FontInfo* _fontInfo { nullptr };
         DoubleEncodedString _text;
         TextAlignment _textAlignment { TextAlignment::Left };
+        TextFlow _textFlow { TextFlow::Horizontal };
+        f32 _colorGlyphTint { 0.0f };
         f32 _textPadding { 0.0f };
         f32 _scrollOffset { 0.0f };
 
@@ -173,21 +252,26 @@ namespace RetroFuturaGUI
             _parentSize { 0.0f },
             _textSpan { 0.0f };
         glm::vec3 _rotation { 0.0f };
-        f32 _textBaseHeight { 0.0f },
-            _lineSpacingFactor { 1.3f };
+        f32 _ascender { 0.0f }, // the font's line metrics at the glyph size
+            _descender { 0.0f },
+            _lineHeight { 0.0f };
         glm::mat4 _translationMatrix { 1.0f },
             _rotationMatrix { 1.0f };
         static inline constinit const f32 _1emFraction { 0.00390625f };
         static inline const glm::vec4 _defaultColor { 1.0f }; //what a text shows before it is given colors
+        std::vector<std::vector<PlacedGlyph>> _shapedLines {}; //each line's glyphs, shaped when the text, the font or the flow changes
         std::vector<f32> _glyphPositions {};
         std::vector<uSize> _glyphLines {};
         bool _anchorTop { false };
 
         // mesh
-        std::vector<f32> _vertices; // x,y,u,v per vertex
-        std::vector<GlyphDraw> _glyphDraws;
-        u32 _vbo { 0 };
-        std::unique_ptr<VertexArray> _vertexArray { nullptr }; //one VAO per context that draws the text, over the same buffer
-        bool _meshChanged { false };
+        GlyphMesh
+            _mesh {},
+            _borderMesh {};
+
+        // border
+        TextBorder _border {};
+        f32 _borderWidth { 0.0f };
+        static constexpr f32 _borderDepthOffset { 0.001f }; //behind the glyphs, well within the step between widgets
     };
 }

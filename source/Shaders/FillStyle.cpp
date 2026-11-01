@@ -128,6 +128,31 @@ void RetroFuturaGUI::FillStyle::SetBackgroundImagePadding(const f32 padding)
     _backgroundImagePadding = padding;
 }
 
+void RetroFuturaGUI::FillStyle::SetBackgroundImageFit(const ImageFit fit)
+{
+    _backgroundImageFit = fit;
+}
+
+void RetroFuturaGUI::FillStyle::SetMaskTextureID(const u32 textureID)
+{
+    _maskTextureID = textureID;
+
+    if(0 == textureID) //0 is no texture
+        _shaderFeatureDIP &= ~ShaderFeatures::Mask;
+    else
+        _shaderFeatureDIP |= ShaderFeatures::Mask;
+}
+
+void RetroFuturaGUI::FillStyle::SetMaskMode(const MaskMode mode)
+{
+    _maskMode = mode;
+}
+
+void RetroFuturaGUI::FillStyle::SetMaskFit(const ImageFit fit)
+{
+    _maskFit = fit;
+}
+
 void RetroFuturaGUI::FillStyle::SetRasterPattern(const RasterPattern rasterPattern)
 {
     _rasterPattern = rasterPattern;
@@ -214,6 +239,12 @@ void RetroFuturaGUI::FillStyle::uploadFill(Shader& shader, const u32 extraFeatur
 
 void RetroFuturaGUI::FillStyle::uploadImage(Shader& shader, const glm::vec2& size) const
 {
+    uploadBackgroundImage(shader, size);
+    uploadMask(shader, size);
+}
+
+void RetroFuturaGUI::FillStyle::uploadBackgroundImage(Shader& shader, const glm::vec2& size) const
+{
     if(0 == (_shaderFeatureDIP & ShaderFeatures::BackgroundImage))
         return;
 
@@ -228,7 +259,44 @@ void RetroFuturaGUI::FillStyle::uploadImage(Shader& shader, const glm::vec2& siz
     shader.SetUniformVec2("uImagePadding", paddingUV);
     glActiveTexture(GL_TEXTURE1);
     glBindTexture(GL_TEXTURE_2D, _backgroundImageTextureID);
+    shader.SetUniformVec2("uImageCoverage", getCoverage(_backgroundImageFit, size - 2.0f * glm::vec2(_backgroundImagePadding))); //fitted inside the padding
     glActiveTexture(GL_TEXTURE0);
+}
+
+void RetroFuturaGUI::FillStyle::uploadMask(Shader& shader, const glm::vec2& size) const
+{
+    if(0 == (_shaderFeatureDIP & ShaderFeatures::Mask))
+        return;
+
+    //Unit 3, after the glyphs, the image and the glass
+    shader.SetUniformInt("uMask", 3);
+    shader.SetUniformInt("uMaskMode", static_cast<i32>(_maskMode));
+    glActiveTexture(GL_TEXTURE3);
+    glBindTexture(GL_TEXTURE_2D, _maskTextureID);
+    shader.SetUniformVec2("uMaskCoverage", getCoverage(_maskFit, size));
+    glActiveTexture(GL_TEXTURE0);
+}
+
+glm::vec2 RetroFuturaGUI::FillStyle::getCoverage(const ImageFit fit, const glm::vec2& size)
+{
+    if(ImageFit::Stretch == fit)
+        return glm::vec2(1.0f);
+
+    GLint
+        width { 0 },
+        height { 0 };
+    glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_WIDTH, &width);
+    glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_HEIGHT, &height);
+
+    if(0 >= width || 0 >= height || 0.0f >= size.x || 0.0f >= size.y)
+        return glm::vec2(1.0f);
+
+    //Scaled by the same factor both ways: the larger one covers the area, the smaller one fits into it
+    const glm::vec2
+        textureSize { static_cast<f32>(width), static_cast<f32>(height) },
+        factors { size / textureSize };
+    const f32 factor { ImageFit::Fill == fit ? std::max(factors.x, factors.y) : std::min(factors.x, factors.y) };
+    return textureSize * factor / size;
 }
 
 void RetroFuturaGUI::FillStyle::uploadRaster(Shader& shader)

@@ -53,7 +53,7 @@ RetroFuturaGUI::FileExplorer::FilePreview::FilePreview(ViewHost& host, Lasagna& 
     _details->SetTrackBorderColors(innerBorderColors, ColorState::Enabled, 0);
     _details->SetTrackBorderColors(innerBorderColors, ColorState::Enabled, 1);
     _details->SetInnerBorderWidth(1.0f);
-    _details->SetFontFamily(_font._Family, _font._Size, _font._Slant, _font._Weight);
+    _details->SetFontFamily(_font._Family, _font._Size, FontSizeUnit::Pixels, _font._Slant, _font._Weight);
     _details->SetTextAlignment(TextAlignment::Left);
     _details->SetTextPadding(6.0f);
     setDetails({});

@@ -112,7 +112,10 @@ namespace RetroFuturaGUI
 
     //Titles
         /// @brief Sets the font of the titles. Without one they don't show.
-        void SetTitleFontFamily(std::string_view fontFamily, const f32 fontSize, const PlatformBridge::Fonts::Slant slant, const PlatformBridge::Fonts::Weight weight);
+        void SetTitleFontFamily(std::string_view fontFamily, const f32 fontSize, const FontSizeUnit sizeUnit, const PlatformBridge::Fonts::Slant slant, const PlatformBridge::Fonts::Weight weight);
+
+        /// @brief Returns the title font size in the given unit.
+        f32 GetTitleFontSize(const FontSizeUnit sizeUnit) const;
 
         /// @brief Sets a title's colors for the given state.
         void SetTitleColors(std::span<const glm::vec4> colors, const ColorState state);
@@ -347,7 +350,7 @@ namespace RetroFuturaGUI
                 ._Selected = { glm::vec4(0.0f) }
             };
         std::string _titleFontFamily {};
-        f32 _titleFontSize { 18.0f };
+        f32 _titleFontSize { FontManager::ToPixels(18.0f, FontSizeUnit::Points) }; //in pixels, as every stored font size
         PlatformBridge::Fonts::Slant _titleFontSlant { PlatformBridge::Fonts::Slant::Roman };
         PlatformBridge::Fonts::Weight _titleFontWeight { PlatformBridge::Fonts::Weight::Normal };
 

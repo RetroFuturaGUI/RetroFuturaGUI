@@ -212,6 +212,38 @@ void RetroFuturaGUI::IBackground::SetBackgroundImagePadding(const f32 padding)
     _background->SetBackgroundImagePadding(padding);
 }
 
+void RetroFuturaGUI::IBackground::SetBackgroundImageFit(const ImageFit fit)
+{
+    if(!_background)
+        return;
+
+    _background->SetBackgroundImageFit(fit);
+}
+
+void RetroFuturaGUI::IBackground::SetBackgroundMaskTextureID(const u32 textureID)
+{
+    if(!_background)
+        return;
+
+    _background->SetMaskTextureID(textureID);
+}
+
+void RetroFuturaGUI::IBackground::SetBackgroundMaskMode(const MaskMode mode)
+{
+    if(!_background)
+        return;
+
+    _background->SetMaskMode(mode);
+}
+
+void RetroFuturaGUI::IBackground::SetBackgroundMaskFit(const ImageFit fit)
+{
+    if(!_background)
+        return;
+
+    _background->SetMaskFit(fit);
+}
+
 void RetroFuturaGUI::IBackground::SetBackgroundImagePathFill(std::string_view name, const SvgPathFill& fill)
 {
     if(!_backgroundSvg)

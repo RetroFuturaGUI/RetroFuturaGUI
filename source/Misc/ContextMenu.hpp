@@ -36,13 +36,13 @@ namespace RetroFuturaGUI
         static void DrawShown(GLFWwindow* window);
 
         /// @brief Sets the font of every ContextMenu, those created before this call included. A ContextMenu given its own font with SetFontFamily keeps it.
-        static void SetDefaultFontFamily(std::string_view fontFamily, const f32 fontSize, const PlatformBridge::Fonts::Slant slant, const PlatformBridge::Fonts::Weight fontWeight);
+        static void SetDefaultFontFamily(std::string_view fontFamily, const f32 fontSize, const FontSizeUnit sizeUnit, const PlatformBridge::Fonts::Slant slant, const PlatformBridge::Fonts::Weight fontWeight);
 
         void SetBackgroundColors(std::span<const glm::vec4> colors);
         void SetBorderColors(std::span<const glm::vec4> colors);
         void SetCornerRadii(const glm::vec4& radii);
         void SetText(std::string_view text, const bool emitSignal) override;
-        void SetFontFamily(std::string_view fontFamily, const f32 fontSize, const PlatformBridge::Fonts::Slant slant, const PlatformBridge::Fonts::Weight fontWeight) override;
+        void SetFontFamily(std::string_view fontFamily, const f32 fontSize, const FontSizeUnit sizeUnit, const PlatformBridge::Fonts::Slant slant, const PlatformBridge::Fonts::Weight fontWeight) override;
         void SetTextPadding(const f32 padding) override;
 
         /// @brief Sets the border width. The box grows with it, since the border draws inside the box.
@@ -80,7 +80,7 @@ namespace RetroFuturaGUI
             _backgroundColors {},
             _borderColors {};
         std::string _fontFamily {};
-        f32 _fontSize { 16.0f };
+        f32 _fontSize { FontManager::ToPixels(16.0f, FontSizeUnit::Points) };
         PlatformBridge::Fonts::Slant _fontSlant { PlatformBridge::Fonts::Slant::Roman };
         PlatformBridge::Fonts::Weight _fontWeight { PlatformBridge::Fonts::Weight::Normal };
         bool
@@ -95,7 +95,7 @@ namespace RetroFuturaGUI
         //Per window, since every window interacts before any draws: drawn and cleared by DrawShown at the end of its frame
         inline static std::unordered_map<GLFWwindow*, ContextMenu*> _shownContextMenus {};
         inline static std::string _defaultFontFamily {};
-        inline static f32 _defaultFontSize { 16.0f };
+        inline static f32 _defaultFontSize { FontManager::ToPixels(16.0f, FontSizeUnit::Points) };
         inline static PlatformBridge::Fonts::Slant _defaultFontSlant { PlatformBridge::Fonts::Slant::Roman };
         inline static PlatformBridge::Fonts::Weight _defaultFontWeight { PlatformBridge::Fonts::Weight::Normal };
         inline static u32 _defaultFontVersion { 0 };

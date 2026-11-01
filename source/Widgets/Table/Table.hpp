@@ -267,7 +267,10 @@ namespace RetroFuturaGUI
         const std::string& GetText(const TrackIndex& index) const;
 
         /// @brief Sets the font family, size and style used to render the text, loading it if necessary.
-        void SetFontFamily(std::string_view fontFamily, const f32 fontSize, const PlatformBridge::Fonts::Slant slant, const PlatformBridge::Fonts::Weight fontWeight);
+        void SetFontFamily(std::string_view fontFamily, const f32 fontSize, const FontSizeUnit sizeUnit, const PlatformBridge::Fonts::Slant slant, const PlatformBridge::Fonts::Weight fontWeight);
+
+        /// @brief Returns the font size in the given unit.
+        f32 GetFontSize(const FontSizeUnit sizeUnit) const;
 
         /// @brief Sets the horizontal alignment of the text.
         void SetTextAlignment(const TextAlignment alignment);
@@ -293,7 +296,10 @@ namespace RetroFuturaGUI
 
         void SetVerticalHeaderText(std::string_view text, const uSize rowIndex);
 
-        void SetHeaderFontFamily(std::string_view fontFamily, const f32 fontSize, const PlatformBridge::Fonts::Slant slant, const PlatformBridge::Fonts::Weight fontWeight);
+        void SetHeaderFontFamily(std::string_view fontFamily, const f32 fontSize, const FontSizeUnit sizeUnit, const PlatformBridge::Fonts::Slant slant, const PlatformBridge::Fonts::Weight fontWeight);
+
+        /// @brief Returns the header font size in the given unit.
+        f32 GetHeaderFontSize(const FontSizeUnit sizeUnit) const;
 
         void SetHeaderTextAlignment(const TextAlignment alignment);
 
@@ -688,7 +694,7 @@ namespace RetroFuturaGUI
         {
             bool _HasFont { false };
             std::string _FontFamily {};
-            f32 _FontSize { 16.0f };
+            f32 _FontSize { FontManager::ToPixels(16.0f, FontSizeUnit::Points) };
             PlatformBridge::Fonts::Slant _Slant { PlatformBridge::Fonts::Slant::Roman };
             PlatformBridge::Fonts::Weight _Weight { PlatformBridge::Fonts::Weight::Normal };
             TextAlignment _Alignment { TextAlignment::Left };

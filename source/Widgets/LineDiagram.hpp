@@ -36,7 +36,10 @@ namespace RetroFuturaGUI
         void SetLineThickness(const f32 thickness);
 
         /// @brief Sets the font of the line labels and of the text next to the pointer. Text draws nothing until it has a font.
-        void SetLabelFontFamily(std::string_view fontFamily, const f32 fontSize, const PlatformBridge::Fonts::Slant slant, const PlatformBridge::Fonts::Weight fontWeight);
+        void SetLabelFontFamily(std::string_view fontFamily, const f32 fontSize, const FontSizeUnit sizeUnit, const PlatformBridge::Fonts::Slant slant, const PlatformBridge::Fonts::Weight fontWeight);
+
+        /// @brief Returns the label font size in the given unit.
+        f32 GetLabelFontSize(const FontSizeUnit sizeUnit) const;
 
         /// @brief Shows every line's label at the start of the line. Labels of lines that start close together overlap.
         void ShowLineLabels(const bool show);
@@ -126,7 +129,7 @@ namespace RetroFuturaGUI
         std::unique_ptr<Plane> _hoverTextBackground { nullptr };
         std::vector<glm::vec4> _hoverTextBackgroundColors { glm::vec4(0.0f, 0.0f, 0.0f, 0.75f) };
         std::string _labelFontFamily {};
-        f32 _labelFontSize { 16.0f };
+        f32 _labelFontSize { FontManager::ToPixels(16.0f, FontSizeUnit::Points) };
         PlatformBridge::Fonts::Slant _labelFontSlant { PlatformBridge::Fonts::Slant::Roman };
         PlatformBridge::Fonts::Weight _labelFontWeight { PlatformBridge::Fonts::Weight::Normal };
         bool

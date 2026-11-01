@@ -23,7 +23,7 @@ namespace RetroFuturaGUI
         void SetText(std::string_view text, const bool emitSignal) override;
 
         /// @brief Sets the font family, size and style used to render the text, loading it if necessary.
-        void SetFontFamily(std::string_view fontFamily, const f32 fontSize, const PlatformBridge::Fonts::Slant slant, const PlatformBridge::Fonts::Weight fontWeight) override;
+        void SetFontFamily(std::string_view fontFamily, const f32 fontSize, const FontSizeUnit sizeUnit, const PlatformBridge::Fonts::Slant slant, const PlatformBridge::Fonts::Weight fontWeight) override;
 
         /// @brief Sets the padding applied around the text, which widens the gap on both sides.
         void SetTextPadding(const f32 padding) override;

@@ -149,15 +149,15 @@ void RetroFuturaGUI::ContextMenu::DrawShown(GLFWwindow* window)
     contextMenu->draw();
 }
 
-void RetroFuturaGUI::ContextMenu::SetDefaultFontFamily(std::string_view fontFamily, const f32 fontSize, const PlatformBridge::Fonts::Slant slant, const PlatformBridge::Fonts::Weight fontWeight)
+void RetroFuturaGUI::ContextMenu::SetDefaultFontFamily(std::string_view fontFamily, const f32 fontSize, const FontSizeUnit sizeUnit, const PlatformBridge::Fonts::Slant slant, const PlatformBridge::Fonts::Weight fontWeight)
 {
     _defaultFontFamily = fontFamily;
-    _defaultFontSize = fontSize;
+    _defaultFontSize = FontManager::ToPixels(fontSize, sizeUnit);
     _defaultFontSlant = slant;
     _defaultFontWeight = fontWeight;
     ++_defaultFontVersion;
 
-    FontManager::GetFontInfo(fontFamily, fontSize, slant, fontWeight);
+    FontManager::GetFontInfo(fontFamily, fontSize, sizeUnit, slant, fontWeight);
 }
 
 void RetroFuturaGUI::ContextMenu::draw()
@@ -199,7 +199,7 @@ void RetroFuturaGUI::ContextMenu::AddItem(std::string_view itemName, std::string
         textLabel->SetText(text, false);
 
         if(!_fontFamily.empty())
-            textLabel->SetFontFamily(_fontFamily, _fontSize, _fontSlant, _fontWeight);
+            textLabel->SetFontFamily(_fontFamily, _fontSize, FontSizeUnit::Pixels, _fontSlant, _fontWeight);
     }
 
     Label* noteLabel { item->AddWidget<Label>("Note", { ._Column = 2 }) };
@@ -209,7 +209,7 @@ void RetroFuturaGUI::ContextMenu::AddItem(std::string_view itemName, std::string
         noteLabel->SetText(note, false);
 
         if(!_fontFamily.empty())
-            noteLabel->SetFontFamily(_fontFamily, _fontSize, _fontSlant, _fontWeight);
+            noteLabel->SetFontFamily(_fontFamily, _fontSize, FontSizeUnit::Pixels, _fontSlant, _fontWeight);
     }
 }
 
@@ -316,17 +316,17 @@ void RetroFuturaGUI::ContextMenu::SetText(std::string_view text, const bool emit
     setSize();
 }
 
-void RetroFuturaGUI::ContextMenu::SetFontFamily(std::string_view fontFamily, const f32 fontSize, const PlatformBridge::Fonts::Slant slant, const PlatformBridge::Fonts::Weight fontWeight)
+void RetroFuturaGUI::ContextMenu::SetFontFamily(std::string_view fontFamily, const f32 fontSize, const FontSizeUnit sizeUnit, const PlatformBridge::Fonts::Slant slant, const PlatformBridge::Fonts::Weight fontWeight)
 {
     _hasOwnFont = true;
     _fontFamily = fontFamily;
-    _fontSize = fontSize;
+    _fontSize = FontManager::ToPixels(fontSize, sizeUnit);
     _fontSlant = slant;
     _fontWeight = fontWeight;
-    ITextProperties::SetFontFamily(fontFamily, fontSize, slant, fontWeight);
+    ITextProperties::SetFontFamily(fontFamily, fontSize, sizeUnit, slant, fontWeight);
 
     if(_items)
-        _items->SetFontFamily(fontFamily, fontSize, slant, fontWeight);
+        _items->SetFontFamily(fontFamily, fontSize, sizeUnit, slant, fontWeight);
 
     setItemFont(_items.get());
     setSize();
@@ -358,10 +358,10 @@ void RetroFuturaGUI::ContextMenu::applyDefaultFont()
     _fontSize = _defaultFontSize;
     _fontSlant = _defaultFontSlant;
     _fontWeight = _defaultFontWeight;
-    ITextProperties::SetFontFamily(_fontFamily, _fontSize, _fontSlant, _fontWeight);
+    ITextProperties::SetFontFamily(_fontFamily, _fontSize, FontSizeUnit::Pixels, _fontSlant, _fontWeight);
 
     if(_items)
-        _items->SetFontFamily(_fontFamily, _fontSize, _fontSlant, _fontWeight);
+        _items->SetFontFamily(_fontFamily, _fontSize, FontSizeUnit::Pixels, _fontSlant, _fontWeight);
 
     setItemFont(_items.get());
     setSize();
@@ -391,12 +391,12 @@ void RetroFuturaGUI::ContextMenu::setItemFont(ExtendedComboBox* comboBox) const
             Label* textLabel { prefab->GetChildWidget<Label>("Text") };
 
             if(textLabel)
-                textLabel->SetFontFamily(_fontFamily, _fontSize, _fontSlant, _fontWeight);
+                textLabel->SetFontFamily(_fontFamily, _fontSize, FontSizeUnit::Pixels, _fontSlant, _fontWeight);
 
             Label* noteLabel { prefab->GetChildWidget<Label>("Note") };
 
             if(noteLabel)
-                noteLabel->SetFontFamily(_fontFamily, _fontSize, _fontSlant, _fontWeight);
+                noteLabel->SetFontFamily(_fontFamily, _fontSize, FontSizeUnit::Pixels, _fontSlant, _fontWeight);
         }
         else if(WidgetTypeID::ExtendedComboBox == item->GetWidgetTypeID())
         {
@@ -405,7 +405,7 @@ void RetroFuturaGUI::ContextMenu::setItemFont(ExtendedComboBox* comboBox) const
             if(!childComboBox)
                 continue;
 
-            childComboBox->SetFontFamily(_fontFamily, _fontSize, _fontSlant, _fontWeight);
+            childComboBox->SetFontFamily(_fontFamily, _fontSize, FontSizeUnit::Pixels, _fontSlant, _fontWeight);
             setItemFont(childComboBox);
         }
     }

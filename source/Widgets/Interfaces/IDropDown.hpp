@@ -51,7 +51,8 @@ namespace RetroFuturaGUI
         void SetDropDownBackgroundColors(std::span<const glm::vec4> colors, const ColorState state);
         void SetDropDownBorderColors(std::span<const glm::vec4> colors, const ColorState state);
         void SetDropDownCornerRadii(const glm::vec4& radii);
-        virtual void SetFontFamily(std::string_view fontFamily, const f32 fontSize, const PlatformBridge::Fonts::Slant slant, const PlatformBridge::Fonts::Weight fontWeight) = 0;
+        virtual void SetFontFamily(std::string_view fontFamily, const f32 fontSize, const FontSizeUnit sizeUnit, const PlatformBridge::Fonts::Slant slant, const PlatformBridge::Fonts::Weight fontWeight) = 0;
+        f32 GetFontSize(const FontSizeUnit sizeUnit) const;
         virtual void SetTextAlignment(const TextAlignment alignment) = 0;
         virtual void SetTextPadding(const f32 padding) = 0;
         virtual void SetDropDownPosition(const DropDownPosition position) = 0;
@@ -108,7 +109,7 @@ namespace RetroFuturaGUI
         TextAlignment _textAlignment { TextAlignment::Left };
         std::string _fontFamily {};
         f32
-            _fontSize { 11.0f },
+            _fontSize { FontManager::ToPixels(11.0f, FontSizeUnit::Points) }, //in pixels, as every stored font size
             _textPadding { 4.0f },
             _dropDownWidth { 0.0f }; //0: the box's width
         PlatformBridge::Fonts::Slant _slant { PlatformBridge::Fonts::Slant::Roman };

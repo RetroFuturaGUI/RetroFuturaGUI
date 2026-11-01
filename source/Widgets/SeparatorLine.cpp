@@ -73,9 +73,9 @@ void RetroFuturaGUI::SeparatorLine::SetText(std::string_view text, const bool em
     updateLayout();
 }
 
-void RetroFuturaGUI::SeparatorLine::SetFontFamily(std::string_view fontFamily, const f32 fontSize, const PlatformBridge::Fonts::Slant slant, const PlatformBridge::Fonts::Weight fontWeight)
+void RetroFuturaGUI::SeparatorLine::SetFontFamily(std::string_view fontFamily, const f32 fontSize, const FontSizeUnit sizeUnit, const PlatformBridge::Fonts::Slant slant, const PlatformBridge::Fonts::Weight fontWeight)
 {
-    ITextProperties::SetFontFamily(fontFamily, fontSize, slant, fontWeight);
+    ITextProperties::SetFontFamily(fontFamily, fontSize, sizeUnit, slant, fontWeight);
     updateLayout();
 }
 

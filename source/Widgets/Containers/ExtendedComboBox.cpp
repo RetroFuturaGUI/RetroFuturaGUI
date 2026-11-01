@@ -603,17 +603,17 @@ void RetroFuturaGUI::ExtendedComboBox::performPendingRemoval()
     updateDropDownGeometry();
 }
 
-void RetroFuturaGUI::ExtendedComboBox::SetFontFamily(std::string_view fontFamily, const f32 fontSize, const PlatformBridge::Fonts::Slant slant, const PlatformBridge::Fonts::Weight fontWeight)
+void RetroFuturaGUI::ExtendedComboBox::SetFontFamily(std::string_view fontFamily, const f32 fontSize, const FontSizeUnit sizeUnit, const PlatformBridge::Fonts::Slant slant, const PlatformBridge::Fonts::Weight fontWeight)
 {
     if(!_previewText)
         return;
 
     _fontFamily = fontFamily;
-    _fontSize = fontSize;
+    _fontSize = FontManager::ToPixels(fontSize, sizeUnit);
     _slant = slant;
     _fontWeight = fontWeight;
 
-    _previewText->SetFontFamily(_fontFamily, _fontSize, _slant, _fontWeight);
+    _previewText->SetFontFamily(_fontFamily, _fontSize, FontSizeUnit::Pixels, _slant, _fontWeight);
     _previewText->SetTextUTF8(std::string(_previewText->GetTextUTF8())); //a font swap leaves the glyph mesh behind, so the text is laid out again
 
     for(const auto& item : _itemWidgets)
@@ -626,19 +626,19 @@ void RetroFuturaGUI::ExtendedComboBox::SetFontFamily(std::string_view fontFamily
             case WidgetTypeID::Label:
             {
                 Label* label = dynamic_cast<Label*>(item.get());
-                label->SetFontFamily(_fontFamily, _fontSize, _slant, _fontWeight);
+                label->SetFontFamily(_fontFamily, _fontSize, FontSizeUnit::Pixels, _slant, _fontWeight);
                 label->SetText(label->GetText(), false);
             } break;
             case WidgetTypeID::Button:
             {
                 Button* button = dynamic_cast<Button*>(item.get());
-                button->SetFontFamily(_fontFamily, _fontSize, _slant, _fontWeight);
+                button->SetFontFamily(_fontFamily, _fontSize, FontSizeUnit::Pixels, _slant, _fontWeight);
                 button->SetText(button->GetText(), false);
             } break;
             case WidgetTypeID::TextBox:
             {
                 TextBox* textBox = dynamic_cast<TextBox*>(item.get());
-                textBox->SetFontFamily(_fontFamily, _fontSize, _slant, _fontWeight);
+                textBox->SetFontFamily(_fontFamily, _fontSize, FontSizeUnit::Pixels, _slant, _fontWeight);
                 textBox->SetValue<std::string_view>(textBox->GetText(), false);
             } break;
             /*case WidgetTypeID::Prefab:
@@ -648,12 +648,12 @@ void RetroFuturaGUI::ExtendedComboBox::SetFontFamily(std::string_view fontFamily
             case WidgetTypeID::ComboBox:
             {
                 ComboBox* comboBox = dynamic_cast<ComboBox*>(item.get());
-                comboBox->SetFontFamily(_fontFamily, _fontSize, _slant, _fontWeight);
+                comboBox->SetFontFamily(_fontFamily, _fontSize, FontSizeUnit::Pixels, _slant, _fontWeight);
             } break;
             case WidgetTypeID::ExtendedComboBox:
             {
                 ExtendedComboBox* extendedComboBox = dynamic_cast<ExtendedComboBox*>(item.get());
-                extendedComboBox->SetFontFamily(_fontFamily, _fontSize, _slant, _fontWeight);
+                extendedComboBox->SetFontFamily(_fontFamily, _fontSize, FontSizeUnit::Pixels, _slant, _fontWeight);
             } break;
             default:
                 [[unlikely]]

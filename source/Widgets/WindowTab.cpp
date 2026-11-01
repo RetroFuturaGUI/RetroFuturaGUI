@@ -308,10 +308,10 @@ void RetroFuturaGUI::WindowTab::SetFieldBorderWidth(const f32 width)
     _fieldBorderWidth = std::max(width, 0.0f);
 }
 
-void RetroFuturaGUI::WindowTab::SetTitleFontFamily(std::string_view fontFamily, const f32 fontSize, const PlatformBridge::Fonts::Slant slant, const PlatformBridge::Fonts::Weight weight)
+void RetroFuturaGUI::WindowTab::SetTitleFontFamily(std::string_view fontFamily, const f32 fontSize, const FontSizeUnit sizeUnit, const PlatformBridge::Fonts::Slant slant, const PlatformBridge::Fonts::Weight weight)
 {
     _titleFontFamily = fontFamily;
-    _titleFontSize = fontSize;
+    _titleFontSize = FontManager::ToPixels(fontSize, sizeUnit);
     _titleFontSlant = slant;
     _titleFontWeight = weight;
 
@@ -319,6 +319,11 @@ void RetroFuturaGUI::WindowTab::SetTitleFontFamily(std::string_view fontFamily, 
         applyTitleFont(field._Title.get());
 
     applyTitleFont(_previewTitle.get());
+}
+
+f32 RetroFuturaGUI::WindowTab::GetTitleFontSize(const FontSizeUnit sizeUnit) const
+{
+    return FontManager::FromPixels(_titleFontSize, sizeUnit);
 }
 
 void RetroFuturaGUI::WindowTab::SetTitleColors(std::span<const glm::vec4> colors, const ColorState state)
@@ -1005,7 +1010,7 @@ void RetroFuturaGUI::WindowTab::applyTitleFont(Text* title) const
     if(_titleFontFamily.empty())
         return;
 
-    title->SetFontFamily(_titleFontFamily, _titleFontSize, _titleFontSlant, _titleFontWeight);
+    title->SetFontFamily(_titleFontFamily, _titleFontSize, FontSizeUnit::Pixels, _titleFontSlant, _titleFontWeight);
 }
 
 bool RetroFuturaGUI::WindowTab::isStripUnder(const glm::ivec2& screenPoint) const

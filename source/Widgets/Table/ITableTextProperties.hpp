@@ -19,7 +19,10 @@ namespace RetroFuturaGUI
         const std::string& GetText() const;
 
         /// @brief Sets the font family, size and style used to render the text, loading it if necessary.
-        void SetFontFamily(std::string_view fontFamily, const f32 fontSize, const PlatformBridge::Fonts::Slant slant, const PlatformBridge::Fonts::Weight fontWeight);
+        void SetFontFamily(std::string_view fontFamily, const f32 fontSize, const FontSizeUnit sizeUnit, const PlatformBridge::Fonts::Slant slant, const PlatformBridge::Fonts::Weight fontWeight);
+
+        /// @brief Returns the font size in the given unit.
+        f32 GetFontSize(const FontSizeUnit sizeUnit) const;
 
         /// @brief Sets the horizontal alignment of the text.
         void SetTextAlignment(const TextAlignment alignment);
@@ -50,7 +53,7 @@ namespace RetroFuturaGUI
         TextAlignment _textAlignment { TextAlignment::Left };
         std::string _fontFamily {}; //empty: Text's own default
         f32
-            _fontSize { 16.0f },
+            _fontSize { FontManager::ToPixels(16.0f, FontSizeUnit::Points) },
             _textPadding { 0.0f };
         PlatformBridge::Fonts::Slant _slant { PlatformBridge::Fonts::Slant::Roman };
         PlatformBridge::Fonts::Weight _fontWeight { PlatformBridge::Fonts::Weight::Normal };

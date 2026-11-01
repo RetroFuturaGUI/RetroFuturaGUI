@@ -4,6 +4,7 @@
 #include "ContextObjects.hpp"
 #include "ShaderManager.hpp"
 #include "AudioPlayback.hpp"
+#include "FontManager.hpp"
 #include <print>
 
 RetroFuturaGUI::Window::Window(std::string_view name, const i32 width, const i32 height)
@@ -49,9 +50,13 @@ RetroFuturaGUI::Window::~Window()
     _backgroundSvg.reset();
     _border.reset();
 
-    //A later window must not try to share with a destroyed one
+    //A later window must not try to share with a destroyed one. Another window of the share group takes over, so later windows
+    //still share with the ones left, and glyphs still have a context
     if(_shareWindow == _window)
-        _shareWindow = nullptr;
+    {
+        _shareWindow = getAllWindows().empty() ? nullptr : getAllWindows().front()->_window;
+        FontManager::SetUploadContext(_shareWindow);
+    }
 
     glfwDestroyWindow(_window);
     ContextObject::ForgetContext(_window); //its VAOs and framebuffers went with it
@@ -357,7 +362,10 @@ void RetroFuturaGUI::Window::createWindow()
     }
 
     if(!_shareWindow)
+    {
         _shareWindow = _window;
+        FontManager::SetUploadContext(_window);
+    }
 
     //Lets a window bar, which only gets the GLFW window, reach this one, e.g. to undock it
     glfwSetWindowUserPointer(_window, this);

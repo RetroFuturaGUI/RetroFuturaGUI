@@ -25,6 +25,7 @@ list(APPEND RetroFuturaGuiSources
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Animation/Transition.cpp"
 
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Fonts/FontManager.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/source/Fonts/FreeTypeGlyphSource.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Fonts/Text.cpp"
 
     "${CMAKE_CURRENT_SOURCE_DIR}/source/MediaPlayback/AudioDecodeThread.cpp"
@@ -234,6 +235,14 @@ else()
     message(FATAL_ERROR "Freetype is not found. Please install Freetype via VCPKG.")
 endif()
 
+# Check for HarfBuzz installation: shapes text with the FreeType fonts (MIT licensed)
+find_package(harfbuzz CONFIG REQUIRED)
+if(TARGET harfbuzz::harfbuzz)
+    message(STATUS "HarfBuzz is installed and found")
+else()
+    message(FATAL_ERROR "HarfBuzz is not found. Please install harfbuzz via VCPKG.")
+endif()
+
 # Check for Stb installation
 find_package(Stb REQUIRED COMPONENTS stb_image)
 if(Stb_FOUND)
@@ -283,6 +292,7 @@ target_link_libraries("RetroFuturaGUI" PUBLIC
     OpenGL::GL 
     glfw
     Freetype::Freetype
+    harfbuzz::harfbuzz
     glm::glm-header-only
     GLEW::GLEW
     glad::glad

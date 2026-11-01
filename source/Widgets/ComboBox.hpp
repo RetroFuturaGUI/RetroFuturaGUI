@@ -25,7 +25,7 @@ namespace RetroFuturaGUI
         void AddItem(std::string_view name);
         const std::string& GetSelectedText() const;
         void RemoveItem(const uSize index) override;
-        void SetFontFamily(std::string_view fontFamily, const f32 fontSize, const PlatformBridge::Fonts::Slant slant, const PlatformBridge::Fonts::Weight fontWeight) override;
+        void SetFontFamily(std::string_view fontFamily, const f32 fontSize, const FontSizeUnit sizeUnit, const PlatformBridge::Fonts::Slant slant, const PlatformBridge::Fonts::Weight fontWeight) override;
         void SetTextAlignment(const TextAlignment alignment) override;
         void SetTextPadding(const f32 padding) override;
         void SetDropDownPosition(const DropDownPosition position) override;

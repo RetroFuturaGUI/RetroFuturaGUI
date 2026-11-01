@@ -119,9 +119,14 @@ bool RetroFuturaGUI::FileExplorer::openWithFilters(std::string_view startPath, c
     return true;
 }
 
-void RetroFuturaGUI::FileExplorer::SetFontFamily(std::string_view fontFamily, const f32 fontSize, const PlatformBridge::Fonts::Slant slant, const PlatformBridge::Fonts::Weight weight)
+void RetroFuturaGUI::FileExplorer::SetFontFamily(std::string_view fontFamily, const f32 fontSize, const FontSizeUnit sizeUnit, const PlatformBridge::Fonts::Slant slant, const PlatformBridge::Fonts::Weight weight)
 {
-    _font = ViewFont { ._Family = std::string(fontFamily), ._Size = fontSize, ._Slant = slant, ._Weight = weight };
+    _font = ViewFont { ._Family = std::string(fontFamily), ._Size = FontManager::ToPixels(fontSize, sizeUnit), ._Slant = slant, ._Weight = weight };
+}
+
+f32 RetroFuturaGUI::FileExplorer::GetFontSize(const FontSizeUnit sizeUnit) const
+{
+    return FontManager::FromPixels(_font._Size, sizeUnit);
 }
 
 RetroFuturaGUI::FileExplorer::ViewHost::ViewHost(std::string_view sceneName, Window* window, const AxisDefinition& lasagnaAxis)
@@ -335,7 +340,7 @@ bool RetroFuturaGUI::FileExplorer::buildView(ViewHost& host, std::string_view ti
     built._Files->SetTrackBorderColors(innerBorderColors, ColorState::Enabled, 0);
     built._Files->SetTrackBorderColors(innerBorderColors, ColorState::Enabled, 1);
     built._Files->SetInnerBorderWidth(1.0f);
-    built._Files->SetFontFamily(_font._Family, _font._Size, _font._Slant, _font._Weight);
+    built._Files->SetFontFamily(_font._Family, _font._Size, FontSizeUnit::Pixels, _font._Slant, _font._Weight);
     built._Files->SetTextAlignment(TextAlignment::Left);
     built._Files->SetTextPadding(6.0f);
 
@@ -345,7 +350,7 @@ bool RetroFuturaGUI::FileExplorer::buildView(ViewHost& host, std::string_view ti
 
     //The header cells come with the columns, so they are named once these exist
     built._Files->SetTrackDefinitions(std::vector<Table::TrackDefinition> {}, columnDefinition(_font, _showThumbnails));
-    built._Files->SetHeaderFontFamily(_font._Family, _font._Size, _font._Slant, _font._Weight);
+    built._Files->SetHeaderFontFamily(_font._Family, _font._Size, FontSizeUnit::Pixels, _font._Slant, _font._Weight);
     built._Files->SetHeaderTextAlignment(TextAlignment::Left);
     built._Files->SetHeaderTextPadding(6.0f);
     built._Files->SetHeaderBackgroundColors(headerColors, ColorState::Enabled);
@@ -424,7 +429,7 @@ bool RetroFuturaGUI::FileExplorer::buildView(ViewHost& host, std::string_view ti
     if(!built._Filter)
         return false;
 
-    built._Filter->SetFontFamily(_font._Family, _font._Size, _font._Slant, _font._Weight);
+    built._Filter->SetFontFamily(_font._Family, _font._Size, FontSizeUnit::Pixels, _font._Slant, _font._Weight);
     built._Filter->SetSize(cellSize(_viewAxis, windowSize, filterCell));
     built._Filter->SetBackgroundColors(std::array { glm::vec4(0.2f, 0.2f, 0.2f, 1.0f) }, ColorState::Enabled);
     built._Filter->SetDropDownPosition(IDropDown::DropDownPosition::Top); //down would run out of the window
@@ -461,7 +466,7 @@ bool RetroFuturaGUI::FileExplorer::buildView(ViewHost& host, std::string_view ti
     if(!built._Status)
         return false;
 
-    built._Status->SetFontFamily(_font._Family, _font._Size, _font._Slant, _font._Weight);
+    built._Status->SetFontFamily(_font._Family, _font._Size, FontSizeUnit::Pixels, _font._Slant, _font._Weight);
     built._Status->SetTextAlignment(TextAlignment::Left);
     built._Status->SetTextColors(std::array { glm::vec4(0.9f, 0.8f, 0.55f, 1.0f) }, ColorState::Enabled);
     built._Status->SetTextPadding(8.0f);
@@ -518,7 +523,7 @@ RetroFuturaGUI::MenuBar* RetroFuturaGUI::FileExplorer::attachBar(ViewHost& host,
     if(!barTitle)
         return bar;
 
-    barTitle->SetFontFamily(font._Family, font._Size, font._Slant, font._Weight);
+    barTitle->SetFontFamily(font._Family, font._Size, FontSizeUnit::Pixels, font._Slant, font._Weight);
     barTitle->SetText(title, false);
     barTitle->SetTextAlignment(TextAlignment::Left);
     barTitle->SetTextColors(std::array { glm::vec4(1.0f) }, ColorState::Enabled);
@@ -551,14 +556,14 @@ void RetroFuturaGUI::FileExplorer::styleButton(Button& button, std::string_view 
     button.SetBackgroundFillType(FillType::Solid);
     button.SetBorderColors(std::array { glm::vec4(0.5f, 0.5f, 0.5f, 1.0f) }, ColorState::Enabled);
     button.SetBorderWidth(1.0f);
-    button.SetFontFamily(font._Family, font._Size, font._Slant, font._Weight);
+    button.SetFontFamily(font._Family, font._Size, FontSizeUnit::Pixels, font._Slant, font._Weight);
     button.SetText(text, false);
     button.SetTextAlignment(TextAlignment::Center);
 }
 
 void RetroFuturaGUI::FileExplorer::styleMenu(ComboBox& menu, std::string_view caption, std::span<const MenuAction> actions, const glm::vec3& size, const f32 listWidth, const ViewFont& font)
 {
-    menu.SetFontFamily(font._Family, font._Size, font._Slant, font._Weight);
+    menu.SetFontFamily(font._Family, font._Size, FontSizeUnit::Pixels, font._Slant, font._Weight);
     menu.SetSize(size);
     menu.SetBackgroundColors(std::array { glm::vec4(0.0f, 0.0f, 0.0f, 0.0f) }, ColorState::Enabled); //flat until hovered, as a menu title is
     menu.SetBackgroundColors(std::array { glm::vec4(0.25f, 0.25f, 0.35f, 0.9f) }, ColorState::Hover);
@@ -603,7 +608,7 @@ void RetroFuturaGUI::FileExplorer::styleCheckBox(CheckBox& checkBox, const f32 s
 
 void RetroFuturaGUI::FileExplorer::styleLabel(Label& label, std::string_view text, const glm::vec3& size, const ViewFont& font)
 {
-    label.SetFontFamily(font._Family, font._Size, font._Slant, font._Weight);
+    label.SetFontFamily(font._Family, font._Size, FontSizeUnit::Pixels, font._Slant, font._Weight);
     label.SetText(text, false);
     label.SetTextAlignment(TextAlignment::Left);
     label.SetTextColors(std::array { glm::vec4(1.0f) }, ColorState::Enabled);
@@ -628,7 +633,7 @@ void RetroFuturaGUI::FileExplorer::styleTextBox(TextBox& textBox, std::string_vi
     textBox.SetBackgroundFillType(FillType::Solid);
     textBox.SetBorderColors(std::array { glm::vec4(0.5f, 0.5f, 0.5f, 1.0f) }, ColorState::Enabled);
     textBox.SetBorderWidth(1.0f);
-    textBox.SetFontFamily(font._Family, font._Size, font._Slant, font._Weight);
+    textBox.SetFontFamily(font._Family, font._Size, FontSizeUnit::Pixels, font._Slant, font._Weight);
     textBox.SetTextAlignment(TextAlignment::Left);
     textBox.SetTextPadding(6.0f);
     textBox.SetPlaceholderText(placeholder);
@@ -821,12 +826,12 @@ std::vector<std::string> RetroFuturaGUI::FileExplorer::splitExtensions(std::stri
 
 void RetroFuturaGUI::FileExplorer::ensureFontBlock(const u32 first, const u32 last) const
 {
-    const FontInfo* fontInfo { FontManager::GetFontInfo(_font._Family, _font._Size, _font._Slant, _font._Weight) };
+    const FontInfo* fontInfo { FontManager::GetFontInfo(_font._Family, _font._Size, FontSizeUnit::Pixels, _font._Slant, _font._Weight) };
 
     if(!fontInfo)
         return;
 
-    const auto atlas { fontInfo->_Atlasses.find(FontManager::FontSizeToIntegral(_font._Size)) };
+    const auto atlas { fontInfo->_Atlasses.find(FontManager::FontSizeToKey(_font._Size)) };
 
     if(fontInfo->_Atlasses.end() == atlas)
         return;
@@ -834,7 +839,7 @@ void RetroFuturaGUI::FileExplorer::ensureFontBlock(const u32 first, const u32 la
     if(atlas->second._GlyphBlocks.contains(first))
         return;
 
-    FontManager::ExtendFontset(_font._Family, _font._Family, _font._Size, _font._Slant, _font._Weight, first, last);
+    FontManager::ExtendFontset(_font._Family, _font._Family, _font._Size, FontSizeUnit::Pixels, _font._Slant, _font._Weight, first, last);
 }
 
 void RetroFuturaGUI::FileExplorer::applyMode()

@@ -8,17 +8,22 @@
     return _text->GetTextUTF8();
 }
 
-void RetroFuturaGUI::ITableTextProperties::SetFontFamily(std::string_view fontFamily, const f32 fontSize, const PlatformBridge::Fonts::Slant slant, const PlatformBridge::Fonts::Weight fontWeight)
+void RetroFuturaGUI::ITableTextProperties::SetFontFamily(std::string_view fontFamily, const f32 fontSize, const FontSizeUnit sizeUnit, const PlatformBridge::Fonts::Slant slant, const PlatformBridge::Fonts::Weight fontWeight)
 {
     _fontFamily = fontFamily;
-    _fontSize = fontSize;
+    _fontSize = FontManager::ToPixels(fontSize, sizeUnit);
     _slant = slant;
     _fontWeight = fontWeight;
 
     if(!_text)
         return;
 
-    _text->SetFontFamily(fontFamily, fontSize, slant, fontWeight);
+    _text->SetFontFamily(fontFamily, fontSize, sizeUnit, slant, fontWeight);
+}
+
+f32 RetroFuturaGUI::ITableTextProperties::GetFontSize(const FontSizeUnit sizeUnit) const
+{
+    return FontManager::FromPixels(_fontSize, sizeUnit);
 }
 
 void RetroFuturaGUI::ITableTextProperties::SetTextAlignment(const TextAlignment alignment)
@@ -52,7 +57,7 @@ void RetroFuturaGUI::ITableTextProperties::applyTextSettings()
         return;
 
     if(!_fontFamily.empty())
-        _text->SetFontFamily(_fontFamily, _fontSize, _slant, _fontWeight);
+        _text->SetFontFamily(_fontFamily, _fontSize, FontSizeUnit::Pixels, _slant, _fontWeight);
 
     _text->SetTextAlignment(_textAlignment);
     _text->SetTextPadding(_textPadding);

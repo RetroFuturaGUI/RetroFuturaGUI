@@ -357,6 +357,11 @@ uSize RetroFuturaGUI::IDropDown::GetItemCount() const
     return _itemCount;
 }
 
+f32 RetroFuturaGUI::IDropDown::GetFontSize(const FontSizeUnit sizeUnit) const
+{
+    return FontManager::FromPixels(_fontSize, sizeUnit);
+}
+
 uSize RetroFuturaGUI::IDropDown::GetSelectedIndex() const
 {
     return _currentIndex;

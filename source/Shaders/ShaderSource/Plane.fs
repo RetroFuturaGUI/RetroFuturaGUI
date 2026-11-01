@@ -7,6 +7,7 @@ uniform float uOpacity = 1.0; //Shader::OpacityScope's product, uploaded with ev
 #include "Modules/BackgroundGap.glsl"
 #include "Modules/Glass.glsl"
 #include "Modules/Image.glsl"
+#include "Modules/Mask.glsl"
 
 #ifdef WAVE_PLANE
 #include "Modules/Wave.glsl"
@@ -41,6 +42,9 @@ void main()
 
     if((uDIP & FOG_EFFECT) != 0)
         finalColor = applyFog(finalColor, vLocalPos);
+
+    if((uDIP & MASK) != 0)
+        finalColor = applyMask(finalColor);
 
     if((uDIP & ROUNDED_CORNERS) != 0 && isOutsideRoundedCorners(vLocalPos))
         discard;

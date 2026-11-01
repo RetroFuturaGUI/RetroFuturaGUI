@@ -106,9 +106,12 @@ namespace RetroFuturaGUI
 
         /// @brief Sets the font every text in the explorer uses; table rows grow with its size. Fonts hold only the code points
         ///        they were loaded with, so names in other scripts, like Japanese, need a font set the app loaded or extended
-        ///        with those blocks (FontManager::LoadFont, ExtendFontset). The explorer adds Latin-1 itself. Arial 18 when
+        ///        with those blocks (FontManager::LoadFont, ExtendFontset). The explorer adds Latin-1 itself. Arial at 18 points when
         ///        not set. Call before Open.
-        void SetFontFamily(std::string_view fontFamily, const f32 fontSize, const PlatformBridge::Fonts::Slant slant, const PlatformBridge::Fonts::Weight weight);
+        void SetFontFamily(std::string_view fontFamily, const f32 fontSize, const FontSizeUnit sizeUnit, const PlatformBridge::Fonts::Slant slant, const PlatformBridge::Fonts::Weight weight);
+
+        /// @brief Returns the font size in the given unit.
+        f32 GetFontSize(const FontSizeUnit sizeUnit) const;
 
     private:
         using Entry = PlatformBridge::FileSystem::Entry;
@@ -260,7 +263,7 @@ namespace RetroFuturaGUI
         struct ViewFont
         {
             std::string _Family { "Arial" };
-            f32 _Size { 18.0f };
+            f32 _Size { FontManager::ToPixels(18.0f, FontSizeUnit::Points) }; //in pixels, as every stored font size
             PlatformBridge::Fonts::Slant _Slant { PlatformBridge::Fonts::Slant::Roman };
             PlatformBridge::Fonts::Weight _Weight { PlatformBridge::Fonts::Weight::Normal };
         };

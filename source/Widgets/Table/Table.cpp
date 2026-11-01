@@ -774,7 +774,7 @@ void RetroFuturaGUI::Table::ensureHeaderWidget(TableCell& cell)
     auto textWidget { std::make_unique<TableText>(this, &_projection) };
 
     if(_headerTextDefaults._HasFont)
-        textWidget->SetFontFamily(_headerTextDefaults._FontFamily, _headerTextDefaults._FontSize, _headerTextDefaults._Slant, _headerTextDefaults._Weight);
+        textWidget->SetFontFamily(_headerTextDefaults._FontFamily, _headerTextDefaults._FontSize, FontSizeUnit::Pixels, _headerTextDefaults._Slant, _headerTextDefaults._Weight);
 
     textWidget->SetTextAlignment(_headerTextDefaults._Alignment);
     textWidget->SetTextPadding(_headerTextDefaults._Padding);
@@ -868,18 +868,23 @@ void RetroFuturaGUI::Table::SetVerticalHeaderText(std::string_view text, const u
     static_cast<TableText*>(cell._TableWidget.get())->SetText(text);
 }
 
-void RetroFuturaGUI::Table::SetHeaderFontFamily(std::string_view fontFamily, const f32 fontSize, const PlatformBridge::Fonts::Slant slant, const PlatformBridge::Fonts::Weight fontWeight)
+void RetroFuturaGUI::Table::SetHeaderFontFamily(std::string_view fontFamily, const f32 fontSize, const FontSizeUnit sizeUnit, const PlatformBridge::Fonts::Slant slant, const PlatformBridge::Fonts::Weight fontWeight)
 {
     _headerTextDefaults._HasFont = true;
     _headerTextDefaults._FontFamily = fontFamily;
-    _headerTextDefaults._FontSize = fontSize;
+    _headerTextDefaults._FontSize = FontManager::ToPixels(fontSize, sizeUnit);
     _headerTextDefaults._Slant = slant;
     _headerTextDefaults._Weight = fontWeight;
 
     for(std::vector<TableCell>* band : { &_horizontalHeaderCells, &_verticalHeaderCells })
         for(TableCell& cell : *band)
             if(cell._TableWidgetTypeID == ITableWidget::TableWidgetTypeID::TableText)
-                static_cast<TableText*>(cell._TableWidget.get())->SetFontFamily(fontFamily, fontSize, slant, fontWeight);
+                static_cast<TableText*>(cell._TableWidget.get())->SetFontFamily(fontFamily, fontSize, sizeUnit, slant, fontWeight);
+}
+
+f32 RetroFuturaGUI::Table::GetHeaderFontSize(const FontSizeUnit sizeUnit) const
+{
+    return FontManager::FromPixels(_headerTextDefaults._FontSize, sizeUnit);
 }
 
 void RetroFuturaGUI::Table::SetHeaderTextAlignment(const TextAlignment alignment)
@@ -1082,15 +1087,20 @@ const std::string& RetroFuturaGUI::Table::GetText(const TrackIndex& index) const
     return cell->_Text;
 }
 
-void RetroFuturaGUI::Table::SetFontFamily(std::string_view fontFamily, const f32 fontSize, const PlatformBridge::Fonts::Slant slant, const PlatformBridge::Fonts::Weight fontWeight)
+void RetroFuturaGUI::Table::SetFontFamily(std::string_view fontFamily, const f32 fontSize, const FontSizeUnit sizeUnit, const PlatformBridge::Fonts::Slant slant, const PlatformBridge::Fonts::Weight fontWeight)
 {
     //A table-wide default, which every text taken from the pool is styled with
     _textDefaults._HasFont = true;
     _textDefaults._FontFamily = fontFamily;
-    _textDefaults._FontSize = fontSize;
+    _textDefaults._FontSize = FontManager::ToPixels(fontSize, sizeUnit);
     _textDefaults._Slant = slant;
     _textDefaults._Weight = fontWeight;
     restyleTexts();
+}
+
+f32 RetroFuturaGUI::Table::GetFontSize(const FontSizeUnit sizeUnit) const
+{
+    return FontManager::FromPixels(_textDefaults._FontSize, sizeUnit);
 }
 
 void RetroFuturaGUI::Table::SetTextAlignment(const TextAlignment alignment)
@@ -1632,7 +1642,7 @@ void RetroFuturaGUI::Table::refreshShownText(const uSize row, const uSize column
 void RetroFuturaGUI::Table::styleText(TableText& text)
 {
     if(_textDefaults._HasFont)
-        text.SetFontFamily(_textDefaults._FontFamily, _textDefaults._FontSize, _textDefaults._Slant, _textDefaults._Weight);
+        text.SetFontFamily(_textDefaults._FontFamily, _textDefaults._FontSize, FontSizeUnit::Pixels, _textDefaults._Slant, _textDefaults._Weight);
 
     text.SetTextAlignment(_textDefaults._Alignment);
     text.SetTextPadding(_textDefaults._Padding);

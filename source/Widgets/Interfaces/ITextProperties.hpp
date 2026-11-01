@@ -45,6 +45,20 @@ namespace RetroFuturaGUI
         /// @brief Sets how far the text's image stays clear of the text's edges, per side in pixels.
         void SetTextBackgroundImagePadding(const f32 padding);
 
+        /// @brief Sets how the text's image is laid across the text: stretched by default, or keeping its proportions while
+        ///        filling the text (cropped) or fitting into it. Kept proportions stop the image widening as the text grows.
+        void SetTextBackgroundImageFit(const ImageFit fit);
+
+        /// @brief Sets a grayscale mask laid across the text, its red channel the gray: as transparency or as shading
+        ///        (SetTextMaskMode). A shading mask of bright and dark bands over a metal image gives chrome text. 0 shows no mask.
+        void SetTextMaskTextureID(const u32 textureID);
+
+        /// @brief Sets what the text's mask does: make the text see-through (Alpha, the default) or shade it (Shade).
+        void SetTextMaskMode(const MaskMode mode);
+
+        /// @brief Sets how the text's mask is laid across the text: stretched, the default, or keeping its proportions.
+        void SetTextMaskFit(const ImageFit fit);
+
         /// @brief Sets which pattern the text's raster draws.
         void SetTextRasterPattern(const RasterPattern rasterPattern);
 
@@ -81,6 +95,44 @@ namespace RetroFuturaGUI
         /// @brief Sets the coverage threshold above which the text's fog appears.
         void SetTextFogClearing(const f32 clearing);
 
+        /// @brief Sets how far Emoji take on the text's fill color, from 0, their own colors (the default), to 1.
+        ///        The raster, fog, glass and mask apply to them either way.
+        void SetTextColorGlyphTint(const f32 tint);
+
+        /// @brief Sets how far the border around every glyph reaches out, in pixels. 0, the default, draws no border.
+        void SetTextBorderWidth(const f32 width);
+
+        /// @brief Sets the text border's colors shown in the given state (black by default). More than one color makes the border's fill a gradient (just like the text)
+        void SetTextBorderColors(std::span<const glm::vec4> colors, const ColorState state);
+
+        /// @brief Returns the text border's colors for the given state.
+        const std::vector<glm::vec4>& GetTextBorderColors(const ColorState state) const;
+
+        /// @brief Sets the text border's fill type
+        void SetTextBorderFillType(const FillType fillType);
+
+        /// @brief Sets the offset applied to the text border gradient's start position.
+        void SetTextBorderGradientOffset(const f32 gradientOffset);
+
+        /// @brief Sets the speed at which the text border's gradient animates.
+        void SetTextBorderGradientAnimationSpeed(const f32 animationSpeed);
+
+        /// @brief Sets the angle, in degrees, of the text border's linear shift.
+        void SetTextBorderGradientDegree(const f32 degree);
+
+        /// @brief Sets the speed at which the text border's gradient rotates.
+        void SetTextBorderGradientRotationSpeed(const f32 rotationSpeed);
+
+        /// @brief Sets the text border's own image, stretched across the whole text behind the border's fill, whose alpha
+        ///        decides how much of it shows. 0 shows no image.
+        void SetTextBorderBackgroundImageTextureID(const u32 textureID);
+
+        /// @brief Sets how far the text border's image stays clear of the text's edges, per side in pixels.
+        void SetTextBorderBackgroundImagePadding(const f32 padding);
+
+        /// @brief Sets how the text border's image is laid across the text: stretched, the default, or keeping its proportions.
+        void SetTextBorderBackgroundImageFit(const ImageFit fit);
+
         /// @brief Sets the text content, in UTF-8.
         virtual void SetText(std::string_view text, const bool emitSignal);
 
@@ -88,10 +140,16 @@ namespace RetroFuturaGUI
         const std::string& GetText() const;
 
         /// @brief Sets the font family, size and style used to render the text, loading it if necessary.
-        virtual void SetFontFamily(std::string_view fontFamily, const f32 fontSize, const PlatformBridge::Fonts::Slant slant, const PlatformBridge::Fonts::Weight fontWeight);
+        virtual void SetFontFamily(std::string_view fontFamily, const f32 fontSize, const FontSizeUnit sizeUnit, const PlatformBridge::Fonts::Slant slant, const PlatformBridge::Fonts::Weight fontWeight);
+
+        /// @brief Returns the font size in the given unit.
+        f32 GetFontSize(const FontSizeUnit sizeUnit) const;
 
         /// @brief Sets the horizontal alignment of the text.
         virtual void SetTextAlignment(const TextAlignment alignment);
+
+        /// @brief Sets how the text's lines run: horizontally (by default), orvertically, laid out left to right or right to left. Each line break starts the next column/row.
+        void SetTextFlow(const TextFlow textFlow);
 
         /// @brief Sets the padding applied around the text.
         virtual void SetTextPadding(const f32 padding);
@@ -127,7 +185,11 @@ namespace RetroFuturaGUI
             _textColorEnabled { glm::vec4(1.0f) },
             _textColorDisabled { glm::vec4(0.5f, 0.5f,0.5f, 1.0f) },
             _textColorClicked { glm::vec4(1.0f) },
-            _textColorHover { glm::vec4(1.0f, 1.0f, 1.0f, 1.0f) };
+            _textColorHover { glm::vec4(1.0f, 1.0f, 1.0f, 1.0f) },
+            _textBorderColorEnabled { glm::vec4(0.0f, 0.0f, 0.0f, 1.0f) },
+            _textBorderColorDisabled { glm::vec4(0.0f, 0.0f, 0.0f, 1.0f) },
+            _textBorderColorClicked { glm::vec4(0.0f, 0.0f, 0.0f, 1.0f) },
+            _textBorderColorHover { glm::vec4(0.0f, 0.0f, 0.0f, 1.0f) };
         ColorState _textColorState { ColorState::Enabled };
         TextAlignment _textAlignment { TextAlignment::Left };
         std::vector<f32>
@@ -135,6 +197,7 @@ namespace RetroFuturaGUI
             _textFogDensity {}; //the text keeps spans over these
 
     private:
-        void setTextColorElement(std::vector<glm::vec4>& color);
+        /// @brief Hands the text and its border the colors of one state.
+        void setTextColorElements(std::vector<glm::vec4>& color, std::vector<glm::vec4>& borderColor);
     };
 }

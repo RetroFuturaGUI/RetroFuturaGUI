@@ -69,7 +69,7 @@ namespace RetroFuturaGUI
                           || std::is_same_v<T, ComboBox> || std::is_same_v<T, ExtendedComboBox>)
             {
                 if(!_fontFamily.empty())
-                    itemPointer->SetFontFamily(_fontFamily, _fontSize, _slant, _fontWeight);
+                    itemPointer->SetFontFamily(_fontFamily, _fontSize, FontSizeUnit::Pixels, _slant, _fontWeight);
             }
 
             _itemCount = _itemWidgets.size();
@@ -94,7 +94,7 @@ namespace RetroFuturaGUI
         /// @brief Removes the item at the given index. The row goes, and the widget is destroyed, at the start of the next Interact,
         ///        so the item's own slot may remove it.
         void RemoveItem(const uSize index) override;
-        void SetFontFamily(std::string_view fontFamily, const f32 fontSize, const PlatformBridge::Fonts::Slant slant, const PlatformBridge::Fonts::Weight fontWeight) override;
+        void SetFontFamily(std::string_view fontFamily, const f32 fontSize, const FontSizeUnit sizeUnit, const PlatformBridge::Fonts::Slant slant, const PlatformBridge::Fonts::Weight fontWeight) override;
         void SetTextAlignment(const TextAlignment alignment) override;
         void SetTextPadding(const f32 padding) override;
         const std::list<std::unique_ptr<IWidget>>& GetItems() const;

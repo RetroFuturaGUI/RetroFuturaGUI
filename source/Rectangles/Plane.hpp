@@ -61,6 +61,10 @@ namespace RetroFuturaGUI
     //Image, from IRectangle
         using IRectangle::SetBackgroundImageTextureID;
         using IRectangle::SetBackgroundImagePadding;
+        using IRectangle::SetBackgroundImageFit;
+        using IRectangle::SetMaskTextureID;
+        using IRectangle::SetMaskMode;
+        using IRectangle::SetMaskFit;
 
     protected:
         /// @brief Makes the shader current and uploads everything a plane's shader reads.

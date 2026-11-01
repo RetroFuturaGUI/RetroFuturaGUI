@@ -75,15 +75,15 @@ void RetroFuturaGUI::Tooltip::DrawShown(GLFWwindow* window)
     tooltip->draw();
 }
 
-void RetroFuturaGUI::Tooltip::SetDefaultFontFamily(std::string_view fontFamily, const f32 fontSize, const PlatformBridge::Fonts::Slant slant, const PlatformBridge::Fonts::Weight fontWeight)
+void RetroFuturaGUI::Tooltip::SetDefaultFontFamily(std::string_view fontFamily, const f32 fontSize, const FontSizeUnit sizeUnit, const PlatformBridge::Fonts::Slant slant, const PlatformBridge::Fonts::Weight fontWeight)
 {
     _defaultFontFamily = fontFamily;
-    _defaultFontSize = fontSize;
+    _defaultFontSize = FontManager::ToPixels(fontSize, sizeUnit);
     _defaultFontSlant = slant;
     _defaultFontWeight = fontWeight;
     ++_defaultFontVersion;
 
-    FontManager::GetFontInfo(fontFamily, fontSize, slant, fontWeight);
+    FontManager::GetFontInfo(fontFamily, fontSize, sizeUnit, slant, fontWeight);
 }
 
 void RetroFuturaGUI::Tooltip::draw()
@@ -131,10 +131,10 @@ void RetroFuturaGUI::Tooltip::SetText(std::string_view text, const bool emitSign
     setSize();
 }
 
-void RetroFuturaGUI::Tooltip::SetFontFamily(std::string_view fontFamily, const f32 fontSize, const PlatformBridge::Fonts::Slant slant, const PlatformBridge::Fonts::Weight fontWeight)
+void RetroFuturaGUI::Tooltip::SetFontFamily(std::string_view fontFamily, const f32 fontSize, const FontSizeUnit sizeUnit, const PlatformBridge::Fonts::Slant slant, const PlatformBridge::Fonts::Weight fontWeight)
 {
     _hasOwnFont = true;
-    ITextProperties::SetFontFamily(fontFamily, fontSize, slant, fontWeight);
+    ITextProperties::SetFontFamily(fontFamily, fontSize, sizeUnit, slant, fontWeight);
     setSize();
 }
 
@@ -160,7 +160,7 @@ void RetroFuturaGUI::Tooltip::applyDefaultFont()
     if(_defaultFontVersion == _appliedDefaultFontVersion)
         return;
 
-    ITextProperties::SetFontFamily(_defaultFontFamily, _defaultFontSize, _defaultFontSlant, _defaultFontWeight);
+    ITextProperties::SetFontFamily(_defaultFontFamily, _defaultFontSize, FontSizeUnit::Pixels, _defaultFontSlant, _defaultFontWeight);
     setSize();
     _appliedDefaultFontVersion = _defaultFontVersion;
 }

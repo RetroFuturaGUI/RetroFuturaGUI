@@ -86,10 +86,10 @@ void RetroFuturaGUI::LineDiagram::SetLineThickness(const f32 thickness)
     alignElementsToTrack();
 }
 
-void RetroFuturaGUI::LineDiagram::SetLabelFontFamily(std::string_view fontFamily, const f32 fontSize, const PlatformBridge::Fonts::Slant slant, const PlatformBridge::Fonts::Weight fontWeight)
+void RetroFuturaGUI::LineDiagram::SetLabelFontFamily(std::string_view fontFamily, const f32 fontSize, const FontSizeUnit sizeUnit, const PlatformBridge::Fonts::Slant slant, const PlatformBridge::Fonts::Weight fontWeight)
 {
     _labelFontFamily = fontFamily;
-    _labelFontSize = fontSize;
+    _labelFontSize = FontManager::ToPixels(fontSize, sizeUnit);
     _labelFontSlant = slant;
     _labelFontWeight = fontWeight;
 
@@ -97,6 +97,11 @@ void RetroFuturaGUI::LineDiagram::SetLabelFontFamily(std::string_view fontFamily
         applyLabelFont(label.get());
 
     applyLabelFont(_hoverText.get());
+}
+
+f32 RetroFuturaGUI::LineDiagram::GetLabelFontSize(const FontSizeUnit sizeUnit) const
+{
+    return FontManager::FromPixels(_labelFontSize, sizeUnit);
 }
 
 void RetroFuturaGUI::LineDiagram::ShowLineLabels(const bool show)
@@ -428,7 +433,7 @@ void RetroFuturaGUI::LineDiagram::applyLabelFont(Text* text) const
     if(_labelFontFamily.empty())
         return;
 
-    text->SetFontFamily(_labelFontFamily, _labelFontSize, _labelFontSlant, _labelFontWeight);
+    text->SetFontFamily(_labelFontFamily, _labelFontSize, FontSizeUnit::Pixels, _labelFontSlant, _labelFontWeight);
     const std::string content { text->GetTextUTF8() };
     text->SetTextUTF8(content);
     fitClipBox(*text);

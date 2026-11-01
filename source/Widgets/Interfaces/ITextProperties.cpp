@@ -99,6 +99,38 @@ void RetroFuturaGUI::ITextProperties::SetTextBackgroundImagePadding(const f32 pa
     _text->SetBackgroundImagePadding(padding);
 }
 
+void RetroFuturaGUI::ITextProperties::SetTextBackgroundImageFit(const ImageFit fit)
+{
+    if(!_text)
+        return;
+
+    _text->SetBackgroundImageFit(fit);
+}
+
+void RetroFuturaGUI::ITextProperties::SetTextMaskTextureID(const u32 textureID)
+{
+    if(!_text)
+        return;
+
+    _text->SetMaskTextureID(textureID);
+}
+
+void RetroFuturaGUI::ITextProperties::SetTextMaskMode(const MaskMode mode)
+{
+    if(!_text)
+        return;
+
+    _text->SetMaskMode(mode);
+}
+
+void RetroFuturaGUI::ITextProperties::SetTextMaskFit(const ImageFit fit)
+{
+    if(!_text)
+        return;
+
+    _text->SetMaskFit(fit);
+}
+
 void RetroFuturaGUI::ITextProperties::SetTextRasterPattern(const RasterPattern rasterPattern)
 {
     if(!_text)
@@ -199,6 +231,121 @@ void RetroFuturaGUI::ITextProperties::SetTextFogClearing(const f32 clearing)
     _text->SetFogClearing(clearing);
 }
 
+void RetroFuturaGUI::ITextProperties::SetTextColorGlyphTint(const f32 tint)
+{
+    if(!_text)
+        return;
+
+    _text->SetColorGlyphTint(tint);
+}
+
+void RetroFuturaGUI::ITextProperties::SetTextBorderWidth(const f32 width)
+{
+    if(!_text)
+        return;
+
+    _text->SetBorderWidth(width);
+}
+
+void RetroFuturaGUI::ITextProperties::SetTextBorderColors(std::span<const glm::vec4> colors, const ColorState state)
+{
+    switch(state)
+    {
+        case ColorState::Clicked:
+            _textBorderColorClicked.assign(colors.begin(), colors.end());
+        break;
+        case ColorState::Disabled:
+            _textBorderColorDisabled.assign(colors.begin(), colors.end());
+        break;
+        case ColorState::Hover:
+            _textBorderColorHover.assign(colors.begin(), colors.end());
+        break;
+        default: // Enabled
+            _textBorderColorEnabled.assign(colors.begin(), colors.end());
+    }
+
+    setTextColors();
+}
+
+const std::vector<glm::vec4>& RetroFuturaGUI::ITextProperties::GetTextBorderColors(const ColorState state) const
+{
+    switch(state)
+    {
+        case ColorState::Clicked:
+            return _textBorderColorClicked;
+        case ColorState::Disabled:
+            return _textBorderColorDisabled;
+        case ColorState::Hover:
+            return _textBorderColorHover;
+        default: // Enabled
+            return _textBorderColorEnabled;
+    }
+}
+
+void RetroFuturaGUI::ITextProperties::SetTextBorderFillType(const FillType fillType)
+{
+    if(!_text)
+        return;
+
+    _text->GetBorder().SetFillType(fillType);
+}
+
+void RetroFuturaGUI::ITextProperties::SetTextBorderGradientOffset(const f32 gradientOffset)
+{
+    if(!_text)
+        return;
+
+    _text->GetBorder().SetGradientOffset(gradientOffset);
+}
+
+void RetroFuturaGUI::ITextProperties::SetTextBorderGradientAnimationSpeed(const f32 animationSpeed)
+{
+    if(!_text)
+        return;
+
+    _text->GetBorder().SetGradientAnimationSpeed(animationSpeed);
+}
+
+void RetroFuturaGUI::ITextProperties::SetTextBorderGradientDegree(const f32 degree)
+{
+    if(!_text)
+        return;
+
+    _text->GetBorder().SetGradientDegree(degree);
+}
+
+void RetroFuturaGUI::ITextProperties::SetTextBorderGradientRotationSpeed(const f32 rotationSpeed)
+{
+    if(!_text)
+        return;
+
+    _text->GetBorder().SetGradientRotationSpeed(rotationSpeed);
+}
+
+void RetroFuturaGUI::ITextProperties::SetTextBorderBackgroundImageTextureID(const u32 textureID)
+{
+    if(!_text)
+        return;
+
+    _text->GetBorder().SetBackgroundImageTextureID(textureID);
+}
+
+void RetroFuturaGUI::ITextProperties::SetTextBorderBackgroundImagePadding(const f32 padding)
+{
+    if(!_text)
+        return;
+
+    _text->GetBorder().SetBackgroundImagePadding(padding);
+}
+
+void RetroFuturaGUI::ITextProperties::SetTextBorderBackgroundImageFit(const ImageFit fit)
+{
+    if(!_text)
+        return;
+
+    _text->GetBorder().SetBackgroundImageFit(fit);
+}
+
 void RetroFuturaGUI::ITextProperties::SetText(std::string_view text, const bool emitSignal)
 {
     if(!_text)
@@ -221,12 +368,20 @@ const std::string& RetroFuturaGUI::ITextProperties::GetText() const
     return _text->GetTextUTF8();
 }
 
-void RetroFuturaGUI::ITextProperties::SetFontFamily(std::string_view fontFamily, const f32 fontSize, const PlatformBridge::Fonts::Slant slant, const PlatformBridge::Fonts::Weight fontWeight)
+void RetroFuturaGUI::ITextProperties::SetFontFamily(std::string_view fontFamily, const f32 fontSize, const FontSizeUnit sizeUnit, const PlatformBridge::Fonts::Slant slant, const PlatformBridge::Fonts::Weight fontWeight)
 {
     if(!_text)
         return;
 
-    _text->SetFontFamily(fontFamily, fontSize, slant, fontWeight);
+    _text->SetFontFamily(fontFamily, fontSize, sizeUnit, slant, fontWeight);
+}
+
+f32 RetroFuturaGUI::ITextProperties::GetFontSize(const FontSizeUnit sizeUnit) const
+{
+    if(!_text)
+        return 0.0f;
+
+    return _text->GetFontSize(sizeUnit);
 }
 
 void RetroFuturaGUI::ITextProperties::SetTextAlignment(const TextAlignment alignment)
@@ -235,6 +390,14 @@ void RetroFuturaGUI::ITextProperties::SetTextAlignment(const TextAlignment align
         return;
 
     _text->SetTextAlignment(alignment);
+}
+
+void RetroFuturaGUI::ITextProperties::SetTextFlow(const TextFlow textFlow)
+{
+    if(!_text)
+        return;
+
+    _text->SetTextFlow(textFlow);
 }
         
 void RetroFuturaGUI::ITextProperties::SetTextPadding(const f32 padding)
@@ -255,12 +418,13 @@ f32 RetroFuturaGUI::ITextProperties::GetTextWidth() const
     return _text ? _text->GetWidth() : 0.0f;
 }
 
-void RetroFuturaGUI::ITextProperties::setTextColorElement(std::vector<glm::vec4>& color)
+void RetroFuturaGUI::ITextProperties::setTextColorElements(std::vector<glm::vec4>& color, std::vector<glm::vec4>& borderColor)
 {
     if(!_text)
         return;
 
     _text->SetColors(color);
+    _text->GetBorder().SetColors(borderColor);
 }
 
 void RetroFuturaGUI::ITextProperties::setTextColors()
@@ -269,19 +433,19 @@ void RetroFuturaGUI::ITextProperties::setTextColors()
     {
         case ColorState::Enabled:
         {
-            setTextColorElement(_textColorEnabled);
+            setTextColorElements(_textColorEnabled, _textBorderColorEnabled);
         } break;
         case ColorState::Clicked:
         {
-            setTextColorElement(_textColorClicked);
+            setTextColorElements(_textColorClicked, _textBorderColorClicked);
         } break;
         case ColorState::Hover:
         {
-            setTextColorElement(_textColorHover);
+            setTextColorElements(_textColorHover, _textBorderColorHover);
         } break;
         default: //Disabled
         {
-            setTextColorElement(_textColorDisabled);
+            setTextColorElements(_textColorDisabled, _textBorderColorDisabled);
         }
     }
 }
