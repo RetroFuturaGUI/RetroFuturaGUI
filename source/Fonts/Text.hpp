@@ -31,6 +31,29 @@ namespace RetroFuturaGUI
         VerticalRightToLeft // the first column rightmost, as Japanese and Chinese vertical text runs
     };
 
+    /// @brief What a text's mask is laid over.
+    enum class MaskSpan : u32
+    {
+        WholeText,
+        EachLine
+    };
+
+    /// @brief Which way an arrow key moves the caret.
+    enum class CaretMove : u32
+    {
+        Left,
+        Right,
+        Up,
+        Down
+    };
+
+    /// @brief A box of selected text in world space, one per stretch that is selected without a break on its line.
+    struct TextSelectionArea
+    {
+        glm::vec2 _Center { 0.0f },
+            _Size { 0.0f };
+    };
+
     struct GlyphDraw
     {
         u32 _TextureID { 0 };
@@ -167,6 +190,18 @@ namespace RetroFuturaGUI
         /// @brief Returns the distance from one baseline to the next.
         f32 GetLineHeight() const;
 
+        /// @brief Returns the boundary an arrow key moves the caret to. On a line, Left and Right go to the nearest boundary that
+        ///        way as the glyphs are drawn, so right-to-left text is walked the way it reads, and on past the line's end in
+        ///        its reading direction; Up and Down go to the closest boundary on the line above or below, or to the text's
+        ///        start and end. In columns, Up and Down step along the column, Left and Right go to the next column that way.
+        uSize GetBoundaryBeside(const uSize boundary, const CaretMove move) const;
+
+        /// @brief Returns the boxes covering the characters from one boundary to another, in world space: one per stretch
+        ///        drawn without a break, as mixed left-to-right and right-to-left text splits a selection on its line. A
+        ///        selected line break shows as a narrow box at its line's end.
+        /// @param caretSize As in GetBoundaryPosition, which the boxes line up with.
+        std::vector<TextSelectionArea> GetSelectionAreas(const uSize first, const uSize last, const f32 caretSize) const;
+
         /// @brief Sets how far the border reaches out from every glyph, in pixels. 0, the default, draws no border.
         void SetBorderWidth(const f32 width);
 
@@ -189,11 +224,19 @@ namespace RetroFuturaGUI
         /// @brief Returns how far color glyphs take on the fill's color.
         f32 GetColorGlyphTint() const;
 
+        /// @brief Sets what the mask (SetMaskTextureID) is laid over: the whole text, the default, or each line, so a
+        ///        chrome mask shades every line of a multiline text as it would a one-line logo. The border's mask follows.
+        void SetMaskSpan(const MaskSpan maskSpan);
+
+        /// @brief Returns what the mask is laid over.
+        MaskSpan GetMaskSpan() const;
+
     private:
         /// @brief Quads of glyphs on their pages, batched by page, with the buffer and the vertex arrays drawing them.
         struct GlyphMesh
         {
-            std::vector<f32> _Vertices {}; // x,y,u,v per vertex
+            std::vector<f32> _Vertices {}; // x, y, u, v and the middle of the glyph's line across it, per vertex
+            static constexpr uSize _FloatsPerVertex { 5 };
             std::vector<GlyphDraw> _Draws {};
             u32 _Vbo { 0 };
             std::unique_ptr<VertexArray> _VertexArray { nullptr }; //one VAO per context that draws the text, over the same buffer
@@ -203,10 +246,23 @@ namespace RetroFuturaGUI
         void updateMesh();
         void alignPosition();
         void calculateTextSpan();
+
+        /// @brief Shapes one line running across: split into runs of one direction by the bidirectional algorithm, each
+        ///        shaped its way and laid out in the order they're drawn, the clusters counted from the line's start.
+        /// @param isRightToLeft Set to whether the line reads right to left, from its first strong character.
+        void shapeLine(std::u32string_view line, std::vector<PlacedGlyph>* glyphs, bool* isRightToLeft) const;
         static void initMesh(GlyphMesh* mesh);
 
         /// @brief Adds a glyph's quad at the pen (its baseline origin), clipped to the parent, starting a new batch when its page differs.
-        void appendGlyphQuad(const Glyph& glyph, const glm::vec2& pen, const f32 scale, GlyphMesh* mesh) const;
+        /// @param lineCenter The middle of the glyph's line across it (y for a line, x for a column), which a mask per line is laid by.
+        void appendGlyphQuad(const Glyph& glyph, const glm::vec2& pen, const f32 scale, const f32 lineCenter, GlyphMesh* mesh) const;
+
+        /// @brief The middle of a line across it: halfway between its lowest and highest glyph, or a column's middle.
+        f32 getLineCenter(const uSize line) const;
+
+        /// @brief Where a line starts across the text: at its left edge, or for a right-to-left line as far in as it leaves
+        ///        room, so it ends at the text's right edge, where it starts reading.
+        f32 getLineStart(const uSize line) const;
 
         /// @brief Uses the shader and uploads where the text is and the span its fill runs across.
         void uploadPlacement(Shader& shader, const glm::mat4& translation) const;
@@ -243,6 +299,7 @@ namespace RetroFuturaGUI
         TextAlignment _textAlignment { TextAlignment::Left };
         TextFlow _textFlow { TextFlow::Horizontal };
         f32 _colorGlyphTint { 0.0f };
+        MaskSpan _maskSpan { MaskSpan::WholeText };
         f32 _textPadding { 0.0f };
         f32 _scrollOffset { 0.0f };
 
@@ -258,10 +315,14 @@ namespace RetroFuturaGUI
         glm::mat4 _translationMatrix { 1.0f },
             _rotationMatrix { 1.0f };
         static inline constinit const f32 _1emFraction { 0.00390625f };
+        static constexpr f32 _sameSpotDistance { 0.01f }; //boundaries closer than this along a line are at the same spot
         static inline const glm::vec4 _defaultColor { 1.0f }; //what a text shows before it is given colors
         std::vector<std::vector<PlacedGlyph>> _shapedLines {}; //each line's glyphs, shaped when the text, the font or the flow changes
-        std::vector<f32> _glyphPositions {};
+        std::vector<bool> _isLineRightToLeft {}; //per line, whether it reads right to left, which sets it against the text's right edge
+        std::vector<f32> _lineWidths {}; //per line, how far it reaches across
+        std::vector<f32> _glyphPositions {}; //where each boundary sits along its line
         std::vector<uSize> _glyphLines {};
+        std::vector<glm::vec2> _characterSpans {}; //per boundary, the stretch along the line its character's glyphs cover
         bool _anchorTop { false };
 
         // mesh

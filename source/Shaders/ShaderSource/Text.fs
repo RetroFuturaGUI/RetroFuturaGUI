@@ -6,6 +6,8 @@ uniform float uOpacity = 1.0; //Shader::OpacityScope's product, uploaded with ev
 #include "Modules/Fog.glsl"
 #include "Modules/Glass.glsl"
 #include "Modules/Image.glsl"
+in vec2 vMaskPos; //where the mask is laid: across the whole text, or across each line
+#define MASK_POSITION vMaskPos
 #include "Modules/Mask.glsl"
 
 bool gIsPlainFill = false; //set while a color glyph asks for the fill's own color, without what shows through it

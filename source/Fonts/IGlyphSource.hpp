@@ -28,6 +28,7 @@ namespace RetroFuturaGUI
     enum class ShapeDirection : u32
     {
         LeftToRight,
+        RightToLeft,
         TopToBottom
     };
 
@@ -72,6 +73,9 @@ namespace RetroFuturaGUI
 
         /// @brief Returns whether some glyphs come out in color (GlyphPixelFormat::Color), as an emoji font's do.
         virtual bool HasColorGlyphs() const = 0;
+
+        /// @brief Returns whether the source has a glyph of its own for a code-point
+        virtual bool HasGlyph(const u32 codePoint) const = 0;
 
         /// @brief Renders one glyph at the size set. A code point the font lacks renders its "missing" glyph.
         /// @return false when rendering failed; the bitmap is then empty.

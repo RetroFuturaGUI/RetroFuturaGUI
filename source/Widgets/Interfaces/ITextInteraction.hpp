@@ -81,12 +81,12 @@ namespace RetroFuturaGUI
         void moveCaretRight();
         void setCaretFromBoundary(const uSize boundary);
 
-    //Multiline hooks: single-line text ignores Up/Down and doesn't break lines; multiline widgets override these
-        /// @brief Moves the caret to the closest boundary on the line above.
-        virtual void moveCaretUp() {}
+    //Multiline hooks: single-line text ignores Up/Down (unless it runs down a column) and doesn't break lines; multiline widgets override these
+        /// @brief Moves the caret to the closest boundary on the line above, or a step up a column.
+        virtual void moveCaretUp();
 
-        /// @brief Moves the caret to the closest boundary on the line below.
-        virtual void moveCaretDown() {}
+        /// @brief Moves the caret to the closest boundary on the line below, or a step down a column.
+        virtual void moveCaretDown();
 
         /// @brief Inserts a line break at the caret when Enter is pressed.
         virtual void insertLineBreak() {}

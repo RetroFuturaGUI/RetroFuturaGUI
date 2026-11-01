@@ -12,7 +12,7 @@ void RetroFuturaGUI::ITextEditVisuals::initEditVisuals(Projection* projection)
         return;
 
     _caret->SetFillType(FillType::Solid);
-    _caret->SetSize(glm::vec2(2.0f, 0.0f)); //updateCaretPosition sets caret size by text size
+    _caret->SetSize(glm::vec2(_caretThickness, 0.0f)); //updateCaretPosition sets caret size by text size
     _caret->SetColors(_caretColors);
     _selectedArea->SetFillType(FillType::Solid);
     _selectedArea->SetColors(_selectedAreaColors);
@@ -30,7 +30,24 @@ void RetroFuturaGUI::ITextEditVisuals::updateCaretPosition()
 
     const f32 fullHeight { getCaretHeight() };
     glm::vec3 caretPosition { text->GetBoundaryPosition(_caretPosition, fullHeight) };
-    caretPosition.x = keepCaretVisible(caretPosition.x, _caret->GetSize().x * 0.5f);
+
+    //In a column the caret lies across it, as wide as the column, between the characters above and below
+    if(TextFlow::Horizontal != text->GetTextFlow())
+    {
+        const f32
+            halfLength { text->GetLineHeight() * 0.5f },
+            clippedLeftX { clampToTextBounds(caretPosition.x - halfLength) },
+            clippedRightX { clampToTextBounds(caretPosition.x + halfLength) },
+            clippedWidth { clippedRightX - clippedLeftX };
+
+        _isCaretInView = 0.0f < clippedWidth && clampToTextBoundsY(caretPosition.y) == caretPosition.y;
+        _caret->SetSize(glm::vec2(clippedWidth, _caretThickness));
+        _caret->SetPosition(glm::vec3(clippedLeftX + clippedWidth * 0.5f, caretPosition.y, caretPosition.z));
+        resetCaretBlink();
+        return;
+    }
+
+    caretPosition.x = keepCaretVisible(caretPosition.x, _caretThickness * 0.5f);
 
     const f32
         clippedTopY { clampToTextBoundsY(caretPosition.y + fullHeight * 0.5f) },
@@ -39,7 +56,7 @@ void RetroFuturaGUI::ITextEditVisuals::updateCaretPosition()
 
     _isCaretInView = 0.0f < clippedHeight; //false while the caret's line is outside the text area
     caretPosition.y = clippedBottomY + clippedHeight * 0.5f;
-    _caret->SetSize(glm::vec2(_caret->GetSize().x, clippedHeight));
+    _caret->SetSize(glm::vec2(_caretThickness, clippedHeight));
     _caret->SetPosition(caretPosition);
     resetCaretBlink();
 }
@@ -64,30 +81,17 @@ void RetroFuturaGUI::ITextEditVisuals::updateSelectedArea()
     if(left == right) //nothing selected
         return;
 
-    const uSize
-        firstLine { text->GetBoundaryLine(left) },
-        lastLine { text->GetBoundaryLine(right) };
-    const f32
-        lineHeight { text->GetLineHeight() },
-        fullCaretHeight { getCaretHeight() }; // highlight where the caret sits, may be clipped shorter
-    uSize start { left };
-
-    for(uSize line = firstLine; line <= lastLine; ++line)
+    //One box per stretch drawn without a break, where the caret sits (it may be clipped shorter): mixed right-to-left and
+    //left-to-right text splits a line's selection, and in columns the boxes run down them
+    for(const TextSelectionArea& area : text->GetSelectionAreas(left, right, getCaretHeight()))
     {
-        const uSize end { line == lastLine ? right : text->GetLineLastBoundary(line) };
-        const f32 lineBreakWidth { line == lastLine ? 0.0f : text->GetGlyphSize() * 0.3f }; //a split for the selected '\n', so selected empty lines still show
-        const glm::vec3
-            startPosition { text->GetBoundaryPosition(start, fullCaretHeight) },
-            endPosition { text->GetBoundaryPosition(end, fullCaretHeight) };
         const f32
-            clippedLeftX { clampToTextBounds(startPosition.x) },
-            clippedRightX { clampToTextBounds(endPosition.x + lineBreakWidth) },
+            clippedLeftX { clampToTextBounds(area._Center.x - area._Size.x * 0.5f) },
+            clippedRightX { clampToTextBounds(area._Center.x + area._Size.x * 0.5f) },
             width { clippedRightX - clippedLeftX },
-            clippedTopY { clampToTextBoundsY(startPosition.y + lineHeight * 0.5f) },
-            clippedBottomY { clampToTextBoundsY(startPosition.y - lineHeight * 0.5f) },
+            clippedTopY { clampToTextBoundsY(area._Center.y + area._Size.y * 0.5f) },
+            clippedBottomY { clampToTextBoundsY(area._Center.y - area._Size.y * 0.5f) },
             height { clippedTopY - clippedBottomY };
-
-        start = end + 1; //+1 starts the next line after '\n'
 
         if(0.0f >= width || 0.0f >= height) //skip whatever is outside the visible text area
             continue;

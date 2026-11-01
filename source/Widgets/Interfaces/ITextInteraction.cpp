@@ -275,11 +275,14 @@ void RetroFuturaGUI::ITextInteraction::moveCaret()
 
 void RetroFuturaGUI::ITextInteraction::moveCaretLeft()
 {
+    Text* text { getActiveText() };
+
+    if(!text)
+        return;
+
+    //The way the glyphs are drawn, so right-to-left text is walked as it reads; in columns, to the next column that way
     deselect();
-
-    if(0 < _caretPosition)
-        --_caretPosition;
-
+    _caretPosition = text->GetBoundaryBeside(_caretPosition, CaretMove::Left);
     updateCaretPosition();
 }
 
@@ -291,10 +294,38 @@ void RetroFuturaGUI::ITextInteraction::moveCaretRight()
         return;
 
     deselect();
+    _caretPosition = text->GetBoundaryBeside(_caretPosition, CaretMove::Right);
+    updateCaretPosition();
+}
 
-    if(_caretPosition < text->GetGlyphCount())
-        ++_caretPosition;
+void RetroFuturaGUI::ITextInteraction::moveCaretUp()
+{
+    Text* text { getActiveText() };
 
+    if(!text)
+        return;
+
+    //A single line has nowhere to go up or down, unless it it is vertic
+    if(TextFlow::Horizontal == text->GetTextFlow())
+        return;
+
+    deselect();
+    _caretPosition = text->GetBoundaryBeside(_caretPosition, CaretMove::Up);
+    updateCaretPosition();
+}
+
+void RetroFuturaGUI::ITextInteraction::moveCaretDown()
+{
+    Text* text { getActiveText() };
+
+    if(!text)
+        return;
+
+    if(TextFlow::Horizontal == text->GetTextFlow())
+        return;
+
+    deselect();
+    _caretPosition = text->GetBoundaryBeside(_caretPosition, CaretMove::Down);
     updateCaretPosition();
 }
 

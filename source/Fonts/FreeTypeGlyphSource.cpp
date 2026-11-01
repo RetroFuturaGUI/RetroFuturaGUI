@@ -99,7 +99,7 @@ bool RetroFuturaGUI::FreeTypeGlyphSource::SetPixelSize(const f32 pixels)
 
     _pixelSize = pixels;
 
-    //HarfBuzz's fonts follow, if they were made at another size
+    //HarfBuzz's fonts follow if they were made at another size
     if(_shapingFont)
         hb_ft_font_changed(_shapingFont);
 
@@ -159,6 +159,14 @@ bool RetroFuturaGUI::FreeTypeGlyphSource::HasColorGlyphs() const
     return FT_HAS_COLOR(_face);
 }
 
+bool RetroFuturaGUI::FreeTypeGlyphSource::HasGlyph(const u32 codePoint) const
+{
+    if(!_face)
+        return false;
+
+    return 0 != FT_Get_Char_Index(_face, static_cast<FT_ULong>(codePoint));
+}
+
 bool RetroFuturaGUI::FreeTypeGlyphSource::RenderGlyph(const u32 codePoint, GlyphBitmap* bitmap)
 {
     //A character the font lacks has index 0
@@ -180,7 +188,7 @@ bool RetroFuturaGUI::FreeTypeGlyphSource::RenderGlyphIndex(const u32 glyphIndex,
     if(!_face)
         return false;
 
-    //COLR version 1 paint first, the gradients the font was drawn with; the flat layers of version 0 are what's left when it fails
+    //COLR version 1 paint first the gradients the font was drawn with. the flat layers of version 0 are what's left when it fails!
     if(FT_HAS_COLOR(_face) && ColorGlyphPainter::HasPaint(getPaintFont(), glyphIndex))
     {
         //The advance before painting, which loads the outlines it clips to into the same slot
@@ -290,7 +298,7 @@ bool RetroFuturaGUI::FreeTypeGlyphSource::Shape(std::u32string_view text, const 
     //The script and language from the text itself, the direction as the text flows
     hb_buffer_clear_contents(_shapingBuffer);
     hb_buffer_add_utf32(_shapingBuffer, reinterpret_cast<const uint32_t*>(text.data()), static_cast<int>(text.size()), 0, static_cast<int>(text.size()));
-    hb_buffer_set_direction(_shapingBuffer, ShapeDirection::TopToBottom == direction ? HB_DIRECTION_TTB : HB_DIRECTION_LTR);
+    hb_buffer_set_direction(_shapingBuffer, ShapeDirection::TopToBottom == direction ? HB_DIRECTION_TTB : ShapeDirection::RightToLeft == direction ? HB_DIRECTION_RTL : HB_DIRECTION_LTR);
     hb_buffer_guess_segment_properties(_shapingBuffer);
     hb_shape(shapingFont, _shapingBuffer, nullptr, 0);
 

@@ -22,14 +22,9 @@ void RetroFuturaGUI::MultilineTextBox::moveCaretUp()
     if(!text)
         return;
 
+    //Already on the first line to the start of the text. in columns, a step up the column
     deselect();
-    const uSize currentLine { text->GetBoundaryLine(_caretPosition) };
-
-    if(0 == currentLine)
-        _caretPosition = 0; //already on the first line: go to the start of the text
-    else
-        _caretPosition = text->GetBoundaryOnLine(currentLine - 1, text->GetBoundaryPosition(_caretPosition, 0.0f).x); //the caret size only affects y
-
+    _caretPosition = text->GetBoundaryBeside(_caretPosition, CaretMove::Up);
     updateCaretPosition();
 }
 
@@ -40,9 +35,9 @@ void RetroFuturaGUI::MultilineTextBox::moveCaretDown()
     if(!text)
         return;
 
+    //Already on the last line, to the end of the text
     deselect();
-    const uSize currentLine { text->GetBoundaryLine(_caretPosition) };
-    _caretPosition = text->GetBoundaryOnLine(currentLine + 1, text->GetBoundaryPosition(_caretPosition, 0.0f).x); //past the last line, GetBoundaryOnLine returns the end of the text
+    _caretPosition = text->GetBoundaryBeside(_caretPosition, CaretMove::Down);
     updateCaretPosition();
 }
 

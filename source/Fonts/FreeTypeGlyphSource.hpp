@@ -31,6 +31,7 @@ namespace RetroFuturaGUI
         std::vector<f32> GetPixelSizes() const override;
         FontMetrics GetMetrics() const override;
         bool HasColorGlyphs() const override;
+        bool HasGlyph(const u32 codePoint) const override;
         bool RenderGlyph(const u32 codePoint, GlyphBitmap* bitmap) override;
         bool RenderGlyphBorder(const u32 codePoint, const f32 width, GlyphBitmap* bitmap) override;
         bool Shape(std::u32string_view text, const ShapeDirection direction, std::vector<ShapedGlyph>* glyphs) override;

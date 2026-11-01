@@ -75,6 +75,9 @@ namespace RetroFuturaGUI
         f32 _FontSize { 16.0f }; // the size the glyphs were rendered at, in pixels
         FontMetrics _Metrics {}; // of the font itself, not of the fonts extending it
         std::unordered_map<u32, GlyphBlock> _GlyphBlocks; // keyed by first codepoint
+        std::list<GlyphBlock> _FallbackBlocks {}; // fonts outside the fontset drawing what it lacks: the default font, opened when first needed
+        std::unordered_map<u32, GlyphBlock*> _FallbackFor {}; // the block drawing a character its own block's font lacks, nullptr for none; found once
+        bool _IsDefaultFontLookedFor { false };
     };
 
     struct FontInfo
@@ -96,7 +99,8 @@ namespace RetroFuturaGUI
         glm::vec2
             _Advance { 0.0f }, // pixels at the font's size, y up; when shaped
             _Offset { 0.0f }; // from the pen to the glyph's origin
-        bool _IsShaped { false };
+        bool _IsShaped { false },
+            _IsRightToLeft { false }; // shaped right to left: the character's start is the glyph's right edge
     };
 
     class FontManager
@@ -172,10 +176,12 @@ namespace RetroFuturaGUI
         ///        without an outline to widen (a bitmap font's) gives an empty glyph.
         static const Glyph* FindGlyphBorder(const FontInfo& font, const u32 sizeKey, const u32 codePoint, const f32 width);
 
-        /// @brief Shapes a line of text with the font at a size (FontSizeToKey), one run per glyph source: the characters each
-        ///        block covers go to its font together, and joiners, variation selectors, skin tones and combining marks stay
-        ///        with the run before them, so an emoji sequence reaches the emoji font whole. A source that can't shape places
-        ///        its characters one by one, unshaped.
+        /// @brief Shapes a run of text of one direction with the font at a size (FontSizeToKey), one run per glyph source: the
+        ///        characters each block covers go to its font together, and joiners, variation selectors, skin tones and
+        ///        combining marks stay with the run before them, so an emoji sequence reaches the emoji font whole. A character
+        ///        its block's font lacks is drawn by another font of the fontset that has it, else by the default font. A
+        ///        source that can't shape places its characters one by one, unshaped. Right to left, the glyphs come out in the
+        ///        order they're drawn, from the left.
         static void ShapeText(const FontInfo& font, const u32 sizeKey, std::u32string_view text, const ShapeDirection direction, std::vector<PlacedGlyph>* glyphs);
 
         /// @brief Finds the glyph a placed glyph draws, rendering it the first time as FindGlyph does.
@@ -263,6 +269,15 @@ namespace RetroFuturaGUI
 
         /// @brief The block of the font covering a character, nullptr when none does.
         static GlyphBlock* findBlock(const GlyphAtlas& atlas, const u32 codePoint);
+
+        /// @brief The block whose font draws a character: its own block's, if that font has it, else the first other font of
+        ///        the fontset that has it (in the order of their blocks), else the default font's. When none has it, its own
+        ///        block, which draws the font's "missing" glyph, or nullptr when no block covers it.
+        static GlyphBlock* findDrawingBlock(const FontInfo& font, GlyphAtlas& atlas, const u32 codePoint);
+
+        /// @brief The default font opened at the atlas's size, kept among its fallback blocks; nullptr when it's one of the
+        ///        fontset's own fonts (asked already) or can't be opened.
+        static GlyphBlock* getDefaultFontBlock(const FontInfo& font, GlyphAtlas& atlas);
 
         /// @brief Whether a character belongs to the character before it rather than starting a run of its own: joiners,
         ///        variation selectors, combining marks, skin tones and the tags of subdivision flags.

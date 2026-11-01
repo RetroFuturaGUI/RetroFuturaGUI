@@ -56,8 +56,12 @@ namespace RetroFuturaGUI
         /// @brief Sets what the text's mask does: make the text see-through (Alpha, the default) or shade it (Shade).
         void SetTextMaskMode(const MaskMode mode);
 
-        /// @brief Sets how the text's mask is laid across the text: stretched, the default, or keeping its proportions.
+        /// @brief Sets how the text's mask is laid across the text: stretched (default) or keeping its proportions.
         void SetTextMaskFit(const ImageFit fit);
+
+        /// @brief Sets what the text's mask is laid over: the whole text (default) or each line on its own, so a chrome
+        ///        mask shades every line of a multiline text as it would a one-line logo.
+        void SetTextMaskSpan(const MaskSpan maskSpan);
 
         /// @brief Sets which pattern the text's raster draws.
         void SetTextRasterPattern(const RasterPattern rasterPattern);

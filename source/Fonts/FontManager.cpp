@@ -669,6 +669,8 @@ void RetroFuturaGUI::FontManager::ExtendFontset(std::string_view fontFamily, std
                 glyph._Advance = static_cast<u32>(std::lround(glyph._Advance * block._Scale));
             }
 
+            //The new font may have what another font was found to draw
+            atlas._FallbackFor.clear();
             _fonts.pop_back();
             return;
         }
@@ -681,48 +683,59 @@ void RetroFuturaGUI::FontManager::ShapeText(const FontInfo& font, const u32 size
         return;
 
     glyphs->clear();
-    const auto atlas { font._Atlasses.find(sizeKey) };
+    const auto found { font._Atlasses.find(sizeKey) };
 
-    if(font._Atlasses.end() == atlas)
+    if(font._Atlasses.end() == found)
         return;
 
-    std::vector<ShapedGlyph> shaped {};
-    uSize start { 0 };
+    //The atlas is the font's, and the fallbacks found for it are kept in it
+    GlyphAtlas& atlas { const_cast<GlyphAtlas&>(found->second) };
+    const bool isRightToLeft { ShapeDirection::RightToLeft == direction };
 
-    while(start < text.size())
+    //The block drawing each character. Joiners, variation selectors, skin tones and marks go with the character before them,
+    //and so does whatever follows a joiner, so the font sees a whole sequence (⬛ in 🐈‍⬛ is in a block the text may not load)
+    std::vector<GlyphBlock*> drawing(text.size(), nullptr);
+
+    for(uSize character = 0; character < text.size(); ++character)
     {
-        GlyphBlock* block { findBlock(atlas->second, text[start]) };
+        const bool isJoined { 0 < character && drawing[character - 1] != nullptr && (isAttaching(text[character]) || 0x200D == text[character - 1]) };
+        drawing[character] = isJoined ? drawing[character - 1] : findDrawingBlock(font, atlas, text[character]);
+    }
+
+    //One run per font file, shaped at once; right to left the runs are laid out from the last one
+    std::vector<std::vector<PlacedGlyph>> runs {};
+    std::vector<ShapedGlyph> shaped {};
+
+    for(uSize start = 0; start < text.size();)
+    {
+        GlyphBlock* block { drawing[start] };
         IGlyphSource* source { block ? block->_Source.get() : nullptr };
         uSize end { start + 1 };
 
-        //The run goes on over blocks drawn from the same font file, over characters belonging to the one before, and over
-        //whatever follows a joiner, so the font sees the whole sequence (⬛ in 🐈‍⬛ is in a block the text may not load)
-        while(end < text.size())
-        {
-            const GlyphBlock* next { findBlock(atlas->second, text[end]) };
-            const bool isJoined { 0x200D == text[end - 1] && source != nullptr };
-
-            if(!isAttaching(text[end]) && !isJoined && (!source || !next || next->_FontFile != block->_FontFile))
-                break;
-
+        while(end < text.size() && block && drawing[end] && drawing[end]->_FontFile == block->_FontFile)
             ++end;
-        }
+
+        std::vector<PlacedGlyph>& run { runs.emplace_back() };
 
         if(!source || !source->Shape(text.substr(start, end - start), direction, &shaped))
         {
             for(uSize character = start; character < end; ++character)
             {
-                glyphs->push_back(PlacedGlyph
+                run.push_back(PlacedGlyph
                 {
-                    ._Block = findBlock(atlas->second, text[character]),
+                    ._Block = findBlock(atlas, text[character]),
                     ._GlyphIndex = 0,
                     ._CodePoint = text[character],
                     ._Cluster = static_cast<u32>(character),
                     ._Advance = glm::vec2(0.0f),
                     ._Offset = glm::vec2(0.0f),
-                    ._IsShaped = false
+                    ._IsShaped = false,
+                    ._IsRightToLeft = isRightToLeft
                 });
             }
+
+            if(isRightToLeft)
+                std::ranges::reverse(run);
 
             start = end;
             continue;
@@ -731,7 +744,7 @@ void RetroFuturaGUI::FontManager::ShapeText(const FontInfo& font, const u32 size
         //Measured at the font's size, like the glyphs
         for(const ShapedGlyph& glyph : shaped)
         {
-            glyphs->push_back(PlacedGlyph
+            run.push_back(PlacedGlyph
             {
                 ._Block = block,
                 ._GlyphIndex = glyph._GlyphIndex,
@@ -739,12 +752,124 @@ void RetroFuturaGUI::FontManager::ShapeText(const FontInfo& font, const u32 size
                 ._Cluster = static_cast<u32>(start + glyph._Cluster),
                 ._Advance = glm::vec2(glyph._AdvanceX, glyph._AdvanceY) * block->_Scale,
                 ._Offset = glm::vec2(glyph._OffsetX, glyph._OffsetY) * block->_Scale,
-                ._IsShaped = true
+                ._IsShaped = true,
+                ._IsRightToLeft = isRightToLeft
             });
         }
 
         start = end;
     }
+
+    if(isRightToLeft)
+        std::ranges::reverse(runs);
+
+    for(const std::vector<PlacedGlyph>& run : runs)
+        glyphs->insert(glyphs->end(), run.begin(), run.end());
+}
+
+RetroFuturaGUI::GlyphBlock* RetroFuturaGUI::FontManager::findDrawingBlock(const FontInfo& font, GlyphAtlas& atlas, const u32 codePoint)
+{
+    GlyphBlock* own { findBlock(atlas, codePoint) };
+
+    if(own && own->_Source && own->_Source->HasGlyph(codePoint))
+        return own;
+
+    const auto known { atlas._FallbackFor.find(codePoint) };
+
+    if(atlas._FallbackFor.end() != known)
+        return known->second ? known->second : own;
+
+    //The fontset's other fonts in the order of their blocks, each font file asked once, then the default font
+    std::vector<u32> blockKeys {};
+
+    for(const auto& [blockKey, block] : atlas._GlyphBlocks)
+        blockKeys.push_back(blockKey);
+
+    std::ranges::sort(blockKeys);
+    std::vector<std::string_view> askedFiles {};
+    GlyphBlock* fallback { nullptr };
+
+    for(const u32 blockKey : blockKeys)
+    {
+        GlyphBlock& block { atlas._GlyphBlocks.at(blockKey) };
+
+        if(!block._Source || std::ranges::contains(askedFiles, std::string_view(block._FontFile)))
+            continue;
+
+        askedFiles.push_back(block._FontFile);
+
+        if(!block._Source->HasGlyph(codePoint))
+            continue;
+
+        fallback = &block;
+        break;
+    }
+
+    if(!fallback)
+    {
+        GlyphBlock* defaultFont { getDefaultFontBlock(font, atlas) };
+
+        if(defaultFont && defaultFont->_Source && defaultFont->_Source->HasGlyph(codePoint))
+            fallback = defaultFont;
+    }
+
+    atlas._FallbackFor[codePoint] = fallback;
+    return fallback ? fallback : own;
+}
+
+RetroFuturaGUI::GlyphBlock* RetroFuturaGUI::FontManager::getDefaultFontBlock(const FontInfo& font, GlyphAtlas& atlas)
+{
+    if(atlas._IsDefaultFontLookedFor)
+        return atlas._FallbackBlocks.empty() ? nullptr : &atlas._FallbackBlocks.front();
+
+    atlas._IsDefaultFontLookedFor = true;
+
+    //The default font, else the first loaded one, in the style of the font asked for
+    const std::string family { _defaultFontFamily.empty() && !_fonts.empty() ? _fonts.front()._FontProperty._Name : _defaultFontFamily };
+
+    if(family.empty())
+        return nullptr;
+
+    const PlatformBridge::Fonts::FontProperty property { resolveFontProperty(family, font._Slant, font._Weight) };
+    const std::string fontFile { property._Path + "#" + std::to_string(property._FaceIndex) };
+
+    if(property._Path.empty())
+        return nullptr;
+
+    for(const auto& [blockKey, block] : atlas._GlyphBlocks)
+    {
+        if(block._FontFile == fontFile)
+            return nullptr;
+    }
+
+    std::unique_ptr<IGlyphSource> source { FreeTypeGlyphSource::Open(_ft, property._Path, property._FaceIndex, font._Weight) };
+
+    if(!source || !source->SetPixelSize(atlas._FontSize))
+        return nullptr;
+
+    //Glyphs it draws are found by shaping, by their index, and rendered into its own pages as they're first shown
+    const f32 scale { atlas._FontSize / std::max(source->GetPixelSize(), 1.0f) };
+    atlas._FallbackBlocks.push_back(GlyphBlock
+    {
+        ._TextureID = 0,
+        ._Width = 0,
+        ._Height = 0,
+        ._CodePointFirst = 0,
+        ._CodePointLast = 0,
+        ._LoadIndividually = true,
+        ._Glyphs = {},
+        ._BorderGlyphs = {},
+        ._IndexGlyphs = {},
+        ._IndexBorderGlyphs = {},
+        ._FontFile = fontFile,
+        ._Source = std::move(source),
+        ._Pages = {},
+        ._ColorPages = {},
+        ._PageSide = pageSideFor(atlas._Metrics),
+        ._Scale = scale
+    });
+
+    return &atlas._FallbackBlocks.front();
 }
 
 const RetroFuturaGUI::Glyph* RetroFuturaGUI::FontManager::FindPlacedGlyph(const FontInfo& font, const u32 sizeKey, const PlacedGlyph& placed)

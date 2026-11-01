@@ -1,6 +1,8 @@
 #include "Text.hpp"
 #include "ShaderManager.hpp"
+#include <SheenBidi/SheenBidi.h>
 #include <algorithm>
+#include <array>
 
 RetroFuturaGUI::Text::Text(Projection* projection)
     : _projection(*projection)
@@ -21,11 +23,14 @@ void RetroFuturaGUI::Text::initMesh(GlyphMesh* mesh)
     glGenBuffers(1, &mesh->_Vbo);
     mesh->_VertexArray = std::make_unique<VertexArray>([vbo = mesh->_Vbo]()
     {
+        constexpr GLsizei stride { static_cast<GLsizei>(GlyphMesh::_FloatsPerVertex * sizeof(f32)) };
         glBindBuffer(GL_ARRAY_BUFFER, vbo);
-        glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(f32), nullptr); // position
-        glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(f32), (void*)(2 * sizeof(f32))); // uv
+        glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, stride, nullptr); // position
+        glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, stride, (void*)(2 * sizeof(f32))); // uv
+        glVertexAttribPointer(2, 1, GL_FLOAT, GL_FALSE, stride, (void*)(4 * sizeof(f32))); // the line's middle
         glEnableVertexAttribArray(0);
         glEnableVertexAttribArray(1);
+        glEnableVertexAttribArray(2);
     });
 }
 
@@ -80,6 +85,12 @@ void RetroFuturaGUI::Text::uploadPlacement(Shader& shader, const glm::mat4& tran
     //The fill, the raster and the fog run across the whole span, whose top is the font's ascender above the first baseline, or for columns the placed position itself
     shader.SetUniformVec2("uScale", glm::max(_textSpan, glm::vec2(1.0f)));
     shader.SetUniformVec2("uSpanCenter", glm::vec2(_textSpan.x * 0.5f, (TextFlow::Horizontal == _textFlow ? _ascender : 0.0f) - _textSpan.y * 0.5f));
+
+    //A mask per line spans a line from its lowest to its highest glyph, or a column's width
+    const bool isVertical { TextFlow::Horizontal != _textFlow };
+    shader.SetUniformInt("uMaskPerLine", MaskSpan::EachLine == _maskSpan ? 1 : 0);
+    shader.SetUniformInt("uIsVertical", isVertical ? 1 : 0);
+    shader.SetUniformFloat("uLineExtent", std::max(isVertical ? _lineHeight : _ascender + _descender, 1.0f));
 }
 
 void RetroFuturaGUI::Text::drawMesh(Shader& shader, GlyphMesh* mesh)
@@ -255,6 +266,7 @@ void RetroFuturaGUI::Text::updateMesh()
     {
         _glyphPositions.clear();
         _glyphLines.clear();
+        _characterSpans.clear();
         return;
     }
 
@@ -269,24 +281,32 @@ void RetroFuturaGUI::Text::updateMesh()
 
     _glyphPositions.clear();
     _glyphLines.clear();
+    _characterSpans.clear();
 
     for(uSize line = 0; line < _shapedLines.size(); ++line)
     {
         const uSize
             lineEnd { std::min(text.find(U'\n', lineStart), text.size()) },
             lineLength { lineEnd - lineStart };
-        f32 along { 0.0f }; //how far along its line the pen is: rightward on a horizontal line, downward in a column
-        std::vector<f32> boundaries(lineLength + 1, -1.0f); //where each boundary sits along the line, -1 until known
+        const f32 lineLeft { getLineStart(line) };
+        f32 along { lineLeft }; //how far along its line the pen is: rightward on a horizontal line, downward in a column
+        std::vector<glm::vec2> clusterSpans(lineLength, glm::vec2(-1.0f)); //per character starting a cluster, the stretch its glyphs cover
+        std::vector<bool> isClusterRightToLeft(lineLength, false);
 
         for(const PlacedGlyph& placed : _shapedLines[line])
         {
-            //A glyph starts its cluster. A character not covered by any registered font draws nothing but keeps its slot
-            if(lineLength > placed._Cluster && 0.0f > boundaries[placed._Cluster])
-                boundaries[placed._Cluster] = along;
-
             const Glyph* glyph { FontManager::FindPlacedGlyph(*_fontInfo, _fontKey, placed) };
             const glm::vec2 pen { getPlacedPen(line, along, placed, glyph, scale) };
+            const f32 start { along };
             along += getPlacedAdvance(placed, glyph, scale);
+
+            //A character not covered by any registered font draws nothing but keeps its slot
+            if(lineLength > placed._Cluster)
+            {
+                glm::vec2& span { clusterSpans[placed._Cluster] };
+                span = 0.0f > span.x ? glm::vec2(std::min(start, along), std::max(start, along)) : glm::vec2(std::min(span.x, start), std::max(span.y, along));
+                isClusterRightToLeft[placed._Cluster] = placed._IsRightToLeft;
+            }
 
             if(!glyph)
                 continue;
@@ -295,27 +315,34 @@ void RetroFuturaGUI::Text::updateMesh()
             const Glyph* border { 0.0f < _borderWidth ? FontManager::FindPlacedGlyphBorder(*_fontInfo, _fontKey, placed, borderWidth) : nullptr };
 
             if(border)
-                appendGlyphQuad(*border, pen, scale, &_borderMesh);
+                appendGlyphQuad(*border, pen, scale, getLineCenter(line), &_borderMesh);
 
-            appendGlyphQuad(*glyph, pen, scale, &_mesh);
+            appendGlyphQuad(*glyph, pen, scale, getLineCenter(line), &_mesh);
         }
 
-        //The characters inside a cluster (an emoji sequence, a ligature) share the boundary after it
-        boundaries[lineLength] = along;
+        //A boundary sits where its character starts: the left edge of its cluster, the right edge right to left. The
+        //characters inside a cluster (an emoji sequence, a ligature) sit at the cluster's end, and the line ends at its
+        //end as it reads: the right end, or the left end of a right-to-left line
+        uSize clusterStart { 0 };
 
-        for(uSize boundary = lineLength; 0 < boundary; --boundary)
+        for(uSize character = 0; character < lineLength; ++character)
         {
-            if(0.0f > boundaries[boundary - 1])
-                boundaries[boundary - 1] = boundaries[boundary];
+            if(0.0f <= clusterSpans[character].x)
+                clusterStart = character;
+
+            const glm::vec2 span { 0.0f <= clusterSpans[clusterStart].x ? clusterSpans[clusterStart] : glm::vec2(0.0f) };
+            const bool isStart { clusterStart == character };
+            const bool isRightToLeft { isClusterRightToLeft[clusterStart] };
+            _glyphPositions.push_back(isStart != isRightToLeft ? span.x : span.y);
+            _glyphLines.push_back(line);
+            _characterSpans.push_back(span);
         }
 
         //The first boundary of a later line is the one after its '\n'
-        for(const f32 boundary : boundaries)
-        {
-            _glyphPositions.push_back(boundary);
-            _glyphLines.push_back(line);
-        }
-
+        const bool isLineRightToLeft { line < _isLineRightToLeft.size() && _isLineRightToLeft[line] };
+        _glyphPositions.push_back(isLineRightToLeft ? lineLeft : along);
+        _glyphLines.push_back(line);
+        _characterSpans.push_back(glm::vec2(_glyphPositions.back()));
         lineStart = lineEnd + 1;
     }
 
@@ -370,6 +397,22 @@ f32 RetroFuturaGUI::Text::getColumnLeft(const uSize line) const
     return static_cast<f32>(column) * _lineHeight;
 }
 
+f32 RetroFuturaGUI::Text::getLineStart(const uSize line) const
+{
+    if(TextFlow::Horizontal != _textFlow || line >= _isLineRightToLeft.size() || line >= _lineWidths.size())
+        return 0.0f;
+
+    return _isLineRightToLeft[line] ? std::round(_textSpan.x - _lineWidths[line]) : 0.0f;
+}
+
+f32 RetroFuturaGUI::Text::getLineCenter(const uSize line) const
+{
+    if(TextFlow::Horizontal != _textFlow)
+        return getColumnLeft(line) + _lineHeight * 0.5f;
+
+    return -static_cast<f32>(line) * _lineHeight + (_ascender - _descender) * 0.5f;
+}
+
 uSize RetroFuturaGUI::Text::getLineCount() const
 {
     return 1 + static_cast<uSize>(std::ranges::count(_text.GetUtf32(), U'\n'));
@@ -401,7 +444,17 @@ f32 RetroFuturaGUI::Text::GetColorGlyphTint() const
     return _colorGlyphTint;
 }
 
-void RetroFuturaGUI::Text::appendGlyphQuad(const Glyph& glyph, const glm::vec2& pen, const f32 scale, GlyphMesh* mesh) const
+void RetroFuturaGUI::Text::SetMaskSpan(const MaskSpan maskSpan)
+{
+    _maskSpan = maskSpan;
+}
+
+RetroFuturaGUI::MaskSpan RetroFuturaGUI::Text::GetMaskSpan() const
+{
+    return _maskSpan;
+}
+
+void RetroFuturaGUI::Text::appendGlyphQuad(const Glyph& glyph, const glm::vec2& pen, const f32 scale, const f32 lineCenter, GlyphMesh* mesh) const
 {
     const f32
         xPos { pen.x + glyph._Bearing[0] * scale },
@@ -437,35 +490,28 @@ void RetroFuturaGUI::Text::appendGlyphQuad(const Glyph& glyph, const glm::vec2& 
 
     //A new batch whenever the page changes: a big block's glyphs spread over several, and a page holds either color glyphs or gray ones
     if(mesh->_Draws.empty() || mesh->_Draws.back()._TextureID != glyph._TextureID)
-        mesh->_Draws.push_back(GlyphDraw { ._TextureID = glyph._TextureID, ._VertexStart = static_cast<i32>(mesh->_Vertices.size() / 4), ._VertexCount = 0, ._IsColor = glyph._IsColor });
+        mesh->_Draws.push_back(GlyphDraw { ._TextureID = glyph._TextureID, ._VertexStart = static_cast<i32>(mesh->_Vertices.size() / GlyphMesh::_FloatsPerVertex), ._VertexCount = 0, ._IsColor = glyph._IsColor });
 
-    std::vector<f32>& vertices { mesh->_Vertices };
-    vertices.reserve(vertices.size() + 24);
-    vertices.push_back(xPos + clippedLocalLeft);
-    vertices.push_back(yPos + height - clippedLocalTop);
-    vertices.push_back(uMin);
-    vertices.push_back(vMax);
-    vertices.push_back(xPos + clippedLocalLeft);
-    vertices.push_back(yPos + height - clippedLocalBottom);
-    vertices.push_back(uMin);
-    vertices.push_back(vMin);
-    vertices.push_back(xPos + clippedLocalLeft + clippedWidth);
-    vertices.push_back(yPos + height - clippedLocalBottom);
-    vertices.push_back(uMax);
-    vertices.push_back(vMin);
-    vertices.push_back(xPos + clippedLocalLeft);
-    vertices.push_back(yPos + height - clippedLocalTop);
-    vertices.push_back(uMin);
-    vertices.push_back(vMax);
-    vertices.push_back(xPos + clippedLocalLeft + clippedWidth);
-    vertices.push_back(yPos + height - clippedLocalBottom);
-    vertices.push_back(uMax);
-    vertices.push_back(vMin);
-    vertices.push_back(xPos + clippedLocalLeft + clippedWidth);
-    vertices.push_back(yPos + height - clippedLocalTop);
-    vertices.push_back(uMax);
-    vertices.push_back(vMax);
-    mesh->_Draws.back()._VertexCount += 6;
+    //Two triangles, each corner's position, glyph page coordinates and its line's middle
+    const f32
+        left { xPos + clippedLocalLeft },
+        right { left + clippedWidth },
+        bottom { yPos + height - clippedLocalTop },
+        top { yPos + height - clippedLocalBottom };
+    const std::array<std::array<f32, GlyphMesh::_FloatsPerVertex>, 6> corners
+    {{
+        { left, bottom, uMin, vMax, lineCenter },
+        { left, top, uMin, vMin, lineCenter },
+        { right, top, uMax, vMin, lineCenter },
+        { left, bottom, uMin, vMax, lineCenter },
+        { right, top, uMax, vMin, lineCenter },
+        { right, bottom, uMax, vMax, lineCenter }
+    }};
+
+    for(const std::array<f32, GlyphMesh::_FloatsPerVertex>& corner : corners)
+        mesh->_Vertices.insert(mesh->_Vertices.end(), corner.begin(), corner.end());
+
+    mesh->_Draws.back()._VertexCount += static_cast<i32>(corners.size());
 }
 
 glm::vec3 RetroFuturaGUI::Text::GetBoundaryPosition(const uSize boundary, const f32 caretSize) const
@@ -594,18 +640,28 @@ void RetroFuturaGUI::Text::calculateTextSpan()
     _descender = atlas._Metrics._Descender * scale;
     _lineHeight = atlas._Metrics._LineHeight * scale;
 
-    //Each line shaped once here, for updateMesh to place
+    //Each line shaped once here, for updateMesh to place: across, in runs of one direction; down a column, as it is
     const std::u32string& text { _text.GetUtf32() };
-    const ShapeDirection direction { TextFlow::Horizontal == _textFlow ? ShapeDirection::LeftToRight : ShapeDirection::TopToBottom };
     _shapedLines.clear();
+    _isLineRightToLeft.clear();
 
     for(uSize lineStart = 0; lineStart <= text.size();)
     {
         const uSize lineEnd { std::min(text.find(U'\n', lineStart), text.size()) };
+        const std::u32string_view lineText { std::u32string_view(text).substr(lineStart, lineEnd - lineStart) };
+        bool isRightToLeft { false };
         _shapedLines.emplace_back();
-        FontManager::ShapeText(*_fontInfo, _fontKey, std::u32string_view(text).substr(lineStart, lineEnd - lineStart), direction, &_shapedLines.back());
+
+        if(TextFlow::Horizontal == _textFlow)
+            shapeLine(lineText, &_shapedLines.back(), &isRightToLeft);
+        else
+            FontManager::ShapeText(*_fontInfo, _fontKey, lineText, ShapeDirection::TopToBottom, &_shapedLines.back());
+
+        _isLineRightToLeft.push_back(isRightToLeft);
         lineStart = lineEnd + 1;
     }
+
+    _lineWidths.clear();
 
     for(uSize line = 0; line < _shapedLines.size(); ++line)
     {
@@ -627,12 +683,202 @@ void RetroFuturaGUI::Text::calculateTextSpan()
         }
 
         longestLine = std::max(longestLine, lineLength);
+        _lineWidths.push_back(lineLength);
     }
 
     //Columns side by side, each a line height wide, as long as the longest
     const f32 lineCount { static_cast<f32>(_shapedLines.size()) };
     _textSpan = TextFlow::Horizontal == _textFlow ? glm::vec2(longestLine, lineCount * _lineHeight) : glm::vec2(lineCount * _lineHeight, longestLine);
     FontManager::FlushGlyphUploads();
+}
+
+void RetroFuturaGUI::Text::shapeLine(std::u32string_view line, std::vector<PlacedGlyph>* glyphs, bool* isRightToLeft) const
+{
+    if(!glyphs)
+        return;
+
+    if(!isRightToLeft)
+        return;
+
+    glyphs->clear();
+    *isRightToLeft = false;
+
+    if(!_fontInfo || line.empty())
+        return;
+
+    //The line's direction from its first strong character, left to right when it has none
+    const SBCodepointSequence sequence { .stringEncoding = SBStringEncodingUTF32, .stringBuffer = line.data(), .stringLength = line.size() };
+    SBAlgorithmRef algorithm { SBAlgorithmCreate(&sequence) };
+    SBParagraphRef paragraph { algorithm ? SBAlgorithmCreateParagraph(algorithm, 0, line.size(), SBLevelDefaultLTR) : nullptr };
+    SBLineRef bidiLine { paragraph ? SBParagraphCreateLine(paragraph, 0, SBParagraphGetLength(paragraph)) : nullptr };
+
+    if(!bidiLine)
+    {
+        FontManager::ShapeText(*_fontInfo, _fontKey, line, ShapeDirection::LeftToRight, glyphs);
+        SBParagraphRelease(paragraph);
+        SBAlgorithmRelease(algorithm);
+        return;
+    }
+
+    //The runs come in the order they're drawn; an odd level reads right to left
+    *isRightToLeft = 0 != (SBParagraphGetBaseLevel(paragraph) & 1);
+    const SBRun* runs { SBLineGetRunsPtr(bidiLine) };
+    std::vector<PlacedGlyph> runGlyphs {};
+
+    for(SBUInteger run = 0; run < SBLineGetRunCount(bidiLine); ++run)
+    {
+        const ShapeDirection direction { 0 != (runs[run].level & 1) ? ShapeDirection::RightToLeft : ShapeDirection::LeftToRight };
+        FontManager::ShapeText(*_fontInfo, _fontKey, line.substr(runs[run].offset, runs[run].length), direction, &runGlyphs);
+
+        for(PlacedGlyph& glyph : runGlyphs)
+            glyph._Cluster += static_cast<u32>(runs[run].offset);
+
+        glyphs->insert(glyphs->end(), runGlyphs.begin(), runGlyphs.end());
+    }
+
+    SBLineRelease(bidiLine);
+    SBParagraphRelease(paragraph);
+    SBAlgorithmRelease(algorithm);
+}
+
+uSize RetroFuturaGUI::Text::GetBoundaryBeside(const uSize boundary, const CaretMove move) const
+{
+    if(_glyphPositions.empty())
+        return 0;
+
+    const uSize
+        glyphCount { GetGlyphCount() },
+        current { std::min(boundary, glyphCount) },
+        line { _glyphLines[current] },
+        lastLine { _glyphLines.back() };
+    const f32 along { _glyphPositions[current] };
+
+    //Down a column a step is a character; across, the next column that way, as far down as the caret is
+    if(TextFlow::Horizontal != _textFlow)
+    {
+        if(CaretMove::Up == move)
+            return 0 < current ? current - 1 : 0;
+
+        if(CaretMove::Down == move)
+            return std::min(current + 1, glyphCount);
+
+        const bool isTowardNextColumn { (CaretMove::Left == move) == (TextFlow::VerticalRightToLeft == _textFlow) };
+
+        if(isTowardNextColumn)
+            return line == lastLine ? current : getClosestOnLine(line + 1, along);
+
+        return 0 == line ? current : getClosestOnLine(line - 1, along);
+    }
+
+    if(CaretMove::Up == move)
+        return 0 == line ? 0 : getClosestOnLine(line - 1, along);
+
+    if(CaretMove::Down == move)
+        return line == lastLine ? glyphCount : getClosestOnLine(line + 1, along);
+
+    //The nearest boundary that way as the line is drawn, the logically closest one where several sit together
+    const bool isRightward { CaretMove::Right == move };
+    const uSize
+        first { static_cast<uSize>(std::lower_bound(_glyphLines.begin(), _glyphLines.end(), line) - _glyphLines.begin()) },
+        last { GetLineLastBoundary(line) };
+    uSize nearest { current };
+
+    for(uSize candidate = first; candidate <= last; ++candidate)
+    {
+        const f32 candidateAlong { _glyphPositions[candidate] };
+
+        if(isRightward ? candidateAlong <= along + _sameSpotDistance : candidateAlong >= along - _sameSpotDistance)
+            continue;
+
+        const bool isCloser { nearest == current
+            || (isRightward ? candidateAlong < _glyphPositions[nearest] : candidateAlong > _glyphPositions[nearest])
+            || (std::abs(candidateAlong - _glyphPositions[nearest]) <= _sameSpotDistance && std::max(candidate, current) - std::min(candidate, current) < std::max(nearest, current) - std::min(nearest, current)) };
+
+        if(isCloser)
+            nearest = candidate;
+    }
+
+    if(nearest != current)
+        return nearest;
+
+    //At the line's edge, on to the next line as the line reads, or back to the one before
+    const bool isForward { isRightward != (line < _isLineRightToLeft.size() && _isLineRightToLeft[line]) };
+
+    if(isForward)
+        return line == lastLine ? current : last + 1;
+
+    return 0 == line ? current : first - 1;
+}
+
+std::vector<RetroFuturaGUI::TextSelectionArea> RetroFuturaGUI::Text::GetSelectionAreas(const uSize first, const uSize last, const f32 caretSize) const
+{
+    std::vector<TextSelectionArea> areas {};
+
+    if(_glyphPositions.empty())
+        return areas;
+
+    const uSize
+        start { std::min(first, last) },
+        end { std::min(std::max(first, last), GetGlyphCount()) };
+    const f32 lineBreakWidth { _glyphSize.y * 0.3f }; //so a selected empty line still shows
+
+    for(uSize line = GetBoundaryLine(start); start < end && line <= GetBoundaryLine(end); ++line)
+    {
+        //The stretches of the selected characters on this line, joined where they touch
+        const uSize lineLast { GetLineLastBoundary(line) };
+        std::vector<glm::vec2> spans {};
+
+        for(uSize character = start; character < end; ++character)
+        {
+            if(_glyphLines[character] != line)
+                continue;
+
+            if(character != lineLast)
+            {
+                if(_characterSpans[character].y > _characterSpans[character].x)
+                    spans.push_back(_characterSpans[character]);
+
+                continue;
+            }
+
+            //The line break, at the line's end as it reads
+            const f32 lineEnd { _glyphPositions[lineLast] };
+            spans.push_back(line < _isLineRightToLeft.size() && _isLineRightToLeft[line] ? glm::vec2(lineEnd - lineBreakWidth, lineEnd) : glm::vec2(lineEnd, lineEnd + lineBreakWidth));
+        }
+
+        std::ranges::sort(spans, {}, [](const glm::vec2& span) { return span.x; });
+        std::vector<glm::vec2> joined {};
+
+        for(const glm::vec2& span : spans)
+        {
+            if(!joined.empty() && span.x <= joined.back().y + _sameSpotDistance)
+                joined.back().y = std::max(joined.back().y, span.y);
+            else
+                joined.push_back(span);
+        }
+
+        //Across, a line height tall where the caret sits; in a column, the column's width, downward along it
+        for(const glm::vec2& span : joined)
+        {
+            if(TextFlow::Horizontal == _textFlow)
+            {
+                areas.push_back(TextSelectionArea
+                {
+                    ._Center = _positionAligned + glm::vec2((span.x + span.y) * 0.5f, -static_cast<f32>(line) * _lineHeight + caretSize * 0.25f),
+                    ._Size = glm::vec2(span.y - span.x, _lineHeight)
+                });
+                continue;
+            }
+
+            areas.push_back(TextSelectionArea
+            {
+                ._Center = _positionAligned + glm::vec2(getColumnLeft(line) + _lineHeight * 0.5f, -(span.x + span.y) * 0.5f),
+                ._Size = glm::vec2(_lineHeight, span.y - span.x)
+            });
+        }
+    }
+
+    return areas;
 }
 
 void RetroFuturaGUI::Text::SetAnchorTop(const bool anchorTop)

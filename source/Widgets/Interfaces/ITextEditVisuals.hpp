@@ -80,6 +80,7 @@ namespace RetroFuturaGUI
         std::unique_ptr<Plane> _caret {};
         std::vector<glm::vec4> _caretColors { glm::vec4(1.0f) };
         static constexpr f32 _caretHeightFactor { 1.6f };
+        static constexpr f32 _caretThickness { 2.0f };
         bool _isCaretInView { true };
 
     //Selection

@@ -131,6 +131,14 @@ void RetroFuturaGUI::ITextProperties::SetTextMaskFit(const ImageFit fit)
     _text->SetMaskFit(fit);
 }
 
+void RetroFuturaGUI::ITextProperties::SetTextMaskSpan(const MaskSpan maskSpan)
+{
+    if(!_text)
+        return;
+
+    _text->SetMaskSpan(maskSpan);
+}
+
 void RetroFuturaGUI::ITextProperties::SetTextRasterPattern(const RasterPattern rasterPattern)
 {
     if(!_text)
