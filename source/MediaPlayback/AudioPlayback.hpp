@@ -1,9 +1,12 @@
 #pragma once
+#include "AudioMetadata.hpp"
 #include "AudioSpectrum.hpp"
 #include "AudioStream.hpp"
 #include "config.hpp"
 #include <atomic>
+#include <optional>
 #include <span>
+#include <string>
 #include <string_view>
 #include <vector>
 #include <miniaudio.h>
@@ -68,8 +71,13 @@ namespace RetroFuturaGUI
 
         /// @brief Loads a file, replacing whatever was loaded before, without starting it - StartPlaying()
         /// does that. The stream stays open so it can be sought, queried and stopped - unlike a
-        /// fire-and-forget sound, which hands back no handle to act on.
+        /// fire-and-forget sound, which hands back no handle to act on. The file's own loop points are read too (see
+        /// GetLoopPoints), and a file that has them is decoded by FFmpeg, even WAV, FLAC or MP3, so its loop has no gap.
         bool OpenAudioFile(std::string_view file);
+
+        /// @brief Loads an encrypted HCA file with the game's key (see HcaKey) - or any file, the key going unused. Fails for
+        ///        an encrypted file whose key doesn't fit, rather than playing noise.
+        bool OpenAudioFile(std::string_view file, const HcaKey& key);
 
         /// @brief Stops playback and rewinds to the start. The file stays loaded, so
         /// StartPlaying() resumes from the beginning.
@@ -98,6 +106,21 @@ namespace RetroFuturaGUI
         void Seek(const u32 position);
 
         void SetPlaybackSpeed(const f32 factor);
+
+        /// @brief Plays in a loop while isLooping, without a gap: between the loop points (see GetLoopPoints), or the whole
+        ///        file without any. Any time, and it stays set for the next file. Off by default.
+        void SetLooping(const bool isLooping);
+        bool IsLooping() const;
+
+        /// @brief Loops between two sample positions at the file's own rate instead of the file's loop points: the end
+        ///        exclusive, 0 for the end of the file. Takes effect at once, also while looping. A file miniaudio decodes is
+        ///        reopened through FFmpeg for it, at the same position. Lasts until the next file. False when nothing is
+        ///        loaded or the end isn't after the start.
+        bool SetLoopPoints(const u64 startSample, const u64 endSample);
+
+        /// @brief The loop points SetLooping loops between: the file's own (from its header, smpl chunk or LOOPSTART tags),
+        ///        or the ones SetLoopPoints set. None when the whole file loops.
+        std::optional<AudioLoop> GetLoopPoints() const;
 
         /// @brief Returns a channel's current output level as linear RMS, 0.0 to ~1.0.
         /// Measured after volume and pitch, with a fast attack and slow decay so it stays
@@ -140,6 +163,12 @@ namespace RetroFuturaGUI
         /// @brief Releases the loaded sound, if any. Idempotent.
         void unloadSound();
 
+        /// @brief Loads the file as the sound, through miniaudio or, isStreamed, through FFmpeg (AudioStream).
+        bool loadSound(std::string_view file, const HcaKey& key, const bool isStreamed);
+
+        /// @brief Hands the loop setting and points to whichever plays the sound.
+        void applyLoop();
+
         /// @brief Builds the meter node and wires it to the engine endpoint. Idempotent.
         bool initMeter();
 
@@ -156,6 +185,8 @@ namespace RetroFuturaGUI
         AudioMeterNode _meter {};
         AudioSpectrum _spectrum {};
         AudioStream _audioStream {};
+        std::string _filePath {}; //the loaded file, for reopening it through FFmpeg
+        std::optional<AudioLoop> _loop {};
         u32
             _channels { 0 }, // 0 - let the device decide
             _sampleRate { 0 }; // 0 - let the device decide
@@ -163,7 +194,8 @@ namespace RetroFuturaGUI
             _initialized { false },
             _soundLoaded { false },
             _meterReady { false },
-            _streamed { false };
+            _streamed { false },
+            _isLooping { false };
         static inline constexpr f32 _meterDecay { 0.85f }; //how smoothly the meter falls when the signal is falling
         static inline constexpr ma_uint32 _spectrumBufferFrameCount { 16384 };
         static inline std::vector<AudioPlayback*> _playbacks {}; //every playback alive, for UpdateAll

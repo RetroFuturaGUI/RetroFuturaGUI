@@ -1,4 +1,5 @@
 #include "AudioPlayback.hpp"
+#include "AudioMetadataReader.hpp"
 #include <cmath>
 #include <cstring>
 #include <string>
@@ -259,16 +260,34 @@ void RetroFuturaGUI::AudioPlayback::SetSampleRate(const u32 sampleRate)
 
 bool RetroFuturaGUI::AudioPlayback::OpenAudioFile(std::string_view file)
 {
+    return OpenAudioFile(file, HcaKey {});
+}
+
+bool RetroFuturaGUI::AudioPlayback::OpenAudioFile(std::string_view file, const HcaKey& key)
+{
     if(!_initialized)
         return false;
 
     unloadSound();
+    const std::optional<AudioMetadata> metadata { AudioMetadataReader::Read(file) };
+    _loop = metadata ? metadata->_Loop : std::nullopt;
+
+    // miniaudio's streamed sounds loop only over the whole file without a gap, so loop points go through FFmpeg
+    if(!loadSound(file, key, _loop || !isNativeFormat(file)))
+        return false;
+
+    applyLoop();
+    return true;
+}
+
+bool RetroFuturaGUI::AudioPlayback::loadSound(std::string_view file, const HcaKey& key, const bool isStreamed)
+{
     ma_uint32 flags = MA_SOUND_FLAG_NO_SPATIALIZATION;
 
     if(_meterReady)
         flags |= MA_SOUND_FLAG_NO_DEFAULT_ATTACHMENT;
 
-    if(isNativeFormat(file))
+    if(!isStreamed)
     {
         const std::string filepath(file); //need 0-terminated string
 
@@ -277,7 +296,7 @@ bool RetroFuturaGUI::AudioPlayback::OpenAudioFile(std::string_view file)
     }
     else
     {
-        if(!_audioStream.Open(file))
+        if(!_audioStream.Open(file, key))
             return false;
 
         if(ma_sound_init_from_data_source(&_engine, _audioStream.GetDataSource(), flags, nullptr, &_sound) != MA_SUCCESS)
@@ -290,6 +309,7 @@ bool RetroFuturaGUI::AudioPlayback::OpenAudioFile(std::string_view file)
     }
 
     _soundLoaded = true;
+    _filePath = file;
 
     if(_meterReady && ma_node_attach_output_bus(&_sound, 0, &_meter._Base, 0) != MA_SUCCESS)
     {
@@ -309,6 +329,70 @@ void RetroFuturaGUI::AudioPlayback::unloadSound()
     _audioStream.Close();
     _soundLoaded = false;
     _streamed = false;
+}
+
+void RetroFuturaGUI::AudioPlayback::applyLoop()
+{
+    if(!_soundLoaded)
+        return;
+
+    if(!_streamed)
+    {
+        ma_sound_set_looping(&_sound, _isLooping ? MA_TRUE : MA_FALSE);
+        return;
+    }
+
+    const AudioLoop loop { _loop.value_or(AudioLoop {}) }; //none: from 0 to the end of the file
+    _audioStream.SetLoop(_isLooping, loop._StartSample, loop._EndSample);
+}
+
+void RetroFuturaGUI::AudioPlayback::SetLooping(const bool isLooping)
+{
+    _isLooping = isLooping;
+    applyLoop();
+}
+
+bool RetroFuturaGUI::AudioPlayback::IsLooping() const
+{
+    return _isLooping;
+}
+
+bool RetroFuturaGUI::AudioPlayback::SetLoopPoints(const u64 startSample, const u64 endSample)
+{
+    if(!_soundLoaded)
+        return false;
+
+    if(0 != endSample && endSample <= startSample)
+        return false;
+
+    _loop = AudioLoop { ._StartSample = startSample, ._EndSample = endSample, ._Source = "SetLoopPoints" };
+
+    // Reopened through FFmpeg where it left off, at the same speed
+    if(!_streamed)
+    {
+        const u32 position { GetPosition() };
+        const bool wasPlaying { IsPlaying() };
+        const f32 pitch { ma_sound_get_pitch(&_sound) };
+        const std::string file { _filePath };
+        unloadSound();
+
+        if(!loadSound(file, HcaKey {}, true))
+            return false;
+
+        ma_sound_set_pitch(&_sound, pitch);
+        _audioStream.Seek(static_cast<i64>(position));
+
+        if(wasPlaying)
+            ma_sound_start(&_sound);
+    }
+
+    applyLoop();
+    return true;
+}
+
+std::optional<RetroFuturaGUI::AudioLoop> RetroFuturaGUI::AudioPlayback::GetLoopPoints() const
+{
+    return _loop;
 }
 
 void RetroFuturaGUI::AudioPlayback::StopPlaying()

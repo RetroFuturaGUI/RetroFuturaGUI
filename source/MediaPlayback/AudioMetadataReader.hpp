@@ -3,6 +3,7 @@
 #include <initializer_list>
 #include <iosfwd>
 #include <optional>
+#include <span>
 #include <string>
 #include <string_view>
 #include <utility>
@@ -24,8 +25,12 @@ namespace RetroFuturaGUI
     {
     public:
         /// @brief Reads what a file says about itself, without playing it. Returns nullopt if the file cannot be opened or it has
-        ///        no audio stream. Files whose codec isn't free read as well - check _CodecIsFree before handing one to Decoder.
+        ///        no audio stream. Files whose codec this build doesn't decode read as well - check _CodecIsAllowed before handing one to Decoder.
         static std::optional<AudioMetadata> Read(std::string_view path);
+
+        /// @brief Reads an HCA header, from its "HCA" signature on - FFmpeg hands it over as the stream's extradata.
+        /// @return Nothing when it isn't one or ends early.
+        static std::optional<HcaMetadata> ReadHcaHeader(std::span<const u8> header);
 
     private:
         AudioMetadataReader() = delete;

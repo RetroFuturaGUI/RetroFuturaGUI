@@ -44,17 +44,22 @@ namespace RetroFuturaGUI
         /// @brief What ma_sound_init_from_data_source takes.
         ma_data_source* GetDataSource();
 
-        /// @brief The clock: ms of audio handed to miniaudio, counted from the last start position.
+        /// @brief The clock: ms of audio handed to miniaudio, counted from the last start position, or from the loop start
+        /// once a loop has gone back to it.
         i64 GetPosition() const;
 
         /// @brief True once every packet has been decoded and written - not after a Stop.
         bool HasEnded() const;
 
+        /// @brief Loops between two sample positions (the end exclusive, 0 for the end of the file) while isLooping; the
+        /// owner's reader puts an AudioDecodeThread::LoopMarker into the queue where it goes back to the start. Any time.
+        void SetLoop(const bool isLooping, const u64 startSample, const u64 endSample);
+
     private:
         AudioDecodeThread _decodeThread;
         RingBufferSource _ringBufferSource {};
         u32 _sampleRate { 0 };
-        std::atomic<i64> _basePosition { 0 };
-        std::atomic<uSize> _baseFramesCount { 0 };
+        mutable std::atomic<i64> _basePosition { 0 }; //moved on by GetPosition when it passes a loop restart
+        mutable std::atomic<uSize> _baseFramesCount { 0 };
     };
 }

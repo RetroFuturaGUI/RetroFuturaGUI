@@ -26,12 +26,14 @@ namespace RetroFuturaGUI
         bool
             _VideoCodecIsFree { false }, // whether the picture may be decoded in a commercial product, see IsCodecFree
             _AudioCodecIsFree { false },
+            _VideoCodecIsAllowed { false },
+            _AudioCodecIsAllowed { false },
             _HasAudio { false };
     };
 
     /// @brief Reads what a video file says about itself. A picture attached as cover art, as songs carry, isn't a video.
     /// @param path UTF-8.
-    /// @return Nothing when the file can't be opened or holds no video stream. Files whose codec isn't free read as well -
-    ///         check _VideoCodecIsFree before decoding.
+    /// @return Nothing when the file can't be opened or holds no video stream. Files whose codec this build doesn't decode read as well -
+    ///         check _VideoCodecIsAllowed before decoding.
     std::optional<VideoMetadata> ReadVideoMetadata(std::string_view path);
 }

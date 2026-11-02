@@ -23,6 +23,7 @@ std::optional<RetroFuturaGUI::VideoMetadata> RetroFuturaGUI::ReadVideoMetadata(s
     metadata._Container = context->iformat && context->iformat->name ? context->iformat->name : "";
     metadata._VideoCodec = avcodec_get_name(picture->codec_id);
     metadata._VideoCodecIsFree = IsCodecFree(picture->codec_id);
+    metadata._VideoCodecIsAllowed = IsCodecAllowed(picture->codec_id);
     metadata._Width = static_cast<u32>(std::max(picture->width, 0));
     metadata._Height = static_cast<u32>(std::max(picture->height, 0));
     metadata._BitRate = context->bit_rate;
@@ -52,6 +53,7 @@ std::optional<RetroFuturaGUI::VideoMetadata> RetroFuturaGUI::ReadVideoMetadata(s
     metadata._HasAudio = true;
     metadata._AudioCodec = avcodec_get_name(sound->codec_id);
     metadata._AudioCodecIsFree = IsCodecFree(sound->codec_id);
+    metadata._AudioCodecIsAllowed = IsCodecAllowed(sound->codec_id);
     metadata._SampleRate = static_cast<u32>(std::max(sound->sample_rate, 0));
     metadata._Channels = static_cast<u32>(std::max(sound->ch_layout.nb_channels, 0));
     return metadata;

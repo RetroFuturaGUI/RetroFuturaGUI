@@ -61,6 +61,12 @@ void RetroFuturaGUI::AudioTrack::SetStartPosition(const i64 milliseconds)
     _baseFramesCount = writtenFramesCount;
     _basePosition = milliseconds;
     _decodeThread.SetStartPosition(milliseconds);
+    _decodeThread.ClearLoopWraps(); // restarts of loops that will never play
+}
+
+void RetroFuturaGUI::AudioTrack::SetLoop(const bool isLooping, const u64 startSample, const u64 endSample)
+{
+    _decodeThread.SetLoop(isLooping, startSample, endSample);
 }
 
 ma_data_source* RetroFuturaGUI::AudioTrack::GetDataSource()
@@ -73,9 +79,16 @@ i64 RetroFuturaGUI::AudioTrack::GetPosition() const
     if(0 == _sampleRate)
         return 0;
 
-    const uSize
-        readFramesCount { _ringBufferSource.GetReadFramesCount() },
-        baseFramesCount { _baseFramesCount };
+    const uSize readFramesCount { _ringBufferSource.GetReadFramesCount() };
+
+    // Played past a loop restart: the clock goes on from the loop start
+    while(const std::optional<AudioDecodeThread::LoopWrap> wrap { _decodeThread.TakeLoopWrap(readFramesCount) })
+    {
+        _baseFramesCount = wrap->_WrittenFramesCount;
+        _basePosition = static_cast<i64>(wrap->_StartSample * 1000 / _sampleRate);
+    }
+
+    const uSize baseFramesCount { _baseFramesCount };
 
     if(readFramesCount <= baseFramesCount)
         return _basePosition;

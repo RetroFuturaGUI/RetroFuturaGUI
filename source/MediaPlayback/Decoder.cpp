@@ -45,7 +45,7 @@ bool RetroFuturaGUI::Decoder::Open(const AVStream* stream)
     if(!parameters)
         return false;
 
-    if(!IsCodecFree(parameters->codec_id))
+    if(!IsCodecAllowed(parameters->codec_id))
         return false;
 
     const AVCodec* codec = avcodec_find_decoder(parameters->codec_id);
@@ -71,6 +71,10 @@ bool RetroFuturaGUI::Decoder::Open(const AVStream* stream)
     }
 
     _codecContext->pkt_timebase = stream->time_base;
+
+    //An HCA block decrypted with a wrong key, or none at all, fails its checksum instead of decoding to noise
+    if(AV_CODEC_ID_HCA == parameters->codec_id)
+        _codecContext->err_recognition |= AV_EF_CRCCHECK;
 
     if(0 > avcodec_open2(_codecContext, codec, nullptr))
     {

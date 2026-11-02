@@ -239,7 +239,7 @@ RetroFuturaGUI::FileExplorer::FilePreview::Loaded RetroFuturaGUI::FileExplorer::
             add("Format", video->_Container);
 
             //The same check decides the frame now and playing later
-            if(video->_VideoCodecIsFree)
+            if(video->_VideoCodecIsAllowed)
                 loaded._CanShowFrame = true;
             else
                 loaded._Message = std::format("No preview:\n{} isn't royalty-free", codecName(video->_VideoCodec)); //two lines, to fit the pane

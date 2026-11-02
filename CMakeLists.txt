@@ -36,6 +36,7 @@ list(APPEND RetroFuturaGuiSources
     "${CMAKE_CURRENT_SOURCE_DIR}/source/MediaPlayback/AudioStream.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/MediaPlayback/AudioTrack.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/MediaPlayback/Decoder.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/source/MediaPlayback/HcaCipher.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/MediaPlayback/MediaFrame.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/MediaPlayback/MediaSource.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/MediaPlayback/MiniaudioImpl.cpp"
@@ -319,4 +320,15 @@ if(TARGETPLATFORM_LOWER STREQUAL "x64-linux")
 elseif(TARGETPLATFORM_LOWER STREQUAL "x64-windows")
     #NOMINMAX: windows.h, which PlatformBridge's headers bring along, would otherwise define min and max as macros
     target_compile_definitions("RetroFuturaGUI" PUBLIC TARGET_PLATFORM_WINDOWS NOMINMAX)
+endif()
+
+# Decode royalty-free codecs only (DecodingPolicy.hpp's FreeCodecs): on by default, for a build that may ship commercially.
+# Off, FFmpeg decodes every codec its build has, H.264, HEVC and AAC among them, for personal or non-commercial, or licensed commercial use.
+option(RETROFUTURAGUI_ROYALTY_FREE_CODECS_ONLY "Decode royalty-free codecs only. Whoever ships a build with this off takes on the licences of the codecs it decodes (H.264, HEVC, AAC, ...)" ON)
+
+if(RETROFUTURAGUI_ROYALTY_FREE_CODECS_ONLY)
+    target_compile_definitions("RetroFuturaGUI" PUBLIC RETROFUTURAGUI_ROYALTY_FREE_CODECS_ONLY=1)
+else()
+    target_compile_definitions("RetroFuturaGUI" PUBLIC RETROFUTURAGUI_ROYALTY_FREE_CODECS_ONLY=0)
+    message(WARNING "RETROFUTURAGUI_ROYALTY_FREE_CODECS_ONLY is off: this build decodes every codec FFmpeg has, H.264, HEVC and AAC among them. Shipping it means taking on those codecs' patent licences - keep it to personal or non-commercial use")
 endif()

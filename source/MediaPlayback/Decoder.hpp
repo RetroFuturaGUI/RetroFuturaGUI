@@ -14,7 +14,8 @@ namespace RetroFuturaGUI
 {
     /// @brief Decodes one stream of a MediaSource: compressed packets in, frames out. Audio and
     /// video decode through the same calls - only the contents of the frames differ. Opening is
-    /// refused for any stream whose codec is not on the FreeCodecs list.
+    /// refused for any stream whose codec this build doesn't decode: one off the FreeCodecs list, unless the royalty-free
+    /// checks are switched off (IsCodecAllowed).
     class Decoder
     {
     public:

@@ -8,6 +8,8 @@
 #include <atomic>
 #include <thread>
 #include <optional>
+#include <deque>
+#include <mutex>
 
 namespace RetroFuturaGUI
 {
@@ -44,12 +46,38 @@ namespace RetroFuturaGUI
         /// @brief Frames before this position are dropped, and the frame it falls inside is cut,
         /// so the first sample written is exactly at the target. Only while stopped - before Start.
         void SetStartPosition(const i64 milliseconds);
-        
+
+        /// @brief A packet of this stream index in the queue marks a loop: the reader goes back to the loop start after it.
+        static constexpr i32 LoopMarker { -1 };
+
+        /// @brief Where a loop went back to its start: the frame of the ring where the loop start's audio begins.
+        struct LoopWrap
+        {
+            uSize _WrittenFramesCount { 0 };
+            u64 _StartSample { 0 };
+        };
+
+        /// @brief Loops between two sample positions (at the stream's rate, the end exclusive; an end of 0 is the end of the
+        ///        file) while isLooping: nothing past the end is written, and at a LoopMarker the decoder is drained and goes
+        ///        on from the start. Any time.
+        void SetLoop(const bool isLooping, const u64 startSample, const u64 endSample);
+
+        /// @brief The first loop restart the data source has read up to (readFramesCount), taken out of the list.
+        std::optional<LoopWrap> TakeLoopWrap(const uSize readFramesCount) const;
+
+        /// @brief Forgets the loop restarts recorded, for a seek. Only while stopped.
+        void ClearLoopWraps();
+
     private:
         void run();
         bool receiveFrames(MediaFrame& frame);
         bool writeSamples(const uSize offset, const uSize frameCount);
         bool writeFrame(const MediaFrame& frame);
+
+        /// @brief At a LoopMarker: the decoder's last frames written up to the loop end, the decoder reset, the restart
+        ///        recorded, and everything before the loop start dropped from now on.
+        bool jumpToLoopStart(MediaFrame& frame);
+        i64 toPts(const u64 sample) const;
 
         PacketQueue& _queue;
         Decoder _decoder;
@@ -62,6 +90,12 @@ namespace RetroFuturaGUI
         i64 _startTime { 0 };
         std::atomic<bool>
             _stop { false },
-            _ended { false };
+            _ended { false },
+            _isLooping { false };
+        std::atomic<u64>
+            _loopStartSample { 0 },
+            _loopEndSample { 0 };
+        mutable std::deque<LoopWrap> _loopWraps {}; //taken off by the clock, which only reads otherwise
+        mutable std::mutex _loopWrapsMutex {}; //the decode thread records restarts, the clock takes them
     };
 }

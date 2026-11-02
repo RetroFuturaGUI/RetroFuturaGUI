@@ -319,6 +319,9 @@ RetroFuturaGUI::AudioFileFormat RetroFuturaGUI::AudioMetadataReader::classify(co
     if(container == "adx")
         return AudioFileFormat::Adx;
 
+    if(container == "hca")
+        return AudioFileFormat::Hca;
+
     if(container == "ogg")
     {
         switch(audio->codec_id)
@@ -645,6 +648,92 @@ RetroFuturaGUI::M4aMetadata RetroFuturaGUI::AudioMetadataReader::readM4aDetails(
     return details;
 }
 
+std::optional<RetroFuturaGUI::HcaMetadata> RetroFuturaGUI::AudioMetadataReader::ReadHcaHeader(std::span<const u8> header)
+{
+    //A chunk id, its top bits masked off as some files set them, as FFmpeg masks them
+    const auto isChunk = [&header](const uSize offset, const char* id)
+    {
+        if(offset + 4 > header.size())
+            return false;
+
+        for(uSize byte = 0; byte < 4; ++byte)
+        {
+            if((header[offset + byte] & 0x7F) != static_cast<u8>(id[byte]))
+                return false;
+        }
+
+        return true;
+    };
+
+    if(8 > header.size() || !isChunk(0, "HCA\0"))
+        return std::nullopt;
+
+    HcaMetadata details {};
+    details._Version = AV_RB16(header.data() + 4);
+    const uSize headerSize { std::min<uSize>(AV_RB16(header.data() + 6), header.size()) };
+
+    //fmt: channels, rate, blocks, the encoder's delay and padding
+    if(!isChunk(8, "fmt\0") || 24 > headerSize)
+        return std::nullopt;
+
+    details._Channels = header[12];
+    details._SampleRate = static_cast<u32>(header[13]) << 16 | static_cast<u32>(header[14]) << 8 | header[15];
+    details._BlockCount = AV_RB32(header.data() + 16);
+    details._EncoderDelay = AV_RB16(header.data() + 20);
+    details._EncoderPadding = AV_RB16(header.data() + 22);
+
+    //comp (version 2) or dec (1.3) carries the block size; then the optional chunks, up to the padding
+    uSize offset { 24 };
+
+    if(isChunk(offset, "comp") && offset + 16 <= headerSize)
+    {
+        details._BlockSize = AV_RB16(header.data() + offset + 4);
+        offset += 16;
+    }
+    else if(isChunk(offset, "dec\0") && offset + 12 <= headerSize)
+    {
+        details._BlockSize = AV_RB16(header.data() + offset + 4);
+        offset += 12;
+    }
+    else
+        return std::nullopt;
+
+    while(offset + 4 <= headerSize)
+    {
+        if(isChunk(offset, "vbr\0"))
+            offset += 8;
+        else if(isChunk(offset, "ath\0"))
+            offset += 6;
+        else if(isChunk(offset, "loop") && offset + 16 <= headerSize)
+        {
+            details._HasLoop = true;
+            details._LoopStartBlock = AV_RB32(header.data() + offset + 4);
+            details._LoopEndBlock = AV_RB32(header.data() + offset + 8);
+            details._LoopStartDelay = AV_RB16(header.data() + offset + 12);
+            details._LoopEndPadding = AV_RB16(header.data() + offset + 14);
+            offset += 16;
+        }
+        else if(isChunk(offset, "ciph") && offset + 6 <= headerSize)
+        {
+            details._CipherType = AV_RB16(header.data() + offset + 4);
+            offset += 6;
+        }
+        else if(isChunk(offset, "rva\0"))
+            offset += 8;
+        else if(isChunk(offset, "comm") && offset + 5 <= headerSize)
+        {
+            const uSize length { std::min<uSize>(header[offset + 4], headerSize - offset - 5) };
+            details._Comment = std::string(reinterpret_cast<const char*>(header.data() + offset + 5), length);
+            details._Comment.erase(std::find(details._Comment.begin(), details._Comment.end(), '\0'), details._Comment.end());
+            offset += 5 + length;
+        }
+        else
+            break; //the padding, or a chunk this reader doesn't know
+    }
+
+    return details;
+}
+
 RetroFuturaGUI::AdxMetadata RetroFuturaGUI::AudioMetadataReader::readAdxDetails(const AVCodecParameters* audio)
 {
     RetroFuturaGUI::AdxMetadata details;
@@ -779,6 +868,7 @@ std::optional<RetroFuturaGUI::AudioMetadata> RetroFuturaGUI::AudioMetadataReader
     metadata._Container = toString(context->iformat->name);
     metadata._Codec = toString(avcodec_get_name(audio->codec_id));
     metadata._CodecIsFree = IsCodecFree(audio->codec_id);
+    metadata._CodecIsAllowed = IsCodecAllowed(audio->codec_id);
 
     metadata._SampleRate = static_cast<u32>(std::max(audio->sample_rate, 0));
     metadata._Channels = static_cast<u32>(std::max(audio->ch_layout.nb_channels, 0));
@@ -953,6 +1043,36 @@ std::optional<RetroFuturaGUI::AudioMetadata> RetroFuturaGUI::AudioMetadataReader
                 metadata._Loop = AudioLoop { ._StartSample = details._LoopStartSample, ._EndSample = details._LoopEndSample, ._Source = "ADX header" };
 
             metadata._Details = details;
+            break;
+        }
+
+        case AudioFileFormat::Hca:
+        {
+            const std::optional<HcaMetadata> details { ReadHcaHeader(std::span<const u8>(audio->extradata, static_cast<uSize>(std::max(audio->extradata_size, 0)))) };
+
+            if(!details)
+                break;
+
+            //Every block decodes to 1024 samples, the encoder's delay and padding kept, as FFmpeg decodes them
+            metadata._TotalSamples = static_cast<u64>(details->_BlockCount) * 1024;
+            metadata._Seconds = toSeconds(metadata._TotalSamples, metadata._SampleRate);
+            metadata._DurationIsEstimate = false;
+
+            //The loop's end block is the last that plays, its padding the samples of it after the loop
+            if(details->_HasLoop && details->_LoopEndBlock >= details->_LoopStartBlock)
+            {
+                metadata._Loop = AudioLoop
+                {
+                    ._StartSample = static_cast<u64>(details->_LoopStartBlock) * 1024 + details->_LoopStartDelay,
+                    ._EndSample = (static_cast<u64>(details->_LoopEndBlock) + 1) * 1024 - details->_LoopEndPadding,
+                    ._Source = "HCA header"
+                };
+            }
+
+            if(!details->_Comment.empty() && metadata._Comment.empty())
+                metadata._Comment = details->_Comment;
+
+            metadata._Details = *details;
             break;
         }
 

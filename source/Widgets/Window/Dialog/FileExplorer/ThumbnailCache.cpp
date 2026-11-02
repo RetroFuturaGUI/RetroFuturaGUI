@@ -91,7 +91,7 @@ RetroFuturaGUI::FileExplorer::ThumbnailCache::Decoded RetroFuturaGUI::FileExplor
         {
             const std::optional<VideoMetadata> video { ReadVideoMetadata(path) };
 
-            if(!video || !video->_VideoCodecIsFree)
+            if(!video || !video->_VideoCodecIsAllowed)
                 break;
 
             decoded._Image = DecodeVideoFrame(path, static_cast<i64>(video->_Seconds * 100.0), _pictureSide, true); //10% in, in milliseconds

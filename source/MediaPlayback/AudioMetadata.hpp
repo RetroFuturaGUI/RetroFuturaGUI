@@ -25,9 +25,9 @@ namespace RetroFuturaGUI
         Opus,
         M4a,        // AAC or ALAC in an MP4 container
         Adx,
-        Ahx         // CRI's MPEG audio behind an ADX-style header - its metadata reads, its audio doesn't decode yet
+        Ahx,        // CRI's MPEG audio behind an ADX-style header - its metadata reads, its audio doesn't decode yet
+        Hca         // CRI's successor to ADX; decodes only with the royalty-free checks off, an encrypted one with its key
         //Todo:
-        //Hca,
         //WebM,
         //Aiff
     };
@@ -45,6 +45,7 @@ namespace RetroFuturaGUI
             case AudioFileFormat::M4a:       return "M4A";
             case AudioFileFormat::Adx:       return "ADX";
             case AudioFileFormat::Ahx:       return "AHX";
+            case AudioFileFormat::Hca:       return "HCA";
             default:                         return "Unknown";
         }
     }
@@ -172,6 +173,28 @@ namespace RetroFuturaGUI
         bool _Decodable { false };  // whether FFmpeg's decoder takes it: type 3, 18-byte blocks, 4 bits, not encrypted
     };
 
+    /// @brief From the HCA header. Every block decodes to 1024 samples; FFmpeg keeps the encoder's delay and padding in
+    ///        what it decodes, so the sample positions here count them too.
+    struct HcaMetadata
+    {
+        u32
+            _Version { 0 },         // 0x0200 for version 2.0, ...
+            _Channels { 0 },
+            _SampleRate { 0 },
+            _BlockCount { 0 },
+            _BlockSize { 0 },       // bytes per block
+            _EncoderDelay { 0 },    // samples the encoder put before the audio...
+            _EncoderPadding { 0 },  // ...and after it
+            _CipherType { 0 };      // 0 none, 1 a fixed table, 56 keyed - a keyed file needs the game's key (HcaKey)
+        bool _HasLoop { false };
+        u32
+            _LoopStartBlock { 0 },
+            _LoopEndBlock { 0 },    // the last block that still plays
+            _LoopStartDelay { 0 },  // samples into the start block where the loop starts
+            _LoopEndPadding { 0 };  // samples of the end block after the loop ends
+        std::string _Comment;
+    };
+
     /// @brief Everything a file says about itself. What every format has lives here; what only one
     /// format carries lives in _Details, as that format's own struct.
     struct AudioMetadata
@@ -180,7 +203,9 @@ namespace RetroFuturaGUI
         std::string
             _Container, // FFmpeg's demuxer name, e.g. "ogg" or "mov,mp4,m4a,3gp,3g2,mj2"
             _Codec;
-        bool _CodecIsFree { false }; // whether the codec is royalityfree
+        bool
+            _CodecIsFree { false }, // whether the codec is royalty-free
+            _CodecIsAllowed { false }; // whether this build decodes it: a royalty-free one, or any with the royalty-free checks off (IsCodecAllowed)
 
         f64 _Seconds { 0.0 };
         u64 _TotalSamples { 0 }; // what Decoder actually produces, with encoder delay and padding already removed
@@ -214,6 +239,6 @@ namespace RetroFuturaGUI
             _CoverArtHeight { 0 };
         std::vector<u8> _CoverArt; // the image as embedded, still encoded, from its own signature on: stray bytes a tagger left before it are dropped
         std::optional<AudioLoop> _Loop; // from wherever the format keeps its loop points
-        std::variant<std::monostate, WavMetadata, FlacMetadata, Mp3Metadata, OggVorbisMetadata, OpusMetadata, M4aMetadata, AdxMetadata> _Details;
+        std::variant<std::monostate, WavMetadata, FlacMetadata, Mp3Metadata, OggVorbisMetadata, OpusMetadata, M4aMetadata, AdxMetadata, HcaMetadata> _Details;
     };
 }

@@ -41,6 +41,7 @@ bool RetroFuturaGUI::AudioDecodeThread::Open(const AVStream* stream)
     _timeBase = stream->time_base;
     _startTime = stream->start_time == AV_NOPTS_VALUE ? 0 : stream->start_time;
     _skipUntilPts.reset();
+    ClearLoopWraps();
     return true;
 }
 
@@ -85,32 +86,98 @@ bool RetroFuturaGUI::AudioDecodeThread::writeFrame(const MediaFrame& frame)
         return false;
 
     const uSize convertedCount { static_cast<uSize>(converted) };
-
-    if(!_skipUntilPts)
-        return writeSamples(0, convertedCount);
-
     const i64 pts { frame->best_effort_timestamp };
+    const AVRational outputRate { .num = 1, .den = static_cast<i32>(_resampler.GetSampleRate()) };
+    uSize
+        first { 0 }, // the part of the frame written
+        last { convertedCount };
 
-    // a frame that can't be placed: better a little early than skipping forever
-    if(pts == AV_NOPTS_VALUE)
-    {
+    // Before a start position (a seek, or a loop's start): dropped, the frame it falls inside cut at the front. A frame
+    // that can't be placed ends the skipping - better a little early than skipping forever
+    if(_skipUntilPts && pts == AV_NOPTS_VALUE)
         _skipUntilPts.reset();
-        return writeSamples(0, convertedCount);
+
+    if(_skipUntilPts)
+    {
+        const i64 target { *_skipUntilPts };
+        const i64 end { pts + av_rescale_q(frame->nb_samples, AVRational { .num = 1, .den = frame->sample_rate }, _timeBase) };
+
+        if(end <= target)
+            return true;
+
+        _skipUntilPts.reset(); // this frame reaches the target, nothing after it is skipped
+
+        if(pts < target)
+            first = std::min(static_cast<uSize>(av_rescale_q(target - pts, _timeBase, outputRate)), convertedCount);
     }
 
-    const i64 target { *_skipUntilPts };
-    const i64 end { pts + av_rescale_q(frame->nb_samples, AVRational { .num = 1, .den = frame->sample_rate }, _timeBase) };
+    // While looping, nothing past the loop end: the frame it falls inside cut at the back (an end of 0 is the file's own)
+    const u64 loopEndSample { _loopEndSample };
 
-    // entirely before the target: dropped
-    if(end <= target)
+    if(_isLooping && 0 != loopEndSample && pts != AV_NOPTS_VALUE)
+    {
+        const i64 loopEnd { toPts(loopEndSample) };
+
+        if(pts >= loopEnd)
+            return true;
+
+        last = std::min(last, static_cast<uSize>(av_rescale_q(loopEnd - pts, _timeBase, outputRate)));
+    }
+
+    if(first >= last)
         return true;
 
-    _skipUntilPts.reset(); // this frame reaches the target, nothing after it is skipped
+    return writeSamples(first, last - first);
+}
 
-    // the target falls inside this frame: cut its front off, counted at the output rate
-    const i64 cut { pts < target ? av_rescale_q(target - pts, _timeBase, AVRational { .num = 1, .den = static_cast<i32>(_resampler.GetSampleRate()) }) : 0 };
-    const uSize cutCount { std::min(static_cast<uSize>(cut), convertedCount) };
-    return writeSamples(cutCount, convertedCount - cutCount);
+bool RetroFuturaGUI::AudioDecodeThread::jumpToLoopStart(MediaFrame& frame)
+{
+    // The decoder's buffered frames still belong before the loop end; then it starts afresh on the loop start's packets
+    _decoder.SendPacket(nullptr);
+
+    if(!receiveFrames(frame))
+        return false;
+
+    _decoder.Flush();
+    const u64 loopStartSample { _loopStartSample };
+
+    {
+        const std::scoped_lock lock { _loopWrapsMutex };
+        _loopWraps.push_back(LoopWrap { ._WrittenFramesCount = _writtenFramesCount, ._StartSample = loopStartSample });
+    }
+
+    _skipUntilPts = toPts(loopStartSample);
+    return true;
+}
+
+i64 RetroFuturaGUI::AudioDecodeThread::toPts(const u64 sample) const
+{
+    return av_rescale_q(static_cast<i64>(sample), AVRational { .num = 1, .den = static_cast<i32>(_resampler.GetSampleRate()) }, _timeBase) + _startTime;
+}
+
+void RetroFuturaGUI::AudioDecodeThread::SetLoop(const bool isLooping, const u64 startSample, const u64 endSample)
+{
+    _loopStartSample = startSample;
+    _loopEndSample = endSample;
+    _isLooping = isLooping;
+}
+
+std::optional<RetroFuturaGUI::AudioDecodeThread::LoopWrap> RetroFuturaGUI::AudioDecodeThread::TakeLoopWrap(const uSize readFramesCount) const
+{
+    const std::scoped_lock lock { _loopWrapsMutex };
+
+    if(_loopWraps.empty() || _loopWraps.front()._WrittenFramesCount > readFramesCount)
+        return std::nullopt;
+
+    const LoopWrap wrap { _loopWraps.front() };
+    _loopWraps.pop_front();
+    return wrap;
+}
+
+void RetroFuturaGUI::AudioDecodeThread::ClearLoopWraps()
+{
+    const std::scoped_lock lock { _loopWrapsMutex };
+    _loopWraps.clear();
 }
 
 bool RetroFuturaGUI::AudioDecodeThread::writeSamples(const uSize offset, const uSize frameCount)
@@ -157,6 +224,15 @@ void RetroFuturaGUI::AudioDecodeThread::run()
 
     while(_queue.PopPacket(packet))
     {
+        // the reader went back to the loop start after this
+        if(LoopMarker == packet->stream_index)
+        {
+            if(!jumpToLoopStart(frame))
+                return;
+
+            continue;
+        }
+
         // only skip corrupt packets rather than ending playback
         if(0 > _decoder.SendPacket(packet.Get()))
             continue;
