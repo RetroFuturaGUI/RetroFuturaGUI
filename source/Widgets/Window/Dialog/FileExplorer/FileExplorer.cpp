@@ -8,6 +8,7 @@
 #include "FontManager.hpp"
 #include "Label.hpp"
 #include "MenuBar.hpp"
+#include "ModuleSource.hpp"
 #include "PlatformBridge.hpp"
 #include "SceneLoader.hpp"
 #include "ScrollView.hpp"
@@ -660,9 +661,9 @@ std::vector<RetroFuturaGUI::Table::TrackDefinition> RetroFuturaGUI::FileExplorer
     std::vector<Table::TrackDefinition> columns
     {
         { ._Sizing = Table::TrackSizing::Star, ._Value = 1.0f },                               //name
-        { ._Sizing = Table::TrackSizing::Fixed, ._Value = std::ceil(6.0f * font._Size) },  //size
-        { ._Sizing = Table::TrackSizing::Fixed, ._Value = std::ceil(11.0f * font._Size) }, //modified
-        { ._Sizing = Table::TrackSizing::Fixed, ._Value = std::ceil(5.5f * font._Size) }   //type, and room for the sort arrow in its header
+        { ._Sizing = Table::TrackSizing::Fixed, ._Value = std::ceil(4.5f * font._Size) },   //size
+        { ._Sizing = Table::TrackSizing::Fixed, ._Value = std::ceil(8.25f * font._Size) },  //modified
+        { ._Sizing = Table::TrackSizing::Fixed, ._Value = std::ceil(4.125f * font._Size) }  //type, and room for the sort arrow in its header
     };
 
     if(hasThumbnails)
@@ -3492,9 +3493,11 @@ RetroFuturaGUI::FileExplorer::FileKind RetroFuturaGUI::FileExplorer::fileKindOf(
     const std::string extension { lowerCase(toUtf8(entry._Path.extension())) };
 
     constexpr std::array<std::string_view, 7> imageExtensions { ".png", ".jpg", ".jpeg", ".bmp", ".gif", ".tga", ".svg" };
-    constexpr std::array<std::string_view, 9>
-        audioExtensions { ".mp3", ".flac", ".wav", ".ogg", ".oga", ".opus", ".m4a", ".adx", ".ahx" },
-        videoExtensions { ".webm", ".mkv", ".mp4", ".m4v", ".mov", ".ogv", ".mpg", ".mpeg", ".avi" };
+    constexpr std::array<std::string_view, 17> audioExtensions
+    {
+        ".mp3", ".flac", ".wav", ".ogg", ".oga", ".opus", ".m4a", ".adx", ".ahx", ".hca", ".aif", ".aiff", ".aifc", ".mka", ".wv", ".caf", ".mp2"
+    };
+    constexpr std::array<std::string_view, 9> videoExtensions { ".webm", ".mkv", ".mp4", ".m4v", ".mov", ".ogv", ".mpg", ".mpeg", ".avi" };
     const auto isAmong { [&extension](const auto& extensions) { return extensions.end() != std::find(extensions.begin(), extensions.end(), extension); } };
 
     if(isAmong(imageExtensions))
@@ -3505,6 +3508,10 @@ RetroFuturaGUI::FileExplorer::FileKind RetroFuturaGUI::FileExplorer::fileKindOf(
 
     if(isAmong(videoExtensions))
         return FileKind::Video;
+
+    // Tracker modules have about 70 extensions; libopenmpt knows them, and none without tracker modules
+    if(ModuleSource::IsModuleExtension(extension))
+        return FileKind::Audio;
 
     return FileKind::Other;
 }

@@ -38,6 +38,10 @@ namespace RetroFuturaGUI
         ///        from its first few kilobytes. Always false without tracker modules.
         static bool IsModule(std::string_view path);
 
+        /// @brief Whether libopenmpt knows the extension ("xm", ".IT", ...), for listing files by name - IsModule decides
+        ///        by content. Always false without tracker modules.
+        static bool IsModuleExtension(std::string_view extension);
+
         /// @brief What a module says about itself, without playing it: AudioFileFormat::Module with ModuleMetadata. The
         ///        common part has the title, artist, date, message (as the comment), the first subsong's length, and every
         ///        metadata item as a tag; it plays as stereo at any rate, so _SampleRate stays 0.

@@ -71,6 +71,17 @@ bool RetroFuturaGUI::ModuleSource::IsModule(std::string_view path)
         &openmpt_log_func_silent, nullptr, &openmpt_error_func_ignore, nullptr, nullptr, nullptr);
 }
 
+bool RetroFuturaGUI::ModuleSource::IsModuleExtension(std::string_view extension)
+{
+    if(extension.starts_with('.'))
+        extension.remove_prefix(1);
+
+    if(extension.empty())
+        return false;
+
+    return 1 == openmpt_is_extension_supported(std::string(extension).c_str()); //compares ignoring case
+}
+
 std::optional<RetroFuturaGUI::AudioMetadata> RetroFuturaGUI::ModuleSource::ReadMetadata(std::string_view path)
 {
     if(!IsModule(path))
@@ -390,6 +401,7 @@ ma_result RetroFuturaGUI::ModuleSource::onSetLooping(ma_data_source* dataSource,
 
 RetroFuturaGUI::ModuleSource::~ModuleSource() = default;
 bool RetroFuturaGUI::ModuleSource::IsModule(std::string_view) { return false; }
+bool RetroFuturaGUI::ModuleSource::IsModuleExtension(std::string_view) { return false; }
 std::optional<RetroFuturaGUI::AudioMetadata> RetroFuturaGUI::ModuleSource::ReadMetadata(std::string_view) { return std::nullopt; }
 bool RetroFuturaGUI::ModuleSource::Open(std::string_view, const u32) { return false; }
 void RetroFuturaGUI::ModuleSource::Close() {}

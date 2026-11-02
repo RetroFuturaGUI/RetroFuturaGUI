@@ -90,6 +90,12 @@ namespace RetroFuturaGUI
         /// @brief The worker's side: reads and decodes the file, and writes out its details.
         static Loaded load(Request&& request, std::stop_token stop);
 
+        /// @brief A song's details and cover art. False with nothing added or when the file can't be read as audio.
+        static bool loadAudio(const std::string& path, const i32 pictureSide, Loaded& loaded);
+
+        /// @brief One row of details. An empty value adds none.
+        static void addDetail(Loaded& loaded, std::string_view key, std::string value);
+
         /// @brief The main thread's side: shows what a job loaded, unless something else was selected since.
         void showLoaded(Loaded&& loaded);
 

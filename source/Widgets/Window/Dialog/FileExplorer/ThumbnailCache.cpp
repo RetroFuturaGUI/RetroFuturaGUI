@@ -78,20 +78,20 @@ RetroFuturaGUI::FileExplorer::ThumbnailCache::Decoded RetroFuturaGUI::FileExplor
             decoded._Image = Texture::DecodeFile(decoded._Path, true, _pictureSide);
         break;
         case FileKind::Audio:
-        {
-            const std::optional<AudioMetadata> audio { AudioMetadataReader::Read(path) };
-
-            if(!audio || audio->_CoverArt.empty())
-                break; //no cover art: the icon shows
-
-            decoded._Image = Texture::DecodeMemory(audio->_CoverArt, true, _pictureSide);
-        }
+            decoded._Image = decodeCoverArt(path);
         break;
         case FileKind::Video:
         {
             const std::optional<VideoMetadata> video { ReadVideoMetadata(path) };
 
-            if(!video || !video->_VideoCodecIsAllowed)
+            // A WebM or Matroska file may hold only sound, and a song's cover art
+            if(!video)
+            {
+                decoded._Image = decodeCoverArt(path);
+                break;
+            }
+
+            if(!video->_VideoCodecIsAllowed)
                 break;
 
             decoded._Image = DecodeVideoFrame(path, static_cast<i64>(video->_Seconds * 100.0), _pictureSide, true); //10% in, in milliseconds
@@ -102,6 +102,16 @@ RetroFuturaGUI::FileExplorer::ThumbnailCache::Decoded RetroFuturaGUI::FileExplor
     }
 
     return decoded;
+}
+
+std::optional<RetroFuturaGUI::DecodedImage> RetroFuturaGUI::FileExplorer::ThumbnailCache::decodeCoverArt(const std::string& path)
+{
+    const std::optional<AudioMetadata> audio { AudioMetadataReader::Read(path) };
+
+    if(!audio || audio->_CoverArt.empty())
+        return std::nullopt;
+
+    return Texture::DecodeMemory(audio->_CoverArt, true, _pictureSide);
 }
 
 void RetroFuturaGUI::FileExplorer::ThumbnailCache::take(Decoded&& decoded)

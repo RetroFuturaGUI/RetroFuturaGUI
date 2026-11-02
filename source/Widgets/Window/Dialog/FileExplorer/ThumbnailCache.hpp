@@ -63,6 +63,9 @@ namespace RetroFuturaGUI
         /// @brief the worker decodes the file's picture and scales it down to a thumbnail.
         static Decoded decode(Request&& request, std::stop_token stop);
 
+        /// @brief A song's cover art as a thumbnail. None without cover art
+        static std::optional<DecodedImage> decodeCoverArt(const std::string& path);
+
         /// @brief The main thread uploads a decoded picture as its file's thumbnail.
         void take(Decoded&& decoded);
 

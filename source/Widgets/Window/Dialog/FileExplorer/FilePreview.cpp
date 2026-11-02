@@ -169,13 +169,6 @@ RetroFuturaGUI::FileExplorer::FilePreview::Loaded RetroFuturaGUI::FileExplorer::
     const Entry& entry { request._Entry };
     Loaded loaded { ._Generation = request._Generation, ._Kind = request._Kind, ._Path = entry._Path, ._Picture = {}, ._Details = {}, ._Message = {}, ._CanShowFrame = false };
     const std::string path { toUtf8(entry._Path) };
-    const auto add { [&loaded](std::string_view key, std::string value)
-        {
-            if(value.empty())
-                return;
-
-            loaded._Details.emplace_back(std::string(key), std::move(value));
-        } };
 
     //What only this kind of file has comes first, since the pane shows as many rows as fit
     switch(request._Kind)
@@ -189,40 +182,19 @@ RetroFuturaGUI::FileExplorer::FilePreview::Loaded RetroFuturaGUI::FileExplorer::
                 break;
             }
 
-            add("Pixels", std::format("{} x {}", loaded._Picture->_SourceResolution.x, loaded._Picture->_SourceResolution.y));
+            addDetail(loaded, "Pixels", std::format("{} x {}", loaded._Picture->_SourceResolution.x, loaded._Picture->_SourceResolution.y));
         break;
         case Kind::Audio:
-        {
-            const std::optional<AudioMetadata> audio { AudioMetadataReader::Read(path) };
-
-            if(!audio)
-            {
+            if(!loadAudio(path, request._PictureSide, loaded))
                 loaded._Message = "Can't read this file";
-                break;
-            }
-
-            add("Title", audio->_Title);
-            add("Artist", audio->_Artist);
-            add("Album", audio->_Album);
-            add("Length", 0.0 < audio->_Seconds ? formatDuration(audio->_Seconds) : std::string {});
-            add("Year", audio->_Date);
-            add("Genre", audio->_Genre);
-            add("Track", audio->_Track);
-            add("Format", AudioFileFormat::Unknown == audio->_Format ? codecName(audio->_Codec) : std::string(GetAudioFileFormatName(audio->_Format)));
-            add("Rate", 0 < audio->_SampleRate ? std::format("{:g} kHz", audio->_SampleRate / 1000.0) : std::string {});
-            add("Channels", 0 < audio->_Channels ? std::to_string(audio->_Channels) : std::string {});
-            add("Bit rate", 0 < audio->_BitRate ? std::format("{} kbps", (audio->_BitRate + 500) / 1000) : std::string {});
-
-            if(!audio->_CoverArt.empty())
-                loaded._Picture = Texture::DecodeMemory(audio->_CoverArt, true, request._PictureSide);
-
-            if(!loaded._Picture)
-                loaded._Message = "No cover art";
-        }
         break;
         case Kind::Video:
         {
             const std::optional<VideoMetadata> video { ReadVideoMetadata(path) };
+
+            // A WebM or Matroska file may hold only sound: shown like a song
+            if(!video && loadAudio(path, request._PictureSide, loaded))
+                break;
 
             if(!video)
             {
@@ -230,13 +202,13 @@ RetroFuturaGUI::FileExplorer::FilePreview::Loaded RetroFuturaGUI::FileExplorer::
                 break;
             }
 
-            add("Title", video->_Title);
-            add("Length", 0.0 < video->_Seconds ? formatDuration(video->_Seconds) : std::string {});
-            add("Pixels", std::format("{} x {}", video->_Width, video->_Height));
-            add("Frames", 0.0 < video->_FramesPerSecond ? std::format("{:g} fps", std::round(video->_FramesPerSecond * 1000.0) / 1000.0) : std::string {});
-            add("Video", codecName(video->_VideoCodec));
-            add("Audio", video->_HasAudio ? std::format("{}, {:g} kHz, {} channels", codecName(video->_AudioCodec), video->_SampleRate / 1000.0, video->_Channels) : std::string("None"));
-            add("Format", video->_Container);
+            addDetail(loaded, "Title", video->_Title);
+            addDetail(loaded, "Length", 0.0 < video->_Seconds ? formatDuration(video->_Seconds) : std::string {});
+            addDetail(loaded, "Pixels", std::format("{} x {}", video->_Width, video->_Height));
+            addDetail(loaded, "Frames", 0.0 < video->_FramesPerSecond ? std::format("{:g} fps", std::round(video->_FramesPerSecond * 1000.0) / 1000.0) : std::string {});
+            addDetail(loaded, "Video", codecName(video->_VideoCodec));
+            addDetail(loaded, "Audio", video->_HasAudio ? std::format("{}, {:g} kHz, {} channels", codecName(video->_AudioCodec), video->_SampleRate / 1000.0, video->_Channels) : std::string("None"));
+            addDetail(loaded, "Format", video->_Container);
 
             //The same check decides the frame now and playing later
             if(video->_VideoCodecIsAllowed)
@@ -254,7 +226,7 @@ RetroFuturaGUI::FileExplorer::FilePreview::Loaded RetroFuturaGUI::FileExplorer::
             for(std::filesystem::directory_iterator iterator { entry._Path, std::filesystem::directory_options::skip_permission_denied, error }, end {}; !error && iterator != end && !stop.stop_requested(); iterator.increment(error))
                 ++itemCount;
 
-            add("Items", error ? std::string {} : std::to_string(itemCount));
+            addDetail(loaded, "Items", error ? std::string {} : std::to_string(itemCount));
         }
         break;
         default:
@@ -265,6 +237,49 @@ RetroFuturaGUI::FileExplorer::FilePreview::Loaded RetroFuturaGUI::FileExplorer::
         loaded._Details.push_back(std::move(detail));
 
     return loaded;
+}
+
+bool RetroFuturaGUI::FileExplorer::FilePreview::loadAudio(const std::string& path, const i32 pictureSide, Loaded& loaded)
+{
+    const std::optional<AudioMetadata> audio { AudioMetadataReader::Read(path) };
+
+    if(!audio)
+        return false;
+
+    // A tracker module's format by its tracker's name, "Impulse Tracker 2.14" rather than "Tracker module"
+    const ModuleMetadata* module { std::get_if<ModuleMetadata>(&audio->_Details) };
+    std::string format { AudioFileFormat::Unknown == audio->_Format ? codecName(audio->_Codec) : std::string(GetAudioFileFormatName(audio->_Format)) };
+
+    if(module && !module->_TypeName.empty())
+        format = module->_TypeName;
+
+    addDetail(loaded, "Title", audio->_Title);
+    addDetail(loaded, "Artist", audio->_Artist);
+    addDetail(loaded, "Album", audio->_Album);
+    addDetail(loaded, "Length", 0.0 < audio->_Seconds ? formatDuration(audio->_Seconds) : std::string {});
+    addDetail(loaded, "Year", audio->_Date);
+    addDetail(loaded, "Genre", audio->_Genre);
+    addDetail(loaded, "Track", audio->_Track);
+    addDetail(loaded, "Format", std::move(format));
+    addDetail(loaded, "Rate", 0 < audio->_SampleRate ? std::format("{:g} kHz", audio->_SampleRate / 1000.0) : std::string {});
+    addDetail(loaded, "Channels", 0 < audio->_Channels ? std::to_string(audio->_Channels) : std::string {});
+    addDetail(loaded, "Bit rate", 0 < audio->_BitRate ? std::format("{} kbps", (audio->_BitRate + 500) / 1000) : std::string {});
+
+    if(!audio->_CoverArt.empty())
+        loaded._Picture = Texture::DecodeMemory(audio->_CoverArt, true, pictureSide);
+
+    if(!loaded._Picture)
+        loaded._Message = "No cover art";
+
+    return true;
+}
+
+void RetroFuturaGUI::FileExplorer::FilePreview::addDetail(Loaded& loaded, std::string_view key, std::string value)
+{
+    if(value.empty())
+        return;
+
+    loaded._Details.emplace_back(std::string(key), std::move(value));
 }
 
 void RetroFuturaGUI::FileExplorer::FilePreview::showLoaded(Loaded&& loaded)
