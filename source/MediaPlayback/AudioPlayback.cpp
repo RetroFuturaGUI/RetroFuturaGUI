@@ -520,6 +520,12 @@ bool RetroFuturaGUI::AudioPlayback::isNativeFormat(std::string_view file)
     if(container == "flac")
         return codec == AV_CODEC_ID_FLAC;
 
+    //miniaudio's WAV decoder reads AIFF and AIFF-C too
+    if(container == "aiff")
+        return codec == AV_CODEC_ID_PCM_S8 || codec == AV_CODEC_ID_PCM_U8 || codec == AV_CODEC_ID_PCM_S16BE || codec == AV_CODEC_ID_PCM_S24BE
+            || codec == AV_CODEC_ID_PCM_S32BE || codec == AV_CODEC_ID_PCM_S16LE || codec == AV_CODEC_ID_PCM_S24LE || codec == AV_CODEC_ID_PCM_S32LE
+            || codec == AV_CODEC_ID_PCM_F32BE || codec == AV_CODEC_ID_PCM_F64BE || codec == AV_CODEC_ID_PCM_ALAW || codec == AV_CODEC_ID_PCM_MULAW;
+
     if(container == "mp3")
         return codec == AV_CODEC_ID_MP3; // FFmpeg's mp3 demuxer also reads MP1/MP2 files - those go through the policy
 

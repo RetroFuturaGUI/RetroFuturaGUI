@@ -33,7 +33,7 @@ namespace RetroFuturaGUI
     };
 
     /// @brief Plays audio files through miniaudio's high-level engine, which owns the
-    /// output device, decoder, resampler and mixer. miniaudio decodes WAV, FLAC and MP3
+    /// output device, decoder, resampler and mixer. miniaudio decodes WAV, AIFF, FLAC and MP3
     /// itself; every other format is decoded by FFmpeg through AudioStream.
     /// @note ma_engine must keep a stable address and must never be copied, so this class
     /// is neither copyable nor movable.
@@ -91,8 +91,7 @@ namespace RetroFuturaGUI
         u32 GetPosition() const;
 
         /// @brief Returns the loaded file's total length in milliseconds, 0 if unknown.
-        /// @note Vorbis always reports 0 (an stb_vorbis push-mode limitation), and MP3
-        /// has to decode the whole file to answer - so cache this, never call it per frame.
+        /// @note An MP3 (decoded by miniaudio) has to be decoded whole to answer - so cache this, never call it per frame.
         u32 GetDuration() const;
 
         /// @brief Seeks to a position given in milliseconds.
