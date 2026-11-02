@@ -269,32 +269,41 @@ bool RetroFuturaGUI::AudioPlayback::OpenAudioFile(std::string_view file, const H
         return false;
 
     unloadSound();
-    const std::optional<AudioMetadata> metadata { AudioMetadataReader::Read(file) };
-    _loop = metadata ? metadata->_Loop : std::nullopt;
+    _loop.reset();
+    SoundDecoder decoder { SoundDecoder::Libopenmpt };
 
-    // miniaudio's streamed sounds loop only over the whole file without a gap, so loop points go through FFmpeg
-    if(!loadSound(file, key, _loop || !isNativeFormat(file)))
+    // A tracker module repeats from its own restart position, so it has no loop points to read
+    if(!ModuleSource::IsModule(file))
+    {
+        const std::optional<AudioMetadata> metadata { AudioMetadataReader::Read(file) };
+        _loop = metadata ? metadata->_Loop : std::nullopt;
+
+        // miniaudio's streamed sounds loop only over the whole file without a gap, so loop points go through FFmpeg
+        decoder = _loop || !isNativeFormat(file) ? SoundDecoder::Ffmpeg : SoundDecoder::Miniaudio;
+    }
+
+    if(!loadSound(file, key, decoder))
         return false;
 
     applyLoop();
     return true;
 }
 
-bool RetroFuturaGUI::AudioPlayback::loadSound(std::string_view file, const HcaKey& key, const bool isStreamed)
+bool RetroFuturaGUI::AudioPlayback::loadSound(std::string_view file, const HcaKey& key, const SoundDecoder decoder)
 {
     ma_uint32 flags = MA_SOUND_FLAG_NO_SPATIALIZATION;
 
     if(_meterReady)
         flags |= MA_SOUND_FLAG_NO_DEFAULT_ATTACHMENT;
 
-    if(!isStreamed)
+    if(SoundDecoder::Miniaudio == decoder)
     {
         const std::string filepath(file); //need 0-terminated string
 
         if(ma_sound_init_from_file(&_engine, filepath.c_str(), flags | MA_SOUND_FLAG_STREAM, nullptr, nullptr, &_sound) != MA_SUCCESS)
             return false;
     }
-    else
+    else if(SoundDecoder::Ffmpeg == decoder)
     {
         if(!_audioStream.Open(file, key))
             return false;
@@ -306,6 +315,20 @@ bool RetroFuturaGUI::AudioPlayback::loadSound(std::string_view file, const HcaKe
         }
 
         _streamed = true;
+    }
+    else
+    {
+        // Rendered at the engine's rate, so miniaudio has nothing to resample
+        if(!_moduleSource.Open(file, ma_engine_get_sample_rate(&_engine)))
+            return false;
+
+        if(ma_sound_init_from_data_source(&_engine, _moduleSource.Get(), flags, nullptr, &_sound) != MA_SUCCESS)
+        {
+            _moduleSource.Close();
+            return false;
+        }
+
+        _isModule = true;
     }
 
     _soundLoaded = true;
@@ -327,8 +350,10 @@ void RetroFuturaGUI::AudioPlayback::unloadSound()
 
     ma_sound_uninit(&_sound);
     _audioStream.Close();
+    _moduleSource.Close();
     _soundLoaded = false;
     _streamed = false;
+    _isModule = false;
 }
 
 void RetroFuturaGUI::AudioPlayback::applyLoop()
@@ -365,6 +390,9 @@ bool RetroFuturaGUI::AudioPlayback::SetLoopPoints(const u64 startSample, const u
     if(0 != endSample && endSample <= startSample)
         return false;
 
+    if(_isModule)
+        return false; // it loops by its own patterns
+
     _loop = AudioLoop { ._StartSample = startSample, ._EndSample = endSample, ._Source = "SetLoopPoints" };
 
     // Reopened through FFmpeg where it left off, at the same speed
@@ -376,7 +404,7 @@ bool RetroFuturaGUI::AudioPlayback::SetLoopPoints(const u64 startSample, const u
         const std::string file { _filePath };
         unloadSound();
 
-        if(!loadSound(file, HcaKey {}, true))
+        if(!loadSound(file, HcaKey {}, SoundDecoder::Ffmpeg))
             return false;
 
         ma_sound_set_pitch(&_sound, pitch);
@@ -393,6 +421,25 @@ bool RetroFuturaGUI::AudioPlayback::SetLoopPoints(const u64 startSample, const u
 std::optional<RetroFuturaGUI::AudioLoop> RetroFuturaGUI::AudioPlayback::GetLoopPoints() const
 {
     return _loop;
+}
+
+uSize RetroFuturaGUI::AudioPlayback::GetSubsongCount() const
+{
+    if(!_soundLoaded)
+        return 0;
+
+    if(!_isModule)
+        return 1;
+
+    return _moduleSource.GetSubsongCount();
+}
+
+bool RetroFuturaGUI::AudioPlayback::SelectSubsong(const i32 index)
+{
+    if(!_isModule)
+        return false;
+
+    return _moduleSource.SelectSubsong(index);
 }
 
 void RetroFuturaGUI::AudioPlayback::StopPlaying()

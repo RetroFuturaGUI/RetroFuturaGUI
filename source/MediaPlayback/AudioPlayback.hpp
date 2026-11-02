@@ -2,6 +2,7 @@
 #include "AudioMetadata.hpp"
 #include "AudioSpectrum.hpp"
 #include "AudioStream.hpp"
+#include "ModuleSource.hpp"
 #include "config.hpp"
 #include <atomic>
 #include <optional>
@@ -37,7 +38,7 @@ namespace RetroFuturaGUI
 
     /// @brief Plays audio files through miniaudio's high-level engine, which owns the
     /// output device, decoder, resampler and mixer. miniaudio decodes WAV, AIFF, FLAC and MP3
-    /// itself; every other format is decoded by FFmpeg through AudioStream.
+    /// itself, libopenmpt renders tracker modules (ModuleSource), and every other format is decoded by FFmpeg through AudioStream.
     /// @note ma_engine must keep a stable address and must never be copied, so this class
     /// is neither copyable nor movable.
     class AudioPlayback
@@ -73,6 +74,8 @@ namespace RetroFuturaGUI
         /// does that. The stream stays open so it can be sought, queried and stopped - unlike a
         /// fire-and-forget sound, which hands back no handle to act on. The file's own loop points are read too (see
         /// GetLoopPoints), and a file that has them is decoded by FFmpeg, even WAV, FLAC or MP3, so its loop has no gap.
+        /// A tracker module (MOD, XM, S3M, IT, ...) plays through libopenmpt when the build has tracker modules
+        /// (TrackerModulesEnabled), rendered at the device's rate.
         bool OpenAudioFile(std::string_view file);
 
         /// @brief Loads an encrypted HCA file with the game's key (see HcaKey) - or any file, the key going unused. Fails for
@@ -108,19 +111,28 @@ namespace RetroFuturaGUI
         void SetPlaybackSpeed(const f32 factor);
 
         /// @brief Plays in a loop while isLooping, without a gap: between the loop points (see GetLoopPoints), or the whole
-        ///        file without any. Any time, and it stays set for the next file. Off by default.
+        ///        file without any. A tracker module repeats from its own restart position, as its composer set it. Any time,
+        ///        and it stays set for the next file. Off by default.
         void SetLooping(const bool isLooping);
         bool IsLooping() const;
 
         /// @brief Loops between two sample positions at the file's own rate instead of the file's loop points: the end
         ///        exclusive, 0 for the end of the file. Takes effect at once, also while looping. A file miniaudio decodes is
         ///        reopened through FFmpeg for it, at the same position. Lasts until the next file. False when nothing is
-        ///        loaded or the end isn't after the start.
+        ///        loaded, the end isn't after the start, or the file is a tracker module, which loops by its own patterns.
         bool SetLoopPoints(const u64 startSample, const u64 endSample);
 
         /// @brief The loop points SetLooping loops between: the file's own (from its header, smpl chunk or LOOPSTART tags),
         ///        or the ones SetLoopPoints set. None when the whole file loops.
         std::optional<AudioLoop> GetLoopPoints() const;
+
+        /// @brief How many subsongs the loaded tracker module has - game music often keeps several in one file. 1 for any
+        ///        other file, 0 with nothing loaded.
+        uSize GetSubsongCount() const;
+
+        /// @brief Switches the loaded tracker module to a subsong, from its start; -1 plays all of them one after another.
+        ///        The position and duration follow the subsong. False for any other file.
+        bool SelectSubsong(const i32 index);
 
         /// @brief Returns a channel's current output level as linear RMS, 0.0 to ~1.0.
         /// Measured after volume and pitch, with a fast attack and slow decay so it stays
@@ -155,6 +167,14 @@ namespace RetroFuturaGUI
         ma_node* GetOutputNode();
 
     private:
+        /// @brief What decodes the loaded sound.
+        enum class SoundDecoder
+        {
+            Miniaudio,  // WAV, AIFF, FLAC, MP3 without loop points
+            Ffmpeg,     // everything else, through AudioStream
+            Libopenmpt  // tracker modules, through ModuleSource
+        };
+
         /// @brief Runs on the audio thread. Measures each channel into the meter's atomics and copies a
         /// mono mix into its ring buffer for the spectrum, then passes the audio through untouched - a
         /// meter must never colour what is heard.
@@ -163,8 +183,8 @@ namespace RetroFuturaGUI
         /// @brief Releases the loaded sound, if any. Idempotent.
         void unloadSound();
 
-        /// @brief Loads the file as the sound, through miniaudio or, isStreamed, through FFmpeg (AudioStream).
-        bool loadSound(std::string_view file, const HcaKey& key, const bool isStreamed);
+        /// @brief Loads the file as the sound, decoded by decoder.
+        bool loadSound(std::string_view file, const HcaKey& key, const SoundDecoder decoder);
 
         /// @brief Hands the loop setting and points to whichever plays the sound.
         void applyLoop();
@@ -185,6 +205,7 @@ namespace RetroFuturaGUI
         AudioMeterNode _meter {};
         AudioSpectrum _spectrum {};
         AudioStream _audioStream {};
+        ModuleSource _moduleSource {};
         std::string _filePath {}; //the loaded file, for reopening it through FFmpeg
         std::optional<AudioLoop> _loop {};
         u32
@@ -195,6 +216,7 @@ namespace RetroFuturaGUI
             _soundLoaded { false },
             _meterReady { false },
             _streamed { false },
+            _isModule { false },
             _isLooping { false };
         static inline constexpr f32 _meterDecay { 0.85f }; //how smoothly the meter falls when the signal is falling
         static inline constexpr ma_uint32 _spectrumBufferFrameCount { 16384 };

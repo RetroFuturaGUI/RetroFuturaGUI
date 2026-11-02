@@ -40,6 +40,7 @@ list(APPEND RetroFuturaGuiSources
     "${CMAKE_CURRENT_SOURCE_DIR}/source/MediaPlayback/MediaFrame.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/MediaPlayback/MediaSource.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/MediaPlayback/MiniaudioImpl.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/source/MediaPlayback/ModuleSource.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/MediaPlayback/Packet.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/MediaPlayback/PacketQueue.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/MediaPlayback/Resampler.cpp"
@@ -331,4 +332,16 @@ if(RETROFUTURAGUI_ROYALTY_FREE_CODECS_ONLY)
 else()
     target_compile_definitions("RetroFuturaGUI" PUBLIC RETROFUTURAGUI_ROYALTY_FREE_CODECS_ONLY=0)
     message(WARNING "RETROFUTURAGUI_ROYALTY_FREE_CODECS_ONLY is off: this build decodes every codec FFmpeg has, H.264, HEVC and AAC among them. Shipping it means taking on those codecs' patent licences - keep it to personal or non-commercial use")
+endif()
+
+# Tracker modules (MOD, XM, S3M, IT and about 60 more) through libopenmpt (BSD), which brings mpg123 (LGPL 2.1, linked
+# dynamically), libvorbis, libogg and zlib along for the samples some modules compress. Off leaves all of them out.
+option(RETROFUTURAGUI_TRACKER_MODULES "Play tracker modules (MOD, XM, S3M, IT, ...) through libopenmpt" ON)
+
+if(RETROFUTURAGUI_TRACKER_MODULES)
+    find_package(libopenmpt CONFIG REQUIRED)
+    target_link_libraries("RetroFuturaGUI" PRIVATE libopenmpt::libopenmpt)
+    target_compile_definitions("RetroFuturaGUI" PUBLIC RETROFUTURAGUI_TRACKER_MODULES=1)
+else()
+    target_compile_definitions("RetroFuturaGUI" PUBLIC RETROFUTURAGUI_TRACKER_MODULES=0)
 endif()

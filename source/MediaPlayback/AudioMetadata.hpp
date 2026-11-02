@@ -26,7 +26,8 @@ namespace RetroFuturaGUI
         M4a,        // AAC or ALAC in an MP4 container
         Adx,
         Ahx,        // CRI's MPEG audio behind an ADX-style header - its metadata reads, its audio doesn't decode yet
-        Hca         // CRI's successor to ADX; decodes only with the royalty-free checks off, an encrypted one with its key
+        Hca,        // CRI's successor to ADX; decodes only with the royalty-free checks off, an encrypted one with its key
+        Module      // a tracker module (MOD, XM, S3M, IT, ...), played through libopenmpt when the build has tracker modules
         //Todo:
         //WebM,
         //Aiff
@@ -46,6 +47,7 @@ namespace RetroFuturaGUI
             case AudioFileFormat::Adx:       return "ADX";
             case AudioFileFormat::Ahx:       return "AHX";
             case AudioFileFormat::Hca:       return "HCA";
+            case AudioFileFormat::Module:    return "Tracker module";
             default:                         return "Unknown";
         }
     }
@@ -195,6 +197,29 @@ namespace RetroFuturaGUI
         std::string _Comment;
     };
 
+    /// @brief From a tracker module, as libopenmpt reads it.
+    struct ModuleMetadata
+    {
+        std::string
+            _Type,          // the format's usual extension, e.g. "it"
+            _TypeName,      // e.g. "Impulse Tracker"
+            _OriginalType,  // a converted module (MO3, GDM, ...): the format it was made from, e.g. "xm"; empty otherwise
+            _Container,     // the package the module sits in, e.g. "Unreal Music"; empty for a plain module
+            _Tracker,       // the tracker that most likely saved it, e.g. "OpenMPT 1.28"
+            _Message,       // the song message as written; empty when there is none
+            _Warnings;      // what libopenmpt noticed while loading, one per line
+        uSize
+            _ChannelCount { 0 }, // the module's own channels - it plays mixed down to stereo
+            _OrderCount { 0 },
+            _PatternCount { 0 },
+            _InstrumentCount { 0 },
+            _SampleCount { 0 };
+        std::vector<std::string>
+            _SubsongNames,  // one per subsong, so its size is the subsong count; names are often empty
+            _InstrumentNames,
+            _SampleNames;
+    };
+
     /// @brief Everything a file says about itself. What every format has lives here; what only one
     /// format carries lives in _Details, as that format's own struct.
     struct AudioMetadata
@@ -239,6 +264,6 @@ namespace RetroFuturaGUI
             _CoverArtHeight { 0 };
         std::vector<u8> _CoverArt; // the image as embedded, still encoded, from its own signature on: stray bytes a tagger left before it are dropped
         std::optional<AudioLoop> _Loop; // from wherever the format keeps its loop points
-        std::variant<std::monostate, WavMetadata, FlacMetadata, Mp3Metadata, OggVorbisMetadata, OpusMetadata, M4aMetadata, AdxMetadata, HcaMetadata> _Details;
+        std::variant<std::monostate, WavMetadata, FlacMetadata, Mp3Metadata, OggVorbisMetadata, OpusMetadata, M4aMetadata, AdxMetadata, HcaMetadata, ModuleMetadata> _Details;
     };
 }

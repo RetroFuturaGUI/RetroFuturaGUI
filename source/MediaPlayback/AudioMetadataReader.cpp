@@ -1,5 +1,6 @@
 #include "AudioMetadataReader.hpp"
 #include "MediaSource.hpp"
+#include "ModuleSource.hpp"
 #include <algorithm>
 #include <array>
 #include <charconv>
@@ -840,6 +841,10 @@ const AVStream* RetroFuturaGUI::AudioMetadataReader::findAudioStream(const Retro
 
 std::optional<RetroFuturaGUI::AudioMetadata> RetroFuturaGUI::AudioMetadataReader::Read(std::string_view path)
 {
+    // FFmpeg doesn't know tracker modules; libopenmpt reads them
+    if(ModuleSource::IsModule(path))
+        return ModuleSource::ReadMetadata(path);
+
     MediaSource source;
 
     if(!source.Open(path))
