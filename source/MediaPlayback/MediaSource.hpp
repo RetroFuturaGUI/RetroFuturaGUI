@@ -13,6 +13,13 @@ extern "C"
 
 namespace RetroFuturaGUI
 {
+    /// @brief How far Open() reads into a file before it returns.
+    enum class StreamProbing : u32
+    {
+        Full,       // reads ahead and decodes until FFmpeg knows every stream completely, just what decoding needs
+        HeadersOnly // the container's headers. Reads ahead only when they leave a stream's codec, size, rate or the length unknown
+    };
+
     /// @brief Owns the demuxer for one media file
     class MediaSource
     {
@@ -28,6 +35,10 @@ namespace RetroFuturaGUI
         /// decoding it are left to the caller - see FindBestStream, GetStream and Decoder.
         /// Returns false if the file can't be opened or its streams can't be read.
         bool Open(std::string_view path);
+
+        /// @brief Opens a media file, reading as far as probing says: HeadersOnly is for metadata
+        ///        (Matroska, MP4, Ogg, ...) is read no further, while one without (an MPEG program stream) is still investigated
+        bool Open(std::string_view path, const StreamProbing probing);
 
         /// @brief Closes the file. Idempotent - safe on a closed source
         void Close();
@@ -65,6 +76,9 @@ namespace RetroFuturaGUI
         i32 Seek(const i64 milliseconds);
 
     private:
+        /// @brief Whether the headers alone told each stream's codec a picture's size and frame rate, a sound's rate, channels, and the length
+        bool hasHeaderInformation() const;
+
         AVFormatContext* _formatContext { nullptr };
     };
 }

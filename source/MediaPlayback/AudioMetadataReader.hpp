@@ -32,6 +32,14 @@ namespace RetroFuturaGUI
         /// @return Nothing when it isn't one or ends early.
         static std::optional<HcaMetadata> ReadHcaHeader(std::span<const u8> header);
 
+        /// @brief Reads a Matroska or WebM file's EBML header and its segment's Info element from the start of the file. The
+        ///        first 256 KB hold them in practice. Fields it doesn't reach stay empty
+        /// @return Nothing when the data doesn't start with an EBML header
+        static std::optional<MatroskaMetadata> ReadMatroskaHeader(std::span<const u8> fileStart);
+
+        /// @brief How much of a file's start ReadMatroskaHeader wants
+        static constexpr uSize MatroskaHeaderSize { 256 * 1024 };
+
     private:
         AudioMetadataReader() = delete;
         AudioMetadataReader(const AudioMetadataReader&) = delete;
@@ -124,6 +132,25 @@ namespace RetroFuturaGUI
         ///        channels and sample rate from it and nothing else - loop points included. The loop block offsets follow vgmstream,
         ///        the reference for CRI formats.
         static AdxMetadata readAdxDetails(const AVCodecParameters* audio);
+
+        /// @brief Walks the AIFF chunk list for COMM, MARK and INST. FFmpeg reads the first for the format and skips the others,
+        ///        which hold the markers and the loops that refer to them
+        static AiffMetadata readAiffDetails(std::string_view path);
+
+        /// @brief An AIFF pascal string at offset. A count byte, the characters, and a pad byte when the whole is odd. offset
+        ///        moves past it. An empty string when it runs past the end
+        static std::string readPascalString(std::span<const u8> data, uSize& offset);
+
+        /// @brief One EBML number at offset. An element ID with its length marker kept (isId), or a size with it removed, where
+        ///        all ones means unknown (UINT64_MAX). offset moves past it. Nothing when it runs past the end or is malformed
+        static std::optional<u64> readEbmlNumber(std::span<const u8> data, uSize& offset, const bool isId);
+
+        /// @brief An EBML element's unsigned integer or string value.
+        static u64 readEbmlUnsigned(std::span<const u8> value);
+        static std::string readEbmlString(std::span<const u8> value);
+
+        /// @brief The cover art's format from FFmpeg's codec for it.
+        static CoverArtCodec toCoverArtCodec(const AVCodecParameters* picture);
 
         /// @brief Returns FFmpeg's best audio stream, or else the first audio stream there is.
         static const AVStream* findAudioStream(const MediaSource& source);

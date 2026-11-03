@@ -1,5 +1,6 @@
 #include "VideoStill.hpp"
 #include "Decoder.hpp"
+#include "DecodingPolicy.hpp"
 #include "MediaFrame.hpp"
 #include "MediaSource.hpp"
 #include "Packet.hpp"
@@ -130,15 +131,84 @@ std::optional<RetroFuturaGUI::DecodedImage> RetroFuturaGUI::DecodeVideoFrame(std
 
     const AVFrame* picture { latest.Get() };
 
-    if(0 >= picture->width || 0 >= picture->height)
-        return std::nullopt;
-
     //Shown at its display shape, since some videos store wide pixels; the stream's word goes before the frame's
     const AVRational
         streamPixelAspect { stream->sample_aspect_ratio },
         framePixelAspect { picture->sample_aspect_ratio };
+    const f64 pixelAspect { 0 < streamPixelAspect.num && 0 < streamPixelAspect.den ? av_q2d(streamPixelAspect) : 0 < framePixelAspect.num && 0 < framePixelAspect.den ? av_q2d(framePixelAspect) : 1.0 };
+    return ConvertPictureToImage(picture, pixelAspect, maxSide, flipVertically);
+}
+
+std::optional<RetroFuturaGUI::DecodedImage> RetroFuturaGUI::DecodeCoverArt(std::span<const u8> picture, const CoverArtCodec codec, const i32 maxSide, const bool flipVertically)
+{
+    if(picture.empty())
+        return std::nullopt;
+
+    AVCodecID codecId { AV_CODEC_ID_NONE };
+
+    switch(codec)
+    {
+        case CoverArtCodec::Jpeg: codecId = AV_CODEC_ID_MJPEG; break;
+        case CoverArtCodec::Png:  codecId = AV_CODEC_ID_PNG; break;
+        case CoverArtCodec::Bmp:  codecId = AV_CODEC_ID_BMP; break;
+        case CoverArtCodec::Gif:  codecId = AV_CODEC_ID_GIF; break;
+        case CoverArtCodec::WebP: codecId = AV_CODEC_ID_WEBP; break;
+        case CoverArtCodec::Tiff: codecId = AV_CODEC_ID_TIFF; break;
+        default:                  return std::nullopt;
+    }
+
+    if(!IsCodecAllowed(codecId))
+        return std::nullopt;
+
+    const AVCodec* decoderCodec { avcodec_find_decoder(codecId) };
+
+    if(!decoderCodec)
+        return std::nullopt;
+
+    std::unique_ptr<AVCodecContext, void(*)(AVCodecContext*)> context { avcodec_alloc_context3(decoderCodec), [](AVCodecContext* opened) { avcodec_free_context(&opened); } };
+
+    if(!context)
+        return std::nullopt;
+
+    context->thread_count = 1; //one picture: threads would only cost their start-up
+
+    if(0 > avcodec_open2(context.get(), decoderCodec, nullptr))
+        return std::nullopt;
+
+    //A packet of its own, since FFmpeg's decoders read a little past the end and want that padding zeroed
+    Packet packet;
+    MediaFrame frame;
+
+    if(!packet.IsValid() || !frame.IsValid())
+        return std::nullopt;
+
+    if(0 > av_new_packet(packet.Get(), static_cast<i32>(std::min<uSize>(picture.size(), std::numeric_limits<i32>::max()))))
+        return std::nullopt;
+
+    std::memcpy(packet->data, picture.data(), static_cast<uSize>(packet->size));
+    packet->flags |= AV_PKT_FLAG_KEY;
+
+    if(0 > avcodec_send_packet(context.get(), packet.Get()))
+        return std::nullopt;
+
+    avcodec_send_packet(context.get(), nullptr); //no more pictures, so one held back comes out
+
+    if(0 > avcodec_receive_frame(context.get(), frame.Get()))
+        return std::nullopt;
+
+    const AVRational pixelAspect { frame->sample_aspect_ratio };
+    return ConvertPictureToImage(frame.Get(), 0 < pixelAspect.num && 0 < pixelAspect.den ? av_q2d(pixelAspect) : 1.0, maxSide, flipVertically);
+}
+
+std::optional<RetroFuturaGUI::DecodedImage> RetroFuturaGUI::ConvertPictureToImage(const AVFrame* picture, const f64 pixelAspect, const i32 maxSide, const bool flipVertically)
+{
+    if(!picture)
+        return std::nullopt;
+
+    if(0 >= picture->width || 0 >= picture->height)
+        return std::nullopt;
+
     const f64
-        pixelAspect { 0 < streamPixelAspect.num && 0 < streamPixelAspect.den ? av_q2d(streamPixelAspect) : 0 < framePixelAspect.num && 0 < framePixelAspect.den ? av_q2d(framePixelAspect) : 1.0 },
         displayWidth { static_cast<f64>(picture->width) * pixelAspect },
         displayHeight { static_cast<f64>(picture->height) },
         longest { std::max(displayWidth, displayHeight) },

@@ -1,9 +1,6 @@
 #include "ThumbnailCache.hpp"
-#include "AudioMetadataReader.hpp"
 #include "PlatformBridge.hpp"
 #include "Table.hpp"
-#include "VideoMetadata.hpp"
-#include "VideoStill.hpp"
 #include "Window.hpp"
 #include <algorithm>
 #include <string_view>
@@ -67,7 +64,7 @@ void RetroFuturaGUI::FileExplorer::ThumbnailCache::Update(Table& table, const st
     letGoOfOldest();
 }
 
-RetroFuturaGUI::FileExplorer::ThumbnailCache::Decoded RetroFuturaGUI::FileExplorer::ThumbnailCache::decode(Request&& request, std::stop_token)
+RetroFuturaGUI::FileExplorer::ThumbnailCache::Decoded RetroFuturaGUI::FileExplorer::ThumbnailCache::decode(Request&& request, IsolatedDecoder& decoder, std::stop_token)
 {
     Decoded decoded { ._Path = std::move(request._Path), ._Image = {} };
     const std::string path { toUtf8(decoded._Path) };
@@ -75,43 +72,19 @@ RetroFuturaGUI::FileExplorer::ThumbnailCache::Decoded RetroFuturaGUI::FileExplor
     switch(request._Kind)
     {
         case FileKind::Image:
-            decoded._Image = Texture::DecodeFile(decoded._Path, true, _pictureSide);
+            decoded._Image = decoder.ReadThumbnail(MediaKind::Image, path, _pictureSide);
         break;
         case FileKind::Audio:
-            decoded._Image = decodeCoverArt(path);
+            decoded._Image = decoder.ReadThumbnail(MediaKind::Audio, path, _pictureSide);
         break;
         case FileKind::Video:
-        {
-            const std::optional<VideoMetadata> video { ReadVideoMetadata(path) };
-
-            // A WebM or Matroska file may hold only sound, and a song's cover art
-            if(!video)
-            {
-                decoded._Image = decodeCoverArt(path);
-                break;
-            }
-
-            if(!video->_VideoCodecIsAllowed)
-                break;
-
-            decoded._Image = DecodeVideoFrame(path, static_cast<i64>(video->_Seconds * 100.0), _pictureSide, true); //10% in, in milliseconds
-        }
+            decoded._Image = decoder.ReadThumbnail(MediaKind::Video, path, _pictureSide);
         break;
         default:
         break;
     }
 
     return decoded;
-}
-
-std::optional<RetroFuturaGUI::DecodedImage> RetroFuturaGUI::FileExplorer::ThumbnailCache::decodeCoverArt(const std::string& path)
-{
-    const std::optional<AudioMetadata> audio { AudioMetadataReader::Read(path) };
-
-    if(!audio || audio->_CoverArt.empty())
-        return std::nullopt;
-
-    return Texture::DecodeMemory(audio->_CoverArt, true, _pictureSide);
 }
 
 void RetroFuturaGUI::FileExplorer::ThumbnailCache::take(Decoded&& decoded)
@@ -142,6 +115,9 @@ const RetroFuturaGUI::ITexture* RetroFuturaGUI::FileExplorer::ThumbnailCache::pi
     const FileKind kind { fileKindOf(entry) };
 
     if(!_work)
+        return iconOf(kind);
+
+    if(!_decoder)
         return iconOf(kind);
 
     const bool hasPicture { FileKind::Image == kind || FileKind::Audio == kind || FileKind::Video == kind };
@@ -178,7 +154,7 @@ const RetroFuturaGUI::ITexture* RetroFuturaGUI::FileExplorer::ThumbnailCache::pi
         _waitingSince = std::chrono::steady_clock::now();
 
     _pendingKeys.push_back(key);
-    _work->Post([request = Request { ._Path = entry._Path, ._Kind = kind }](std::stop_token stop) mutable { return decode(std::move(request), stop); },
+    _work->Post([request = Request { ._Path = entry._Path, ._Kind = kind }, decoder = _decoder](std::stop_token stop) mutable { return decode(std::move(request), *decoder, stop); },
                 [this](Decoded&& decoded) { take(std::move(decoded)); });
     return shown;
 }
@@ -239,4 +215,5 @@ void RetroFuturaGUI::FileExplorer::ThumbnailCache::letGoOfStuckJob()
 
     _pendingKeys.clear();
     _work = std::make_unique<BackgroundWork>(BackgroundWork::WhenDestroyed::LetJobFinish);
+    _decoder = std::make_shared<IsolatedDecoder>(); //the stuck job keeps the old one, and the helper it waits on
 }

@@ -1,10 +1,8 @@
 #include "FilePreview.hpp"
-#include "AudioMetadataReader.hpp"
 #include "Image.hpp"
 #include "Label.hpp"
 #include "Table.hpp"
 #include "Video.hpp"
-#include "VideoMetadata.hpp"
 #include "Window.hpp"
 #include <algorithm>
 #include <array>
@@ -151,135 +149,67 @@ void RetroFuturaGUI::FileExplorer::FilePreview::post(Request&& request)
 {
     const std::chrono::steady_clock::time_point now { std::chrono::steady_clock::now() };
 
-    //A job still running holds the next one up; one busy this long is stuck, on a download say, and is let go to finish alone
+    //A job still running holds the next one up; one busy this long is stuck, on a download say, and is let go to finish alone, with its own decoder
     if(!_work || (_work->IsBusy() && _jobPatience < now - _lastPostAt))
+    {
         _work = std::make_unique<BackgroundWork>(BackgroundWork::WhenDestroyed::LetJobFinish);
+        _decoder = std::make_shared<IsolatedDecoder>();
+    }
 
     if(!_work)
         return;
 
+    if(!_decoder)
+        return;
+
     _work->ClearPending(); //only the newest selection is worth loading
     _lastPostAt = now;
-    _work->Post([request = std::move(request)](std::stop_token stop) mutable { return load(std::move(request), stop); },
+    _work->Post([request = std::move(request), decoder = _decoder](std::stop_token stop) mutable { return load(std::move(request), *decoder, stop); },
                 [this](Loaded&& loaded) { showLoaded(std::move(loaded)); });
 }
 
-RetroFuturaGUI::FileExplorer::FilePreview::Loaded RetroFuturaGUI::FileExplorer::FilePreview::load(Request&& request, std::stop_token stop)
+RetroFuturaGUI::FileExplorer::FilePreview::Loaded RetroFuturaGUI::FileExplorer::FilePreview::load(Request&& request, IsolatedDecoder& decoder, std::stop_token stop)
 {
     const Entry& entry { request._Entry };
     Loaded loaded { ._Generation = request._Generation, ._Kind = request._Kind, ._Path = entry._Path, ._Picture = {}, ._Details = {}, ._Message = {}, ._CanShowFrame = false };
     const std::string path { toUtf8(entry._Path) };
+    std::optional<MediaKind> mediaKind {};
 
-    //What only this kind of file has comes first, since the pane shows as many rows as fit
     switch(request._Kind)
     {
-        case Kind::Image:
-            loaded._Picture = Texture::DecodeFile(entry._Path, true, request._PictureSide);
+        case Kind::Image: mediaKind = MediaKind::Image; break;
+        case Kind::Audio: mediaKind = MediaKind::Audio; break;
+        case Kind::Video: mediaKind = MediaKind::Video; break;
+        default: break;
+    }
 
-            if(!loaded._Picture)
-            {
-                loaded._Message = "Can't read this image";
-                break;
-            }
+    //What only this kind of file has comes first, since the pane shows as many rows as fit
+    if(mediaKind)
+    {
+        MediaPreviewResult media { decoder.ReadPreview(*mediaKind, path, request._PictureSide) };
+        loaded._Details = std::move(media._Details);
+        loaded._Picture = std::move(media._Picture);
+        loaded._Message = std::move(media._Message);
+        loaded._CanShowFrame = media._CanShowFrame;
+    }
 
-            addDetail(loaded, "Pixels", std::format("{} x {}", loaded._Picture->_SourceResolution.x, loaded._Picture->_SourceResolution.y));
-        break;
-        case Kind::Audio:
-            if(!loadAudio(path, request._PictureSide, loaded))
-                loaded._Message = "Can't read this file";
-        break;
-        case Kind::Video:
-        {
-            const std::optional<VideoMetadata> video { ReadVideoMetadata(path) };
+    if(Kind::Folder == request._Kind)
+    {
+        //Counted here, off the main thread, since a big folder or a slow drive takes a while
+        uSize itemCount { 0 };
+        std::error_code error {};
 
-            // A WebM or Matroska file may hold only sound: shown like a song
-            if(!video && loadAudio(path, request._PictureSide, loaded))
-                break;
+        for(std::filesystem::directory_iterator iterator { entry._Path, std::filesystem::directory_options::skip_permission_denied, error }, end {}; !error && iterator != end && !stop.stop_requested(); iterator.increment(error))
+            ++itemCount;
 
-            if(!video)
-            {
-                loaded._Message = "Can't read this video";
-                break;
-            }
-
-            addDetail(loaded, "Title", video->_Title);
-            addDetail(loaded, "Length", 0.0 < video->_Seconds ? formatDuration(video->_Seconds) : std::string {});
-            addDetail(loaded, "Pixels", std::format("{} x {}", video->_Width, video->_Height));
-            addDetail(loaded, "Frames", 0.0 < video->_FramesPerSecond ? std::format("{:g} fps", std::round(video->_FramesPerSecond * 1000.0) / 1000.0) : std::string {});
-            addDetail(loaded, "Video", codecName(video->_VideoCodec));
-            addDetail(loaded, "Audio", video->_HasAudio ? std::format("{}, {:g} kHz, {} channels", codecName(video->_AudioCodec), video->_SampleRate / 1000.0, video->_Channels) : std::string("None"));
-            addDetail(loaded, "Format", video->_Container);
-
-            //The same check decides the frame now and playing later
-            if(video->_VideoCodecIsAllowed)
-                loaded._CanShowFrame = true;
-            else
-                loaded._Message = std::format("No preview:\n{} isn't royalty-free", codecName(video->_VideoCodec)); //two lines, to fit the pane
-        }
-        break;
-        case Kind::Folder:
-        {
-            //Counted here, off the main thread, since a big folder or a slow drive takes a while
-            uSize itemCount { 0 };
-            std::error_code error {};
-
-            for(std::filesystem::directory_iterator iterator { entry._Path, std::filesystem::directory_options::skip_permission_denied, error }, end {}; !error && iterator != end && !stop.stop_requested(); iterator.increment(error))
-                ++itemCount;
-
-            addDetail(loaded, "Items", error ? std::string {} : std::to_string(itemCount));
-        }
-        break;
-        default:
-        break;
+        if(!error)
+            loaded._Details.emplace_back("Items", std::to_string(itemCount));
     }
 
     for(std::pair<std::string, std::string>& detail : fileDetails(entry))
         loaded._Details.push_back(std::move(detail));
 
     return loaded;
-}
-
-bool RetroFuturaGUI::FileExplorer::FilePreview::loadAudio(const std::string& path, const i32 pictureSide, Loaded& loaded)
-{
-    const std::optional<AudioMetadata> audio { AudioMetadataReader::Read(path) };
-
-    if(!audio)
-        return false;
-
-    // A tracker module's format by its tracker's name, "Impulse Tracker 2.14" rather than "Tracker module"
-    const ModuleMetadata* module { std::get_if<ModuleMetadata>(&audio->_Details) };
-    std::string format { AudioFileFormat::Unknown == audio->_Format ? codecName(audio->_Codec) : std::string(GetAudioFileFormatName(audio->_Format)) };
-
-    if(module && !module->_TypeName.empty())
-        format = module->_TypeName;
-
-    addDetail(loaded, "Title", audio->_Title);
-    addDetail(loaded, "Artist", audio->_Artist);
-    addDetail(loaded, "Album", audio->_Album);
-    addDetail(loaded, "Length", 0.0 < audio->_Seconds ? formatDuration(audio->_Seconds) : std::string {});
-    addDetail(loaded, "Year", audio->_Date);
-    addDetail(loaded, "Genre", audio->_Genre);
-    addDetail(loaded, "Track", audio->_Track);
-    addDetail(loaded, "Format", std::move(format));
-    addDetail(loaded, "Rate", 0 < audio->_SampleRate ? std::format("{:g} kHz", audio->_SampleRate / 1000.0) : std::string {});
-    addDetail(loaded, "Channels", 0 < audio->_Channels ? std::to_string(audio->_Channels) : std::string {});
-    addDetail(loaded, "Bit rate", 0 < audio->_BitRate ? std::format("{} kbps", (audio->_BitRate + 500) / 1000) : std::string {});
-
-    if(!audio->_CoverArt.empty())
-        loaded._Picture = Texture::DecodeMemory(audio->_CoverArt, true, pictureSide);
-
-    if(!loaded._Picture)
-        loaded._Message = "No cover art";
-
-    return true;
-}
-
-void RetroFuturaGUI::FileExplorer::FilePreview::addDetail(Loaded& loaded, std::string_view key, std::string value)
-{
-    if(value.empty())
-        return;
-
-    loaded._Details.emplace_back(std::string(key), std::move(value));
 }
 
 void RetroFuturaGUI::FileExplorer::FilePreview::showLoaded(Loaded&& loaded)
@@ -439,31 +369,4 @@ std::vector<std::pair<std::string, std::string>> RetroFuturaGUI::FileExplorer::F
     details.emplace_back("Date", formatTime(entry._LastWriteTime, clock));
     details.emplace_back("Type", typeName(entry));
     return details;
-}
-
-std::string RetroFuturaGUI::FileExplorer::FilePreview::formatDuration(const f64 seconds)
-{
-    const i64
-        totalSeconds { static_cast<i64>(std::llround(seconds)) },
-        hours { totalSeconds / 3600 },
-        minutes { totalSeconds / 60 % 60 },
-        rest { totalSeconds % 60 };
-
-    if(0 < hours)
-        return std::format("{}:{:02}:{:02}", hours, minutes, rest);
-
-    return std::format("{}:{:02}", minutes, rest);
-}
-
-std::string RetroFuturaGUI::FileExplorer::FilePreview::codecName(std::string_view ffmpegName)
-{
-    constexpr std::array<std::pair<std::string_view, std::string_view>, 20> names
-    {{
-        { "h264", "H.264" }, { "hevc", "HEVC" }, { "vvc", "VVC" }, { "vc1", "VC-1" }, { "mpeg4", "MPEG-4 Part 2" },
-        { "mpeg2video", "MPEG-2" }, { "mpeg1video", "MPEG-1" }, { "vp8", "VP8" }, { "vp9", "VP9" }, { "av1", "AV1" },
-        { "theora", "Theora" }, { "ffv1", "FFV1" }, { "mjpeg", "Motion JPEG" }, { "aac", "AAC" }, { "mp3", "MP3" },
-        { "mp2", "MP2" }, { "opus", "Opus" }, { "vorbis", "Vorbis" }, { "flac", "FLAC" }, { "pcm_s16le", "PCM" }
-    }};
-    const auto known { std::find_if(names.begin(), names.end(), [ffmpegName](const auto& name) { return name.first == ffmpegName; }) };
-    return names.end() != known ? std::string(known->second) : std::string(ffmpegName);
 }

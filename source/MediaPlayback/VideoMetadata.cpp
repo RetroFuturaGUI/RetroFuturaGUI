@@ -5,7 +5,7 @@ std::optional<RetroFuturaGUI::VideoMetadata> RetroFuturaGUI::ReadVideoMetadata(s
 {
     MediaSource source;
 
-    if(!source.Open(path))
+    if(!source.Open(path, StreamProbing::HeadersOnly))
         return std::nullopt;
 
     const AVFormatContext* context { source.GetFormatContext() };

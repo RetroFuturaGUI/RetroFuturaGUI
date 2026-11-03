@@ -1,5 +1,6 @@
 #pragma once
 #include "FileExplorer.hpp"
+#include "IsolatedDecoder.hpp"
 #include "Texture.hpp"
 #include <chrono>
 #include <filesystem>
@@ -17,8 +18,9 @@ namespace RetroFuturaGUI
 
     /// @brief The explorer's preview pane beside the list: a picture - an image, a song's cover art, or a video's frame from
     ///        10% in, for royalty-free codecs only - over a row kept for playback controls, and the selection's details below.
-    ///        Files are read and decoded off the main thread; what arrives shows from Update. The selected video stays open and
-    ///        paused, the groundwork for playing it here later.
+    ///        Files are read and decoded off the main thread, by the decoder helper's process when it's there; what arrives shows
+    ///        from Update. The selected video stays open and paused, the groundwork for playing it here later - opened only once
+    ///        the helper decoded its frame without crashing.
     class FileExplorer::FilePreview
     {
     public:
@@ -87,14 +89,9 @@ namespace RetroFuturaGUI
             Message
         };
 
-        /// @brief The worker's side: reads and decodes the file, and writes out its details.
-        static Loaded load(Request&& request, std::stop_token stop);
-
-        /// @brief A song's details and cover art. False with nothing added or when the file can't be read as audio.
-        static bool loadAudio(const std::string& path, const i32 pictureSide, Loaded& loaded);
-
-        /// @brief One row of details. An empty value adds none.
-        static void addDetail(Loaded& loaded, std::string_view key, std::string value);
+        /// @brief The worker's side: reads and decodes the file - an image, a song or a video through the decoder, in the decoder
+        ///        helper's process when it's there - and writes out its details.
+        static Loaded load(Request&& request, IsolatedDecoder& decoder, std::stop_token stop);
 
         /// @brief The main thread's side: shows what a job loaded, unless something else was selected since.
         void showLoaded(Loaded&& loaded);
@@ -121,12 +118,6 @@ namespace RetroFuturaGUI
         /// @brief Name, size, modified and type, as every file has them.
         static std::vector<std::pair<std::string, std::string>> fileDetails(const Entry& entry);
 
-        /// @brief "3:25", or "1:02:03" past an hour.
-        static std::string formatDuration(const f64 seconds);
-
-        /// @brief "H.264" for FFmpeg's "h264": the names the codecs that aren't royalty-free are known by.
-        static std::string codecName(std::string_view ffmpegName);
-
         ViewHost& _host;
         Lasagna
             * _pane { nullptr },
@@ -143,6 +134,7 @@ namespace RetroFuturaGUI
         std::filesystem::file_time_type _shownWriteTime {};
         uSize _shownCount { 0 };
         std::unique_ptr<BackgroundWork> _work { std::make_unique<BackgroundWork>(BackgroundWork::WhenDestroyed::LetJobFinish) }; //its jobs use only copies
+        std::shared_ptr<IsolatedDecoder> _decoder { std::make_shared<IsolatedDecoder>() }; //the worker's own; a stuck job keeps the one it has
         std::chrono::steady_clock::time_point _lastPostAt {};
         u64 _generation { 0 };
 

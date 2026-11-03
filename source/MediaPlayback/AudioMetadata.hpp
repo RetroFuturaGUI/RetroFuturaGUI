@@ -7,10 +7,6 @@
 #include <variant>
 #include <vector>
 
-/*ToDo:
-CoverArtCodec enum class
-Decoded album covers*/
-
 namespace RetroFuturaGUI
 {
     /// @brief The audio formats AudioMetadata tells apart. Decided from the container and the codec
@@ -21,16 +17,16 @@ namespace RetroFuturaGUI
         Wav,
         Flac,       // native FLAC, or FLAC inside Ogg
         Mp3,
-        OggVorbis,  // Vorbis, Opus or FLAC.
+        OggVorbis,  // Vorbis, Opus or FLAC
         Opus,
         M4a,        // AAC or ALAC in an MP4 container
         Adx,
-        Ahx,        // CRI's MPEG audio behind an ADX-style header - its metadata reads, its audio doesn't decode yet
+        Ahx,        // CRI's MPEG audio behind an ADX-style header. Tts metadata reads, its audio doesn't decode yet
         Hca,        // CRI's successor to ADX; decodes only with the royalty-free checks off, an encrypted one with its key
-        Module      // a tracker module (MOD, XM, S3M, IT, ...), played through libopenmpt when the build has tracker modules
-        //Todo:
-        //WebM,
-        //Aiff
+        Module,     // a tracker module (MOD, XM, S3M, IT, ...), played through libopenmpt when the build has tracker modules
+        Aiff,       // AIFF or AIFF-C
+        WebM,       // Matroska's web profile, audio only: Opus or Vorbis
+        Matroska    // any other Matroska file with audio only (MKA)
     };
 
     /// @brief Returns a display name for the format.
@@ -48,7 +44,38 @@ namespace RetroFuturaGUI
             case AudioFileFormat::Ahx:       return "AHX";
             case AudioFileFormat::Hca:       return "HCA";
             case AudioFileFormat::Module:    return "Tracker module";
+            case AudioFileFormat::Aiff:      return "AIFF";
+            case AudioFileFormat::WebM:      return "WebM";
+            case AudioFileFormat::Matroska:  return "Matroska";
             default:                         return "Unknown";
+        }
+    }
+
+    /// @brief The format of the picture a file carries as its cover art.
+    enum class CoverArtCodec : u32
+    {
+        None,   // no cover art
+        Jpeg,
+        Png,
+        Bmp,
+        Gif,
+        WebP,
+        Tiff,
+        Other   // a picture in a format not listed, which DecodeCoverArt doesn't decode
+    };
+
+    constexpr std::string_view GetCoverArtCodecName(const CoverArtCodec codec)
+    {
+        switch(codec)
+        {
+            case CoverArtCodec::Jpeg:  return "JPEG";
+            case CoverArtCodec::Png:   return "PNG";
+            case CoverArtCodec::Bmp:   return "BMP";
+            case CoverArtCodec::Gif:   return "GIF";
+            case CoverArtCodec::WebP:  return "WebP";
+            case CoverArtCodec::Tiff:  return "TIFF";
+            case CoverArtCodec::Other: return "Other";
+            default:                   return "None";
         }
     }
 
@@ -220,6 +247,49 @@ namespace RetroFuturaGUI
             _SampleNames;
     };
 
+    /// @brief A point in an AIFF file's sound data that its loops refer to from the MARK chunk
+    struct AiffMarker
+    {
+        u32
+            _Id { 0 },
+            _Position { 0 };    // in sample frames (a point between two frames)
+        std::string _Name;
+    };
+
+    /// @brief A loop of the INST chunk, between two markers
+    struct AiffLoop
+    {
+        u32
+            _PlayMode { 0 },    // 0 doesn't loop, 1 forward, 2 forward and back
+            _StartMarker { 0 }, // marker ids
+            _EndMarker { 0 };
+    };
+
+    /// @brief From the COMM, MARK and INST chunks
+    struct AiffMetadata
+    {
+        bool _IsAifc { false };
+        std::string
+            _CompressionType,   // AIFF-C's four-character code: "NONE", "sowt", "fl32", "ima4", ...; "NONE" for plain AIFF
+            _CompressionName;   // its description, e.g. "not compressed"
+        std::vector<AiffMarker> _Markers;
+        bool _HasInstrumentChunk { false };
+        u32 _BaseNote { 0 };    // the MIDI note the sound plays at unchanged - only meaningful with an INST chunk
+        AiffLoop
+            _SustainLoop,       // the loop that plays while a note is held - AudioMetadata's _Loop when it plays
+            _ReleaseLoop;
+    };
+
+    /// @brief From the EBML header and the segment's Info element
+    struct MatroskaMetadata
+    {
+        std::string _DocType;   // "webm" or "matroska"
+        u32 _DocTypeVersion { 0 };
+        std::string
+            _MuxingApp,         // the library that wrote the file, e.g. "Lavf61.7.100"
+            _WritingApp;        // the program that used it
+    };
+
     /// @brief Everything a file says about itself. What every format has lives here; what only one
     /// format carries lives in _Details, as that format's own struct.
     struct AudioMetadata
@@ -258,12 +328,12 @@ namespace RetroFuturaGUI
             _Comment;
         std::vector<std::pair<std::string, std::string>> _Tags; // every tag in the file, the ones above included
         std::vector<AudioChapter> _Chapters;
-        std::string _CoverArtCodec; // e.g. "mjpeg" or "png"; empty without cover art
+        CoverArtCodec _CoverArtCodec { CoverArtCodec::None };
         u32
             _CoverArtWidth { 0 },
             _CoverArtHeight { 0 };
-        std::vector<u8> _CoverArt; // the image as embedded, still encoded, from its own signature on: stray bytes a tagger left before it are dropped
+        std::vector<u8> _CoverArt; // the image as embedded, still encoded (DecodeCoverArt makes pixels of it), from its own signature on: stray bytes a tagger left before it are dropped
         std::optional<AudioLoop> _Loop; // from wherever the format keeps its loop points
-        std::variant<std::monostate, WavMetadata, FlacMetadata, Mp3Metadata, OggVorbisMetadata, OpusMetadata, M4aMetadata, AdxMetadata, HcaMetadata, ModuleMetadata> _Details;
+        std::variant<std::monostate, WavMetadata, FlacMetadata, Mp3Metadata, OggVorbisMetadata, OpusMetadata, M4aMetadata, AdxMetadata, HcaMetadata, ModuleMetadata, AiffMetadata, MatroskaMetadata> _Details;
     };
 }

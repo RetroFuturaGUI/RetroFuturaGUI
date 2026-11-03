@@ -1,5 +1,6 @@
 #pragma once
 #include "FileExplorer.hpp"
+#include "IsolatedDecoder.hpp"
 #include "Texture.hpp"
 #include <array>
 #include <chrono>
@@ -60,11 +61,8 @@ namespace RetroFuturaGUI
             std::optional<DecodedImage> _Image {}; //none when the file has no picture to show
         };
 
-        /// @brief the worker decodes the file's picture and scales it down to a thumbnail.
-        static Decoded decode(Request&& request, std::stop_token stop);
-
-        /// @brief A song's cover art as a thumbnail. None without cover art
-        static std::optional<DecodedImage> decodeCoverArt(const std::string& path);
+        /// @brief the worker decodes the file's picture and scales it down to a thumbnail, through the decoder - in the decoder helper's process when it's there.
+        static Decoded decode(Request&& request, IsolatedDecoder& decoder, std::stop_token stop);
 
         /// @brief The main thread uploads a decoded picture as its file's thumbnail.
         void take(Decoded&& decoded);
@@ -83,6 +81,7 @@ namespace RetroFuturaGUI
         std::deque<std::filesystem::path::string_type> _pendingKeys {}; //...in the order posted, which is the order they finish in
         std::array<std::unique_ptr<Texture>, 5> _icons {}; //by FileKind
         std::unique_ptr<BackgroundWork> _work { std::make_unique<BackgroundWork>(BackgroundWork::WhenDestroyed::LetJobFinish) }; //its jobs use only copies
+        std::shared_ptr<IsolatedDecoder> _decoder { std::make_shared<IsolatedDecoder>() }; //the worker's own. a stuck job keeps the one it has
         std::chrono::steady_clock::time_point _waitingSince {}; //for the job running now
         uSize
             _shownFirstRow { 0 },

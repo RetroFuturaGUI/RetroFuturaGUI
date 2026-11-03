@@ -13,8 +13,10 @@ namespace RetroFuturaGUI
         u16 _Subkey { 0 };
     };
 
-    /// @brief Decrypts HCA blocks before they reach FFmpeg, whose decoder (7.1.1) misreads the header past the comp chunk and
-    ///        therefore never decrypts. Every byte of a block goes through one table (0x00 and 0xFF stay as they are, so a block's  0xFFFF sync stays in-tact)
+    /// @brief Decrypts HCA blocks before they reach FFmpeg. FFmpeg 9 decrypts type 56 itself only when handed the key through its
+    ///        demuxer's options, and type 1 not at all (7.1.1 misread the header and never decrypted); it's never handed the key, so
+    ///        nothing is decrypted twice. Every byte of a block goes through one table (0x00 and 0xFF stay as they are, so a block's
+    ///        0xFFFF sync stays intact)
     class HcaCipher
     {
     public:

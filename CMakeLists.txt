@@ -39,6 +39,9 @@ list(APPEND RetroFuturaGuiSources
     "${CMAKE_CURRENT_SOURCE_DIR}/source/MediaPlayback/HcaCipher.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/MediaPlayback/MediaFrame.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/MediaPlayback/MediaSource.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/source/MediaPlayback/IsolatedDecoder.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/source/MediaPlayback/MediaPreview.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/source/MediaPlayback/MediaPreviewProtocol.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/MediaPlayback/MiniaudioImpl.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/MediaPlayback/ModuleSource.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/MediaPlayback/Packet.cpp"
@@ -344,4 +347,26 @@ if(RETROFUTURAGUI_TRACKER_MODULES)
     target_compile_definitions("RetroFuturaGUI" PUBLIC RETROFUTURAGUI_TRACKER_MODULES=1)
 else()
     target_compile_definitions("RetroFuturaGUI" PUBLIC RETROFUTURAGUI_TRACKER_MODULES=0)
+endif()
+
+# Fuzzing (MSVC): the library is built with AddressSanitizer and libFuzzer's coverage counters, and tools/fuzz adds the fuzz
+# targets. Such a library links into the fuzz targets only, so a fuzzing build folder builds just them (tools/fuzz/README.md).
+option(RETROFUTURAGUI_FUZZING "Build RetroFuturaGUI instrumented for fuzzing, with the fuzz targets in tools/fuzz (MSVC)" OFF)
+
+if(RETROFUTURAGUI_FUZZING)
+    if(NOT MSVC)
+        message(FATAL_ERROR "RETROFUTURAGUI_FUZZING uses MSVC's /fsanitize=address,fuzzer")
+    endif()
+
+    # The runtime checks and incremental linking don't go together with AddressSanitizer
+    string(REPLACE "/RTC1" "" CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG}")
+    target_compile_options("RetroFuturaGUI" PRIVATE /fsanitize=address /fsanitize-coverage=inline-8bit-counters /fsanitize-coverage=edge /fsanitize-coverage=trace-cmp)
+    add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/tools/fuzz")
+else()
+    # The decoder helper: the file explorer's previews and thumbnails are decoded in a process of their own (IsolatedDecoder),
+    # so a malicious or broken file takes only the helper down. Built into the top build folder, beside the program and
+    # library that use RetroFuturaGUI, where IsolatedDecoder looks for it.
+    add_executable("RetroFuturaGUIDecoder" "${CMAKE_CURRENT_SOURCE_DIR}/source/DecoderHelper/RetroFuturaGUIDecoder.cpp")
+    target_link_libraries("RetroFuturaGUIDecoder" PRIVATE "RetroFuturaGUI")
+    set_target_properties("RetroFuturaGUIDecoder" PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}")
 endif()

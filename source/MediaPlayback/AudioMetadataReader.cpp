@@ -3,6 +3,7 @@
 #include "ModuleSource.hpp"
 #include <algorithm>
 #include <array>
+#include <bit>
 #include <charconv>
 #include <cmath>
 #include <cstring>
@@ -249,7 +250,7 @@ void RetroFuturaGUI::AudioMetadataReader::readCoverArt(const AVFormatContext* co
         if(!picture)
             continue;
 
-        metadata._CoverArtCodec = toString(avcodec_get_name(picture->codec_id));
+        metadata._CoverArtCodec = toCoverArtCodec(picture);
         metadata._CoverArtWidth = static_cast<u32>(std::max(picture->width, 0));
         metadata._CoverArtHeight = static_cast<u32>(std::max(picture->height, 0));
 
@@ -261,6 +262,23 @@ void RetroFuturaGUI::AudioMetadataReader::readCoverArt(const AVFormatContext* co
             start { findPictureStart(stream->attached_pic.data, size) };
         metadata._CoverArt.assign(stream->attached_pic.data + start, stream->attached_pic.data + size);
         return; // the first picture only - it's the front cover in practice
+    }
+}
+
+RetroFuturaGUI::CoverArtCodec RetroFuturaGUI::AudioMetadataReader::toCoverArtCodec(const AVCodecParameters* picture)
+{
+    if(!picture)
+        return CoverArtCodec::None;
+
+    switch(picture->codec_id)
+    {
+        case AV_CODEC_ID_MJPEG: return CoverArtCodec::Jpeg;
+        case AV_CODEC_ID_PNG:   return CoverArtCodec::Png;
+        case AV_CODEC_ID_BMP:   return CoverArtCodec::Bmp;
+        case AV_CODEC_ID_GIF:   return CoverArtCodec::Gif;
+        case AV_CODEC_ID_WEBP:  return CoverArtCodec::WebP;
+        case AV_CODEC_ID_TIFF:  return CoverArtCodec::Tiff;
+        default:                return CoverArtCodec::Other;
     }
 }
 
@@ -322,6 +340,13 @@ RetroFuturaGUI::AudioFileFormat RetroFuturaGUI::AudioMetadataReader::classify(co
 
     if(container == "hca")
         return AudioFileFormat::Hca;
+
+    if(container == "aiff")
+        return AudioFileFormat::Aiff;
+
+    // One demuxer reads both; Read tells WebM from other Matroska by the EBML header's DocType
+    if(container == "matroska,webm" && !hasVideoStream(context))
+        return AudioFileFormat::Matroska;
 
     if(container == "ogg")
     {
@@ -409,6 +434,235 @@ RetroFuturaGUI::WavMetadata RetroFuturaGUI::AudioMetadataReader::readWavDetails(
         }
 
         offset += 8 + chunkSize + (chunkSize & 1); // chunks are padded to an even size
+    }
+
+    return details;
+}
+
+RetroFuturaGUI::AiffMetadata RetroFuturaGUI::AudioMetadataReader::readAiffDetails(std::string_view path)
+{
+    RetroFuturaGUI::AiffMetadata details;
+    std::ifstream file = openFile(path);
+
+    if(!file)
+        return details;
+
+    const u64 fileSize = getFileSize(file);
+    const std::vector<u8> form = readBytes(file, 0, 12);
+
+    if(12 > form.size() || 0 != std::memcmp(form.data(), "FORM", 4))
+        return details;
+
+    details._IsAifc = 0 == std::memcmp(form.data() + 8, "AIFC", 4);
+    details._CompressionType = "NONE"; // plain AIFF, and AIFF-C until COMM says otherwise
+    u64 offset { 12 };
+
+    while(offset + 8 <= fileSize)
+    {
+        const std::vector<u8> header = readBytes(file, offset, 8);
+
+        if(8 > header.size())
+            break;
+
+        const u64 chunkSize { AV_RB32(header.data() + 4) };
+        const bool
+            isComm { 0 == std::memcmp(header.data(), "COMM", 4) },
+            isMark { 0 == std::memcmp(header.data(), "MARK", 4) },
+            isInst { 0 == std::memcmp(header.data(), "INST", 4) };
+
+        // Only the small chunks are read. The sound data is skipped from header to header
+        if(isComm || isMark || isInst)
+        {
+            const std::vector<u8> chunk = readBytes(file, offset + 8, std::min<u64>(chunkSize, fileSize - offset - 8));
+            const std::span<const u8> data { chunk };
+
+            // channels, frames, bits, the 80-bit rate, then AIFF-C's compression type and name
+            if(isComm && details._IsAifc && 22 <= data.size())
+            {
+                details._CompressionType = std::string(reinterpret_cast<const char*>(data.data() + 18), 4);
+                uSize nameOffset { 22 };
+                details._CompressionName = readPascalString(data, nameOffset);
+            }
+
+            if(isMark && 2 <= data.size())
+            {
+                const u32 markerCount { AV_RB16(data.data()) };
+                uSize markerOffset { 2 };
+
+                // The count can claim more markers than the chunk holds
+                for(u32 marker = 0; marker < markerCount && markerOffset + 6 <= data.size(); ++marker)
+                {
+                    AiffMarker read { ._Id = AV_RB16(data.data() + markerOffset), ._Position = AV_RB32(data.data() + markerOffset + 2), ._Name = {} };
+                    markerOffset += 6;
+                    read._Name = readPascalString(data, markerOffset);
+                    details._Markers.push_back(std::move(read));
+                }
+            }
+
+            // base note, detune, note and velocity ranges, gain, then the sustain and release loops, 6 bytes each
+            if(isInst && 20 <= data.size())
+            {
+                details._HasInstrumentChunk = true;
+                details._BaseNote = data[0];
+                details._SustainLoop = AiffLoop { ._PlayMode = AV_RB16(data.data() + 8), ._StartMarker = AV_RB16(data.data() + 10), ._EndMarker = AV_RB16(data.data() + 12) };
+                details._ReleaseLoop = AiffLoop { ._PlayMode = AV_RB16(data.data() + 14), ._StartMarker = AV_RB16(data.data() + 16), ._EndMarker = AV_RB16(data.data() + 18) };
+            }
+        }
+
+        offset += 8 + chunkSize + (chunkSize & 1); // chunks are padded to an even size
+    }
+
+    return details;
+}
+
+std::string RetroFuturaGUI::AudioMetadataReader::readPascalString(std::span<const u8> data, uSize& offset)
+{
+    if(offset >= data.size())
+        return {};
+
+    const uSize length { data[offset] };
+
+    if(offset + 1 + length > data.size())
+    {
+        offset = data.size();
+        return {};
+    }
+
+    std::string text(reinterpret_cast<const char*>(data.data() + offset + 1), length);
+    offset += 1 + length + (0 == (length & 1) ? 1 : 0); // count byte and characters together padded to an even size
+    return text;
+}
+
+std::optional<u64> RetroFuturaGUI::AudioMetadataReader::readEbmlNumber(std::span<const u8> data, uSize& offset, const bool isId)
+{
+    if(offset >= data.size())
+        return std::nullopt;
+
+    // The leading zero bits of the first byte tell the length: 1 to 4 bytes for an ID, 1 to 8 for a size
+    const u8 first { data[offset] };
+    const uSize length { static_cast<uSize>(std::countl_zero(first)) + 1 };
+
+    if(0 == first || (isId && 4 < length) || offset + length > data.size())
+        return std::nullopt;
+
+    u64 value { isId ? first : static_cast<u64>(first & (0xFF >> length)) };
+    bool isAllOnes { (first & (0xFF >> length)) == (0xFF >> length) };
+
+    for(uSize index = 1; index < length; ++index)
+    {
+        value = (value << 8) | data[offset + index];
+        isAllOnes = isAllOnes && 0xFF == data[offset + index];
+    }
+
+    offset += length;
+    return !isId && isAllOnes ? UINT64_MAX : value;
+}
+
+u64 RetroFuturaGUI::AudioMetadataReader::readEbmlUnsigned(std::span<const u8> value)
+{
+    u64 number { 0 };
+
+    for(uSize index = 0; index < value.size() && index < 8; ++index)
+        number = (number << 8) | value[index];
+
+    return number;
+}
+
+std::string RetroFuturaGUI::AudioMetadataReader::readEbmlString(std::span<const u8> value)
+{
+    // Padded with zeros at the end, which aren't part of the text
+    const auto end { std::find(value.begin(), value.end(), u8 { 0 }) };
+    return std::string(reinterpret_cast<const char*>(value.data()), static_cast<uSize>(end - value.begin()));
+}
+
+std::optional<RetroFuturaGUI::MatroskaMetadata> RetroFuturaGUI::AudioMetadataReader::ReadMatroskaHeader(std::span<const u8> fileStart)
+{
+    constexpr u64
+        ebmlId { 0x1A45DFA3 },
+        docTypeId { 0x4282 },
+        docTypeVersionId { 0x4287 },
+        segmentId { 0x18538067 },
+        infoId { 0x1549A966 },
+        clusterId { 0x1F43B675 },
+        muxingAppId { 0x4D80 },
+        writingAppId { 0x5741 };
+
+    uSize offset { 0 };
+    const std::optional<u64> headerId { readEbmlNumber(fileStart, offset, true) };
+    const std::optional<u64> headerSize { readEbmlNumber(fileStart, offset, false) };
+
+    if(!headerId || ebmlId != *headerId || !headerSize || *headerSize > fileStart.size() - offset)
+        return std::nullopt;
+
+    MatroskaMetadata details;
+    const uSize headerEnd { offset + static_cast<uSize>(*headerSize) };
+
+    while(offset < headerEnd)
+    {
+        const std::optional<u64> id { readEbmlNumber(fileStart, offset, true) };
+        const std::optional<u64> size { readEbmlNumber(fileStart, offset, false) };
+
+        // A child's ID and size can run past the end of its parent, which leaves offset beyond it
+        if(!id || !size || offset > headerEnd || *size > headerEnd - offset)
+            return details;
+
+        const std::span<const u8> value { fileStart.subspan(offset, static_cast<uSize>(*size)) };
+
+        if(docTypeId == *id)
+            details._DocType = readEbmlString(value);
+
+        if(docTypeVersionId == *id)
+            details._DocTypeVersion = static_cast<u32>(readEbmlUnsigned(value));
+
+        offset += static_cast<uSize>(*size);
+    }
+
+    // The segment's children up to its Info; a size left unknown (a live recording) runs to the end of what was read
+    const std::optional<u64> segment { readEbmlNumber(fileStart, offset, true) };
+    const std::optional<u64> segmentSize { readEbmlNumber(fileStart, offset, false) };
+
+    if(!segment || segmentId != *segment || !segmentSize)
+        return details;
+
+    const uSize segmentEnd { *segmentSize > fileStart.size() - offset ? fileStart.size() : offset + static_cast<uSize>(*segmentSize) };
+
+    while(offset < segmentEnd)
+    {
+        const std::optional<u64> id { readEbmlNumber(fileStart, offset, true) };
+        const std::optional<u64> size { readEbmlNumber(fileStart, offset, false) };
+
+        // The clusters hold the sound; Info comes before them
+        if(!id || !size || clusterId == *id || offset > segmentEnd || *size > segmentEnd - offset)
+            return details;
+
+        if(infoId != *id)
+        {
+            offset += static_cast<uSize>(*size);
+            continue;
+        }
+
+        const uSize infoEnd { offset + static_cast<uSize>(*size) };
+
+        while(offset < infoEnd)
+        {
+            const std::optional<u64> childId { readEbmlNumber(fileStart, offset, true) };
+            const std::optional<u64> childSize { readEbmlNumber(fileStart, offset, false) };
+
+            if(!childId || !childSize || offset > infoEnd || *childSize > infoEnd - offset)
+                return details;
+
+            const std::span<const u8> value { fileStart.subspan(offset, static_cast<uSize>(*childSize)) };
+
+            if(muxingAppId == *childId)
+                details._MuxingApp = readEbmlString(value);
+
+            if(writingAppId == *childId)
+                details._WritingApp = readEbmlString(value);
+
+            offset += static_cast<uSize>(*childSize);
+        }
+
+        return details;
     }
 
     return details;
@@ -1078,6 +1332,37 @@ std::optional<RetroFuturaGUI::AudioMetadata> RetroFuturaGUI::AudioMetadataReader
                 metadata._Comment = details->_Comment;
 
             metadata._Details = *details;
+            break;
+        }
+
+        case AudioFileFormat::Aiff:
+        {
+            AiffMetadata details = readAiffDetails(path);
+            const AiffLoop& loop { details._SustainLoop };
+            const auto findMarker { [&details](const u32 id) { return std::find_if(details._Markers.begin(), details._Markers.end(), [id](const AiffMarker& marker) { return marker._Id == id; }); } };
+            const auto start { findMarker(loop._StartMarker) }, end { findMarker(loop._EndMarker) };
+
+            // Markers sit between frames, so the end marker is the first frame after the loop
+            if(0 != loop._PlayMode && details._Markers.end() != start && details._Markers.end() != end && start->_Position < end->_Position)
+                metadata._Loop = AudioLoop { ._StartSample = start->_Position, ._EndSample = end->_Position, ._Source = "AIFF INST sustain loop" };
+
+            metadata._Details = std::move(details);
+            break;
+        }
+
+        case AudioFileFormat::Matroska:
+        {
+            std::ifstream file = openFile(path);
+            const std::vector<u8> fileStart { file ? readBytes(file, 0, MatroskaHeaderSize) : std::vector<u8> {} };
+            std::optional<MatroskaMetadata> details { ReadMatroskaHeader(fileStart) };
+
+            if(!details)
+                break;
+
+            if("webm" == details->_DocType)
+                metadata._Format = AudioFileFormat::WebM;
+
+            metadata._Details = std::move(*details);
             break;
         }
 

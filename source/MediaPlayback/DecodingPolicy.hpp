@@ -28,6 +28,8 @@ namespace RetroFuturaGUI
         // video
         AV_CODEC_ID_VP8, AV_CODEC_ID_VP9, AV_CODEC_ID_AV1,
         AV_CODEC_ID_MPEG2VIDEO, AV_CODEC_ID_MJPEG, AV_CODEC_ID_FFV1, AV_CODEC_ID_THEORA,
+        // pictures, for cover art (JPEG is MJPEG above): GIF's and TIFF's LZW patents expired in 2003-04, WebP is royalty-free
+        AV_CODEC_ID_PNG, AV_CODEC_ID_BMP, AV_CODEC_ID_GIF, AV_CODEC_ID_WEBP, AV_CODEC_ID_TIFF,
         // audio
         AV_CODEC_ID_FLAC, AV_CODEC_ID_VORBIS, AV_CODEC_ID_OPUS, AV_CODEC_ID_MP3,
         AV_CODEC_ID_ALAC, // Apple Lossless, Apache 2.0 since 2011

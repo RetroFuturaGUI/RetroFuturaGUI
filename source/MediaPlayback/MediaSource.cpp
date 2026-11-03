@@ -71,6 +71,11 @@ RetroFuturaGUI::MediaSource::~MediaSource()
 
 bool RetroFuturaGUI::MediaSource::Open(std::string_view path)
 {
+    return Open(path, StreamProbing::Full);
+}
+
+bool RetroFuturaGUI::MediaSource::Open(std::string_view path, const StreamProbing probing)
+{
     Close();
 
     const std::string filepath(path);
@@ -81,6 +86,9 @@ bool RetroFuturaGUI::MediaSource::Open(std::string_view path)
     if(!_formatContext)
         return false;
 
+    if(StreamProbing::HeadersOnly == probing && hasHeaderInformation())
+        return true;
+
     if(0 > avformat_find_stream_info(_formatContext, nullptr))
     {
         Close();
@@ -90,6 +98,50 @@ bool RetroFuturaGUI::MediaSource::Open(std::string_view path)
     return true;
 }
 
+
+bool RetroFuturaGUI::MediaSource::hasHeaderInformation() const
+{
+    if(!_formatContext)
+        return false;
+
+    // A container without a header (an MPEG program stream) finds its streams only by reading
+    if(0 == _formatContext->nb_streams || 0 != (_formatContext->ctx_flags & AVFMTCTX_NOHEADER))
+        return false;
+
+    bool hasLength { 0 < _formatContext->duration && AV_NOPTS_VALUE != _formatContext->duration };
+
+    for(u32 index = 0; index < _formatContext->nb_streams; ++index)
+    {
+        const AVStream* stream { _formatContext->streams[index] };
+
+        if(!stream)
+            return false;
+
+        const AVCodecParameters* parameters { stream->codecpar };
+
+        if(!parameters)
+            return false;
+
+        if(AV_CODEC_ID_NONE == parameters->codec_id)
+            return false;
+
+        hasLength = hasLength || 0 < stream->duration;
+
+        // Cover art is one picture: no rate to know
+        if(AVMEDIA_TYPE_VIDEO == parameters->codec_type && 0 == (stream->disposition & AV_DISPOSITION_ATTACHED_PIC))
+        {
+            const bool hasRate { (0 < stream->avg_frame_rate.num && 0 < stream->avg_frame_rate.den) || (0 < stream->r_frame_rate.num && 0 < stream->r_frame_rate.den) };
+
+            if(0 >= parameters->width || 0 >= parameters->height || !hasRate)
+                return false;
+        }
+
+        if(AVMEDIA_TYPE_AUDIO == parameters->codec_type && (0 >= parameters->sample_rate || 0 >= parameters->ch_layout.nb_channels))
+            return false;
+    }
+
+    return hasLength;
+}
 
 void RetroFuturaGUI::MediaSource::Close()
 {
