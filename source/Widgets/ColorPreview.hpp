@@ -48,9 +48,6 @@ namespace RetroFuturaGUI
         /// @brief Sets the world position, stacking the previewed color and the border in front of the backgrounds.
         void applyPosition(const glm::vec3& position) override;
 
-        /// @brief Sets the rotation of the backgrounds, the previewed color and the border alike.
-        void applyRotation(const glm::vec3& rotation) override;
-
     private:
         /// @brief Sizes and places both backgrounds, the previewed color and the border for the current split.
         void alignColorPreview();

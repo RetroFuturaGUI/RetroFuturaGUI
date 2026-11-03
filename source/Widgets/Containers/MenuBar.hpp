@@ -278,8 +278,6 @@ namespace RetroFuturaGUI
 
         void applySize(const glm::vec3& size) override;
 
-        void applyRotation(const glm::vec3& rotation) override;
-
     private:
         struct MouseState
         {

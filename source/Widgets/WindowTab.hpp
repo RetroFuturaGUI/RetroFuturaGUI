@@ -155,9 +155,6 @@ namespace RetroFuturaGUI
         /// @brief Sets the size of the whole WindowTab, strip and content area together.
         void applySize(const glm::vec3& size) override;
 
-        /// @brief Stored only: the fields and the content stay upright, since a window's content can't turn.
-        void applyRotation(const glm::vec3& rotation) override;
-
     private:
         friend class Window; //resets _isShown each frame, finds the strip under a dragged window and shows a preview field for it
 

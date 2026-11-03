@@ -37,8 +37,5 @@ namespace RetroFuturaGUI
         /// @brief Sets the world position of the text box.
         void applyPosition(const glm::vec3& position) final override;
 
-        /// @brief Sets the rotation of the text box.
-        void applyRotation(const glm::vec3& rotation) final override;
-
     };
 }

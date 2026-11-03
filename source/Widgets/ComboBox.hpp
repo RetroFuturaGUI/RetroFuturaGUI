@@ -47,8 +47,6 @@ namespace RetroFuturaGUI
 
         void applyPosition(const glm::vec3& position) override;
 
-        void applyRotation(const glm::vec3& rotation) override;
-
     private:
         void interact() override;
 

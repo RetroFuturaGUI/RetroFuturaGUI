@@ -52,8 +52,8 @@ namespace RetroFuturaGUI
         auto operator =(const Environment&) = delete;
         auto operator =(Environment&&) = delete;
 
-        /// @brief Builds a widget of type T in the Environment and owns it. The Environment is its parent, and passes its
-        ///        projection and window on to it. Widgets draw in the order they were attached.
+        /// @brief Builds a widget of type T in the Environment and owns it. The Environment is its parent, and passes its own
+        ///        projection (SetPerspective) and its window on to it. Widgets draw in the order they were attached
         /// @param args Constructor arguments after the parent window, such as an Image's path.
         /// @return The new widget, or nullptr, building nothing, when the name is taken. The widget lives until it is removed
         ///         or the Environment is destroyed.
@@ -69,7 +69,7 @@ namespace RetroFuturaGUI
 
             //Most widget constructors take the name as const std::string&, so it is materialised here
             const std::string widgetName { name };
-            std::unique_ptr<T> widget { std::make_unique<T>(widgetName, &_projection, this, _widgetTypeID, _parentWindow, std::forward<Args>(args)...) };
+            std::unique_ptr<T> widget { std::make_unique<T>(widgetName, &_viewProjection, this, _widgetTypeID, _parentWindow, std::forward<Args>(args)...) };
             T* attachedWidget { widget.get() };
             _entries.push_back(EnvironmentEntry { ._Widget = std::move(widget), ._Placement = placement, ._Show = true });
             placeWidget(_entries.back());
@@ -124,11 +124,18 @@ namespace RetroFuturaGUI
         /// @brief Converts a point from environment units to window coordinates, through the Environment's position, rotation and scale.
         glm::vec3 ToWindow(const glm::vec3& point) const;
 
-        /// @brief Sets whether drawing is cut off at the Environment's rectangle. Off by default; Cover, KeepHeight and KeepWidth
-        ///        need it to keep overhanging content off neighbouring widgets.
-        /// @note  The clip is the unrotated rectangle, because scissoring only cuts along the window's axes. It no longer matches
-        ///        once the Environment itself is rotated.
+        /// @brief Sets whether drawing is cut off at the Environment's rectangle. Off by default. Cover, KeepHeight and KeepWidth
+        ///        need it to keep overhanging content off neighbouring widgets
+        /// @note  The clip turns with a rotated Environment and under perspective it cuts what reaches past the rectangle on the
+        ///        screen in front or behind of it  as well
         void EnableClipping(const bool enable);
+
+        /// @brief Shows the Environment in a perspective of its own. Whatever its window shows, the eye viewingDistance pixels in
+        ///        front of the Environment's center. So what ever lies further back in the room shrinks toward it
+        void SetPerspective(const f32 viewingDistance);
+
+        /// @brief Shows the Environment as its window does again (default)
+        void FollowWindowProjection();
 
         /// @brief Sets whether the box's outline is drawn over the contents, which shows where the fit put it.
         void ShowDebugBox(const bool show);
@@ -161,9 +168,12 @@ namespace RetroFuturaGUI
         void placeWidget(const EnvironmentEntry& entry) const;
         void drawDebugBox();
 
-        /// @brief Splits a rotation into the X, Y and Z angles, in degrees, that every widget composes as Rz * Ry * Rx (see Model::SetRotation).
-        static glm::vec3 toEulerDegrees(const glm::quat& rotation);
+        /// @brief Brings the projection the widgets inside draw through up-to-date. the window's or the Environment's own
+        ///        perspective at the window's resolution vanishing at its center
+        void followProjection();
 
+        Projection _viewProjection; //declared before the widgets which point at it (so it outlives them)
+        bool _hasOwnPerspective { false };
         std::vector<EnvironmentEntry> _entries {};
         std::vector<std::unique_ptr<IWidget>> _removedWidgets {}; //destroyed at the start of the next Interact
         glm::vec3 _extent { 1.0f };

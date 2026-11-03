@@ -77,24 +77,6 @@ void RetroFuturaGUI::RadioButton::applyPosition(const glm::vec3& position)
     _indicator->SetPosition(position + glm::vec3(0.0f, 0.0f, 0.02f));
 }
 
-void RetroFuturaGUI::RadioButton::applyRotation(const glm::vec3& rotation)
-{
-    if(!_background)
-        return;
-
-    if(!_border)
-        return;
-
-    if(!_indicator)
-        return;
-
-    _rotation = rotation;
-
-    _background->SetRotation(rotation);
-    _border->SetRotation(rotation);
-    _indicator->SetRotation(rotation);
-}
-
 void RetroFuturaGUI::RadioButton::SetValue(const bool value, const bool emitSignal)
 {
     bool valueCahnged { _isChecked != value };

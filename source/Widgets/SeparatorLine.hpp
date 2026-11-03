@@ -40,8 +40,6 @@ namespace RetroFuturaGUI
 
         void applyPosition(const glm::vec3& position) override;
 
-        void applyRotation(const glm::vec3& rotation) override;
-
     private:
         /// @brief Sizes and places the gap the text sits in, and centers the text inside it.
         void updateLayout();

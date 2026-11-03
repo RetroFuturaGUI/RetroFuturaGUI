@@ -35,6 +35,10 @@ namespace RetroFuturaGUI
         ///        click on the list reaches only the drop-down. IWidget::readPointer calls it for every widget.
         static void CaptureUnderOpenList(const IHierarchyNode* reader, GLFWwindow* readerWindow, PointerState& pointer);
 
+        /// @brief Returns whether the open list of any drop-down in the window lies over a window point (bottom-up pixels). Lists
+        ///        are drawn over everything, uncut, so a ScrollView lets the pointer through to one sticking out of it
+        static bool IsOpenListAt(GLFWwindow* window, const glm::vec2& windowPoint);
+
         virtual void RemoveItem(const uSize index) = 0;
         void Connect_OnItemClicked(const typename Signal<>::Slot& slot, const bool async);
         void Connect_OnIndexChanged(const typename Signal<>::Slot& slot, const bool async);
@@ -142,14 +146,13 @@ namespace RetroFuturaGUI
         /// @brief Puts lists taken by takeShown back.
         static void restoreShown(std::vector<IDropDown*>&& shown);
 
-        /// @brief Returns whether the list lies over a point in the reader's window, and the reader is neither this drop-down nor inside it.
-        bool isListOver(const IHierarchyNode* reader, GLFWwindow* readerWindow, const glm::vec2& point) const;
+        /// @brief Returns whether the list lies over a window point (bottom-up pixels) in the reader's window, and the reader is neither this drop-down nor inside it
+        bool isListOver(const IHierarchyNode* reader, GLFWwindow* readerWindow, const glm::vec2& windowPoint) const;
 
         void setDropDownArrowColors();
         void setDropDownBackgroundColors();
         void setDropDownBorderColors();
         glm::vec3 getDropDownCenter() const;
-        glm::vec2 rotateLocalOffset(const glm::vec2& localOffset) const;
 
     //Design
         ColorState
@@ -198,5 +201,6 @@ namespace RetroFuturaGUI
         inline static std::vector<IDropDown*> _shownDropDowns {}; //opened in the frame being drawn, drawn and cleared by DrawShown
         inline static std::vector<const IDropDown*> _dropDowns {}; //every drop-down, for the pointer check
         bool _hideLabelWhenOpen { false };
+        glm::mat4 _listFrame { 1.0f }; //the frame the widget drew in, which its open list draws in later
     };
 }

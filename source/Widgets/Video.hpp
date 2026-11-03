@@ -50,8 +50,6 @@ namespace RetroFuturaGUI
 
         void applyPosition(const glm::vec3& position) override;
 
-        void applyRotation(const glm::vec3& rotation) override;
-
     private:
         /// @brief Moves the picture on to the one due now, also while the Video is hidden or its window sits in a background tab.
         void update() override;

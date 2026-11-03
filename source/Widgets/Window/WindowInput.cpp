@@ -94,7 +94,7 @@ GLFWwindow* RetroFuturaGUI::Window::KeyboardWindowOf(GLFWwindow* glfwWindow)
     return window->GetKeyboardWindow();
 }
 
-void RetroFuturaGUI::Window::FilterPointer(PointerState& pointer) const
+void RetroFuturaGUI::Window::FilterPointer(PointerState& pointer, [[maybe_unused]] const IHierarchyNode* reader) const
 {
     //The mouse is on another window lying over this one, or holds a press that began on another window: to this window's
     //widgets it is outside, so they let go of their hover. The press stays visible, so a text box still ends its editing.

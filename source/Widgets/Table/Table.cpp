@@ -2,7 +2,7 @@
 #include "ITableWidget.hpp"
 #include "IncludeHelper.hpp"
 #include "PlatformBridge.hpp"
-#include "ScissorClip.hpp"
+#include "Shader.hpp"
 #include "SvgImage.hpp"
 #include "SvgTexture.hpp"
 #include "TableCheckBox.hpp"
@@ -199,7 +199,7 @@ void RetroFuturaGUI::Table::Draw()
 
     {
         // clamp contents to viewport
-        const ScissorClip contentClip { framebufferBox(contentOrigin.x, contentOrigin.y - _innerSize.y, _innerSize.x, _innerSize.y) };
+        const Shader::ClipScope contentClip { glm::vec4(contentOrigin.x, contentOrigin.y - _innerSize.y, _innerSize.x, _innerSize.y), _position.z, _projection };
 
         // only draw cells overlapping the viewport
         const uSize
@@ -271,14 +271,14 @@ void RetroFuturaGUI::Table::Draw()
     if(_displayHorizontalHeader)
     {
         const uSize headerColumnEnd { _horizontalHeaderCells.size() < _displayedColumns[1] ? _horizontalHeaderCells.size() : _displayedColumns[1] };
-        const ScissorClip headerClip { framebufferBox(contentOrigin.x, tableBottom, _innerSize.x, _size.y) };
+        const Shader::ClipScope headerClip { glm::vec4(contentOrigin.x, tableBottom, _innerSize.x, _size.y), _position.z, _projection };
         drawHeaderBand(_horizontalHeaderCells, _displayedColumns[0], headerColumnEnd);
     }
 
     if(_displayVerticalHeader)
     {
         const uSize rowEnd2 { _verticalHeaderCells.size() < _displayedRows[1] ? _verticalHeaderCells.size() : _displayedRows[1] };
-        const ScissorClip headerClip { framebufferBox(tableLeft, contentOrigin.y - _innerSize.y, _size.x, _innerSize.y) };
+        const Shader::ClipScope headerClip { glm::vec4(tableLeft, contentOrigin.y - _innerSize.y, _size.x, _innerSize.y), _position.z, _projection };
         drawHeaderBand(_verticalHeaderCells, _displayedRows[0], rowEnd2);
     }
 }
@@ -391,19 +391,6 @@ void RetroFuturaGUI::Table::applyPosition(const glm::vec3& position)
     _border->SetPosition(position + glm::vec3(0.0f, 0.0f, 0.1f));
     _selectedArea->SetPosition(position + glm::vec3(0.0f, 0.0f, _widgetZOffset - 0.01f));
     layoutCells();
-}
-
-void RetroFuturaGUI::Table::applyRotation(const glm::vec3& rotation)
-{
-    if(!_background)
-        return;
-
-    if(!_border)
-        return;
-
-    _rotation = rotation;
-    _background->SetRotation(rotation);
-    _border->SetRotation(rotation);
 }
 
 void RetroFuturaGUI::Table::SetTrackDefinitions(const std::vector<f32>& rowDefinition, const std::vector<f32>& columnDefinition)
@@ -1822,7 +1809,7 @@ bool RetroFuturaGUI::Table::isPointOnCheckBox(const glm::vec2& point, const uSiz
     cellRect(row, column, position, size);
     _sharedCheckBox->SetSize(size); //fits the box into the cell, as for drawing
     _sharedCheckBox->SetPosition(position);
-    return isPointInsideRect(point, _sharedCheckBox->GetSize(), _sharedCheckBox->GetPosition(), _rotation);
+    return isPointInsideRect(point, _sharedCheckBox->GetSize(), _sharedCheckBox->GetPosition(), glm::vec3(0.0f));
 }
 
 bool RetroFuturaGUI::Table::GetValue(const TrackIndex& index) const
@@ -2751,7 +2738,7 @@ bool RetroFuturaGUI::Table::findHorizontalHeaderAt(const glm::vec2& point, uSize
     {
         const TableCell& cell { _horizontalHeaderCells[column] };
 
-        if(!isPointInsideRect(point, cell._SizePixels, cell._PositionPixels, _rotation))
+        if(!isPointInsideRect(point, cell._SizePixels, cell._PositionPixels, glm::vec3(0.0f)))
             continue;
 
         outColumn = column;

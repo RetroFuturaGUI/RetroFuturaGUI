@@ -62,9 +62,6 @@ namespace RetroFuturaGUI
         /// @brief Sets the world position of the button.
         void applyPosition(const glm::vec3& position) override;
 
-        /// @brief Sets the rotation of the button.
-        void applyRotation(const glm::vec3& rotation) override;
-
     private:
         void setColors(const ColorState state) override;
         void setCheckmarkColors();

@@ -95,16 +95,6 @@ void RetroFuturaGUI::Video::applyPosition(const glm::vec3& position)
     _plane->SetPosition(_position);
 }
 
-void RetroFuturaGUI::Video::applyRotation(const glm::vec3& rotation)
-{
-    IWidget::applyRotation(rotation);
-
-    if(!_plane)
-        return;
-
-    _plane->SetRotation(_rotation);
-}
-
 bool RetroFuturaGUI::Video::OpenVideoFile(std::string_view file)
 {
     if(!_videoPlayback)

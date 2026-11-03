@@ -90,29 +90,6 @@ void RetroFuturaGUI::CheckBox::applyPosition(const glm::vec3& position)
     _checkmark->SetPosition(position + glm::vec3(0.0f, 0.0f, 0.03f));
 }
 
-void RetroFuturaGUI::CheckBox::applyRotation(const glm::vec3& rotation)
-{
-    if(!_background)
-        return;
-
-    if(!_border)
-        return;
-
-    if(!_inheritFill)
-        return;
-
-    _rotation = rotation;
-
-    _background->SetRotation(rotation);
-    _border->SetRotation(rotation);
-    _inheritFill->SetRotation(rotation);
-
-    if(!_checkmark)
-        return;
-
-    _checkmark->SetRotation(rotation);
-}
-
 void RetroFuturaGUI::CheckBox::SetValue(const bool value, const bool emitSignal)
 {
     bool valueCahnged { false };

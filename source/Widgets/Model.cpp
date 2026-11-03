@@ -28,7 +28,7 @@ void RetroFuturaGUI::Model::LoadModel(std::string_view path)
 void RetroFuturaGUI::Model::Draw()
 {
     for(Mesh& mesh : _meshes)
-        mesh.Draw(_projection.GetProjectionMatrix(), _translationMatrix, _rotationMatrix, _scalingMatrix);
+        mesh.Draw(_projection.GetProjectionMatrix(), _translationMatrix, glm::mat4(1.0f), _scalingMatrix); //turned by the widget's frame.
 }
 
 void RetroFuturaGUI::Model::applySize(const glm::vec3& size)
@@ -41,16 +41,6 @@ void RetroFuturaGUI::Model::applyPosition(const glm::vec3& position)
 {
     IWidget::applyPosition(position);
     _translationMatrix = glm::translate(glm::mat4(1.0f), position);
-}
-
-void RetroFuturaGUI::Model::applyRotation(const glm::vec3& rotation)
-{
-    IWidget::applyRotation(rotation);
-    glm::vec3 radians = glm::radians(rotation);
-    _rotationMatrix =
-        glm::rotate(glm::mat4(1.0f), radians.z, glm::vec3(0.0f, 0.0f, 1.0f)) *
-        glm::rotate(glm::mat4(1.0f), radians.y, glm::vec3(0.0f, 1.0f, 0.0f)) *
-        glm::rotate(glm::mat4(1.0f), radians.x, glm::vec3(1.0f, 0.0f, 0.0f));
 }
 
 RetroFuturaGUI::Mesh RetroFuturaGUI::Model::processMesh(aiMesh* unprocessedMesh, const aiScene* scene)

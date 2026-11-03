@@ -32,7 +32,7 @@ void RetroFuturaGUI::Prefab::Draw()
     if(!_lasagna)
         return;
 
-    _lasagna->Draw();
+    _lasagna->DrawAtOpacity();
 }
 
 void RetroFuturaGUI::Prefab::interact()
@@ -70,16 +70,6 @@ void RetroFuturaGUI::Prefab::applyPosition(const glm::vec3& position)
     IWidget::applyPosition(position);
 
     _lasagna->SetPosition(position);
-}
-
-void RetroFuturaGUI::Prefab::applyRotation(const glm::vec3& rotation)
-{
-    if(!_lasagna)
-        return;
-
-    IWidget::applyRotation(rotation);
-
-    _lasagna->SetRotation(rotation);
 }
 
 void RetroFuturaGUI::Prefab::SetColumnDefinition(std::vector<f32> columnDefinition)

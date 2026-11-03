@@ -102,28 +102,6 @@ void RetroFuturaGUI::ITextBox::applyPosition(const glm::vec3& position)
     _caret->SetPosition(position + glm::vec3(0.0f, 0.0f, 0.5f));
 }
 
-void RetroFuturaGUI::ITextBox::applyRotation(const glm::vec3& rotation)
-{
-    if(!_background)
-        return;
-
-    if(!_border)
-        return;
-
-    if(!_text)
-        return;
-
-    if(!_placeholderText)
-        return;
-
-    _rotation = rotation;
-
-    _background->SetRotation(rotation);
-    _border->SetRotation(rotation);
-    _text->SetRotation(rotation);
-    _placeholderText->SetRotation(rotation);
-}
-
 void RetroFuturaGUI::ITextBox::interact()
 {
     const PointerState pointer { readPointer() };

@@ -36,16 +36,6 @@ void RetroFuturaGUI::Image::applyPosition(const glm::vec3& position)
     _plane->SetPosition(position);
 }
 
-void RetroFuturaGUI::Image::applyRotation(const glm::vec3& rotation)
-{
-    IWidget::applyRotation(rotation);
-
-    if(!_plane)
-        return;
-
-    _plane->SetRotation(rotation);
-}
-
 void RetroFuturaGUI::Image::SetImage(DecodedImage&& image)
 {
     _decodedTexture = std::make_unique<Texture>(std::move(image));

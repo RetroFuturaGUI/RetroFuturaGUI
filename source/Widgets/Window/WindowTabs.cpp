@@ -12,16 +12,6 @@ bool RetroFuturaGUI::Window::IsInTab() const
     return _tabHost != nullptr;
 }
 
-glm::ivec2 RetroFuturaGUI::Window::DrawOriginOf(GLFWwindow* glfwWindow)
-{
-    const Window* window { FromGlfwWindow(glfwWindow) };
-
-    if(!window)
-        return glm::ivec2(0);
-
-    return window->_drawOrigin;
-}
-
 bool RetroFuturaGUI::Window::enterTab(WindowTab* tab)
 {
     if(!tab)
@@ -121,7 +111,6 @@ void RetroFuturaGUI::Window::drawInHost(const ScreenRect& contentArea, const glm
     GLint viewport[4] {};
     glGetIntegerv(GL_VIEWPORT, viewport);
     glViewport(area.x, area.y, area.z, area.w);
-    _drawOrigin = glm::ivec2(area.x, area.y);
 
     //The drawing window's own open lists still draw last in its frame. Its tooltip and context menu wait under its own window.
     std::vector<IDropDown*> hostDropDowns { IDropDown::takeShown() };
@@ -129,6 +118,8 @@ void RetroFuturaGUI::Window::drawInHost(const ScreenRect& contentArea, const glm
     {
         //Everything lands in the content area, depth clears included, and an active clip stays in force
         const ScissorClip clip { area };
+        const Shader::FrameScope flat { glm::mat4(1.0f), Shader::FrameComposition::Instead }; //its content lies in its own space.
+        const Shader::UnclippedScope unclipped {}; //likewise, so the host's clip planes don't reach into it.
         const Transitions::InstantScope instant { _isHidden }; //a tab just selected shows what changed meanwhile at once
         glClear(GL_DEPTH_BUFFER_BIT);
         drawContent();
@@ -139,7 +130,6 @@ void RetroFuturaGUI::Window::drawInHost(const ScreenRect& contentArea, const glm
 
     IDropDown::restoreShown(std::move(hostDropDowns));
 
-    _drawOrigin = glm::ivec2(0);
     glViewport(viewport[0], viewport[1], viewport[2], viewport[3]);
 }
 

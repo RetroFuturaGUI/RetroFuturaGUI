@@ -83,28 +83,6 @@ void RetroFuturaGUI::ColorPreview::applyPosition(const glm::vec3& position)
     alignColorPreview();
 }
 
-void RetroFuturaGUI::ColorPreview::applyRotation(const glm::vec3& rotation)
-{
-    IWidget::applyRotation(rotation);
-
-    if(!_checkeredBackground)
-        return;
-
-    if(!_whiteBackground)
-        return;
-
-    if(!_colorRect)
-        return;
-
-    if(!_border)
-        return;
-
-    _checkeredBackground->SetRotation(rotation);
-    _whiteBackground->SetRotation(rotation);
-    _colorRect->SetRotation(rotation);
-    _border->SetRotation(rotation);
-}
-
 void RetroFuturaGUI::ColorPreview::EnableDualPreviewBackground(const bool enable)
 {
     _useWhiteBackgroundRect = enable;

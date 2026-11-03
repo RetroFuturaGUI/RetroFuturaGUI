@@ -7,7 +7,7 @@ namespace RetroFuturaGUI
     class ScissorClip
     {
     public:
-        /// @brief Clips to box: left, bottom, width and height in framebuffer pixels (see IWidget::framebufferBox).
+        /// @brief Clips to box: left, bottom, width and height in framebuffer pixels
         explicit ScissorClip(const glm::ivec4& box);
         ~ScissorClip();
         ScissorClip(const ScissorClip&) = delete;

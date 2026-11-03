@@ -278,9 +278,12 @@ namespace RetroFuturaGUI
         /// @brief The rectangle the values are laid out along: the widget's background, read each time so a replaced _background can't leave a stale pointer behind.
         Plane* getTrack() const { return _background.get(); }
 
-        /// @brief Folds the orientation into the widget's own rotation.
-        /// @return The given rotation for Horizontal, or that rotation turned a quarter turn counter-clockwise for Vertical.
-        glm::vec3 orientedRotation(const glm::vec3& rotation) const;
+        /// @brief The rotation the orientation gives the track. None for Horizontal. A quarter turn counter-clockwise for
+        ///        Vertical. The widget's own rotation is in its frame
+        glm::vec3 orientedRotation() const;
+
+        /// @brief Turns the track to the orientation and places the indicator along it.
+        void orientTrack();
 
         /// @brief Places the indicator along the track.
         /// @param trackFraction Where along the track, 0 at the track's start; see toTrackFraction.
@@ -456,9 +459,6 @@ namespace RetroFuturaGUI
 
         /// @brief Sets the size
         void applySize(const glm::vec3& size) override final;
-
-        /// @brief Sets the rotation
-        void applyRotation(const glm::vec3& rotation) override final;
 
     private:
         void setIndicatorBackgroundColors();

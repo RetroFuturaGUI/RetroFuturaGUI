@@ -51,9 +51,6 @@ namespace RetroFuturaGUI
         /// @brief Sets the world position of the image.
         void applyPosition(const glm::vec3& position) override;
 
-        /// @brief Sets the rotation of the image.
-        void applyRotation(const glm::vec3& rotation) override;
-
     private:
         f32 _textureAspectRatio { 0.0f };
         Texture* _texture { nullptr }; //the picture shown: ResourceManager's for a file, _decodedTexture for a decoded picture

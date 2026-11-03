@@ -1,5 +1,7 @@
 #pragma once
 #include "IncludeHelper.hpp"
+#include "Projection.hpp"
+#include <array>
 #include <filesystem>
 #include <functional>
 #include <string>
@@ -10,7 +12,7 @@
 
 namespace RetroFuturaGUI
 {
-    /// @brief The features a shader runs, as the bits of uDIP
+    /// @brief The features a shader runs as the bits of uDIP
     enum ShaderFeatures : u32
     {
         RoundedCorners = 1,
@@ -42,13 +44,83 @@ namespace RetroFuturaGUI
             f32 _outerOpacity { 1.0f };
         };
 
+        /// @brief How a FrameScope's matrix meets the frame around it
+        enum class FrameComposition : u32
+        {
+            Inside,     // multiplies the frame around it: A widget inside its container
+            Instead     // replaces it: what draws later apart from its widget in the frame the widget had
+        };
+
+        /// @brief While one lives, everything drawn is placed through its frame. The matrix that tilts an untilted layout into
+        ///        place. Every shader program in use takes the frame as uFrame. A widget draws and takes the pointer inside one
+        ///        that tilts it around its center inside its container's
+        class FrameScope
+        {
+        public:
+            FrameScope(const glm::mat4& frame, const FrameComposition composition);
+            FrameScope(const FrameScope&) = delete;
+            FrameScope(FrameScope&&) = delete;
+            auto operator =(const FrameScope&) = delete;
+            auto operator =(FrameScope&&) = delete;
+            ~FrameScope();
+
+        private:
+            glm::mat4 _outerFrame { 1.0f };
+        };
+
+        /// @brief The frame of the FrameScopes around what is drawn now or the identity outside every one
+        static const glm::mat4& GetDrawFrame();
+
+        /// @brief While one lives, everything drawn is cut to a rectangle of the untilted layout of the frame around it (just as like as the
+        ///        eye sees it). Additionally also to the ClipScopes around it. That frame however is tilted. Every shader program in use takes the
+        ///        cut as uClipPlanes: four planes from the eye through the rectangle's edges which under perspective also cut what
+        ///        lies in front of or behind the rectangle where it reaches past it on the screen. Nested rectangles in one frame
+        ///        and depth are cut to their overlap. Any other adds its own four planes, two deep at most (the innermost two count)
+        class ClipScope
+        {
+        public:
+            /// @brief Cuts to box: left, bottom, width and height in the untilted layout, lying at depth there, as projection's eye sees it
+            ClipScope(const glm::vec4& box, const f32 depth, const Projection& projection);
+            ClipScope(const ClipScope&) = delete;
+            ClipScope(ClipScope&&) = delete;
+            auto operator =(const ClipScope&) = delete;
+            auto operator =(ClipScope&&) = delete;
+            ~ClipScope();
+
+        private:
+            std::array<glm::vec4, 8> _outerPlanes {};
+            u32 _outerPlaneCount { 0 };
+            glm::vec4 _outerBox { 0.0f };
+            glm::mat4
+                _outerBoxFrame { 1.0f },
+                _outerBoxView { 1.0f };
+            f32 _outerBoxDepth { 0.0f };
+        };
+
+        /// @brief While one lives, the ClipScopes around it cut nothing. For what draws in a space of its own such as a tabbed
+        ///        window's content drawn by its host
+        class UnclippedScope
+        {
+        public:
+            UnclippedScope();
+            UnclippedScope(const UnclippedScope&) = delete;
+            UnclippedScope(UnclippedScope&&) = delete;
+            auto operator =(const UnclippedScope&) = delete;
+            auto operator =(UnclippedScope&&) = delete;
+            ~UnclippedScope();
+
+        private:
+            u32 _outerPlaneCount { 0 };
+        };
+
         /// @brief Loads, compiles and links a shader program from the given shader source files. A source may pull in other files
         ///        with #include "file", and each define is set right after its #version line, so one source can build several
         ///        programs, such as one per fill.
         Shader(const char* vertexPath, const char* fragmentPath, const char* geometryPath = nullptr, const std::vector<std::string>& defines = {});
         ~Shader();
 
-        /// @brief Activates this shader program for subsequent draw calls, with the opacity of the OpacityScopes around it.
+        /// @brief Activates this shader program for subsequent draw calls with the opacity of the OpacityScopes and the frame of
+        ///        the FrameScopes around it.
         void UseProgram();
 
         /// @brief Sets a bool uniform.
@@ -117,10 +189,6 @@ namespace RetroFuturaGUI
             }
         };
 
-        u32 _programId = 0;
-        i32 _projectionLocation = -1;
-        mutable std::unordered_map<std::string, i32, NameHash, std::equal_to<>> _uniformLocations {}; //asked from GL once per name
-
         u32 compileShader(const char* shaderCode, const int shaderType);
 
         /// @brief Reads a shader source with its #include lines replaced by the files they name, and the defines set right after its #version line. Empty when a file can't be read.
@@ -135,6 +203,26 @@ namespace RetroFuturaGUI
         /// @brief The location of the uniform with the given name. -1 when the program has none
         i32 getUniformLocation(std::string_view name) const;
 
+        /// @brief The four planes from projection's eye through the edges of box (left, bottom, width, height) at depth in the
+        ///        layout frame tilts into place (each keeping the side the box lies on)
+        static std::array<glm::vec4, 4> clipPlanesOf(const glm::vec4& box, const f32 depth, const glm::mat4& frame, const Projection& projection);
+
+        /// @brief Switches the clip distances in use on and the rest off
+        static void enableClipPlanes(const u32 count, const u32 previousCount);
+
+        u32 _programId = 0;
+        i32 _projectionLocation = -1;
+        mutable std::unordered_map<std::string, i32, NameHash, std::equal_to<>> _uniformLocations {}; //asked from GL once per name
+
         static inline f32 _drawOpacity { 1.0f }; //the product of the OpacityScopes around what is drawn now
+        static inline glm::mat4 _drawFrame { 1.0f }; //the frame of the FrameScopes around what is drawn now
+        static constexpr u32 _maxClipPlanes { 8 }; //as many as Clip.glsl measures. GL guarantees 8 clip distances
+        static inline std::array<glm::vec4, _maxClipPlanes> _clipPlanes {}; //the ClipScopes' planes in the window before the projection
+        static inline u32 _clipPlaneCount { 0 };
+        static inline glm::vec4 _clipBox { 0.0f }; //the innermost rectangle, in its frame's untilted layout: the last four planes
+        static inline glm::mat4
+            _clipBoxFrame { 1.0f },
+            _clipBoxView { 1.0f }; //the projection it was seen through
+        static inline f32 _clipBoxDepth { 0.0f };
     };
 }

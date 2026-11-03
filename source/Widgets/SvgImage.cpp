@@ -30,16 +30,6 @@ void RetroFuturaGUI::SvgImage::applyPosition(const glm::vec3& position)
     _svgTexture->SetPosition(position);
 }
 
-void RetroFuturaGUI::SvgImage::applyRotation(const glm::vec3& rotation)
-{
-    if(!_svgTexture)
-        return;
-
-    IWidget::applyRotation(rotation);
-
-    _svgTexture->SetRotation(rotation);
-}
-
 void RetroFuturaGUI::SvgImage::FitGeometryToTexture()
 {
     if(!_svgTexture)

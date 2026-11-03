@@ -56,17 +56,6 @@ void RetroFuturaGUI::SeparatorLine::applyPosition(const glm::vec3& position)
     updateLayout();
 }
 
-void RetroFuturaGUI::SeparatorLine::applyRotation(const glm::vec3& rotation)
-{
-    IWidget::applyRotation(rotation);
-
-    if(!_background || !_text)
-        return;
-
-    _background->SetRotation(rotation);
-    _text->SetRotation(rotation);
-}
-
 void RetroFuturaGUI::SeparatorLine::SetText(std::string_view text, const bool emitSignal)
 {
     ITextProperties::SetText(text, emitSignal);

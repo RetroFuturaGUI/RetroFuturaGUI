@@ -61,7 +61,7 @@ void RetroFuturaGUI::IRangedValue::applySize(const glm::vec3& size)
     alignElementsToTrack();
 }
 
-void RetroFuturaGUI::IRangedValue::applyRotation(const glm::vec3& rotation)
+void RetroFuturaGUI::IRangedValue::orientTrack()
 {
     if(!_background)
         return;
@@ -69,8 +69,7 @@ void RetroFuturaGUI::IRangedValue::applyRotation(const glm::vec3& rotation)
     if(!_border)
         return;
 
-    IWidget::applyRotation(rotation);
-    const glm::vec3 trackRotation { orientedRotation(rotation) };
+    const glm::vec3 trackRotation { orientedRotation() };
     _background->SetRotation(trackRotation);
     _border->SetRotation(trackRotation);
     alignElementsToTrack();
@@ -80,7 +79,7 @@ void RetroFuturaGUI::IRangedValue::SetOrientation(const Orientation orientation)
 {
     _orientation = orientation;
     SetSize(_size);
-    SetRotation(_rotation);
+    orientTrack();
 }
 
 void RetroFuturaGUI::IRangedValue::SetTrackDirection(const TrackDirection direction)
@@ -639,11 +638,9 @@ void RetroFuturaGUI::IRangedValue::SetGraphFogClearing(const f32 clearing)
     _graph->SetFogClearing(clearing);
 }
 
-glm::vec3 RetroFuturaGUI::IRangedValue::orientedRotation(const glm::vec3& rotation) const
+glm::vec3 RetroFuturaGUI::IRangedValue::orientedRotation() const
 {
-    return _orientation == Orientation::Vertical
-        ? rotation + glm::vec3(0.0f, 0.0f, 90.0f)
-        : rotation;
+    return _orientation == Orientation::Vertical ? glm::vec3(0.0f, 0.0f, 90.0f) : glm::vec3(0.0f);
 }
 
 f32 RetroFuturaGUI::IRangedValue::toF32(const PrimitiveUnion value) const

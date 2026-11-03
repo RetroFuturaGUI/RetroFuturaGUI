@@ -84,7 +84,25 @@ void RetroFuturaGUI::Window::UpdateLayout()
         return;
 
     _lasagna->SetPosition(glm::vec3(client.GetCenter(), _lasagna->GetPosition().z));
-    _lasagna->SetSize(glm::vec3(client._Extent, _lasagna->GetSize().z));
+    _lasagna->SetSize(glm::vec3(client._Extent, _projection->GetDepth())); //the depth its layers spread over, flat under perspective.
+}
+
+void RetroFuturaGUI::Window::SetPerspective(const f32 viewingDistance)
+{
+    if(!_projection)
+        return;
+
+    _projection->SetPerspective(viewingDistance, std::nullopt);
+    UpdateLayout();
+}
+
+void RetroFuturaGUI::Window::SetOrthographic()
+{
+    if(!_projection)
+        return;
+
+    _projection->SetOrthographic();
+    UpdateLayout();
 }
 
 const RetroFuturaGUI::ScreenRect& RetroFuturaGUI::Window::GetClientRect() const

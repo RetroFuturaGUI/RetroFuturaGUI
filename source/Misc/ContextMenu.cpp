@@ -96,6 +96,8 @@ void RetroFuturaGUI::ContextMenu::Update()
     if(!_items)
         return;
 
+    const Shader::FrameScope flat { glm::mat4(1.0f), Shader::FrameComposition::Instead }; //the menu stays flat over a tilted widget.
+
     if(_hasPendingItemClose)
     {
         _hasPendingItemClose = false;
@@ -495,12 +497,12 @@ void RetroFuturaGUI::ContextMenu::interact()
     const bool isOverWidget { !pointer._IsCaptured && _widget->isPointInside(pointer._Position) };
     const bool isOverMenu {
         _isShown && _items
-        && (_items->isPointInside(pointer._Position) || _items->IsPointInsideOpenDropDown(pointer._Position))
+        && (_items->isPointInside(pointer._WindowPosition) || _items->IsPointInsideOpenDropDown(pointer._WindowPosition))
     };
 
     if(rightButtonPressedThisFrame && isOverWidget)
     {
-        _pointerPosition = pointer._Position;
+        _pointerPosition = pointer._WindowPosition;
         _isShown = !_isShown;
 
         if(_items)

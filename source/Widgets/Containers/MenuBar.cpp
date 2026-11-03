@@ -73,28 +73,6 @@ void RetroFuturaGUI::MenuBar::applySize(const glm::vec3& size)
     updateLayout();
 }
 
-void RetroFuturaGUI::MenuBar::applyRotation(const glm::vec3& rotation)
-{
-    if(!_background)
-        return;
-
-    if(!_border)
-        return;
-
-    IWidget::applyRotation(rotation);
-
-    _background->SetRotation(rotation);
-    _border->SetRotation(rotation);
-
-    for(const std::unique_ptr<IWidget>& item : _itemFlex)
-    {
-        if(!item)
-            continue;
-
-        item->SetRotation(rotation);
-    }
-}
-
 void RetroFuturaGUI::MenuBar::SetMargin(const f32 margin)
 {
     _margin = margin;
@@ -654,7 +632,7 @@ void RetroFuturaGUI::MenuBar::followPointer()
 
     for(uSize index { 0 }; index < _itemFlex.size(); ++index)
     {
-        if(!isPointInsideRect(mousePos, glm::vec3(cellSize(index), _size.z), cellPosition(index), _rotation))
+        if(!isPointInsideRect(mousePos, glm::vec3(cellSize(index), _size.z), cellPosition(index), glm::vec3(0.0f)))
             continue;
 
         _hoveredItemIndex = index;
@@ -755,7 +733,7 @@ bool RetroFuturaGUI::MenuBar::isPointInsideDragCell(const glm::vec2& point) cons
         if(!dynamic_cast<Label*>(item.get()))
             continue;
 
-        if(!isPointInsideRect(point, glm::vec3(cellSize(cell), _size.z), cellPosition(cell), _rotation))
+        if(!isPointInsideRect(point, glm::vec3(cellSize(cell), _size.z), cellPosition(cell), glm::vec3(0.0f)))
             continue;
 
         return true;
@@ -786,7 +764,7 @@ bool RetroFuturaGUI::MenuBar::isPointInsideUndockCell(const glm::vec2& point) co
         if(!item->IsEnabled())
             continue;
 
-        if(!isPointInsideRect(point, glm::vec3(cellSize(cell), _size.z), cellPosition(cell), _rotation))
+        if(!isPointInsideRect(point, glm::vec3(cellSize(cell), _size.z), cellPosition(cell), glm::vec3(0.0f)))
             continue;
 
         return true;
@@ -1083,12 +1061,10 @@ void RetroFuturaGUI::MenuBar::drawItems()
 
         _itemBackground->SetSize(cell);
         _itemBackground->SetPosition(center);
-        _itemBackground->SetRotation(_rotation);
         _itemBackground->Draw();
 
         _itemBorder->SetSize(cell);
         _itemBorder->SetPosition(center + glm::vec3(0.0f, 0.0f, 0.01f));
-        _itemBorder->SetRotation(_rotation);
         _itemBorder->Draw();
 
         if(!item)
@@ -1114,7 +1090,6 @@ void RetroFuturaGUI::MenuBar::drawSeparatorLines()
         : glm::vec2(_size.x, _separatorLinesThickness) };
 
     _separatorLine->SetSize(lineSize);
-    _separatorLine->SetRotation(_rotation);
 
     // A line goes on every seam between two cells. one fewer than there are cells
     for(uSize seam { 1 }; seam < _itemFlex.size(); ++seam)

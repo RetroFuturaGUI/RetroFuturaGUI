@@ -178,7 +178,49 @@ void RetroFuturaGUI::IWidget::DrawAtOpacity()
         return; //nothing of it would show
 
     const Shader::OpacityScope opacity { _opacity };
+    const Shader::FrameScope frame { getTilt(), Shader::FrameComposition::Inside };
+    _frame = Shader::GetDrawFrame();
     Draw();
+}
+
+glm::mat4 RetroFuturaGUI::IWidget::getTilt() const
+{
+    if(glm::vec3(0.0f) == _rotation)
+        return glm::mat4(1.0f);
+
+    // Turned around the center in the same Z * Y * X order every element composes its own rotation in
+    const glm::vec3 radians { glm::radians(_rotation) };
+    return glm::translate(glm::mat4(1.0f), _position)
+        * glm::rotate(glm::mat4(1.0f), radians.z, glm::vec3(0.0f, 0.0f, 1.0f))
+        * glm::rotate(glm::mat4(1.0f), radians.y, glm::vec3(0.0f, 1.0f, 0.0f))
+        * glm::rotate(glm::mat4(1.0f), radians.x, glm::vec3(1.0f, 0.0f, 0.0f))
+        * glm::translate(glm::mat4(1.0f), -_position);
+}
+
+std::optional<glm::vec2> RetroFuturaGUI::IWidget::toLayoutPoint(const glm::vec2& windowPoint, const glm::mat4& frame) const
+{
+    // The view through the window point from the near to the far end of the view-span. Taken back into the untilted layout
+    const glm::vec2 resolution { glm::max(_projection.GetResolution(), glm::vec2(1.0f)) };
+    const glm::vec2 clip { windowPoint / resolution * 2.0f - 1.0f };
+    const glm::mat4 toLayout { glm::inverse(_projection.GetProjectionMatrix() * frame) };
+    const glm::vec4
+        nearPoint { toLayout * glm::vec4(clip, -1.0f, 1.0f) },
+        farPoint { toLayout * glm::vec4(clip, 1.0f, 1.0f) };
+    const glm::vec3
+        rayStart { glm::vec3(nearPoint) / nearPoint.w },
+        rayEnd { glm::vec3(farPoint) / farPoint.w };
+
+    if(std::abs(rayEnd.z - rayStart.z) < 1e-6f)
+        return std::nullopt; //the layout's plane is edge-on to the view
+
+    // Where the ray meets the layout's plane at the widget's depth
+    const f32 along { (_position.z - rayStart.z) / (rayEnd.z - rayStart.z) };
+    return glm::vec2(rayStart + (rayEnd - rayStart) * along);
+}
+
+std::optional<glm::vec2> RetroFuturaGUI::IWidget::toOwnLayoutPoint(const glm::vec2& windowPoint) const
+{
+    return toLayoutPoint(windowPoint, _frame);
 }
 
 void RetroFuturaGUI::IWidget::SetOpacity(const f32 opacity)
@@ -268,9 +310,7 @@ bool RetroFuturaGUI::IWidget::IsEnabled() const
 
 bool RetroFuturaGUI::IWidget::isPointInsideRect(const glm::vec2& point, const glm::vec3& size, const glm::vec3& position, const glm::vec3& rotation) const
 {
-     /* Hit-testing is a 2D point-in-rectangle check, so only the Z-axis (screen-plane)
-       rotation applies here - X/Y rotation tilts the widget in a way this simple test
-       can't represent*/
+    // The point is in the widget's untilted layout (readPointer), so only a part's own turn within it applies here
     glm::vec2 translatedPoint = point - glm::vec2(position.x, position.y);
     f32 radians = glm::radians(- rotation.z);
     glm::vec2 rotatedPoint(
@@ -285,7 +325,7 @@ bool RetroFuturaGUI::IWidget::isPointInsideRect(const glm::vec2& point, const gl
 
 bool RetroFuturaGUI::IWidget::isPointInside(const glm::vec2& point) const
 {
-    return isPointInsideRect(point, _size, _position, _rotation);
+    return isPointInsideRect(point, _size, _position, glm::vec3(0.0f)); //the widget's own rotation is in its frame
 }
 
 RetroFuturaGUI::PointerState RetroFuturaGUI::IWidget::readPointer() const
@@ -301,13 +341,17 @@ RetroFuturaGUI::PointerState RetroFuturaGUI::IWidget::readPointer() const
     pointer._HasPosition = PlatformBridge::Input::GetMouseWindowPosition(glfwGetWin32Window(_parentWindow), mouseX, mouseY);
 #endif
 
-    // PlatformBridge reports native, top-down window coordinates; the library's world space runs bottom-up.
-    pointer._Position = glm::vec2(static_cast<f32>(mouseX), _projection.GetResolution().y - static_cast<f32>(mouseY));
+    // PlatformBridge reports native, top-down window coordinates; the library's world space runs bottom-up. The widget sees
+    // the point where the pointer meets its untilted layout. For an untilted widget in an orthographic view, it's the same point
+    pointer._WindowPosition = glm::vec2(static_cast<f32>(mouseX), _projection.GetResolution().y - static_cast<f32>(mouseY));
+    const std::optional<glm::vec2> layoutPoint { toOwnLayoutPoint(pointer._WindowPosition) };
+    pointer._HasPosition = pointer._HasPosition && layoutPoint.has_value();
+    pointer._Position = layoutPoint.value_or(pointer._WindowPosition);
     pointer._LeftButtonPressed = PlatformBridge::Input::IsMouseButtonDown(PlatformBridge::MouseButton::Left);
     pointer._RightButtonPressed = PlatformBridge::Input::IsMouseButtonDown(PlatformBridge::MouseButton::Right);
     Window::ReadWheel(_parentWindow, pointer);
 
-    filterThroughAncestors(_parentWidget, pointer);
+    filterThroughAncestors(_parentWidget, this, pointer);
     IDropDown::CaptureUnderOpenList(this, _parentWindow, pointer);
     return pointer;
 }
@@ -317,30 +361,19 @@ void RetroFuturaGUI::IWidget::requestCursorIcon(const PlatformBridge::CursorIcon
     Window::RequestCursorIcon(_parentWindow, icon);
 }
 
-glm::ivec4 RetroFuturaGUI::IWidget::framebufferBox(const f32 left, const f32 bottom, const f32 width, const f32 height) const
-{
-    const glm::ivec2 origin { Window::DrawOriginOf(_parentWindow) };
-
-    return glm::ivec4(
-        origin.x + static_cast<i32>(left),
-        origin.y + static_cast<i32>(bottom),
-        static_cast<i32>(width),
-        static_cast<i32>(height));
-}
-
-void RetroFuturaGUI::IWidget::filterThroughAncestors(const IHierarchyNode* node, PointerState& pointer)
+void RetroFuturaGUI::IWidget::filterThroughAncestors(const IHierarchyNode* node, const IHierarchyNode* reader, PointerState& pointer)
 {
     if(!node)
         return;
 
-    filterThroughAncestors(node->GetParent(), pointer);
+    filterThroughAncestors(node->GetParent(), reader, pointer);
 
     const IPointerFilter* filter { dynamic_cast<const IPointerFilter*>(node) };
 
     if(!filter)
         return;
 
-    filter->FilterPointer(pointer);
+    filter->FilterPointer(pointer, reader);
 }
 
 void RetroFuturaGUI::IWidget::SetTooltipText(std::string_view text)
@@ -366,6 +399,8 @@ RetroFuturaGUI::Tooltip* RetroFuturaGUI::IWidget::GetTooltip() const
 
 void RetroFuturaGUI::IWidget::Interact()
 {
+    const Shader::FrameScope frame { getTilt(), Shader::FrameComposition::Inside };
+    _frame = Shader::GetDrawFrame();
     updateTooltip();
     interact();
 }

@@ -55,7 +55,7 @@ void RetroFuturaGUI::Slider::interact()
     glm::vec2 mousePos { pointer._Position };
     bool
         isMouseButtonPressed { pointer._LeftButtonPressed },
-        isMouseInside { pointer._HasPosition && isPointInsideRect(mousePos, _size, _position, _rotation) },
+        isMouseInside { pointer._HasPosition && isPointInsideRect(mousePos, _size, _position, glm::vec3(0.0f)) },
         isMouseInsideIndicator { isPointInsideRect(mousePos, glm::vec3(_indicatorBackground->GetSize(), 0.0f), _indicatorBackground->GetPosition(), _indicatorBackground->GetRotation()) };
 
     if(!_isEnabledFlag || !isMouseInside) //no action and mouse leave

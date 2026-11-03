@@ -3,10 +3,13 @@
 
 namespace RetroFuturaGUI
 {
-    /// @brief The mouse position and button states a widget reacts to. A ScrollView may hide a press or take the pointer while scrolling.
+    class IHierarchyNode;
+
+    /// @brief The mouse position and button states a widget reacts to. A ScrollView may hide a press or take the pointer while scrolling
     struct PointerState
     {
-        glm::vec2 _Position { 0.0f }; // Window coordinates
+        glm::vec2 _Position { 0.0f };
+        glm::vec2 _WindowPosition { 0.0f };
         bool
             _HasPosition { false },
             _LeftButtonPressed { false },
@@ -42,7 +45,8 @@ namespace RetroFuturaGUI
     public:
         virtual ~IPointerFilter() = default;
 
-        /// @brief Adjusts the mouse as this container's descendants see it. IWidget::readPointer calls it for every filtering ancestor.
-        virtual void FilterPointer(PointerState& pointer) const = 0;
+        /// @brief Adjusts the mouse as this container's descendants see it. IWidget::readPointer calls it for every filtering ancestor,
+        ///        with the widget reading the pointer as reader
+        virtual void FilterPointer(PointerState& pointer, const IHierarchyNode* reader) const = 0;
     };
 }

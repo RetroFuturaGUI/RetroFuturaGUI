@@ -1,7 +1,9 @@
 #include "ScrollView.hpp"
+#include "IDropDown.hpp"
 #include "IWidget.hpp"
 #include "IncludeHelper.hpp"
 #include "PlatformBridge.hpp"
+#include "Shader.hpp"
 #include "Window.hpp"
 #include <memory>
 #include <algorithm>
@@ -24,22 +26,35 @@ RetroFuturaGUI::ScrollView::ScrollView(std::string_view name, Projection* projec
 
 void RetroFuturaGUI::ScrollView::Draw()
 {
-    for(ScrollViewCell& cell : _items)
+    const glm::vec3 viewSize { getInnerSize() };
+    const Shader::ClipScope clip { glm::vec4(_position.x - viewSize.x * 0.5f, _position.y - viewSize.y * 0.5f, viewSize.x, viewSize.y), _position.z, _projection }; //content scrolled past the border is cut away.
+
+    const auto draw = [this](ScrollViewCell& cell)
     {
         if(cell._PendingRemoval)
-            continue;
+            return;
 
         if(!cell._Widget)
-            continue;
+            return;
+
+        if(!isCellInDepth(cell))
+            return;
 
         cell._Widget->DrawAtOpacity();
-    }
+    };
+
+    // A stack along Z draws from the back, so a cell's see-through edges blend over the cells behind it
+    if(ScrollAxis::Z == _alignmentDirection)
+        std::for_each(_items.rbegin(), _items.rend(), draw);
+    else
+        std::for_each(_items.begin(), _items.end(), draw);
 }
 
 void RetroFuturaGUI::ScrollView::interact()
 {
     performPendingRemoval();
     followPointer();
+    findPointerCell();
 
     for(ScrollViewCell& cell : _items)
     {
@@ -50,10 +65,68 @@ void RetroFuturaGUI::ScrollView::interact()
         if(!cell._Widget)
             continue;
 
+        if(!isCellInDepth(cell))
+            continue;
+
         cell._Widget->Interact();
     }
 
     scrollByWheel();
+}
+
+bool RetroFuturaGUI::ScrollView::isCellInDepth(const ScrollViewCell& cell) const
+{
+    if(!isScrollEnabled(ScrollEnable::Z))
+        return true; //nothing scrolls along Z, so every cell keeps its depth
+
+    if(!cell._Widget)
+        return false;
+
+    // Scrolled past the view's front, a cell would come toward the viewer. Beyond its back it lies outside the view
+    const f32
+        depth { cell._Widget->GetPosition().z },
+        halfDepth { getInnerSize().z * 0.5f };
+    return _position.z - halfDepth <= depth && _position.z + halfDepth >= depth;
+}
+
+void RetroFuturaGUI::ScrollView::findPointerCell()
+{
+    _pointerCell = nullptr;
+
+    if(ScrollAxis::Z != _alignmentDirection)
+        return;
+
+    const PointerState pointer { readPointer() };
+
+    if(!pointer._HasPosition)
+        return;
+
+    // From the front: the first cell under the pointer covers the ones behind it
+    for(const ScrollViewCell& cell : _items)
+    {
+        if(cell._PendingRemoval)
+            continue;
+
+        if(!cell._Widget)
+            continue;
+
+        if(!isCellInDepth(cell))
+            continue;
+
+        const std::optional<glm::vec2> cellPoint { cell._Widget->toOwnLayoutPoint(pointer._WindowPosition) };
+
+        if(!cellPoint || !cell._Widget->isPointInside(*cellPoint))
+            continue;
+
+        _pointerCell = cell._Widget.get();
+        return;
+    }
+}
+
+void RetroFuturaGUI::ScrollView::SetAlignmentDirection(const ScrollAxis direction)
+{
+    _alignmentDirection = direction;
+    layoutCells();
 }
 
 void RetroFuturaGUI::ScrollView::update()
@@ -104,6 +177,13 @@ void RetroFuturaGUI::ScrollView::scrollByWheel()
     if(0.0f != pointer._Wheel.y && canScrollAlong(ScrollEnable::Y))
     {
         scrollPosition.y -= pointer._Wheel.y * notchDistance.y; //away from the user scrolls up, toward the start of the content
+        takenParts = takenParts | WheelParts::Vertical;
+    }
+    else if(0.0f != pointer._Wheel.y && !isScrollEnabled(ScrollEnable::Y) && canScrollAlong(ScrollEnable::Z))
+    {
+        // A view that scrolls only in depth takes the plain wheel for it
+        const f32 depthNotch { 0 == linesPerNotch ? innerSize.z : static_cast<f32>(linesPerNotch) * _wheelScrollStep };
+        scrollPosition.z += pointer._Wheel.y * depthNotch;
         takenParts = takenParts | WheelParts::Vertical;
     }
 
@@ -176,11 +256,6 @@ void RetroFuturaGUI::ScrollView::applyPosition(const glm::vec3& position)
 {
     IWidget::applyPosition(position);
     layoutCells();
-}
-
-void RetroFuturaGUI::ScrollView::applyRotation(const glm::vec3& rotation)
-{
-    IWidget::applyRotation(rotation);
 }
 
 void RetroFuturaGUI::ScrollView::EnableScrolling(const ScrollEnable enableMask)
@@ -321,8 +396,19 @@ void RetroFuturaGUI::ScrollView::updatePress(const PointerState& pointer, const 
     }
 }
 
-void RetroFuturaGUI::ScrollView::FilterPointer(PointerState& pointer) const
+void RetroFuturaGUI::ScrollView::FilterPointer(PointerState& pointer, const IHierarchyNode* reader) const
 {
+    // Content cut away past the border takes no pointer either
+    const std::optional<glm::vec2> viewPoint { toOwnLayoutPoint(pointer._WindowPosition) };
+    const bool isInView { viewPoint.has_value() && isPointInsideRect(*viewPoint, getInnerSize(), _position, glm::vec3(0.0f)) };
+
+    if(!isInView && !IDropDown::IsOpenListAt(_parentWindow, pointer._WindowPosition))
+        pointer._HasPosition = false;
+
+    // In a stack along Z only the frontmost cell under the pointer has it. The cells behind it are covered
+    if(ScrollAxis::Z == _alignmentDirection && !isInsidePointerCell(reader))
+        pointer._HasPosition = false;
+
     switch(_pressPhase)
     {
         case PressPhase::Deciding:
@@ -338,6 +424,20 @@ void RetroFuturaGUI::ScrollView::FilterPointer(PointerState& pointer) const
         default:
         break;
     }
+}
+
+bool RetroFuturaGUI::ScrollView::isInsidePointerCell(const IHierarchyNode* reader) const
+{
+    if(!_pointerCell)
+        return false;
+
+    for(const IHierarchyNode* node { reader }; node; node = node->GetParent())
+    {
+        if(node == _pointerCell)
+            return true;
+    }
+
+    return false;
 }
 
 bool RetroFuturaGUI::ScrollView::canScrollAlong(const ScrollEnable axis) const

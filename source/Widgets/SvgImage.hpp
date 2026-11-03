@@ -38,9 +38,6 @@ namespace RetroFuturaGUI
         /// @brief Sets the world position of the SvgImage.
         void applyPosition(const glm::vec3& position) override;
 
-        /// @brief Sets the rotation of the SvgImage.
-        void applyRotation(const glm::vec3& rotation) override;
-
     private:
         glm::vec2 _quadSize { 1.0f };
         f32 _svgTextureAspectRatio { 0.0f };

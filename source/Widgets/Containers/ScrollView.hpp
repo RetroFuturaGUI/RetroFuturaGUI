@@ -100,14 +100,20 @@ namespace RetroFuturaGUI
         void EnableScrolling(const ScrollEnable enableMask);
         f32 GetScrollPosition(const ScrollAxis axis) const;
         void SetScrollPosition(const ScrollAxis axis, const f32 scrollPosition);
+
+        /// @brief Sets the axis the cells stack along, one after the other (Vertical by default). Along Z they stack away from the
+        ///        eye, from the view's front face, and draw from the back. With Z scrolling on (EnableScrolling), the cells scrolled
+        ///        past the front or lying beyond the view's depth are left out, and the frontmost cell under the pointer covers the ones behind it
         void SetAlignmentDirection(const ScrollAxis direction);
 
         /// @brief Sets how far one line of the mouse wheel scrolls, in pixels (20 by default). A notch scrolls as many lines as the
-        ///        system is set to (3 unless changed), or a whole view when it scrolls a page per notch.
+        ///        system is set to (3 unless changed), or a whole view when it scrolls a page per notch. A view that scrolls along Z
+        ///        but not Y takes the plain wheel for the depth. Away from the user goes deeper
         void SetWheelScrollStep(const f32 step);
 
         /// @brief Decides what the widgets inside see of the mouse: A ScrollView may hide a press while it decides between click and scroll, or take the pointer away while scrolling
-        void FilterPointer(PointerState& pointer) const override;
+        ///        Outside its border the pointer is gone for them, since what lies there is cut away. In a stack along Z only the frontmost cell under the pointer sees it
+        void FilterPointer(PointerState& pointer, const IHierarchyNode* reader) const override;
 
         /// @brief Constructs a widget of type T after the last cell and takes ownership of it.
         /// @param args Constructor arguments after the parent window, such as a Lasagna's AxisDefinition or an Image's path.
@@ -152,8 +158,6 @@ namespace RetroFuturaGUI
 
         void applyPosition(const glm::vec3& position) override;
 
-        void applyRotation(const glm::vec3& rotation) override;
-
     private:
         /// @brief What a press inside the view has turned out to be so far.
         enum class PressPhase : u32
@@ -182,6 +186,16 @@ namespace RetroFuturaGUI
 
         /// @brief True when the axis is enabled and holds more content than fits, so a drag along it can scroll.
         bool canScrollAlong(const ScrollEnable axis) const;
+
+        /// @brief Whether a cell lies within the view's depth. Neither scrolled past its front nor beyond its back. (Always true
+        ///        while nothing scrolls along Z)
+        bool isCellInDepth(const ScrollViewCell& cell) const;
+
+        /// @brief Finds the frontmost cell under the pointer of a stack along Z (For FilterPointer, none in any other stack)
+        void findPointerCell();
+
+        /// @brief Whether the reading widget is the frontmost cell under the pointer or lies inside it
+        bool isInsidePointerCell(const IHierarchyNode* reader) const;
 
         /// @brief Appends an already constructed widget. It isn't a template, so a future markup factory that builds widgets by type name can share it.
         void adoptWidget(std::unique_ptr<IWidget> widget);
@@ -223,6 +237,7 @@ namespace RetroFuturaGUI
             _pressPosition {};
         PressPhase _pressPhase { PressPhase::None };
         std::list<ScrollViewCell> _items {};
+        const IWidget* _pointerCell { nullptr }; //the frontmost cell under the pointer in a stack along Z.Oonly compared and never dereferenced!
         f32
             _cellPadding { 0.0f },
             _wheelScrollStep { 20.0f }; //pixels per line of the wheel

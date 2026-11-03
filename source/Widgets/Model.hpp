@@ -32,9 +32,6 @@ namespace RetroFuturaGUI
             /// @brief Sets the world position of the model.
             void applyPosition(const glm::vec3& position) override;
 
-            /// @brief Sets the rotation of the model.
-            void applyRotation(const glm::vec3& rotation) override;
-
         private:
             void processNode(aiNode* node, const aiScene* scene);
             Mesh processMesh(aiMesh* unprocessedMesh, const aiScene* scene);
@@ -44,7 +41,6 @@ namespace RetroFuturaGUI
             std::string _directory;
             glm::mat4
                 _translationMatrix { 1.0f },
-                _rotationMatrix { 1.0f },
                 _scalingMatrix { 1.0f };
     };
 

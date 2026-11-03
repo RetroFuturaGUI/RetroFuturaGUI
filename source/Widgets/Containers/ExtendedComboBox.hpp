@@ -104,8 +104,6 @@ namespace RetroFuturaGUI
 
         void applyPosition(const glm::vec3& position) override;
 
-        void applyRotation(const glm::vec3& rotation) override;
-
     private:
         /// @brief Sweeps the removed items, follows the pointer for the box and its list, then passes the input on to the rows while the list is open.
         void interact() override;

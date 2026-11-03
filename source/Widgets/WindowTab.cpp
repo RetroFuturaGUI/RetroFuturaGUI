@@ -118,11 +118,6 @@ void RetroFuturaGUI::WindowTab::applySize(const glm::vec3& size)
     _border->SetSize(glm::vec2(size));
 }
 
-void RetroFuturaGUI::WindowTab::applyRotation(const glm::vec3& rotation)
-{
-    IWidget::applyRotation(rotation);
-}
-
 bool RetroFuturaGUI::WindowTab::AddWindow(Window* window)
 {
     return InsertWindow(window, _fields.size());

@@ -29,9 +29,6 @@ namespace RetroFuturaGUI
         /// @brief Sets the world position of the label.
         void applyPosition(const glm::vec3& position) override;
 
-        /// @brief Sets the rotation of the label.
-        void applyRotation(const glm::vec3& rotation) override;
-
     private:
         void setColors(const ColorState state) override;
     };

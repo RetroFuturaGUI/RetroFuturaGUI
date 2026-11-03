@@ -126,7 +126,6 @@ void RetroFuturaGUI::ComboBox::placeItemText(Text& item, const glm::vec3& center
 
     item.SetParentSize(glm::vec2(parentWidth, parentHeight));
     item.SetPosition(center);
-    item.SetRotation(_rotation);
     item.SetTextAlignment(_textAlignment);
     item.SetTextPadding(_textPadding);
 }
@@ -143,34 +142,6 @@ void RetroFuturaGUI::ComboBox::applyPosition(const glm::vec3& position)
 
     _background->SetPosition(position);
     _border->SetPosition(position + glm::vec3(0.0f, 0.0f, _zStep));
-
-    updateDropDownGeometry();
-}
-
-void RetroFuturaGUI::ComboBox::applyRotation(const glm::vec3& rotation)
-{
-    if(!_background)
-        return;
-
-    if(!_border)
-        return;
-
-    if(!_dropDownBackground)
-        return;
-
-    if(!_dropDownBorder)
-        return;
-
-    if(!_dropDownItemHighlight)
-        return;
-
-    IWidget::applyRotation(rotation);
-
-    _background->SetRotation(rotation);
-    _border->SetRotation(rotation);
-    _dropDownBackground->SetRotation(rotation);
-    _dropDownBorder->SetRotation(rotation);
-    _dropDownItemHighlight->SetRotation(rotation);
 
     updateDropDownGeometry();
 }

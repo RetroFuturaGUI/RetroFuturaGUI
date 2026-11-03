@@ -85,19 +85,13 @@ glm::vec3 RetroFuturaGUI::Histogram::calculateBarPosition(const uSize index) con
         ? glm::vec2(-_size.x * 0.5f + barOffset, -_size.y * 0.5f + barHeight * 0.5f)
         : glm::vec2(-_size.x * 0.5f + barHeight * 0.5f, -_size.y * 0.5f + barOffset) };
 
-    const f32 radians { glm::radians(_rotation.z) };
-    const glm::vec2 rotatedOffset
-    (
-        localOffset.x * cos(radians) - localOffset.y * sin(radians),
-        localOffset.x * sin(radians) + localOffset.y * cos(radians)
-    );
-
-    return glm::vec3(_position.x + rotatedOffset.x, _position.y + rotatedOffset.y, _position.z + 0.02f);
+    // Laid out untilted: the widget's frame turns the bars with it
+    return glm::vec3(_position.x + localOffset.x, _position.y + localOffset.y, _position.z + 0.02f);
 }
 
 glm::vec3 RetroFuturaGUI::Histogram::calculateBarRotation() const
 {
-    return orientedRotation(_rotation);
+    return orientedRotation();
 }
 
 void RetroFuturaGUI::Histogram::drawGraph()

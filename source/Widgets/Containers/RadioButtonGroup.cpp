@@ -98,20 +98,6 @@ void RetroFuturaGUI::RadioButtonGroup::applyPosition(const glm::vec3& position)
     updateGridLayout();
 }
 
-void RetroFuturaGUI::RadioButtonGroup::applyRotation(const glm::vec3& rotation)
-{
-    if(!_border)
-        return;
-
-    if(!_text)
-        return;
-
-    IWidget::applyRotation(rotation);
-
-    _border->SetRotation(rotation);
-    _text->SetRotation(rotation);
-}
-
 void RetroFuturaGUI::RadioButtonGroup::DeselectOthers(RadioButton* activeRadioButton)
 {
     for(auto& row : _grid)

@@ -73,9 +73,6 @@ namespace RetroFuturaGUI
         /// @brief Sets the world position of the radio button group.
         void applyPosition(const glm::vec3& position) override;
 
-        /// @brief Sets the rotation of the radio button group.
-        void applyRotation(const glm::vec3& rotation) override;
-
     private:
         /// @brief Sweeps the removed buttons, then passes the frame's input on to every button and its label.
         void interact() override;

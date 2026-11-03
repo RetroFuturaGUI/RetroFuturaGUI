@@ -110,7 +110,6 @@ void RetroFuturaGUI::ExtendedComboBox::placeItemWidget(IWidget* item, const glm:
             Label* label = dynamic_cast<Label*>(item);
             label->SetSize(glm::vec3(parentWidth, parentHeight, 0.01f));
             label->SetPosition(center);
-            label->SetRotation(_rotation);
             label->SetTextAlignment(_textAlignment);
             label->SetTextPadding(_textPadding);
         } break;
@@ -119,7 +118,6 @@ void RetroFuturaGUI::ExtendedComboBox::placeItemWidget(IWidget* item, const glm:
             Button* button = dynamic_cast<Button*>(item);
             button->SetSize(glm::vec3(parentWidth, parentHeight, 0.01f));
             button->SetPosition(center);
-            button->SetRotation(_rotation);
             button->SetTextAlignment(_textAlignment);
             button->SetTextPadding(_textPadding);
         } break;
@@ -128,7 +126,6 @@ void RetroFuturaGUI::ExtendedComboBox::placeItemWidget(IWidget* item, const glm:
             TextBox* textBox = dynamic_cast<TextBox*>(item);
             textBox->SetSize(glm::vec3(parentWidth, parentHeight, 0.01f));
             textBox->SetPosition(center);
-            textBox->SetRotation(_rotation);
             textBox->SetTextAlignment(_textAlignment);
             textBox->SetTextPadding(_textPadding);
         } break;
@@ -137,35 +134,30 @@ void RetroFuturaGUI::ExtendedComboBox::placeItemWidget(IWidget* item, const glm:
             Image* image = dynamic_cast<Image*>(item);
             image->SetSize(glm::vec3(parentWidth, parentHeight, 0.01f));
             image->SetPosition(center);
-            image->SetRotation(_rotation);
         } break;
         case WidgetTypeID::SvgImage:
         {
             SvgImage* svgImage = dynamic_cast<SvgImage*>(item);
             svgImage->SetSize(glm::vec3(parentWidth, parentHeight, 0.01f));
             svgImage->SetPosition(center);
-            svgImage->SetRotation(_rotation);
         } break;
         case WidgetTypeID::CheckBox:
         {
             CheckBox* checkBox = dynamic_cast<CheckBox*>(item);
             checkBox->SetSize(glm::vec3(parentWidth, parentHeight, 0.01f));
             checkBox->SetPosition(center);
-            checkBox->SetRotation(_rotation);
         } break;
         case WidgetTypeID::Slider:
         {
             Slider* slider = dynamic_cast<Slider*>(item);
             slider->SetSize(glm::vec3(parentWidth, parentHeight, 0.01f));
             slider->SetPosition(center);
-            slider->SetRotation(_rotation);
         } break;
         case WidgetTypeID::ProgressBar:
         {
             ProgressBar* progressBar = dynamic_cast<ProgressBar*>(item);
             progressBar->SetSize(glm::vec3(parentWidth, parentHeight, 0.01f));
             progressBar->SetPosition(center);
-            progressBar->SetRotation(_rotation);
         } break;
         case WidgetTypeID::Prefab:
         {
@@ -181,14 +173,12 @@ void RetroFuturaGUI::ExtendedComboBox::placeItemWidget(IWidget* item, const glm:
                 imageFraction { 0.0f < parentWidth ? imageWidth / parentWidth : 0.0f };
             prefab->SetColumnDefinition({ imageFraction, 0.6f, 0.4f - imageFraction });
             prefab->SetPosition(center);
-            prefab->SetRotation(_rotation);
         } break;
         case WidgetTypeID::ComboBox:
         {
             ComboBox* comboBox = dynamic_cast<ComboBox*>(item);
             comboBox->SetSize(glm::vec3(parentWidth, parentHeight, 0.01f));
             comboBox->SetPosition(center);
-            comboBox->SetRotation(_rotation);
             comboBox->SetTextAlignment(_textAlignment);
             comboBox->SetTextPadding(_textPadding);
         } break;
@@ -197,7 +187,6 @@ void RetroFuturaGUI::ExtendedComboBox::placeItemWidget(IWidget* item, const glm:
             ExtendedComboBox* extendedComboBox = dynamic_cast<ExtendedComboBox*>(item);
             extendedComboBox->SetSize(glm::vec3(parentWidth, parentHeight, 0.01f));
             extendedComboBox->SetPosition(center);
-            extendedComboBox->SetRotation(_rotation);
             extendedComboBox->SetTextAlignment(_textAlignment);
             extendedComboBox->SetTextPadding(_textPadding);
         } break;
@@ -258,7 +247,6 @@ void RetroFuturaGUI::ExtendedComboBox::updatePreviewTextGeometry() const
     //the same inset the rows get, so the closed box and the open list line their text up the same way
     _previewText->SetParentSize(contentSize(_size.x));
     _previewText->SetPosition(_position + glm::vec3(0.0f, 0.0f, _zStep * 2.0f));
-    _previewText->SetRotation(_rotation);
     _previewText->SetTextAlignment(_textAlignment);
     _previewText->SetTextPadding(_textPadding);
 }
@@ -291,34 +279,6 @@ void RetroFuturaGUI::ExtendedComboBox::applyPosition(const glm::vec3& position)
 
     _background->SetPosition(position);
     _border->SetPosition(position + glm::vec3(0.0f, 0.0f, _zStep));
-
-    updateDropDownGeometry();
-}
-
-void RetroFuturaGUI::ExtendedComboBox::applyRotation(const glm::vec3& rotation)
-{
-    if(!_background)
-        return;
-
-    if(!_border)
-        return;
-
-    if(!_dropDownBackground)
-        return;
-
-    if(!_dropDownBorder)
-        return;
-
-    if(!_dropDownItemHighlight)
-        return;
-
-    IWidget::applyRotation(rotation);
-
-    _background->SetRotation(rotation);
-    _border->SetRotation(rotation);
-    _dropDownBackground->SetRotation(rotation);
-    _dropDownBorder->SetRotation(rotation);
-    _dropDownItemHighlight->SetRotation(rotation);
 
     updateDropDownGeometry();
 }

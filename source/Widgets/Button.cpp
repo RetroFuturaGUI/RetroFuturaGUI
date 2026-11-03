@@ -70,24 +70,6 @@ void RetroFuturaGUI::Button::applyPosition(const glm::vec3& position)
     _text->SetPosition(position + glm::vec3(0.0f, 0.0f, 0.02f));
 }
 
-void RetroFuturaGUI::Button::applyRotation(const glm::vec3& rotation)
-{
-    if(!_background)
-        return;
-
-    if(!_border)
-        return;
-
-    if(!_text)
-        return;
-
-    _rotation = rotation;
-
-    _background->SetRotation(rotation);
-    _border->SetRotation(rotation);
-    _text->SetRotation(rotation);
-}
-
 void RetroFuturaGUI::Button::interact()
 {
     const PointerState pointer { readPointer() };

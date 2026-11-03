@@ -98,29 +98,6 @@ void RetroFuturaGUI::ColorPicker::applyPosition(const glm::vec3& position)
     alignIndicator();
 }
 
-void RetroFuturaGUI::ColorPicker::applyRotation(const glm::vec3& rotation)
-{
-    IWidget::applyRotation(rotation);
-
-    if(!_colorPickerBackground)
-        return;
-
-    if(!_colorPickerBorder)
-        return;
-
-    if(!_indicatorBackground)
-        return;
-
-    if(!_indicatorBorder)
-        return;
-
-    _colorPickerBorder->SetRotation(_rotation);
-    _colorPickerBackground->SetRotation(_rotation);
-    _indicatorBackground->SetRotation(_rotation);
-    _indicatorBorder->SetRotation(_rotation);
-    alignIndicator();
-}
-
 const glm::vec3 RetroFuturaGUI::ColorPicker::GetColorRGBF() const
 {
     return glm::vec3(_rgbaf);
@@ -271,7 +248,7 @@ void RetroFuturaGUI::ColorPicker::interact()
         return;
     }
 
-    const bool isPointerOnIndicator { isPointInsideRect(pointer._Position, glm::vec3(_indicatorBackground->GetSize(), 0.0f), _indicatorBackground->GetPosition(), _rotation) };
+    const bool isPointerOnIndicator { isPointInsideRect(pointer._Position, glm::vec3(_indicatorBackground->GetSize(), 0.0f), _indicatorBackground->GetPosition(), glm::vec3(0.0f)) };
     setBorderStates(isPointerOnField ? ColorState::Hover : ColorState::Enabled, isPointerOnIndicator ? ColorState::Hover : ColorState::Enabled);
 }
 
@@ -307,24 +284,15 @@ void RetroFuturaGUI::ColorPicker::alignIndicator()
         fieldPoint = _saturation * 0.5f * glm::min(fieldSize.x, fieldSize.y) * glm::vec2(std::cos(hueAngle), std::sin(hueAngle));
     }
 
-    // Back out of field space: turn with the widget, then stack in front of the field (0.0) and its border (0.01)
-    const f32 rotation { glm::radians(_rotation.z) };
-    _indicatorPosition = glm::vec3(
-        fieldPoint.x * std::cos(rotation) - fieldPoint.y * std::sin(rotation),
-        fieldPoint.x * std::sin(rotation) + fieldPoint.y * std::cos(rotation),
-        0.02f);
+    // In front of the field (0.0) and its border (0.01), laid out untilted: the frame turns it with the widget.
+    _indicatorPosition = glm::vec3(fieldPoint, 0.02f);
     _indicatorBackground->SetPosition(_position + _indicatorPosition);
     _indicatorBorder->SetPosition(_position + _indicatorPosition + glm::vec3(0.0f, 0.0f, 0.01f));
 }
 
 glm::vec2 RetroFuturaGUI::ColorPicker::toFieldSpace(const glm::vec2& point) const
 {
-    // only the screen-plane rotation can be undone in 2D
-    const glm::vec2 offset { point - glm::vec2(_position) };
-    const f32 rotation { glm::radians(-_rotation.z) };
-    return glm::vec2(
-        offset.x * std::cos(rotation) - offset.y * std::sin(rotation),
-        offset.x * std::sin(rotation) + offset.y * std::cos(rotation));
+    return point - glm::vec2(_position); //the point is already in the untilted layout (readPointer).
 }
 
 bool RetroFuturaGUI::ColorPicker::isOnField(const glm::vec2& fieldPoint, const glm::vec2& fieldSize) const

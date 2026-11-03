@@ -1,8 +1,10 @@
 #version 330 core
+#include "Modules/Clip.glsl"
 layout (lines_adjacency) in;
 layout (triangle_strip, max_vertices = 7) out;
 
 uniform mat4 uProjection;
+uniform mat4 uFrame = mat4(1.0); // tilts the untilted layout into place: the FrameScopes around the draw.
 uniform float uLineThickness; // the line's full width, in pixels
 
 in vec4 vs_WorldPosition[];
@@ -19,7 +21,9 @@ const float kEpsilon = 0.0001;
 void emit(vec2 position, float z, float distance)
 {
     gs_Distance = distance;
-    gl_Position = uProjection * vec4(position, z, 1.0);
+    vec4 placedPosition = uFrame * vec4(position, z, 1.0);
+    gl_Position = uProjection * placedPosition;
+    clipToScopes(placedPosition);
     EmitVertex();
 }
 

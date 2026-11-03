@@ -57,7 +57,7 @@ void RetroFuturaGUI::ProgressBar::interact()
     glm::vec2 mousePos { pointer._Position };
     bool
         isMouseButtonPressed { pointer._LeftButtonPressed },
-        isMouseInside { pointer._HasPosition && isPointInsideRect(mousePos, _size, _position, _rotation) },
+        isMouseInside { pointer._HasPosition && isPointInsideRect(mousePos, _size, _position, glm::vec3(0.0f)) },
         isMouseInsideGraph { isInsideGraph(mousePos) };
 
     if(!_isEnabledFlag || !isMouseInside) //no action and mouse leave

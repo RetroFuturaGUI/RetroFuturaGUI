@@ -123,7 +123,7 @@ namespace RetroFuturaGUI
         static GLFWwindow* KeyboardWindowOf(GLFWwindow* glfwWindow);
 
         /// @brief Takes all interactions away from this window's widgets while a popup lies over it
-        void FilterPointer(PointerState& pointer) const override;
+        void FilterPointer(PointerState& pointer, const IHierarchyNode* reader) const override;
 
         /// @brief Connects a slot to files dropped on the window, from another program or another of the app's windows: their
         ///        UTF-8 paths, and where the pointer was, in window coordinates. Sent from the next Interact, never from inside the
@@ -153,6 +153,14 @@ namespace RetroFuturaGUI
 
         /// @brief The client area left after every docked scene took its share.
         const ScreenRect& GetClientRect() const;
+
+        /// @brief Shows the window's content in perspective of the eye viewingDistance pixels in front of the window's center. What
+        ///        is tilted or lies further back shrinks toward the middle, while the screen plane stays pixel-exact. Layouts stack
+        ///        flat (Projection::GetDepth), so only what is meant to be 3D shows depth
+        void SetPerspective(const f32 viewingDistance);
+
+        /// @brief Shows the window's content flat (default), and lays the content out again
+        void SetOrthographic();
 
         /// @brief Sets the radii of the background's and the border's corners, clockwise from the top-left. Docking may square
         ///        some of them, see EnableSquaredCornersWhenDocked.
@@ -217,11 +225,6 @@ namespace RetroFuturaGUI
     //Tabs
         /// @brief Returns whether this window is docked into a WindowTab.
         bool IsInTab() const;
-
-        /// @brief Where the given GLFW window's (0, 0) lies in the framebuffer being drawn: the corner of the content area while a
-        ///        WindowTab's window draws it, otherwise (0, 0). Scissor boxes count framebuffer pixels, so a widget setting one
-        ///        adds this.
-        static glm::ivec2 DrawOriginOf(GLFWwindow* glfwWindow);
 
     //Layout file
         /// @brief Sets the file the windows' layout is kept in
@@ -655,7 +658,6 @@ namespace RetroFuturaGUI
         std::vector<WindowTab*> _windowTabs {}; //the WindowTabs in this window's scenes, registered by them
         glm::ivec2
             _untabbedSize { 0 },
-            _drawOrigin { 0 },
             _cursorGrabPoint { 0 }; //where the cursor holds the window while it follows the cursor after being pulled out of a tab
         glm::vec4 _tabCornerRadii { 0.0f }; //the content area's radii, which the window takes while it is in a tab
         bool _followsCursor { false }; //whether window should move when pulled out off a tab

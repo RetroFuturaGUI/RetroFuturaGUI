@@ -38,13 +38,3 @@ void RetroFuturaGUI::Label::applyPosition(const glm::vec3& position)
 
     _text->SetPosition(position);
 }
-
-void RetroFuturaGUI::Label::applyRotation(const glm::vec3& rotation)
-{
-    if(!_text)
-        return;
-
-    _rotation = rotation;
-
-    _text->SetRotation(rotation);
-}

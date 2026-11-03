@@ -1,5 +1,5 @@
 #include "Environment.hpp"
-#include "ScissorClip.hpp"
+#include "Shader.hpp"
 #include "Window.hpp"
 #include <algorithm>
 #include <cmath>
@@ -8,7 +8,7 @@
 #include <utility>
 
 RetroFuturaGUI::Environment::Environment(const std::string& name, Projection* projection, IHierarchyNode* parentWidget, const WidgetTypeID parentWidgetTypeID, GLFWwindow* parentWindow)
-    : IWidget(name, projection, parentWidget, parentWidgetTypeID, parentWindow)
+    : IWidget(name, projection, parentWidget, parentWidgetTypeID, parentWindow), _viewProjection(_projection)
 {
     _widgetTypeID = WidgetTypeID::Environment;
     _size = glm::vec3(_projection.GetResolution().x, _projection.GetResolution().y, _projection.GetDepth());
@@ -20,7 +20,7 @@ RetroFuturaGUI::Environment::Environment(const std::string& name, Projection* pr
         applyTransform();
     }
 
-    _debugBox = std::make_unique<Frame>(&_projection);
+    _debugBox = std::make_unique<Frame>(&_viewProjection);
 
     if(!_debugBox)
         return;
@@ -125,6 +125,18 @@ void RetroFuturaGUI::Environment::EnableClipping(const bool enable)
     _clippingOn = enable;
 }
 
+void RetroFuturaGUI::Environment::SetPerspective(const f32 viewingDistance)
+{
+    _hasOwnPerspective = true;
+    _viewProjection.SetPerspective(viewingDistance, glm::vec2(_position));
+}
+
+void RetroFuturaGUI::Environment::FollowWindowProjection()
+{
+    _hasOwnPerspective = false;
+    followProjection();
+}
+
 void RetroFuturaGUI::Environment::ShowDebugBox(const bool show)
 {
     _drawDebugBox = show;
@@ -132,10 +144,11 @@ void RetroFuturaGUI::Environment::ShowDebugBox(const bool show)
 
 void RetroFuturaGUI::Environment::Draw()
 {
-    std::optional<ScissorClip> clip;
+    followProjection();
+    std::optional<Shader::ClipScope> clip;
 
     if(_clippingOn)
-        clip.emplace(framebufferBox(_position.x - _size.x * 0.5f, _position.y - _size.y * 0.5f, _size.x, _size.y));
+        clip.emplace(glm::vec4(_position.x - _size.x * 0.5f, _position.y - _size.y * 0.5f, _size.x, _size.y), _position.z, _viewProjection); //its own box, tilted with it.
 
     //By index, since a slot that runs while a widget draws, like a Video's, may attach another one
     for(uSize index = 0; index < _entries.size(); ++index)
@@ -154,6 +167,8 @@ void RetroFuturaGUI::Environment::Draw()
 
 void RetroFuturaGUI::Environment::interact()
 {
+    followProjection(); //the widgets take the pointer through the projection they draw through
+
     //No slot of the removed widgets runs between frames
     _removedWidgets.clear();
     std::erase_if(_entries, [](const EnvironmentEntry& entry) { return !entry._Widget; });
@@ -253,13 +268,27 @@ void RetroFuturaGUI::Environment::placeWidget(const EnvironmentEntry& entry) con
     if(!entry._Widget)
         return;
 
-    // The Environment scales every axis by the same factor, so its transform composed with the widget's own still splits
-    // into one position, one rotation and one size - the three values every widget takes. A non-uniform scale would shear
-    // a rotated widget, and that has no position/rotation/size equivalent. Size goes first, because some widgets lay out
-    // their parts from their size when they are moved.
+    // Placed untilted with its own rotation only. The Environment's frame turns every widget around the box's center. Size
+    // goes first, because some widgets lay out their parts from their size when they are moved!!
     entry._Widget->SetSize(entry._Placement._Size * _scale);
-    entry._Widget->SetRotation(toEulerDegrees(_orientation * glm::quat(glm::radians(entry._Placement._Rotation))));
-    entry._Widget->SetPosition(ToWindow(entry._Placement._Position));
+    entry._Widget->SetRotation(entry._Placement._Rotation);
+    entry._Widget->SetPosition(_position + entry._Placement._Position * _scale);
+}
+
+void RetroFuturaGUI::Environment::followProjection()
+{
+    if(!_hasOwnPerspective)
+    {
+        _viewProjection = _projection;
+        return;
+    }
+
+    const glm::vec2 resolution { _projection.GetResolution() };
+
+    if(resolution != _viewProjection.GetResolution())
+        _viewProjection.UpdateProjectionMatrix(resolution.x, resolution.y);
+
+    _viewProjection.SetPerspective(_viewProjection.GetViewingDistance(), glm::vec2(_position)); //vanishing at its center, wherever it moved.
 }
 
 void RetroFuturaGUI::Environment::drawDebugBox()
@@ -267,8 +296,7 @@ void RetroFuturaGUI::Environment::drawDebugBox()
     if(!_debugBox)
         return;
 
-    _debugBox->SetPosition(_position);
-    _debugBox->SetRotation(_rotation);
+    _debugBox->SetPosition(_position); //untilted: the Environment's frame turns it
     _debugBox->SetSize(glm::vec2(_extent.x, _extent.y) * (2.0f * _scale));
 
     
@@ -278,22 +306,4 @@ void RetroFuturaGUI::Environment::drawDebugBox()
 
     if(depthTestWasEnabled)
         glEnable(GL_DEPTH_TEST);
-}
-
-glm::vec3 RetroFuturaGUI::Environment::toEulerDegrees(const glm::quat& rotation)
-{
-    // glm matrices are column-major (matrix[column][row])
-    const glm::mat3 matrix { glm::mat3_cast(rotation) };
-
-    // Z comes out first, then X is solved with that Z already taken out. Near Y = +-90 degrees X and Z turn about the
-    // same axis, so Z is only loosely defined there - but X absorbs whatever Z was found, and the three angles still
-    // rebuild the same rotation. Snapping Z to 0 near the lock instead visibly tilts widgets within a degree of it.
-    const f32
-        angleZ { std::atan2(matrix[0][1], matrix[0][0]) },
-        angleY { std::atan2(-matrix[0][2], std::hypot(matrix[0][0], matrix[0][1])) },
-        sinZ { std::sin(angleZ) },
-        cosZ { std::cos(angleZ) },
-        angleX { std::atan2(sinZ * matrix[2][0] - cosZ * matrix[2][1], cosZ * matrix[1][1] - sinZ * matrix[1][0]) };
-
-    return glm::degrees(glm::vec3(angleX, angleY, angleZ));
 }

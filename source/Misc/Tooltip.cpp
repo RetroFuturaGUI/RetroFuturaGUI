@@ -247,7 +247,7 @@ void RetroFuturaGUI::Tooltip::interact()
         return;
     }
 
-    _pointerPosition = pointer._Position;
+    _pointerPosition = pointer._WindowPosition; //stays always flat!
 
     if(!_isHovering) //mouse entered, the delay starts
     {

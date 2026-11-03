@@ -48,6 +48,7 @@ void RetroFuturaGUI::IDropDown::DrawShown()
 
         glClear(GL_DEPTH_BUFFER_BIT); //over everything drawn before, a row's list over its panel too
         const Shader::OpacityScope opacity { dropDown->_listOpacity.Get() };
+        const Shader::FrameScope frame { dropDown->_listFrame, Shader::FrameComposition::Instead }; //tilted with its widget.
         dropDown->drawDropDown();
     }
 
@@ -64,7 +65,7 @@ void RetroFuturaGUI::IDropDown::CaptureUnderOpenList(const IHierarchyNode* reade
         if(!dropDown)
             continue;
 
-        if(!dropDown->isListOver(reader, readerWindow, pointer._Position))
+        if(!dropDown->isListOver(reader, readerWindow, pointer._WindowPosition))
             continue;
 
         pointer._IsCaptured = true;
@@ -72,7 +73,15 @@ void RetroFuturaGUI::IDropDown::CaptureUnderOpenList(const IHierarchyNode* reade
     }
 }
 
-bool RetroFuturaGUI::IDropDown::isListOver(const IHierarchyNode* reader, GLFWwindow* readerWindow, const glm::vec2& point) const
+bool RetroFuturaGUI::IDropDown::IsOpenListAt(GLFWwindow* window, const glm::vec2& windowPoint)
+{
+    return std::any_of(_dropDowns.begin(), _dropDowns.end(), [window, &windowPoint](const IDropDown* dropDown)
+    {
+        return dropDown && dropDown->isListOver(nullptr, window, windowPoint); //no reader: every list counts.
+    });
+}
+
+bool RetroFuturaGUI::IDropDown::isListOver(const IHierarchyNode* reader, GLFWwindow* readerWindow, const glm::vec2& windowPoint) const
 {
     if(!_showDropDown && !_holdsPickPress)
         return false;
@@ -86,7 +95,8 @@ bool RetroFuturaGUI::IDropDown::isListOver(const IHierarchyNode* reader, GLFWwin
             return false; //the drop-down itself, or a row of an ExtendedComboBox
     }
 
-    return isPointInsideDropDown(point);
+    const std::optional<glm::vec2> listPoint { toLayoutPoint(windowPoint, _listFrame) }; //the list lies in the frame its widget drew in.
+    return listPoint.has_value() && isPointInsideDropDown(*listPoint);
 }
 
 void RetroFuturaGUI::IDropDown::showDropDownLater()
@@ -99,6 +109,8 @@ void RetroFuturaGUI::IDropDown::showDropDownLater()
 
     if(0.0f >= _listOpacity.Get())
         return;
+
+    _listFrame = Shader::GetDrawFrame(); //called while the widget draws, so the list draws in the same frame later
 
     if(std::find(_shownDropDowns.begin(), _shownDropDowns.end(), this) != _shownDropDowns.end())
         return;
@@ -173,7 +185,7 @@ glm::vec3 RetroFuturaGUI::IDropDown::getDropDownCenter() const
             localOffset = glm::vec2(nearEdgeShift, -(_size.y + panelHeight) * 0.5f);
     }
 
-    const glm::vec2 offset { rotateLocalOffset(localOffset) };
+    const glm::vec2 offset { localOffset }; //laid out untilted. The frame turns it with the widget
     return glm::vec3(_position.x + offset.x, _position.y + offset.y, _position.z + _zOffset);
 }
 
@@ -200,7 +212,7 @@ void RetroFuturaGUI::IDropDown::updateDropDownArrowGeometry()
         drawnWidth { isQuarterTurned ? height : width },
         drawnHeight { isQuarterTurned ? width : height },
         rightMargin { (_size.y - drawnHeight) * 0.5f };
-    const glm::vec2 offset { rotateLocalOffset(glm::vec2(_size.x * 0.5f - rightMargin - drawnWidth * 0.5f, 0.0f)) };
+    const glm::vec2 offset { glm::vec2(_size.x * 0.5f - rightMargin - drawnWidth * 0.5f, 0.0f) };
 
     _dropDownArrow->SetSize(glm::vec2(width, height));
     _dropDownArrow->SetPosition(glm::vec3(_position.x + offset.x, _position.y + offset.y, _position.z + _zStep * 2.0f));
@@ -208,16 +220,16 @@ void RetroFuturaGUI::IDropDown::updateDropDownArrowGeometry()
     switch(_dropDownPosition)
     {
         case DropDownPosition::Right:
-            _dropDownArrow->SetRotation(_rotation + glm::vec3(0.0f, 0.0f, 90.0f));
+            _dropDownArrow->SetRotation(glm::vec3(0.0f, 0.0f, 90.0f));
         break;
         case DropDownPosition::Left:
-            _dropDownArrow->SetRotation(_rotation + glm::vec3(0.0f, 0.0f, 270.0f));
+            _dropDownArrow->SetRotation(glm::vec3(0.0f, 0.0f, 270.0f));
         break;
         case DropDownPosition::Top:
-            _dropDownArrow->SetRotation(_rotation + glm::vec3(0.0f, 0.0f, 180.0f));
+            _dropDownArrow->SetRotation(glm::vec3(0.0f, 0.0f, 180.0f));
         break;
         default:
-            _dropDownArrow->SetRotation(_rotation);
+            _dropDownArrow->SetRotation(glm::vec3(0.0f));
     }
 }
 
@@ -289,17 +301,6 @@ void RetroFuturaGUI::IDropDown::setDropDownBorderColors()
     }
 }
 
-glm::vec2 RetroFuturaGUI::IDropDown::rotateLocalOffset(const glm::vec2& localOffset) const
-{
-    const f32 radians { glm::radians(_rotation.z) };
-
-    return glm::vec2
-    (
-        localOffset.x * cos(radians) - localOffset.y * sin(radians),
-        localOffset.x * sin(radians) + localOffset.y * cos(radians)
-    );
-}
-
 uSize RetroFuturaGUI::IDropDown::getVisibleItemCount() const
 {
     return _itemCount < _maxItemsToDraw ? _itemCount : _maxItemsToDraw;
@@ -309,7 +310,7 @@ glm::vec3 RetroFuturaGUI::IDropDown::itemRowCenter(const uSize visibleIndex) con
 {
     const glm::vec3 panelCenter { getDropDownCenter() };
     const f32 panelHeight { _size.y * static_cast<f32>(getVisibleItemCount()) };
-    const glm::vec2 offset { rotateLocalOffset(glm::vec2(0.0f, panelHeight * 0.5f - _size.y * (static_cast<f32>(visibleIndex) + 0.5f))) };
+    const glm::vec2 offset { glm::vec2(0.0f, panelHeight * 0.5f - _size.y * (static_cast<f32>(visibleIndex) + 0.5f)) };
 
     return glm::vec3(panelCenter.x + offset.x, panelCenter.y + offset.y, panelCenter.z + _zStep * 2.0f);
 }
@@ -474,7 +475,7 @@ bool RetroFuturaGUI::IDropDown::isPointInsideDropDown(const glm::vec2& point) co
     if(!_dropDownBackground)
         return false;
 
-    return isPointInsideRect(point, glm::vec3(_dropDownBackground->GetSize(), 0.0f), _dropDownBackground->GetPosition(), _rotation);
+    return isPointInsideRect(point, glm::vec3(_dropDownBackground->GetSize(), 0.0f), _dropDownBackground->GetPosition(), glm::vec3(0.0f));
 }
 
 bool RetroFuturaGUI::IDropDown::hoveredItemIndex(const glm::vec2& point, uSize& outIndex) const
@@ -483,7 +484,7 @@ bool RetroFuturaGUI::IDropDown::hoveredItemIndex(const glm::vec2& point, uSize& 
 
     for(uSize index { 0 }; index < getVisibleItemCount(); ++index)
     {
-        if(!isPointInsideRect(point, rowSize, itemRowCenter(index), _rotation))
+        if(!isPointInsideRect(point, rowSize, itemRowCenter(index), glm::vec3(0.0f)))
             continue;
 
         outIndex = index;

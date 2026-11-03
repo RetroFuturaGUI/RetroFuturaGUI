@@ -60,10 +60,134 @@ RetroFuturaGUI::Shader::OpacityScope::~OpacityScope()
     _drawOpacity = _outerOpacity;
 }
 
+RetroFuturaGUI::Shader::FrameScope::FrameScope(const glm::mat4& frame, const FrameComposition composition)
+    : _outerFrame(_drawFrame)
+{
+    _drawFrame = FrameComposition::Inside == composition ? _outerFrame * frame : frame;
+}
+
+RetroFuturaGUI::Shader::FrameScope::~FrameScope()
+{
+    _drawFrame = _outerFrame;
+}
+
+const glm::mat4& RetroFuturaGUI::Shader::GetDrawFrame()
+{
+    return _drawFrame;
+}
+
+RetroFuturaGUI::Shader::ClipScope::ClipScope(const glm::vec4& box, const f32 depth, const Projection& projection)
+    : _outerPlanes(_clipPlanes), _outerPlaneCount(_clipPlaneCount), _outerBox(_clipBox), _outerBoxFrame(_clipBoxFrame),
+      _outerBoxView(_clipBoxView), _outerBoxDepth(_clipBoxDepth)
+{
+    glm::vec4 cut { box };
+
+    if(0 < _clipPlaneCount && _clipBoxFrame == _drawFrame && _clipBoxDepth == depth && _clipBoxView == projection.GetProjectionMatrix())
+    {
+        // Seen as the rectangle inside. Their overlap takes that rectangle's planes
+        const glm::vec2
+            low { glm::max(glm::vec2(box), glm::vec2(_clipBox)) },
+            high { glm::min(glm::vec2(box) + glm::vec2(box.z, box.w), glm::vec2(_clipBox) + glm::vec2(_clipBox.z, _clipBox.w)) };
+        cut = glm::vec4(low, glm::max(high - low, glm::vec2(0.0f)));
+        _clipPlaneCount -= 4;
+    }
+    else if(_maxClipPlanes < _clipPlaneCount + 4)
+    {
+        // A third frame. The innermost rectangle so far stays, the outer one goes
+        std::copy(_clipPlanes.begin() + 4, _clipPlanes.begin() + 8, _clipPlanes.begin());
+        _clipPlaneCount = 4;
+    }
+
+    const std::array<glm::vec4, 4> planes { clipPlanesOf(cut, depth, _drawFrame, projection) };
+    std::copy(planes.begin(), planes.end(), _clipPlanes.begin() + _clipPlaneCount);
+    _clipPlaneCount += 4;
+    _clipBox = cut;
+    _clipBoxFrame = _drawFrame;
+    _clipBoxView = projection.GetProjectionMatrix();
+    _clipBoxDepth = depth;
+    enableClipPlanes(_clipPlaneCount, _outerPlaneCount);
+}
+
+RetroFuturaGUI::Shader::ClipScope::~ClipScope()
+{
+    const u32 innerPlaneCount { _clipPlaneCount };
+    _clipPlanes = _outerPlanes;
+    _clipPlaneCount = _outerPlaneCount;
+    _clipBox = _outerBox;
+    _clipBoxFrame = _outerBoxFrame;
+    _clipBoxView = _outerBoxView;
+    _clipBoxDepth = _outerBoxDepth;
+    enableClipPlanes(_clipPlaneCount, innerPlaneCount);
+}
+
+RetroFuturaGUI::Shader::UnclippedScope::UnclippedScope()
+    : _outerPlaneCount(_clipPlaneCount)
+{
+    _clipPlaneCount = 0; //the planes stay where they are for the scopes around it
+    enableClipPlanes(0, _outerPlaneCount);
+}
+
+RetroFuturaGUI::Shader::UnclippedScope::~UnclippedScope()
+{
+    _clipPlaneCount = _outerPlaneCount;
+    enableClipPlanes(_clipPlaneCount, 0);
+}
+
+std::array<glm::vec4, 4> RetroFuturaGUI::Shader::clipPlanesOf(const glm::vec4& box, const f32 depth, const glm::mat4& frame, const Projection& projection)
+{
+    // The box's corners and middle where the frame places them. Counterclockwise from the bottom left
+    const auto place = [&frame, depth](const f32 x, const f32 y) { return glm::vec3(frame * glm::vec4(x, y, depth, 1.0f)); };
+    const std::array<glm::vec3, 4> corners { place(box.x, box.y), place(box.x + box.z, box.y), place(box.x + box.z, box.y + box.w), place(box.x, box.y + box.w) };
+    const glm::vec3 middle { place(box.x + box.z * 0.5f, box.y + box.w * 0.5f) };
+    const std::optional<glm::vec3> eye { projection.GetEyePosition() };
+    std::array<glm::vec4, 4> planes {};
+
+    for(uSize edge = 0; 4 > edge; ++edge)
+    {
+        // The plane holds the edge and the view or the orthographic direction the eye looks along
+        const glm::vec3
+            start { corners[edge] },
+            end { corners[(edge + 1) % 4] },
+            towardEye { eye ? *eye - start : glm::vec3(0.0f, 0.0f, 1.0f) };
+        glm::vec3 normal { glm::cross(end - start, towardEye) };
+        const f32 normalLength { glm::length(normal) };
+
+        if(1e-6f > normalLength)
+        {
+            planes[edge] = glm::vec4(0.0f, 0.0f, 0.0f, -1.0f); //seen edge-on (the box shows nothing)
+            continue;
+        }
+
+        normal /= normalLength;
+
+        if(0.0f > glm::dot(normal, middle - start))
+            normal = -normal; //kept on the side the box lies on
+
+        planes[edge] = glm::vec4(normal, -glm::dot(normal, start));
+    }
+
+    return planes;
+}
+
+void RetroFuturaGUI::Shader::enableClipPlanes(const u32 count, const u32 previousCount)
+{
+    for(u32 plane = std::min(count, previousCount); std::max(count, previousCount) > plane; ++plane)
+    {
+        if(count > plane)
+            glEnable(GL_CLIP_DISTANCE0 + plane);
+        else
+            glDisable(GL_CLIP_DISTANCE0 + plane);
+    }
+}
+
 void RetroFuturaGUI::Shader::UseProgram()
 {
     glUseProgram(_programId);
     SetUniformFloat("uOpacity", _drawOpacity); //a program without it, such as YuvToRgb's, ignores it
+    SetUniformMat4("uFrame", _drawFrame); //likewise YuvToRgb draws into a texture, never tilted
+
+    if(0 < _clipPlaneCount)
+        SetUniformVec4("uClipPlanes", glm::value_ptr(_clipPlanes[0]), _clipPlaneCount); //outside every ClipScope the planes are off
 }
 
 void RetroFuturaGUI::Shader::SetUniformBool(std::string_view name, bool value) const
