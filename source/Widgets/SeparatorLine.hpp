@@ -1,5 +1,5 @@
 #pragma once
-#include "IBackground.hpp"
+#include "Background.hpp"
 #include "ITextProperties.hpp"
 #include "IWidget.hpp"
 #include "config.hpp"
@@ -7,7 +7,7 @@
 
 namespace RetroFuturaGUI
 {
-    class SeparatorLine final : public IWidget, public ITextProperties, public IBackground
+    class SeparatorLine final : public IWidget, public ITextProperties
     {
     public:
         SeparatorLine(std::string_view name, Projection* projection, IHierarchyNode* parentWidget, const WidgetTypeID parentWidgetTypeID, GLFWwindow* parentWindow);
@@ -35,6 +35,13 @@ namespace RetroFuturaGUI
         /// to hold it, so the background gap is driven from here rather than set directly.
         void ShowText(const bool enable);
 
+        /// @brief Returns the button's background
+        Background& GetBackground();
+        
+        /// @brief Returns the button's background
+        const Background& GetBackground() const;
+
+
     protected:
         void applySize(const glm::vec3& size) override;
 
@@ -44,8 +51,8 @@ namespace RetroFuturaGUI
         /// @brief Sizes and places the gap the text sits in, and centers the text inside it.
         void updateLayout();
 
+        Background _background { &_projection };
+        f32 _textLeftPadding { 50.0f };
         bool _showText { false };
-        f32 
-            _textLeftPadding { 50.0f };
     };
 }

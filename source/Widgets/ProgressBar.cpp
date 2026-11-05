@@ -18,14 +18,8 @@ RetroFuturaGUI::ProgressBar::ProgressBar(const std::string& name, Projection* pr
 
 void  RetroFuturaGUI::ProgressBar::Draw()
 {
-    if(!_background)
-        return;
-
-    if(!_border)
-        return;
-
-    drawBackground();
-    _border->Draw();
+    _background.Draw();
+    _border.Draw();
 
     drawGraph();
     drawIndicator();
@@ -33,10 +27,8 @@ void  RetroFuturaGUI::ProgressBar::Draw()
 
 void RetroFuturaGUI::ProgressBar::setColors(const ColorState state)
 {
-    _backgroundColorState = state;
-    _borderColorState = state;
-    setBackgroundColors();
-    setBorderColors();
+    _background.SetColorState(state);
+    _border.SetColorState(state);
 }
 
 bool RetroFuturaGUI::ProgressBar::isInsideGraph(const glm::vec2& mousePos)

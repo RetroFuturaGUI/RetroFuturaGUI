@@ -39,8 +39,8 @@ RetroFuturaGUI::FileExplorer::FilePreview::FilePreview(ViewHost& host, Lasagna& 
     //Like the list, without its header
     const glm::vec3 detailsSize { cellSize(_axis, paneSize, detailsCell) };
     _details->SetSize(detailsSize);
-    _details->SetBorderWidth(1.0f);
-    _details->SetBorderColors(std::array { glm::vec4(0.35f, 0.35f, 0.45f, 1.0f) }, ColorState::Enabled);
+    _details->GetBorder().SetWidth(1.0f);
+    _details->GetBorder().SetColors(std::array { glm::vec4(0.35f, 0.35f, 0.45f, 1.0f) }, ColorState::Enabled);
     _details->SetTrackAlternatingColorCount(2);
     std::vector<glm::vec4>
         evenRowColors {{ 0.1f, 0.1f, 0.13f, 1.0f }},

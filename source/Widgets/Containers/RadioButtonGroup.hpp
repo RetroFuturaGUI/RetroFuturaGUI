@@ -13,7 +13,7 @@ namespace RetroFuturaGUI
 {
     class RadioButton;
 
-    class RadioButtonGroup final : public IWidget, public IBorder, public ITextProperties
+    class RadioButtonGroup final : public IWidget, public ITextProperties
     {
     public:
         /// @brief Constructs a RadioButtonGroup under the given parent widget/window.
@@ -52,9 +52,6 @@ namespace RetroFuturaGUI
         /// @brief Sets the text content, in UTF-8.
         void SetText(std::string_view text, const bool emitSignal) override;
 
-        /// @brief Sets sections of the border to skip drawing; see Frame::SetBorderGaps.
-        void SetBorderGaps(std::span<BorderGap> gaps) override;
-
         /// @brief Sets the Grid according to the axis definitions. Radio buttons in cells the new grid still has keep them; the
         ///        others are removed with their labels.
         void SetAxisDefinitions(std::span<f32> rowDefinitions, std::span<f32> columnDefinitions);
@@ -65,6 +62,16 @@ namespace RetroFuturaGUI
         /// @brief Sets how much each cell's RadioButton + Label should be away from the border's inner edge
         /// @param pixels (const f32): Distance in pixels
         void SetGridContentPadding(const f32 pixels);
+
+        /// @brief Sets the label's horizontal offset from the left edge of the group's border gap.
+        /// @param pixels Distance in pixels.
+        void SetLabelLeftPadding(const f32 pixels);
+
+        /// @brief Returns the button group's border
+        Border& GetBorder();
+
+        /// @brief Returns the button group's border
+        const Border& GetBorder() const;
 
     protected:
         /// @brief Sets the size of the radio button group.
@@ -98,6 +105,7 @@ namespace RetroFuturaGUI
         void updateLabelLayout();
         void updateGridLayout();
 
+        Border _border { &_projection };
         f32 
             _textLeftPadding { 0.0f },
             _borderPadding { 0.0f };

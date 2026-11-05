@@ -18,32 +18,17 @@ RetroFuturaGUI::ComboBox::ComboBox(std::string_view name, Projection* projection
     : IDropDown(name, projection, parentWidget, parentWidgetTypeID, parentWindow)
 {
     _widgetTypeID = WidgetTypeID::ComboBox;
-    _background = std::make_unique<Plane>(projection);
-    _border = std::make_unique<Frame>(projection);
-    useTransitions({ _background.get(), _border.get() });
-
-    if(!_background)
-        return;
-
-    if(!_border)
-        return;
-
-
+    useTransitions({  });
+    _background.SetTransitionSettings(&_transitionSettings);
     setColors(ColorState::Enabled);
 }
 
 void RetroFuturaGUI::ComboBox::Draw()
 {
-    if(!_background)
-        return;
-
-    if(!_border)
-        return;
-
     if(!isLabelHidden())
     {
-        drawBackground();
-        _border->Draw();
+        _background.Draw();
+        _border.Draw();
         drawDropDownArrow();
 
         if(_hasCaption && _previewText)
@@ -99,17 +84,9 @@ void RetroFuturaGUI::ComboBox::drawDropDown()
 
 void RetroFuturaGUI::ComboBox::applySize(const glm::vec3& size)
 {
-    if(!_background)
-        return;
-
-    if(!_border)
-        return;
-
     IWidget::applySize(size);
-
-    _background->SetSize(size);
-    _border->SetSize(size);
-
+    _background.SetSize(size);
+    _border.SetSize(size);
     updateDropDownGeometry();
 }
 
@@ -118,7 +95,7 @@ void RetroFuturaGUI::ComboBox::applySize(const glm::vec3& size)
 void RetroFuturaGUI::ComboBox::placeItemText(Text& item, const glm::vec3& center, const f32 width) const
 {
     const f32
-        boxBorder { _border ? _border->GetBorderWidth() : 0.0f },
+        boxBorder { _border.GetWidth() },
         panelBorder { _dropDownBorder ? _dropDownBorder->GetBorderWidth() : 0.0f },
         inset { (boxBorder > panelBorder ? boxBorder : panelBorder) * 2.0f },
         parentWidth { 0.0f < width - inset ? width - inset : 0.0f },
@@ -132,17 +109,9 @@ void RetroFuturaGUI::ComboBox::placeItemText(Text& item, const glm::vec3& center
 
 void RetroFuturaGUI::ComboBox::applyPosition(const glm::vec3& position)
 {
-    if(!_background)
-        return;
-
-    if(!_border)
-        return;
-
     IWidget::applyPosition(position);
-
-    _background->SetPosition(position);
-    _border->SetPosition(position + glm::vec3(0.0f, 0.0f, _zStep));
-
+    _background.SetPosition(position);
+    _border.SetPosition(position + glm::vec3(0.0f, 0.0f, _zStep));
     updateDropDownGeometry();
 }
 
@@ -340,10 +309,8 @@ void RetroFuturaGUI::ComboBox::selectItem(const uSize index)
 void RetroFuturaGUI::ComboBox::setColors(const ColorState state)
 {
     IDropDown::setColors(state);
-    _backgroundColorState = state;
-    _borderColorState = state;
-    setBackgroundColors();
-    setBorderColors();
+    _background.SetColorState(state);
+    _border.SetColorState(state);
 }
 
 void RetroFuturaGUI::ComboBox::updateItemGeometry()
@@ -418,4 +385,14 @@ void RetroFuturaGUI::ComboBox::SetDropDownPosition(const DropDownPosition positi
     _dropDownPosition = position;
     updateDropDownGeometry();
     updateItemGeometry();
+}
+
+RetroFuturaGUI::Border& RetroFuturaGUI::ComboBox::GetBorder()
+{
+    return _border;
+}
+
+const RetroFuturaGUI::Border& RetroFuturaGUI::ComboBox::GetBorder() const
+{
+    return _border;
 }

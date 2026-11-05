@@ -3,8 +3,8 @@
 #include "IClickable.hpp"
 #include "IncludeHelper.hpp"
 #include "Plane.hpp"
-#include "IBackground.hpp"
-#include "IBorder.hpp"
+#include "Background.hpp"
+#include "Border.hpp"
 #include <memory>
 
 namespace RetroFuturaGUI
@@ -12,7 +12,7 @@ namespace RetroFuturaGUI
     class RadioButtonGroup;
 
     /// @brief A radiobutton
-    class RadioButton final : public IWidget, public IClickable, public IBackground, public IBorder
+    class RadioButton final : public IWidget, public IClickable
     {
     public:
         /// @brief Constructs a RadioButton widget under the given parent widget/window.
@@ -60,6 +60,18 @@ namespace RetroFuturaGUI
         /// @brief Sets the distance between border and Indicator in pixels
         /// @param a float extressing the distance in pixels
         void SetIndicatorPadding(const f32 pixels);
+        
+        /// @brief Returns the button's background
+        Background& GetBackground();
+        
+        /// @brief Returns the button's background
+        const Background& GetBackground() const;
+        
+        /// @brief Returns the button's border
+        Border& GetBorder();
+        
+        /// @brief Returns the button's border
+        const Border& GetBorder() const;
 
     protected:
         /// @brief Sets the size of the button.
@@ -74,6 +86,8 @@ namespace RetroFuturaGUI
         void interact() override;
 
         std::unique_ptr<Plane> _indicator { nullptr };
+        Background _background { &_projection };
+        Border _border { &_projection };
         RadioButtonGroup* _parentGroup { nullptr };
         bool _isChecked { false };
         f32 _indicatorPadding { 2.0f };

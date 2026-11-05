@@ -19,14 +19,8 @@ RetroFuturaGUI::Slider::Slider(const std::string& name, Projection* projection, 
 
 void  RetroFuturaGUI::Slider::Draw()
 {
-    if(!_background)
-        return;
-
-    if(!_border)
-        return;
-
-    drawBackground();
-    _border->Draw();
+    _background.Draw();
+    _border.Draw();
 
     drawIndicator();
     drawGraph();
@@ -34,10 +28,8 @@ void  RetroFuturaGUI::Slider::Draw()
 
 void RetroFuturaGUI::Slider::setColors(const ColorState state)
 {
-    _backgroundColorState = state;
-    _borderColorState = state;
-    setBackgroundColors();
-    setBorderColors();
+    _background.SetColorState(state);
+    _border.SetColorState(state);
 }
 
 bool RetroFuturaGUI::Slider::isInsideIndicator(const glm::vec2& mousePos)

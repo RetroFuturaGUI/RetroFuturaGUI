@@ -1,8 +1,8 @@
 #pragma once
+#include "Background.hpp"
 #include "IncludeHelper.hpp"
 #include "IWidget.hpp"
-#include "IBackground.hpp"
-#include "IBorder.hpp"
+#include "Border.hpp"
 #include "Frame.hpp"
 #include "Plane.hpp"
 #include "SvgTexture.hpp"
@@ -18,9 +18,9 @@ namespace RetroFuturaGUI
     class Window;
     struct ScreenRect;
 
-    /// @brief Docks windows as tabs: a strip of fields along the top, each showing a window's title and a close button. Only the selected window's content is visible below.
-    ///        Dragging a field sideways reorders the fields, dragging it out of the strip pulls its window out again, and dragging a free window by its bar over the strip drops it in at the end.
-    class WindowTab final : public IWidget, public IBackground, public IBorder
+    /// @brief Docks windows as tabs. A strip of fields along the top, each showing a window's title and a close button. Only the selected window's content is visible below. Dragging
+    ///        a field sideways reorders the fields, dragging it out of the strip pulls its window out again, and dragging a free window by its bar over the strip drops it in at the end
+    class WindowTab final : public IWidget
     {
     public:
         /// @brief Constructs an empty WindowTab
@@ -147,6 +147,18 @@ namespace RetroFuturaGUI
 
         /// @brief Returns the corner radii of the content area.
         const glm::vec4& GetContentCornerRadii() const;
+        
+        /// @brief Returns the button's background
+        Background& GetBackground();
+        
+        /// @brief Returns the button's background
+        const Background& GetBackground() const;
+        
+        /// @brief Returns the button's border
+        Border& GetBorder();
+        
+        /// @brief Returns the button's border
+        const Border& GetBorder() const;
 
     protected:
         /// @brief Sets the center of the whole WindowTab, strip and content area together.
@@ -294,6 +306,8 @@ namespace RetroFuturaGUI
         std::unique_ptr<Plane>
             _fieldBackground { nullptr },
             _closeBackground { nullptr };
+        Background _background { &_projection };
+        Border _border { &_projection };
         std::unique_ptr<Frame> _fieldBorder { nullptr };
         std::unique_ptr<SvgTexture> _closeIcon { nullptr }; //its own, so its color and size are this tab's alone
         std::unique_ptr<Text> _previewTitle { nullptr };

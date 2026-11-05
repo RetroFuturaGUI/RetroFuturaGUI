@@ -42,6 +42,12 @@ namespace RetroFuturaGUI
         /// @brief Sets the item texts' colors: ColorState::Disabled sets the disabled items' colors, every other state the enabled items'.
         void SetItemTextColors(std::span<const glm::vec4> colors, const ColorState state);
 
+        /// @brief Returns the ComboBox's border
+        Border& GetBorder();
+
+        /// @brief Returns the ComboBox's border
+        const Border& GetBorder() const;
+        
     protected:
         void applySize(const glm::vec3& size) override;
 

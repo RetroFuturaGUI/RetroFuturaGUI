@@ -1,14 +1,14 @@
 #pragma once
 #include "IWidget.hpp"
 #include "IClickable.hpp"
-#include "IBackground.hpp"
-#include "IBorder.hpp"
+#include "Background.hpp"
+#include "Border.hpp"
 #include "ITextProperties.hpp"
 
 namespace RetroFuturaGUI
 {
     //A widget that triggers actions
-    class Button final : public IWidget, public IClickable, public IBackground, public IBorder, public ITextProperties
+    class Button final : public IWidget, public IClickable, public ITextProperties
     {
     public:
         /// @brief Constructs a Button widget under the given parent widget/window.
@@ -26,6 +26,14 @@ namespace RetroFuturaGUI
         /// @brief Sets the corner rounding radii of the button's background and border.
         void SetCornerRadii(const glm::vec4& radii);
 
+        /// @brief Returns the button's background
+        Background& GetBackground();
+        const Background& GetBackground() const;
+
+        /// @brief Returns the button's border
+        Border& GetBorder();
+        const Border& GetBorder() const;
+
     protected:
         /// @brief Sets the size of the button.
         void applySize(const glm::vec3& size) override;
@@ -36,5 +44,8 @@ namespace RetroFuturaGUI
     private:
         void interact() override;
         void setColors(const ColorState state) override;
+
+        Background _background { &_projection };
+        Border _border { &_projection };
     };
 }

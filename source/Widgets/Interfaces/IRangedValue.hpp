@@ -12,8 +12,8 @@
 #include <type_traits>
 #include <utility>
 #include <vector>
-#include "IBackground.hpp"
-#include "IBorder.hpp"
+#include "Background.hpp"
+#include "Border.hpp"
 #include "IClickable.hpp"
 #include "IWidget.hpp"
 #include "IncludeHelper.hpp"
@@ -21,7 +21,7 @@
 namespace RetroFuturaGUI
 {
     /// @brief Shared range, track, indicator and graph for widgets that map values into a min/max range. IRangedSingleValue holds one value (Slider, ProgressBar), IRangedMultiValue many (Histogram, LineGraph).
-    class IRangedValue : public IWidget, public IClickable, public IBackground, public IBorder
+    class IRangedValue : public IWidget, public IClickable
     {
     public:
         enum class ElementSizing : u32
@@ -78,6 +78,10 @@ namespace RetroFuturaGUI
 
         /// @brief Sets the corner rounding radii of the track's track background and border.
         void SetCornerRadii(const glm::vec4& radii);
+        Background& GetBackground();
+        const Background& GetBackground() const;
+        Border& GetBorder();
+        const Border& GetBorder() const;
 
         /// @brief Sets the range's lower bound, stored in the type resolveValueType picks: T on a single-value widget (converting the value and step to T
         /// as well, see setValueType), the data's type on a multi-value widget that has data (so 0.5f becomes 0 for u8 data).
@@ -275,8 +279,8 @@ namespace RetroFuturaGUI
         // Non-owning alias of the projection the elements are created with
         Projection* _elementProjection { nullptr };
 
-        /// @brief The rectangle the values are laid out along: the widget's background, read each time so a replaced _background can't leave a stale pointer behind.
-        Plane* getTrack() const { return _background.get(); }
+        /// @brief The rectangle the values are laid out along.
+        const Background* getTrack() const { return &_background; }
 
         /// @brief The rotation the orientation gives the track. None for Horizontal. A quarter turn counter-clockwise for
         ///        Vertical. The widget's own rotation is in its frame
@@ -412,6 +416,8 @@ namespace RetroFuturaGUI
         PrimitiveTypeID _valueType { PrimitiveTypeID::Int32 };
 
         // Elements
+        Background _background { &_projection };
+        Border _border { &_projection };
         std::unique_ptr<Plane> _indicatorBackground { nullptr };
         std::unique_ptr<Frame> _indicatorBorder { nullptr };
         std::unique_ptr<WavePlane> _graph { nullptr };

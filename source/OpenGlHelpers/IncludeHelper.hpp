@@ -109,7 +109,7 @@ namespace RetroFuturaGUI
         FILL_XYZ
     };
 
-    enum ColorState : u32
+    enum class ColorState : u32
     {
         Enabled,
         Disabled,

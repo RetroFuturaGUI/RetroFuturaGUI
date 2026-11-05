@@ -5,17 +5,11 @@
 RetroFuturaGUI::IRangedValue::IRangedValue(std::string_view name, Projection* projection, IHierarchyNode* parentWidget, const WidgetTypeID parentWidgetTypeID, GLFWwindow* parentWindow)
     : IWidget(name, projection, parentWidget, parentWidgetTypeID, parentWindow)
 {
-    _background = std::make_unique<Plane>(projection);
-    _border = std::make_unique<Frame>(projection);
     _indicatorBackground = std::make_unique<Plane>(projection);
     _indicatorBorder = std::make_unique<Frame>(projection);
-    useTransitions({ _background.get(), _border.get(), _indicatorBackground.get(), _indicatorBorder.get() });
-
-    if(!_background)
-        return;
-
-    if(!_border)
-        return;
+    useTransitions({ _indicatorBackground.get(), _indicatorBorder.get() });
+    _background.SetTransitionSettings(&_transitionSettings);
+    _border.SetTransitionSettings(&_transitionSettings);
 
     if(!_indicatorBackground)
         return;
@@ -23,55 +17,56 @@ RetroFuturaGUI::IRangedValue::IRangedValue(std::string_view name, Projection* pr
     if(!_indicatorBorder)
         return;
 
-
     _elementProjection = projection;
     _useIndicator = true;
 }
 
+RetroFuturaGUI::Background& RetroFuturaGUI::IRangedValue::GetBackground()
+{
+    return _background;
+}
+
+const RetroFuturaGUI::Background& RetroFuturaGUI::IRangedValue::GetBackground() const
+{
+    return _background;
+}
+
+RetroFuturaGUI::Border& RetroFuturaGUI::IRangedValue::GetBorder()
+{
+    return _border;
+}
+
+const RetroFuturaGUI::Border& RetroFuturaGUI::IRangedValue::GetBorder() const
+{
+    return _border;
+}
+
 void RetroFuturaGUI::IRangedValue::applyPosition(const glm::vec3& position)
 {
-    if(!_background)
-        return;
-
-    if(!_border)
-        return;
-
     IWidget::applyPosition(position);
-    _background->SetPosition(position);
-    _border->SetPosition(position + glm::vec3(0.0f, 0.0f, 0.01f));
+    _background.SetPosition(position);
+    _border.SetPosition(position + glm::vec3(0.0f, 0.0f, 0.01f));
     alignElementsToTrack();
 }
 
 void RetroFuturaGUI::IRangedValue::applySize(const glm::vec3& size)
 {
-    if(!_background)
-        return;
-
-    if(!_border)
-        return;
-
     IWidget::applySize(size);
     const glm::vec3 trackSize { _orientation == Orientation::Vertical
         ? glm::vec3(size.y, size.x, size.z)
         : size };
 
-    _background->SetSize(trackSize);
-    _border->SetSize(trackSize);
+    _background.SetSize(trackSize);
+    _border.SetSize(trackSize);
     setIndicatorSize();
     alignElementsToTrack();
 }
 
 void RetroFuturaGUI::IRangedValue::orientTrack()
 {
-    if(!_background)
-        return;
-
-    if(!_border)
-        return;
-
     const glm::vec3 trackRotation { orientedRotation() };
-    _background->SetRotation(trackRotation);
-    _border->SetRotation(trackRotation);
+    _background.SetRotation(trackRotation);
+    _border.SetRotation(trackRotation);
     alignElementsToTrack();
 }
 
@@ -746,7 +741,7 @@ void RetroFuturaGUI::IRangedValue::setIndicatorPosition(const f32 trackFraction)
     if(!_indicatorBorder)
         return;
 
-    Plane* track { getTrack() };
+    const Background* track { getTrack() };
 
     if(!track)
         return;
@@ -755,7 +750,7 @@ void RetroFuturaGUI::IRangedValue::setIndicatorPosition(const f32 trackFraction)
         return;
 
     const f32
-        borderInset { _border ? _border->GetBorderWidth() * 2.0f : 0.0f },
+        borderInset { _border.GetWidth() * 2.0f },
         trackLength { glm::max(track->GetSize().x - borderInset, 0.0f) },
         indicatorLength { _indicatorBackground->GetSize().x },
         travelRange { 0.0f < trackLength - indicatorLength ? trackLength - indicatorLength : 0.0f },
@@ -787,7 +782,7 @@ void RetroFuturaGUI::IRangedValue::setIndicatorPosition(const f32 trackFraction)
 
 void RetroFuturaGUI::IRangedValue::setGraphSize(const f32 trackFraction)
 {
-    Plane* track { getTrack() };
+    const Background* track { getTrack() };
 
     if(!track)
         return;
@@ -806,7 +801,7 @@ void RetroFuturaGUI::IRangedValue::setGraphSize(const f32 trackFraction)
 
 void RetroFuturaGUI::IRangedValue::setGraphPosition(const f32 trackFraction)
 {
-    Plane* track { getTrack() };
+    const Background* track { getTrack() };
 
     if(!track)
         return;
@@ -942,9 +937,6 @@ void RetroFuturaGUI::IRangedValue::drawGraph()
 
 void RetroFuturaGUI::IRangedValue::setIndicatorSize()
 {
-    if(!_background)
-        return;
-
     if(!_indicatorBackground)
         return;
 
@@ -953,8 +945,8 @@ void RetroFuturaGUI::IRangedValue::setIndicatorSize()
 
     // The border shader insets the frame uBorderWidth inward from every edge, inside the track's own bounds,
     // so the area the indicator can occupy without painting over it is the track shrunk by that much per side.
-    const glm::vec2 trackSize { _background->GetSize() };
-    const f32 borderInset { _border ? _border->GetBorderWidth() * 2.0f : 0.0f };
+    const glm::vec2 trackSize { _background.GetSize() };
+    const f32 borderInset { _border.GetWidth() * 2.0f };
     const glm::vec2 innerSize { glm::max(trackSize.x - borderInset, 0.0f), glm::max(trackSize.y - borderInset, 0.0f) };
 
     // Both axes are the track's own - x along its length, y across its thickness - and the indicator carries the

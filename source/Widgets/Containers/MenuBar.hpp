@@ -1,8 +1,8 @@
 #pragma once
 #include "IncludeHelper.hpp"
 #include "IWidget.hpp"
-#include "IBackground.hpp"
-#include "IBorder.hpp"
+#include "Background.hpp"
+#include "Border.hpp"
 #include "IClickable.hpp"
 #include "Label.hpp"
 #include "Button.hpp"
@@ -33,7 +33,7 @@ namespace RetroFuturaGUI
     || std::same_as<T, Slider> || std::same_as<T, ProgressBar> || std::same_as<T, Prefab>
     || std::same_as<T, ComboBox> || std::same_as<T, ColorPreview>;
 
-    class MenuBar final : public IWidget, public IBackground, public IBorder, public IClickable
+    class MenuBar final : public IWidget, public IClickable
     {
     public:
         enum class DockingEdge : u32
@@ -272,6 +272,18 @@ namespace RetroFuturaGUI
 
         /// @brief Sets sections of the item border to skip drawing; see Frame::SetBorderGaps.
         void SetItemBorderGaps(std::span<BorderGap> gaps);
+        
+        /// @brief Returns the MenuBar's background
+        Background& GetBackground();
+        
+        /// @brief Returns the MenuBar's background
+        const Background& GetBackground() const;
+        
+        /// @brief Returns the MenuBar's border
+        Border& GetBorder();
+        
+        /// @brief Returns the MenuBar's border
+        const Border& GetBorder() const;
 
     protected:
         void applyPosition(const glm::vec3& position) override;
@@ -371,6 +383,8 @@ namespace RetroFuturaGUI
         void setItemBorderCornerRadii(const glm::vec4& radii);
 
     //Elements
+        Background _background { &_projection };
+        Border _border { &_projection };
         std::unique_ptr<Plane>
             _separatorLine { nullptr },
             _itemBackground { nullptr };

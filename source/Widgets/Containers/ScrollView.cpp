@@ -21,14 +21,12 @@ RetroFuturaGUI::ScrollView::ScrollView(std::string_view name, Projection* projec
     : IWidget(name, projection, parentWidget, parentWidgetTypeID, parentWindow)
 {
     _widgetTypeID = WidgetTypeID::ScrollView;
-
+    _border.SetTransitionSettings(&_transitionSettings);
 }
 
 void RetroFuturaGUI::ScrollView::Draw()
 {
     const glm::vec3 viewSize { getInnerSize() };
-    const Shader::ClipScope clip { glm::vec4(_position.x - viewSize.x * 0.5f, _position.y - viewSize.y * 0.5f, viewSize.x, viewSize.y), _position.z, _projection }; //content scrolled past the border is cut away.
-
     const auto draw = [this](ScrollViewCell& cell)
     {
         if(cell._PendingRemoval)
@@ -43,11 +41,18 @@ void RetroFuturaGUI::ScrollView::Draw()
         cell._Widget->DrawAtOpacity();
     };
 
-    // A stack along Z draws from the back, so a cell's see-through edges blend over the cells behind it
-    if(ScrollAxis::Z == _alignmentDirection)
-        std::for_each(_items.rbegin(), _items.rend(), draw);
-    else
-        std::for_each(_items.begin(), _items.end(), draw);
+    {
+        const Shader::ClipScope clip { glm::vec4(_position.x - viewSize.x * 0.5f, _position.y - viewSize.y * 0.5f, viewSize.x, viewSize.y), _position.z, _projection }; //content scrolled past the border is cut away.
+
+        // A stack along Z draws from the back, so a cell's see-through edges blend over the cells behind it
+        if(ScrollAxis::Z == _alignmentDirection)
+            std::for_each(_items.rbegin(), _items.rend(), draw);
+        else
+            std::for_each(_items.begin(), _items.end(), draw);
+    }
+
+    if(_showBorder)
+        _border.Draw();
 }
 
 void RetroFuturaGUI::ScrollView::interact()
@@ -249,12 +254,14 @@ const RetroFuturaGUI::ScrollView::ScrollViewCell* RetroFuturaGUI::ScrollView::fi
 void RetroFuturaGUI::ScrollView::applySize(const glm::vec3& size)
 {
     IWidget::applySize(size);
+    _border.SetSize(size);
     layoutCells();
 }
 
 void RetroFuturaGUI::ScrollView::applyPosition(const glm::vec3& position)
 {
     IWidget::applyPosition(position);
+    _border.SetPosition(position + glm::vec3(0.0f, 0.0f, 0.01f));
     layoutCells();
 }
 
@@ -521,25 +528,12 @@ bool RetroFuturaGUI::ScrollView::isScrollEnabled(const ScrollEnable axis) const
 void RetroFuturaGUI::ScrollView::EnableBackground(const bool enable)
 {
     _showBackground = enable;
-
-    if(_showBackground)
-        _background = std::make_unique<Plane>(&_projection);
-    else
-        _background.reset();
-
-    useTransitions({ _background.get() });
 }
 
 void RetroFuturaGUI::ScrollView::EnableBorder(const bool enable)
 {
     _showBorder = enable;
-
-    if(_showBorder)
-        _border = std::make_unique<Frame>(&_projection);
-    else
-        _border.reset();
-
-    useTransitions({ _border.get() });
+    layoutCells();
 }
 
 void RetroFuturaGUI::ScrollView::layoutCells()
@@ -606,18 +600,18 @@ void RetroFuturaGUI::ScrollView::layoutCells()
 
 glm::vec3 RetroFuturaGUI::ScrollView::getInnerSize() const
 {
-    if(!_border)
+    if(!_showBorder)
         return _size;
 
-    // The border is drawn inside the widget's rectangle, so the cells scroll through what is left inside it.
-    const f32 inset { 2.0f * _border->GetBorderWidth() };
+    // The border is drawn inside the widget's rectangle, so the cells scroll through what is left inside it
+    const f32 inset { 2.0f * _border.GetWidth() };
     return glm::vec3(std::max(_size.x - inset, 0.0f), std::max(_size.y - inset, 0.0f), _size.z);
 }
 
 glm::vec3 RetroFuturaGUI::ScrollView::contentToWindow(const glm::vec3& point) const
 {
-    // Content starts at the view's top-left front corner and runs rightward, downward and away from the camera.
-    // Scrolling moves it the opposite way, which brings what lies further along into view.
+    // Content starts at the view's top-left front corner and runs rightward, downward and away from the
+    //  camera. Scrolling moves it the opposite way, which brings what lies further along into view
     const glm::vec3 viewSize { getInnerSize() };
     const glm::vec3 scrolledPoint { point - _scrollPosition };
 
@@ -671,10 +665,8 @@ glm::vec3 RetroFuturaGUI::ScrollView::getSpanAlignmentFactors() const
 
 void RetroFuturaGUI::ScrollView::setColors(const ColorState state)
 {
-    _backgroundColorState = state;
-    _borderColorState = state;
-    setBackgroundColors();
-    setBorderColors();
+    _background.SetColorState(state);
+    _border.SetColorState(state);
 }
 
 void RetroFuturaGUI::ScrollView::performPendingRemoval()
@@ -684,4 +676,24 @@ void RetroFuturaGUI::ScrollView::performPendingRemoval()
 
     std::erase_if(_items, [](const ScrollViewCell& cell) { return cell._PendingRemoval; });
     _hasPendingRemovals = false;
+}
+
+RetroFuturaGUI::Background& RetroFuturaGUI::ScrollView::GetBackground()
+{
+    return _background;
+}
+
+const RetroFuturaGUI::Background& RetroFuturaGUI::ScrollView::GetBackground() const
+{
+    return _background;
+}
+
+RetroFuturaGUI::Border& RetroFuturaGUI::ScrollView::GetBorder()
+{
+    return _border;
+}
+
+const RetroFuturaGUI::Border& RetroFuturaGUI::ScrollView::GetBorder() const
+{
+    return _border;
 }

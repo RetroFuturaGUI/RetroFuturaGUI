@@ -1,34 +1,26 @@
 #include "Tooltip.hpp"
+#include "Background.hpp"
 #include "FontManager.hpp"
 #include "ITextProperties.hpp"
 #include "IWidget.hpp"
+#include "IncludeHelper.hpp"
 #include "PlatformBridge.hpp"
 #include <algorithm>
 #include <memory>
 #include <string_view>
 
 RetroFuturaGUI::Tooltip::Tooltip(Projection* projection, IWidget* widget)
+    : _projection(*projection)
 {
-    _projection = projection;
     _widget = widget;
-    _background = std::make_unique<Plane>(_projection);
-    _border = std::make_unique<Frame>(_projection);
     _text = std::make_unique<Text>(projection);
     useWidgetTransitions();
-
-    if(!_background)
-        return;
-
-    if(!_border)
-        return;
 
     if(!_text)
         return;
 
-    _border->SetBorderWidth(_defaultBorderWidth);
+    _border.SetWidth(_defaultBorderWidth);
     _text->SetTextPadding(_defaultTextPadding);
-    setBackgroundColors();
-    setBorderColors();
     setTextColors();
     applyDefaultFont();
 }
@@ -90,39 +82,21 @@ void RetroFuturaGUI::Tooltip::draw()
 {
     applyDefaultFont();
     setPosition();
-    drawBackground();
-    drawBorder();
+    _background.Draw();
+    _border.Draw();
     drawText();
-}
-
-void RetroFuturaGUI::Tooltip::SetBackgroundColors(std::span<const glm::vec4> colors)
-{
-    if(!_background)
-        return;
-
-    _backgroundColors.assign(colors.begin(), colors.end());
-    _background->SetColors(_backgroundColors);
 }
 
 void RetroFuturaGUI::Tooltip::SetBorderColors(std::span<const glm::vec4> colors)
 {
-    if(!_border)
-        return;
-    
     _borderColors.assign(colors.begin(), colors.end());
-    _border->SetColors(_borderColors);
+    _border.SetColors(_borderColors, ColorState::Enabled);
 }
 
 void RetroFuturaGUI::Tooltip::SetCornerRadii(const glm::vec4& radii)
 {
-    if(!_background)
-        return;
-    
-    if(!_border)
-        return;
-    
-    _background->SetCornerRadii(radii);
-    _border->SetCornerRadii(radii);
+    _background.SetCornerRadii(radii);
+    _border.SetCornerRadii(radii);
 }
 
 void RetroFuturaGUI::Tooltip::SetText(std::string_view text, const bool emitSignal)
@@ -143,7 +117,9 @@ void RetroFuturaGUI::Tooltip::useWidgetTransitions()
     if(!_widget)
         return;
 
-    for(FillStyle* element : std::initializer_list<FillStyle*> { _background.get(), _border.get(), _text.get() })
+    _background.SetTransitionSettings(&_widget->_transitionSettings);
+
+    for(FillStyle* element : std::initializer_list<FillStyle*> { _text.get() })
     {
         if(!element)
             continue;
@@ -173,7 +149,7 @@ void RetroFuturaGUI::Tooltip::SetTextPadding(const f32 padding)
 
 void RetroFuturaGUI::Tooltip::SetBorderWidth(const f32 borderWidth)
 {
-    IBorder::SetBorderWidth(borderWidth);
+    _border.SetWidth(borderWidth);
     setSize();
 }
 
@@ -182,19 +158,13 @@ void RetroFuturaGUI::Tooltip::setSize()
     if(!_text)
         return;
 
-    if(!_background)
-        return;
-
-    if(!_border)
-        return;
-
     const f32 padding { _text->GetPadding() };
     const glm::vec2
         textArea { _text->GetWidth() + padding * 2.0f, _text->GetHeight() + padding * 2.0f }, //exactly the text plus its padding, so any alignment centers it
-        size { textArea + glm::vec2(_border->GetBorderWidth() * 2.0f) }; //the border draws inside the box
+        size { textArea + glm::vec2(_border.GetWidth() * 2.0f) }; //the border draws inside the box
     _text->SetParentSize(textArea);
-    _background->SetSize(size);
-    _border->SetSize(size);
+    _background.SetSize(size);
+    _border.SetSize(size);
 }
 
 void RetroFuturaGUI::Tooltip::setPosition()
@@ -202,23 +172,14 @@ void RetroFuturaGUI::Tooltip::setPosition()
     if(!_widget)
         return;
 
-    if(!_projection)
-        return;
-
-    if(!_background)
-        return;
-
-    if(!_border)
-        return;
-
     if(!_text)
         return;
 
     const glm::vec2
-        halfSize { _background->GetSize() * 0.5f },
-        resolution { _projection->GetResolution() };
+        halfSize { _background.GetSize() * 0.5f },
+        resolution { _projection.GetResolution() };
 
-    // Centered above the cursor's tip and kept inside the window: it slides sideways at the left and right edges
+    // Centered above the cursor's tip and kept inside the window. It slides sideways at the left and right edges
     // and down at the top one. World space runs bottom-up, so above is +Y.
     // Not std::clamp: a tooltip larger than the window would make it undefined.
     const glm::vec3 center {
@@ -226,8 +187,8 @@ void RetroFuturaGUI::Tooltip::setPosition()
         std::max(halfSize.y, std::min(_pointerPosition.y + _cursorDistance + halfSize.y, resolution.y - halfSize.y)),
         _widget->GetPosition().z };
 
-    _background->SetPosition(center);
-    _border->SetPosition(center + glm::vec3(0.0f, 0.0f, _zStep));
+    _background.SetPosition(center);
+    _border.SetPosition(center + glm::vec3(0.0f, 0.0f, _zStep));
     _text->SetPosition(center + glm::vec3(0.0f, 0.0f, _zStep * 2.0f));
 }
 
@@ -259,4 +220,14 @@ void RetroFuturaGUI::Tooltip::interact()
         _isDismissed = true;
 
     _isShown = !_isDismissed && _showDelay <= std::chrono::steady_clock::now() - _hoverStart;
+}
+
+RetroFuturaGUI::Background& RetroFuturaGUI::Tooltip::GetBackground()
+{
+    return _background;
+}
+
+const RetroFuturaGUI::Background& RetroFuturaGUI::Tooltip::GetBackground() const
+{
+    return _background;
 }

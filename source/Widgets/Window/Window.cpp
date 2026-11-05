@@ -47,7 +47,6 @@ RetroFuturaGUI::Window::~Window()
     glfwMakeContextCurrent(_window);
     ContextObject::DeletePending(_window);
     _background.reset();
-    _backgroundSvg.reset();
     _border.reset();
 
     //A later window must not try to share with a destroyed one. Another window of the share group takes over, so later windows
@@ -405,33 +404,23 @@ void RetroFuturaGUI::Window::createWindow()
     }
 
     _projection = std::make_unique<Projection>((float)_width, (float)_height);
-
-    _background = std::make_unique<Plane>(_projection.get());
-
-    if(!_background)
-        return;
-
+    _background.emplace(_projection.get());
+    _border.emplace(_projection.get());
     _background->SetTransitionSettings(&_transitionSettings);
-
     _background->SetPosition(glm::vec3((f32)_width * 0.5f, (f32)_height * 0.5f, -1.0f));
     _background->SetSize(glm::vec2((f32)_width, (f32)_height));
     _background->SetRotation(glm::vec3(0.0f));
-
-    _border = std::make_unique<Frame>(_projection.get());
 
     if(!_border)
         return;
 
     _border->SetTransitionSettings(&_transitionSettings);
-
     _border->SetPosition(glm::vec3((f32)_width * 0.5f, (f32)_height * 0.5f, 0.0f));
     _border->SetSize(glm::vec2((f32)_width, (f32)_height));
     _border->SetRotation(glm::vec3(0.0f));
     //No frame until one is asked for, since a Frame starts with a 5 px border
-    _border->SetBorderWidth(0.0f);
-
-    SetBackgroundColors(std::array { glm::vec4(0.086f, 0.086f, 0.1137f, 1.0f) }, ColorState::Enabled);
-    setBorderColors();
+    _border->SetWidth(0.0f);
+    _background->SetColors(std::array { glm::vec4(0.0f, 0.0f, 0.0f, 1.0f) }, ColorState::Enabled);
 }
 
 std::vector<RetroFuturaGUI::Window*>& RetroFuturaGUI::Window::getAllWindows()

@@ -124,7 +124,7 @@ void RetroFuturaGUI::DynamicLibWidgetManager::SetBackgroundColors(const char* id
         case WidgetTypeID::Button:
         {
             Button* button = dynamic_cast<Button*>(widget);
-            button->SetBackgroundColors(colors, colorState);
+            button->GetBackground().SetColors(colors, colorState);
         } break;
         default:
             [[unlikely]];
@@ -145,7 +145,7 @@ void RetroFuturaGUI::DynamicLibWidgetManager::SetBackgroundGradientOffset(const 
         case WidgetTypeID::Button:
         {
             Button* button = dynamic_cast<Button*>(widget);
-            button->SetBackgroundGradientOffset(gradientOffset);
+            button->GetBackground().SetGradientOffset(gradientOffset);
         } break;
         default:
             [[unlikely]];
@@ -166,7 +166,7 @@ void RetroFuturaGUI::DynamicLibWidgetManager::SetBackgroundGradientAnimationSpee
         case WidgetTypeID::Button:
         {
             Button* button = dynamic_cast<Button*>(widget);
-            button->SetBackgroundGradientAnimationSpeed(animationSpeed);
+            button->GetBackground().SetGradientAnimationSpeed(animationSpeed);
         } break;
         default:
             [[unlikely]];
@@ -187,7 +187,7 @@ void RetroFuturaGUI::DynamicLibWidgetManager::SetBackgroundGradientDegree(const 
         case WidgetTypeID::Button:
         {
             Button* button = dynamic_cast<Button*>(widget);
-            button->SetBackgroundGradientDegree(degree);
+            button->GetBackground().SetGradientDegree(degree);
         } break;
         default:
             [[unlikely]];
@@ -208,7 +208,7 @@ void RetroFuturaGUI::DynamicLibWidgetManager::SetBackgroundGradientRotationSpeed
         case WidgetTypeID::Button:
         {
             Button* button = dynamic_cast<Button*>(widget);
-            button->SetBackgroundGradientRotationSpeed(rotationSpeed);
+            button->GetBackground().SetGradientRotationSpeed(rotationSpeed);
         } break;
         default:
             [[unlikely]];
@@ -229,7 +229,7 @@ void RetroFuturaGUI::DynamicLibWidgetManager::SetWindowBackgroundImageTextureID(
         case WidgetTypeID::Button:
         {
             Button* button = dynamic_cast<Button*>(widget);
-            button->SetWindowBackgroundImageTextureID(textureID);
+            button->GetBackground().SetWindowBackgroundImageTextureID(textureID);
         } break;
         default:
             [[unlikely]];
@@ -250,7 +250,7 @@ void RetroFuturaGUI::DynamicLibWidgetManager::SetBorderColors(const char* id, st
         case WidgetTypeID::Button:
         {
             Button* button = dynamic_cast<Button*>(widget);
-            button->SetBorderColors(colors, colorState);
+            button->GetBorder().SetColors(colors, colorState);
         } break;
         default:
             [[unlikely]];
@@ -271,7 +271,7 @@ void RetroFuturaGUI::DynamicLibWidgetManager::SetBorderGradientOffset(const char
         case WidgetTypeID::Button:
         {
             Button* button = dynamic_cast<Button*>(widget);
-            button->SetBorderGradientOffset(gradientOffset);
+            button->GetBorder().SetGradientOffset(gradientOffset);
         } break;
         default:
             [[unlikely]];
@@ -292,7 +292,7 @@ void RetroFuturaGUI::DynamicLibWidgetManager::SetBorderGradientAnimationSpeed(co
         case WidgetTypeID::Button:
         {
             Button* button = dynamic_cast<Button*>(widget);
-            button->SetBorderGradientAnimationSpeed(animationSpeed);
+            button->GetBorder().SetGradientAnimationSpeed(animationSpeed);
         } break;
         default:
             [[unlikely]];
@@ -313,7 +313,7 @@ void RetroFuturaGUI::DynamicLibWidgetManager::SetBorderGradientDegree(const char
         case WidgetTypeID::Button:
         {
             Button* button = dynamic_cast<Button*>(widget);
-            button->SetBorderGradientDegree(degree);
+            button->GetBorder().SetGradientDegree(degree);
         } break;
         default:
             [[unlikely]];
@@ -334,7 +334,7 @@ void RetroFuturaGUI::DynamicLibWidgetManager::SetBorderGradientRotationSpeed(con
         case WidgetTypeID::Button:
         {
             Button* button = dynamic_cast<Button*>(widget);
-            button->SetBorderGradientRotationSpeed(rotationSpeed);
+            button->GetBorder().SetGradientRotationSpeed(rotationSpeed);
         } break;
         default:
             [[unlikely]];
@@ -355,7 +355,7 @@ void RetroFuturaGUI::DynamicLibWidgetManager::SetWindowBorderImageTextureID(cons
         case WidgetTypeID::Button:
         {
             Button* button = dynamic_cast<Button*>(widget);
-            button->SetWindowBorderImageTextureID(textureID);
+            button->GetBorder().SetWindowImageTextureID(textureID);
         } break;
         default:
             [[unlikely]];

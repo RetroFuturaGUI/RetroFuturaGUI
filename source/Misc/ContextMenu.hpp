@@ -1,7 +1,6 @@
 #pragma once
 #include "ExtendedComboBox.hpp"
-#include "IBackground.hpp"
-#include "IBorder.hpp"
+#include "Border.hpp"
 #include "ITextProperties.hpp"
 #include "Projection.hpp"
 #include "SvgImage.hpp"
@@ -9,17 +8,17 @@
 #include <string>
 #include <string_view>
 #include <unordered_map>
+#include "Background.hpp"
 
 namespace RetroFuturaGUI
 {
     class IWidget;
 
-    /// @brief Nested dropdown items shown near the cursor after right-clicking the owning widget. The widget updates it in
-    ///        its Interact, and Window::Draw draws the one shown in that window at the end of the frame, over every scene.
-    class ContextMenu final : public IBackground, public IBorder, public ITextProperties
+    /// @brief Nested dropdown items shown near the cursor after right-clicking the owning widget
+    class ContextMenu final : public ITextProperties
     {
     public:
-        /// @brief Constructs a ContextMenu for the given widget.
+        /// @brief Constructs a ContextMenu for the given widget
         ContextMenu(Projection* projection, IWidget* widget);
         ContextMenu() = delete;
         ContextMenu(const ContextMenu&) = delete;
@@ -28,8 +27,7 @@ namespace RetroFuturaGUI
         auto operator =(const ContextMenu&) = delete;
         auto operator =(ContextMenu&&) = delete;
 
-        /// @brief Tracks right-clicks on the owning widget, passes the input on to the items while shown, and queues this
-        ///        ContextMenu for the end of the frame.
+        /// @brief Tracks right-clicks on the owning widget, passes the input on to the items while shown, and queues this ContextMenu to be drawn last in this frame
         void Update();
 
         /// @brief Draws the ContextMenu shown this frame in the given window over everything drawn so far. Window::Draw calls it last.
@@ -38,7 +36,6 @@ namespace RetroFuturaGUI
         /// @brief Sets the font of every ContextMenu, those created before this call included. A ContextMenu given its own font with SetFontFamily keeps it.
         static void SetDefaultFontFamily(std::string_view fontFamily, const f32 fontSize, const FontSizeUnit sizeUnit, const PlatformBridge::Fonts::Slant slant, const PlatformBridge::Fonts::Weight fontWeight);
 
-        void SetBackgroundColors(std::span<const glm::vec4> colors);
         void SetBorderColors(std::span<const glm::vec4> colors);
         void SetCornerRadii(const glm::vec4& radii);
         void SetText(std::string_view text, const bool emitSignal) override;
@@ -58,6 +55,18 @@ namespace RetroFuturaGUI
         /// @brief Returns the selected root dropdown item index.
         uSize GetSelectedIndex() const;
 
+        /// @brief Returns the button's background
+        Background& GetBackground();
+
+        /// @brief Returns the button's background
+        const Background& GetBackground() const;
+
+        /// @brief Returns the button's border
+        Border& GetBorder();
+        
+        /// @brief Returns the button's border
+        const Border& GetBorder() const;
+
     private:
         void draw();
         void setSize();
@@ -73,12 +82,14 @@ namespace RetroFuturaGUI
 
         ExtendedComboBox* iterateNode(ExtendedComboBox* comboBox, std::string_view node);
 
-        Projection* _projection { nullptr };
+        Projection& _projection;
         IWidget* _widget { nullptr };
         std::unique_ptr<ExtendedComboBox> _items { nullptr };
         std::vector<glm::vec4>
             _backgroundColors {},
             _borderColors {};
+        Background _background { &_projection };
+        Border _border { &_projection };
         std::string _fontFamily {};
         f32 _fontSize { FontManager::ToPixels(16.0f, FontSizeUnit::Points) };
         PlatformBridge::Fonts::Slant _fontSlant { PlatformBridge::Fonts::Slant::Roman };

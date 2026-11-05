@@ -13,63 +13,40 @@ RetroFuturaGUI::MenuBar::MenuBar(const std::string& name, Projection* projection
     : IWidget(name, projection, parentWidget, parentWidgetTypeID, parentWindow)
 {
     _widgetTypeID = WidgetTypeID::MenuBar;
-    _background = std::make_unique<Plane>(projection);
-    _border = std::make_unique<Frame>(projection);
     _itemBackground = std::make_unique<Plane>(projection);
     _itemBorder = std::make_unique<Frame>(projection);
-    useTransitions({ _background.get(), _border.get() }); //the item background and border draw once per item, in its colors, so they switch at once
-
-    if(!_background)
-        return;
-
-    if(!_border)
-        return;
+    useTransitions({ }); //the item background and border draw once per item, in its colors, so they switch at once
+    _border.SetTransitionSettings(&_transitionSettings);
 
     if(!_itemBackground)
         return;
 
     if(!_itemBorder)
         return;
-
 }
 
 void RetroFuturaGUI::MenuBar::Draw()
 {
-    drawBackground();
-    drawBorder();
+    _background.Draw();
+    _border.Draw();
     drawSeparatorLines();
     drawItems();
 }
 
 void RetroFuturaGUI::MenuBar::applyPosition(const glm::vec3& position)
 {
-    if(!_background)
-        return;
-
-    if(!_border)
-        return;
-
     IWidget::applyPosition(position);
-
-    _background->SetPosition(position);
-    _border->SetPosition(position + glm::vec3(0.0f, 0.0f, 0.01f));
+    _background.SetPosition(position);
+    _border.SetPosition(position + glm::vec3(0.0f, 0.0f, 0.01f));
 
     placeItems();
 }
 
 void RetroFuturaGUI::MenuBar::applySize(const glm::vec3& size)
 {
-    if(!_background)
-        return;
-
-    if(!_border)
-        return;
-
     IWidget::applySize(size);
-
-    _background->SetSize(size);
-    _border->SetSize(size);
-
+    _background.SetSize(size);
+    _border.SetSize(size);
     updateLayout();
 }
 
@@ -96,8 +73,7 @@ void RetroFuturaGUI::MenuBar::SetFlexCount(const uSize count)
     releaseCellsFrom(count);
     _itemFlex.resize(count);
 
-    /* Cells added here have no policy of their own, so they take an even share. Cells that already had
-       one keep it. An additional call on SetFlexDefinition readjusts all. */
+    //Cells added here have no policy of their own so they take an even share. Cells that already had one keep it. An additional call on SetFlexDefinition readjusts all
     _flexDefinition.resize(count, _kEvenShare);
 
     if(_hoveredItemIndex >= _itemFlex.size())
@@ -110,7 +86,7 @@ void RetroFuturaGUI::MenuBar::SetFlexDefinition(std::span<FlexDefinition> flexDe
 {
     _flexDefinition.assign(flexDefinitions.begin(), flexDefinitions.end());
 
-    //The definitions express how many cells there are, so the flex follows them.
+    //The definitions express how many cells there are, so the flex follows them
     releaseCellsFrom(_flexDefinition.size());
     _itemFlex.resize(_flexDefinition.size());
 
@@ -275,8 +251,8 @@ void RetroFuturaGUI::MenuBar::SetItemBackgroundColors(std::span<const glm::vec4>
 
 void RetroFuturaGUI::MenuBar::SetCornerRadii(const glm::vec4& radii)
 {
-    setBackgroundCornerRadii(radii);
-    setBorderCornerRadii(radii);
+    _background.SetCornerRadii(radii);
+    _border.SetCornerRadii(radii);
 }
 
 void RetroFuturaGUI::MenuBar::SetItemCornerRadii(const glm::vec4& radii)
@@ -1223,4 +1199,24 @@ void RetroFuturaGUI::MenuBar::setItemBorderCornerRadii(const glm::vec4& radii)
         return;
 
     _itemBorder->SetCornerRadii(radii);
+}
+
+RetroFuturaGUI::Background& RetroFuturaGUI::MenuBar::GetBackground()
+{
+    return _background;
+}
+
+const RetroFuturaGUI::Background& RetroFuturaGUI::MenuBar::GetBackground() const
+{
+    return _background;
+}
+
+RetroFuturaGUI::Border& RetroFuturaGUI::MenuBar::GetBorder()
+{
+    return _border;
+}
+
+const RetroFuturaGUI::Border& RetroFuturaGUI::MenuBar::GetBorder() const
+{
+    return _border;
 }

@@ -10,18 +10,12 @@
 RetroFuturaGUI::ITextBox::ITextBox(std::string_view name, Projection* projection, IHierarchyNode* parentWidget, const WidgetTypeID parentWidgetTypeID, GLFWwindow* parentWindow)
    : IWidget(name, projection, parentWidget, parentWidgetTypeID, parentWindow)
 {
-    _background = std::make_unique<Plane>(projection);
-    _border = std::make_unique<Frame>(projection);
     _text = std::make_unique<Text>(projection);
     _placeholderText = std::make_unique<Text>(projection);
     initEditVisuals(projection);
-    useTransitions({ _background.get(), _border.get(), _text.get(), _placeholderText.get(), _caret.get(), _selectedArea.get() });
-
-    if(!_background)
-        return;
-
-    if(!_border)
-        return;
+    useTransitions({ _text.get(), _placeholderText.get(), _caret.get(), _selectedArea.get() });
+    _background.SetTransitionSettings(&_transitionSettings);
+    _border.SetTransitionSettings(&_transitionSettings);
 
     if(!_placeholderText)
         return;
@@ -34,8 +28,8 @@ void RetroFuturaGUI::ITextBox::Draw()
     if(!_placeholderText)
         return;
 
-    drawBackground();
-    drawBorder();
+    _background.Draw();
+    _border.Draw();
     drawSelectedArea();
 
     if(_text && !_text->GetTextUTF32().empty())
@@ -52,12 +46,6 @@ void RetroFuturaGUI::ITextBox::Draw()
 
 void RetroFuturaGUI::ITextBox::applySize(const glm::vec3& size)
 {
-    if(!_background)
-        return;
-
-    if(!_border)
-        return;
-
     if(!_text)
         return;
 
@@ -66,23 +54,16 @@ void RetroFuturaGUI::ITextBox::applySize(const glm::vec3& size)
 
     IWidget::applySize(size);
 
-    _background->SetSize(size);
-    _border->SetSize(size);
+    _background.SetSize(size);
+    _border.SetSize(size);
     _text->SetParentSize(glm::vec2(size.x, size.y));
     _placeholderText->SetParentSize(glm::vec2(size.x, size.y));
 }
 
 void RetroFuturaGUI::ITextBox::applyPosition(const glm::vec3& position)
 {
-    if(!_background)
-        return;
-
     if(!_selectedArea)
         return;
-
-    if(!_border)
-        return;
-
     if(!_text)
         return;
 
@@ -94,9 +75,9 @@ void RetroFuturaGUI::ITextBox::applyPosition(const glm::vec3& position)
 
     IWidget::applyPosition(position);
 
-    _background->SetPosition(position);
+    _background.SetPosition(position);
     _selectedArea->SetPosition(position + glm::vec3(0.0f, 0.0f, 0.1f));
-    _border->SetPosition(position + glm::vec3(0.0f, 0.0f, 0.2f));
+    _border.SetPosition(position + glm::vec3(0.0f, 0.0f, 0.2f));
     _text->SetPosition(position + glm::vec3(0.0f, 0.0f, 0.3f));
     _placeholderText->SetPosition(position + glm::vec3(0.0f, 0.0f, 0.3f));
     _caret->SetPosition(position + glm::vec3(0.0f, 0.0f, 0.5f));
@@ -220,18 +201,36 @@ void RetroFuturaGUI::ITextBox::TakeKeyboardFocus()
 
 void RetroFuturaGUI::ITextBox::setColors(const ColorState state)
 {
-    _backgroundColorState = state;
-    _borderColorState = state;
     _textColorState = state;
-    setBackgroundColors();
-    setBorderColors();
+    _background.SetColorState(state);
+    _border.SetColorState(state);
     setTextColors();
 }
 
 void RetroFuturaGUI::ITextBox::SetCornerRadii(const glm::vec4& radii)
 {
-    _background->SetCornerRadii(radii);
-    _border->SetCornerRadii(radii);
+    _background.SetCornerRadii(radii);
+    _border.SetCornerRadii(radii);
+}
+
+RetroFuturaGUI::Background& RetroFuturaGUI::ITextBox::GetBackground()
+{
+    return _background;
+}
+
+const RetroFuturaGUI::Background& RetroFuturaGUI::ITextBox::GetBackground() const
+{
+    return _background;
+}
+
+RetroFuturaGUI::Border& RetroFuturaGUI::ITextBox::GetBorder()
+{
+    return _border;
+}
+
+const RetroFuturaGUI::Border& RetroFuturaGUI::ITextBox::GetBorder() const
+{
+    return _border;
 }
 
 RetroFuturaGUI::ITextEditVisuals::TextArea RetroFuturaGUI::ITextBox::getTextArea() const

@@ -9,26 +9,18 @@ RetroFuturaGUI::SeparatorLine::SeparatorLine(std::string_view name, Projection* 
     : IWidget(name, projection, parentWidget, parentWidgetTypeID, parentWindow)
 {
     _widgetTypeID = WidgetTypeID::SeparatorLine;
-    _background = std::make_unique<Plane>(&_projection);
     _text = std::make_unique<Text>(&_projection);
-    useTransitions({ _background.get(), _text.get() });
-
-    if(!_background)
-        return;
-
+    useTransitions({ _text.get() });
 }
 
 void RetroFuturaGUI::SeparatorLine::Draw()
 {
-    if(!_background)
+    _background.Draw();
+
+    if(!_showText)
         return;
 
     if(!_text)
-        return;
-
-    drawBackground();
-
-    if(!_showText)
         return;
 
     _text->Draw();
@@ -37,22 +29,14 @@ void RetroFuturaGUI::SeparatorLine::Draw()
 void RetroFuturaGUI::SeparatorLine::applySize(const glm::vec3& size)
 {
     IWidget::applySize(size);
-
-    if(!_background)
-        return;
-
-    _background->SetSize(size);
+    _background.SetSize(size);
     updateLayout();
 }
 
 void RetroFuturaGUI::SeparatorLine::applyPosition(const glm::vec3& position)
 {
     IWidget::applyPosition(position);
-
-    if(!_background)
-        return;
-
-    _background->SetPosition(position);
+    _background.SetPosition(position);
     updateLayout();
 }
 
@@ -88,14 +72,14 @@ void RetroFuturaGUI::SeparatorLine::ShowText(const bool enable)
 
 void RetroFuturaGUI::SeparatorLine::updateLayout()
 {
-    if(!_text || !_background)
+    if(!_text)
         return;
 
     _text->SetParentSize(glm::vec2(_size.x, std::max<f32>(_size.y, _text->GetSpanHeight())));
 
     if(!_showText || GetText().empty()) //if no label, draw a solid line
     {
-        IBackground::SetBackgroundGaps(BackgroundGap { ._Repeat = 0 });
+        _background.SetGaps(BackgroundGap { ._Repeat = 0 });
         return;
     }
 
@@ -110,11 +94,21 @@ void RetroFuturaGUI::SeparatorLine::updateLayout()
         ._Repeat = 1
     };
 
-    IBackground::SetBackgroundGaps(textGap);
+    _background.SetGaps(textGap);
     _text->SetTextAlignment(TextAlignment::Center);
     _text->SetPosition(glm::vec3(
         _position.x - _size.x * 0.5f + _textLeftPadding + textGap._Length * 0.5f,
         _position.y,
         _position.z + 0.01f)
     );
+}
+
+RetroFuturaGUI::Background& RetroFuturaGUI::SeparatorLine::GetBackground()
+{
+    return _background;
+}
+
+const RetroFuturaGUI::Background& RetroFuturaGUI::SeparatorLine::GetBackground() const
+{
+    return _background;
 }

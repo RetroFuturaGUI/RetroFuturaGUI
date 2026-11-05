@@ -10,8 +10,8 @@ RetroFuturaGUI::ColorPreview::ColorPreview(std::string_view name, Projection* pr
     _checkeredBackground = std::make_unique<Plane>(&_projection);
     _whiteBackground = std::make_unique<Plane>(&_projection);
     _colorRect = std::make_unique<Plane>(&_projection);
-    _border = std::make_unique<Frame>(&_projection);
-    useTransitions({ _border.get() }); //the preview color is a value, not a style, so it switches at once
+    useTransitions({ }); //the preview color is a value, not a style, so it switches at once
+    _border.SetTransitionSettings(&_transitionSettings);
 
     if(!_checkeredBackground)
         return;
@@ -22,9 +22,6 @@ RetroFuturaGUI::ColorPreview::ColorPreview(std::string_view name, Projection* pr
     if(!_colorRect)
         return;
 
-    if(!_border)
-        return;
-
     _checkeredBackground->SetColors(_checkeredFillColor);
     _checkeredBackground->SetRasterPattern(RasterPattern::Checkered);
     _checkeredBackground->SetPrimaryRasterColor(_primaryCheckeredColor);
@@ -33,7 +30,6 @@ RetroFuturaGUI::ColorPreview::ColorPreview(std::string_view name, Projection* pr
     _checkeredBackground->SetRasterDegree(0.0f);
     _whiteBackground->SetColors(_whiteBackgroundColor);
     _colorRect->SetColors(std::span<const glm::vec4>(&_previewColor, 1));
-    setBorderColors();
 }
 
 void RetroFuturaGUI::ColorPreview::Draw()
@@ -53,7 +49,7 @@ void RetroFuturaGUI::ColorPreview::Draw()
         _whiteBackground->Draw();
 
     _colorRect->Draw();
-    drawBorder();
+    _border.Draw();
 }
 
 const glm::vec4& RetroFuturaGUI::ColorPreview::GetColor() const
@@ -106,13 +102,10 @@ void RetroFuturaGUI::ColorPreview::alignColorPreview()
     if(!_colorRect)
         return;
 
-    if(!_border)
-        return;
-
     _colorRect->SetSize(_size);
     _colorRect->SetPosition(_position + glm::vec3(0.0f, 0.0f, 0.01f));
-    _border->SetSize(_size);
-    _border->SetPosition(_position + glm::vec3(0.0f, 0.0f, 0.02f));
+    _border.SetSize(_size);
+    _border.SetPosition(_position + glm::vec3(0.0f, 0.0f, 0.02f));
 
     if(!_useWhiteBackgroundRect)
     {
@@ -132,4 +125,14 @@ void RetroFuturaGUI::ColorPreview::alignColorPreview()
     _checkeredBackground->SetPosition(_position + checkeredOffset);
     _whiteBackground->SetSize(halfSize);
     _whiteBackground->SetPosition(_position - checkeredOffset);
+}
+
+RetroFuturaGUI::Border& RetroFuturaGUI::ColorPreview::GetBorder()
+{
+    return _border;
+}
+
+const RetroFuturaGUI::Border& RetroFuturaGUI::ColorPreview::GetBorder() const
+{
+    return _border;
 }

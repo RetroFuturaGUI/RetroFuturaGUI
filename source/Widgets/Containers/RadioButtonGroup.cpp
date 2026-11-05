@@ -16,12 +16,9 @@ RetroFuturaGUI::RadioButtonGroup::RadioButtonGroup(const std::string& name, Proj
     : IWidget(name, projection, parentWidget, parentWidgetTypeID, parentWindow)
 {
     _widgetTypeID = WidgetTypeID::RadioButtonGroup;
-    _border = std::make_unique<Frame>(projection);
     _text = std::make_unique<Text>(projection);
-    useTransitions({ _border.get(), _text.get() });
-
-    if(!_border)
-        return;
+    useTransitions({ _text.get() });
+    _border.SetTransitionSettings(&_transitionSettings);
 }
 
 void RetroFuturaGUI::RadioButtonGroup::Draw()
@@ -29,8 +26,7 @@ void RetroFuturaGUI::RadioButtonGroup::Draw()
     if(!_text)
         return;
 
-    drawBorder();
-
+    _border.Draw();
     _text->Draw();
 
     for(const auto& row : _grid)
@@ -219,15 +215,15 @@ void RetroFuturaGUI::RadioButtonGroup::SetText(std::string_view text, const bool
 
 void RetroFuturaGUI::RadioButtonGroup::updateLabelLayout()
 {
-    if(!_text || !_border)
+    if(!_text)
         return;
 
     if(GetText().empty()) //if no label, draw solid border
     {
-        _border->SetSize(glm::vec2(_size.x, _size.y));
-        _border->SetPosition(_position + glm::vec3(0.0f, 0.0f, 0.01f));
+        _border.SetSize(glm::vec2(_size.x, _size.y));
+        _border.SetPosition(_position + glm::vec3(0.0f, 0.0f, 0.01f));
         _text->SetParentSize(glm::vec2(_size.x, _size.y));
-        IBorder::SetBorderGaps(std::span<BorderGap>());
+        _border.SetGaps(std::span<BorderGap>());
         return;
     }
 
@@ -238,8 +234,8 @@ void RetroFuturaGUI::RadioButtonGroup::updateLabelLayout()
 
     glm::vec2 newSize { _size.x, _size.y - glyphHeight * 0.5f };
     glm::vec3 newPos { _position.x, _position.y + glyphHeight * 0.5f, _position.z + 0.01f };
-    _border->SetSize(newSize);
-    _border->SetPosition(newPos);
+    _border.SetSize(newSize);
+    _border.SetPosition(newPos);
     _text->SetParentSize(newSize);
 
     // single top border's edge gap, sized to fit the label (+ padding on both sides)
@@ -251,7 +247,7 @@ void RetroFuturaGUI::RadioButtonGroup::updateLabelLayout()
         ._Repeat = 1
     };
 
-    IBorder::SetBorderGaps(std::span<BorderGap>(&textGap, 1));
+    _border.SetGaps(std::span<BorderGap>(&textGap, 1));
     _text->SetTextAlignment(TextAlignment::Center);
     _text->SetPosition(glm::vec3(
         newPos.x - newSize.x * 0.5f + _textLeftPadding + textGap._Length * 0.5f,
@@ -259,19 +255,6 @@ void RetroFuturaGUI::RadioButtonGroup::updateLabelLayout()
         newPos.z + 0.01f)
     );
 }
-
-void RetroFuturaGUI::RadioButtonGroup::SetBorderGaps(std::span<BorderGap> gaps)
-{
-    IBorder::SetBorderGaps(gaps);
-
-    for(const BorderGap& gap : gaps)
-        if(gap._Edge == BorderEdge::Left)
-        {
-            _textLeftPadding = gap._Offset;
-            return;
-        }
-}
-
 void RetroFuturaGUI::RadioButtonGroup::SetAxisDefinitions(std::span<f32> rowDefinitions, std::span<f32> columnDefinitions)
 {
     _rowDefinitions.assign(rowDefinitions.begin(), rowDefinitions.end());
@@ -324,9 +307,9 @@ void RetroFuturaGUI::RadioButtonGroup::updateGridLayout()
             f32 combinedLeft { cell._Position.x - combinedWidth * 0.5f }; // Center (default)
 
             if(_gridContentAlignment == TextAlignment::Left)
-                combinedLeft = cell._Position.x - cell._Size.x * 0.5f + _border->GetBorderWidth() + _borderPadding;
+                combinedLeft = cell._Position.x - cell._Size.x * 0.5f + _border.GetWidth() + _borderPadding;
             else if(_gridContentAlignment == TextAlignment::Right)
-                combinedLeft = cell._Position.x + cell._Size.x * 0.5f - combinedWidth + _border->GetBorderWidth() + _borderPadding;
+                combinedLeft = cell._Position.x + cell._Size.x * 0.5f - combinedWidth + _border.GetWidth() + _borderPadding;
 
             if(cell._RadioButton)
                 cell._RadioButton->SetPosition(glm::vec3(combinedLeft + radioWidth * 0.5f, cell._Position.y, _position.z + 0.02f));
@@ -348,4 +331,20 @@ void RetroFuturaGUI::RadioButtonGroup::SetGridContentPadding(const f32 pixels)
 {
     _borderPadding = pixels;
     updateGridLayout();
+}
+
+void RetroFuturaGUI::RadioButtonGroup::SetLabelLeftPadding(const f32 pixels)
+{
+    _textLeftPadding = pixels;
+    updateLabelLayout();
+}
+
+RetroFuturaGUI::Border& RetroFuturaGUI::RadioButtonGroup::GetBorder()
+{
+    return _border;
+}
+
+const RetroFuturaGUI::Border& RetroFuturaGUI::RadioButtonGroup::GetBorder() const
+{
+    return _border;
 }

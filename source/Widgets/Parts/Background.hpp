@@ -6,126 +6,154 @@
 #include "Plane.hpp"
 #include "SvgTexture.hpp"
 #include "Texture.hpp"
+#include "IWidgetDecoration.hpp"
 
 namespace RetroFuturaGUI
 {
-    /// @brief Mixin providing a filled/gradient background rectangle for widgets that inherit from it.
-    class IBackground
+    /// @brief A widget's background: a filled or gradient rectangle with optional raster, fog, glass, mask and image. The widget
+    ///        owns it and hands it out through GetBackground(), so it is styled as button.GetBackground().SetColors(...)
+    class Background final : public IWidgetDecoration
     {
     public:
-        /// @brief Sets the background colors for the given color state: one for a solid fill, the stops for a gradient. A single color is written std::array { color }.
-        void SetBackgroundColors(std::span<const glm::vec4> colors, const ColorState state);
+        Background(Projection* projection);
+        Background() = delete;
+        Background(const Background&) = delete;
+        Background(Background&&) = delete;
+        ~Background() = default;
+        auto operator =(const Background&) = delete;
+        auto operator =(Background&&) = delete;
+
+        /// @brief Draws the fill, then an SVG image over it
+        void Draw() override;
+
+        /// @brief Sizes the background size
+        void SetSize(const glm::vec2& size) override;
+
+        /// @brief Places the background
+        void SetPosition(const glm::vec3& position) override;
+
+        /// @brief Turns the background
+        void SetRotation(const glm::vec3& rotation) override;
+
+        /// @brief returns the background's size
+        glm::vec2 GetSize() override;
+        glm::vec2 GetSize() const;
+
+        /// @brief returns the background's position
+        glm::vec3 GetPosition() override;
+        glm::vec3 GetPosition() const;
+
+        /// @brief Returns the Background's rotation
+        glm::vec3 GetRotation() override;
+        glm::vec3 GetRotation() const;
+
+        /// @brief Rounds the corners, clockwise from the top-left
+        void SetCornerRadii(const glm::vec4& radii) override;
+
+        /// @brief Has the colors and corner radii move to new values over the owning widget's transitions.
+        void SetTransitionSettings(const TransitionSettings* settings);
 
         /// @brief Sets the offset applied to the background gradient's start position.
-        void SetBackgroundGradientOffset(const f32 gradientOffset);
+        void SetGradientOffset(const f32 gradientOffset);
 
         /// @brief Sets the speed at which the background gradient animates over time.
-        void SetBackgroundGradientAnimationSpeed(const f32 animationSpeed);
+        void SetGradientAnimationSpeed(const f32 animationSpeed);
 
         /// @brief Sets the angle of the background's linear gradient, in degrees.
-        void SetBackgroundGradientDegree(const f32 degree);
+        void SetGradientDegree(const f32 degree);
 
         /// @brief Sets the speed at which the background gradient rotates over time.
-        void SetBackgroundGradientRotationSpeed(const f32 rotationSpeed);
+        void SetGradientRotationSpeed(const f32 rotationSpeed);
 
         /// @brief Sets the texture ID sampled for the background's glass-effect-with-image shader feature. 0 turns the glass off.
         void SetWindowBackgroundImageTextureID(const u32 textureID);
 
         /// @brief Sets the dot color used for the background's Dotted raster pattern.
-        void SetBackgroundPrimaryRasterColor(const glm::vec4& color);
+        void SetPrimaryRasterColor(const glm::vec4& color);
 
         /// @brief Sets the gap, in pixels, between the largest elements of the background's raster: 0 lets them touch. Spreads the grid without changing any element's size.
-        void SetBackgroundRasterSpacing(const f32 spacing);
+        void SetRasterSpacing(const f32 spacing);
 
         /// @brief Sets the direction, in degrees, along which the background's raster widths/animation transfer.
-        void SetBackgroundRasterDegree(const f32 degree);
+        void SetRasterDegree(const f32 degree);
 
         /// @brief Sets the per-position dot width curve, in pixels (each value is a dot's full width across), for the background's Dotted raster pattern. Enables the Raster shader feature when non-empty.
-        void SetBackgroundPrimaryRasterWidthTransfer(std::span<f32> widthTransfer);
+        void SetPrimaryRasterWidthTransfer(std::span<f32> widthTransfer);
 
         /// @brief Sets how far each background dot's opacity reaches from its center before fading to transparent.
-        void SetBackgroundDotTransparencyTransfer(const f32 transparencyTransfer);
+        void SetDotTransparencyTransfer(const f32 transparencyTransfer);
 
         /// @brief Sets the speed at which the background's raster pattern animates.
-        void SetBackgroundRasterAnimationSpeed(const f32 animationSpeed);
+        void SetRasterAnimationSpeed(const f32 animationSpeed);
 
         /// @brief Sets the overall opacity of the background's FogEffect shader feature.
-        void SetBackgroundFogAlpha(const f32 alpha);
+        void SetFogAlpha(const f32 alpha);
 
         /// @brief Sets the speed at which the background's fog drifts over time.
-        void SetBackgroundFogSpeed(const f32 speed);
+        void SetFogSpeed(const f32 speed);
 
         /// @brief Sets the per-octave density/weight curve driving the background's fog. Enables the FogEffect shader feature when non-empty.
-        void SetBackgroundFogDensity(std::span<f32> density);
+        void SetFogDensity(std::span<f32> density);
 
         /// @brief Sets the coverage threshold above which the background's fog appears; higher values carve larger clear gaps out of the cloud.
-        void SetBackgroundFogClearing(const f32 clearing);
+        void SetFogClearing(const f32 clearing);
 
         /// @brief Shows an image file (UTF-8) on the background. A picture (png, jpg, ...) sits behind the fill, and comes from
         ///        ResourceManager, which keeps it until ResourceManager::Free. An SVG sits over the fill as an SvgTexture of the
         ///        background's own, so SetBackgroundImagePathFill can recolor its paths.
-        virtual void SetBackgroundImage(std::string_view imagePath);
+        void SetImage(std::string_view imagePath);
+        /// @brief Returns the raster image texture ID, or 0 when the background has no raster image.
+        u32 GetImageTextureID() const;
 
         /// @brief Sets how far the background image stays clear of the widget's edges
-        void SetBackgroundImagePadding(const f32 padding);
+        void SetImagePadding(const f32 padding);
 
         /// @brief Sets how the background image is laid over the widget: stretched (default), cropped or fitting into it.
-        void SetBackgroundImageFit(const ImageFit fit);
+        void SetImageFit(const ImageFit fit);
 
         /// @brief Sets a grayscale mask laid over the background, its red channel the gray: as transparency or as shading
         ///        (SetBackgroundMaskMode). 0 shows no mask.
-        void SetBackgroundMaskTextureID(const u32 textureID);
+        void SetMaskTextureID(const u32 textureID);
 
         /// @brief Sets what the background mask does: make the background transparent/Alpha (default) or shade it (Shade).
-        void SetBackgroundMaskMode(const MaskMode mode);
+        void SetMaskMode(const MaskMode mode);
 
         /// @brief Sets how the background mask is laid over the widget: stretched (default) or keeping its proportions.
-        void SetBackgroundMaskFit(const ImageFit fit);
+        void SetMaskFit(const ImageFit fit);
 
         /// @brief Sets or replaces the color override of a named path in an SVG background image. Does nothing for a picture.
-        void SetBackgroundImagePathFill(std::string_view name, const SvgPathFill& fill);
+        void SetImagePathFill(std::string_view name, const SvgPathFill& fill);
 
         /// @brief Gives a named path in an SVG background image its own color back.
-        void ClearBackgroundImagePathFill(std::string_view name);
+        void ClearImagePathFill(std::string_view name);
 
         /// @brief Returns the background colors configured for the given color state.
-        const std::vector<glm::vec4>& GetBackgroundColors(const ColorState state) const;
+        const std::vector<glm::vec4>& GetColors(const ColorState state) const;
 
         /// @brief Sets the background fill type (solid, linear/radial/huestar gradient).
-        void SetBackgroundFillType(const FillType fillType);
+        void SetFillType(const FillType fillType);
 
         /// @brief Sets sections of the background to skip drawing; see Plane::SetBackgroundGaps.
-        virtual void SetBackgroundGaps(const BackgroundGap& gap);
+        void SetGaps(const BackgroundGap& gap);
 
-    protected:
-        void setBackgroundColors();
-        void drawBackground();
-        void setBackgroundCornerRadii(const glm::vec4& radii);
+    private:
+        /// @brief Hands the colors of the current state to the fill.
+        void setColors() override;
+        
+        /// @brief Draws the SVG background image over the fill, inset by the padding wherever the widget put _background.
+        void drawSvg();
+
+        /// @brief Whether the path names an SVG file, by its extension in any case.
+        static bool isSvgPath(std::string_view path);
 
     //Elements
-        std::unique_ptr<Plane> _background { nullptr };
+        std::unique_ptr<Plane> _backgroundPlane { nullptr };
         Texture* _backgroundImage { nullptr }; //a picture borrowed from ResourceManager, shown by _background
         std::unique_ptr<SvgTexture> _backgroundSvg { nullptr }; //an SVG background image, drawn over the fill
         f32 _backgroundImagePadding { 0.0f };
 
     //Style
-        std::vector<glm::vec4> 
-            _backgroundColorEnabled { glm::vec4(0.5f, 0.5f, 0.5f, 1.0f) },
-            _backgroundColorDisabled { glm::vec4(0.25f, 0.25f, 0.25f, 1.0f) },
-            _backgroundColorClicked { glm::vec4(0.6f, 0.6f,0.6f, 1.0f) },
-            _backgroundColorHover { glm::vec4(0.55f, 0.55f, 0.55f, 1.0f) };
-        FillType _backgroundFillType { FillType::Solid };
-        ColorState _backgroundColorState { ColorState::Enabled };
         std::vector<f32> _backgroundPrimaryRasterWidthTransfer;
         std::vector<f32> _backgroundFogDensity;
-
-    private:
-        void setBackgroundColorElement(std::vector<glm::vec4>& color);
-
-        /// @brief Draws the SVG background image over the fill, inset by the padding wherever the widget put _background.
-        void drawBackgroundSvg();
-
-        /// @brief Whether the path names an SVG file, by its extension in any case.
-        static bool isSvgPath(std::string_view path);
     };
 }

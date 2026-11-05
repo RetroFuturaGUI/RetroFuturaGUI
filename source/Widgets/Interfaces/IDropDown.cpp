@@ -10,6 +10,8 @@ RetroFuturaGUI::IDropDown::IDropDown(std::string_view name, Projection* projecti
     _dropDownBorder = std::make_unique<Frame>(projection);
     _dropDownItemHighlight = std::make_unique<Plane>(projection);
     useTransitions({ _dropDownBackground.get(), _dropDownBorder.get(), _dropDownItemHighlight.get() });
+    _background.SetTransitionSettings(&_transitionSettings);
+    _border.SetTransitionSettings(&_transitionSettings);
     _dropDownArrow = ResourceManager::CreateDropDownArrowIcon(projection);
 
     if(!_dropDownBackground)
@@ -25,6 +27,26 @@ RetroFuturaGUI::IDropDown::IDropDown(std::string_view name, Projection* projecti
     setDropDownBorderColors();
     _dropDownItemHighlight->SetColors(_highLightColor);
     _dropDowns.push_back(this);
+}
+
+RetroFuturaGUI::Background& RetroFuturaGUI::IDropDown::GetBackground()
+{
+    return _background;
+}
+
+const RetroFuturaGUI::Background& RetroFuturaGUI::IDropDown::GetBackground() const
+{
+    return _background;
+}
+
+RetroFuturaGUI::Border& RetroFuturaGUI::IDropDown::GetBorder()
+{
+    return _border;
+}
+
+const RetroFuturaGUI::Border& RetroFuturaGUI::IDropDown::GetBorder() const
+{
+    return _border;
 }
 
 RetroFuturaGUI::IDropDown::~IDropDown()

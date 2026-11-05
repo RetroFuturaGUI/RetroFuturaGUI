@@ -3,8 +3,8 @@
 #include "Label.hpp"
 #include "Image.hpp"
 #include "Lasagna.hpp"
-#include "IBackground.hpp"
-#include "IBorder.hpp"
+#include "Background.hpp"
+#include "Border.hpp"
 #include "IHierarchyNode.hpp"
 #include "IPointerFilter.hpp"
 #include "IPopup.hpp"
@@ -14,6 +14,7 @@
 #include <algorithm>
 #include <list>
 #include <memory>
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -35,7 +36,7 @@ namespace RetroFuturaGUI
         }
     };
 
-    class Window final : public IBackground, public IBorder, public IHierarchyNode, public IPointerFilter
+    class Window final : public IHierarchyNode, public IPointerFilter
     {
     public:
         /// @brief Creates a native GLFW window with the given title and size.
@@ -133,8 +134,17 @@ namespace RetroFuturaGUI
         void Disconnect_OnFilesDropped(const typename Signal<std::vector<std::string>, glm::vec2>::Slot& slot);
 
     //Layout and drawing
-        /// @brief Loads an image and applies it as the window's glass-effect background texture.
-        void SetBackgroundImage(std::string_view imagePath) override;
+        /// @brief Returns the window's background
+        Background& GetBackground();
+
+        /// @brief Returns the window's background
+        const Background& GetBackground() const;
+
+        /// @brief Returns the window's border
+        Border& GetBorder();
+
+        /// @brief Returns the window's border
+        const Border& GetBorder() const;
 
         /// @brief Returns the OpenGL texture ID of the background image, if one is set.
         i32 GetBackgroundImageId() const;
@@ -577,8 +587,10 @@ namespace RetroFuturaGUI
             _windowTitle { "RetroFuturaGUI Window" };
         WindowRole _role { WindowRole::Normal };
         std::unique_ptr<Projection> _projection;
-        bool _showAfterDraw { false }; //a popup's window that just opened, or a window that just left a tab, and shows once it has drawn
+        std::optional<Background> _background {};
+        std::optional<Border> _border {};
         bool
+            _showAfterDraw { false }, //a popup's window that just opened, or a window that just left a tab, and shows once it has drawn
             _isHidden { true }, //wasn't drawn last frame, or the system doesn't show it: draws without transitions
             _isDrawnSinceUpdate { false };
         TransitionValue<f32> _opacity {}; //the native window's, for a popup's or the docking preview's fades

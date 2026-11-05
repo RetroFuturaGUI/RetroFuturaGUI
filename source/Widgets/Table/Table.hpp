@@ -1,6 +1,6 @@
 #pragma once
-#include "IBackground.hpp"
-#include "IBorder.hpp"
+#include "Background.hpp"
+#include "Border.hpp"
 #include "IClickable.hpp"
 #include "ITableWidget.hpp"
 #include "IWidget.hpp"
@@ -27,7 +27,7 @@
 
 namespace RetroFuturaGUI
 {
-    class Table final : public IWidget, public IClickable, public IBackground, public IBorder, public ITextEditVisuals
+    class Table final : public IWidget, public IClickable, public ITextEditVisuals
     {
     public:
         enum class TableOrientation : u32
@@ -87,7 +87,6 @@ namespace RetroFuturaGUI
         Table(Table&&) = delete;
         auto operator =(const Table&) = delete;
         auto operator =(Table&&) = delete;
-        void SetBackgroundColors(std::span<const glm::vec4> colors, const ColorState state) = delete;
         void SetTrackBackgroundColors(std::span<const glm::vec4> colors, const ColorState state, const uSize nthIndex);
         void SetTrackBorderColors(std::span<const glm::vec4> colors, const ColorState state, const uSize nthIndex);
         void SetCheckBoxBackgroundColors(std::span<const glm::vec4> colors, const ColorState state);
@@ -435,6 +434,18 @@ namespace RetroFuturaGUI
         /// @param emitSignal Whether OnScrolled fires when it scrolled.
         void ScrollRowIntoView(const uSize row, const bool emitSignal);
 
+        /// @brief Returns the table's background
+        Background& GetBackground();
+
+        /// @brief Returns the table's background
+        const Background& GetBackground() const;
+
+        /// @brief Returns the table's border
+        Border& GetBorder();
+
+        /// @brief Returns the table's border
+        const Border& GetBorder() const;
+
     protected:
         void applySize(const glm::vec3& size) override;
 
@@ -700,6 +711,8 @@ namespace RetroFuturaGUI
         };
 
     //Elements
+        Background _background { &_projection };
+        Border _border { &_projection };
         std::vector<BodyCell> _cells {}; //row after row, as many per row as there are columns
         std::vector<ShownText> _shownTexts {}; //the pooled texts drawing cells, about as many as fit in the view
         std::vector<std::unique_ptr<TableText>> _freeTexts {}; //the pool's texts not drawing a cell right now

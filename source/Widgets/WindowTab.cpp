@@ -11,20 +11,13 @@ RetroFuturaGUI::WindowTab::WindowTab(std::string_view name, Projection* projecti
     : IWidget(name, projection, parentWidget, parentWidgetTypeID, parentWindow)
 {
     _widgetTypeID = WidgetTypeID::WindowTab;
-    _background = std::make_unique<Plane>(projection);
-    _border = std::make_unique<Frame>(projection);
     _fieldBackground = std::make_unique<Plane>(projection);
     _fieldBorder = std::make_unique<Frame>(projection);
     _closeBackground = std::make_unique<Plane>(projection);
     _closeIcon = ResourceManager::CreateSvgTexture(getCloseIconPath(), projection, glm::i32vec2(32));
     _previewTitle = std::make_unique<Text>(projection);
-    useTransitions({ _background.get(), _border.get() }); //the field elements draw once per field, in its colors, so they switch at once
-
-    if(!_background)
-        return;
-
-    if(!_border)
-        return;
+    useTransitions({ }); //the field elements draw once per field, in its colors, so they switch at once
+    _border.SetTransitionSettings(&_transitionSettings);
 
     if(!_fieldBackground)
         return;
@@ -35,14 +28,10 @@ RetroFuturaGUI::WindowTab::WindowTab(std::string_view name, Projection* projecti
     if(!_closeBackground)
         return;
 
-
-    _border->SetBorderWidth(0.0f); //no frame until one is asked for, since a Frame starts with a 5 px border
-
-
-    SetBackgroundColors(std::array { glm::vec4(0.055f, 0.055f, 0.075f, 1.0f) }, ColorState::Enabled);
-    SetBackgroundColors(std::array { glm::vec4(0.055f, 0.055f, 0.075f, 1.0f) }, ColorState::Disabled);
-    setBackgroundColors();
-    setBorderColors();
+    _border.SetWidth(0.0f); //no frame until one is asked for, since a Frame starts with a 5 px border
+    _background.SetColors(std::array { glm::vec4(0.055f, 0.055f, 0.075f, 1.0f) }, ColorState::Enabled);
+    _background.SetColors(std::array { glm::vec4(0.055f, 0.055f, 0.075f, 1.0f) }, ColorState::Disabled);
+    //_border.SetColors(std::span<const glm::vec4> colors, const ColorState state)
     applyTitleFont(_previewTitle.get());
     applyCloseIconColors();
 
@@ -83,8 +72,8 @@ void RetroFuturaGUI::WindowTab::Draw()
 {
     syncTitles(); //again, since a widget after this WindowTab may have renamed a window
     syncFieldRects(); //again, since the pointer may have moved, closed or added a field since
-    drawBackground();
-    drawBorder();
+    _background.Draw();
+    _border.Draw();
     drawFields();
     drawDropPreview();
     drawSelectedWindow();
@@ -92,30 +81,17 @@ void RetroFuturaGUI::WindowTab::Draw()
 
 void RetroFuturaGUI::WindowTab::applyPosition(const glm::vec3& position)
 {
-    if(!_background)
-        return;
-
-    if(!_border)
-        return;
-
     IWidget::applyPosition(position);
-
-    _background->SetPosition(position);
-    _border->SetPosition(position + glm::vec3(0.0f, 0.0f, _zStep * 8.0f)); //over the fields
+    _background.SetPosition(position);
+    _border.SetPosition(position + glm::vec3(0.0f, 0.0f, _zStep * 8.0f)); //over the fields
 }
 
 void RetroFuturaGUI::WindowTab::applySize(const glm::vec3& size)
 {
-    if(!_background)
-        return;
-
-    if(!_border)
-        return;
-
     IWidget::applySize(size);
 
-    _background->SetSize(glm::vec2(size));
-    _border->SetSize(glm::vec2(size));
+    _background.SetSize(glm::vec2(size));
+    _border.SetSize(glm::vec2(size));
 }
 
 bool RetroFuturaGUI::WindowTab::AddWindow(Window* window)
@@ -377,8 +353,8 @@ void RetroFuturaGUI::WindowTab::applyCloseIconColors()
 
 void RetroFuturaGUI::WindowTab::SetCornerRadii(const glm::vec4& radii)
 {
-    setBackgroundCornerRadii(radii);
-    setBorderCornerRadii(radii);
+    _background.SetCornerRadii(radii);
+    _border.SetCornerRadii(radii);
 }
 
 void RetroFuturaGUI::WindowTab::SetContentCornerRadii(const glm::vec4& radii)
@@ -1158,4 +1134,14 @@ std::string RetroFuturaGUI::WindowTab::getCloseIconPath()
     //Not path.string(): on Windows that goes through the ANSI code page and turns names outside it into '?'
     const std::u8string text { path.u8string() };
     return std::string(text.begin(), text.end());
+}
+
+RetroFuturaGUI::Background& RetroFuturaGUI::WindowTab::GetBackground()
+{
+    return _background;
+}
+
+const RetroFuturaGUI::Background& RetroFuturaGUI::WindowTab::GetBackground() const
+{
+    return _background;
 }

@@ -13,17 +13,8 @@ RetroFuturaGUI::ExtendedComboBox::ExtendedComboBox(std::string_view name, Projec
     : IDropDown(name, projection, parentWidget, parentWidgetTypeID, parentWindow)
 {
     _widgetTypeID = WidgetTypeID::ExtendedComboBox;
-    _background = std::make_unique<Plane>(projection);
-    _border = std::make_unique<Frame>(projection);
     _previewText = std::make_shared<Text>(projection);
-    useTransitions({ _background.get(), _border.get(), _previewText.get() });
-
-    if(!_background)
-        return;
-
-    if(!_border)
-        return;
-
+    useTransitions({ _previewText.get() });
 
     setColors(ColorState::Enabled);
 }
@@ -37,19 +28,13 @@ void RetroFuturaGUI::ExtendedComboBox::SetDropDownPosition(const DropDownPositio
 
 void RetroFuturaGUI::ExtendedComboBox::Draw()
 {
-    if(!_background)
-        return;
-
-    if(!_border)
-        return;
-
     if(!_previewText)
         return;
 
     if(!isLabelHidden())
     {
-        drawBackground();
-        _border->Draw();
+        _background.Draw();
+        _border.Draw();
         drawDropDownArrow();
 
         //The rows are arbitrary widgets, so the closed box stands in for the selection with its own text
@@ -199,7 +184,7 @@ void RetroFuturaGUI::ExtendedComboBox::placeItemWidget(IWidget* item, const glm:
 glm::vec2 RetroFuturaGUI::ExtendedComboBox::contentSize(const f32 width) const
 {
     const f32
-        boxBorder { _border ? _border->GetBorderWidth() : 0.0f },
+        boxBorder { _border.GetWidth() },
         panelBorder { _dropDownBorder ? _dropDownBorder->GetBorderWidth() : 0.0f },
         inset { (boxBorder > panelBorder ? boxBorder : panelBorder) * 2.0f };
 
@@ -253,32 +238,20 @@ void RetroFuturaGUI::ExtendedComboBox::updatePreviewTextGeometry() const
 
 void RetroFuturaGUI::ExtendedComboBox::applySize(const glm::vec3& size)
 {
-    if(!_background)
-        return;
-
-    if(!_border)
-        return;
-
     IWidget::applySize(size);
 
-    _background->SetSize(size);
-    _border->SetSize(size);
+    _background.SetSize(size);
+    _border.SetSize(size);
 
     updateDropDownGeometry();
 }
 
 void RetroFuturaGUI::ExtendedComboBox::applyPosition(const glm::vec3& position)
 {
-    if(!_background)
-        return;
-
-    if(!_border)
-        return;
-
     IWidget::applyPosition(position);
 
-    _background->SetPosition(position);
-    _border->SetPosition(position + glm::vec3(0.0f, 0.0f, _zStep));
+    _background.SetPosition(position);
+    _border.SetPosition(position + glm::vec3(0.0f, 0.0f, _zStep));
 
     updateDropDownGeometry();
 }
@@ -430,11 +403,9 @@ void RetroFuturaGUI::ExtendedComboBox::selectItem(const uSize index)
 void RetroFuturaGUI::ExtendedComboBox::setColors(const ColorState state)
 {
     IDropDown::setColors(state);
-    _backgroundColorState = state;
-    _borderColorState = state;
     _previewTextColorState = state;
-    setBackgroundColors();
-    setBorderColors();
+    _background.SetColorState(state);
+    _border.SetColorState(state);
     setPreviewTextColors();
 }
 

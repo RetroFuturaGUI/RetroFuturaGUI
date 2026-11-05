@@ -2,16 +2,17 @@
 #include "IWidget.hpp"
 #include "IClickable.hpp"
 #include "IncludeHelper.hpp"
+#include "Parts/Background.hpp"
 #include "Plane.hpp"
-#include "IBackground.hpp"
-#include "IBorder.hpp"
+#include "Background.hpp"
+#include "Border.hpp"
 #include "SvgTexture.hpp"
 #include <memory>
 
 namespace RetroFuturaGUI
 {
     /// @brief A widget that visually represents a boolean
-    class CheckBox final : public IWidget, public IClickable, public IBackground, public IBorder
+    class CheckBox final : public IWidget, public IClickable
     {
     public:
         /// @brief Constructs a CheckBox widget under the given parent widget/window.
@@ -22,7 +23,7 @@ namespace RetroFuturaGUI
         auto operator =(const CheckBox&) = delete;
         auto operator =(CheckBox&&) = delete;
 
-        /// @brief Draws the button, including its Inherit, border and label text.
+        /// @brief Draws the CheckBox, including its inherited-value fill, border and checkmark
         void Draw() override;
 
         void SetValue(const bool value, const bool emitSignal);
@@ -55,11 +56,23 @@ namespace RetroFuturaGUI
         /// @param a float extressing the distance in pixels
         void SetInnerPadding(const f32 pixels);
 
+        /// @brief Returns the CheckBox's background
+        Background& GetBackground();
+
+        /// @brief Returns the CheckBox's background
+        const Background& GetBackground() const;
+
+        /// @brief Returns the CheckBox's border
+        Border& GetBorder();
+
+        /// @brief Returns the CheckBox's border
+        const Border& GetBorder() const;
+
     protected:
-        /// @brief Sets the size of the button.
+        /// @brief Sets the size of the CheckBox.
         void applySize(const glm::vec3& size) override;
 
-        /// @brief Sets the world position of the button.
+        /// @brief Sets the world position of the CheckBox.
         void applyPosition(const glm::vec3& position) override;
 
     private:
@@ -70,6 +83,8 @@ namespace RetroFuturaGUI
 
         std::unique_ptr<Plane> _inheritFill { nullptr };
         std::unique_ptr<SvgTexture> _checkmark { nullptr }; //its own, so its colors and place are this box's alone
+        Background _background { &_projection };
+        Border _border { &_projection };
         bool* _inheritValue { nullptr };
         bool
             _useInheritValue { false },

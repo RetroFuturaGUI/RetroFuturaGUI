@@ -5,17 +5,26 @@
 #include "Tooltip.hpp"
 #include <algorithm>
 
-void RetroFuturaGUI::Window::SetBackgroundImage(std::string_view imagePath)
-{
-    IBackground::SetBackgroundImage(imagePath);
-}
-
 i32 RetroFuturaGUI::Window::GetBackgroundImageId() const
 {
-    if(!_backgroundImage)
+    if(!_background)
         return -1;
 
-    return _backgroundImage->GetID();
+    const u32 textureID { _background->GetImageTextureID() };
+    if(0 == textureID)
+        return -1;
+
+    return static_cast<i32>(textureID);
+}
+
+RetroFuturaGUI::Background& RetroFuturaGUI::Window::GetBackground()
+{
+    return *_background;
+}
+
+const RetroFuturaGUI::Background& RetroFuturaGUI::Window::GetBackground() const
+{
+    return *_background;
 }
 
 void RetroFuturaGUI::Window::SetLasagna(Lasagna* lasagna)
@@ -226,7 +235,7 @@ bool RetroFuturaGUI::Window::updateSize()
 void RetroFuturaGUI::Window::drawContent()
 {
     applyCornerRadii();
-    drawBackground();
+    _background->Draw();
     drawLasagna();
 
     for(Scene* scene : _scenes)
@@ -254,12 +263,12 @@ void RetroFuturaGUI::Window::drawFrame()
         return; //it would cut the selected field off from the content
 
     //Width 0, the default, means no frame
-    if(0.0f >= _border->GetBorderWidth())
+    if(0.0f >= _border->GetWidth())
         return;
 
     //A fresh depth buffer, so the frame lies over every scene
     glClear(GL_DEPTH_BUFFER_BIT);
-    drawBorder();
+    _border->Draw();
 }
 
 void RetroFuturaGUI::Window::drawLasagna()
@@ -286,8 +295,12 @@ void RetroFuturaGUI::Window::applyCornerRadii()
         return;
 
     _appliedCornerRadii = radii;
-    setBackgroundCornerRadii(radii);
-    setBorderCornerRadii(radii);
+
+    if(_background)
+        _background->SetCornerRadii(radii);
+
+    if(_border)
+       _border->SetCornerRadii(radii);
 }
 
 bool RetroFuturaGUI::Window::isSceneShown(const Scene* scene) const
@@ -302,4 +315,14 @@ bool RetroFuturaGUI::Window::isSceneShown(const Scene* scene) const
         return true;
 
     return scene->IsShownInTab();
+}
+
+RetroFuturaGUI::Border& RetroFuturaGUI::Window::GetBorder()
+{
+    return *_border;
+}
+
+const RetroFuturaGUI::Border& RetroFuturaGUI::Window::GetBorder() const
+{
+    return *_border;
 }

@@ -1,0 +1,410 @@
+#include "Background.hpp"
+#include "IWidgetDecoration.hpp"
+#include "ResourceManager.hpp"
+#include <algorithm>
+#include <cctype>
+#include <memory>
+
+RetroFuturaGUI::Background::Background(Projection* projection)
+    : IWidgetDecoration(projection)
+{
+    _backgroundPlane = std::make_unique<Plane>(_projection);
+    setColors();
+}
+
+void RetroFuturaGUI::Background::Draw()
+{
+    if(!_backgroundPlane)
+        return;
+
+    _backgroundPlane->Draw();
+    drawSvg();
+}
+
+void RetroFuturaGUI::Background::SetCornerRadii(const glm::vec4& radii)
+{
+    if(!_backgroundPlane)
+        return;
+
+    _backgroundPlane->SetCornerRadii(radii);
+}
+
+void RetroFuturaGUI::Background::SetTransitionSettings(const TransitionSettings* settings)
+{
+    if(!_backgroundPlane)
+        return;
+
+    _backgroundPlane->SetTransitionSettings(settings);
+}
+
+void RetroFuturaGUI::Background::SetSize(const glm::vec2& size)
+{
+    if(!_backgroundPlane)
+        return;
+
+    _backgroundPlane->SetSize(size);
+}
+
+void RetroFuturaGUI::Background::SetPosition(const glm::vec3& position)
+{
+    if(!_backgroundPlane)
+        return;
+
+    _backgroundPlane->SetPosition(position);
+}
+
+void RetroFuturaGUI::Background::SetRotation(const glm::vec3& rotation)
+{
+    if(!_backgroundPlane)
+        return;
+
+    _backgroundPlane->SetRotation(rotation);
+}
+
+glm::vec2 RetroFuturaGUI::Background::GetSize()
+{
+    if(!_backgroundPlane)
+        return glm::vec2(0.0f);
+
+    return _backgroundPlane->GetSize();
+}
+
+glm::vec2 RetroFuturaGUI::Background::GetSize() const
+{
+    if(!_backgroundPlane)
+        return glm::vec2(0.0f);
+
+    return _backgroundPlane->GetSize();
+}
+
+glm::vec3 RetroFuturaGUI::Background::GetPosition()
+{
+    if(!_backgroundPlane)
+        return glm::vec3(0.0f);
+
+    return _backgroundPlane->GetPosition();
+}
+
+glm::vec3 RetroFuturaGUI::Background::GetPosition() const
+{
+    if(!_backgroundPlane)
+        return glm::vec3(0.0f);
+
+    return _backgroundPlane->GetPosition();
+}
+
+glm::vec3 RetroFuturaGUI::Background::GetRotation()
+{
+    if(!_backgroundPlane)
+        return glm::vec3(0.0f);
+
+    return _backgroundPlane->GetRotation();
+}
+
+glm::vec3 RetroFuturaGUI::Background::GetRotation() const
+{
+    if(!_backgroundPlane)
+        return glm::vec3(0.0f);
+
+    return _backgroundPlane->GetRotation();
+}
+
+void RetroFuturaGUI::Background::SetGradientOffset(const f32 gradientOffset)
+{
+    if(!_backgroundPlane)
+        return;
+
+    _backgroundPlane->SetGradientOffset(gradientOffset);
+}
+
+void RetroFuturaGUI::Background::SetGradientAnimationSpeed(const f32 animationSpeed)
+{
+    if(!_backgroundPlane)
+        return;
+
+    _backgroundPlane->SetGradientAnimationSpeed(animationSpeed);
+}
+
+void RetroFuturaGUI::Background::SetGradientDegree(const f32 degree)
+{
+    if(!_backgroundPlane)
+        return;
+
+    _backgroundPlane->SetGradientDegree(degree);
+}
+
+void RetroFuturaGUI::Background::SetGradientRotationSpeed(const f32 rotationSpeed)
+{    
+    if(!_backgroundPlane)
+        return;
+
+    _backgroundPlane->SetGradientRotationSpeed(rotationSpeed);
+}
+
+const std::vector<glm::vec4>& RetroFuturaGUI::Background::GetColors(const ColorState state) const
+{
+    switch(state)
+    {
+        case ColorState::Clicked:
+            return _colorsClicked;
+        case ColorState::Disabled:
+            return _colorsDisabled;
+        case ColorState::Hover:
+            return _colorsHover;
+        default: // Enabled
+            return _colorsEnabled;
+    }
+}
+
+void RetroFuturaGUI::Background::SetFillType(const FillType fillType)
+{
+    _fillType = fillType;
+
+    if(!_backgroundPlane)
+        return;
+
+    _backgroundPlane->SetFillType(fillType);
+}
+
+void RetroFuturaGUI::Background::SetGaps(const BackgroundGap& gap)
+{
+    if(!_backgroundPlane)
+        return;
+
+    _backgroundPlane->SetBackgroundGaps(gap);
+}
+
+void RetroFuturaGUI::Background::SetWindowBackgroundImageTextureID(const u32 textureID)
+{
+    if(!_backgroundPlane)
+        return;
+
+    _backgroundPlane->SetWindowBackgroundImageTextureID(textureID);
+}
+
+void RetroFuturaGUI::Background::SetPrimaryRasterColor(const glm::vec4& color)
+{
+    if(!_backgroundPlane)
+        return;
+
+    _backgroundPlane->SetPrimaryRasterColor(color);
+}
+
+void RetroFuturaGUI::Background::SetRasterSpacing(const f32 spacing)
+{
+    if(!_backgroundPlane)
+        return;
+
+    _backgroundPlane->SetRasterSpacing(spacing);
+}
+
+void RetroFuturaGUI::Background::SetRasterDegree(const f32 degree)
+{
+    if(!_backgroundPlane)
+        return;
+
+    _backgroundPlane->SetRasterDegree(degree);
+}
+
+void RetroFuturaGUI::Background::SetPrimaryRasterWidthTransfer(std::span<f32> widthTransfer)
+{
+    _backgroundPrimaryRasterWidthTransfer.assign(widthTransfer.begin(), widthTransfer.end());
+
+    if(!_backgroundPlane)
+        return;
+
+    _backgroundPlane->SetPrimaryRasterWidthTransfer(_backgroundPrimaryRasterWidthTransfer);
+}
+
+void RetroFuturaGUI::Background::SetDotTransparencyTransfer(const f32 transparencyTransfer)
+{
+    if(!_backgroundPlane)
+        return;
+
+    _backgroundPlane->SetDotTransparencyTransfer(transparencyTransfer);
+}
+
+void RetroFuturaGUI::Background::SetRasterAnimationSpeed(const f32 animationSpeed)
+{
+    if(!_backgroundPlane)
+        return;
+
+    _backgroundPlane->SetRasterAnimationSpeed(animationSpeed);
+}
+
+void RetroFuturaGUI::Background::SetFogAlpha(const f32 alpha)
+{
+    if(!_backgroundPlane)
+        return;
+
+    _backgroundPlane->SetFogAlpha(alpha);
+}
+
+void RetroFuturaGUI::Background::SetFogSpeed(const f32 speed)
+{
+    if(!_backgroundPlane)
+        return;
+
+    _backgroundPlane->SetFogSpeed(speed);
+}
+
+void RetroFuturaGUI::Background::SetFogDensity(std::span<f32> density)
+{
+    _backgroundFogDensity.assign(density.begin(), density.end());
+
+    if(!_backgroundPlane)
+        return;
+
+    _backgroundPlane->SetFogDensity(_backgroundFogDensity);
+}
+
+void RetroFuturaGUI::Background::SetFogClearing(const f32 clearing)
+{
+    if(!_backgroundPlane)
+        return;
+
+    _backgroundPlane->SetFogClearing(clearing);
+}
+
+void RetroFuturaGUI::Background::SetImage(std::string_view imagePath)
+{
+    if(!_backgroundPlane)
+        return;
+
+    if(isSvgPath(imagePath))
+    {
+        _backgroundImage = nullptr;
+        _backgroundPlane->SetBackgroundImageTextureID(0);
+        _backgroundSvg = ResourceManager::CreateSvgTexture(imagePath, &_backgroundPlane->GetProjection());
+        return;
+    }
+
+    _backgroundSvg.reset();
+    _backgroundImage = ResourceManager::GetTexture(imagePath);
+
+    if(!_backgroundImage)
+        return;
+
+    _backgroundPlane->SetBackgroundImageTextureID(_backgroundImage->GetID());
+}
+
+u32 RetroFuturaGUI::Background::GetImageTextureID() const
+{
+    if(!_backgroundImage)
+        return 0;
+
+    return _backgroundImage->GetID();
+}
+
+void RetroFuturaGUI::Background::SetImagePadding(const f32 padding)
+{
+    _backgroundImagePadding = padding;
+
+    if(!_backgroundPlane)
+        return;
+
+    _backgroundPlane->SetBackgroundImagePadding(padding);
+}
+
+void RetroFuturaGUI::Background::SetImageFit(const ImageFit fit)
+{
+    if(!_backgroundPlane)
+        return;
+
+    _backgroundPlane->SetBackgroundImageFit(fit);
+}
+
+void RetroFuturaGUI::Background::SetMaskTextureID(const u32 textureID)
+{
+    if(!_backgroundPlane)
+        return;
+
+    _backgroundPlane->SetMaskTextureID(textureID);
+}
+
+void RetroFuturaGUI::Background::SetMaskMode(const MaskMode mode)
+{
+    if(!_backgroundPlane)
+        return;
+
+    _backgroundPlane->SetMaskMode(mode);
+}
+
+void RetroFuturaGUI::Background::SetMaskFit(const ImageFit fit)
+{
+    if(!_backgroundPlane)
+        return;
+
+    _backgroundPlane->SetMaskFit(fit);
+}
+
+void RetroFuturaGUI::Background::SetImagePathFill(std::string_view name, const SvgPathFill& fill)
+{
+    if(!_backgroundSvg)
+        return;
+
+    _backgroundSvg->SetPathFill(name, fill);
+}
+
+void RetroFuturaGUI::Background::ClearImagePathFill(std::string_view name)
+{
+    if(!_backgroundSvg)
+        return;
+
+    _backgroundSvg->ClearPathFill(name);
+}
+
+void RetroFuturaGUI::Background::setColors()
+{
+    if(!_backgroundPlane)
+        return;
+
+    switch(_colorState)
+    {
+        case ColorState::Disabled:
+            _backgroundPlane->SetColors(_colorsDisabled);
+        break;
+        case ColorState::Clicked:
+            _backgroundPlane->SetColors(_colorsClicked);
+        break;
+        case ColorState::Hover:
+            _backgroundPlane->SetColors(_colorsHover);
+        break;
+        case ColorState::Selected:
+            _backgroundPlane->SetColors(_colorsSelected);
+        break;
+        default: //Enabled
+            _backgroundPlane->SetColors(_colorsEnabled);
+    }
+}
+
+void RetroFuturaGUI::Background::drawSvg()
+{
+    if(!_backgroundPlane)
+        return;
+
+    if(!_backgroundSvg)
+        return;
+
+    //Widgets place _backgroundPlane themselves, so the SVG follows it here. SvgTexture rebuilds a matrix only for a value that changed
+    const glm::vec2 size { glm::max(_backgroundPlane->GetSize() - glm::vec2(_backgroundImagePadding * 2.0f), glm::vec2(0.0f)) };
+    _backgroundSvg->SetSize(size);
+    _backgroundSvg->SetPosition(_backgroundPlane->GetPosition() + glm::vec3(0.0f, 0.0f, 0.005f));
+    _backgroundSvg->SetRotation(_backgroundPlane->GetRotation());
+    _backgroundSvg->Draw();
+}
+
+bool RetroFuturaGUI::Background::isSvgPath(std::string_view path)
+{
+    constexpr std::string_view extension { ".svg" };
+
+    if(path.size() < extension.size())
+        return false;
+
+    const std::string_view end { path.substr(path.size() - extension.size()) };
+
+    return std::equal(end.begin(), end.end(), extension.begin(), [](const char left, const char right)
+        {
+            return std::tolower(static_cast<unsigned char>(left)) == right;
+        });
+}

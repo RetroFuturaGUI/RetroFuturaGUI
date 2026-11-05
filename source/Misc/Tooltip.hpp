@@ -1,9 +1,10 @@
 #pragma once
-#include "IBackground.hpp"
-#include "IBorder.hpp"
+#include "Background.hpp"
+#include "Border.hpp"
 #include "ITextProperties.hpp"
 #include "Projection.hpp"
 #include <chrono>
+#include <memory>
 #include <string>
 #include <string_view>
 #include <unordered_map>
@@ -12,13 +13,11 @@ namespace RetroFuturaGUI
 {
     class IWidget;
 
-    /// @brief Text in a box that shows above the mouse cursor once it has rested on a widget for a while. The widget owns it
-    ///        (IWidget::SetTooltipText) and updates it in its Interact, and Window::Draw draws the one shown in that window at
-    ///        the end of the frame, over every scene.
-    class Tooltip final : public IBackground, public IBorder, public ITextProperties
+    /// @brief Text in a box that shows above the mouse cursor once it has rested on a widget for a while
+    class Tooltip final : public ITextProperties
     {
     public:
-        /// @brief Constructs a Tooltip for the given widget.
+        /// @brief Constructs a Tooltip for the given widget
         Tooltip(Projection* projection, IWidget* widget);
         Tooltip() = delete;
         Tooltip(const Tooltip&) = delete;
@@ -36,7 +35,6 @@ namespace RetroFuturaGUI
         /// @brief Sets the font of every tooltip, those created before this call included. A tooltip given its own font with SetFontFamily keeps it.
         static void SetDefaultFontFamily(std::string_view fontFamily, const f32 fontSize, const FontSizeUnit sizeUnit, const PlatformBridge::Fonts::Slant slant, const PlatformBridge::Fonts::Weight fontWeight);
 
-        void SetBackgroundColors(std::span<const glm::vec4> colors);
         void SetBorderColors(std::span<const glm::vec4> colors);
         void SetCornerRadii(const glm::vec4& radii);
         void SetText(std::string_view text, bool emitSignal) override;
@@ -45,6 +43,18 @@ namespace RetroFuturaGUI
 
         /// @brief Sets the border width. The box grows with it, since the border draws inside the box.
         void SetBorderWidth(const f32 borderWidth);
+
+        /// @brief Returns the button's background
+        Background& GetBackground();
+        
+        /// @brief Returns the button's background
+        const Background& GetBackground() const;
+
+        /// @brief Returns the button's border
+        Border& GetBorder();
+        
+        /// @brief Returns the button's border
+        const Border& GetBorder() const;
 
     private:
         void draw();
@@ -58,8 +68,10 @@ namespace RetroFuturaGUI
         /// @brief Has the box and the text follow the widget's transitions.
         void useWidgetTransitions();
 
-        Projection* _projection { nullptr };
+        Projection& _projection;
         IWidget* _widget { nullptr };
+        Background _background { &_projection };
+        Border _border { &_projection };
         std::vector<glm::vec4>
             _backgroundColors {},
             _borderColors {};

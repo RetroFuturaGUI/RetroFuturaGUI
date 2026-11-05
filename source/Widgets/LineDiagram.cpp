@@ -35,17 +35,9 @@ RetroFuturaGUI::LineDiagram::LineDiagram(std::string_view name, Projection* proj
 
 void RetroFuturaGUI::LineDiagram::Draw()
 {
-    if(!_background)
-        return;
-
-    if(!_border)
-        return;
-
-    updatePoints(); //again, since the Update loop may have handed over new data after Interact, like a playback its frequency bands
-
-    drawBackground();
-    _border->Draw();
-
+    updatePoints(); //again, since the Update loop may have handed over new data after Interact (just like a playback its frequency bands)
+    _background.Draw();
+    _border.Draw();
     drawGraph();
     drawLineLabels();
     drawHoverPointer();
@@ -132,12 +124,12 @@ void RetroFuturaGUI::LineDiagram::alignElementsToTrack()
 {
     growLinesTo(_dataCount.size());
 
-    const Plane* track { getTrack() };
+    const Background* track { getTrack() };
 
     if(!track)
         return;
 
-    const f32 inset { (_border ? _border->GetBorderWidth() * 2.0f : 0.0f) + _lineThickness + _hoverThicknessIncrease };
+    const f32 inset { ( _border.GetWidth() * 2.0f) + _lineThickness + _hoverThicknessIncrease };
     _plotSize = (glm::max)(track->GetSize() - glm::vec2(inset), glm::vec2(0.0f)); // parenthesized: glfw3native.h brings in windows.h and its max macro
 
     for(uSize lineIndex = 0; lineIndex < _lines.size(); ++lineIndex)
@@ -163,7 +155,7 @@ void RetroFuturaGUI::LineDiagram::growLinesTo(const uSize lineCount)
     _points.resize(_lines.size());
 }
 
-void RetroFuturaGUI::LineDiagram::alignLine(const uSize lineIndex, const Plane& track)
+void RetroFuturaGUI::LineDiagram::alignLine(const uSize lineIndex, const Background& track)
 {
     if(lineIndex >= _lines.size())
         return;
@@ -249,7 +241,7 @@ void RetroFuturaGUI::LineDiagram::drawLineLabels()
     if(!_useGraph || !_showLineLabels)
         return;
 
-    const Plane* track { getTrack() };
+    const Background* track { getTrack() };
 
     if(!track)
         return;
@@ -265,7 +257,7 @@ void RetroFuturaGUI::LineDiagram::drawLineLabels()
     glDepthFunc(static_cast<GLenum>(depthFunction));
 }
 
-void RetroFuturaGUI::LineDiagram::drawLineLabel(const uSize lineIndex, const Plane& track)
+void RetroFuturaGUI::LineDiagram::drawLineLabel(const uSize lineIndex, const Background& track)
 {
     if(lineIndex >= _labels.size() || lineIndex >= _points.size())
         return;
@@ -299,7 +291,7 @@ void RetroFuturaGUI::LineDiagram::drawHoverPointer()
     if(!_lineHovered)
         return;
 
-    const Plane* track { getTrack() };
+    const Background* track { getTrack() };
 
     if(!track)
         return;
@@ -312,7 +304,7 @@ void RetroFuturaGUI::LineDiagram::drawHoverPointer()
     drawHoverText(pointerPosition, *track);
 }
 
-void RetroFuturaGUI::LineDiagram::drawHoverMarker(const glm::vec2& pointerPosition, const Plane& track)
+void RetroFuturaGUI::LineDiagram::drawHoverMarker(const glm::vec2& pointerPosition, const Background& track)
 {
     if(!_useIndicator)
         return;
@@ -331,7 +323,7 @@ void RetroFuturaGUI::LineDiagram::drawHoverMarker(const glm::vec2& pointerPositi
     drawIndicator();
 }
 
-void RetroFuturaGUI::LineDiagram::drawHoverText(const glm::vec2& pointerPosition, const Plane& track)
+void RetroFuturaGUI::LineDiagram::drawHoverText(const glm::vec2& pointerPosition, const Background& track)
 {
     if(!_showHoverLineLabel && !_showHoverValue)
         return;
@@ -488,7 +480,7 @@ bool RetroFuturaGUI::LineDiagram::findHoveredLine(const glm::vec2& point, uSize&
 
 bool RetroFuturaGUI::LineDiagram::isPointOnLine(const glm::vec2& point, const uSize lineIndex, const f32 thickness) const
 {
-    const Plane* track { getTrack() };
+    const Background* track { getTrack() };
 
     if(!track)
         return false;
@@ -523,7 +515,7 @@ bool RetroFuturaGUI::LineDiagram::isPointOnLine(const glm::vec2& point, const uS
 
 uSize RetroFuturaGUI::LineDiagram::nearestPointIndex(const glm::vec2& point, const uSize lineIndex) const
 {
-    const Plane* track { getTrack() };
+    const Background* track { getTrack() };
 
     if(!track)
         return 0;
@@ -542,7 +534,7 @@ uSize RetroFuturaGUI::LineDiagram::nearestPointIndex(const glm::vec2& point, con
     return std::min(static_cast<uSize>(std::max(nearest, 0.0f)), _points[lineIndex].size() - 1);
 }
 
-glm::vec2 RetroFuturaGUI::LineDiagram::toTrackSpace(const glm::vec2& point, const Plane& track)
+glm::vec2 RetroFuturaGUI::LineDiagram::toTrackSpace(const glm::vec2& point, const Background& track)
 {
     const glm::vec2 offset { point - glm::vec2(track.GetPosition()) };
     const f32 radians { glm::radians(-track.GetRotation().z) };
@@ -554,7 +546,7 @@ glm::vec2 RetroFuturaGUI::LineDiagram::toTrackSpace(const glm::vec2& point, cons
     );
 }
 
-glm::vec3 RetroFuturaGUI::LineDiagram::toWorldSpace(const glm::vec2& trackPoint, const Plane& track, const f32 zOffset)
+glm::vec3 RetroFuturaGUI::LineDiagram::toWorldSpace(const glm::vec2& trackPoint, const Background& track, const f32 zOffset)
 {
     const f32 radians { glm::radians(track.GetRotation().z) };
     const glm::vec2 rotated

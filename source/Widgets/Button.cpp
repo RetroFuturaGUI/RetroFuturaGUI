@@ -1,4 +1,5 @@
 #include "Button.hpp"
+#include "Parts/Border.hpp"
 #include "PlatformBridge.hpp"
 
 #if defined(TARGET_PLATFORM_LINUX)
@@ -12,41 +13,28 @@ RetroFuturaGUI::Button::Button(const std::string& name, Projection* projection, 
    : IWidget(name, projection, parentWidget, parentWidgetTypeID, parentWindow)
 {
     _widgetTypeID = WidgetTypeID::Button;
-    _background = std::make_unique<Plane>(projection);
-    _border = std::make_unique<Frame>(projection);
     _text = std::make_unique<Text>(projection);
-    useTransitions({ _background.get(), _border.get(), _text.get() });
-
-    if(!_background)
-        return;
-
-    if(!_border)
-        return;
-
+    useTransitions({ _text.get() });
+    _background.SetTransitionSettings(&_transitionSettings);
+    _border.SetTransitionSettings(&_transitionSettings);
 }
 
 void RetroFuturaGUI::Button::Draw()
 {
-    drawBackground();
-    drawBorder();
+    _background.Draw();
+    _border.Draw();
     drawText();
 }
 
 void RetroFuturaGUI::Button::applySize(const glm::vec3& size)
 {
-    if(!_background)
-        return;
-
-    if(!_border)
-        return;
-
     if(!_text)
         return;
 
     IWidget::applySize(size);
 
-    _background->SetSize(size);
-    _border->SetSize(size);
+    _background.SetSize(size);
+    _border.SetSize(size);
 
     _text->SetParentSize(glm::vec2(size.x, size.y));
     _text->SetPosition(_position + glm::vec3(0.0f, 0.0f, 0.02f));
@@ -54,19 +42,13 @@ void RetroFuturaGUI::Button::applySize(const glm::vec3& size)
 
 void RetroFuturaGUI::Button::applyPosition(const glm::vec3& position)
 {
-    if(!_background)
-        return;
-
-    if(!_border)
-        return;
-
     if(!_text)
         return;
 
     IWidget::applyPosition(position);
 
-    _background->SetPosition(position);
-    _border->SetPosition(position + glm::vec3(0.0f, 0.0f, 0.01f));
+    _background.SetPosition(position);
+    _border.SetPosition(position + glm::vec3(0.0f, 0.0f, 0.01f));
     _text->SetPosition(position + glm::vec3(0.0f, 0.0f, 0.02f));
 }
 
@@ -141,16 +123,34 @@ void RetroFuturaGUI::Button::interact()
 
 void RetroFuturaGUI::Button::setColors(const ColorState state)
 {
-    _backgroundColorState = state;
-    _borderColorState = state;
     _textColorState = state;
-    setBackgroundColors();
-    setBorderColors();
+    _background.SetColorState(state);
+    _border.SetColorState(state);
     setTextColors();
 }
 
 void RetroFuturaGUI::Button::SetCornerRadii(const glm::vec4& radii)
 {
-    _background->SetCornerRadii(radii);
-    _border->SetCornerRadii(radii);
+    _background.SetCornerRadii(radii);
+    _border.SetCornerRadii(radii);
+}
+
+RetroFuturaGUI::Background& RetroFuturaGUI::Button::GetBackground()
+{
+    return _background;
+}
+
+const RetroFuturaGUI::Background& RetroFuturaGUI::Button::GetBackground() const
+{
+    return _background;
+}
+
+RetroFuturaGUI::Border& RetroFuturaGUI::Button::GetBorder()
+{
+    return _border;
+}
+
+const RetroFuturaGUI::Border& RetroFuturaGUI::Button::GetBorder() const
+{
+    return _border;
 }

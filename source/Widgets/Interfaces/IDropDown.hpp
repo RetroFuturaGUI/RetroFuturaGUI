@@ -1,7 +1,7 @@
 #pragma once
 #include "IWidget.hpp"
-#include "IBackground.hpp"
-#include "IBorder.hpp"
+#include "Background.hpp"
+#include "Border.hpp"
 #include "Frame.hpp"
 #include "Plane.hpp"
 #include "SvgTexture.hpp"
@@ -12,7 +12,7 @@
 
 namespace RetroFuturaGUI
 {
-    class IDropDown : public IWidget, public IClickable, public IBackground, public IBorder
+    class IDropDown : public IWidget, public IClickable
     {
     public:
         enum class DropDownPosition : u32
@@ -55,6 +55,10 @@ namespace RetroFuturaGUI
         void SetDropDownBackgroundColors(std::span<const glm::vec4> colors, const ColorState state);
         void SetDropDownBorderColors(std::span<const glm::vec4> colors, const ColorState state);
         void SetDropDownCornerRadii(const glm::vec4& radii);
+        Background& GetBackground();
+        const Background& GetBackground() const;
+        Border& GetBorder();
+        const Border& GetBorder() const;
         virtual void SetFontFamily(std::string_view fontFamily, const f32 fontSize, const FontSizeUnit sizeUnit, const PlatformBridge::Fonts::Slant slant, const PlatformBridge::Fonts::Weight fontWeight) = 0;
         f32 GetFontSize(const FontSizeUnit sizeUnit) const;
         virtual void SetTextAlignment(const TextAlignment alignment) = 0;
@@ -99,6 +103,8 @@ namespace RetroFuturaGUI
         void showDropDownLater();
 
     //Elements
+        Background _background { &_projection };
+        Border _border { &_projection };
         std::unique_ptr<Plane>
             _dropDownBackground { nullptr },
             _dropDownItemHighlight { nullptr };

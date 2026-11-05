@@ -138,7 +138,7 @@ void RetroFuturaGUI::IRangedSingleValue::alignElementsToTrack()
 
 void RetroFuturaGUI::IRangedSingleValue::setValueFromMousePosition(const glm::vec2& mousePos)
 {
-    Plane* track { getTrack() };
+    const Background* track { getTrack() };
 
     if(!track)
         return;
@@ -157,7 +157,7 @@ void RetroFuturaGUI::IRangedSingleValue::setValueFromMousePosition(const glm::ve
 
     // Must match the span setIndicatorPosition places the indicator across, or the cursor drifts from it mid-drag.
     const f32
-        borderInset { _border ? _border->GetBorderWidth() * 2.0f : 0.0f },
+        borderInset { _border.GetWidth() * 2.0f },
         trackLength { glm::max(track->GetSize().x - borderInset, 0.0f) },
         indicatorLength { _indicatorBackground->GetSize().x },
         travelRange { 0.0f < trackLength - indicatorLength ? trackLength - indicatorLength : 0.0f },

@@ -11,14 +11,8 @@ RetroFuturaGUI::Histogram::Histogram(std::string_view name, Projection* projecti
 
 void RetroFuturaGUI::Histogram::Draw()
 {
-    if(!_background)
-        return;
-
-    if(!_border)
-        return;
-
-    drawBackground();
-    _border->Draw();
+    _background.Draw();
+    _border.Draw();
 
     drawGraph();
     drawIndicator();

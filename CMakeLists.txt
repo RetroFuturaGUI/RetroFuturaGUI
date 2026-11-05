@@ -126,9 +126,11 @@ list(APPEND RetroFuturaGuiSources
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/Interfaces/ITextProperties.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/Interfaces/ITypedText.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/Interfaces/IWidget.cpp"
-    "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/Interfaces/IBackground.cpp"
-    "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/Interfaces/IBorder.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/Interfaces/IClickable.cpp"
+
+    "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/Parts/IWidgetDecoration.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/Parts/Background.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/Parts/Border.cpp"
     
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/Table/ITableTextProperties.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/Table/ITableWidget.cpp"
@@ -178,6 +180,7 @@ target_include_directories("RetroFuturaGUI" PUBLIC
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/Containers"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/Interfaces"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/Mechanisms"
+    "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/Parts"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/Table"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/Window"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/Window/Dialog"

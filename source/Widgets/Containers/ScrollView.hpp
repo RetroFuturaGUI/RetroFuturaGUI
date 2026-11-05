@@ -3,8 +3,8 @@
 #include "ColorPreview.hpp"
 #include "Environment.hpp"
 #include "Histogram.hpp"
-#include "IBackground.hpp"
-#include "IBorder.hpp"
+#include "Background.hpp"
+#include "Border.hpp"
 #include "IClickable.hpp"
 #include "IPointerFilter.hpp"
 #include "IWidget.hpp"
@@ -28,7 +28,7 @@ namespace RetroFuturaGUI
         || std::same_as<T, SeparatorLine> || std::same_as<T, ColorPreview> || std::same_as<T, Video> || std::same_as<T, Histogram>
         || std::same_as<T, MultilineTextBox> || std::same_as<T, LineDiagram> || std::same_as<T, ColorPicker>;
 
-    class ScrollView final : public IWidget, public IBackground, public IBorder, public IClickable, public IPointerFilter
+    class ScrollView final : public IWidget, public IClickable, public IPointerFilter
     {
     public:
         enum class ScrollEnable : u32
@@ -152,6 +152,18 @@ namespace RetroFuturaGUI
 
             return dynamic_cast<T*>(cell->_Widget.get());
         }
+        
+        /// @brief Returns the ScrollViews's background
+        Background& GetBackground();
+        
+        /// @brief Returns the ScrollViews's background
+        const Background& GetBackground() const;
+
+        /// @brief Returns the ScrollViews's border
+        Border& GetBorder();
+        
+        /// @brief Returns the ScrollViews's border
+        const Border& GetBorder() const;
 
     protected:
         void applySize(const glm::vec3& size) override;
@@ -226,6 +238,8 @@ namespace RetroFuturaGUI
 
         void performPendingRemoval();
 
+        Background _background { &_projection };
+        Border _border { &_projection };
         ScrollEnable _enableMask { ScrollEnable::Y };
         ScrollAxis _alignmentDirection { ScrollAxis::Vertical };
         CellSpanAlignment _cellSpanAlignment {};

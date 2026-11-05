@@ -4,12 +4,12 @@
 #include "Plane.hpp"
 #include <memory>
 #include <vector>
-#include "IBorder.hpp"
+#include "Border.hpp"
 #include "config.hpp"
 
 namespace RetroFuturaGUI
 {
-    class ColorPreview final : public IWidget, public IBorder
+    class ColorPreview final : public IWidget
     {
     public:
         enum class DualPrevieAlignment : u32
@@ -41,6 +41,12 @@ namespace RetroFuturaGUI
         /// @brief Sets which way the dual preview is split: Horizontal puts the halves side by side, Vertical stacks them.
         void SetDualPreviewAlignment(const DualPrevieAlignment alignment);
 
+        /// @brief Returns the ColorPreviews's border
+        Border& GetBorder();
+
+        /// @brief Returns the ColorPreviews's border
+        const Border& GetBorder() const;
+
     protected:
         /// @brief Sets the size of the whole widget. While the dual preview is on, the two backgrounds split it in half.
         void applySize(const glm::vec3& size) override;
@@ -61,6 +67,7 @@ namespace RetroFuturaGUI
             _checkeredBackground { nullptr },
             _whiteBackground { nullptr },
             _colorRect { nullptr };
+        Border _border { &_projection };
         DualPrevieAlignment _previewAlignment { DualPrevieAlignment::Horizontal };
         bool _useWhiteBackgroundRect { true };
 

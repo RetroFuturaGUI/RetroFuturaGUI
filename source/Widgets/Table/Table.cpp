@@ -22,8 +22,6 @@ RetroFuturaGUI::Table::Table(const std::string& name, Projection* projection, IW
     : IWidget(name, projection, parentWidget, parentWidgetTypeID, parentWindow)
 {
     _widgetTypeID = WidgetTypeID::Table;
-    _background = std::make_unique<Plane>(projection);
-    _border = std::make_unique<Frame>(projection);
     _highlightedBackgroundCell = std::make_unique<Plane>(projection);
     _highlightedCellBorder = std::make_unique<Frame>(projection);
     _trackColoringOverlay = std::make_unique<Plane>(projection);
@@ -35,13 +33,9 @@ RetroFuturaGUI::Table::Table(const std::string& name, Projection* projection, IW
     _cellImagePlane = std::make_unique<Plane>(projection);
     _selectionBand = std::make_unique<Plane>(projection);
     _selectionBandBorder = std::make_unique<Frame>(projection);
-    useTransitions({ _background.get(), _border.get(), _selectionBand.get(), _selectionBandBorder.get() }); //the cell elements draw once per cell, in its colors, so they switch at once
-
-    if(!_background)
-        return;
-
-    if(!_border)
-        return;
+    useTransitions({ _selectionBand.get(), _selectionBandBorder.get() }); //the cell elements draw once per cell, in its colors, so they switch at once
+    _background.SetTransitionSettings(&_transitionSettings);
+    _border.SetTransitionSettings(&_transitionSettings);
 
     if(!_highlightedBackgroundCell)
         return;
@@ -188,7 +182,7 @@ void RetroFuturaGUI::Table::Draw()
     if(!_innerBorder)
         return;
 
-    drawBorder();
+    _border.Draw();
 
     if(_nthTrackColors.empty())
         return;
@@ -363,32 +357,20 @@ void RetroFuturaGUI::Table::drawHeaderBand(std::vector<TableCell>& cells, const 
 
 void RetroFuturaGUI::Table::applySize(const glm::vec3& size)
 {
-    if(!_background)
-        return;
-
-    if(!_border)
-        return;
-
     IWidget::applySize(size);
-    _background->SetSize(size);
-    _border->SetSize(size);
+    _background.SetSize(size);
+    _border.SetSize(size);
     layoutCells();
 }
 
 void RetroFuturaGUI::Table::applyPosition(const glm::vec3& position)
 {
-    if(!_background)
-        return;
-
-    if(!_border)
-        return;
-
     if(!_selectedArea)
         return;
 
     IWidget::applyPosition(position);
-    _background->SetPosition(position);
-    _border->SetPosition(position + glm::vec3(0.0f, 0.0f, 0.1f));
+    _background.SetPosition(position);
+    _border.SetPosition(position + glm::vec3(0.0f, 0.0f, 0.1f));
     _selectedArea->SetPosition(position + glm::vec3(0.0f, 0.0f, _widgetZOffset - 0.01f));
     layoutCells();
 }
@@ -2854,4 +2836,25 @@ void RetroFuturaGUI::Table::emitSelectionChange(const std::vector<bool>& previou
 
     _onSelectionChangedAsync.EmitAsync();
     _onSelectionChanged.Emit();
+}
+
+RetroFuturaGUI::Background& RetroFuturaGUI::Table::GetBackground()
+{
+    return _background;
+}
+
+const RetroFuturaGUI::Background& RetroFuturaGUI::Table::GetBackground() const
+{
+    return _background;
+}
+
+
+RetroFuturaGUI::Border& RetroFuturaGUI::Table::GetBorder()
+{
+    return _border;
+}
+
+const RetroFuturaGUI::Border& RetroFuturaGUI::Table::GetBorder() const
+{
+    return _border;
 }

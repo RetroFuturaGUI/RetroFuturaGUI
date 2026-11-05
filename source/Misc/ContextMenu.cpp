@@ -1,4 +1,5 @@
 #include "ContextMenu.hpp"
+#include "Background.hpp"
 #include "ExtendedComboBox.hpp"
 #include "FontManager.hpp"
 #include "ITextProperties.hpp"
@@ -13,6 +14,7 @@
 #include <string_view>
 
 RetroFuturaGUI::ContextMenu::ContextMenu(Projection* projection, IWidget* widget)
+    : _projection(*projection)
 {
     if(!projection)
         return;
@@ -20,7 +22,6 @@ RetroFuturaGUI::ContextMenu::ContextMenu(Projection* projection, IWidget* widget
     if(!widget)
         return;
 
-    _projection = projection;
     _widget = widget;
 
     if(_defaultFontFamily.empty())
@@ -38,7 +39,7 @@ RetroFuturaGUI::ContextMenu::ContextMenu(Projection* projection, IWidget* widget
         }
     }
 
-    _items = std::make_unique<ExtendedComboBox>(_rootNodeName, _projection, _widget, _widget->GetWidgetTypeID(), _widget->GetParentWindow());
+    _items = std::make_unique<ExtendedComboBox>(_rootNodeName, &_projection, _widget, _widget->GetWidgetTypeID(), _widget->GetParentWindow());
 
     if(_items)
     {
@@ -54,24 +55,14 @@ RetroFuturaGUI::ContextMenu::ContextMenu(Projection* projection, IWidget* widget
         }, false);
     }
 
-    _background = std::make_unique<Plane>(_projection);
-    _border = std::make_unique<Frame>(_projection);
-    _text = std::make_unique<Text>(projection);
+    _text = std::make_unique<Text>(&_projection);
     useWidgetTransitions();
-
-    if(!_background)
-        return;
-
-    if(!_border)
-        return;
 
     if(!_text)
         return;
 
-    _border->SetBorderWidth(_defaultBorderWidth);
+    _border.SetWidth(_defaultBorderWidth);
     _text->SetTextPadding(_defaultTextPadding);
-    setBackgroundColors();
-    setBorderColors();
     setTextColors();
     applyDefaultFont();
     setSize();
@@ -85,9 +76,6 @@ RetroFuturaGUI::ContextMenu::~ContextMenu()
 void RetroFuturaGUI::ContextMenu::Update()
 {
     if(!_widget)
-        return;
-
-    if(!_background)
         return;
 
     if(!_text)
@@ -127,8 +115,8 @@ void RetroFuturaGUI::ContextMenu::Update()
     const Transitions::InstantScope instant { true };
     applyDefaultFont();
     setPosition();
-    _items->SetSize(glm::vec3(_background->GetSize(), 0.01f));
-    _items->SetPosition(_background->GetPosition() + glm::vec3(0.0f, 0.0f, _zStep * 2.0f));
+    _items->SetSize(glm::vec3(_background.GetSize(), 0.01f));
+    _items->SetPosition(_background.GetPosition() + glm::vec3(0.0f, 0.0f, _zStep * 2.0f));
     _items->SetPreviewText(_text->GetTextUTF8());
     _items->Interact();
 }
@@ -282,34 +270,16 @@ RetroFuturaGUI::ExtendedComboBox* RetroFuturaGUI::ContextMenu::iterateNode(Exten
     return nullptr;
 }
 
-void RetroFuturaGUI::ContextMenu::SetBackgroundColors(std::span<const glm::vec4> colors)
-{
-    if(!_background)
-        return;
-
-    _backgroundColors.assign(colors.begin(), colors.end());
-    _background->SetColors(_backgroundColors);
-}
-
 void RetroFuturaGUI::ContextMenu::SetBorderColors(std::span<const glm::vec4> colors)
 {
-    if(!_border)
-        return;
-    
     _borderColors.assign(colors.begin(), colors.end());
-    _border->SetColors(_borderColors);
+    _border.SetColors(_borderColors, ColorState::Enabled);
 }
 
 void RetroFuturaGUI::ContextMenu::SetCornerRadii(const glm::vec4& radii)
 {
-    if(!_background)
-        return;
-    
-    if(!_border)
-        return;
-    
-    _background->SetCornerRadii(radii);
-    _border->SetCornerRadii(radii);
+    _background.SetCornerRadii(radii);
+    _border.SetCornerRadii(radii);
 }
 
 void RetroFuturaGUI::ContextMenu::SetText(std::string_view text, const bool emitSignal)
@@ -339,7 +309,9 @@ void RetroFuturaGUI::ContextMenu::useWidgetTransitions()
     if(!_widget)
         return;
 
-    for(FillStyle* element : std::initializer_list<FillStyle*> { _background.get(), _border.get(), _text.get() })
+    _background.SetTransitionSettings(&_widget->_transitionSettings);
+
+    for(FillStyle* element : std::initializer_list<FillStyle*> { _text.get() })
     {
         if(!element)
             continue;
@@ -421,7 +393,7 @@ void RetroFuturaGUI::ContextMenu::SetTextPadding(const f32 padding)
 
 void RetroFuturaGUI::ContextMenu::SetBorderWidth(const f32 borderWidth)
 {
-    IBorder::SetBorderWidth(borderWidth);
+    _border.SetWidth(borderWidth);
     setSize();
 }
 
@@ -430,22 +402,16 @@ void RetroFuturaGUI::ContextMenu::setSize()
     if(!_text)
         return;
 
-    if(!_background)
-        return;
-
-    if(!_border)
-        return;
-
     const f32
         padding { _text->GetPadding() },
-        borderWidth { _border->GetBorderWidth() };
+        borderWidth { _border.GetWidth() };
     const glm::vec2
         textArea { _text->GetWidth() + padding * 2.0f, _text->GetHeight() + padding * 2.0f },
         contentSize { std::max(textArea.x, 180.0f - borderWidth * 2.0f), std::max(textArea.y, 28.0f - borderWidth * 2.0f) },
         size { contentSize + glm::vec2(borderWidth * 2.0f) };
     _text->SetParentSize(contentSize);
-    _background->SetSize(size);
-    _border->SetSize(size);
+    _background.SetSize(glm::vec3(size, 0.01f));
+    _border.SetSize(size);
 }
 
 void RetroFuturaGUI::ContextMenu::setPosition()
@@ -453,21 +419,12 @@ void RetroFuturaGUI::ContextMenu::setPosition()
     if(!_widget)
         return;
 
-    if(!_projection)
-        return;
-
-    if(!_background)
-        return;
-
-    if(!_border)
-        return;
-
     if(!_text)
         return;
 
     const glm::vec2
-        halfSize { _background->GetSize() * 0.5f },
-        resolution { _projection->GetResolution() };
+        halfSize { _background.GetSize() * 0.5f },
+        resolution { _projection.GetResolution() };
 
     // Centered above the cursor's tip and kept inside the window: it slides sideways at the left and right edges
     // and down at the top one. World space runs bottom-up, so above is +Y.
@@ -477,8 +434,8 @@ void RetroFuturaGUI::ContextMenu::setPosition()
         std::max(halfSize.y, std::min(_pointerPosition.y + _cursorDistance + halfSize.y, resolution.y - halfSize.y)),
         _widget->GetPosition().z };
 
-    _background->SetPosition(center);
-    _border->SetPosition(center + glm::vec3(0.0f, 0.0f, _zStep));
+    _background.SetPosition(center);
+    _border.SetPosition(center + glm::vec3(0.0f, 0.0f, _zStep));
     _text->SetPosition(center + glm::vec3(0.0f, 0.0f, _zStep * 2.0f));
 }
 
@@ -518,4 +475,14 @@ void RetroFuturaGUI::ContextMenu::interact()
             _items->SetDropDownOpen(false);
     }
 
+}
+
+RetroFuturaGUI::Background& RetroFuturaGUI::ContextMenu::GetBackground()
+{
+    return _background;
+}
+
+const RetroFuturaGUI::Background& RetroFuturaGUI::ContextMenu::GetBackground() const
+{
+    return _background;
 }
