@@ -32,6 +32,7 @@ namespace RetroFuturaGUI
         using IRectangle::SetColors;
         using IRectangle::SetFillType;
         using IRectangle::SetCornerRadii;
+        using IRectangle::GetCornerRadii;
         using IRectangle::SetGradientOffset;
         using IRectangle::SetGradientAnimationSpeed;
         using IRectangle::SetGradientDegree;

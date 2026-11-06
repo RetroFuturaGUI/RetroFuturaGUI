@@ -34,8 +34,6 @@ namespace RetroFuturaGUI
         /// @brief Turns the background within the owning widget's layout.
         void SetRotation(const glm::vec3& rotation) override;
 
-        void SetCornerRadii(const glm::vec4& radii) override;
-
         /// @brief returns the background's size
         glm::vec2 GetSize() override;
 
@@ -98,7 +96,7 @@ namespace RetroFuturaGUI
     private:
         void draw();
         void setColors() override;
-        void setCornerRadii(const glm::vec4& radii);
+        void setCornerRadii() override;
 
         std::unique_ptr<Frame> _borderFrame;
 

@@ -172,10 +172,6 @@ namespace RetroFuturaGUI
         /// @brief Shows the window's content flat (default), and lays the content out again
         void SetOrthographic();
 
-        /// @brief Sets the radii of the background's and the border's corners, clockwise from the top-left. Docking may square
-        ///        some of them, see EnableSquaredCornersWhenDocked.
-        void SetCornerRadii(const glm::vec4& radii);
-
         /// @brief Returns the radii the background and border are drawn with: the ones set, with the corners where docked windows
         ///        meet squared. A widget lining the window's edge, such as a window bar, can match its own corners to them.
         glm::vec4 GetDrawnCornerRadii() const;

@@ -85,6 +85,11 @@ void RetroFuturaGUI::IRectangle::SetCornerRadii(const glm::vec4& radii)
     setRoundedCornersFeature(isRounded(_fromCornerRadii) || isRounded(_cornerRadii));
 }
 
+const glm::vec4& RetroFuturaGUI::IRectangle::GetCornerRadii() const
+{
+    return _cornerRadii;
+}
+
 void RetroFuturaGUI::IRectangle::uploadTransform(Shader& shader)
 {
     updateShownCornerRadii();

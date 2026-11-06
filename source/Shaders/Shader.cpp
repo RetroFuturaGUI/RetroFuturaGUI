@@ -195,7 +195,7 @@ void RetroFuturaGUI::Shader::SetUniformBool(std::string_view name, bool value) c
     glUniform1i(getUniformLocation(name), (int)value);
 }
 
-void RetroFuturaGUI::Shader::SetUniformInt(std::string_view name, int value) const
+void RetroFuturaGUI::Shader::SetUniformInt(std::string_view name, int32_t value) const
 {
     glUniform1i(getUniformLocation(name), value);
 }
@@ -349,7 +349,7 @@ bool RetroFuturaGUI::Shader::appendWithIncludes(const std::filesystem::path& pat
     return true;
 }
 
-u32 RetroFuturaGUI::Shader::compileShader(const char* shaderCode, const int shaderType)
+u32 RetroFuturaGUI::Shader::compileShader(const char* shaderCode, const int32_t shaderType)
 {
     if (shaderType != GL_VERTEX_SHADER && shaderType != GL_FRAGMENT_SHADER && shaderType != GL_GEOMETRY_SHADER)
     {

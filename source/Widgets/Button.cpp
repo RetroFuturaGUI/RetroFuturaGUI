@@ -128,13 +128,6 @@ void RetroFuturaGUI::Button::setColors(const ColorState state)
     _border.SetColorState(state);
     setTextColors();
 }
-
-void RetroFuturaGUI::Button::SetCornerRadii(const glm::vec4& radii)
-{
-    _background.SetCornerRadii(radii);
-    _border.SetCornerRadii(radii);
-}
-
 RetroFuturaGUI::Background& RetroFuturaGUI::Button::GetBackground()
 {
     return _background;

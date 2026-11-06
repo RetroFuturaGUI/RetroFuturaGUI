@@ -30,9 +30,6 @@ namespace RetroFuturaGUI
         void SetInheritValueReference(bool* ref);
         bool GetValue() const;
         void SetCheckmarkColors(std::span<const glm::vec4> colors, const ColorState state);
-        
-        /// @brief Sets the corner rounding radii of the CheckBox' background, inherit field and border.
-        void SetCornerRadii(const glm::vec4& radii);
 
         /// @brief Sets multiple inherit state fill colors (e.g. gradient stops) for the given color state.
         void SetInheritColors(std::span<const glm::vec4> colors, const ColorState state);
@@ -80,6 +77,7 @@ namespace RetroFuturaGUI
         void setCheckmarkColors();
         void setInheritFillColors();
         void interact() override;
+        void updateInheritFillShape();
 
         std::unique_ptr<Plane> _inheritFill { nullptr };
         std::unique_ptr<SvgTexture> _checkmark { nullptr }; //its own, so its colors and place are this box's alone

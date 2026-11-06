@@ -249,12 +249,6 @@ void RetroFuturaGUI::MenuBar::SetItemBackgroundColors(std::span<const glm::vec4>
     setItemBackgroundColors();
 }
 
-void RetroFuturaGUI::MenuBar::SetCornerRadii(const glm::vec4& radii)
-{
-    _background.SetCornerRadii(radii);
-    _border.SetCornerRadii(radii);
-}
-
 void RetroFuturaGUI::MenuBar::SetItemCornerRadii(const glm::vec4& radii)
 {
     setItemBackgroundCornerRadii(radii);

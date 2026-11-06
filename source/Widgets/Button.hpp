@@ -23,9 +23,6 @@ namespace RetroFuturaGUI
         /// @brief Draws the button, including its background, border and label text.
         void Draw() override;
 
-        /// @brief Sets the corner rounding radii of the button's background and border.
-        void SetCornerRadii(const glm::vec4& radii);
-
         /// @brief Returns the button's background
         Background& GetBackground();
         const Background& GetBackground() const;

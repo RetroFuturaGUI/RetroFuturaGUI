@@ -402,7 +402,7 @@ bool RetroFuturaGUI::Window::canResize(const ResizeEdge edge) const
     }
 }
 
-void RetroFuturaGUI::Window::dropCallback(GLFWwindow* glfwWindow, const int pathCount, const char* paths[])
+void RetroFuturaGUI::Window::dropCallback(GLFWwindow* glfwWindow, const int32_t pathCount, const char* paths[])
 {
     Window* window { FromGlfwWindow(glfwWindow) };
 
@@ -411,7 +411,7 @@ void RetroFuturaGUI::Window::dropCallback(GLFWwindow* glfwWindow, const int path
 
     DroppedFiles dropped {};
 
-    for(int index = 0; index < pathCount; ++index)
+    for(int32_t index { 0 }; index < pathCount; ++index)
     {
         if(!paths[index])
             continue;

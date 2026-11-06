@@ -351,12 +351,6 @@ void RetroFuturaGUI::WindowTab::applyCloseIconColors()
     });
 }
 
-void RetroFuturaGUI::WindowTab::SetCornerRadii(const glm::vec4& radii)
-{
-    _background.SetCornerRadii(radii);
-    _border.SetCornerRadii(radii);
-}
-
 void RetroFuturaGUI::WindowTab::SetContentCornerRadii(const glm::vec4& radii)
 {
     _contentCornerRadii = radii;
@@ -1144,4 +1138,14 @@ RetroFuturaGUI::Background& RetroFuturaGUI::WindowTab::GetBackground()
 const RetroFuturaGUI::Background& RetroFuturaGUI::WindowTab::GetBackground() const
 {
     return _background;
+}
+
+RetroFuturaGUI::Border& RetroFuturaGUI::WindowTab::GetBorder()
+{
+    return _border;
+}
+
+const RetroFuturaGUI::Border& RetroFuturaGUI::WindowTab::GetBorder() const
+{
+    return _border;
 }

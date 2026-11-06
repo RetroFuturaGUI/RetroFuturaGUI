@@ -32,6 +32,7 @@ void RetroFuturaGUI::RadioButton::Draw()
     if(!_isChecked)
         return;
 
+    updateIndicatorShape();
     _indicator->Draw();
 }
 
@@ -105,14 +106,23 @@ void RetroFuturaGUI::RadioButton::SetIndicatorColors(std::span<const glm::vec4> 
     setIndicatorColors();
 }
         
-void RetroFuturaGUI::RadioButton::SetCornerRadii(const glm::vec4& radii)
+void RetroFuturaGUI::RadioButton::updateIndicatorShape()
 {
     if(!_indicator)
         return;
 
-    _background.SetCornerRadii(radii);
-    _border.SetCornerRadii(radii);
-    _indicator->SetCornerRadii(radii - _border.GetWidth() - _indicatorPadding);
+    /*const glm::vec4&
+        backgroundCornerRadii { _background.GetCornerRadii() },
+        indicatorCornerRadii { _indicator->GetCornerRadii() };
+
+    if((std::bit_cast<u32>(backgroundCornerRadii.x) & 0xFFFF0000) != (std::bit_cast<u32>(indicatorCornerRadii.x) & 0xFFFF0000)
+        || (std::bit_cast<u32>(backgroundCornerRadii.y) & 0xFFFF0000) != (std::bit_cast<u32>(indicatorCornerRadii.y) & 0xFFFF0000)
+        || (std::bit_cast<u32>(backgroundCornerRadii.z) & 0xFFFF0000) != (std::bit_cast<u32>(indicatorCornerRadii.z) & 0xFFFF0000)
+        || (std::bit_cast<u32>(backgroundCornerRadii.w) & 0xFFFF0000) != (std::bit_cast<u32>(indicatorCornerRadii.w) & 0xFFFF0000)
+      )
+    {*/
+    _indicator->SetCornerRadii(_background.GetCornerRadii() - _border.GetWidth() - _indicatorPadding);
+    //}
 }
 
 void RetroFuturaGUI::RadioButton::SetIndicatorGradientOffset(const f32 gradientOffset)

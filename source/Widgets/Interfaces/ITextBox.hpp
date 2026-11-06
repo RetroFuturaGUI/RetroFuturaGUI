@@ -15,8 +15,6 @@ namespace RetroFuturaGUI
         /// @brief Draws the text box, including its background, border, text, caret and selection highlight.
         void Draw() final override;
 
-        /// @brief Sets the corner rounding radii of the text box's background and border.
-        void SetCornerRadii(const glm::vec4& radii);
         Background& GetBackground();
         const Background& GetBackground() const;
 

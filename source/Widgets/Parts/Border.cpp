@@ -15,13 +15,14 @@ void RetroFuturaGUI::Border::Draw()
     _borderFrame->Draw();
 }
 
-void RetroFuturaGUI::Border::SetCornerRadii(const glm::vec4& radii)
+void RetroFuturaGUI::Border::setCornerRadii()
 {
     if(!_borderFrame)
         return;
 
-    _borderFrame->SetCornerRadii(radii);
+    _borderFrame->SetCornerRadii(_cornerRadii);
 }
+
 void RetroFuturaGUI::Border::SetTransitionSettings(const TransitionSettings* settings)
 {
     if(!_borderFrame)
@@ -229,14 +230,6 @@ void RetroFuturaGUI::Border::SetWidth(const f32 borderWidth)
         return;
 
     _borderFrame->SetBorderWidth(borderWidth);
-}
-
-void RetroFuturaGUI::Border::setCornerRadii(const glm::vec4& radii)
-{
-    if(!_borderFrame)
-        return;
-
-    _borderFrame->SetCornerRadii(radii);
 }
 
 void RetroFuturaGUI::Border::SetGaps(std::span<BorderGap> gaps)

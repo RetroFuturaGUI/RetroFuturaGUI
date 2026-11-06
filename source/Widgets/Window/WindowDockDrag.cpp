@@ -241,7 +241,8 @@ void RetroFuturaGUI::Window::showDockPreview(const DockRect& slot, const glm::ve
     if(!_dockPreview->_window)
         return;
 
-    _dockPreview->SetCornerRadii(cornerRadii);
+    _dockPreview->GetBackground().SetCornerRadii(cornerRadii);
+    _dockPreview->GetBorder().SetCornerRadii(cornerRadii);
 
     const DockRect current { _dockPreview->getScreenRect() };
 

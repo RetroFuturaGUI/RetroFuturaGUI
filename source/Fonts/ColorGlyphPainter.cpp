@@ -648,14 +648,14 @@ RetroFuturaGUI::ColorGlyphPainter::ColorLine RetroFuturaGUI::ColorGlyphPainter::
     if(!colorLine)
         return line;
 
-    unsigned int stopCount { hb_color_line_get_color_stops(colorLine, 0, nullptr, nullptr) };
+    uint32_t stopCount { hb_color_line_get_color_stops(colorLine, 0, nullptr, nullptr) };
     std::vector<hb_color_stop_t> stops(stopCount);
     hb_color_line_get_color_stops(colorLine, 0, &stopCount, stops.data());
 
     //In order of their offsets, a foreground stop coming with the foreground's color
     std::vector<std::pair<f32, glm::vec4>> sorted {};
 
-    for(unsigned int stop = 0; stop < stopCount; ++stop)
+    for(uint32_t stop = 0; stop < stopCount; ++stop)
         sorted.emplace_back(stops[stop].offset, toPremultiplied(stops[stop].color));
 
     std::ranges::stable_sort(sorted, {}, &std::pair<f32, glm::vec4>::first);

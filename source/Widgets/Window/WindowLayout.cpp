@@ -119,11 +119,6 @@ const RetroFuturaGUI::ScreenRect& RetroFuturaGUI::Window::GetClientRect() const
     return _clientRect;
 }
 
-void RetroFuturaGUI::Window::SetCornerRadii(const glm::vec4& radii)
-{
-    _cornerRadii = radii;
-}
-
 void RetroFuturaGUI::Window::SetTransition(const TransitionProperty properties, const Transition& transition)
 {
     Transitions::Override(_transitionSettings, properties, transition);

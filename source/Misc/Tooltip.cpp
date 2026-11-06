@@ -93,12 +93,6 @@ void RetroFuturaGUI::Tooltip::SetBorderColors(std::span<const glm::vec4> colors)
     _border.SetColors(_borderColors, ColorState::Enabled);
 }
 
-void RetroFuturaGUI::Tooltip::SetCornerRadii(const glm::vec4& radii)
-{
-    _background.SetCornerRadii(radii);
-    _border.SetCornerRadii(radii);
-}
-
 void RetroFuturaGUI::Tooltip::SetText(std::string_view text, const bool emitSignal)
 {
     ITextProperties::SetText(text, emitSignal);

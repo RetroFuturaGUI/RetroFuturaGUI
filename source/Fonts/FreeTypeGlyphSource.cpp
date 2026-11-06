@@ -125,7 +125,7 @@ bool RetroFuturaGUI::FreeTypeGlyphSource::SetPixelSize(const f32 pixels)
 
     if(_paintFont)
     {
-        const int scale { static_cast<int>(std::lround(_pixelSize * 64.0f)) };
+        const int32_t scale { static_cast<int>(std::lround(_pixelSize * 64.0f)) };
         hb_font_set_scale(_paintFont, scale, scale);
     }
 
@@ -322,12 +322,12 @@ bool RetroFuturaGUI::FreeTypeGlyphSource::Shape(std::u32string_view text, const 
     hb_buffer_guess_segment_properties(_shapingBuffer);
     hb_shape(shapingFont, _shapingBuffer, nullptr, 0);
 
-    unsigned int glyphCount { 0 };
+    uint32_t glyphCount { 0 };
     const hb_glyph_info_t* infos { hb_buffer_get_glyph_infos(_shapingBuffer, &glyphCount) };
     const hb_glyph_position_t* positions { hb_buffer_get_glyph_positions(_shapingBuffer, &glyphCount) };
     glyphs->reserve(glyphCount);
 
-    for(unsigned int glyph = 0; glyph < glyphCount; ++glyph)
+    for(uint32_t glyph = 0; glyph < glyphCount; ++glyph)
     {
         glyphs->push_back(ShapedGlyph
         {
@@ -381,9 +381,9 @@ hb_font_t* RetroFuturaGUI::FreeTypeGlyphSource::getPaintFont()
 
     //The face every source of this font file shares, at this source's size and variable font settings
     _paintFont = hb_font_create(face);
-    const int scale { static_cast<int>(std::lround(_pixelSize * 64.0f)) };
+    const int32_t scale { static_cast<int>(std::lround(_pixelSize * 64.0f)) };
     hb_font_set_scale(_paintFont, scale, scale);
-    unsigned int coordinateCount { 0 };
+    uint32_t coordinateCount { 0 };
     const int* coordinates { hb_font_get_var_coords_normalized(shapingFont, &coordinateCount) };
     hb_font_set_var_coords_normalized(_paintFont, coordinates, coordinateCount);
     return _paintFont;

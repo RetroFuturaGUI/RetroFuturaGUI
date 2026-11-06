@@ -47,9 +47,6 @@ namespace RetroFuturaGUI
         glm::vec3 GetRotation() override;
         glm::vec3 GetRotation() const;
 
-        /// @brief Rounds the corners, clockwise from the top-left
-        void SetCornerRadii(const glm::vec4& radii) override;
-
         /// @brief Has the colors and corner radii move to new values over the owning widget's transitions.
         void SetTransitionSettings(const TransitionSettings* settings);
 
@@ -145,6 +142,8 @@ namespace RetroFuturaGUI
 
         /// @brief Whether the path names an SVG file, by its extension in any case.
         static bool isSvgPath(std::string_view path);
+
+        void setCornerRadii() override;
 
     //Elements
         std::unique_ptr<Plane> _backgroundPlane { nullptr };

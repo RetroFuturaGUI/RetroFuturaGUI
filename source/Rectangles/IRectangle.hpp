@@ -49,6 +49,7 @@ namespace RetroFuturaGUI
         /// @brief Sets the per-corner rounding radii. Any radius above 0 rounds the corners. With transition settings the
         ///        corners move to them over the corner radii transition. Public on Plane and Frame.
         void SetCornerRadii(const glm::vec4& radii);
+        const glm::vec4& GetCornerRadii() const;
 
         /// @brief Uploads the projection, the three matrices, the size in pixels, and the corner radii shown now when the
         ///        corners are rounded.

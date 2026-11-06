@@ -76,8 +76,6 @@ namespace RetroFuturaGUI
         /// @param sizingMode (ElementSizing): Whether the size is set in pixelsize (abolute) or in percent (relative to the track's total length)
         void SetIndicatorSize(const glm::vec2& size, const ElementSizing sizingMode);
 
-        /// @brief Sets the corner rounding radii of the track's track background and border.
-        void SetCornerRadii(const glm::vec4& radii);
         Background& GetBackground();
         const Background& GetBackground() const;
         Border& GetBorder();

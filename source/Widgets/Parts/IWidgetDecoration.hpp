@@ -1,6 +1,7 @@
 #pragma once
 #include "Projection.hpp"
 #include "IncludeHelper.hpp"
+#include <glm/ext/vector_float4.hpp>
 #include <vector>
 #include <span>
 
@@ -15,7 +16,6 @@ namespace RetroFuturaGUI
         virtual void SetSize(const glm::vec2& size) = 0;
         virtual void SetPosition(const glm::vec3& position) = 0;
         virtual void SetRotation(const glm::vec3& rotation) = 0;
-        virtual void SetCornerRadii(const glm::vec4& radii) = 0;
         virtual glm::vec2 GetSize() = 0;
         virtual glm::vec3 GetPosition() = 0;
         virtual glm::vec3 GetRotation() = 0;
@@ -26,9 +26,12 @@ namespace RetroFuturaGUI
         /// @brief Shows the colors of the given state
         void SetColorState(const ColorState state);
 
+        const glm::vec4& GetCornerRadii() const;
+        void SetCornerRadii(const glm::vec4& radii);
 
     protected:
         virtual void setColors() = 0;
+        virtual void setCornerRadii() = 0;
 
 
 
@@ -39,6 +42,7 @@ namespace RetroFuturaGUI
             _colorsClicked { glm::vec4(0.6f, 0.6f,0.6f, 1.0f) },
             _colorsHover { glm::vec4(0.55f, 0.55f, 0.55f, 1.0f) },
             _colorsSelected { };
+        glm::vec4 _cornerRadii { 0.0f };
 
         FillType _fillType { FillType::Solid };
         ColorState _colorState { ColorState::Enabled };

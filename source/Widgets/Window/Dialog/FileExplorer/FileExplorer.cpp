@@ -41,7 +41,8 @@ RetroFuturaGUI::FileExplorer::FileExplorer(std::string_view title, const i32 wid
 void RetroFuturaGUI::FileExplorer::styleWindow(Window& window, std::string_view title)
 {
     window.SetWindowTitle(title);
-    window.SetCornerRadii(glm::vec4(12.0f));
+    window.GetBackground().SetCornerRadii(glm::vec4(12.0f));
+    window.GetBorder().SetCornerRadii(glm::vec4(12.0f));
     window.GetBorder().SetWidth(1.0f);
     window.GetBorder().SetColors(std::array { glm::vec4(0.35f, 0.35f, 0.45f, 1.0f) }, ColorState::Enabled);
 }
@@ -504,7 +505,8 @@ RetroFuturaGUI::MenuBar* RetroFuturaGUI::FileExplorer::attachBar(ViewHost& host,
     bar->GetBackground().SetFillType(FillType::Solid);
     bar->GetBorder().SetColors(std::array { glm::vec4(0.35f, 0.35f, 0.45f, 1.0f) }, ColorState::Enabled);
     bar->GetBorder().SetWidth(1.0f);
-    bar->SetCornerRadii(glm::vec4(12.0f, 12.0f, 0.0f, 0.0f)); //the window's top corners, which a popup never squares
+    bar->GetBackground().SetCornerRadii(glm::vec4(12.0f, 12.0f, 0.0f, 0.0f)); //the window's top corners, which a popup never squares
+    bar->GetBorder().SetCornerRadii(glm::vec4(12.0f, 12.0f, 0.0f, 0.0f));
     bar->SetItemBackgroundColors(std::array { glm::vec4(0.0f, 0.0f, 0.0f, 0.0f) }, ColorState::Enabled);
     bar->SetItemBackgroundColors(std::array { glm::vec4(0.25f, 0.25f, 0.35f, 0.9f) }, ColorState::Hover);
     bar->SetItemBackgroundColors(std::array { glm::vec4(0.35f, 0.35f, 0.5f, 0.95f) }, ColorState::Clicked);
@@ -549,7 +551,8 @@ RetroFuturaGUI::MenuBar* RetroFuturaGUI::FileExplorer::attachBar(ViewHost& host,
 void RetroFuturaGUI::FileExplorer::styleButton(Button& button, std::string_view text, const glm::vec3& size, const ViewFont& font)
 {
     button.SetSize(size);
-    button.SetCornerRadii(glm::vec4(8.0f));
+    button.GetBackground().SetCornerRadii(glm::vec4(8.0f));
+    button.GetBorder().SetCornerRadii(glm::vec4(8.0f));
     button.GetBackground().SetColors(std::array { glm::vec4(0.2f, 0.2f, 0.2f, 1.0f) }, ColorState::Enabled);
     button.GetBackground().SetColors(std::array { glm::vec4(0.3f, 0.3f, 0.3f, 1.0f) }, ColorState::Hover);
     button.GetBackground().SetColors(std::array { glm::vec4(0.4f, 0.4f, 0.4f, 1.0f) }, ColorState::Clicked);
@@ -603,7 +606,8 @@ void RetroFuturaGUI::FileExplorer::styleCheckBox(CheckBox& checkBox, const f32 s
     checkBox.GetBorder().SetColors(borderColors, ColorState::Hover);
     checkBox.GetBorder().SetColors(borderColors, ColorState::Clicked);
     checkBox.GetBorder().SetWidth(1.0f);
-    checkBox.SetCornerRadii(glm::vec4(6.0f));
+    checkBox.GetBackground().SetCornerRadii(glm::vec4(6.0f));
+    checkBox.GetBorder().SetCornerRadii(glm::vec4(6.0f));
     checkBox.SetInnerPadding(4.0f);
 }
 
@@ -627,7 +631,8 @@ void RetroFuturaGUI::FileExplorer::styleToggle(Button& toggle, const bool isOn)
 void RetroFuturaGUI::FileExplorer::styleTextBox(TextBox& textBox, std::string_view placeholder, const glm::vec3& size, const ViewFont& font)
 {
     textBox.SetSize(size);
-    textBox.SetCornerRadii(glm::vec4(8.0f));
+    textBox.GetBackground().SetCornerRadii(glm::vec4(8.0f));
+    textBox.GetBorder().SetCornerRadii(glm::vec4(8.0f));
     textBox.GetBackground().SetColors(std::array { glm::vec4(0.2f, 0.2f, 0.2f, 1.0f) }, ColorState::Enabled);
     textBox.GetBackground().SetColors(std::array { glm::vec4(0.3f, 0.3f, 0.3f, 1.0f) }, ColorState::Hover);
     textBox.GetBackground().SetColors(std::array { glm::vec4(0.2f, 0.2f, 0.2f, 1.0f) }, ColorState::Clicked);

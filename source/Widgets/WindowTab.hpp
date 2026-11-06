@@ -137,10 +137,6 @@ namespace RetroFuturaGUI
         void SetCloseIconColors(std::span<const glm::vec4> colors);
 
     //Content
-        /// @brief Sets the corner radii of the WindowTab's own background and border, clockwise from the top-left. A WindowTab
-        ///        filling a window with rounded corners takes the window's, see Window::GetDrawnCornerRadii.
-        void SetCornerRadii(const glm::vec4& radii);
-
         /// @brief Sets the corner radii of the content area, clockwise from the top-left. The docked window rounds its own
         ///        corners to them, to match the rounded corners of the window this WindowTab fills, for instance.
         void SetContentCornerRadii(const glm::vec4& radii);

@@ -276,12 +276,6 @@ void RetroFuturaGUI::ContextMenu::SetBorderColors(std::span<const glm::vec4> col
     _border.SetColors(_borderColors, ColorState::Enabled);
 }
 
-void RetroFuturaGUI::ContextMenu::SetCornerRadii(const glm::vec4& radii)
-{
-    _background.SetCornerRadii(radii);
-    _border.SetCornerRadii(radii);
-}
-
 void RetroFuturaGUI::ContextMenu::SetText(std::string_view text, const bool emitSignal)
 {
     ITextProperties::SetText(text, emitSignal);

@@ -133,7 +133,7 @@ void RetroFuturaGUI::Transitions::ResampleStops(std::span<const glm::vec4> color
     stops.reserve(stopCount);
 
     //Stop j sits at j / stopCount along the gradient, where the shader mixes the two colors around it
-    for(uSize stop = 0; stop < stopCount; ++stop)
+    for(uSize stop { 0 }; stop < stopCount; ++stop)
     {
         const f64 position { static_cast<f64>(stop) * static_cast<f64>(colorCount) / static_cast<f64>(stopCount) };
         const uSize

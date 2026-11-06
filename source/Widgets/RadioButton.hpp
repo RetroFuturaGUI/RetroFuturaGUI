@@ -39,9 +39,6 @@ namespace RetroFuturaGUI
         /// @return a boolean value representing the RadioButton's current state
         bool GetValue() const;
         
-        /// @brief Sets the corner rounding radii of the RadioButton' background, Indicator field and border.
-        void SetCornerRadii(const glm::vec4& radii);
-
         /// @brief Sets multiple Indicator state fill colors (e.g. gradient stops) for the given color state.
         void SetIndicatorColors(std::span<const glm::vec4> colors, const ColorState state);
 
@@ -84,6 +81,7 @@ namespace RetroFuturaGUI
         void setColors(const ColorState state) override;
         void setIndicatorColors();
         void interact() override;
+        void updateIndicatorShape();
 
         std::unique_ptr<Plane> _indicator { nullptr };
         Background _background { &_projection };

@@ -34,3 +34,14 @@ void RetroFuturaGUI::IWidgetDecoration::SetColorState(const ColorState state)
     _colorState = state;
     setColors();
 }
+
+const glm::vec4& RetroFuturaGUI::IWidgetDecoration::GetCornerRadii() const
+{
+   return _cornerRadii;
+}
+
+void RetroFuturaGUI::IWidgetDecoration::SetCornerRadii(const glm::vec4& radii)
+{
+   _cornerRadii = radii;
+   setCornerRadii();
+}

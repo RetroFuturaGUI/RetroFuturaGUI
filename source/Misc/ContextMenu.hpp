@@ -37,7 +37,6 @@ namespace RetroFuturaGUI
         static void SetDefaultFontFamily(std::string_view fontFamily, const f32 fontSize, const FontSizeUnit sizeUnit, const PlatformBridge::Fonts::Slant slant, const PlatformBridge::Fonts::Weight fontWeight);
 
         void SetBorderColors(std::span<const glm::vec4> colors);
-        void SetCornerRadii(const glm::vec4& radii);
         void SetText(std::string_view text, const bool emitSignal) override;
         void SetFontFamily(std::string_view fontFamily, const f32 fontSize, const FontSizeUnit sizeUnit, const PlatformBridge::Fonts::Slant slant, const PlatformBridge::Fonts::Weight fontWeight) override;
         void SetTextPadding(const f32 padding) override;

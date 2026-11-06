@@ -1,0 +1,48 @@
+newmtl water
+Ka 1 1 1
+Kd 1 1 1
+Ks 0 0 0
+illum 0
+map_Kd textures/water.png
+
+newmtl grass
+Ka 1 1 1
+Kd 1 1 1
+Ks 0 0 0
+illum 0
+map_Kd textures/grass.png
+
+newmtl underside
+Ka 1 1 1
+Kd 1 1 1
+Ks 0 0 0
+illum 0
+map_Kd textures/underside.png
+
+newmtl trunk
+Ka 1 1 1
+Kd 1 1 1
+Ks 0 0 0
+illum 0
+map_Kd textures/trunk.png
+
+newmtl canopy
+Ka 1 1 1
+Kd 1 1 1
+Ks 0 0 0
+illum 0
+map_Kd textures/canopy.png
+
+newmtl ring
+Ka 1 1 1
+Kd 1 1 1
+Ks 0 0 0
+illum 0
+map_Kd textures/ring.png
+
+newmtl bubble
+Ka 1 1 1
+Kd 1 1 1
+Ks 0 0 0
+illum 0
+map_Kd textures/bubble.png

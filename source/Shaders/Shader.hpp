@@ -126,11 +126,11 @@ namespace RetroFuturaGUI
         /// @brief Sets a bool uniform.
         void SetUniformBool(std::string_view name, bool value) const;
 
-        /// @brief Sets an int uniform.
-        void SetUniformInt(std::string_view name, int value) const;
+        /// @brief Sets an int32_t uniform.
+        void SetUniformInt(std::string_view name, int32_t value) const;
 
         /// @brief Sets a float uniform.
-        void SetUniformFloat(std::string_view name, float value) const;
+        void SetUniformFloat(std::string_view name, f32 value) const;
 
         /// @brief Sets a float array uniform from raw float data.
         void SetUniformFloat(std::string_view name, const f32* values, const u32 count) const;
@@ -142,7 +142,7 @@ namespace RetroFuturaGUI
         void SetUniformVec2(std::string_view name, const f32* value, const u32 count = 1) const;
 
         /// @brief Sets a vec2 uniform from separate x, y components.
-        void SetUniformVec2(std::string_view name, float x, float y) const;
+        void SetUniformVec2(std::string_view name, f32 x, f32 y) const;
 
         /// @brief Sets a vec3 uniform.
         void SetUniformVec3(std::string_view name, const glm::vec3& value) const;
@@ -151,7 +151,7 @@ namespace RetroFuturaGUI
         void SetUniformVec3(std::string_view name, const f32* value, const u32 count = 1) const;
 
         /// @brief Sets a vec3 uniform from separate x, y, z components.
-        void SetUniformVec3(std::string_view name, float x, float y, float z) const;
+        void SetUniformVec3(std::string_view name, f32 x, f32 y, f32 z) const;
 
         /// @brief Sets a vec4 uniform.
         void SetUniformVec4(std::string_view name, const glm::vec4& value) const;
@@ -189,7 +189,7 @@ namespace RetroFuturaGUI
             }
         };
 
-        u32 compileShader(const char* shaderCode, const int shaderType);
+        u32 compileShader(const char* shaderCode, const int32_t shaderType);
 
         /// @brief Reads a shader source with its #include lines replaced by the files they name, and the defines set right after its #version line. Empty when a file can't be read.
         static std::string loadShaderSource(const char* shaderPath, const std::vector<std::string>& defines);

@@ -207,12 +207,6 @@ void RetroFuturaGUI::ITextBox::setColors(const ColorState state)
     setTextColors();
 }
 
-void RetroFuturaGUI::ITextBox::SetCornerRadii(const glm::vec4& radii)
-{
-    _background.SetCornerRadii(radii);
-    _border.SetCornerRadii(radii);
-}
-
 RetroFuturaGUI::Background& RetroFuturaGUI::ITextBox::GetBackground()
 {
     return _background;

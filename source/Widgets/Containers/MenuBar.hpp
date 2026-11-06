@@ -166,9 +166,6 @@ namespace RetroFuturaGUI
         /// @brief Sets sections of the separator lines to skip drawing, which is what turns them into dashed lines; see Plane::SetBackgroundGaps.
         void SetSeparatorLinesGaps(const BackgroundGap& gap);
 
-        /// @brief Sets the corner rounding radii of the bar's own background and border, clockwise from the top-left.
-        void SetCornerRadii(const glm::vec4& radii);
-
     //Item background
         /// @brief Sets the item background colors for the given color state: one for a solid fill, the stops for a gradient.
         void SetItemBackgroundColors(std::span<const glm::vec4> colors, const ColorState state);

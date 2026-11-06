@@ -21,12 +21,12 @@ void RetroFuturaGUI::Background::Draw()
     drawSvg();
 }
 
-void RetroFuturaGUI::Background::SetCornerRadii(const glm::vec4& radii)
+void RetroFuturaGUI::Background::setCornerRadii()
 {
     if(!_backgroundPlane)
         return;
 
-    _backgroundPlane->SetCornerRadii(radii);
+    _backgroundPlane->SetCornerRadii(_cornerRadii);
 }
 
 void RetroFuturaGUI::Background::SetTransitionSettings(const TransitionSettings* settings)

@@ -17,7 +17,7 @@ extern "C" int LLVMFuzzerInitialize(int*, char***)
     _CrtSetReportFile(_CRT_ASSERT, _CRTDBG_FILE_STDERR);
     _CrtSetReportMode(_CRT_ERROR, _CRTDBG_MODE_FILE);
     _CrtSetReportFile(_CRT_ERROR, _CRTDBG_FILE_STDERR);
-    _set_invalid_parameter_handler([](const wchar_t* expression, const wchar_t* function, const wchar_t* file, unsigned int line, uintptr_t)
+    _set_invalid_parameter_handler([](const wchar_t* expression, const wchar_t* function, const wchar_t* file, uint32_t line, uintptr_t)
         {
             std::fwprintf(stderr, L"invalid parameter: %ls in %ls (%ls:%u)\n", expression ? expression : L"?", function ? function : L"?", file ? file : L"?", line);
             std::abort();
