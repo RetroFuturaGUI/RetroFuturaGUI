@@ -136,10 +136,15 @@ RetroFuturaGUI::Transition RetroFuturaGUI::Window::GetTransition(const Transitio
 
 glm::vec4 RetroFuturaGUI::Window::GetDrawnCornerRadii() const
 {
+    return drawnCornerRadii(_backgroundCornerRadii);
+}
+
+glm::vec4 RetroFuturaGUI::Window::drawnCornerRadii(const glm::vec4& asked) const
+{
     if(IsInTab())
         return _tabCornerRadii;
 
-    glm::vec4 radii { _cornerRadii };
+    glm::vec4 radii { asked };
 
     if(!_noCornerRadiiWhenDocked)
         return radii;
@@ -284,18 +289,33 @@ void RetroFuturaGUI::Window::updateLasagna()
 
 void RetroFuturaGUI::Window::applyCornerRadii()
 {
-    const glm::vec4 radii { GetDrawnCornerRadii() };
+    const glm::vec4
+        backgroundRadii { drawnCornerRadii(_backgroundCornerRadii) },
+        borderRadii { drawnCornerRadii(_borderCornerRadii) };
 
-    if(radii == _appliedCornerRadii)
+    if(backgroundRadii == _appliedBackgroundCornerRadii && borderRadii == _appliedBorderCornerRadii)
         return;
 
-    _appliedCornerRadii = radii;
+    _appliedBackgroundCornerRadii = backgroundRadii;
+    _appliedBorderCornerRadii = borderRadii;
+    _isApplyingCornerRadii = true;
 
     if(_background)
-        _background->SetCornerRadii(radii);
+        _background->SetCornerRadii(backgroundRadii);
 
     if(_border)
-       _border->SetCornerRadii(radii);
+       _border->SetCornerRadii(borderRadii);
+
+    _isApplyingCornerRadii = false;
+}
+
+void RetroFuturaGUI::Window::takeCornerRadii(glm::vec4& asked, const IWidgetDecoration& part)
+{
+    if(_isApplyingCornerRadii)
+        return;
+
+    asked = part.GetCornerRadii();
+    _appliedBackgroundCornerRadii = glm::vec4(-1.0f); //the drawn radii are handed over again at the next draw
 }
 
 bool RetroFuturaGUI::Window::isSceneShown(const Scene* scene) const

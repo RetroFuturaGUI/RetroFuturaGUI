@@ -10,7 +10,7 @@ RetroFuturaGUI::SeparatorLine::SeparatorLine(std::string_view name, Projection* 
 {
     _widgetTypeID = WidgetTypeID::SeparatorLine;
     _text.SetTransitionSettings(&_transitionSettings);
-    _text.SetChangeHook([this](const WidgetTextChange) { updateLayout(); }); //the text's size is the gap's
+    _background.SetTransitionSettings(&_transitionSettings);
 }
 
 void RetroFuturaGUI::SeparatorLine::Draw()

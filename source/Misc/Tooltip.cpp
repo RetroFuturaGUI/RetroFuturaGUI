@@ -18,7 +18,6 @@ RetroFuturaGUI::Tooltip::Tooltip(Projection* projection, IWidget* widget)
     _border.SetWidth(_defaultBorderWidth);
     _text.SetPadding(_defaultTextPadding);
     _text.SetColorState(ColorState::Enabled);
-    _text.SetChangeHook([this](const WidgetTextChange) { setSize(); }); //the box holds the text
     applyDefaultFont();
 }
 
@@ -84,12 +83,6 @@ void RetroFuturaGUI::Tooltip::draw()
     _text.Draw();
 }
 
-void RetroFuturaGUI::Tooltip::SetBorderColors(std::span<const glm::vec4> colors)
-{
-    _borderColors.assign(colors.begin(), colors.end());
-    _border.SetColors(_borderColors, ColorState::Enabled);
-}
-
 void RetroFuturaGUI::Tooltip::SetFontFamily(std::string_view fontFamily, const f32 fontSize, const FontSizeUnit sizeUnit, const PlatformBridge::Fonts::Slant slant, const PlatformBridge::Fonts::Weight fontWeight)
 {
     _hasOwnFont = true;
@@ -103,7 +96,7 @@ void RetroFuturaGUI::Tooltip::useWidgetTransitions()
         return;
 
     _background.SetTransitionSettings(&_widget->_transitionSettings);
-
+    _border.SetTransitionSettings(&_widget->_transitionSettings);
     _text.SetTransitionSettings(&_widget->_transitionSettings);
 }
 
@@ -118,12 +111,6 @@ void RetroFuturaGUI::Tooltip::applyDefaultFont()
     _text.SetFontFamily(_defaultFontFamily, _defaultFontSize, FontSizeUnit::Pixels, _defaultFontSlant, _defaultFontWeight);
     setSize();
     _appliedDefaultFontVersion = _defaultFontVersion;
-}
-
-void RetroFuturaGUI::Tooltip::SetBorderWidth(const f32 borderWidth)
-{
-    _border.SetWidth(borderWidth);
-    setSize();
 }
 
 void RetroFuturaGUI::Tooltip::setSize()
@@ -197,6 +184,16 @@ RetroFuturaGUI::Background& RetroFuturaGUI::Tooltip::GetBackground()
 const RetroFuturaGUI::Background& RetroFuturaGUI::Tooltip::GetBackground() const
 {
     return _background;
+}
+
+RetroFuturaGUI::Border& RetroFuturaGUI::Tooltip::GetBorder()
+{
+    return _border;
+}
+
+const RetroFuturaGUI::Border& RetroFuturaGUI::Tooltip::GetBorder() const
+{
+    return _border;
 }
 
 RetroFuturaGUI::WidgetText& RetroFuturaGUI::Tooltip::GetText()

@@ -36,11 +36,7 @@ namespace RetroFuturaGUI
         /// @brief Sets the font of every ContextMenu, those created before this call included. A ContextMenu given its own font with SetFontFamily keeps it
         static void SetDefaultFontFamily(std::string_view fontFamily, const f32 fontSize, const FontSizeUnit sizeUnit, const PlatformBridge::Fonts::Slant slant, const PlatformBridge::Fonts::Weight fontWeight);
 
-        void SetBorderColors(std::span<const glm::vec4> colors);
         void SetFontFamily(std::string_view fontFamily, const f32 fontSize, const FontSizeUnit sizeUnit, const PlatformBridge::Fonts::Slant slant, const PlatformBridge::Fonts::Weight fontWeight);
-
-        /// @brief Sets the border width. The box grows with it, since the border draws inside the box.
-        void SetBorderWidth(const f32 borderWidth);
 
         /// @brief Adds an item with an optional SVG image and text/note labels to the named dropdown node. Use "Root" for the root dropdown
         /// @param imagePath The SVG file path. Each item creates and owns its own SvgImage through ResourceManager
@@ -59,16 +55,16 @@ namespace RetroFuturaGUI
         WidgetText& GetText();
         const WidgetText& GetText() const;
 
-        /// @brief Returns the button's background
+        /// @brief Returns the context menu's background
         Background& GetBackground();
 
-        /// @brief Returns the button's background
+        /// @brief Returns the context menu's background
         const Background& GetBackground() const;
 
-        /// @brief Returns the button's border
+        /// @brief Returns the context menu's border. The box grows with its width, since the border draws inside the box
         Border& GetBorder();
         
-        /// @brief Returns the button's border
+        /// @brief Returns the context menu's border
         const Border& GetBorder() const;
 
     private:
@@ -89,12 +85,9 @@ namespace RetroFuturaGUI
         Projection& _projection;
         IWidget* _widget { nullptr };
         std::unique_ptr<ExtendedComboBox> _items { nullptr };
-        std::vector<glm::vec4>
-            _backgroundColors {},
-            _borderColors {};
         Background _background { &_projection };
-        Border _border { &_projection };
-        WidgetText _text { &_projection };
+        Border _border { &_projection, { ._OnWidthChange = [this]() { setSize(); }, ._OnCornerRadiiChange = {} } };
+        WidgetText _text { &_projection, [this](const WidgetTextChange) { setSize(); } };
         std::string _fontFamily {};
         f32 _fontSize { FontManager::ToPixels(16.0f, FontSizeUnit::Points) };
         PlatformBridge::Fonts::Slant _fontSlant { PlatformBridge::Fonts::Slant::Roman };

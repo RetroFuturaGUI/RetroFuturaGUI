@@ -24,7 +24,9 @@ namespace RetroFuturaGUI
     class WidgetText final
     {
     public:
-        explicit WidgetText(Projection* projection);
+        /// @param changeHook What the owning widget does when the string, font or padding change, before OnTextChange fires: lay itself out again, say, or keep its caret in place
+        /// @param follower A second text taking the same font, alignment and padding: a text box's placeholder
+        explicit WidgetText(Projection* projection, std::function<void(WidgetTextChange)> changeHook = {}, WidgetText* follower = nullptr);
         WidgetText() = delete;
         WidgetText(const WidgetText&) = delete;
         WidgetText(WidgetText&&) = delete;
@@ -182,12 +184,6 @@ namespace RetroFuturaGUI
 
         /// @brief Has the colors move to new values over the widget's transitions
         void SetTransitionSettings(const TransitionSettings* settings);
-
-        /// @brief Sets what the widget does when the string, font or padding change, before OnTextChange fires. lay itself out again, say, or keep its caret in place
-        void SetChangeHook(const std::function<void(WidgetTextChange)>& hook);
-
-        /// @brief Sets a second text taking the same font, alignment and padding: a text box's placeholder.
-        void SetFollower(WidgetText* follower);
 
         /// @brief Emits OnTextChange for text the widget changed through GetElement
         void EmitChange();

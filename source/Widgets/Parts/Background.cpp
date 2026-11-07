@@ -1,12 +1,14 @@
 #include "Background.hpp"
 #include "IWidgetDecoration.hpp"
+#include "IncludeHelper.hpp"
 #include "ResourceManager.hpp"
 #include <algorithm>
 #include <cctype>
 #include <memory>
+#include <utility>
 
-RetroFuturaGUI::Background::Background(Projection* projection)
-    : IWidgetDecoration(projection)
+RetroFuturaGUI::Background::Background(Projection* projection, BackgroundHooks hooks)
+    : IWidgetDecoration(projection, std::move(hooks._OnCornerRadiiChange))
 {
     _backgroundPlane = std::make_unique<Plane>(_projection);
     setColors();
@@ -61,14 +63,6 @@ void RetroFuturaGUI::Background::SetRotation(const glm::vec3& rotation)
     _backgroundPlane->SetRotation(rotation);
 }
 
-glm::vec2 RetroFuturaGUI::Background::GetSize()
-{
-    if(!_backgroundPlane)
-        return glm::vec2(0.0f);
-
-    return _backgroundPlane->GetSize();
-}
-
 glm::vec2 RetroFuturaGUI::Background::GetSize() const
 {
     if(!_backgroundPlane)
@@ -77,28 +71,12 @@ glm::vec2 RetroFuturaGUI::Background::GetSize() const
     return _backgroundPlane->GetSize();
 }
 
-glm::vec3 RetroFuturaGUI::Background::GetPosition()
-{
-    if(!_backgroundPlane)
-        return glm::vec3(0.0f);
-
-    return _backgroundPlane->GetPosition();
-}
-
 glm::vec3 RetroFuturaGUI::Background::GetPosition() const
 {
     if(!_backgroundPlane)
         return glm::vec3(0.0f);
 
     return _backgroundPlane->GetPosition();
-}
-
-glm::vec3 RetroFuturaGUI::Background::GetRotation()
-{
-    if(!_backgroundPlane)
-        return glm::vec3(0.0f);
-
-    return _backgroundPlane->GetRotation();
 }
 
 glm::vec3 RetroFuturaGUI::Background::GetRotation() const
@@ -151,6 +129,8 @@ const std::vector<glm::vec4>& RetroFuturaGUI::Background::GetColors(const ColorS
             return _colorsDisabled;
         case ColorState::Hover:
             return _colorsHover;
+        case ColorState::Selected:
+            return _colorsSelected;
         default: // Enabled
             return _colorsEnabled;
     }
@@ -158,8 +138,6 @@ const std::vector<glm::vec4>& RetroFuturaGUI::Background::GetColors(const ColorS
 
 void RetroFuturaGUI::Background::SetFillType(const FillType fillType)
 {
-    _fillType = fillType;
-
     if(!_backgroundPlane)
         return;
 
@@ -174,7 +152,7 @@ void RetroFuturaGUI::Background::SetGaps(const BackgroundGap& gap)
     _backgroundPlane->SetBackgroundGaps(gap);
 }
 
-void RetroFuturaGUI::Background::SetWindowBackgroundImageTextureID(const u32 textureID)
+void RetroFuturaGUI::Background::SetWindowImageTextureID(const u32 textureID)
 {
     if(!_backgroundPlane)
         return;

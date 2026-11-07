@@ -81,7 +81,7 @@ namespace RetroFuturaGUI
 
         std::unique_ptr<Plane> _inheritFill { nullptr };
         std::unique_ptr<SvgTexture> _checkmark { nullptr }; //its own, so its colors and place are this box's alone
-        Background _background { &_projection };
+        Background _background { &_projection, { ._OnCornerRadiiChange = [this]() { updateInheritFillShape(); } } }; //the inherit fill has the same corners
         Border _border { &_projection };
         bool* _inheritValue { nullptr };
         bool

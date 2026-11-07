@@ -16,15 +16,15 @@ RetroFuturaGUI::ITextBox::ITextBox(std::string_view name, Projection* projection
     _selectedArea.SetTransitionSettings(&_transitionSettings);
     _background.SetTransitionSettings(&_transitionSettings);
     _border.SetTransitionSettings(&_transitionSettings);
+}
+
+void RetroFuturaGUI::ITextBox::textChanged(const WidgetTextChange change)
+{
+    if(WidgetTextChange::String != change)
+        return;
 
     //Text set by code rather than typed. No keystroke placed the caret and its old place may lie past the new text's end
-    _text.SetChangeHook([this](const WidgetTextChange change)
-    {
-        if(WidgetTextChange::String != change)
-            return;
-
-        placeCaretAfterText();
-    });
+    placeCaretAfterText();
 }
 
 void RetroFuturaGUI::ITextBox::Draw()

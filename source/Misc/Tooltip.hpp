@@ -35,26 +35,22 @@ namespace RetroFuturaGUI
         /// @brief Sets the font of every tooltip, those created before this call included. A tooltip given its own font with SetFontFamily keeps it
         static void SetDefaultFontFamily(std::string_view fontFamily, const f32 fontSize, const FontSizeUnit sizeUnit, const PlatformBridge::Fonts::Slant slant, const PlatformBridge::Fonts::Weight fontWeight);
 
-        void SetBorderColors(std::span<const glm::vec4> colors);
         void SetFontFamily(std::string_view fontFamily, const f32 fontSize, const FontSizeUnit sizeUnit, const PlatformBridge::Fonts::Slant slant, const PlatformBridge::Fonts::Weight fontWeight);
-
-        /// @brief Sets the border width. The box grows with it, since the border draws inside the box
-        void SetBorderWidth(const f32 borderWidth);
 
         /// @brief Returns the widget's text: its string, font, colors and effects
         WidgetText& GetText();
         const WidgetText& GetText() const;
 
-        /// @brief Returns the button's background
+        /// @brief Returns the tooltip's background
         Background& GetBackground();
         
-        /// @brief Returns the button's background
+        /// @brief Returns the tooltip's background
         const Background& GetBackground() const;
 
-        /// @brief Returns the button's border
+        /// @brief Returns the tooltip's border. The box grows with its width, since the border draws inside the box
         Border& GetBorder();
         
-        /// @brief Returns the button's border
+        /// @brief Returns the tooltip's border
         const Border& GetBorder() const;
 
     private:
@@ -72,11 +68,8 @@ namespace RetroFuturaGUI
         Projection& _projection;
         IWidget* _widget { nullptr };
         Background _background { &_projection };
-        Border _border { &_projection };
-        WidgetText _text { &_projection };
-        std::vector<glm::vec4>
-            _backgroundColors {},
-            _borderColors {};
+        Border _border { &_projection, { ._OnWidthChange = [this]() { setSize(); }, ._OnCornerRadiiChange = {} } };
+        WidgetText _text { &_projection, [this](const WidgetTextChange) { setSize(); } };
         bool
             _isHovering { false },
             _isShown { false },

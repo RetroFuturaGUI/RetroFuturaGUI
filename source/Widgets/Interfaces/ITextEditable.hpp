@@ -25,19 +25,22 @@ namespace RetroFuturaGUI
         const WidgetText& GetPlaceholder() const;
 
     protected:
-        /// @brief Creates the text and the placeholder.
+        /// @brief Creates the text and the placeholder
         explicit ITextEditable(Projection* projection);
-    //ITextInteraction hooks: this widget edits the single Text it owns. ITextEditVisuals draws its caret and selection.
+    //ITextInteraction hooks: this widget edits the single Text it owns. ITextEditVisuals draws its caret and selection
         Text* getActiveText() const override final;
         void emitChange() override;
         bool isTextReadOnly() const override final;
+
+        /// @brief Called when the text's string, font or padding change, before OnTextChange fires
+        virtual void textChanged(const WidgetTextChange) {}
 
     //input logic
         bool _readOnly { false };
         std::vector<char> _prevKeyStates {};
 
     //Text
-        mutable WidgetText _text; //getActiveText hands it out for editing, also from const functions.
-        WidgetText _placeholder;
+        WidgetText _placeholder; //follows _text, so it is declared before it
+        mutable WidgetText _text; //getActiveText hands it out for editing, also from const functions
     };
 }

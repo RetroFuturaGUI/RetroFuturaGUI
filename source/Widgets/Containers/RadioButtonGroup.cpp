@@ -17,7 +17,6 @@ RetroFuturaGUI::RadioButtonGroup::RadioButtonGroup(const std::string& name, Proj
 {
     _widgetTypeID = WidgetTypeID::RadioButtonGroup;
     _text.SetTransitionSettings(&_transitionSettings);
-    _text.SetChangeHook([this](const WidgetTextChange) { updateLabelLayout(); });
     _border.SetTransitionSettings(&_transitionSettings);
 }
 

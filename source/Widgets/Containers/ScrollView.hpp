@@ -239,7 +239,7 @@ namespace RetroFuturaGUI
         void performPendingRemoval();
 
         Background _background { &_projection };
-        Border _border { &_projection };
+        Border _border { &_projection, { ._OnWidthChange = [this]() { layoutCells(); }, ._OnCornerRadiiChange = {} } }; //the cells scroll through what the border leaves inside it
         ScrollEnable _enableMask { ScrollEnable::Y };
         ScrollAxis _alignmentDirection { ScrollAxis::Vertical };
         CellSpanAlignment _cellSpanAlignment {};

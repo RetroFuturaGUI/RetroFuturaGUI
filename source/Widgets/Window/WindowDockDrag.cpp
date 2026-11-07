@@ -77,7 +77,7 @@ void RetroFuturaGUI::Window::updateDockSnap()
     const DockRect host { _dockSnap._Target->getScreenRect() };
     const uSize count { _dockSnap._Target->dockedWindows(_dockSnap._Edge).size() + 1 };
     const i32 gap { _dockSnap._Target->edgeGap(_dockSnap._Edge, this) };
-    showDockPreview(_dockSnap._Target->dockSlot(host, _dockSnap._Edge, _dockSnap._Index, count, dockDepth(_dockSnap._Edge), gap), cornerRadiiDockedAt(_dockSnap._Edge));
+    showDockPreview(_dockSnap._Target->dockSlot(host, _dockSnap._Edge, _dockSnap._Index, count, dockDepth(_dockSnap._Edge), gap), cornerRadiiDockedAt(_backgroundCornerRadii, _dockSnap._Edge));
 }
 
 RetroFuturaGUI::Window::DockSnap RetroFuturaGUI::Window::findDockSnap() const
@@ -264,9 +264,9 @@ void RetroFuturaGUI::Window::showDockPreview(const DockRect& slot, const glm::ve
         glfwShowWindow(_dockPreview->_window);
 }
 
-glm::vec4 RetroFuturaGUI::Window::cornerRadiiDockedAt(const DockEdge edge) const
+glm::vec4 RetroFuturaGUI::Window::cornerRadiiDockedAt(const glm::vec4& asked, const DockEdge edge) const
 {
-    glm::vec4 radii { _cornerRadii };
+    glm::vec4 radii { asked };
 
     if(!_noCornerRadiiWhenDocked)
         return radii;

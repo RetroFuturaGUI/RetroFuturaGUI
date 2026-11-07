@@ -107,7 +107,7 @@ namespace RetroFuturaGUI
         void updateGridLayout();
 
         Border _border { &_projection };
-        WidgetText _text { &_projection };
+        WidgetText _text { &_projection, [this](const WidgetTextChange) { updateLabelLayout(); } };
         f32 
             _textLeftPadding { 0.0f },
             _borderPadding { 0.0f };

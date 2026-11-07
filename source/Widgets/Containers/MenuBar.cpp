@@ -15,7 +15,8 @@ RetroFuturaGUI::MenuBar::MenuBar(const std::string& name, Projection* projection
     _widgetTypeID = WidgetTypeID::MenuBar;
     _itemBackground = std::make_unique<Plane>(projection);
     _itemBorder = std::make_unique<Frame>(projection);
-    useTransitions({ }); //the item background and border draw once per item, in its colors, so they switch at once
+    //The item background and border draw once per item, in its colors, so they switch at once
+    _background.SetTransitionSettings(&_transitionSettings);
     _border.SetTransitionSettings(&_transitionSettings);
 
     if(!_itemBackground)

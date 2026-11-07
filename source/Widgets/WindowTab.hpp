@@ -144,16 +144,16 @@ namespace RetroFuturaGUI
         /// @brief Returns the corner radii of the content area.
         const glm::vec4& GetContentCornerRadii() const;
         
-        /// @brief Returns the button's background
+        /// @brief Returns the WindowTab's background
         Background& GetBackground();
         
-        /// @brief Returns the button's background
+        /// @brief Returns the WindowTab's background
         const Background& GetBackground() const;
         
-        /// @brief Returns the button's border
+        /// @brief Returns the WindowTab's border
         Border& GetBorder();
         
-        /// @brief Returns the button's border
+        /// @brief Returns the WindowTab's border
         const Border& GetBorder() const;
 
     protected:

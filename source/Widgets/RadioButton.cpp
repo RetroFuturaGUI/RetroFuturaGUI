@@ -17,6 +17,7 @@ RetroFuturaGUI::RadioButton::RadioButton(const std::string& name, Projection* pr
     _widgetTypeID = WidgetTypeID::RadioButton;
     _indicator = std::make_unique<Plane>(projection);
     useTransitions({ _indicator.get() });
+    _background.SetTransitionSettings(&_transitionSettings);
     _border.SetTransitionSettings(&_transitionSettings);
     _parentGroup = parentGroup;
 }
@@ -32,7 +33,6 @@ void RetroFuturaGUI::RadioButton::Draw()
     if(!_isChecked)
         return;
 
-    updateIndicatorShape();
     _indicator->Draw();
 }
 
@@ -111,18 +111,7 @@ void RetroFuturaGUI::RadioButton::updateIndicatorShape()
     if(!_indicator)
         return;
 
-    /*const glm::vec4&
-        backgroundCornerRadii { _background.GetCornerRadii() },
-        indicatorCornerRadii { _indicator->GetCornerRadii() };
-
-    if((std::bit_cast<u32>(backgroundCornerRadii.x) & 0xFFFF0000) != (std::bit_cast<u32>(indicatorCornerRadii.x) & 0xFFFF0000)
-        || (std::bit_cast<u32>(backgroundCornerRadii.y) & 0xFFFF0000) != (std::bit_cast<u32>(indicatorCornerRadii.y) & 0xFFFF0000)
-        || (std::bit_cast<u32>(backgroundCornerRadii.z) & 0xFFFF0000) != (std::bit_cast<u32>(indicatorCornerRadii.z) & 0xFFFF0000)
-        || (std::bit_cast<u32>(backgroundCornerRadii.w) & 0xFFFF0000) != (std::bit_cast<u32>(indicatorCornerRadii.w) & 0xFFFF0000)
-      )
-    {*/
     _indicator->SetCornerRadii(_background.GetCornerRadii() - _border.GetWidth() - _indicatorPadding);
-    //}
 }
 
 void RetroFuturaGUI::RadioButton::SetIndicatorGradientOffset(const f32 gradientOffset)
@@ -262,6 +251,7 @@ void RetroFuturaGUI::RadioButton::SetIndicatorPadding(const f32 pixels)
     size -= glm::vec3(_indicatorPadding * 2,  _indicatorPadding * 2, 0.0f);
 
     _indicator->SetSize(size);
+    updateIndicatorShape();
 }
 
 void RetroFuturaGUI::RadioButton::SetParentGroup(RadioButtonGroup* parentGroup)
@@ -277,4 +267,14 @@ RetroFuturaGUI::Background& RetroFuturaGUI::RadioButton::GetBackground()
 const RetroFuturaGUI::Background& RetroFuturaGUI::RadioButton::GetBackground() const
 {
     return _background;
+}
+
+RetroFuturaGUI::Border& RetroFuturaGUI::RadioButton::GetBorder()
+{
+    return _border;
+}
+
+const RetroFuturaGUI::Border& RetroFuturaGUI::RadioButton::GetBorder() const
+{
+    return _border;
 }

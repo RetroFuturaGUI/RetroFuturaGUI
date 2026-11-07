@@ -229,7 +229,7 @@ void RetroFuturaGUI::DynamicLibWidgetManager::SetWindowBackgroundImageTextureID(
         case WidgetTypeID::Button:
         {
             Button* button = dynamic_cast<Button*>(widget);
-            button->GetBackground().SetWindowBackgroundImageTextureID(textureID);
+            button->GetBackground().SetWindowImageTextureID(textureID);
         } break;
         default:
             [[unlikely]];

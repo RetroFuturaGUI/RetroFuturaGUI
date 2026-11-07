@@ -1,7 +1,8 @@
 #include "IWidgetDecoration.hpp"
+#include <utility>
 
-RetroFuturaGUI::IWidgetDecoration::IWidgetDecoration(Projection* projection)
-    : _projection(projection)
+RetroFuturaGUI::IWidgetDecoration::IWidgetDecoration(Projection* projection, std::function<void()> onCornerRadiiChange)
+    : _projection(projection), _onCornerRadiiChange(std::move(onCornerRadiiChange))
 {
 
 }
@@ -44,4 +45,9 @@ void RetroFuturaGUI::IWidgetDecoration::SetCornerRadii(const glm::vec4& radii)
 {
    _cornerRadii = radii;
    setCornerRadii();
+
+    if(!_onCornerRadiiChange)
+        return;
+
+    _onCornerRadiiChange();
 }

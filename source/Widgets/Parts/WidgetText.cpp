@@ -1,7 +1,8 @@
 #include "WidgetText.hpp"
+#include <utility>
 
-RetroFuturaGUI::WidgetText::WidgetText(Projection* projection)
-    : _text(projection), _outline(_text)
+RetroFuturaGUI::WidgetText::WidgetText(Projection* projection, std::function<void(WidgetTextChange)> changeHook, WidgetText* follower)
+    : _text(projection), _outline(_text), _changeHook(std::move(changeHook)), _follower(follower)
 {
 }
 
@@ -259,16 +260,6 @@ void RetroFuturaGUI::WidgetText::SetColorState(const ColorState state)
 void RetroFuturaGUI::WidgetText::SetTransitionSettings(const TransitionSettings* settings)
 {
     _text.SetTransitionSettings(settings);
-}
-
-void RetroFuturaGUI::WidgetText::SetChangeHook(const std::function<void(WidgetTextChange)>& hook)
-{
-    _changeHook = hook;
-}
-
-void RetroFuturaGUI::WidgetText::SetFollower(WidgetText* follower)
-{
-    _follower = follower;
 }
 
 void RetroFuturaGUI::WidgetText::EmitChange()

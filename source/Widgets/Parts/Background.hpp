@@ -1,6 +1,7 @@
 #pragma once
 #include "IncludeHelper.hpp"
 #include <array>
+#include <functional>
 #include <memory>
 #include <span>
 #include "Plane.hpp"
@@ -10,12 +11,18 @@
 
 namespace RetroFuturaGUI
 {
+    /// @brief What a background tells its owning widget, for a layout that depends on it
+    struct BackgroundHooks
+    {
+        std::function<void()> _OnCornerRadiiChange {};
+    };
+
     /// @brief A widget's background: a filled or gradient rectangle with optional raster, fog, glass, mask and image. The widget
     ///        owns it and hands it out through GetBackground(), so it is styled as button.GetBackground().SetColors(...)
     class Background final : public IWidgetDecoration
     {
     public:
-        Background(Projection* projection);
+        explicit Background(Projection* projection, BackgroundHooks hooks = {});
         Background() = delete;
         Background(const Background&) = delete;
         Background(Background&&) = delete;
@@ -26,7 +33,7 @@ namespace RetroFuturaGUI
         /// @brief Draws the fill, then an SVG image over it
         void Draw() override;
 
-        /// @brief Sizes the background size
+        /// @brief Sizes the background.
         void SetSize(const glm::vec2& size) override;
 
         /// @brief Places the background
@@ -35,17 +42,14 @@ namespace RetroFuturaGUI
         /// @brief Turns the background
         void SetRotation(const glm::vec3& rotation) override;
 
-        /// @brief returns the background's size
-        glm::vec2 GetSize() override;
-        glm::vec2 GetSize() const;
+        /// @brief Returns the background's size
+        glm::vec2 GetSize() const override;
 
-        /// @brief returns the background's position
-        glm::vec3 GetPosition() override;
-        glm::vec3 GetPosition() const;
+        /// @brief Returns the background's position
+        glm::vec3 GetPosition() const override;
 
-        /// @brief Returns the Background's rotation
-        glm::vec3 GetRotation() override;
-        glm::vec3 GetRotation() const;
+        /// @brief Returns the background's rotation
+        glm::vec3 GetRotation() const override;
 
         /// @brief Has the colors and corner radii move to new values over the owning widget's transitions.
         void SetTransitionSettings(const TransitionSettings* settings);
@@ -63,7 +67,7 @@ namespace RetroFuturaGUI
         void SetGradientRotationSpeed(const f32 rotationSpeed);
 
         /// @brief Sets the texture ID sampled for the background's glass-effect-with-image shader feature. 0 turns the glass off.
-        void SetWindowBackgroundImageTextureID(const u32 textureID);
+        void SetWindowImageTextureID(const u32 textureID);
 
         /// @brief Sets the dot color used for the background's Dotted raster pattern.
         void SetPrimaryRasterColor(const glm::vec4& color);
@@ -97,7 +101,7 @@ namespace RetroFuturaGUI
 
         /// @brief Shows an image file (UTF-8) on the background. A picture (png, jpg, ...) sits behind the fill, and comes from
         ///        ResourceManager, which keeps it until ResourceManager::Free. An SVG sits over the fill as an SvgTexture of the
-        ///        background's own, so SetBackgroundImagePathFill can recolor its paths.
+        ///        background's own, so SetImagePathFill can recolor its paths
         void SetImage(std::string_view imagePath);
         /// @brief Returns the raster image texture ID, or 0 when the background has no raster image.
         u32 GetImageTextureID() const;
@@ -109,7 +113,7 @@ namespace RetroFuturaGUI
         void SetImageFit(const ImageFit fit);
 
         /// @brief Sets a grayscale mask laid over the background, its red channel the gray: as transparency or as shading
-        ///        (SetBackgroundMaskMode). 0 shows no mask.
+        ///        (SetMaskMode). 0 shows no mask
         void SetMaskTextureID(const u32 textureID);
 
         /// @brief Sets what the background mask does: make the background transparent/Alpha (default) or shade it (Shade).

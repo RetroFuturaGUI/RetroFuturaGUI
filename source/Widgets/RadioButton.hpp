@@ -58,16 +58,16 @@ namespace RetroFuturaGUI
         /// @param a float extressing the distance in pixels
         void SetIndicatorPadding(const f32 pixels);
         
-        /// @brief Returns the button's background
+        /// @brief Returns the radio button's background
         Background& GetBackground();
         
-        /// @brief Returns the button's background
+        /// @brief Returns the radio button's background
         const Background& GetBackground() const;
         
-        /// @brief Returns the button's border
+        /// @brief Returns the radio button's border
         Border& GetBorder();
         
-        /// @brief Returns the button's border
+        /// @brief Returns the radio button's border
         const Border& GetBorder() const;
 
     protected:
@@ -84,8 +84,8 @@ namespace RetroFuturaGUI
         void updateIndicatorShape();
 
         std::unique_ptr<Plane> _indicator { nullptr };
-        Background _background { &_projection };
-        Border _border { &_projection };
+        Background _background { &_projection, { ._OnCornerRadiiChange = [this]() { updateIndicatorShape(); } } }; //the indicator's corners follow the background's
+        Border _border { &_projection, { ._OnWidthChange = [this]() { updateIndicatorShape(); }, ._OnCornerRadiiChange = {} } }; //and sit inside the border
         RadioButtonGroup* _parentGroup { nullptr };
         bool _isChecked { false };
         f32 _indicatorPadding { 2.0f };

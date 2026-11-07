@@ -30,10 +30,10 @@ namespace RetroFuturaGUI
         /// to hold it, so the background gap is driven from here rather than set directly
         void ShowText(const bool enable);
 
-        /// @brief Returns the button's background
+        /// @brief Returns the line's background
         Background& GetBackground();
         
-        /// @brief Returns the button's background
+        /// @brief Returns the line's background
         const Background& GetBackground() const;
 
 
@@ -47,7 +47,7 @@ namespace RetroFuturaGUI
         void updateLayout();
 
         Background _background { &_projection };
-        WidgetText _text { &_projection };
+        WidgetText _text { &_projection, [this](const WidgetTextChange) { updateLayout(); } }; //the text's size is the gap's
         f32 _textLeftPadding { 50.0f };
         bool _showText { false };
     };

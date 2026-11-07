@@ -404,8 +404,8 @@ void RetroFuturaGUI::Window::createWindow()
     }
 
     _projection = std::make_unique<Projection>((float)_width, (float)_height);
-    _background.emplace(_projection.get());
-    _border.emplace(_projection.get());
+    _background.emplace(_projection.get(), BackgroundHooks { ._OnCornerRadiiChange = [this]() { takeCornerRadii(_backgroundCornerRadii, *_background); } });
+    _border.emplace(_projection.get(), BorderHooks { ._OnWidthChange = {}, ._OnCornerRadiiChange = [this]() { takeCornerRadii(_borderCornerRadii, *_border); } });
     _background->SetTransitionSettings(&_transitionSettings);
     _background->SetPosition(glm::vec3((f32)_width * 0.5f, (f32)_height * 0.5f, -1.0f));
     _background->SetSize(glm::vec2((f32)_width, (f32)_height));
@@ -420,7 +420,7 @@ void RetroFuturaGUI::Window::createWindow()
     _border->SetRotation(glm::vec3(0.0f));
     //No frame until one is asked for, since a Frame starts with a 5 px border
     _border->SetWidth(0.0f);
-    _background->SetColors(std::array { glm::vec4(0.0f, 0.0f, 0.0f, 1.0f) }, ColorState::Enabled);
+    _background->SetColors(std::array { glm::vec4(0.086f, 0.086f, 0.1137f, 1.0f) }, ColorState::Enabled);
 }
 
 std::vector<RetroFuturaGUI::Window*>& RetroFuturaGUI::Window::getAllWindows()

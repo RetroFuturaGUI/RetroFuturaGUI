@@ -11,9 +11,8 @@
 #include <GLFW/glfw3native.h>
 
 RetroFuturaGUI::ITextEditable::ITextEditable(Projection* projection)
-    : ITextEditVisuals(projection), _text(projection), _placeholder(projection)
+    : ITextEditVisuals(projection), _placeholder(projection), _text(projection, [this](const WidgetTextChange change) { textChanged(change); }, &_placeholder)
 {
-    _text.SetFollower(&_placeholder);
     _placeholder.SetColors(std::array { glm::vec4(0.5f, 0.5f, 0.5f, 1.0f) }, ColorState::Enabled);
 }
 

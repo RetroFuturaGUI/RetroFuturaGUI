@@ -1,9 +1,14 @@
 #include "Border.hpp"
+#include <utility>
 
-RetroFuturaGUI::Border::Border(Projection* projection)
-    : IWidgetDecoration(projection)
+RetroFuturaGUI::Border::Border(Projection* projection, BorderHooks hooks)
+    : IWidgetDecoration(projection, std::move(hooks._OnCornerRadiiChange)), _onWidthChange(std::move(hooks._OnWidthChange))
 {
     _borderFrame = std::make_unique<Frame>(_projection);
+    _colorsEnabled = { glm::vec4(0.25f, 0.25f, 0.25f, 1.0f) };
+    _colorsDisabled = { glm::vec4(0.2f, 0.2f, 0.2f, 1.0f) };
+    _colorsClicked = { glm::vec4(0.3f, 0.3f, 1.3f, 1.0f) };
+    _colorsHover = { glm::vec4(0.275f, 0.275f, 0.275f, 1.0f) };
     setColors();
 }
 
@@ -55,7 +60,7 @@ void RetroFuturaGUI::Border::SetRotation(const glm::vec3& rotation)
     _borderFrame->SetRotation(rotation);
 }
 
-glm::vec2 RetroFuturaGUI::Border::GetSize()
+glm::vec2 RetroFuturaGUI::Border::GetSize() const
 {
     if(!_borderFrame)
         return glm::vec2(0.0f);
@@ -63,7 +68,7 @@ glm::vec2 RetroFuturaGUI::Border::GetSize()
     return _borderFrame->GetSize();
 }
 
-glm::vec3 RetroFuturaGUI::Border::GetPosition()
+glm::vec3 RetroFuturaGUI::Border::GetPosition() const
 {
     if(!_borderFrame)
         return glm::vec3(0.0f);
@@ -71,7 +76,7 @@ glm::vec3 RetroFuturaGUI::Border::GetPosition()
     return _borderFrame->GetPosition();
 }
 
-glm::vec3 RetroFuturaGUI::Border::GetRotation()
+glm::vec3 RetroFuturaGUI::Border::GetRotation() const
 {
     if(!_borderFrame)
         return glm::vec3(0.0f);
@@ -79,7 +84,7 @@ glm::vec3 RetroFuturaGUI::Border::GetRotation()
     return _borderFrame->GetRotation();
 }
 
-const std::vector<glm::vec4>& RetroFuturaGUI::Border::GetColor(const ColorState state) const
+const std::vector<glm::vec4>& RetroFuturaGUI::Border::GetColors(const ColorState state) const
 {
     switch(state)
     {
@@ -89,6 +94,8 @@ const std::vector<glm::vec4>& RetroFuturaGUI::Border::GetColor(const ColorState 
             return _colorsDisabled;
         case ColorState::Hover:
             return _colorsHover;
+        case ColorState::Selected:
+            return _colorsSelected;
         default: // Enabled
             return _colorsEnabled;
     }
@@ -96,8 +103,6 @@ const std::vector<glm::vec4>& RetroFuturaGUI::Border::GetColor(const ColorState 
 
 void RetroFuturaGUI::Border::SetFillType(const FillType fillType)
 {
-    _fillType = fillType;
-
     if(!_borderFrame)
         return;
 
@@ -192,14 +197,6 @@ void RetroFuturaGUI::Border::SetRasterAnimationSpeed(const f32 animationSpeed)
     _borderFrame->SetRasterAnimationSpeed(animationSpeed);
 }
 
-void RetroFuturaGUI::Border::draw()
-{
-    if(!_borderFrame)
-        return;
-
-    _borderFrame->Draw();
-}
-
 void RetroFuturaGUI::Border::setColors()
 {
     if(!_borderFrame)
@@ -230,6 +227,11 @@ void RetroFuturaGUI::Border::SetWidth(const f32 borderWidth)
         return;
 
     _borderFrame->SetBorderWidth(borderWidth);
+
+    if(!_onWidthChange)
+        return;
+
+    _onWidthChange();
 }
 
 void RetroFuturaGUI::Border::SetGaps(std::span<BorderGap> gaps)

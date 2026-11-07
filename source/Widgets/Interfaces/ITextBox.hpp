@@ -8,17 +8,17 @@
 
 namespace RetroFuturaGUI
 {
-    //Everything TextBox and MultilineTextBox share: the box around the text, mouse interaction and editing.
+    //Everything TextBox and MultilineTextBox share: the box around the text, mouse interaction and editing
     class ITextBox : public IWidget, public IClickable, public ITextEditable
     {
     public:
-        /// @brief Draws the text box, including its background, border, text, caret and selection highlight.
+        /// @brief Draws the text box, including its background, border, text, caret and selection highlight
         void Draw() final override;
 
         Background& GetBackground();
         const Background& GetBackground() const;
 
-        /// @brief Takes the keystrokes as a click into the box would, with its whole text selected and the caret at its end, so a dialog opens ready for typing.
+        /// @brief Takes the keystrokes as a click into the box would, with its whole text selected and the caret at its end, so a dialog opens ready for typing
         void TakeKeyboardFocus();
 
         /// @brief Returns the TextBox's border
@@ -30,12 +30,13 @@ namespace RetroFuturaGUI
     //Geometry
 
     protected:
-        /// @brief Creates the box, text, placeholder, caret and selection. Protected: only TextBox and MultilineTextBox create one, and set their own widget type.
+        /// @brief Creates the box, text, placeholder, caret and selection. Protected: only TextBox and MultilineTextBox create one, and set their own widget type
         ITextBox(std::string_view name, Projection* projection, IHierarchyNode* parentWidget, const WidgetTypeID parentWidgetTypeID, GLFWwindow* parentWindow);
 
         void interact() override;
         void setColors(const ColorState state) final override;
         TextArea getTextArea() const override final;
+        void textChanged(const WidgetTextChange change) override;
     protected:
         /// @brief Sets the size of the text box.
         void applySize(const glm::vec3& size) final override;

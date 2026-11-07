@@ -31,10 +31,7 @@ void RetroFuturaGUI::CheckBox::Draw()
     _border.Draw();
 
     if(_useInheritValue && _inheritValue)
-    {
-        updateInheritFillShape();
         _inheritFill->Draw();
-    }
 
     if(!_isChecked)
         return;
@@ -145,18 +142,7 @@ void RetroFuturaGUI::CheckBox::updateInheritFillShape()
     if(!_inheritFill)
         return;
 
-    /*const glm::vec4&
-        backgroundCornerRadii { _background.GetCornerRadii() },
-        inheritFillCornerRadii { _inheritFill->GetCornerRadii() };
-
-    if((std::bit_cast<u32>(backgroundCornerRadii.x) & 0xFFFF0000) != (std::bit_cast<u32>(inheritFillCornerRadii.x) & 0xFFFF0000)
-        || (std::bit_cast<u32>(backgroundCornerRadii.y) & 0xFFFF0000) != (std::bit_cast<u32>(inheritFillCornerRadii.y) & 0xFFFF0000)
-        || (std::bit_cast<u32>(backgroundCornerRadii.z) & 0xFFFF0000) != (std::bit_cast<u32>(inheritFillCornerRadii.z) & 0xFFFF0000)
-        || (std::bit_cast<u32>(backgroundCornerRadii.w) & 0xFFFF0000) != (std::bit_cast<u32>(inheritFillCornerRadii.w) & 0xFFFF0000)
-      )
-    {*/
     _inheritFill->SetCornerRadii(_background.GetCornerRadii());
-    //}
 }
 
 void RetroFuturaGUI::CheckBox::SetInheritColors(std::span<const glm::vec4> colors, const ColorState state)

@@ -60,7 +60,6 @@ RetroFuturaGUI::ContextMenu::ContextMenu(Projection* projection, IWidget* widget
     _border.SetWidth(_defaultBorderWidth);
     _text.SetPadding(_defaultTextPadding);
     _text.SetColorState(ColorState::Enabled);
-    _text.SetChangeHook([this](const WidgetTextChange) { setSize(); }); //the box holds the text
     applyDefaultFont();
     setSize();
 }
@@ -264,12 +263,6 @@ RetroFuturaGUI::ExtendedComboBox* RetroFuturaGUI::ContextMenu::iterateNode(Exten
     return nullptr;
 }
 
-void RetroFuturaGUI::ContextMenu::SetBorderColors(std::span<const glm::vec4> colors)
-{
-    _borderColors.assign(colors.begin(), colors.end());
-    _border.SetColors(_borderColors, ColorState::Enabled);
-}
-
 void RetroFuturaGUI::ContextMenu::SetFontFamily(std::string_view fontFamily, const f32 fontSize, const FontSizeUnit sizeUnit, const PlatformBridge::Fonts::Slant slant, const PlatformBridge::Fonts::Weight fontWeight)
 {
     _hasOwnFont = true;
@@ -292,7 +285,7 @@ void RetroFuturaGUI::ContextMenu::useWidgetTransitions()
         return;
 
     _background.SetTransitionSettings(&_widget->_transitionSettings);
-
+    _border.SetTransitionSettings(&_widget->_transitionSettings);
     _text.SetTransitionSettings(&_widget->_transitionSettings);
 }
 
@@ -359,12 +352,6 @@ void RetroFuturaGUI::ContextMenu::setItemFont(ExtendedComboBox* comboBox) const
             setItemFont(childComboBox);
         }
     }
-}
-
-void RetroFuturaGUI::ContextMenu::SetBorderWidth(const f32 borderWidth)
-{
-    _border.SetWidth(borderWidth);
-    setSize();
 }
 
 void RetroFuturaGUI::ContextMenu::setSize()
@@ -449,6 +436,16 @@ RetroFuturaGUI::Background& RetroFuturaGUI::ContextMenu::GetBackground()
 const RetroFuturaGUI::Background& RetroFuturaGUI::ContextMenu::GetBackground() const
 {
     return _background;
+}
+
+RetroFuturaGUI::Border& RetroFuturaGUI::ContextMenu::GetBorder()
+{
+    return _border;
+}
+
+const RetroFuturaGUI::Border& RetroFuturaGUI::ContextMenu::GetBorder() const
+{
+    return _border;
 }
 
 RetroFuturaGUI::WidgetText& RetroFuturaGUI::ContextMenu::GetText()

@@ -4,16 +4,16 @@ RetroFuturaGUI::TextBox::TextBox(const std::string& name, Projection* projection
    : ITextBox(name, projection, parentWidget, parentWidgetTypeID, parentWindow)
 {
     _widgetTypeID = WidgetTypeID::TextBox;
+}
+
+void RetroFuturaGUI::TextBox::textChanged(const WidgetTextChange change)
+{
+    if(WidgetTextChange::String != change)
+        return;
 
     //Text set by code reaches the value store too, and the caret stays inside it. SetValue renders without coming through here
-    _text.SetChangeHook([this](const WidgetTextChange change)
-    {
-        if(WidgetTextChange::String != change)
-            return;
-
-        updateValueStore(_text.GetString());
-        placeCaretAfterText();
-    });
+    updateValueStore(_text.GetString());
+    placeCaretAfterText();
 }
 
 void RetroFuturaGUI::TextBox::emitChange()

@@ -134,13 +134,15 @@ namespace RetroFuturaGUI
         void Disconnect_OnFilesDropped(const typename Signal<std::vector<std::string>, glm::vec2>::Slot& slot);
 
     //Layout and drawing
-        /// @brief Returns the window's background
+        /// @brief Returns the window's background. Docking squares the corners of the radii set on it where windows meet, see
+        ///        EnableSquaredCornersWhenDocked
         Background& GetBackground();
 
         /// @brief Returns the window's background
         const Background& GetBackground() const;
 
-        /// @brief Returns the window's border
+        /// @brief Returns the window's border. Docking squares the corners of the radii set on it where windows meet, see
+        ///        EnableSquaredCornersWhenDocked
         Border& GetBorder();
 
         /// @brief Returns the window's border
@@ -172,8 +174,8 @@ namespace RetroFuturaGUI
         /// @brief Shows the window's content flat (default), and lays the content out again
         void SetOrthographic();
 
-        /// @brief Returns the radii the background and border are drawn with: the ones set, with the corners where docked windows
-        ///        meet squared. A widget lining the window's edge, such as a window bar, can match its own corners to them.
+        /// @brief Returns the radii the background is drawn with: the ones set on it, with the corners where docked windows meet
+        ///        squared. A widget lining the window's edge, such as a window bar, can match its own corners to them
         glm::vec4 GetDrawnCornerRadii() const;
 
         /// @brief Sets how the background's and the border's colors or corner radii move to new values, squaring when docked included, in place of the global default (Transitions::SetDefault).
@@ -371,6 +373,12 @@ namespace RetroFuturaGUI
         /// @brief Hands the corner radii to the background and border, with the corners where docked windows meet squared.
         void applyCornerRadii();
 
+        /// @brief Keeps the radii a part was given as the ones asked for, unless the window is applying its drawn radii
+        void takeCornerRadii(glm::vec4& asked, const IWidgetDecoration& part);
+
+        /// @brief The radii with the corners where docked windows meet squared, or the tab's while the window is in a tab
+        glm::vec4 drawnCornerRadii(const glm::vec4& radii) const;
+
         /// @brief Whether the scene draws and takes its space: it is active, and not hidden while this window is in a tab.
         bool isSceneShown(const Scene* scene) const;
 
@@ -452,7 +460,7 @@ namespace RetroFuturaGUI
 
         /// @brief This window's corner radii with the corners that would meet a window it docks to on the given edge squared, the
         ///        way they will be once it is docked.
-        glm::vec4 cornerRadiiDockedAt(const DockEdge edge) const;
+        glm::vec4 cornerRadiiDockedAt(const glm::vec4& radii, const DockEdge edge) const;
 
         /// @brief Hides the docking preview, if it shows: fades it out over its Opacity transition, at once without one.
         void hideDockPreview();
@@ -629,8 +637,11 @@ namespace RetroFuturaGUI
         ScreenRect _clientRect {};
         glm::ivec2 _lastSize = { _width, _height };
         glm::vec4
-            _cornerRadii { 0.0f },
-            _appliedCornerRadii { -1.0f }; //what the background and border last got, so they are only set again on a change
+            _backgroundCornerRadii { 0.0f }, //the radii asked for, before docking squares any corner
+            _borderCornerRadii { 0.0f },
+            _appliedBackgroundCornerRadii { -1.0f }, //what the background and border last got, so they are only set again on a change
+            _appliedBorderCornerRadii { -1.0f };
+        bool _isApplyingCornerRadii { false }; //the parts' radii change because the window squares them, not because they were asked for
         TransitionSettings _transitionSettings {}; //read by the background and the border
 
     //Docking

@@ -1,6 +1,7 @@
 #pragma once
 #include "IncludeHelper.hpp"
 #include <array>
+#include <functional>
 #include <memory>
 #include <span>
 #include "Frame.hpp"
@@ -9,12 +10,20 @@
 
 namespace RetroFuturaGUI
 {
-    /// @brief A widget's border: a filled or gradient rectangle with optional raster, fog, glass, mask and image. The widget
+    /// @brief What a border tells its owning widget, for a layout that depends on it
+    struct BorderHooks
+    {
+        std::function<void()>
+            _OnWidthChange {},
+            _OnCornerRadiiChange {};
+    };
+
+    /// @brief A widget's border: a filled or gradient frame with optional raster and glass. The widget
     ///        owns it and hands it out through GetBorder(), so it is styled as button.GetBorder().SetColors(...)
     class Border final : public IWidgetDecoration
     {
     public:
-        Border(Projection* projection);
+        explicit Border(Projection* projection, BorderHooks hooks = {});
         Border() = delete;
         Border(const Border&) = delete;
         Border(Border&&) = delete;
@@ -22,26 +31,26 @@ namespace RetroFuturaGUI
         auto operator =(const Border&) = delete;
         auto operator =(Border&&) = delete;
 
-        /// @brief Draws the fill, then an over it. Called by the owning widget's Draw.
+        /// @brief Draws the border. Called by the owning widget's Draw
         void Draw() override;
 
-        /// @brief Sizes the background to the owning widget. Called by the widget as it is laid out.
+        /// @brief Sizes the border to the owning widget. Called by the widget as it is laid out
         void SetSize(const glm::vec2& size) override;
 
-        /// @brief Places the background where the owning widget puts it. Called by the widget as it is laid out.
+        /// @brief Places the border where the owning widget puts it. Called by the widget as it is laid out
         void SetPosition(const glm::vec3& position) override;
 
-        /// @brief Turns the background within the owning widget's layout.
+        /// @brief Turns the border within the owning widget's layout
         void SetRotation(const glm::vec3& rotation) override;
 
-        /// @brief returns the background's size
-        glm::vec2 GetSize() override;
+        /// @brief Returns the border's size
+        glm::vec2 GetSize() const override;
 
-        /// @brief returns the background's position
-        glm::vec3 GetPosition() override;
+        /// @brief Returns the border's position
+        glm::vec3 GetPosition() const override;
 
-        /// @brief Returns the Background's rotation
-        glm::vec3 GetRotation() override;
+        /// @brief Returns the border's rotation
+        glm::vec3 GetRotation() const override;
 
         f32 GetWidth() const;
 
@@ -82,7 +91,7 @@ namespace RetroFuturaGUI
         void SetRasterAnimationSpeed(const f32 animationSpeed);
 
         /// @brief Returns the border colors configured for the given color state.
-        const std::vector<glm::vec4>& GetColor(const ColorState state) const;
+        const std::vector<glm::vec4>& GetColors(const ColorState state) const;
 
         /// @brief Sets the border fill type (solid, linear/radial/huestar gradient).
         void SetFillType(const FillType fillType);
@@ -94,11 +103,10 @@ namespace RetroFuturaGUI
         void SetGaps(std::span<BorderGap> gaps);
 
     private:
-        void draw();
         void setColors() override;
         void setCornerRadii() override;
 
         std::unique_ptr<Frame> _borderFrame;
-
+        std::function<void()> _onWidthChange {};
     };
 }
