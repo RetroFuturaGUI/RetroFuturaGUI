@@ -1,40 +1,32 @@
 
 #pragma once
-#include "ITextProperties.hpp"
+#include "WidgetText.hpp"
 #include "ITextEditVisuals.hpp"
 #include <memory>
 
 namespace RetroFuturaGUI
 {
-    //An interface to specialize a widget with editable text capabilities.
-    class ITextEditable : virtual public IWindowAccessor, public ITextProperties, public ITextEditVisuals
+    //An interface to specialize a widget with editable text capabilities
+    class ITextEditable : virtual public IWindowAccessor, public ITextEditVisuals
     {
     public:
-        /// @brief Sets whether the widget rejects text input/editing while still allowing selection and copy.
+        /// @brief Sets whether the widget rejects text input/editing while still allowing selection and copy
         void EnableReadOnly(const bool enable);
 
-        /// @brief Returns whether the widget is currently read-only.
+        /// @brief Returns whether the widget is currently read-only
         bool IsReadOnly() const;
 
-        /// @brief Sets the placeholder text colors.
-        void SetPlaceholderTextColors(std::span<const glm::vec4> colors);
+        /// @brief Returns the edited text's string, font, colors and effects. Its font, alignment and padding also apply to the placeholder
+        WidgetText& GetText();
+        const WidgetText& GetText() const;
 
-        /// @brief Sets the placeholder text content, in UTF-8.
-        void SetPlaceholderText(std::string_view text);
-
-        /// @brief Returns the placeholder text content, in UTF-8.
-        const std::string& GetPlaceholderText() const;
-
-        /// @brief Sets the font family, size and style used to render the text and placeholder text, loading it if necessary.
-        void SetFontFamily(std::string_view fontFamily, const f32 fontSize, const FontSizeUnit sizeUnit, const PlatformBridge::Fonts::Slant slant, const PlatformBridge::Fonts::Weight fontWeight) final override;
-
-        /// @brief Sets the horizontal alignment of the text and placeholder text.
-        void SetTextAlignment(const TextAlignment alignment) final override;
-
-        /// @brief Sets the padding applied around the text and placeholder text.
-        void SetTextPadding(const f32 padding) final override;
+        /// @brief Returns the text shown while the edited text is empty
+        WidgetText& GetPlaceholder();
+        const WidgetText& GetPlaceholder() const;
 
     protected:
+        /// @brief Creates the text and the placeholder.
+        explicit ITextEditable(Projection* projection);
     //ITextInteraction hooks: this widget edits the single Text it owns. ITextEditVisuals draws its caret and selection.
         Text* getActiveText() const override final;
         void emitChange() override;
@@ -44,8 +36,8 @@ namespace RetroFuturaGUI
         bool _readOnly { false };
         std::vector<char> _prevKeyStates {};
 
-    //Placeholder Text
-        std::unique_ptr<Text> _placeholderText { nullptr };
-        std::vector<glm::vec4> _placeholderTextColors { glm::vec4(0.5f, 0.5f, 0.5f, 1.0f) };
+    //Text
+        mutable WidgetText _text; //getActiveText hands it out for editing, also from const functions.
+        WidgetText _placeholder;
     };
 }

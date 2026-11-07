@@ -9,8 +9,8 @@ RetroFuturaGUI::SeparatorLine::SeparatorLine(std::string_view name, Projection* 
     : IWidget(name, projection, parentWidget, parentWidgetTypeID, parentWindow)
 {
     _widgetTypeID = WidgetTypeID::SeparatorLine;
-    _text = std::make_unique<Text>(&_projection);
-    useTransitions({ _text.get() });
+    _text.SetTransitionSettings(&_transitionSettings);
+    _text.SetChangeHook([this](const WidgetTextChange) { updateLayout(); }); //the text's size is the gap's
 }
 
 void RetroFuturaGUI::SeparatorLine::Draw()
@@ -20,10 +20,7 @@ void RetroFuturaGUI::SeparatorLine::Draw()
     if(!_showText)
         return;
 
-    if(!_text)
-        return;
-
-    _text->Draw();
+    _text.Draw();
 }
 
 void RetroFuturaGUI::SeparatorLine::applySize(const glm::vec3& size)
@@ -37,24 +34,6 @@ void RetroFuturaGUI::SeparatorLine::applyPosition(const glm::vec3& position)
 {
     IWidget::applyPosition(position);
     _background.SetPosition(position);
-    updateLayout();
-}
-
-void RetroFuturaGUI::SeparatorLine::SetText(std::string_view text, const bool emitSignal)
-{
-    ITextProperties::SetText(text, emitSignal);
-    updateLayout();
-}
-
-void RetroFuturaGUI::SeparatorLine::SetFontFamily(std::string_view fontFamily, const f32 fontSize, const FontSizeUnit sizeUnit, const PlatformBridge::Fonts::Slant slant, const PlatformBridge::Fonts::Weight fontWeight)
-{
-    ITextProperties::SetFontFamily(fontFamily, fontSize, sizeUnit, slant, fontWeight);
-    updateLayout();
-}
-
-void RetroFuturaGUI::SeparatorLine::SetTextPadding(const f32 padding)
-{
-    ITextProperties::SetTextPadding(padding);
     updateLayout();
 }
 
@@ -72,20 +51,17 @@ void RetroFuturaGUI::SeparatorLine::ShowText(const bool enable)
 
 void RetroFuturaGUI::SeparatorLine::updateLayout()
 {
-    if(!_text)
-        return;
+    _text.SetSize(glm::vec2(_size.x, std::max<f32>(_size.y, _text.GetElement().GetSpanHeight())));
 
-    _text->SetParentSize(glm::vec2(_size.x, std::max<f32>(_size.y, _text->GetSpanHeight())));
-
-    if(!_showText || GetText().empty()) //if no label, draw a solid line
+    if(!_showText || _text.GetString().empty()) //if no label, draw a solid line
     {
         _background.SetGaps(BackgroundGap { ._Repeat = 0 });
         return;
     }
 
     f32
-        textPadding { _text->GetPadding() },
-        textWidth { _text->GetWidth() };
+        textPadding { _text.GetPadding() },
+        textWidth { _text.GetWidth() };
 
     BackgroundGap textGap {
         ._Offset = _textLeftPadding,
@@ -95,8 +71,8 @@ void RetroFuturaGUI::SeparatorLine::updateLayout()
     };
 
     _background.SetGaps(textGap);
-    _text->SetTextAlignment(TextAlignment::Center);
-    _text->SetPosition(glm::vec3(
+    _text.SetAlignment(TextAlignment::Center);
+    _text.SetPosition(glm::vec3(
         _position.x - _size.x * 0.5f + _textLeftPadding + textGap._Length * 0.5f,
         _position.y,
         _position.z + 0.01f)
@@ -111,4 +87,14 @@ RetroFuturaGUI::Background& RetroFuturaGUI::SeparatorLine::GetBackground()
 const RetroFuturaGUI::Background& RetroFuturaGUI::SeparatorLine::GetBackground() const
 {
     return _background;
+}
+
+RetroFuturaGUI::WidgetText& RetroFuturaGUI::SeparatorLine::GetText()
+{
+    return _text;
+}
+
+const RetroFuturaGUI::WidgetText& RetroFuturaGUI::SeparatorLine::GetText() const
+{
+    return _text;
 }

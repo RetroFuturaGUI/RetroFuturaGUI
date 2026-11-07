@@ -8,14 +8,14 @@ RetroFuturaGUI::Text::Text(Projection* projection)
     : _projection(*projection)
 {
     initMesh(&_mesh);
-    initMesh(&_borderMesh);
+    initMesh(&_outlineMesh);
     SetColors(std::span<const glm::vec4>(&_defaultColor, 1));
 }
 
 RetroFuturaGUI::Text::~Text()
 {
     glDeleteBuffers(1, &_mesh._Vbo);
-    glDeleteBuffers(1, &_borderMesh._Vbo);
+    glDeleteBuffers(1, &_outlineMesh._Vbo);
 }
 
 void RetroFuturaGUI::Text::initMesh(GlyphMesh* mesh)
@@ -42,7 +42,7 @@ void RetroFuturaGUI::Text::Draw()
     if(_colors.empty())
         return;
 
-    drawBorder();
+    drawOutline();
 
     if(_mesh._Draws.empty())
         return;
@@ -58,18 +58,18 @@ void RetroFuturaGUI::Text::Draw()
     drawMesh(shader, &_mesh);
 }
 
-void RetroFuturaGUI::Text::drawBorder()
+void RetroFuturaGUI::Text::drawOutline()
 {
-    if(0.0f >= _borderWidth || _borderMesh._Draws.empty())
+    if(0.0f >= _outlineWidth || _outlineMesh._Draws.empty())
         return;
 
     //Follows the text's transitions, whichever the widget gave it; a little further back, so the glyphs drawn next pass the depth test
-    _border.SetTransitionSettings(_transitionSettings);
-    Shader& shader { ShaderManager::GetTextShader(_border._fillType) };
-    uploadPlacement(shader, glm::translate(_translationMatrix, glm::vec3(0.0f, 0.0f, -_borderDepthOffset)));
-    _border.uploadFill(shader, 0);
-    _border.uploadImage(shader, glm::max(_textSpan, glm::vec2(1.0f)));
-    drawMesh(shader, &_borderMesh);
+    _outline.SetTransitionSettings(_transitionSettings);
+    Shader& shader { ShaderManager::GetTextShader(_outline._fillType) };
+    uploadPlacement(shader, glm::translate(_translationMatrix, glm::vec3(0.0f, 0.0f, -_outlineDepthOffset)));
+    _outline.uploadFill(shader, 0);
+    _outline.uploadImage(shader, glm::max(_textSpan, glm::vec2(1.0f)));
+    drawMesh(shader, &_outlineMesh);
 }
 
 void RetroFuturaGUI::Text::uploadPlacement(Shader& shader, const glm::mat4& translation) const
@@ -127,23 +127,23 @@ void RetroFuturaGUI::Text::drawMesh(Shader& shader, GlyphMesh* mesh)
     glBindTexture(GL_TEXTURE_2D, 0);
 }
 
-void RetroFuturaGUI::Text::SetBorderWidth(const f32 width)
+void RetroFuturaGUI::Text::SetOutlineWidth(const f32 width)
 {
-    if(_borderWidth == width)
+    if(_outlineWidth == width)
         return;
 
-    _borderWidth = width;
+    _outlineWidth = width;
     updateMesh();
 }
 
-f32 RetroFuturaGUI::Text::GetBorderWidth() const
+f32 RetroFuturaGUI::Text::GetOutlineWidth() const
 {
-    return _borderWidth;
+    return _outlineWidth;
 }
 
-RetroFuturaGUI::TextBorder& RetroFuturaGUI::Text::GetBorder()
+RetroFuturaGUI::TextOutline& RetroFuturaGUI::Text::GetOutline()
 {
-    return _border;
+    return _outline;
 }
 
 void RetroFuturaGUI::Text::SetTextPadding(const f32 padding)
@@ -256,8 +256,8 @@ void RetroFuturaGUI::Text::updateMesh()
 {
     _mesh._Vertices.clear();
     _mesh._Draws.clear();
-    _borderMesh._Vertices.clear();
-    _borderMesh._Draws.clear();
+    _outlineMesh._Vertices.clear();
+    _outlineMesh._Draws.clear();
 
     if(!_fontInfo)
         return;
@@ -275,7 +275,7 @@ void RetroFuturaGUI::Text::updateMesh()
     const f32
         nativeSize { atlas._FontSize },
         scale { _glyphSize.y / nativeSize },
-        borderWidth { _borderWidth / scale }; //widened at the glyphs' own size, so it's as wide as asked once they're scaled
+        outlineWidth { _outlineWidth / scale }; //widened at the glyphs' own size, so it's as wide as asked once they're scaled
     const std::u32string& text { _text.GetUtf32() };
     uSize lineStart { 0 };
 
@@ -311,11 +311,11 @@ void RetroFuturaGUI::Text::updateMesh()
             if(!glyph)
                 continue;
 
-            //The border first, so the glyph's quad comes after it in the same order
-            const Glyph* border { 0.0f < _borderWidth ? FontManager::FindPlacedGlyphBorder(*_fontInfo, _fontKey, placed, borderWidth) : nullptr };
+            //The outline first, so the glyph's quad comes after it in the same order.
+            const Glyph* outline { 0.0f < _outlineWidth ? FontManager::FindPlacedGlyphOutline(*_fontInfo, _fontKey, placed, outlineWidth) : nullptr };
 
-            if(border)
-                appendGlyphQuad(*border, pen, scale, getLineCenter(line), &_borderMesh);
+            if(outline)
+                appendGlyphQuad(*outline, pen, scale, getLineCenter(line), &_outlineMesh);
 
             appendGlyphQuad(*glyph, pen, scale, getLineCenter(line), &_mesh);
         }
@@ -347,7 +347,7 @@ void RetroFuturaGUI::Text::updateMesh()
     }
 
     _mesh._IsChanged = true;
-    _borderMesh._IsChanged = true;
+    _outlineMesh._IsChanged = true;
     FontManager::FlushGlyphUploads();
 }
 

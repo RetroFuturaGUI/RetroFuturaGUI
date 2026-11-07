@@ -1,4 +1,5 @@
 #include "ITextEditable.hpp"
+#include <array>
 #include "Clipboard.hpp"
 #include "PlatformBridge.hpp"
 
@@ -8,6 +9,13 @@
     #define GLFW_EXPOSE_NATIVE_WIN32
 #endif
 #include <GLFW/glfw3native.h>
+
+RetroFuturaGUI::ITextEditable::ITextEditable(Projection* projection)
+    : ITextEditVisuals(projection), _text(projection), _placeholder(projection)
+{
+    _text.SetFollower(&_placeholder);
+    _placeholder.SetColors(std::array { glm::vec4(0.5f, 0.5f, 0.5f, 1.0f) }, ColorState::Enabled);
+}
 
 void RetroFuturaGUI::ITextEditable::EnableReadOnly(const bool enable)
 {
@@ -24,82 +32,32 @@ void RetroFuturaGUI::ITextEditable::emitChange()
     if(_enterPressed)
         return;
 
-    _onTextChangeAsync.EmitAsync();
-    _onTextChange.Emit();
+    _text.EmitChange();
 }
 
-void RetroFuturaGUI::ITextEditable::SetPlaceholderTextColors(std::span<const glm::vec4> colors)
+RetroFuturaGUI::WidgetText& RetroFuturaGUI::ITextEditable::GetText()
 {
-    _placeholderTextColors.assign(colors.begin(), colors.end());
-
-    if(!_placeholderText)
-        return;
-
-    _placeholderText->SetColors(_placeholderTextColors);
+    return _text;
 }
 
-void RetroFuturaGUI::ITextEditable::SetPlaceholderText(std::string_view text)
+const RetroFuturaGUI::WidgetText& RetroFuturaGUI::ITextEditable::GetText() const
 {
-    if(!_placeholderText)
-        return;
-
-    if(text.empty())
-    {
-        _placeholderText->SetTextUTF8("");
-        return;
-    }
-
-    _placeholderText->SetTextUTF8(text);
+    return _text;
 }
 
-const std::string& RetroFuturaGUI::ITextEditable::GetPlaceholderText() const
+RetroFuturaGUI::WidgetText& RetroFuturaGUI::ITextEditable::GetPlaceholder()
 {
-    if(!_placeholderText)
-        return _dummy;
-
-    return _placeholderText->GetTextUTF8();
+    return _placeholder;
 }
 
-void RetroFuturaGUI::ITextEditable::SetFontFamily(std::string_view fontFamily, const f32 fontSize, const FontSizeUnit sizeUnit, const PlatformBridge::Fonts::Slant slant, const PlatformBridge::Fonts::Weight fontWeight)
+const RetroFuturaGUI::WidgetText& RetroFuturaGUI::ITextEditable::GetPlaceholder() const
 {
-    if(!_text)
-        return;
-
-    if(!_placeholderText)
-        return;
-
-    _text->SetFontFamily(fontFamily, fontSize, sizeUnit, slant, fontWeight);
-    _placeholderText->SetFontFamily(fontFamily, fontSize, sizeUnit, slant, fontWeight);
+    return _placeholder;
 }
-
-void RetroFuturaGUI::ITextEditable::SetTextAlignment(const TextAlignment alignment)
-{
-    if(!_text)
-        return;
-
-    if(!_placeholderText)
-        return;
-
-    _text->SetTextAlignment(alignment);
-    _placeholderText->SetTextAlignment(alignment);
-}
-        
-void RetroFuturaGUI::ITextEditable::SetTextPadding(const f32 padding)
-{
-    if(!_text)
-        return;
-
-    if(!_placeholderText)
-        return;
-
-    _text->SetTextPadding(padding);
-    _placeholderText->SetTextPadding(padding);
-}
-
 
 RetroFuturaGUI::Text* RetroFuturaGUI::ITextEditable::getActiveText() const
 {
-    return _text.get();
+    return &_text.GetElement();
 }
 
 bool RetroFuturaGUI::ITextEditable::isTextReadOnly() const

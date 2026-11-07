@@ -3,15 +3,15 @@
 #include "IClickable.hpp"
 #include "Background.hpp"
 #include "Border.hpp"
-#include "ITextProperties.hpp"
+#include "WidgetText.hpp"
 
 namespace RetroFuturaGUI
 {
     //A widget that triggers actions
-    class Button final : public IWidget, public IClickable, public ITextProperties
+    class Button final : public IWidget, public IClickable
     {
     public:
-        /// @brief Constructs a Button widget under the given parent widget/window.
+        /// @brief Constructs a Button widget under the given parent widget/window
         Button(const std::string& name, Projection* projection, IWidget* parentWidget, const WidgetTypeID parentWidgetTypeID, GLFWwindow* parentWindow);
         Button() = delete;
         Button(const Button&) = delete;
@@ -20,7 +20,7 @@ namespace RetroFuturaGUI
         auto operator =(Button&&) = delete;
         ~Button() = default;
 
-        /// @brief Draws the button, including its background, border and label text.
+        /// @brief Draws the button, including its background, border and label text
         void Draw() override;
 
         /// @brief Returns the button's background
@@ -30,6 +30,10 @@ namespace RetroFuturaGUI
         /// @brief Returns the button's border
         Border& GetBorder();
         const Border& GetBorder() const;
+
+        /// @brief Returns the widget's text: its string, font, colors and effects
+        WidgetText& GetText();
+        const WidgetText& GetText() const;
 
     protected:
         /// @brief Sets the size of the button.
@@ -44,5 +48,6 @@ namespace RetroFuturaGUI
 
         Background _background { &_projection };
         Border _border { &_projection };
+        WidgetText _text { &_projection };
     };
 }

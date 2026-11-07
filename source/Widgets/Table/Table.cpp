@@ -19,7 +19,7 @@
 #include <GLFW/glfw3native.h>
 
 RetroFuturaGUI::Table::Table(const std::string& name, Projection* projection, IWidget* parentWidget, const WidgetTypeID parentWidgetTypeID, GLFWwindow* parentWindow)
-    : IWidget(name, projection, parentWidget, parentWidgetTypeID, parentWindow)
+    : IWidget(name, projection, parentWidget, parentWidgetTypeID, parentWindow), ITextEditVisuals(projection)
 {
     _widgetTypeID = WidgetTypeID::Table;
     _highlightedBackgroundCell = std::make_unique<Plane>(projection);
@@ -66,8 +66,6 @@ RetroFuturaGUI::Table::Table(const std::string& name, Projection* projection, IW
 
     if(!_selectionBandBorder)
         return;
-
-    initEditVisuals(projection);
 
     _cellColorPlane->SetFillType(FillType::Solid);
 
@@ -365,13 +363,10 @@ void RetroFuturaGUI::Table::applySize(const glm::vec3& size)
 
 void RetroFuturaGUI::Table::applyPosition(const glm::vec3& position)
 {
-    if(!_selectedArea)
-        return;
-
     IWidget::applyPosition(position);
     _background.SetPosition(position);
     _border.SetPosition(position + glm::vec3(0.0f, 0.0f, 0.1f));
-    _selectedArea->SetPosition(position + glm::vec3(0.0f, 0.0f, _widgetZOffset - 0.01f));
+    _selectedArea.SetPosition(position + glm::vec3(0.0f, 0.0f, _widgetZOffset - 0.01f));
     layoutCells();
 }
 
@@ -938,10 +933,7 @@ bool RetroFuturaGUI::Table::IsTrackReadOnly(const uSize trackIndex) const
 
 void RetroFuturaGUI::Table::SetCaretSize(const glm::vec2& size)
 {
-    if(!_caret)
-        return;
-
-    _caret->SetSize(size);
+    _caret.SetSize(size);
 }
 
 bool RetroFuturaGUI::Table::GetEditedCell(uSize& outRow, uSize& outColumn) const
@@ -1949,7 +1941,7 @@ void RetroFuturaGUI::Table::interactTableText(const MouseState& mouse)
     moveCaret();
     followEditKeys();
 
-    if(!_caretNeverBlinks)
+    if(!_caret.NeverBlinks())
         updateCaretBlink();
 }
 

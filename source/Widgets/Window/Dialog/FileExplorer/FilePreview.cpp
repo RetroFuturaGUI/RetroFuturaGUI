@@ -33,8 +33,8 @@ RetroFuturaGUI::FileExplorer::FilePreview::FilePreview(ViewHost& host, Lasagna& 
 
     _picture->SetSize(_mediaSize);
     styleLabel(*_message, "", _mediaSize, _font);
-    _message->SetTextAlignment(TextAlignment::Center);
-    _message->SetTextColors(std::array { glm::vec4(0.7f, 0.7f, 0.75f, 1.0f) }, ColorState::Enabled);
+    _message->GetText().SetAlignment(TextAlignment::Center);
+    _message->GetText().SetColors(std::array { glm::vec4(0.7f, 0.7f, 0.75f, 1.0f) }, ColorState::Enabled);
 
     //Like the list, without its header
     const glm::vec3 detailsSize { cellSize(_axis, paneSize, detailsCell) };
@@ -270,7 +270,7 @@ void RetroFuturaGUI::FileExplorer::FilePreview::showMessage(std::string_view mes
     if(!_message)
         return;
 
-    _message->SetText(message, false);
+    _message->GetText().SetString(message, false);
     showLayer(MediaLayer::Message);
 }
 

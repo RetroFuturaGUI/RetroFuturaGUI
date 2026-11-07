@@ -61,23 +61,6 @@ bool RetroFuturaGUI::ITextInteraction::hasInputFocus() const
 #endif
 }
 
-void RetroFuturaGUI::ITextInteraction::updateCaretBlink()
-{
-    if(!_showCaret)
-    {
-        resetCaretBlink();
-        return;
-    }
-
-    const f64 elapsedMilliseconds { std::chrono::duration<f64, std::milli>(std::chrono::high_resolution_clock::now() - _millisecondsPassed).count() };
-
-    if(elapsedMilliseconds < _blinkForMilliseconds)
-        return;
-
-    _caretBlinkState = !_caretBlinkState;
-    _millisecondsPassed = std::chrono::high_resolution_clock::now();
-}
-
 void RetroFuturaGUI::ITextInteraction::resetCaretBlink()
 {
     _caretBlinkState = true;
@@ -132,6 +115,35 @@ u32 RetroFuturaGUI::ITextInteraction::getEnterPressCount()
 const std::string& RetroFuturaGUI::ITextInteraction::GetCopiedText() const
 {
     return _copiedText;
+}
+
+const char* RetroFuturaGUI::ITextInteraction::GetSelection() const
+{
+    const Text* text { getActiveText() };
+
+    if(!text)
+        return nullptr;
+
+    if(!_isSelected)
+        return nullptr;
+
+    //The marks count characters and the string is UTF-8, so the bytes before the selection are measured by encoding them
+    const uSize byteOffset { DoubleEncodedString::Utf32ToUtf8(text->GetTextUTF32().substr(0, getMarkedStart())).size() };
+    return text->GetTextUTF8().c_str() + byteOffset;
+}
+
+std::string RetroFuturaGUI::ITextInteraction::GetSelectedString() const
+{
+    const Text* text { getActiveText() };
+
+    if(!text)
+        return {};
+
+    if(!_isSelected)
+        return {};
+
+    const uSize selectionStart { getMarkedStart() };
+    return DoubleEncodedString::Utf32ToUtf8(text->GetTextUTF32().substr(selectionStart, getMarkedEnd() - selectionStart));
 }
 
 void RetroFuturaGUI::ITextInteraction::CopySelectedText()

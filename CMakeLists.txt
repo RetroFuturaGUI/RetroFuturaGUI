@@ -123,7 +123,6 @@ list(APPEND RetroFuturaGuiSources
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/Interfaces/ITextEditable.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/Interfaces/ITextEditVisuals.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/Interfaces/ITextInteraction.cpp"
-    "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/Interfaces/ITextProperties.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/Interfaces/ITypedText.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/Interfaces/IWidget.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/Interfaces/IClickable.cpp"
@@ -131,6 +130,10 @@ list(APPEND RetroFuturaGuiSources
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/Parts/IWidgetDecoration.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/Parts/Background.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/Parts/Border.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/Parts/WidgetText.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/Parts/Outline.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/Parts/Caret.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/Parts/SelectedArea.cpp"
     
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/Table/ITableTextProperties.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/Table/ITableWidget.cpp"

@@ -5,14 +5,8 @@ RetroFuturaGUI::MultilineTextBox::MultilineTextBox(const std::string& name, Proj
 {
     _widgetTypeID = WidgetTypeID::MultilineTextBox;
 
-    if(!_text)
-        return;
-
-    if(!_placeholderText)
-        return;
-
-    _text->SetAnchorTop(true);
-    _placeholderText->SetAnchorTop(true);
+    _text.GetElement().SetAnchorTop(true);
+    _placeholder.GetElement().SetAnchorTop(true);
 }
 
 void RetroFuturaGUI::MultilineTextBox::moveCaretUp()

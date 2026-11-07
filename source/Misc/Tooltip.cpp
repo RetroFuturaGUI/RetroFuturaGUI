@@ -1,7 +1,7 @@
 #include "Tooltip.hpp"
 #include "Background.hpp"
 #include "FontManager.hpp"
-#include "ITextProperties.hpp"
+#include "WidgetText.hpp"
 #include "IWidget.hpp"
 #include "IncludeHelper.hpp"
 #include "PlatformBridge.hpp"
@@ -13,15 +13,12 @@ RetroFuturaGUI::Tooltip::Tooltip(Projection* projection, IWidget* widget)
     : _projection(*projection)
 {
     _widget = widget;
-    _text = std::make_unique<Text>(projection);
     useWidgetTransitions();
 
-    if(!_text)
-        return;
-
     _border.SetWidth(_defaultBorderWidth);
-    _text->SetTextPadding(_defaultTextPadding);
-    setTextColors();
+    _text.SetPadding(_defaultTextPadding);
+    _text.SetColorState(ColorState::Enabled);
+    _text.SetChangeHook([this](const WidgetTextChange) { setSize(); }); //the box holds the text
     applyDefaultFont();
 }
 
@@ -84,7 +81,7 @@ void RetroFuturaGUI::Tooltip::draw()
     setPosition();
     _background.Draw();
     _border.Draw();
-    drawText();
+    _text.Draw();
 }
 
 void RetroFuturaGUI::Tooltip::SetBorderColors(std::span<const glm::vec4> colors)
@@ -93,16 +90,10 @@ void RetroFuturaGUI::Tooltip::SetBorderColors(std::span<const glm::vec4> colors)
     _border.SetColors(_borderColors, ColorState::Enabled);
 }
 
-void RetroFuturaGUI::Tooltip::SetText(std::string_view text, const bool emitSignal)
-{
-    ITextProperties::SetText(text, emitSignal);
-    setSize();
-}
-
 void RetroFuturaGUI::Tooltip::SetFontFamily(std::string_view fontFamily, const f32 fontSize, const FontSizeUnit sizeUnit, const PlatformBridge::Fonts::Slant slant, const PlatformBridge::Fonts::Weight fontWeight)
 {
     _hasOwnFont = true;
-    ITextProperties::SetFontFamily(fontFamily, fontSize, sizeUnit, slant, fontWeight);
+    _text.SetFontFamily(fontFamily, fontSize, sizeUnit, slant, fontWeight);
     setSize();
 }
 
@@ -113,13 +104,7 @@ void RetroFuturaGUI::Tooltip::useWidgetTransitions()
 
     _background.SetTransitionSettings(&_widget->_transitionSettings);
 
-    for(FillStyle* element : std::initializer_list<FillStyle*> { _text.get() })
-    {
-        if(!element)
-            continue;
-
-        element->SetTransitionSettings(&_widget->_transitionSettings);
-    }
+    _text.SetTransitionSettings(&_widget->_transitionSettings);
 }
 
 void RetroFuturaGUI::Tooltip::applyDefaultFont()
@@ -130,15 +115,9 @@ void RetroFuturaGUI::Tooltip::applyDefaultFont()
     if(_defaultFontVersion == _appliedDefaultFontVersion)
         return;
 
-    ITextProperties::SetFontFamily(_defaultFontFamily, _defaultFontSize, FontSizeUnit::Pixels, _defaultFontSlant, _defaultFontWeight);
+    _text.SetFontFamily(_defaultFontFamily, _defaultFontSize, FontSizeUnit::Pixels, _defaultFontSlant, _defaultFontWeight);
     setSize();
     _appliedDefaultFontVersion = _defaultFontVersion;
-}
-
-void RetroFuturaGUI::Tooltip::SetTextPadding(const f32 padding)
-{
-    ITextProperties::SetTextPadding(padding);
-    setSize(); //the padding is part of the box
 }
 
 void RetroFuturaGUI::Tooltip::SetBorderWidth(const f32 borderWidth)
@@ -149,14 +128,11 @@ void RetroFuturaGUI::Tooltip::SetBorderWidth(const f32 borderWidth)
 
 void RetroFuturaGUI::Tooltip::setSize()
 {
-    if(!_text)
-        return;
-
-    const f32 padding { _text->GetPadding() };
+    const f32 padding { _text.GetPadding() };
     const glm::vec2
-        textArea { _text->GetWidth() + padding * 2.0f, _text->GetHeight() + padding * 2.0f }, //exactly the text plus its padding, so any alignment centers it
+        textArea { _text.GetWidth() + padding * 2.0f, _text.GetElement().GetHeight() + padding * 2.0f }, //exactly the text plus its padding, so any alignment centers it
         size { textArea + glm::vec2(_border.GetWidth() * 2.0f) }; //the border draws inside the box
-    _text->SetParentSize(textArea);
+    _text.SetSize(textArea);
     _background.SetSize(size);
     _border.SetSize(size);
 }
@@ -166,16 +142,13 @@ void RetroFuturaGUI::Tooltip::setPosition()
     if(!_widget)
         return;
 
-    if(!_text)
-        return;
-
     const glm::vec2
         halfSize { _background.GetSize() * 0.5f },
         resolution { _projection.GetResolution() };
 
     // Centered above the cursor's tip and kept inside the window. It slides sideways at the left and right edges
-    // and down at the top one. World space runs bottom-up, so above is +Y.
-    // Not std::clamp: a tooltip larger than the window would make it undefined.
+    // and down at the top one. World space runs bottom-up, so above is +Y
+    // Not std::clamp: a tooltip larger than the window would make it undefined
     const glm::vec3 center {
         std::max(halfSize.x, std::min(_pointerPosition.x, resolution.x - halfSize.x)),
         std::max(halfSize.y, std::min(_pointerPosition.y + _cursorDistance + halfSize.y, resolution.y - halfSize.y)),
@@ -183,7 +156,7 @@ void RetroFuturaGUI::Tooltip::setPosition()
 
     _background.SetPosition(center);
     _border.SetPosition(center + glm::vec3(0.0f, 0.0f, _zStep));
-    _text->SetPosition(center + glm::vec3(0.0f, 0.0f, _zStep * 2.0f));
+    _text.SetPosition(center + glm::vec3(0.0f, 0.0f, _zStep * 2.0f));
 }
 
 void RetroFuturaGUI::Tooltip::interact()
@@ -224,4 +197,14 @@ RetroFuturaGUI::Background& RetroFuturaGUI::Tooltip::GetBackground()
 const RetroFuturaGUI::Background& RetroFuturaGUI::Tooltip::GetBackground() const
 {
     return _background;
+}
+
+RetroFuturaGUI::WidgetText& RetroFuturaGUI::Tooltip::GetText()
+{
+    return _text;
+}
+
+const RetroFuturaGUI::WidgetText& RetroFuturaGUI::Tooltip::GetText() const
+{
+    return _text;
 }

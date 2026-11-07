@@ -348,7 +348,7 @@ bool RetroFuturaGUI::FileExplorer::buildView(ViewHost& host, std::string_view ti
 
     //A name being renamed sits on a selected row, whose blue hides the default blue of selected text, so it is lightened instead
     std::vector<glm::vec4> renameSelectionColors {{ 0.95f, 0.95f, 1.0f, 0.35f }};
-    built._Files->SetSelectedAreaColors(renameSelectionColors);
+    built._Files->GetSelectedArea().SetColors(renameSelectionColors);
 
     //The header cells come with the columns, so they are named once these exist
     built._Files->SetTrackDefinitions(std::vector<Table::TrackDefinition> {}, columnDefinition(_font, _showThumbnails));
@@ -422,7 +422,7 @@ bool RetroFuturaGUI::FileExplorer::buildView(ViewHost& host, std::string_view ti
             return false;
 
         styleTextBox(*built._Name, "File name", cellSize(_viewAxis, windowSize, nameCell), _font);
-        built._Name->Connect_OnTextChange([this]() { on_nameTextBox_textChanged(); }, false);
+        built._Name->GetText().Connect_OnTextChange([this]() { on_nameTextBox_textChanged(); }, false);
         built._Name->Connect_OnEnterPressed([this]() { on_okButton_click(); }, false);
     }
 
@@ -468,10 +468,10 @@ bool RetroFuturaGUI::FileExplorer::buildView(ViewHost& host, std::string_view ti
     if(!built._Status)
         return false;
 
-    built._Status->SetFontFamily(_font._Family, _font._Size, FontSizeUnit::Pixels, _font._Slant, _font._Weight);
-    built._Status->SetTextAlignment(TextAlignment::Left);
-    built._Status->SetTextColors(std::array { glm::vec4(0.9f, 0.8f, 0.55f, 1.0f) }, ColorState::Enabled);
-    built._Status->SetTextPadding(8.0f);
+    built._Status->GetText().SetFontFamily(_font._Family, _font._Size, FontSizeUnit::Pixels, _font._Slant, _font._Weight);
+    built._Status->GetText().SetAlignment(TextAlignment::Left);
+    built._Status->GetText().SetColors(std::array { glm::vec4(0.9f, 0.8f, 0.55f, 1.0f) }, ColorState::Enabled);
+    built._Status->GetText().SetPadding(8.0f);
     built._Status->SetSize(cellSize(_viewAxis, windowSize, statusCell));
     built._Ok = host.Attach<Button>("Ok", *lasagna, okCell);
 
@@ -526,11 +526,11 @@ RetroFuturaGUI::MenuBar* RetroFuturaGUI::FileExplorer::attachBar(ViewHost& host,
     if(!barTitle)
         return bar;
 
-    barTitle->SetFontFamily(font._Family, font._Size, FontSizeUnit::Pixels, font._Slant, font._Weight);
-    barTitle->SetText(title, false);
-    barTitle->SetTextAlignment(TextAlignment::Left);
-    barTitle->SetTextColors(std::array { glm::vec4(1.0f) }, ColorState::Enabled);
-    barTitle->SetTextPadding(8.0f);
+    barTitle->GetText().SetFontFamily(font._Family, font._Size, FontSizeUnit::Pixels, font._Slant, font._Weight);
+    barTitle->GetText().SetString(title, false);
+    barTitle->GetText().SetAlignment(TextAlignment::Left);
+    barTitle->GetText().SetColors(std::array { glm::vec4(1.0f) }, ColorState::Enabled);
+    barTitle->GetText().SetPadding(8.0f);
     barTitle->SetSize(glm::vec3(0.5f * windowSize.x, barHeight, 0.01f)); //as tall as the bar, since text is clipped to its label
 
     Button* closeButton { bar->AddWidget<Button>("BarClose", _barCloseIndex) };
@@ -560,9 +560,9 @@ void RetroFuturaGUI::FileExplorer::styleButton(Button& button, std::string_view 
     button.GetBackground().SetFillType(FillType::Solid);
     button.GetBorder().SetColors(std::array { glm::vec4(0.5f, 0.5f, 0.5f, 1.0f) }, ColorState::Enabled);
     button.GetBorder().SetWidth(1.0f);
-    button.SetFontFamily(font._Family, font._Size, FontSizeUnit::Pixels, font._Slant, font._Weight);
-    button.SetText(text, false);
-    button.SetTextAlignment(TextAlignment::Center);
+    button.GetText().SetFontFamily(font._Family, font._Size, FontSizeUnit::Pixels, font._Slant, font._Weight);
+    button.GetText().SetString(text, false);
+    button.GetText().SetAlignment(TextAlignment::Center);
 }
 
 void RetroFuturaGUI::FileExplorer::styleMenu(ComboBox& menu, std::string_view caption, std::span<const MenuAction> actions, const glm::vec3& size, const f32 listWidth, const ViewFont& font)
@@ -613,11 +613,11 @@ void RetroFuturaGUI::FileExplorer::styleCheckBox(CheckBox& checkBox, const f32 s
 
 void RetroFuturaGUI::FileExplorer::styleLabel(Label& label, std::string_view text, const glm::vec3& size, const ViewFont& font)
 {
-    label.SetFontFamily(font._Family, font._Size, FontSizeUnit::Pixels, font._Slant, font._Weight);
-    label.SetText(text, false);
-    label.SetTextAlignment(TextAlignment::Left);
-    label.SetTextColors(std::array { glm::vec4(1.0f) }, ColorState::Enabled);
-    label.SetTextPadding(8.0f);
+    label.GetText().SetFontFamily(font._Family, font._Size, FontSizeUnit::Pixels, font._Slant, font._Weight);
+    label.GetText().SetString(text, false);
+    label.GetText().SetAlignment(TextAlignment::Left);
+    label.GetText().SetColors(std::array { glm::vec4(1.0f) }, ColorState::Enabled);
+    label.GetText().SetPadding(8.0f);
     label.SetSize(size);
 }
 
@@ -639,11 +639,11 @@ void RetroFuturaGUI::FileExplorer::styleTextBox(TextBox& textBox, std::string_vi
     textBox.GetBackground().SetFillType(FillType::Solid);
     textBox.GetBorder().SetColors(std::array { glm::vec4(0.5f, 0.5f, 0.5f, 1.0f) }, ColorState::Enabled);
     textBox.GetBorder().SetWidth(1.0f);
-    textBox.SetFontFamily(font._Family, font._Size, FontSizeUnit::Pixels, font._Slant, font._Weight);
-    textBox.SetTextAlignment(TextAlignment::Left);
-    textBox.SetTextPadding(6.0f);
-    textBox.SetPlaceholderText(placeholder);
-    textBox.SetPlaceholderTextColors(std::array { glm::vec4(0.5f, 0.5f, 0.5f, 1.0f) });
+    textBox.GetText().SetFontFamily(font._Family, font._Size, FontSizeUnit::Pixels, font._Slant, font._Weight);
+    textBox.GetText().SetAlignment(TextAlignment::Left);
+    textBox.GetText().SetPadding(6.0f);
+    textBox.GetPlaceholder().SetString(placeholder, false);
+    textBox.GetPlaceholder().SetColors(std::array { glm::vec4(0.5f, 0.5f, 0.5f, 1.0f) }, RetroFuturaGUI::ColorState::Enabled);
 }
 
 glm::vec3 RetroFuturaGUI::FileExplorer::placeButtonSize(const glm::vec2& windowSize, const ViewFont& font)
@@ -857,7 +857,7 @@ void RetroFuturaGUI::FileExplorer::applyMode()
         return;
 
     _widgets._Files->SetRowSelection(Mode::MultiFile == _mode ? Table::RowSelection::Multiple : Table::RowSelection::Single);
-    _widgets._Ok->SetText(getOkButtonText(), false);
+    _widgets._Ok->GetText().SetString(getOkButtonText(), false);
 }
 
 void RetroFuturaGUI::FileExplorer::addPlaces()
@@ -908,8 +908,8 @@ void RetroFuturaGUI::FileExplorer::addPlaceButton(std::string_view text, const s
         return;
 
     styleButton(*button, text, placeButtonSize(glm::vec2(static_cast<f32>(_width), static_cast<f32>(_height)), _font), _font);
-    button->SetTextAlignment(TextAlignment::Left);
-    button->SetTextPadding(8.0f);
+    button->GetText().SetAlignment(TextAlignment::Left);
+    button->GetText().SetPadding(8.0f);
     button->Connect_OnClick([this, place]() { on_placeButton_click(place); }, false);
     _placeButtons.emplace_back(button, place); //where a drag can drop
 }
@@ -1530,7 +1530,7 @@ void RetroFuturaGUI::FileExplorer::showStatus()
     if(!_widgets._Status)
         return;
 
-    _widgets._Status->SetText(_statusMessage.empty() ? _statusNote : _statusMessage, false);
+    _widgets._Status->GetText().SetString(_statusMessage.empty() ? _statusNote : _statusMessage, false);
 }
 
 const RetroFuturaGUI::FileExplorer::Filter& RetroFuturaGUI::FileExplorer::getCurrentFilter() const
@@ -1603,7 +1603,7 @@ std::filesystem::path RetroFuturaGUI::FileExplorer::getNameBoxTarget() const
     if(!_widgets._Name)
         return {};
 
-    std::filesystem::path name { fromUtf8(_widgets._Name->GetText()) };
+    std::filesystem::path name { fromUtf8(_widgets._Name->GetText().GetString()) };
 
     if(name.empty())
         return {};
@@ -1650,7 +1650,7 @@ void RetroFuturaGUI::FileExplorer::confirmWrite(const std::filesystem::path& tar
     {
         _isReplaceArmed = true;
         _replaceTarget = target;
-        _widgets._Ok->SetText("Replace", false);
+        _widgets._Ok->GetText().SetString("Replace", false);
         setStatus(std::format("{} already exists. Press Replace to overwrite it.", toUtf8(target.filename())));
         return;
     }
@@ -1668,7 +1668,7 @@ void RetroFuturaGUI::FileExplorer::disarmReplace()
 
     _isReplaceArmed = false;
     _replaceTarget.clear();
-    _widgets._Ok->SetText(getOkButtonText(), false);
+    _widgets._Ok->GetText().SetString(getOkButtonText(), false);
     setStatus("");
 }
 
@@ -1729,7 +1729,7 @@ void RetroFuturaGUI::FileExplorer::on_addressTextBox_enterPressed()
     if(!_widgets._Address)
         return;
 
-    const std::filesystem::path typed { fromUtf8(_widgets._Address->GetText()) };
+    const std::filesystem::path typed { fromUtf8(_widgets._Address->GetText().GetString()) };
 
     if(typed.empty())
         return;

@@ -95,24 +95,24 @@ void RetroFuturaGUI::ExtendedComboBox::placeItemWidget(IWidget* item, const glm:
             Label* label = dynamic_cast<Label*>(item);
             label->SetSize(glm::vec3(parentWidth, parentHeight, 0.01f));
             label->SetPosition(center);
-            label->SetTextAlignment(_textAlignment);
-            label->SetTextPadding(_textPadding);
+            label->GetText().SetAlignment(_textAlignment);
+            label->GetText().SetPadding(_textPadding);
         } break;
         case WidgetTypeID::Button:
         {
             Button* button = dynamic_cast<Button*>(item);
             button->SetSize(glm::vec3(parentWidth, parentHeight, 0.01f));
             button->SetPosition(center);
-            button->SetTextAlignment(_textAlignment);
-            button->SetTextPadding(_textPadding);
+            button->GetText().SetAlignment(_textAlignment);
+            button->GetText().SetPadding(_textPadding);
         } break;
         case WidgetTypeID::TextBox:
         {
             TextBox* textBox = dynamic_cast<TextBox*>(item);
             textBox->SetSize(glm::vec3(parentWidth, parentHeight, 0.01f));
             textBox->SetPosition(center);
-            textBox->SetTextAlignment(_textAlignment);
-            textBox->SetTextPadding(_textPadding);
+            textBox->GetText().SetAlignment(_textAlignment);
+            textBox->GetText().SetPadding(_textPadding);
         } break;
         case WidgetTypeID::Image:
         {
@@ -557,20 +557,20 @@ void RetroFuturaGUI::ExtendedComboBox::SetFontFamily(std::string_view fontFamily
             case WidgetTypeID::Label:
             {
                 Label* label = dynamic_cast<Label*>(item.get());
-                label->SetFontFamily(_fontFamily, _fontSize, FontSizeUnit::Pixels, _slant, _fontWeight);
-                label->SetText(label->GetText(), false);
+                label->GetText().SetFontFamily(_fontFamily, _fontSize, FontSizeUnit::Pixels, _slant, _fontWeight);
+                label->GetText().SetString(label->GetText().GetString(), false);
             } break;
             case WidgetTypeID::Button:
             {
                 Button* button = dynamic_cast<Button*>(item.get());
-                button->SetFontFamily(_fontFamily, _fontSize, FontSizeUnit::Pixels, _slant, _fontWeight);
-                button->SetText(button->GetText(), false);
+                button->GetText().SetFontFamily(_fontFamily, _fontSize, FontSizeUnit::Pixels, _slant, _fontWeight);
+                button->GetText().SetString(button->GetText().GetString(), false);
             } break;
             case WidgetTypeID::TextBox:
             {
                 TextBox* textBox = dynamic_cast<TextBox*>(item.get());
-                textBox->SetFontFamily(_fontFamily, _fontSize, FontSizeUnit::Pixels, _slant, _fontWeight);
-                textBox->SetValue<std::string_view>(textBox->GetText(), false);
+                textBox->GetText().SetFontFamily(_fontFamily, _fontSize, FontSizeUnit::Pixels, _slant, _fontWeight);
+                textBox->SetValue<std::string_view>(textBox->GetText().GetString(), false);
             } break;
             /*case WidgetTypeID::Prefab:
             {

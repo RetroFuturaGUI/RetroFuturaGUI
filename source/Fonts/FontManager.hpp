@@ -58,11 +58,11 @@ namespace RetroFuturaGUI
             _CodePointLast { 0 };
         bool _LoadIndividually { false }; // a range of more than 256 code points: each glyph is rendered when first shown
         std::unordered_map<u32, Glyph> _Glyphs; // keyed by codepoint; a glyph keeps its address when others are added
-        std::unordered_map<u64, Glyph> _BorderGlyphs; // glyphs widened for text borders, keyed by the width (FontSizeToKey) above the codepoint
+        std::unordered_map<u64, Glyph> _OutlineGlyphs; // glyphs widened for text outlines, keyed by the width (FontSizeToKey) above the codepoint
         std::unordered_map<u32, Glyph> _IndexGlyphs; // glyphs found by shaping, keyed by their index in the source
-        std::unordered_map<u64, Glyph> _IndexBorderGlyphs; // those widened for text borders, keyed by the width above the index
+        std::unordered_map<u64, Glyph> _IndexOutlineGlyphs; // those widened for text outlines, keyed by the width above the index.
         std::string _FontFile {}; // the font file and face the source draws from: neighboring blocks of one file are shaped together
-        std::unique_ptr<IGlyphSource> _Source { nullptr }; // kept until the program ends, for glyphs rendered on first use and for borders
+        std::unique_ptr<IGlyphSource> _Source { nullptr }; // kept until the program ends, for glyphs rendered on first use and for outlines
         std::vector<GlyphPage>
             _Pages {}, // one byte per pixel
             _ColorPages {}; // four bytes per pixel, for color glyphs
@@ -170,11 +170,11 @@ namespace RetroFuturaGUI
         ///        contexts, but another one sees a change only once it's flushed. Does nothing when nothing was rendered.
         static void FlushGlyphUploads();
 
-        /// @brief Finds a glyph widened by width pixels for a text border, rendering it into the block's pages the first time,
+        /// @brief Finds a glyph widened by width pixels for a text outline, rendering it into the block's pages the first time,
         ///        through the upload context when no GL context is current.
         /// @return nullptr when no block of the font covers the code point, or no context is there to render it with. A glyph
         ///        without an outline to widen (a bitmap font's) gives an empty glyph.
-        static const Glyph* FindGlyphBorder(const FontInfo& font, const u32 sizeKey, const u32 codePoint, const f32 width);
+        static const Glyph* FindGlyphOutline(const FontInfo& font, const u32 sizeKey, const u32 codePoint, const f32 width);
 
         /// @brief Shapes a run of text of one direction with the font at a size (FontSizeToKey), one run per glyph source: the
         ///        characters each block covers go to its font together, and joiners, variation selectors, skin tones and
@@ -188,8 +188,8 @@ namespace RetroFuturaGUI
         /// @return nullptr when nothing covers it, or no context is there to render it with.
         static const Glyph* FindPlacedGlyph(const FontInfo& font, const u32 sizeKey, const PlacedGlyph& placed);
 
-        /// @brief Finds the glyph a placed glyph draws widened for a text border, as FindGlyphBorder does.
-        static const Glyph* FindPlacedGlyphBorder(const FontInfo& font, const u32 sizeKey, const PlacedGlyph& placed, const f32 width);
+        /// @brief Finds the glyph a placed glyph draws widened for a text outline, as FindGlyphOutline does.
+        static const Glyph* FindPlacedGlyphOutline(const FontInfo& font, const u32 sizeKey, const PlacedGlyph& placed, const f32 width);
 
         /// @brief Extends an already-loaded fontset by loading glyphs for the given codepoint range from a fallback font family.
         static void ExtendFontset(std::string_view fontFamily, std::string_view fontFamilyExtension, const f32 size, const FontSizeUnit sizeUnit, const PlatformBridge::Fonts::Slant slant, const PlatformBridge::Fonts::Weight weight, const u32 codePointFirst, const u32 codePointLast);

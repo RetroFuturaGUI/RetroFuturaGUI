@@ -193,9 +193,9 @@ bool RetroFuturaGUI::FreeTypeGlyphSource::RenderGlyph(const u32 codePoint, Glyph
     return RenderGlyphIndex(_face ? FT_Get_Char_Index(_face, static_cast<FT_ULong>(codePoint)) : 0, bitmap);
 }
 
-bool RetroFuturaGUI::FreeTypeGlyphSource::RenderGlyphBorder(const u32 codePoint, const f32 width, GlyphBitmap* bitmap)
+bool RetroFuturaGUI::FreeTypeGlyphSource::RenderGlyphOutline(const u32 codePoint, const f32 width, GlyphBitmap* bitmap)
 {
-    return RenderGlyphIndexBorder(_face ? FT_Get_Char_Index(_face, static_cast<FT_ULong>(codePoint)) : 0, width, bitmap);
+    return RenderGlyphIndexOutline(_face ? FT_Get_Char_Index(_face, static_cast<FT_ULong>(codePoint)) : 0, width, bitmap);
 }
 
 bool RetroFuturaGUI::FreeTypeGlyphSource::RenderGlyphIndex(const u32 glyphIndex, GlyphBitmap* bitmap)
@@ -239,7 +239,7 @@ bool RetroFuturaGUI::FreeTypeGlyphSource::RenderGlyphIndex(const u32 glyphIndex,
     return false;
 }
 
-bool RetroFuturaGUI::FreeTypeGlyphSource::RenderGlyphIndexBorder(const u32 glyphIndex, const f32 width, GlyphBitmap* bitmap)
+bool RetroFuturaGUI::FreeTypeGlyphSource::RenderGlyphIndexOutline(const u32 glyphIndex, const f32 width, GlyphBitmap* bitmap)
 {
     if(!bitmap)
         return false;
@@ -249,7 +249,7 @@ bool RetroFuturaGUI::FreeTypeGlyphSource::RenderGlyphIndexBorder(const u32 glyph
     if(!_face)
         return false;
 
-    //The outline, hinted as the glyph itself is, so the border lines up with it
+    //The glyph's shape, hinted as the glyph itself is, so the outline lines up with it.
     if(FT_Load_Glyph(_face, glyphIndex, FT_LOAD_NO_BITMAP | FT_LOAD_FORCE_AUTOHINT | FT_LOAD_TARGET_LIGHT))
         return false;
 

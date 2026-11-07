@@ -376,12 +376,12 @@ void RetroFuturaGUI::DynamicLibWidgetManager::SetTextColors(const char *id, std:
         case WidgetTypeID::Button:
         {
             Button* button = dynamic_cast<Button*>(widget);
-            button->SetTextColors(colors, colorState);
+            button->GetText().SetColors(colors, colorState);
         } break;
         case WidgetTypeID::Label:
         {
             Label* label = dynamic_cast<Label*>(widget);
-            label->SetTextColors(colors, colorState);
+            label->GetText().SetColors(colors, colorState);
         } break;
         default:
             [[unlikely]];
@@ -402,12 +402,12 @@ void RetroFuturaGUI::DynamicLibWidgetManager::SetText(const char* id, const char
         case WidgetTypeID::Button:
         {
             Button* button = dynamic_cast<Button*>(widget);
-            button->SetText(text, false); //the app already set it
+            button->GetText().SetString(text, false); //the app already set it
         } break;
         case WidgetTypeID::Label:
         {
             Label* label = dynamic_cast<Label*>(widget);
-            label->SetText(text, false);
+            label->GetText().SetString(text, false);
         } break;
         case WidgetTypeID::TextBox:
         {
@@ -530,7 +530,7 @@ void RetroFuturaGUI::DynamicLibWidgetManager::connectSlotToLabel(IWidget *widget
     switch(action)
     {
         case WidgetAction::OnTextChange:
-            label->Connect_OnTextChange(callback, async);
+            label->GetText().Connect_OnTextChange(callback, async);
         default:
             std::println("Warning: Action type of {0} is not compatible with Labels.", action);
     }
@@ -543,7 +543,7 @@ void RetroFuturaGUI::DynamicLibWidgetManager::disconnectSlotFromLabel(IWidget *w
     switch(action)
     {
         case WidgetAction::OnTextChange:
-            label->Disconnect_OnTextChange(callback);
+            label->GetText().Disconnect_OnTextChange(callback);
         break;
         default:
             std::println("Warning: Action type of {0} is not compatible with Labels.", action);
@@ -572,7 +572,7 @@ void RetroFuturaGUI::DynamicLibWidgetManager::connectSlotToTextBox(IWidget *widg
             textBox->Connect_WhileHover(callback, async);
         break;
         case WidgetAction::OnTextChange:
-            textBox->Connect_OnTextChange(callback, async);
+            textBox->GetText().Connect_OnTextChange(callback, async);
         break;
         case WidgetAction::OnEnterPressed:
             textBox->Connect_OnEnterPressed(callback, async);
@@ -607,7 +607,7 @@ void RetroFuturaGUI::DynamicLibWidgetManager::disconnectSlotFromTextBox(IWidget 
             textBox->Disconnect_WhileHover(callback);
         break;
         case WidgetAction::OnTextChange:
-            textBox->Disconnect_OnTextChange(callback);
+            textBox->GetText().Disconnect_OnTextChange(callback);
         break;
         case WidgetAction::OnEnterPressed:
             textBox->Disconnect_OnEnterPressed(callback);

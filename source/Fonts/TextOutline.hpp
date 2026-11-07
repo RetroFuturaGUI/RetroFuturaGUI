@@ -5,12 +5,12 @@ namespace RetroFuturaGUI
 {
     class Text;
 
-    /// @brief The border around every glyph of a text: the glyph's shape widened by the border's width, drawn behind the
-    ///        glyph with a fill, raster and image of its own. Black until colors are set; the width is set on the Text.
-    class TextBorder final : public FillStyle
+    /// @brief The outline around every glyph of a text: the glyph's shape widened by the outline's width, drawn behind the
+    ///        glyph with a fill, raster and image of its own. Black until colors are set; the width is set on the Text
+    class TextOutline final : public FillStyle
     {
     public:
-        TextBorder()
+        TextOutline()
         {
             SetColors(std::span<const glm::vec4>(&_defaultColor, 1));
         }

@@ -86,7 +86,7 @@ void RetroFuturaGUI::FileExplorer::NamePrompt::confirm()
     if(!_name)
         return;
 
-    Close(_name->GetText());
+    Close(_name->GetText().GetString());
 }
 
 RetroFuturaGUI::FileExplorer::ConfirmPrompt::ConfirmPrompt(std::string_view title, std::string_view message, std::string_view detail, std::string_view confirmText, const ViewFont& font)
@@ -134,7 +134,7 @@ RetroFuturaGUI::FileExplorer::ConfirmPrompt::ConfirmPrompt(std::string_view titl
 
     styleLabel(*messageLabel, message, cellSize(_axis, windowSize, messageCell), font);
     styleLabel(*detailLabel, detail, cellSize(_axis, windowSize, detailCell), font);
-    detailLabel->SetTextColors(std::array { glm::vec4(0.75f, 0.75f, 0.8f, 1.0f) }, ColorState::Enabled);
+    detailLabel->GetText().SetColors(std::array { glm::vec4(0.75f, 0.75f, 0.8f, 1.0f) }, ColorState::Enabled);
     styleButton(*confirmButton, confirmText, cellSize(_axis, windowSize, confirmCell), font);
     confirmButton->Connect_OnClick([this]() { Close(); }, false);
     styleButton(*cancel, "Cancel", cellSize(_axis, windowSize, cancelCell), font);

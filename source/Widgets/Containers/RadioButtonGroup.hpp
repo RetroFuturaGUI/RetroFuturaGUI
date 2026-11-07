@@ -1,5 +1,5 @@
 #pragma once
-#include "ITextProperties.hpp"
+#include "WidgetText.hpp"
 #include "Lasagna.hpp"
 #include "RadioButton.hpp"
 #include "Label.hpp"
@@ -13,7 +13,7 @@ namespace RetroFuturaGUI
 {
     class RadioButton;
 
-    class RadioButtonGroup final : public IWidget, public ITextProperties
+    class RadioButtonGroup final : public IWidget
     {
     public:
         /// @brief Constructs a RadioButtonGroup under the given parent widget/window.
@@ -49,8 +49,9 @@ namespace RetroFuturaGUI
         /// @brief Returns the Label of the RadioButton with the given name, or nullptr when there is none.
         Label* GetRadioButtonLabel(std::string_view radioButtonName) const;
 
-        /// @brief Sets the text content, in UTF-8.
-        void SetText(std::string_view text, const bool emitSignal) override;
+        /// @brief Returns the widget's text: its string, font, colors and effects.
+        WidgetText& GetText();
+        const WidgetText& GetText() const;
 
         /// @brief Sets the Grid according to the axis definitions. Radio buttons in cells the new grid still has keep them; the
         ///        others are removed with their labels.
@@ -106,6 +107,7 @@ namespace RetroFuturaGUI
         void updateGridLayout();
 
         Border _border { &_projection };
+        WidgetText _text { &_projection };
         f32 
             _textLeftPadding { 0.0f },
             _borderPadding { 0.0f };

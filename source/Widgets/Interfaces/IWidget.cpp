@@ -384,7 +384,7 @@ void RetroFuturaGUI::IWidget::SetTooltipText(std::string_view text)
     if(!_tooltip)
         return;
 
-    _tooltip->SetText(text, false);
+    _tooltip->GetText().SetString(text, false);
 }
 
 void RetroFuturaGUI::IWidget::ShowTooltip(const bool show)

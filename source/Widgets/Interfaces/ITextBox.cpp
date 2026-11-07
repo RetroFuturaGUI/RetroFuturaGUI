@@ -8,79 +8,63 @@
 #include <GLFW/glfw3native.h>
 
 RetroFuturaGUI::ITextBox::ITextBox(std::string_view name, Projection* projection, IHierarchyNode* parentWidget, const WidgetTypeID parentWidgetTypeID, GLFWwindow* parentWindow)
-   : IWidget(name, projection, parentWidget, parentWidgetTypeID, parentWindow)
+   : IWidget(name, projection, parentWidget, parentWidgetTypeID, parentWindow), ITextEditable(projection)
 {
-    _text = std::make_unique<Text>(projection);
-    _placeholderText = std::make_unique<Text>(projection);
-    initEditVisuals(projection);
-    useTransitions({ _text.get(), _placeholderText.get(), _caret.get(), _selectedArea.get() });
+    _text.SetTransitionSettings(&_transitionSettings);
+    _placeholder.SetTransitionSettings(&_transitionSettings);
+    _caret.SetTransitionSettings(&_transitionSettings);
+    _selectedArea.SetTransitionSettings(&_transitionSettings);
     _background.SetTransitionSettings(&_transitionSettings);
     _border.SetTransitionSettings(&_transitionSettings);
 
-    if(!_placeholderText)
-        return;
+    //Text set by code rather than typed. No keystroke placed the caret and its old place may lie past the new text's end
+    _text.SetChangeHook([this](const WidgetTextChange change)
+    {
+        if(WidgetTextChange::String != change)
+            return;
 
-    _placeholderText->SetColors(_placeholderTextColors);
+        placeCaretAfterText();
+    });
 }
 
 void RetroFuturaGUI::ITextBox::Draw()
 {
-    if(!_placeholderText)
-        return;
-
     _background.Draw();
     _border.Draw();
     drawSelectedArea();
 
-    if(_text && !_text->GetTextUTF32().empty())
+    if(!_text.GetElement().GetTextUTF32().empty())
     {
-        drawText();
+        _text.Draw();
         drawCaret();
         return;
     }
 
-    _placeholderText->Draw();
+    _placeholder.Draw();
 
     drawCaret();
 }
 
 void RetroFuturaGUI::ITextBox::applySize(const glm::vec3& size)
 {
-    if(!_text)
-        return;
-
-    if(!_placeholderText)
-        return;
-
     IWidget::applySize(size);
 
     _background.SetSize(size);
     _border.SetSize(size);
-    _text->SetParentSize(glm::vec2(size.x, size.y));
-    _placeholderText->SetParentSize(glm::vec2(size.x, size.y));
+    _text.SetSize(glm::vec2(size.x, size.y));
+    _placeholder.SetSize(glm::vec2(size.x, size.y));
 }
 
 void RetroFuturaGUI::ITextBox::applyPosition(const glm::vec3& position)
 {
-    if(!_selectedArea)
-        return;
-    if(!_text)
-        return;
-
-    if(!_placeholderText)
-        return;
-
-    if(!_caret)
-        return;
-
     IWidget::applyPosition(position);
 
     _background.SetPosition(position);
-    _selectedArea->SetPosition(position + glm::vec3(0.0f, 0.0f, 0.1f));
+    _selectedArea.SetPosition(position + glm::vec3(0.0f, 0.0f, 0.1f));
     _border.SetPosition(position + glm::vec3(0.0f, 0.0f, 0.2f));
-    _text->SetPosition(position + glm::vec3(0.0f, 0.0f, 0.3f));
-    _placeholderText->SetPosition(position + glm::vec3(0.0f, 0.0f, 0.3f));
-    _caret->SetPosition(position + glm::vec3(0.0f, 0.0f, 0.5f));
+    _text.SetPosition(position + glm::vec3(0.0f, 0.0f, 0.3f));
+    _placeholder.SetPosition(position + glm::vec3(0.0f, 0.0f, 0.3f));
+    _caret.SetPosition(position + glm::vec3(0.0f, 0.0f, 0.5f));
 }
 
 void RetroFuturaGUI::ITextBox::interact()
@@ -100,7 +84,7 @@ void RetroFuturaGUI::ITextBox::interact()
     editText();
     moveCaret();
 
-    if(!_caretNeverBlinks)
+    if(!_caret.NeverBlinks())
         updateCaretBlink();
 
     if(pointer._IsCaptured)
@@ -113,7 +97,7 @@ void RetroFuturaGUI::ITextBox::interact()
             requestCursorIcon(PlatformBridge::CursorIcon::Text); //also once the drag leaves the box
             //clamp before the hit-test, so the selection doesn't extend outside the visible text area
             //also consider scrolling when marking goes out of bounds
-            _selectedPositionLast = _text->GetBoundaryAtPosition(mousePos);
+            _selectedPositionLast = _text.GetElement().GetBoundaryAtPosition(mousePos);
             setCaretFromBoundary(_selectedPositionLast);
             updateSelectedArea();
         }
@@ -163,7 +147,7 @@ void RetroFuturaGUI::ITextBox::interact()
         _editingEnabled = true;
         takeKeyboardFocus();
         _isMarking = true;
-        _selectedPositionFirst = _selectedPositionLast = _text->GetBoundaryAtPosition(glm::vec2(clampToTextBounds(mousePos.x), mousePos.y));
+        _selectedPositionFirst = _selectedPositionLast = _text.GetElement().GetBoundaryAtPosition(glm::vec2(clampToTextBounds(mousePos.x), mousePos.y));
         setCaretFromBoundary(_selectedPositionFirst);
         updateSelectedArea();
         _showCaret = true;
@@ -184,14 +168,11 @@ void RetroFuturaGUI::ITextBox::interact()
 
 void RetroFuturaGUI::ITextBox::TakeKeyboardFocus()
 {
-    if(!_text)
-        return;
-
     _editingEnabled = true;
     takeKeyboardFocus();
     _isMarking = false;
     _selectedPositionFirst = 0;
-    _selectedPositionLast = _text->GetGlyphCount();
+    _selectedPositionLast = _text.GetElement().GetGlyphCount();
     _isSelected = 0 < _selectedPositionLast;
     setCaretFromBoundary(_selectedPositionLast);
     updateSelectedArea();
@@ -201,10 +182,9 @@ void RetroFuturaGUI::ITextBox::TakeKeyboardFocus()
 
 void RetroFuturaGUI::ITextBox::setColors(const ColorState state)
 {
-    _textColorState = state;
     _background.SetColorState(state);
     _border.SetColorState(state);
-    setTextColors();
+    _text.SetColorState(state);
 }
 
 RetroFuturaGUI::Background& RetroFuturaGUI::ITextBox::GetBackground()

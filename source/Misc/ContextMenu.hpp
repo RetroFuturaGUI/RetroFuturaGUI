@@ -1,7 +1,7 @@
 #pragma once
 #include "ExtendedComboBox.hpp"
 #include "Border.hpp"
-#include "ITextProperties.hpp"
+#include "WidgetText.hpp"
 #include "Projection.hpp"
 #include "SvgImage.hpp"
 #include <memory>
@@ -15,7 +15,7 @@ namespace RetroFuturaGUI
     class IWidget;
 
     /// @brief Nested dropdown items shown near the cursor after right-clicking the owning widget
-    class ContextMenu final : public ITextProperties
+    class ContextMenu final
     {
     public:
         /// @brief Constructs a ContextMenu for the given widget
@@ -30,29 +30,34 @@ namespace RetroFuturaGUI
         /// @brief Tracks right-clicks on the owning widget, passes the input on to the items while shown, and queues this ContextMenu to be drawn last in this frame
         void Update();
 
-        /// @brief Draws the ContextMenu shown this frame in the given window over everything drawn so far. Window::Draw calls it last.
+        /// @brief Draws the ContextMenu shown this frame in the given window over everything drawn so far. Window::Draw calls it last
         static void DrawShown(GLFWwindow* window);
 
-        /// @brief Sets the font of every ContextMenu, those created before this call included. A ContextMenu given its own font with SetFontFamily keeps it.
+        /// @brief Sets the font of every ContextMenu, those created before this call included. A ContextMenu given its own font with SetFontFamily keeps it
         static void SetDefaultFontFamily(std::string_view fontFamily, const f32 fontSize, const FontSizeUnit sizeUnit, const PlatformBridge::Fonts::Slant slant, const PlatformBridge::Fonts::Weight fontWeight);
 
         void SetBorderColors(std::span<const glm::vec4> colors);
-        void SetText(std::string_view text, const bool emitSignal) override;
-        void SetFontFamily(std::string_view fontFamily, const f32 fontSize, const FontSizeUnit sizeUnit, const PlatformBridge::Fonts::Slant slant, const PlatformBridge::Fonts::Weight fontWeight) override;
-        void SetTextPadding(const f32 padding) override;
+        void SetFontFamily(std::string_view fontFamily, const f32 fontSize, const FontSizeUnit sizeUnit, const PlatformBridge::Fonts::Slant slant, const PlatformBridge::Fonts::Weight fontWeight);
 
         /// @brief Sets the border width. The box grows with it, since the border draws inside the box.
         void SetBorderWidth(const f32 borderWidth);
 
-        /// @brief Adds an item with an optional SVG image and text/note labels to the named dropdown node. Use "Root" for the root dropdown.
-        /// @param imagePath The SVG file path. Each item creates and owns its own SvgImage through ResourceManager.
+        /// @brief Adds an item with an optional SVG image and text/note labels to the named dropdown node. Use "Root" for the root dropdown
+        /// @param imagePath The SVG file path. Each item creates and owns its own SvgImage through ResourceManager
         void AddItem(std::string_view itemName, std::string_view node, std::string_view imagePath, std::string_view text, std::string_view note);
-        /// @brief Adds a dropdown node beneath the named dropdown node. Use "Root" for the root dropdown.
+
+        /// @brief Adds a dropdown node beneath the named dropdown node. Use "Root" for the root dropdown
         void AddNode(std::string_view newNodeName, std::string_view node);
-        /// @brief Connects to clicks on items in the root dropdown.
+
+        /// @brief Connects to clicks on items in the root dropdown
         void Connect_OnItemClicked(const typename Signal<>::Slot& slot, const bool async);
-        /// @brief Returns the selected root dropdown item index.
+
+        /// @brief Returns the selected root dropdown item index
         uSize GetSelectedIndex() const;
+
+        /// @brief Returns the widget's text: its string, font, colors and effects
+        WidgetText& GetText();
+        const WidgetText& GetText() const;
 
         /// @brief Returns the button's background
         Background& GetBackground();
@@ -73,10 +78,10 @@ namespace RetroFuturaGUI
         void interact();
         void setItemFont(ExtendedComboBox* comboBox) const;
 
-        /// @brief Switches to the default font if it changed since this ContextMenu last took it, unless the ContextMenu has its own font.
+        /// @brief Switches to the default font if it changed since this ContextMenu last took it, unless the ContextMenu has its own font
         void applyDefaultFont();
 
-        /// @brief Has the box and the text follow the widget's transitions.
+        /// @brief Has the box and the text follow the widget's transitions
         void useWidgetTransitions();
 
         ExtendedComboBox* iterateNode(ExtendedComboBox* comboBox, std::string_view node);
@@ -89,6 +94,7 @@ namespace RetroFuturaGUI
             _borderColors {};
         Background _background { &_projection };
         Border _border { &_projection };
+        WidgetText _text { &_projection };
         std::string _fontFamily {};
         f32 _fontSize { FontManager::ToPixels(16.0f, FontSizeUnit::Points) };
         PlatformBridge::Fonts::Slant _fontSlant { PlatformBridge::Fonts::Slant::Roman };

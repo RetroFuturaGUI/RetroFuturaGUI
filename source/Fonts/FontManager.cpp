@@ -149,9 +149,9 @@ RetroFuturaGUI::FontManager::LoadFontResult RetroFuturaGUI::FontManager::LoadFon
             ._CodePointLast = codePointLast,
             ._LoadIndividually = true,
             ._Glyphs = {},
-            ._BorderGlyphs = {},
+            ._OutlineGlyphs = {},
             ._IndexGlyphs = {},
-            ._IndexBorderGlyphs = {},
+            ._IndexOutlineGlyphs = {},
             ._FontFile = fontProperty._Path + "#" + std::to_string(fontProperty._FaceIndex),
             ._Source = std::move(source),
             ._Pages = {},
@@ -176,14 +176,14 @@ RetroFuturaGUI::FontManager::LoadFontResult RetroFuturaGUI::FontManager::LoadFon
         ._CodePointLast = codePointLast,
         ._LoadIndividually = false,
         ._Glyphs = {},
-        ._BorderGlyphs = {},
+        ._OutlineGlyphs = {},
         ._IndexGlyphs = {},
-        ._IndexBorderGlyphs = {},
+        ._IndexOutlineGlyphs = {},
         ._FontFile = fontProperty._Path + "#" + std::to_string(fontProperty._FaceIndex),
-        ._Source = std::move(source), //every glyph is made, but borders are rendered from it later
+        ._Source = std::move(source), //every glyph is made, but outlines are rendered from it later.
         ._Pages = {},
         ._ColorPages = {},
-        ._PageSide = pageSideFor(atlas._Metrics), //for the borders
+        ._PageSide = pageSideFor(atlas._Metrics), //for the outlines.
         ._Scale = 1.0f
     };
 
@@ -495,7 +495,7 @@ const RetroFuturaGUI::Glyph* RetroFuturaGUI::FontManager::loadGlyph(GlyphBlock& 
     return &block._Glyphs.emplace(codePoint, glyph).first->second;
 }
 
-const RetroFuturaGUI::Glyph* RetroFuturaGUI::FontManager::FindGlyphBorder(const FontInfo& font, const u32 sizeKey, const u32 codePoint, const f32 width)
+const RetroFuturaGUI::Glyph* RetroFuturaGUI::FontManager::FindGlyphOutline(const FontInfo& font, const u32 sizeKey, const u32 codePoint, const f32 width)
 {
     const auto atlas { font._Atlasses.find(sizeKey) };
 
@@ -507,11 +507,11 @@ const RetroFuturaGUI::Glyph* RetroFuturaGUI::FontManager::FindGlyphBorder(const 
     if(atlas->second._GlyphBlocks.end() == block)
         return nullptr;
 
-    const u64 borderKey { static_cast<u64>(FontSizeToKey(width)) << 32 | codePoint };
-    const auto border { block->second._BorderGlyphs.find(borderKey) };
+    const u64 outlineKey { static_cast<u64>(FontSizeToKey(width)) << 32 | codePoint };
+    const auto outline { block->second._OutlineGlyphs.find(outlineKey) };
 
-    if(block->second._BorderGlyphs.end() != border)
-        return &border->second;
+    if(block->second._OutlineGlyphs.end() != outline)
+        return &outline->second;
 
     GlyphBlock& editableBlock { const_cast<GlyphBlock&>(block->second) };
 
@@ -530,12 +530,12 @@ const RetroFuturaGUI::Glyph* RetroFuturaGUI::FontManager::FindGlyphBorder(const 
     glyph._CodePoint = codePoint;
     GlyphBitmap bitmap {};
 
-    //Widened at the source's own size, so the border is as wide as asked once the glyph is scaled to the font's size; kept
-    //when it fails too (a bitmap font has no outline), so it isn't tried again
-    if(editableBlock._Source->RenderGlyphBorder(codePoint, width / editableBlock._Scale, &bitmap))
+    //Widened at the source's own size, so the outline is as wide as asked once the glyph is scaled to the font's size; kept
+    //when it fails too (a bitmap font has no outline), so it isn't tried again.
+    if(editableBlock._Source->RenderGlyphOutline(codePoint, width / editableBlock._Scale, &bitmap))
         storeGlyph(editableBlock, bitmap, &glyph);
 
-    return &editableBlock._BorderGlyphs.emplace(borderKey, glyph).first->second;
+    return &editableBlock._OutlineGlyphs.emplace(outlineKey, glyph).first->second;
 }
 
 void RetroFuturaGUI::FontManager::storeGlyph(GlyphBlock& block, const GlyphBitmap& bitmap, Glyph* glyph)
@@ -858,9 +858,9 @@ RetroFuturaGUI::GlyphBlock* RetroFuturaGUI::FontManager::getDefaultFontBlock(con
         ._CodePointLast = 0,
         ._LoadIndividually = true,
         ._Glyphs = {},
-        ._BorderGlyphs = {},
+        ._OutlineGlyphs = {},
         ._IndexGlyphs = {},
-        ._IndexBorderGlyphs = {},
+        ._IndexOutlineGlyphs = {},
         ._FontFile = fontFile,
         ._Source = std::move(source),
         ._Pages = {},
@@ -905,19 +905,19 @@ const RetroFuturaGUI::Glyph* RetroFuturaGUI::FontManager::FindPlacedGlyph(const 
     return &block._IndexGlyphs.emplace(placed._GlyphIndex, glyph).first->second;
 }
 
-const RetroFuturaGUI::Glyph* RetroFuturaGUI::FontManager::FindPlacedGlyphBorder(const FontInfo& font, const u32 sizeKey, const PlacedGlyph& placed, const f32 width)
+const RetroFuturaGUI::Glyph* RetroFuturaGUI::FontManager::FindPlacedGlyphOutline(const FontInfo& font, const u32 sizeKey, const PlacedGlyph& placed, const f32 width)
 {
     if(!placed._Block)
         return nullptr;
 
     if(!placed._IsShaped)
-        return FindGlyphBorder(font, sizeKey, placed._CodePoint, width);
+        return FindGlyphOutline(font, sizeKey, placed._CodePoint, width);
 
     GlyphBlock& block { *placed._Block };
-    const u64 borderKey { static_cast<u64>(FontSizeToKey(width)) << 32 | placed._GlyphIndex };
-    const auto found { block._IndexBorderGlyphs.find(borderKey) };
+    const u64 outlineKey { static_cast<u64>(FontSizeToKey(width)) << 32 | placed._GlyphIndex };
+    const auto found { block._IndexOutlineGlyphs.find(outlineKey) };
 
-    if(block._IndexBorderGlyphs.end() != found)
+    if(block._IndexOutlineGlyphs.end() != found)
         return &found->second;
 
     if(!block._Source)
@@ -932,11 +932,11 @@ const RetroFuturaGUI::Glyph* RetroFuturaGUI::FontManager::FindPlacedGlyphBorder(
     glyph._CodePoint = placed._CodePoint;
     GlyphBitmap bitmap {};
 
-    //Widened at the source's own size, as FindGlyphBorder does
-    if(block._Source->RenderGlyphIndexBorder(placed._GlyphIndex, width / block._Scale, &bitmap))
+    //Widened at the source's own size, as FindGlyphOutline does.
+    if(block._Source->RenderGlyphIndexOutline(placed._GlyphIndex, width / block._Scale, &bitmap))
         storeGlyph(block, bitmap, &glyph);
 
-    return &block._IndexBorderGlyphs.emplace(borderKey, glyph).first->second;
+    return &block._IndexOutlineGlyphs.emplace(outlineKey, glyph).first->second;
 }
 
 RetroFuturaGUI::GlyphBlock* RetroFuturaGUI::FontManager::findBlock(const GlyphAtlas& atlas, const u32 codePoint)

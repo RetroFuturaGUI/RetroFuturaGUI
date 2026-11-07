@@ -1,7 +1,7 @@
 #pragma once
 #include "Background.hpp"
 #include "Border.hpp"
-#include "ITextProperties.hpp"
+#include "WidgetText.hpp"
 #include "Projection.hpp"
 #include <chrono>
 #include <memory>
@@ -14,7 +14,7 @@ namespace RetroFuturaGUI
     class IWidget;
 
     /// @brief Text in a box that shows above the mouse cursor once it has rested on a widget for a while
-    class Tooltip final : public ITextProperties
+    class Tooltip final
     {
     public:
         /// @brief Constructs a Tooltip for the given widget
@@ -26,22 +26,24 @@ namespace RetroFuturaGUI
         auto operator =(const Tooltip&) = delete;
         auto operator =(Tooltip&&) = delete;
 
-        /// @brief Tracks the mouse on the widget. Once it has rested there for the show delay, this tooltip is drawn at the end of the frame.
+        /// @brief Tracks the mouse on the widget. Once it has rested there for the show delay, this tooltip is drawn at the end of the frame
         void Update();
 
-        /// @brief Draws the tooltip shown this frame in the given window over everything drawn so far. Window::Draw calls it last.
+        /// @brief Draws the tooltip shown this frame in the given window over everything drawn so far. Window::Draw calls it last
         static void DrawShown(GLFWwindow* window);
 
-        /// @brief Sets the font of every tooltip, those created before this call included. A tooltip given its own font with SetFontFamily keeps it.
+        /// @brief Sets the font of every tooltip, those created before this call included. A tooltip given its own font with SetFontFamily keeps it
         static void SetDefaultFontFamily(std::string_view fontFamily, const f32 fontSize, const FontSizeUnit sizeUnit, const PlatformBridge::Fonts::Slant slant, const PlatformBridge::Fonts::Weight fontWeight);
 
         void SetBorderColors(std::span<const glm::vec4> colors);
-        void SetText(std::string_view text, bool emitSignal) override;
-        void SetFontFamily(std::string_view fontFamily, const f32 fontSize, const FontSizeUnit sizeUnit, const PlatformBridge::Fonts::Slant slant, const PlatformBridge::Fonts::Weight fontWeight) override;
-        void SetTextPadding(const f32 padding) override;
+        void SetFontFamily(std::string_view fontFamily, const f32 fontSize, const FontSizeUnit sizeUnit, const PlatformBridge::Fonts::Slant slant, const PlatformBridge::Fonts::Weight fontWeight);
 
-        /// @brief Sets the border width. The box grows with it, since the border draws inside the box.
+        /// @brief Sets the border width. The box grows with it, since the border draws inside the box
         void SetBorderWidth(const f32 borderWidth);
+
+        /// @brief Returns the widget's text: its string, font, colors and effects
+        WidgetText& GetText();
+        const WidgetText& GetText() const;
 
         /// @brief Returns the button's background
         Background& GetBackground();
@@ -71,6 +73,7 @@ namespace RetroFuturaGUI
         IWidget* _widget { nullptr };
         Background _background { &_projection };
         Border _border { &_projection };
+        WidgetText _text { &_projection };
         std::vector<glm::vec4>
             _backgroundColors {},
             _borderColors {};

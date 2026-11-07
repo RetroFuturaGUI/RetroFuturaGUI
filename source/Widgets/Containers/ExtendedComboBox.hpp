@@ -46,10 +46,10 @@ namespace RetroFuturaGUI
         void SetDropDownPosition(const DropDownPosition position) override;
 
         /// @brief Builds a widget of type T as the last item and owns it. The box is its parent, so an open list counts the row
-        ///        as its own instead of blocking it like a widget beneath, and passes its projection and window on to it.
-        /// @param args Constructor arguments after the parent window, such as an SvgImage's path.
-        /// @return The item, so the caller can carry on configuring it, or nullptr, building nothing, when the name is taken.
-        /// @warning Call from the GUI thread only: a widget creates OpenGL objects, and those must stay on the context's thread.
+        ///        as its own instead of blocking it like a widget beneath, and passes its projection and window on to it
+        /// @param args Constructor arguments after the parent window, such as an SvgImage's path
+        /// @return The item, so the caller can carry on configuring it, or nullptr, building nothing, when the name is taken
+        /// @warning Call from the GUI thread only: a widget creates OpenGL objects, and those must stay on the context's thread
         template<ExtendedComboBoxWidgets T, typename... Args>
         T* AddItem(std::string_view name, Args&&... args)
         {
@@ -65,8 +65,12 @@ namespace RetroFuturaGUI
             T* itemPointer { item.get() };
             _itemWidgets.push_back(std::move(item));
 
-            if constexpr (std::is_same_v<T, Label> || std::is_same_v<T, Button> || std::is_same_v<T, TextBox>
-                          || std::is_same_v<T, ComboBox> || std::is_same_v<T, ExtendedComboBox>)
+            if constexpr (std::is_same_v<T, Label> || std::is_same_v<T, Button> || std::is_same_v<T, TextBox>)
+            {
+                if(!_fontFamily.empty())
+                    itemPointer->GetText().SetFontFamily(_fontFamily, _fontSize, FontSizeUnit::Pixels, _slant, _fontWeight);
+            }
+            else if constexpr (std::is_same_v<T, ComboBox> || std::is_same_v<T, ExtendedComboBox>)
             {
                 if(!_fontFamily.empty())
                     itemPointer->SetFontFamily(_fontFamily, _fontSize, FontSizeUnit::Pixels, _slant, _fontWeight);
@@ -77,22 +81,21 @@ namespace RetroFuturaGUI
             return itemPointer;
         }
 
-        /// @brief Sets the text shown in the closed box, which stands in for the selected item.
+        /// @brief Sets the text shown in the closed box, which stands in for the selected item
         void SetPreviewText(std::string_view text);
 
-        /// @brief Returns the text shown in the closed box.
+        /// @brief Returns the text shown in the closed box
         const std::string& GetPreviewText() const;
 
-        /// @brief Sets the preview text colors for the given color state.
+        /// @brief Sets the preview text colors for the given color state
         void SetPreviewTextColors(std::span<const glm::vec4> colors, const ColorState state);
 
-        /// @brief Returns the preview text colors configured for the given color state.
+        /// @brief Returns the preview text colors configured for the given color state
         const std::vector<glm::vec4>& GetPreviewTextColors(const ColorState state) const;
 
         bool IsPointInsideOpenDropDown(const glm::vec2& point) const override;
 
-        /// @brief Removes the item at the given index. The row goes, and the widget is destroyed, at the start of the next Interact,
-        ///        so the item's own slot may remove it.
+        /// @brief Removes the item at the given index. The row goes, and the widget is destroyed, at the start of the next Interact, so the item's own slot may remove it
         void RemoveItem(const uSize index) override;
         void SetFontFamily(std::string_view fontFamily, const f32 fontSize, const FontSizeUnit sizeUnit, const PlatformBridge::Fonts::Slant slant, const PlatformBridge::Fonts::Weight fontWeight) override;
         void SetTextAlignment(const TextAlignment alignment) override;
@@ -105,16 +108,16 @@ namespace RetroFuturaGUI
         void applyPosition(const glm::vec3& position) override;
 
     private:
-        /// @brief Sweeps the removed items, follows the pointer for the box and its list, then passes the input on to the rows while the list is open.
+        /// @brief Sweeps the removed items, follows the pointer for the box and its list, then passes the input on to the rows while the list is open
         void interact() override;
 
-        /// @brief Passes the frame's update on to every widget, hidden ones included.
+        /// @brief Passes the frame's update on to every widget, hidden ones included
         void update() override;
 
-        /// @brief Hover, clicks and picking a row for the box and its open list.
+        /// @brief Hover, clicks and picking a row for the box and its open list
         void followPointer();
 
-        /// @brief Makes the given item the selected one and emits what changed.
+        /// @brief Makes the given item the selected one and emits what changed
         void selectItem(const uSize index) override;
 
         void drawDropDown() override;
@@ -123,10 +126,10 @@ namespace RetroFuturaGUI
         void updateItemGeometry();
         void updatePreviewTextGeometry() const;
 
-        /// @brief Returns what is left of a box of the given width, the closed box's or the open list's, once the thickest of the two borders is taken off.
+        /// @brief Returns what is left of a box of the given width, the closed box's or the open list's, once the thickest of the two borders is taken off
         glm::vec2 contentSize(const f32 width) const;
 
-        /// @brief Returns whether a world space point falls on a drop down one of the visible rows has open.
+        /// @brief Returns whether a world space point falls on a drop down one of the visible rows has open
         bool isPointInsideItemDropDown(const glm::vec2& point) const;
 
         void placeItemWidget(IWidget* item, const glm::vec3& center) const;
@@ -138,7 +141,7 @@ namespace RetroFuturaGUI
         /// @brief Whether an item already has the given name.
         bool isItemNameTaken(std::string_view name) const;
 
-        /// @brief Drops the rows of removed items, and the widgets with them.
+        /// @brief Drops the rows of removed items, and the widgets with them
         void performPendingRemoval();
         inline static const std::string _emptyText { "" };
 

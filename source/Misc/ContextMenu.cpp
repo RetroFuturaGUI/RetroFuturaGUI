@@ -2,7 +2,7 @@
 #include "Background.hpp"
 #include "ExtendedComboBox.hpp"
 #include "FontManager.hpp"
-#include "ITextProperties.hpp"
+#include "WidgetText.hpp"
 #include "IWidget.hpp"
 #include "IncludeHelper.hpp"
 #include "Label.hpp"
@@ -55,15 +55,12 @@ RetroFuturaGUI::ContextMenu::ContextMenu(Projection* projection, IWidget* widget
         }, false);
     }
 
-    _text = std::make_unique<Text>(&_projection);
     useWidgetTransitions();
 
-    if(!_text)
-        return;
-
     _border.SetWidth(_defaultBorderWidth);
-    _text->SetTextPadding(_defaultTextPadding);
-    setTextColors();
+    _text.SetPadding(_defaultTextPadding);
+    _text.SetColorState(ColorState::Enabled);
+    _text.SetChangeHook([this](const WidgetTextChange) { setSize(); }); //the box holds the text
     applyDefaultFont();
     setSize();
 }
@@ -78,13 +75,10 @@ void RetroFuturaGUI::ContextMenu::Update()
     if(!_widget)
         return;
 
-    if(!_text)
-        return;
-
     if(!_items)
         return;
 
-    const Shader::FrameScope flat { glm::mat4(1.0f), Shader::FrameComposition::Instead }; //the menu stays flat over a tilted widget.
+    const Shader::FrameScope flat { glm::mat4(1.0f), Shader::FrameComposition::Instead }; //the menu stays flat over a tilted widget
 
     if(_hasPendingItemClose)
     {
@@ -117,7 +111,7 @@ void RetroFuturaGUI::ContextMenu::Update()
     setPosition();
     _items->SetSize(glm::vec3(_background.GetSize(), 0.01f));
     _items->SetPosition(_background.GetPosition() + glm::vec3(0.0f, 0.0f, _zStep * 2.0f));
-    _items->SetPreviewText(_text->GetTextUTF8());
+    _items->SetPreviewText(_text.GetString());
     _items->Interact();
 }
 
@@ -186,20 +180,20 @@ void RetroFuturaGUI::ContextMenu::AddItem(std::string_view itemName, std::string
 
     if(textLabel)
     {
-        textLabel->SetText(text, false);
+        textLabel->GetText().SetString(text, false);
 
         if(!_fontFamily.empty())
-            textLabel->SetFontFamily(_fontFamily, _fontSize, FontSizeUnit::Pixels, _fontSlant, _fontWeight);
+            textLabel->GetText().SetFontFamily(_fontFamily, _fontSize, FontSizeUnit::Pixels, _fontSlant, _fontWeight);
     }
 
     Label* noteLabel { item->AddWidget<Label>("Note", { ._Column = 2 }) };
 
     if(noteLabel)
     {
-        noteLabel->SetText(note, false);
+        noteLabel->GetText().SetString(note, false);
 
         if(!_fontFamily.empty())
-            noteLabel->SetFontFamily(_fontFamily, _fontSize, FontSizeUnit::Pixels, _fontSlant, _fontWeight);
+            noteLabel->GetText().SetFontFamily(_fontFamily, _fontSize, FontSizeUnit::Pixels, _fontSlant, _fontWeight);
     }
 }
 
@@ -276,12 +270,6 @@ void RetroFuturaGUI::ContextMenu::SetBorderColors(std::span<const glm::vec4> col
     _border.SetColors(_borderColors, ColorState::Enabled);
 }
 
-void RetroFuturaGUI::ContextMenu::SetText(std::string_view text, const bool emitSignal)
-{
-    ITextProperties::SetText(text, emitSignal);
-    setSize();
-}
-
 void RetroFuturaGUI::ContextMenu::SetFontFamily(std::string_view fontFamily, const f32 fontSize, const FontSizeUnit sizeUnit, const PlatformBridge::Fonts::Slant slant, const PlatformBridge::Fonts::Weight fontWeight)
 {
     _hasOwnFont = true;
@@ -289,7 +277,7 @@ void RetroFuturaGUI::ContextMenu::SetFontFamily(std::string_view fontFamily, con
     _fontSize = FontManager::ToPixels(fontSize, sizeUnit);
     _fontSlant = slant;
     _fontWeight = fontWeight;
-    ITextProperties::SetFontFamily(fontFamily, fontSize, sizeUnit, slant, fontWeight);
+    _text.SetFontFamily(fontFamily, fontSize, sizeUnit, slant, fontWeight);
 
     if(_items)
         _items->SetFontFamily(fontFamily, fontSize, sizeUnit, slant, fontWeight);
@@ -305,13 +293,7 @@ void RetroFuturaGUI::ContextMenu::useWidgetTransitions()
 
     _background.SetTransitionSettings(&_widget->_transitionSettings);
 
-    for(FillStyle* element : std::initializer_list<FillStyle*> { _text.get() })
-    {
-        if(!element)
-            continue;
-
-        element->SetTransitionSettings(&_widget->_transitionSettings);
-    }
+    _text.SetTransitionSettings(&_widget->_transitionSettings);
 }
 
 void RetroFuturaGUI::ContextMenu::applyDefaultFont()
@@ -326,7 +308,7 @@ void RetroFuturaGUI::ContextMenu::applyDefaultFont()
     _fontSize = _defaultFontSize;
     _fontSlant = _defaultFontSlant;
     _fontWeight = _defaultFontWeight;
-    ITextProperties::SetFontFamily(_fontFamily, _fontSize, FontSizeUnit::Pixels, _fontSlant, _fontWeight);
+    _text.SetFontFamily(_fontFamily, _fontSize, FontSizeUnit::Pixels, _fontSlant, _fontWeight);
 
     if(_items)
         _items->SetFontFamily(_fontFamily, _fontSize, FontSizeUnit::Pixels, _fontSlant, _fontWeight);
@@ -359,12 +341,12 @@ void RetroFuturaGUI::ContextMenu::setItemFont(ExtendedComboBox* comboBox) const
             Label* textLabel { prefab->GetChildWidget<Label>("Text") };
 
             if(textLabel)
-                textLabel->SetFontFamily(_fontFamily, _fontSize, FontSizeUnit::Pixels, _fontSlant, _fontWeight);
+                textLabel->GetText().SetFontFamily(_fontFamily, _fontSize, FontSizeUnit::Pixels, _fontSlant, _fontWeight);
 
             Label* noteLabel { prefab->GetChildWidget<Label>("Note") };
 
             if(noteLabel)
-                noteLabel->SetFontFamily(_fontFamily, _fontSize, FontSizeUnit::Pixels, _fontSlant, _fontWeight);
+                noteLabel->GetText().SetFontFamily(_fontFamily, _fontSize, FontSizeUnit::Pixels, _fontSlant, _fontWeight);
         }
         else if(WidgetTypeID::ExtendedComboBox == item->GetWidgetTypeID())
         {
@@ -379,12 +361,6 @@ void RetroFuturaGUI::ContextMenu::setItemFont(ExtendedComboBox* comboBox) const
     }
 }
 
-void RetroFuturaGUI::ContextMenu::SetTextPadding(const f32 padding)
-{
-    ITextProperties::SetTextPadding(padding);
-    setSize(); //the padding is part of the box
-}
-
 void RetroFuturaGUI::ContextMenu::SetBorderWidth(const f32 borderWidth)
 {
     _border.SetWidth(borderWidth);
@@ -393,17 +369,14 @@ void RetroFuturaGUI::ContextMenu::SetBorderWidth(const f32 borderWidth)
 
 void RetroFuturaGUI::ContextMenu::setSize()
 {
-    if(!_text)
-        return;
-
     const f32
-        padding { _text->GetPadding() },
+        padding { _text.GetPadding() },
         borderWidth { _border.GetWidth() };
     const glm::vec2
-        textArea { _text->GetWidth() + padding * 2.0f, _text->GetHeight() + padding * 2.0f },
+        textArea { _text.GetWidth() + padding * 2.0f, _text.GetElement().GetHeight() + padding * 2.0f },
         contentSize { std::max(textArea.x, 180.0f - borderWidth * 2.0f), std::max(textArea.y, 28.0f - borderWidth * 2.0f) },
         size { contentSize + glm::vec2(borderWidth * 2.0f) };
-    _text->SetParentSize(contentSize);
+    _text.SetSize(contentSize);
     _background.SetSize(glm::vec3(size, 0.01f));
     _border.SetSize(size);
 }
@@ -413,16 +386,13 @@ void RetroFuturaGUI::ContextMenu::setPosition()
     if(!_widget)
         return;
 
-    if(!_text)
-        return;
-
     const glm::vec2
         halfSize { _background.GetSize() * 0.5f },
         resolution { _projection.GetResolution() };
 
     // Centered above the cursor's tip and kept inside the window: it slides sideways at the left and right edges
-    // and down at the top one. World space runs bottom-up, so above is +Y.
-    // Not std::clamp: a ContextMenu larger than the window would make it undefined.
+    // and down at the top one. World space runs bottom-up, so above is +Y
+    // Not std::clamp: a ContextMenu larger than the window would make it undefined
     const glm::vec3 center {
         std::max(halfSize.x, std::min(_pointerPosition.x, resolution.x - halfSize.x)),
         std::max(halfSize.y, std::min(_pointerPosition.y + _cursorDistance + halfSize.y, resolution.y - halfSize.y)),
@@ -430,7 +400,7 @@ void RetroFuturaGUI::ContextMenu::setPosition()
 
     _background.SetPosition(center);
     _border.SetPosition(center + glm::vec3(0.0f, 0.0f, _zStep));
-    _text->SetPosition(center + glm::vec3(0.0f, 0.0f, _zStep * 2.0f));
+    _text.SetPosition(center + glm::vec3(0.0f, 0.0f, _zStep * 2.0f));
 }
 
 void RetroFuturaGUI::ContextMenu::interact()
@@ -479,4 +449,14 @@ RetroFuturaGUI::Background& RetroFuturaGUI::ContextMenu::GetBackground()
 const RetroFuturaGUI::Background& RetroFuturaGUI::ContextMenu::GetBackground() const
 {
     return _background;
+}
+
+RetroFuturaGUI::WidgetText& RetroFuturaGUI::ContextMenu::GetText()
+{
+    return _text;
+}
+
+const RetroFuturaGUI::WidgetText& RetroFuturaGUI::ContextMenu::GetText() const
+{
+    return _text;
 }

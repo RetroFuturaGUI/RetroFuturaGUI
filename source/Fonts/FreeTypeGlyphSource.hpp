@@ -35,10 +35,10 @@ namespace RetroFuturaGUI
         bool HasColorGlyphs() const override;
         bool HasGlyph(const u32 codePoint) const override;
         bool RenderGlyph(const u32 codePoint, GlyphBitmap* bitmap) override;
-        bool RenderGlyphBorder(const u32 codePoint, const f32 width, GlyphBitmap* bitmap) override;
+        bool RenderGlyphOutline(const u32 codePoint, const f32 width, GlyphBitmap* bitmap) override;
         bool Shape(std::u32string_view text, const ShapeDirection direction, std::vector<ShapedGlyph>* glyphs) override;
         bool RenderGlyphIndex(const u32 glyphIndex, GlyphBitmap* bitmap) override;
-        bool RenderGlyphIndexBorder(const u32 glyphIndex, const f32 width, GlyphBitmap* bitmap) override;
+        bool RenderGlyphIndexOutline(const u32 glyphIndex, const f32 width, GlyphBitmap* bitmap) override;
 
     private:
         FreeTypeGlyphSource(FT_Face face, std::string_view path, const u32 faceIndex);

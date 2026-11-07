@@ -1,21 +1,26 @@
 #include "ITextEditVisuals.hpp"
 
-void RetroFuturaGUI::ITextEditVisuals::initEditVisuals(Projection* projection)
+RetroFuturaGUI::ITextEditVisuals::ITextEditVisuals(Projection* projection)
+    : _caret(projection), _selectedArea(projection)
 {
-    _caret = std::make_unique<Plane>(projection);
-    _selectedArea = std::make_unique<Plane>(projection);
+    _caret.SetSize(glm::vec2(_caretThickness, 0.0f)); //updateCaretPosition sets caret size by text size
+}
 
-    if(!_caret)
+void RetroFuturaGUI::ITextEditVisuals::updateCaretBlink()
+{
+    if(!_showCaret)
+    {
+        resetCaretBlink();
+        return;
+    }
+
+    const f64 elapsedMilliseconds { std::chrono::duration<f64, std::milli>(std::chrono::high_resolution_clock::now() - _millisecondsPassed).count() };
+
+    if(elapsedMilliseconds < _caret.GetBlinkTime())
         return;
 
-    if(!_selectedArea)
-        return;
-
-    _caret->SetFillType(FillType::Solid);
-    _caret->SetSize(glm::vec2(_caretThickness, 0.0f)); //updateCaretPosition sets caret size by text size
-    _caret->SetColors(_caretColors);
-    _selectedArea->SetFillType(FillType::Solid);
-    _selectedArea->SetColors(_selectedAreaColors);
+    _caretBlinkState = !_caretBlinkState;
+    _millisecondsPassed = std::chrono::high_resolution_clock::now();
 }
 
 void RetroFuturaGUI::ITextEditVisuals::updateCaretPosition()
@@ -23,9 +28,6 @@ void RetroFuturaGUI::ITextEditVisuals::updateCaretPosition()
     Text* text { getActiveText() };
 
     if(!text)
-        return;
-
-    if(!_caret)
         return;
 
     const f32 fullHeight { getCaretHeight() };
@@ -41,8 +43,8 @@ void RetroFuturaGUI::ITextEditVisuals::updateCaretPosition()
             clippedWidth { clippedRightX - clippedLeftX };
 
         _isCaretInView = 0.0f < clippedWidth && clampToTextBoundsY(caretPosition.y) == caretPosition.y;
-        _caret->SetSize(glm::vec2(clippedWidth, _caretThickness));
-        _caret->SetPosition(glm::vec3(clippedLeftX + clippedWidth * 0.5f, caretPosition.y, caretPosition.z));
+        _caret.SetSize(glm::vec2(clippedWidth, _caretThickness));
+        _caret.SetPosition(glm::vec3(clippedLeftX + clippedWidth * 0.5f, caretPosition.y, caretPosition.z));
         resetCaretBlink();
         return;
     }
@@ -56,8 +58,8 @@ void RetroFuturaGUI::ITextEditVisuals::updateCaretPosition()
 
     _isCaretInView = 0.0f < clippedHeight; //false while the caret's line is outside the text area
     caretPosition.y = clippedBottomY + clippedHeight * 0.5f;
-    _caret->SetSize(glm::vec2(_caretThickness, clippedHeight));
-    _caret->SetPosition(caretPosition);
+    _caret.SetSize(glm::vec2(_caretThickness, clippedHeight));
+    _caret.SetPosition(caretPosition);
     resetCaretBlink();
 }
 
@@ -69,9 +71,6 @@ void RetroFuturaGUI::ITextEditVisuals::updateSelectedArea()
     Text* text { getActiveText() };
 
     if(!text)
-        return;
-
-    if(!_selectedArea)
         return;
 
     const uSize
@@ -96,7 +95,7 @@ void RetroFuturaGUI::ITextEditVisuals::updateSelectedArea()
         if(0.0f >= width || 0.0f >= height) //skip whatever is outside the visible text area
             continue;
 
-        _selectedLineAreas.push_back({ ._Center = glm::vec2(clippedLeftX + width * 0.5f, clippedBottomY + height * 0.5f), ._Size = glm::vec2(width, height) });
+        _selectedLineAreas.push_back(SelectedArea::LineArea { ._Center = glm::vec2(clippedLeftX + width * 0.5f, clippedBottomY + height * 0.5f), ._Size = glm::vec2(width, height) });
     }
 
     _isSelected = !_selectedLineAreas.empty();
@@ -104,41 +103,22 @@ void RetroFuturaGUI::ITextEditVisuals::updateSelectedArea()
 
 void RetroFuturaGUI::ITextEditVisuals::drawSelectedArea()
 {
-    if(!_selectedArea)
-        return;
-
     if(!_isSelected)
         return;
 
-    //Plane::Draw() advances the gradient animation on every call
-    const f32
-        gradientOffset { _selectedArea->GetGradientOffset() },
-        gradientDegree { _selectedArea->GetGradientDegree() },
-        z { _selectedArea->GetPosition().z };
-
-    for(const SelectedLineArea& area : _selectedLineAreas)
-    {
-        _selectedArea->SetGradientOffset(gradientOffset);
-        _selectedArea->SetGradientDegree(gradientDegree);
-        _selectedArea->SetSize(area._Size);
-        _selectedArea->SetPosition(glm::vec3(area._Center, z));
-        _selectedArea->Draw();
-    }
+    _selectedArea.Draw(_selectedLineAreas);
 }
 
 void RetroFuturaGUI::ITextEditVisuals::drawCaret()
 {
-    if(!_caret)
-        return;
-
     if(!_showCaret)
         return;
 
     if(!_isCaretInView)
         return;
 
-    if(_caretNeverBlinks || _caretBlinkState)
-        _caret->Draw();
+    if(_caret.NeverBlinks() || _caretBlinkState)
+        _caret.Draw();
 }
 
 f32 RetroFuturaGUI::ITextEditVisuals::clampToTextBounds(const f32 worldX, const f32 halfExtent) const
@@ -218,99 +198,22 @@ f32 RetroFuturaGUI::ITextEditVisuals::getCaretHeight() const
     return text->GetGlyphSize() * _caretHeightFactor;
 }
 
-void RetroFuturaGUI::ITextEditVisuals::SetCaretBlinkTime(const f64 milliseconds)
+RetroFuturaGUI::Caret& RetroFuturaGUI::ITextEditVisuals::GetCaret()
 {
-    if(16.0 >= milliseconds) //at or below one frame a blink can't be seen
-    {
-        _caretNeverBlinks = true;
-        return;
-    }
-
-    _blinkForMilliseconds = milliseconds;
-    _caretNeverBlinks = false;
-    resetCaretBlink();
+    return _caret;
 }
 
-void RetroFuturaGUI::ITextEditVisuals::SetCaretColors(std::span<const glm::vec4> colors)
+const RetroFuturaGUI::Caret& RetroFuturaGUI::ITextEditVisuals::GetCaret() const
 {
-    _caretColors.assign(colors.begin(), colors.end());
-
-    if(!_caret)
-        return;
-
-    _caret->SetColors(_caretColors);
+    return _caret;
 }
 
-void RetroFuturaGUI::ITextEditVisuals::SetCaretFillType(const FillType fillType)
+RetroFuturaGUI::SelectedArea& RetroFuturaGUI::ITextEditVisuals::GetSelectedArea()
 {
-    if(!_caret)
-        return;
-
-    _caret->SetFillType(fillType);
+    return _selectedArea;
 }
 
-void RetroFuturaGUI::ITextEditVisuals::SetCaretGradientAnimationSpeed(const f32 speed)
+const RetroFuturaGUI::SelectedArea& RetroFuturaGUI::ITextEditVisuals::GetSelectedArea() const
 {
-    if(!_caret)
-        return;
-
-    _caret->SetGradientAnimationSpeed(speed);
-}
-
-void RetroFuturaGUI::ITextEditVisuals::SetSelectedAreaColors(std::span<const glm::vec4> colors)
-{
-    _selectedAreaColors.assign(colors.begin(), colors.end());
-
-    if(!_selectedArea)
-        return;
-
-    _selectedArea->SetColors(_selectedAreaColors);
-}
-
-void RetroFuturaGUI::ITextEditVisuals::SetSelectedAreaFillType(const FillType fillType)
-{
-    if(!_selectedArea)
-        return;
-
-    _selectedArea->SetFillType(fillType);
-}
-
-void RetroFuturaGUI::ITextEditVisuals::SetSelectedAreaGradientAnimationSpeed(const f32 speed)
-{
-    if(!_selectedArea)
-        return;
-
-    _selectedArea->SetGradientAnimationSpeed(speed);
-}
-
-void RetroFuturaGUI::ITextEditVisuals::SetSelectedAreaGradientOffset(const f32 gradientOffset)
-{
-    if(!_selectedArea)
-        return;
-
-    _selectedArea->SetGradientOffset(gradientOffset);
-}
-
-void RetroFuturaGUI::ITextEditVisuals::SetSelectedAreaGradientDegree(const f32 degree)
-{
-    if(!_selectedArea)
-        return;
-
-    _selectedArea->SetGradientDegree(degree);
-}
-
-void RetroFuturaGUI::ITextEditVisuals::SetSelectedAreaGradientRotationSpeed(const f32 rotationSpeed)
-{
-    if(!_selectedArea)
-        return;
-
-    _selectedArea->SetGradientRotationSpeed(rotationSpeed);
-}
-
-void RetroFuturaGUI::ITextEditVisuals::SetSelectedAreaCornerRadii(const glm::vec4& radii)
-{
-    if(!_selectedArea)
-        return;
-
-    _selectedArea->SetCornerRadii(radii);
+    return _selectedArea;
 }

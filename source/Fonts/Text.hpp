@@ -3,7 +3,7 @@
 #include "DoubleEncodedString.hpp"
 #include "FillStyle.hpp"
 #include "FogStyle.hpp"
-#include "TextBorder.hpp"
+#include "TextOutline.hpp"
 #include "IncludeHelper.hpp"
 #include "Projection.hpp"
 #include "ContextObjects.hpp"
@@ -23,7 +23,7 @@ namespace RetroFuturaGUI
         //Block
     };
 
-    /// @brief How a text's lines run. Vertical lines are columns read top to bottom, one em per glyph, the glyphs upright.
+    /// @brief How a text's lines run. Vertical lines are columns read top to bottom, one em per glyph, the glyphs upright
     enum class TextFlow : u32
     {
         Horizontal,
@@ -31,14 +31,14 @@ namespace RetroFuturaGUI
         VerticalRightToLeft // the first column rightmost, as Japanese and Chinese vertical text runs
     };
 
-    /// @brief What a text's mask is laid over.
+    /// @brief What a text's mask is laid over
     enum class MaskSpan : u32
     {
         WholeText,
         EachLine
     };
 
-    /// @brief Which way an arrow key moves the caret.
+    /// @brief Which way an arrow key moves the caret
     enum class CaretMove : u32
     {
         Left,
@@ -47,7 +47,7 @@ namespace RetroFuturaGUI
         Down
     };
 
-    /// @brief A box of selected text in world space, one per stretch that is selected without a break on its line.
+    /// @brief A box of selected text in world space, one per stretch that is selected without a break on its line
     struct TextSelectionArea
     {
         glm::vec2 _Center { 0.0f },
@@ -65,7 +65,7 @@ namespace RetroFuturaGUI
     class Text : public FillStyle, public FogStyle
     {
     public:
-        /// @brief Constructs a Text object that renders using the given projection.
+        /// @brief Constructs a Text object that renders using the given projection
         Text(Projection* projection);
         Text() = delete;
         ~Text();
@@ -73,22 +73,22 @@ namespace RetroFuturaGUI
         /// @brief Draws the text.
         void Draw();
 
-        /// @brief Sets the font family, size and style used to render the text, loading it if necessary.
+        /// @brief Sets the font family, size and style used to render the text, loading it if necessary
         void SetFontFamily(std::string_view fontFamily, const f32 size, const FontSizeUnit sizeUnit, PlatformBridge::Fonts::Slant slant, PlatformBridge::Fonts::Weight weight);
 
-        /// @brief Returns the font size in the given unit.
+        /// @brief Returns the font size in the given unit
         f32 GetFontSize(const FontSizeUnit sizeUnit) const;
 
-        /// @brief Sets the horizontal alignment of the text within its parent.
+        /// @brief Sets the horizontal alignment of the text within its parent
         void SetTextAlignment(TextAlignment textAlignment);
 
-        /// @brief Sets the glyph size.
+        /// @brief Sets the glyph size
         void SetSize(const glm::vec2& glyphSize);
 
-        /// @brief Sets the world position of the text.
+        /// @brief Sets the world position of the text
         void SetPosition(const glm::vec3& position);
 
-        /// @brief Sets the rotation of the text.
+        /// @brief Sets the rotation of the text
         void SetRotation(const glm::vec3& rotation);
 
     //Fill, glass and raster, from FillStyle, and fog, from FogStyle. White until colors are set
@@ -120,74 +120,75 @@ namespace RetroFuturaGUI
         using FogStyle::SetFogDensity;
         using FogStyle::SetFogClearing;
 
-        /// @brief Sets the size of the parent widget, used for alignment.
+        /// @brief Sets the size of the parent widget, used for alignment
         void SetParentSize(const glm::vec2 size);
 
-        /// @brief Sets the padding applied around the text when aligning.
+        /// @brief Sets the padding applied around the text when aligning
         void SetTextPadding(const f32 padding);
 
-        /// @brief Sets the text content from a UTF-8 encoded string.
+        /// @brief Sets the text content from a UTF-8 encoded string
         void SetTextUTF8(std::string_view text);
 
-        /// @brief Sets the text content from a UTF-32 encoded string.
+        /// @brief Sets the text content from a UTF-32 encoded string
         void SetTextUTF32(std::u32string_view text);
 
-        /// @brief Sets the horizontal scroll offset, used when the text overflows its parent.
+        /// @brief Sets the horizontal scroll offset, used when the text overflows its parent
         void SetScrollOffset(const f32 offset);
 
-        /// @brief Returns the current horizontal scroll offset.
+        /// @brief Returns the current horizontal scroll offset
         f32 GetScrollOffset() const;
 
-        /// @brief Returns the glyph size: the font size in pixels, unless SetSize scaled the glyphs.
+        /// @brief Returns the glyph size. The font size in pixels, unless SetSize scaled the glyphs
         float GetGlyphSize() const;
 
-        /// @brief Returns one line's height from the font's lowest descender to its highest ascender, without the gap between lines.
+        /// @brief Returns one line's height from the font's lowest descender to its highest ascender, without the gap between lines
         float GetHeight() const;
 
-        /// @brief Returns the width of the rendered text span.
+        /// @brief Returns the width of the rendered text span
         float GetWidth() const;
 
-        /// @brief Returns the height of the rendered text span, line spacing included (covering ascenders and decenders).
+        /// @brief Returns the height of the rendered text span, line spacing included (covering ascenders and decenders)
         float GetSpanHeight() const;
 
         /// @brief Returns the padding
         float GetPadding() const;
 
-        /// @brief Returns the world position of the given glyph boundary, useful for placing a caret.
-        /// @param boundary The glyph boundary index.
-        /// @param caretSize The width to offset by so the caret sits on the correct side of the boundary.
-        /// @return The world position of the boundary.
+        /// @brief Returns the world position of the given glyph boundary, useful for placing a caret
+        /// @param boundary The glyph boundary index
+        /// @param caretSize The width to offset by so the caret sits on the correct side of the boundary
+        /// @return The world position of the boundary
         glm::vec3 GetBoundaryPosition(const uSize boundary, const f32 caretSize) const;
 
-        /// @brief Returns the glyph boundary closest to the given world position: the line under its Y first, then the closest X on that line.
+        /// @brief Returns the glyph boundary closest to the given world position: the line under its Y first, then the closest X on that line
         uSize GetBoundaryAtPosition(const glm::vec2& worldPosition) const;
         uSize GetBoundaryAtPosition(const f32 worldX) const;
-        /// @brief Returns the glyph boundary on the given line closest to the given world X, or the end of the text if there is no such line.
+
+        /// @brief Returns the glyph boundary on the given line closest to the given world X, or the end of the text if there is no such line
         uSize GetBoundaryOnLine(const uSize line, const f32 worldX) const;
 
-        /// @brief Returns the text content as a UTF-8 encoded string.
+        /// @brief Returns the text content as a UTF-8 encoded string
         const std::string& GetTextUTF8() const;
 
-        /// @brief Returns the text content as a UTF-32 encoded string.
+        /// @brief Returns the text content as a UTF-32 encoded string
         const std::u32string& GetTextUTF32() const;
 
-        /// @brief Returns the number of glyphs in the text.
+        /// @brief Returns the number of glyphs in the text
         uSize GetGlyphCount() const;
 
-        /// @brief Converts a glyph index to its corresponding byte position within the UTF-8 string.
-        /// @return The UTF-8 byte position.
+        /// @brief Converts a glyph index to its corresponding byte position within the UTF-8 string
+        /// @return The UTF-8 byte position
         uSize GetUtf8Position(uSize const glyphPosition) const;
 
-        /// @brief Puts the first line just below the parent's top edge instead of centring it on the position - for multiline text.
+        /// @brief Puts the first line just below the parent's top edge instead of centring it on the position for multiline text
         void SetAnchorTop(const bool anchorTop);
 
-        /// @brief Returns the line the given glyph boundary sits on, 0 being the first.
+        /// @brief Returns the line the given glyph boundary sits on, 0 being the first
         uSize GetBoundaryLine(const uSize boundary) const;
 
-        /// @brief Returns the last glyph boundary of the given line - the one right before its '\n'.
+        /// @brief Returns the last glyph boundary of the given line the one right before its '\n'
         uSize GetLineLastBoundary(const uSize line) const;
 
-        /// @brief Returns the distance from one baseline to the next.
+        /// @brief Returns the distance from one baseline to the next
         f32 GetLineHeight() const;
 
         /// @brief Returns the boundary an arrow key moves the caret to. On a line, Left and Right go to the nearest boundary that
@@ -202,37 +203,37 @@ namespace RetroFuturaGUI
         /// @param caretSize As in GetBoundaryPosition, which the boxes line up with.
         std::vector<TextSelectionArea> GetSelectionAreas(const uSize first, const uSize last, const f32 caretSize) const;
 
-        /// @brief Sets how far the border reaches out from every glyph, in pixels. 0, the default, draws no border.
-        void SetBorderWidth(const f32 width);
+        /// @brief Sets how far the outline reaches out from every glyph, in pixels. 0, the default, draws no outline
+        void SetOutlineWidth(const f32 width);
 
-        /// @brief Returns how far the border reaches out from every glyph, in pixels.
-        f32 GetBorderWidth() const;
+        /// @brief Returns how far the outline reaches out from every glyph, in pixels
+        f32 GetOutlineWidth() const;
 
-        /// @brief Returns the border's style: its colors, fill, raster and image, set like the text's own.
-        TextBorder& GetBorder();
+        /// @brief Returns the outline's style: its colors, fill, raster and image, set like the text's own
+        TextOutline& GetOutline();
 
-        /// @brief Sets how the lines run: horizontally (default), or as columns. Each '\n' starts the next column. Columns are placed by their top edge: centered on the position, or at the parent's top with SetAnchorTop.
+        /// @brief Sets how the lines run: horizontally (default), or as columns. Each '\n' starts the next column. Columns are placed by their top edge: centered on the position, or at the parent's top with SetAnchorTop
         void SetTextFlow(const TextFlow textFlow);
 
-        /// @brief Returns how the lines run.
+        /// @brief Returns how the lines run
         TextFlow GetTextFlow() const;
 
         /// @brief Sets how far color glyphs (emoji) take on the fill's color, from 0, their own colors (the default), to 1, the
-        ///        fill's. The raster, fog, glass and mask apply to them either way; the text's image doesn't, as it would hide them.
+        ///        fill's. The raster, fog, glass and mask apply to them either way; the text's image doesn't, as it would hide them
         void SetColorGlyphTint(const f32 tint);
 
         /// @brief Returns how far color glyphs take on the fill's color.
         f32 GetColorGlyphTint() const;
 
         /// @brief Sets what the mask (SetMaskTextureID) is laid over: the whole text, the default, or each line, so a
-        ///        chrome mask shades every line of a multiline text as it would a one-line logo. The border's mask follows.
+        ///        chrome mask shades every line of a multiline text as it would a one-line logo. The outline's mask follows
         void SetMaskSpan(const MaskSpan maskSpan);
 
         /// @brief Returns what the mask is laid over.
         MaskSpan GetMaskSpan() const;
 
     private:
-        /// @brief Quads of glyphs on their pages, batched by page, with the buffer and the vertex arrays drawing them.
+        /// @brief Quads of glyphs on their pages, batched by page, with the buffer and the vertex arrays drawing them
         struct GlyphMesh
         {
             std::vector<f32> _Vertices {}; // x, y, u, v and the middle of the glyph's line across it, per vertex
@@ -248,44 +249,44 @@ namespace RetroFuturaGUI
         void calculateTextSpan();
 
         /// @brief Shapes one line running across: split into runs of one direction by the bidirectional algorithm, each
-        ///        shaped its way and laid out in the order they're drawn, the clusters counted from the line's start.
-        /// @param isRightToLeft Set to whether the line reads right to left, from its first strong character.
+        ///        shaped its way and laid out in the order they're drawn, the clusters counted from the line's start
+        /// @param isRightToLeft Set to whether the line reads right to left, from its first strong character
         void shapeLine(std::u32string_view line, std::vector<PlacedGlyph>* glyphs, bool* isRightToLeft) const;
         static void initMesh(GlyphMesh* mesh);
 
-        /// @brief Adds a glyph's quad at the pen (its baseline origin), clipped to the parent, starting a new batch when its page differs.
-        /// @param lineCenter The middle of the glyph's line across it (y for a line, x for a column), which a mask per line is laid by.
+        /// @brief Adds a glyph's quad at the pen (its baseline origin), clipped to the parent, starting a new batch when its page differs
+        /// @param lineCenter The middle of the glyph's line across it (y for a line, x for a column), which a mask per line is laid by
         void appendGlyphQuad(const Glyph& glyph, const glm::vec2& pen, const f32 scale, const f32 lineCenter, GlyphMesh* mesh) const;
 
         /// @brief The middle of a line across it: halfway between its lowest and highest glyph, or a column's middle.
         f32 getLineCenter(const uSize line) const;
 
         /// @brief Where a line starts across the text: at its left edge, or for a right-to-left line as far in as it leaves
-        ///        room, so it ends at the text's right edge, where it starts reading.
+        ///        room, so it ends at the text's right edge, where it starts reading
         f32 getLineStart(const uSize line) const;
 
-        /// @brief Uses the shader and uploads where the text is and the span its fill runs across.
+        /// @brief Uses the shader and uploads where the text is and the span its fill runs across
         void uploadPlacement(Shader& shader, const glm::mat4& translation) const;
         static void drawMesh(Shader& shader, GlyphMesh* mesh);
-        void drawBorder();
+        void drawOutline();
 
-        /// @brief How far a glyph placed by itself (its font can't shape) moves the pen along its line: its advance, or one em in a column.
+        /// @brief How far a glyph placed by itself (its font can't shape) moves the pen along its line: its advance, or one em in a column
         f32 getAdvance(const Glyph& glyph, const f32 scale) const;
 
-        /// @brief The baseline origin of a placed glyph so far along a line: from its shaped offsets, or as getPen places one unshaped.
+        /// @brief The baseline origin of a placed glyph so far along a line: from its shaped offsets, or as getPen places one unshaped
         glm::vec2 getPlacedPen(const uSize line, const f32 along, const PlacedGlyph& placed, const Glyph* glyph, const f32 scale) const;
 
         /// @brief How far a placed glyph moves the pen along its line.
         f32 getPlacedAdvance(const PlacedGlyph& placed, const Glyph* glyph, const f32 scale) const;
 
-        /// @brief The baseline origin of a glyph so far along a line; in a column the glyph is centered across it.
+        /// @brief The baseline origin of a glyph so far along a line; in a column the glyph is centered across it
         glm::vec2 getPen(const uSize line, const f32 along, const f32 horizontalAdvance) const;
 
-        /// @brief The left edge of a line's column, from the text's left edge.
+        /// @brief The left edge of a line's column, from the text's left edge
         f32 getColumnLeft(const uSize line) const;
         uSize getLineCount() const;
 
-        /// @brief The boundary on a line closest to a distance along it, or the end of the text if there is no such line.
+        /// @brief The boundary on a line closest to a distance along it, or the end of the text if there is no such line
         uSize getClosestOnLine(const uSize line, const f32 along) const;
 
         Projection& _projection;
@@ -303,7 +304,7 @@ namespace RetroFuturaGUI
         f32 _textPadding { 0.0f };
         f32 _scrollOffset { 0.0f };
 
-        // geometry
+    // geometry
         glm::vec3 _position { 0.0f };
         glm::vec2 _positionAligned { 0.0f },
             _parentSize { 0.0f },
@@ -325,14 +326,14 @@ namespace RetroFuturaGUI
         std::vector<glm::vec2> _characterSpans {}; //per boundary, the stretch along the line its character's glyphs cover
         bool _anchorTop { false };
 
-        // mesh
+    // mesh
         GlyphMesh
             _mesh {},
-            _borderMesh {};
+            _outlineMesh {};
 
-        // border
-        TextBorder _border {};
-        f32 _borderWidth { 0.0f };
-        static constexpr f32 _borderDepthOffset { 0.001f }; //behind the glyphs, well within the step between widgets
+    // outline
+        TextOutline _outline {};
+        f32 _outlineWidth { 0.0f };
+        static constexpr f32 _outlineDepthOffset { 0.001f }; //behind the glyphs, well within the step between widgets
     };
 }

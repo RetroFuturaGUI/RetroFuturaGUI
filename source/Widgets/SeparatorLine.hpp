@@ -1,13 +1,13 @@
 #pragma once
 #include "Background.hpp"
-#include "ITextProperties.hpp"
+#include "WidgetText.hpp"
 #include "IWidget.hpp"
 #include "config.hpp"
 #include <string_view>
 
 namespace RetroFuturaGUI
 {
-    class SeparatorLine final : public IWidget, public ITextProperties
+    class SeparatorLine final : public IWidget
     {
     public:
         SeparatorLine(std::string_view name, Projection* projection, IHierarchyNode* parentWidget, const WidgetTypeID parentWidgetTypeID, GLFWwindow* parentWindow);
@@ -19,20 +19,15 @@ namespace RetroFuturaGUI
 
         void Draw() override;
 
-        /// @brief Sets the text content, in UTF-8, and resizes the gap holding it to match.
-        void SetText(std::string_view text, const bool emitSignal) override;
+        /// @brief Returns the widget's text: its string, font, colors and effects. The gap in the line follows its size
+        WidgetText& GetText();
+        const WidgetText& GetText() const;
 
-        /// @brief Sets the font family, size and style used to render the text, loading it if necessary.
-        void SetFontFamily(std::string_view fontFamily, const f32 fontSize, const FontSizeUnit sizeUnit, const PlatformBridge::Fonts::Slant slant, const PlatformBridge::Fonts::Weight fontWeight) override;
-
-        /// @brief Sets the padding applied around the text, which widens the gap on both sides.
-        void SetTextPadding(const f32 padding) override;
-
-        /// @brief Sets how far from the line's left edge the text - and so its gap - starts.
+        /// @brief Sets how far from the line's left edge the text and therefore its gap start
         void SetTextLeftPadding(const f32 padding);
 
         /// @brief Sets whether the text overlay is drawn. While it is, the line carries a gap sized
-        /// to hold it, so the background gap is driven from here rather than set directly.
+        /// to hold it, so the background gap is driven from here rather than set directly
         void ShowText(const bool enable);
 
         /// @brief Returns the button's background
@@ -48,10 +43,11 @@ namespace RetroFuturaGUI
         void applyPosition(const glm::vec3& position) override;
 
     private:
-        /// @brief Sizes and places the gap the text sits in, and centers the text inside it.
+        /// @brief Sizes and places the gap the text sits in, and centers the text inside it
         void updateLayout();
 
         Background _background { &_projection };
+        WidgetText _text { &_projection };
         f32 _textLeftPadding { 50.0f };
         bool _showText { false };
     };

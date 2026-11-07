@@ -9,7 +9,7 @@ namespace RetroFuturaGUI
     class TextBox final : public ITextBox, public ITypedText
     {
     public:
-        /// @brief Constructs a TextBox widget under the given parent widget/window.
+        /// @brief Constructs a TextBox widget under the given parent widget/window
         TextBox(const std::string& name, Projection* projection, IWidget* parentWidget, const WidgetTypeID parentWidgetTypeID, GLFWwindow* parentWindow);
         TextBox() = delete;
         TextBox(const TextBox&) = delete;
@@ -19,7 +19,6 @@ namespace RetroFuturaGUI
         auto operator =(TextBox&&) = delete;
 
     private:
-        using ITextProperties::SetText; //setting text directly would bypass the value store - SetValue<std::string_view> renders it
         void renderValueText(std::string_view text, const bool emitSignal) override;
         void emitChange() override;
     };
