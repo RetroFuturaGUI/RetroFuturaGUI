@@ -207,7 +207,7 @@ void RetroFuturaGUI::LineDiagram::updateLinePoints(const uSize lineIndex)
 
 void RetroFuturaGUI::LineDiagram::drawGraph()
 {
-    if(!_useGraph)
+    if(!_graph.IsShown())
         return;
 
     for(uSize lineIndex = 0; lineIndex < _lines.size(); ++lineIndex)
@@ -238,7 +238,7 @@ void RetroFuturaGUI::LineDiagram::drawLine(const uSize lineIndex, const f32 thic
 
 void RetroFuturaGUI::LineDiagram::drawLineLabels()
 {
-    if(!_useGraph || !_showLineLabels)
+    if(!_graph.IsShown() || !_showLineLabels)
         return;
 
     const Background* track { getTrack() };
@@ -436,7 +436,7 @@ void RetroFuturaGUI::LineDiagram::interact()
         return; //ScrollView above has taken the pointer
 
     const glm::vec2 mousePos { pointer._Position };
-    const bool canHover { _isEnabledFlag && _useGraph && pointer._HasPosition && isPointInside(mousePos) };
+    const bool canHover { _isEnabledFlag && _graph.IsShown() && pointer._HasPosition && isPointInside(mousePos) };
 
     if(!canHover)
     {

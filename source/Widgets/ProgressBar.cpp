@@ -33,10 +33,7 @@ void RetroFuturaGUI::ProgressBar::setColors(const ColorState state)
 
 bool RetroFuturaGUI::ProgressBar::isInsideGraph(const glm::vec2& mousePos)
 {
-    if(!_graph)
-        return false;
-
-    return isPointInsideRect(mousePos, glm::vec3(_graph->GetSize(), 0.0f), _graph->GetPosition(), _graph->GetRotation());
+    return isPointInsideRect(mousePos, glm::vec3(_graph.GetSize(), 0.0f), _graph.GetPosition(), _graph.GetRotation());
 }
 
 void RetroFuturaGUI::ProgressBar::interact()

@@ -15,6 +15,7 @@
 #include "Background.hpp"
 #include "Border.hpp"
 #include "Indicator.hpp"
+#include "Graph.hpp"
 #include "IClickable.hpp"
 #include "IWidget.hpp"
 #include "IncludeHelper.hpp"
@@ -25,12 +26,6 @@ namespace RetroFuturaGUI
     class IRangedValue : public IWidget, public IClickable
     {
     public:
-        enum class GraphMode : u32
-        {
-            Bar,
-            Wave
-        };
-
         enum GraphDecoration : u32
         {
             None,
@@ -70,6 +65,12 @@ namespace RetroFuturaGUI
         /// @brief Returns the marker riding the track: shown or hidden, its shape, size, background and border
         const RetroFuturaGUI::Indicator& GetIndicator() const;
 
+        /// @brief Returns the fill growing along the track. Shown or hidden, a bar or a wave, its thickness, colors and effects
+        RetroFuturaGUI::Graph& GetGraph();
+
+        /// @brief Returns the fill growing along the track. Shown or hidden, a bar or a wave, its thickness, colors and effects
+        const RetroFuturaGUI::Graph& GetGraph() const;
+
         /// @brief Sets the range's lower bound, stored in the type resolveValueType picks: T on a single-value widget (converting the value and step to T
         /// as well, see setValueType), the data's type on a multi-value widget that has data (so 0.5f becomes 0 for u8 data).
         template <NumericValueType T> void SetMinValue(T value)
@@ -87,77 +88,6 @@ namespace RetroFuturaGUI
             _maxValue = convertPrimitiveTo(value, _valueType);
             alignValueToRange();
         }
-
-        /// @brief Shows or hides the graph (growing fill). Builds it the first time it's shown.
-        void ShowGraph(const bool show);
-
-        /// @brief Sets whether the graph is drawn as a solid fill (Bar) or as a wave (Wave).
-        void SetGraphMode(const GraphMode mode);
-
-        /// @brief Sets the thickness of the graph's wave line in pixels (Wave mode only)
-        void SetGraphWaveThickness(const f32 thickness);
-
-        /// @brief Sets the amplitude of the graph's wave, in pixels (Wave mode only)
-        void SetGraphWaveHeight(const f32 height);
-
-        /// @brief Sets the horizontal distance between the graph's wave peaks in pixels (Wave mode only)
-        void SetGraphWaveLength(const f32 length);
-
-        void SetGraphColors(std::span<const glm::vec4> colors, const ColorState state);
-
-        /// @brief Sets the corner rounding radii of the graph.
-        void SetGraphCornerRadii(const glm::vec4& radii);
-
-        /// @brief Sets the graph's thickness (its size along the track's short axis). Values at or above the track's height are clamped to it; 0 matches the track's height exactly.
-        void SetGraphWidth(const f32 width);
-
-        /// @brief Sets the graph fill type (solid, linear/radial/huestar gradient).
-        void SetGraphFillType(const FillType fillType);
-
-        /// @brief Sets the offset applied to the graph gradient's start position.
-        void SetGraphGradientOffset(const f32 gradientOffset);
-
-        /// @brief Sets the speed at which the graph gradient animates over time.
-        void SetGraphGradientAnimationSpeed(const f32 animationSpeed);
-
-        /// @brief Sets the angle of the graph's linear gradient, in degrees.
-        void SetGraphGradientDegree(const f32 degree);
-
-        /// @brief Sets the speed at which the graph gradient rotates over time.
-        void SetGraphGradientRotationSpeed(const f32 rotationSpeed);
-
-        /// @brief Sets the texture ID sampled for the graph's glass-effect-with-image shader feature.
-        void SetGraphWindowBackgroundImageTextureID(const u32 textureID);
-
-        /// @brief Sets the dot color used for the graph's Dotted raster pattern.
-        void SetGraphPrimaryRasterColor(const glm::vec4& color);
-
-        /// @brief Sets the gap, in pixels, between the largest elements of the graph's raster: 0 lets them touch. Spreads the grid without changing any element's size.
-        void SetGraphRasterSpacing(const f32 spacing);
-
-        /// @brief Sets the direction, in degrees, along which the graph's raster widths/animation transfer.
-        void SetGraphRasterDegree(const f32 degree);
-
-        /// @brief Sets the per-position dot width curve, in pixels (each value is a dot's full width across), for the graph's Dotted raster pattern. Enables the Raster shader feature when non-empty.
-        void SetGraphPrimaryRasterWidthTransfer(std::span<f32> widthTransfer);
-
-        /// @brief Sets how far each graph dot's opacity reaches from its center before fading to transparent.
-        void SetGraphDotTransparencyTransfer(const f32 transparencyTransfer);
-
-        /// @brief Sets the speed at which the graph's raster pattern animates.
-        void SetGraphRasterAnimationSpeed(const f32 animationSpeed);
-
-        /// @brief Sets the overall opacity of the graph's FogEffect shader feature.
-        void SetGraphFogAlpha(const f32 alpha);
-
-        /// @brief Sets the speed at which the graph's fog drifts over time.
-        void SetGraphFogSpeed(const f32 speed);
-
-        /// @brief Sets the per-octave density/weight curve driving the graph's fog. Enables the FogEffect shader feature when non-empty.
-        void SetGraphFogDensity(std::span<f32> density);
-
-        /// @brief Sets the coverage threshold above which the graph's fog appears; higher values carve larger clear gaps out of the cloud.
-        void SetGraphFogClearing(const f32 clearing);
 
     protected:
         // Non-owning alias of the projection the elements are created with
@@ -303,27 +233,14 @@ namespace RetroFuturaGUI
         Background _background { &_projection };
         Border _border { &_projection };
         RetroFuturaGUI::Indicator _indicator { &_projection, { ._OnLayoutChange = [this]() { setIndicatorSize(); alignElementsToTrack(); } } }; //the GraphDecoration enumerator hides the type's own name in here
-        std::unique_ptr<WavePlane> _graph { nullptr };
+        RetroFuturaGUI::Graph _graph { &_projection, { ._OnLayoutChange = [this]() { alignElementsToTrack(); } } };
 
         // Settings
-        bool _useGraph { false };
-        GraphMode _graphMode { GraphMode::Bar };
-        f32 _graphWidth { 0.0f }; // graph thickness; 0 matches the track's height
         Orientation _orientation { Orientation::Horizontal };
         TrackDirection _trackDirection { TrackDirection::Normal };
         glm::i32vec2 _previousIndicatorPosition { glm::i32vec2(0) };
 
         // Design
-        std::vector<glm::vec4>
-            _graphColorEnabled { glm::vec4(1.0f, 0.0f, 0.0f, 1.0f) },
-            _graphColorClicked { glm::vec4(1.0f, 1.0f, 0.0f, 1.0f) },
-            _graphColorHover { glm::vec4(0.0f, 0.0f, 1.0f, 1.0f) },
-            _graphColorDisabled { glm::vec4(0.5f, .5f, 0.5f, 1.0f) };
-        ColorState
-            _graphColorState { ColorState::Enabled };
-        std::vector<f32>
-            _graphPrimaryRasterWidthTransfer,
-            _graphFogDensity;
 
     protected:
         /// @brief Sets the position
@@ -333,7 +250,6 @@ namespace RetroFuturaGUI
         void applySize(const glm::vec3& size) override final;
 
     private:
-        void setGraphColorsApply();
         void setIndicatorSize();
     };
 }

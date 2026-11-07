@@ -6,6 +6,7 @@ RetroFuturaGUI::IRangedValue::IRangedValue(std::string_view name, Projection* pr
     : IWidget(name, projection, parentWidget, parentWidgetTypeID, parentWindow)
 {
     _indicator.SetTransitionSettings(&_transitionSettings);
+    _graph.SetTransitionSettings(&_transitionSettings);
     _background.SetTransitionSettings(&_transitionSettings);
     _border.SetTransitionSettings(&_transitionSettings);
     _elementProjection = projection;
@@ -29,6 +30,16 @@ RetroFuturaGUI::Indicator& RetroFuturaGUI::IRangedValue::GetIndicator()
 const RetroFuturaGUI::Indicator& RetroFuturaGUI::IRangedValue::GetIndicator() const
 {
     return _indicator;
+}
+
+RetroFuturaGUI::Graph& RetroFuturaGUI::IRangedValue::GetGraph()
+{
+    return _graph;
+}
+
+const RetroFuturaGUI::Graph& RetroFuturaGUI::IRangedValue::GetGraph() const
+{
+    return _graph;
 }
 
 RetroFuturaGUI::Border& RetroFuturaGUI::IRangedValue::GetBorder()
@@ -81,220 +92,6 @@ void RetroFuturaGUI::IRangedValue::SetTrackDirection(const TrackDirection direct
 {
     _trackDirection = direction;
     alignElementsToTrack();
-}
-
-void RetroFuturaGUI::IRangedValue::ShowGraph(const bool show)
-{
-    _useGraph = show;
-
-    if(_useGraph && !_graph)
-    {
-        _graph = std::make_unique<WavePlane>(_elementProjection);
-        useTransitions({ _graph.get() });
-        setGraphColorsApply();
-    }
-
-    alignElementsToTrack();
-}
-
-void RetroFuturaGUI::IRangedValue::SetGraphMode(const GraphMode mode)
-{
-    _graphMode = mode;
-
-    if(!_graph)
-        return;
-
-    _graph->ShowWave(_graphMode == GraphMode::Wave);
-}
-
-void RetroFuturaGUI::IRangedValue::SetGraphWaveThickness(const f32 thickness)
-{
-    if(!_graph)
-        return;
-
-    _graph->SetWaveThickness(thickness);
-}
-
-void RetroFuturaGUI::IRangedValue::SetGraphWaveHeight(const f32 height)
-{
-    if(!_graph)
-        return;
-
-    _graph->SetWaveHeight(height);
-}
-
-void RetroFuturaGUI::IRangedValue::SetGraphWaveLength(const f32 length)
-{
-    if(!_graph)
-        return;
-
-    _graph->SetWaveLength(length);
-}
-
-void RetroFuturaGUI::IRangedValue::SetGraphColors(std::span<const glm::vec4> colors, const ColorState state)
-{
-    switch(state)
-    {
-        case ColorState::Disabled:
-            _graphColorDisabled.assign(colors.begin(), colors.end());
-        break;
-        case ColorState::Hover:
-            _graphColorHover.assign(colors.begin(), colors.end());
-        break;
-        case ColorState::Clicked:
-            _graphColorClicked.assign(colors.begin(), colors.end());
-        break;
-        default: // Enabled
-            _graphColorEnabled.assign(colors.begin(), colors.end());
-    }
-
-    setGraphColorsApply();
-}
-
-void RetroFuturaGUI::IRangedValue::SetGraphCornerRadii(const glm::vec4& radii)
-{
-    if(!_graph)
-        return;
-
-    _graph->SetCornerRadii(radii);
-}
-
-void RetroFuturaGUI::IRangedValue::SetGraphWidth(const f32 width)
-{
-    _graphWidth = width;
-    alignElementsToTrack();
-}
-
-void RetroFuturaGUI::IRangedValue::SetGraphFillType(const FillType fillType)
-{
-    if(!_graph)
-        return;
-
-    _graph->SetFillType(fillType);
-}
-
-void RetroFuturaGUI::IRangedValue::SetGraphGradientOffset(const f32 gradientOffset)
-{
-    if(!_graph)
-        return;
-
-    _graph->SetGradientOffset(gradientOffset);
-}
-
-void RetroFuturaGUI::IRangedValue::SetGraphGradientAnimationSpeed(const f32 animationSpeed)
-{
-    if(!_graph)
-        return;
-
-    _graph->SetGradientAnimationSpeed(animationSpeed);
-}
-
-void RetroFuturaGUI::IRangedValue::SetGraphGradientDegree(const f32 degree)
-{
-    if(!_graph)
-        return;
-
-    _graph->SetGradientDegree(degree);
-}
-
-void RetroFuturaGUI::IRangedValue::SetGraphGradientRotationSpeed(const f32 rotationSpeed)
-{
-    if(!_graph)
-        return;
-
-    _graph->SetGradientRotationSpeed(rotationSpeed);
-}
-
-void RetroFuturaGUI::IRangedValue::SetGraphWindowBackgroundImageTextureID(const u32 textureID)
-{
-    if(!_graph)
-        return;
-
-    _graph->SetWindowBackgroundImageTextureID(textureID);
-}
-
-void RetroFuturaGUI::IRangedValue::SetGraphPrimaryRasterColor(const glm::vec4& color)
-{
-    if(!_graph)
-        return;
-
-    _graph->SetPrimaryRasterColor(color);
-}
-
-void RetroFuturaGUI::IRangedValue::SetGraphRasterSpacing(const f32 spacing)
-{
-    if(!_graph)
-        return;
-
-    _graph->SetRasterSpacing(spacing);
-}
-
-void RetroFuturaGUI::IRangedValue::SetGraphRasterDegree(const f32 degree)
-{
-    if(!_graph)
-        return;
-
-    _graph->SetRasterDegree(degree);
-}
-
-void RetroFuturaGUI::IRangedValue::SetGraphPrimaryRasterWidthTransfer(std::span<f32> widthTransfer)
-{
-    _graphPrimaryRasterWidthTransfer.assign(widthTransfer.begin(), widthTransfer.end());
-
-    if(!_graph)
-        return;
-
-    _graph->SetPrimaryRasterWidthTransfer(_graphPrimaryRasterWidthTransfer);
-}
-
-void RetroFuturaGUI::IRangedValue::SetGraphDotTransparencyTransfer(const f32 transparencyTransfer)
-{
-    if(!_graph)
-        return;
-
-    _graph->SetDotTransparencyTransfer(transparencyTransfer);
-}
-
-void RetroFuturaGUI::IRangedValue::SetGraphRasterAnimationSpeed(const f32 animationSpeed)
-{
-    if(!_graph)
-        return;
-
-    _graph->SetRasterAnimationSpeed(animationSpeed);
-}
-
-void RetroFuturaGUI::IRangedValue::SetGraphFogAlpha(const f32 alpha)
-{
-    if(!_graph)
-        return;
-
-    _graph->SetFogAlpha(alpha);
-}
-
-void RetroFuturaGUI::IRangedValue::SetGraphFogSpeed(const f32 speed)
-{
-    if(!_graph)
-        return;
-
-    _graph->SetFogSpeed(speed);
-}
-
-void RetroFuturaGUI::IRangedValue::SetGraphFogDensity(std::span<f32> density)
-{
-    _graphFogDensity.assign(density.begin(), density.end());
-
-    if(!_graph)
-        return;
-
-    _graph->SetFogDensity(_graphFogDensity);
-}
-
-void RetroFuturaGUI::IRangedValue::SetGraphFogClearing(const f32 clearing)
-{
-    if(!_graph)
-        return;
-
-    _graph->SetFogClearing(clearing);
 }
 
 glm::vec3 RetroFuturaGUI::IRangedValue::orientedRotation() const
@@ -441,16 +238,14 @@ void RetroFuturaGUI::IRangedValue::setGraphSize(const f32 trackFraction)
     if(!track)
         return;
 
-    if(!_graph)
-        return;
-
     const f32
         trackWidth { track->GetSize().x },
         trackHeight { track->GetSize().y },
         graphWidth { trackWidth * trackFraction },
-        graphHeight { 0.0f < _graphWidth ? (_graphWidth < trackHeight ? _graphWidth : trackHeight) : trackHeight };
+        thickness { _graph.GetWidth() },
+        graphHeight { 0.0f < thickness ? (thickness < trackHeight ? thickness : trackHeight) : trackHeight };
 
-    _graph->SetSize(glm::vec2(graphWidth, graphHeight));
+    _graph.SetSize(glm::vec2(graphWidth, graphHeight));
 }
 
 void RetroFuturaGUI::IRangedValue::setGraphPosition(const f32 trackFraction)
@@ -460,14 +255,11 @@ void RetroFuturaGUI::IRangedValue::setGraphPosition(const f32 trackFraction)
     if(!track)
         return;
 
-    if(!_graph)
-        return;
-
     setGraphSize(trackFraction);
 
     const f32
         trackWidth { track->GetSize().x },
-        graphWidth { _graph->GetSize().x };
+        graphWidth { _graph.GetSize().x };
 
     // The graph always grows along the track's local x-axis, anchored to its left edge.
     const glm::vec2 localOffset(graphWidth * 0.5f - trackWidth * 0.5f, 0.0f);
@@ -485,8 +277,8 @@ void RetroFuturaGUI::IRangedValue::setGraphPosition(const f32 trackFraction)
         track->GetPosition().z + 0.02f
     );
 
-    _graph->SetPosition(position);
-    _graph->SetRotation(track->GetRotation());
+    _graph.SetPosition(position);
+    _graph.SetRotation(track->GetRotation());
 }
 
 void RetroFuturaGUI::IRangedValue::setIndicatorColors(const ColorState state)
@@ -496,29 +288,7 @@ void RetroFuturaGUI::IRangedValue::setIndicatorColors(const ColorState state)
 
 void RetroFuturaGUI::IRangedValue::setGraphColors(const ColorState state)
 {
-    _graphColorState = state;
-    setGraphColorsApply();
-}
-
-void RetroFuturaGUI::IRangedValue::setGraphColorsApply()
-{
-    if(!_graph)
-        return;
-
-    switch(_graphColorState)
-    {
-        case ColorState::Enabled:
-            _graph->SetColors(_graphColorEnabled);
-        break;
-        case ColorState::Clicked:
-            _graph->SetColors(_graphColorClicked);
-        break;
-        case ColorState::Hover:
-            _graph->SetColors(_graphColorHover);
-        break;
-        default: //Disabled
-            _graph->SetColors(_graphColorDisabled);
-    }
+    _graph.SetColorState(state);
 }
 
 void RetroFuturaGUI::IRangedValue::drawIndicator()
@@ -528,10 +298,7 @@ void RetroFuturaGUI::IRangedValue::drawIndicator()
 
 void RetroFuturaGUI::IRangedValue::drawGraph()
 {
-    if(!_useGraph || !_graph)
-        return;
-
-    _graph->Draw();
+    _graph.Draw();
 }
 
 void RetroFuturaGUI::IRangedValue::setIndicatorSize()

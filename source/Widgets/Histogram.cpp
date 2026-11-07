@@ -93,7 +93,7 @@ void RetroFuturaGUI::Histogram::drawGraph()
     if(_dataCount.empty())
         return;
 
-    if(!_useGraph || !_graph)
+    if(!_graph.IsShown())
         return;
 
     for(uSize i = 0; i < _dataCount.front(); ++i)
@@ -103,10 +103,10 @@ void RetroFuturaGUI::Histogram::drawGraph()
             barRotation = calculateBarRotation();
         f32 barHeight = calculateBarHeight(i);
 
-        _graph->SetSize(glm::vec3(_barWidth, barHeight, 1.0f));
-        _graph->SetPosition(barPosition);
-        _graph->SetRotation(barRotation);
-        _graph->Draw();
+        _graph.SetSize(glm::vec2(_barWidth, barHeight));
+        _graph.SetPosition(barPosition);
+        _graph.SetRotation(barRotation);
+        _graph.Draw();
     }
 }
 
