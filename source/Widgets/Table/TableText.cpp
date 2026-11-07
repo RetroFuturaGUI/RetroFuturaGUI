@@ -92,6 +92,9 @@ void RetroFuturaGUI::TableText::SetTextColors(std::span<const glm::vec4> colors,
         case ColorState::Hover:
             _textColorHover = colors;
         break;
+        case ColorState::Selected:
+            _textColorSelected = colors;
+        break;
         default: //Enabled
             _textColorEnabled = colors;
     }

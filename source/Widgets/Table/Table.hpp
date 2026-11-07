@@ -136,6 +136,7 @@ namespace RetroFuturaGUI
                 _TextColorDisabled {{ 0.5f, 0.5f, 0.5f, 1.0f }},
                 _TextColorClicked {{ 1.0f, 1.0f, 1.0f, 1.0f }},
                 _TextColorHover {{ 1.0f, 1.0f, 1.0f, 1.0f }},
+                _TextColorSelected {{ 1.0f, 1.0f, 1.0f, 1.0f }},
                 _IconColorEnabled {{ 1.0f, 1.0f, 1.0f, 1.0f }},
                 _IconColorDisabled {{ 0.5f, 0.5f, 0.5f, 1.0f }},
                 _IconColorClicked {{ 1.0f, 1.0f, 1.0f, 1.0f }},
@@ -163,7 +164,8 @@ namespace RetroFuturaGUI
         /// @brief Disconnects a previously connected OnTextChange slot.
         void Disconnect_OnTextChange(const typename Signal<>::Slot& slot);
 
-        /// @brief Sets the text color for the given color state.
+        /// @brief Sets the text color for the given color state and track variant. Selected rows show the Selected colors (white
+        ///        by default). An empty list has them show the Enabled colors.
         void SetTextColors(std::span<const glm::vec4> colors, const ColorState state, const uSize nthIndex);
 
         /// @brief Returns the text color configured for the given color state.
@@ -304,6 +306,7 @@ namespace RetroFuturaGUI
 
         void SetHeaderTextPadding(const f32 padding);
 
+        /// @brief Sets the header text color for the given color state. A header can't be selected, so Selected colors are ignored
         void SetHeaderTextColors(std::span<const glm::vec4> colors, const ColorState state);
 
         void SetHeaderInnerBorderWidth(const f32 width);
@@ -365,8 +368,6 @@ namespace RetroFuturaGUI
         void ClearSelection(const bool emitSignal);
 
         void SetSelectedRowBackgroundColors(std::span<const glm::vec4> colors);
-
-        void SetSelectedRowTextColors(std::span<const glm::vec4> colors);
 
         /// @brief Marks the row, or the column in Column orientation, that a drag would drop on: its background is drawn in the
         ///        drop target colors, over its own and the selection's. One row at a time; redefining the tracks takes it away.
@@ -565,8 +566,8 @@ namespace RetroFuturaGUI
         /// @brief Returns the space each header band takes out of the table: x for the row header's width, y for the column header's height.
         glm::vec2 getHeaderExtents() const;
 
-        /// @brief Draws a text cell through its pooled TableText, in the row's text colors.
-        void drawTextCell(const uSize row, const uSize column, std::span<const glm::vec4> textColors);
+        /// @brief Draws a text cell through its pooled TableText, in the row's text colors
+        void drawTextCell(const uSize row, const uSize column, const TrackColoring& coloring, const ColorState state);
 
         /// @brief Draws a checkbox cell through the shared checkbox, fitted to the cell.
         void drawCheckBoxCell(const BodyCell& cell, const uSize row, const uSize column, const glm::vec3& position, const glm::vec3& size);
@@ -844,7 +845,6 @@ namespace RetroFuturaGUI
         std::vector<bool> _selectedRowFlags {}; // one per selectable row
         std::vector<glm::vec4>
             _selectedRowBackgroundColors {{ 0.2f, 0.3f, 0.55f, 1.0f }},
-            _selectedRowTextColors {{ 1.0f, 1.0f, 1.0f, 1.0f }},
             _dropTargetRowBackgroundColors {{ 0.25f, 0.5f, 0.42f, 1.0f }};
         uSize _dropTargetRow { 0 };
         bool _hasDropTargetRow { false };

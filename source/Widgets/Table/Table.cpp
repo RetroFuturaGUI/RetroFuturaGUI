@@ -235,7 +235,7 @@ void RetroFuturaGUI::Table::Draw()
                 switch(cell->_Type)
                 {
                     case ITableWidget::TableWidgetTypeID::TableText:
-                        drawTextCell(row, column, isSelected ? _selectedRowTextColors : coloring._TextColorEnabled);
+                        drawTextCell(row, column, coloring, isSelected ? ColorState::Selected : ColorState::Enabled);
                     break;
                     case ITableWidget::TableWidgetTypeID::TableCheckBox:
                         drawCheckBoxCell(*cell, row, column, position, size);
@@ -275,14 +275,16 @@ void RetroFuturaGUI::Table::Draw()
     }
 }
 
-void RetroFuturaGUI::Table::drawTextCell(const uSize row, const uSize column, std::span<const glm::vec4> textColors)
+void RetroFuturaGUI::Table::drawTextCell(const uSize row, const uSize column, const TrackColoring& coloring, const ColorState state)
 {
     TableText* text { bindText(row, column) };
 
     if(!text)
         return;
 
-    text->SetTextColors(textColors, ColorState::Enabled);
+    text->SetTextColors(coloring._TextColorEnabled, ColorState::Enabled);
+    text->SetTextColors(coloring._TextColorSelected, ColorState::Selected);
+    text->SetTextColorState(state);
     text->Draw();
 }
 
@@ -873,6 +875,9 @@ void RetroFuturaGUI::Table::SetHeaderTextPadding(const f32 padding)
 
 void RetroFuturaGUI::Table::SetHeaderTextColors(std::span<const glm::vec4> colors, const ColorState state)
 {
+    if(ColorState::Selected == state)
+        return;
+
     std::vector<glm::vec4>& target { state == ColorState::Disabled ? _headerTextColorsDisabled : _headerTextColorsEnabled };
     target.assign(colors.begin(), colors.end());
 
@@ -1006,6 +1011,9 @@ void RetroFuturaGUI::Table::SetTextColors(std::span<const glm::vec4> colors, con
         case ColorState::Hover:
             target = &coloring._TextColorHover;
         break;
+        case ColorState::Selected:
+            target = &coloring._TextColorSelected;
+        break;
         default: //Enabled
             target = &coloring._TextColorEnabled;
     }
@@ -1029,6 +1037,8 @@ std::vector<glm::vec4> RetroFuturaGUI::Table::GetTextColor(const ColorState stat
             return coloring._TextColorClicked;
         case ColorState::Hover:
             return coloring._TextColorHover;
+        case ColorState::Selected:
+            return coloring._TextColorSelected;
         default: //Enabled
             return coloring._TextColorEnabled;
     }
@@ -1617,6 +1627,7 @@ void RetroFuturaGUI::Table::styleText(TableText& text)
     text.SetTextColors(coloring._TextColorDisabled, ColorState::Disabled);
     text.SetTextColors(coloring._TextColorClicked, ColorState::Clicked);
     text.SetTextColors(coloring._TextColorHover, ColorState::Hover);
+    text.SetTextColors(coloring._TextColorSelected, ColorState::Selected);
 }
 
 RetroFuturaGUI::ColorState RetroFuturaGUI::Table::checkBoxColorState(const uSize row, const uSize column) const
@@ -2109,11 +2120,6 @@ void RetroFuturaGUI::Table::ClearSelection(const bool emitSignal)
 void RetroFuturaGUI::Table::SetSelectedRowBackgroundColors(std::span<const glm::vec4> colors)
 {
     _selectedRowBackgroundColors.assign(colors.begin(), colors.end());
-}
-
-void RetroFuturaGUI::Table::SetSelectedRowTextColors(std::span<const glm::vec4> colors)
-{
-    _selectedRowTextColors.assign(colors.begin(), colors.end());
 }
 
 void RetroFuturaGUI::Table::SetDropTargetRow(const uSize row)

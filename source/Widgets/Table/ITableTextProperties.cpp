@@ -51,6 +51,12 @@ f32 RetroFuturaGUI::ITableTextProperties::GetTextWidth() const
     return _text ? _text->GetWidth() : 0.0f;
 }
 
+void RetroFuturaGUI::ITableTextProperties::SetTextColorState(const ColorState state)
+{
+    _textColorState = state;
+    setTextColors();
+}
+
 void RetroFuturaGUI::ITableTextProperties::applyTextSettings()
 {
     if(!_text)
@@ -82,6 +88,12 @@ void RetroFuturaGUI::ITableTextProperties::setTextColors()
         case ColorState::Hover:
             if(!_textColorHover.empty())
                 _text->SetColors(_textColorHover);
+            break;
+        case ColorState::Selected:
+            if(!_textColorSelected.empty())
+                _text->SetColors(_textColorSelected);
+            else if(!_textColorEnabled.empty())
+                _text->SetColors(_textColorEnabled);
             break;
         default: //Disabled
             if(!_textColorDisabled.empty())

@@ -33,6 +33,9 @@ namespace RetroFuturaGUI
         /// @brief Returns the rendered width of the text content, in pixels.
         f32 GetTextWidth() const;
 
+        /// @brief Shows the colors of the given state. Selected colors are optional. Without any, the Selected state shows the Enabled colors
+        void SetTextColorState(const ColorState state);
+
     protected:
         void setTextColors();
 
@@ -48,7 +51,8 @@ namespace RetroFuturaGUI
             _textColorEnabled {},
             _textColorDisabled {},
             _textColorClicked {},
-            _textColorHover {};
+            _textColorHover {},
+            _textColorSelected {};
         ColorState _textColorState { ColorState::Enabled };
         TextAlignment _textAlignment { TextAlignment::Left };
         std::string _fontFamily {}; //empty: Text's own default
@@ -60,6 +64,5 @@ namespace RetroFuturaGUI
 
     private:
         inline static const std::string _dummyText { "" };
-
     };
 }
