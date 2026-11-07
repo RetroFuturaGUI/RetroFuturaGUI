@@ -15,7 +15,6 @@ RetroFuturaGUI::CheckBox::CheckBox(const std::string& name, Projection* projecti
     : IWidget(name, projection, parentWidget, parentWidgetTypeID, parentWindow)
 {
     _widgetTypeID = WidgetTypeID::CheckBox;
-    _checkmark = ResourceManager::CreateCheckmarkIcon(projection);
     _inheritFill = std::make_unique<Plane>(projection);
     useTransitions({ _inheritFill.get() });
     _background.SetTransitionSettings(&_transitionSettings);
@@ -36,10 +35,7 @@ void RetroFuturaGUI::CheckBox::Draw()
     if(!_isChecked)
         return;
 
-    if(!_checkmark)
-        return;
-
-    _checkmark->Draw();
+    _checkmark.Draw();
 }
 
 void RetroFuturaGUI::CheckBox::applySize(const glm::vec3& size)
@@ -59,11 +55,7 @@ void RetroFuturaGUI::CheckBox::applyPosition(const glm::vec3& position)
     _background.SetPosition(position);
     _border.SetPosition(position + glm::vec3(0.0f, 0.0f, 0.01f));
     _inheritFill->SetPosition(position + glm::vec3(0.0f, 0.0f, 0.02f));
-
-    if(!_checkmark)
-        return;
-
-    _checkmark->SetPosition(position + glm::vec3(0.0f, 0.0f, 0.03f));
+    _checkmark.SetPosition(position + glm::vec3(0.0f, 0.0f, 0.03f));
 }
 
 void RetroFuturaGUI::CheckBox::SetValue(const bool value, const bool emitSignal)
@@ -115,28 +107,6 @@ bool RetroFuturaGUI::CheckBox::GetValue() const
     return _isChecked;
 }
 
-void RetroFuturaGUI::CheckBox::SetCheckmarkColors(std::span<const glm::vec4> colors, const ColorState state)
-{
-    _checkmarkColorState = state;
-
-    switch(state)
-    {
-        case ColorState::Enabled:
-            _checkmarkColorsEnabled.assign(colors.begin(), colors.end());
-        break;
-        case ColorState::Clicked:
-            _checkmarkColorsClicked.assign(colors.begin(), colors.end());
-        break;
-        case ColorState::Hover:
-            _checkmarkColorsHover.assign(colors.begin(), colors.end());
-        break;
-        default: //disabled
-            _checkmarkColorsDisabled.assign(colors.begin(), colors.end());
-    }
-
-    setCheckmarkColors();
-}
-        
 void RetroFuturaGUI::CheckBox::updateInheritFillShape()
 {
     if(!_inheritFill)
@@ -201,35 +171,11 @@ void RetroFuturaGUI::CheckBox::SetInheritGradientRotationSpeed(const f32 rotatio
 
 void RetroFuturaGUI::CheckBox::setColors(const ColorState state)
 {
-    _checkmarkColorState = state;
+    _checkmark.SetColorState(state);
     _inheritFillColorState = state;
     _background.SetColorState(state);
     _border.SetColorState(state);
-    setCheckmarkColors();
     setInheritFillColors();
-}
-
-void RetroFuturaGUI::CheckBox::setCheckmarkColors()
-{
-    if(!_checkmark)
-        return;
-
-    switch(_checkmarkColorState)
-    {
-        case ColorState::Enabled:
-            _checkmarkPathFill._Colors = _checkmarkColorsEnabled;
-        break;
-        case ColorState::Clicked:
-            _checkmarkPathFill._Colors = _checkmarkColorsClicked;
-        break;
-        case ColorState::Hover:
-            _checkmarkPathFill._Colors = _checkmarkColorsHover;
-        break;
-        default: //Disabled
-            _checkmarkPathFill._Colors = _checkmarkColorsDisabled;
-    }
-            
-    _checkmark->SetPathFill("CheckmarkPath", _checkmarkPathFill);
 }
 
 void RetroFuturaGUI::CheckBox::setInheritFillColors()
@@ -332,12 +278,18 @@ void RetroFuturaGUI::CheckBox::SetInnerPadding(const f32 pixels)
     glm::vec3 size { _size - glm::vec3(_border.GetWidth() * 2.0f, _border.GetWidth() * 2.0f, 0.0f) };
 
     _inheritFill->SetSize(size);
-
-    if(!_checkmark)
-        return;
-
     size -= glm::vec3( _innerPadding * 2.0f,  _innerPadding * 2.0f, 0.0f);
-    _checkmark->SetSize(size);
+    _checkmark.SetSize(size);
+}
+
+RetroFuturaGUI::Icon& RetroFuturaGUI::CheckBox::GetCheckmark()
+{
+    return _checkmark;
+}
+
+const RetroFuturaGUI::Icon& RetroFuturaGUI::CheckBox::GetCheckmark() const
+{
+    return _checkmark;
 }
 
 RetroFuturaGUI::Background& RetroFuturaGUI::CheckBox::GetBackground()

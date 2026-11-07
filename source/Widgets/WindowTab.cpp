@@ -14,7 +14,6 @@ RetroFuturaGUI::WindowTab::WindowTab(std::string_view name, Projection* projecti
     _fieldBackground = std::make_unique<Plane>(projection);
     _fieldBorder = std::make_unique<Frame>(projection);
     _closeBackground = std::make_unique<Plane>(projection);
-    _closeIcon = ResourceManager::CreateSvgTexture(getCloseIconPath(), projection, glm::i32vec2(32));
     _previewTitle = std::make_unique<Text>(projection);
     //The field elements draw once per field, in its colors, so they switch at once
     _background.SetTransitionSettings(&_transitionSettings);
@@ -34,7 +33,7 @@ RetroFuturaGUI::WindowTab::WindowTab(std::string_view name, Projection* projecti
     _background.SetColors(std::array { glm::vec4(0.055f, 0.055f, 0.075f, 1.0f) }, ColorState::Disabled);
     //_border.SetColors(std::span<const glm::vec4> colors, const ColorState state)
     applyTitleFont(_previewTitle.get());
-    applyCloseIconColors();
+    _closeIcon.SetColorState(ColorState::Enabled); //the cross takes its color at once, not the SVG's own.
 
     Window* host { GetHostWindow() };
 
@@ -317,39 +316,14 @@ void RetroFuturaGUI::WindowTab::SetCloseButtonSize(const f32 size)
 {
     _closeButtonSize = std::max(size, 0.0f);
 
-    if(!_closeIcon)
-        return;
-
     //Rasterized at twice the size the cross draws at, so it stays smooth when it is scaled down
     const i32 resolution { std::max(static_cast<i32>(std::lround(_closeButtonSize * _closeIconScale * 2.0f)), 8) };
-    _closeIcon->Rasterize(glm::i32vec2(resolution));
+    _closeIcon.Rasterize(glm::i32vec2(resolution));
 }
 
 void RetroFuturaGUI::WindowTab::SetCloseButtonBackgroundColors(std::span<const glm::vec4> colors, const ColorState state)
 {
     colorOf(_closeBackgroundColors, state).assign(colors.begin(), colors.end());
-}
-
-void RetroFuturaGUI::WindowTab::SetCloseIconColors(std::span<const glm::vec4> colors)
-{
-    _closeIconColors.assign(colors.begin(), colors.end());
-    applyCloseIconColors();
-}
-
-void RetroFuturaGUI::WindowTab::applyCloseIconColors()
-{
-    if(!_closeIcon)
-        return;
-
-    _closeIcon->SetPathFill("CloseIcon", SvgPathFill
-    {
-        ._FillType = FillType::Solid,
-        ._Colors = _closeIconColors,
-        ._GradientDegree = 0.0f,
-        ._GradientOffset = 0.0f,
-        ._GradientAnimationSpeed = 0.0f,
-        ._GradientRotationSpeed = 0.0f
-    });
 }
 
 void RetroFuturaGUI::WindowTab::SetContentCornerRadii(const glm::vec4& radii)
@@ -846,9 +820,6 @@ void RetroFuturaGUI::WindowTab::drawCloseButton(const glm::vec4& field, const f3
     if(!_closeBackground)
         return;
 
-    if(!_closeIcon)
-        return;
-
     const glm::vec4 button { closeButtonRect(field) };
 
     if(0.0f >= button.z)
@@ -866,9 +837,9 @@ void RetroFuturaGUI::WindowTab::drawCloseButton(const glm::vec4& field, const f3
         _closeBackground->Draw();
     }
 
-    _closeIcon->SetSize(glm::vec2(button.z * _closeIconScale)); //the cross keeps clear of the button's edges
-    _closeIcon->SetPosition(center + glm::vec3(0.0f, 0.0f, _zStep));
-    _closeIcon->Draw();
+    _closeIcon.SetSize(glm::vec2(button.z * _closeIconScale)); //the cross keeps clear of the button's edges
+    _closeIcon.SetPosition(center + glm::vec3(0.0f, 0.0f, _zStep));
+    _closeIcon.Draw();
 }
 
 void RetroFuturaGUI::WindowTab::drawTitle(Text* title, const glm::vec4& field, const f32 z, const std::vector<glm::vec4>& colors)
@@ -1129,6 +1100,16 @@ std::string RetroFuturaGUI::WindowTab::getCloseIconPath()
     //Not path.string(): on Windows that goes through the ANSI code page and turns names outside it into '?'
     const std::u8string text { path.u8string() };
     return std::string(text.begin(), text.end());
+}
+
+RetroFuturaGUI::Icon& RetroFuturaGUI::WindowTab::GetCloseIcon()
+{
+    return _closeIcon;
+}
+
+const RetroFuturaGUI::Icon& RetroFuturaGUI::WindowTab::GetCloseIcon() const
+{
+    return _closeIcon;
 }
 
 RetroFuturaGUI::Background& RetroFuturaGUI::WindowTab::GetBackground()

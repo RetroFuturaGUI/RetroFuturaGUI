@@ -6,6 +6,8 @@
 #include "Frame.hpp"
 #include "Plane.hpp"
 #include "SvgTexture.hpp"
+#include "Icon.hpp"
+#include "ResourceManager.hpp"
 #include "Text.hpp"
 #include "Signal.hpp"
 #include <memory>
@@ -133,8 +135,11 @@ namespace RetroFuturaGUI
         /// @brief Sets a close button's background colors for the given state. It is transparent until hovered by default.
         void SetCloseButtonBackgroundColors(std::span<const glm::vec4> colors, const ColorState state);
 
-        /// @brief Sets the colors of the cross on the close buttons.
-        void SetCloseIconColors(std::span<const glm::vec4> colors);
+        /// @brief Returns the cross on the close buttons. One icon draws every field's cross
+        Icon& GetCloseIcon();
+
+        /// @brief Returns the cross on the close buttons. One icon draws every field's cross
+        const Icon& GetCloseIcon() const;
 
     //Content
         /// @brief Sets the corner radii of the content area, clockwise from the top-left. The docked window rounds its own
@@ -290,9 +295,6 @@ namespace RetroFuturaGUI
         /// @brief Whether any of the colors can be seen, so a fully transparent part isn't drawn at all.
         static bool isVisible(std::span<const glm::vec4> colors);
 
-        /// @brief Hands the close icon's colors to its SVG path.
-        void applyCloseIconColors();
-
         static bool contains(const glm::vec4& rect, const glm::vec2& point);
         /// @brief The UTF-8 path of the close icon, in the Resources/img folder next to the executable.
         static std::string getCloseIconPath();
@@ -305,7 +307,13 @@ namespace RetroFuturaGUI
         Background _background { &_projection };
         Border _border { &_projection };
         std::unique_ptr<Frame> _fieldBorder { nullptr };
-        std::unique_ptr<SvgTexture> _closeIcon { nullptr }; //its own, so its color and size are this tab's alone
+        Icon _closeIcon //its own, so its color and size are this tab's alone
+        {
+            ResourceManager::CreateSvgTexture(getCloseIconPath(), &_projection, glm::i32vec2(32)),
+            "CloseIcon",
+            SvgPathFill { ._FillType = FillType::Solid, ._Colors = {}, ._GradientDegree = 0.0f, ._GradientOffset = 0.0f, ._GradientAnimationSpeed = 0.0f, ._GradientRotationSpeed = 0.0f },
+            IconColors { ._Enabled = { glm::vec4(0.85f, 0.85f, 0.9f, 1.0f) }, ._Disabled = {}, ._Clicked = {}, ._Hover = {}, ._Selected = {} }
+        };
         std::unique_ptr<Text> _previewTitle { nullptr };
         TransitionValue<glm::vec2> _previewShown {}; //the drop preview field's left edge and width as drawn
         bool _isPreviewShown { false }; //a dropped window's field starts where the preview was
@@ -322,7 +330,6 @@ namespace RetroFuturaGUI
         glm::vec4
             _fieldCornerRadii { 8.0f, 8.0f, 0.0f, 0.0f },
             _contentCornerRadii { 0.0f };
-        std::vector<glm::vec4> _closeIconColors { glm::vec4(0.85f, 0.85f, 0.9f, 1.0f) };
         FieldColors
             _fieldBackgroundColors
             {

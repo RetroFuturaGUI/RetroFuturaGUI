@@ -7,6 +7,8 @@
 #include "Background.hpp"
 #include "Border.hpp"
 #include "SvgTexture.hpp"
+#include "Icon.hpp"
+#include "ResourceManager.hpp"
 #include <memory>
 
 namespace RetroFuturaGUI
@@ -29,7 +31,6 @@ namespace RetroFuturaGUI
         void SetValue(const bool value, const bool emitSignal);
         void SetInheritValueReference(bool* ref);
         bool GetValue() const;
-        void SetCheckmarkColors(std::span<const glm::vec4> colors, const ColorState state);
 
         /// @brief Sets multiple inherit state fill colors (e.g. gradient stops) for the given color state.
         void SetInheritColors(std::span<const glm::vec4> colors, const ColorState state);
@@ -54,6 +55,12 @@ namespace RetroFuturaGUI
         void SetInnerPadding(const f32 pixels);
 
         /// @brief Returns the CheckBox's background
+        /// @brief Returns the checkmark drawn while the box is checked
+        Icon& GetCheckmark();
+
+        /// @brief Returns the checkmark drawn while the box is checked
+        const Icon& GetCheckmark() const;
+
         Background& GetBackground();
 
         /// @brief Returns the CheckBox's background
@@ -74,13 +81,25 @@ namespace RetroFuturaGUI
 
     private:
         void setColors(const ColorState state) override;
-        void setCheckmarkColors();
         void setInheritFillColors();
         void interact() override;
         void updateInheritFillShape();
 
         std::unique_ptr<Plane> _inheritFill { nullptr };
-        std::unique_ptr<SvgTexture> _checkmark { nullptr }; //its own, so its colors and place are this box's alone
+        Icon _checkmark //its own, so its colors and place are this box's alone
+        {
+            ResourceManager::CreateCheckmarkIcon(&_projection),
+            "CheckmarkPath",
+            SvgPathFill { ._FillType = FillType::Solid, ._Colors = {}, ._GradientDegree = 35.0f, ._GradientOffset = 0.0f, ._GradientAnimationSpeed = 0.05f, ._GradientRotationSpeed = 5.0f },
+            IconColors
+            {
+                ._Enabled = { glm::vec4(0.7f, 0.7f, 0.7f, 1.0f) },
+                ._Disabled = { glm::vec4(0.3f, 0.3f, 0.3f, 1.0f) },
+                ._Clicked = { glm::vec4(1.0f, 1.0f, 1.0f, 1.0f) },
+                ._Hover = { glm::vec4(0.85f, 0.85f, 0.85f, 1.0f) },
+                ._Selected = {}
+            }
+        };
         Background _background { &_projection, { ._OnCornerRadiiChange = [this]() { updateInheritFillShape(); } } }; //the inherit fill has the same corners
         Border _border { &_projection };
         bool* _inheritValue { nullptr };
@@ -89,29 +108,12 @@ namespace RetroFuturaGUI
             _isChecked { false };
         f32 _innerPadding { 2.0f };
         ColorState
-            _checkmarkColorState { ColorState::Enabled },
             _inheritFillColorState { ColorState::Enabled };
         std::vector<glm::vec4>
-            _checkmarkColorsEnabled { { 0.7f, 0.7f, 0.7f, 1.0f } },
-            _checkmarkColorsDisabled { { 0.3f, 0.3f, 0.3f, 1.0f } },
-            _checkmarkColorsHover { { 0.85f, 0.85f, 0.85f, 1.0f } },
-            _checkmarkColorsClicked { { 1.0f, 1.0f, 1.0f, 1.0f } },
             _inheritFillColorsEnabled { { 0.25f, 0.25f, 0.8f, 1.0f } },
             _inheritFillColorsDisabled { { 0.1f, 0.1f, 0.45f, 1.0f } },
             _inheritFillColorsHover { { 0.3f, 0.3f, 0.9f, 1.0f } },
             _inheritFillColorsClicked { { 0.4f, 0.4f, 1.0f, 1.0f } };
-        SvgPathFill _checkmarkPathFill
-        {
-            SvgPathFill
-            {
-                ._FillType = FillType::Solid,
-                ._Colors = { glm::vec4(1.0f) },
-                ._GradientDegree = 35.0f,
-                ._GradientOffset = 0.0f,
-                ._GradientAnimationSpeed = 0.05f,
-                ._GradientRotationSpeed = 5.0f
-            }
-        };
         Signal<>
             _onSetValue,
             _onSetValueAsync,

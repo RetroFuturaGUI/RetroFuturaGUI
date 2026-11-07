@@ -5,6 +5,8 @@
 #include "Frame.hpp"
 #include "Plane.hpp"
 #include "SvgTexture.hpp"
+#include "Icon.hpp"
+#include "ResourceManager.hpp"
 #include "Text.hpp"
 #include <memory>
 #include <vector>
@@ -51,10 +53,15 @@ namespace RetroFuturaGUI
         void SetDropDownOpen(const bool open);
         void SetLabelHiddenWhenOpen(const bool hide);
         virtual bool IsPointInsideOpenDropDown(const glm::vec2& point) const;
-        void SetDropDownArrowColors(std::span<const glm::vec4> colors, const ColorState state);
         void SetDropDownBackgroundColors(std::span<const glm::vec4> colors, const ColorState state);
         void SetDropDownBorderColors(std::span<const glm::vec4> colors, const ColorState state);
         void SetDropDownCornerRadii(const glm::vec4& radii);
+        /// @brief Returns the arrow at the box's end, turned toward where the list opens
+        Icon& GetArrow();
+
+        /// @brief Returns the arrow at the box's end, turned toward where the list opens
+        const Icon& GetArrow() const;
+
         Background& GetBackground();
         const Background& GetBackground() const;
         Border& GetBorder();
@@ -112,7 +119,20 @@ namespace RetroFuturaGUI
             _dropDownBorder { nullptr },
             _dropDownItemBorder { nullptr };
         std::shared_ptr<Text> _previewText { nullptr };
-        std::unique_ptr<SvgTexture> _dropDownArrow { nullptr }; //its own, so its colors and place are this box's alone
+        Icon _arrow //its own, so its colors and place are this box's alone
+        {
+            ResourceManager::CreateDropDownArrowIcon(&_projection),
+            "DropDownArrow",
+            SvgPathFill { ._FillType = FillType::Solid, ._Colors = {}, ._GradientDegree = 35.0f, ._GradientOffset = 0.0f, ._GradientAnimationSpeed = 0.05f, ._GradientRotationSpeed = 5.0f },
+            IconColors
+            {
+                ._Enabled = { glm::vec4(0.7f, 0.7f, 0.7f, 1.0f) },
+                ._Disabled = { glm::vec4(0.3f, 0.3f, 0.3f, 1.0f) },
+                ._Clicked = { glm::vec4(1.0f, 1.0f, 1.0f, 1.0f) },
+                ._Hover = { glm::vec4(0.85f, 0.85f, 0.85f, 1.0f) },
+                ._Selected = {}
+            }
+        };
 
     //Design
         static constexpr const f32 _zStep { 0.01f };
@@ -155,14 +175,12 @@ namespace RetroFuturaGUI
         /// @brief Returns whether the list lies over a window point (bottom-up pixels) in the reader's window, and the reader is neither this drop-down nor inside it
         bool isListOver(const IHierarchyNode* reader, GLFWwindow* readerWindow, const glm::vec2& windowPoint) const;
 
-        void setDropDownArrowColors();
         void setDropDownBackgroundColors();
         void setDropDownBorderColors();
         glm::vec3 getDropDownCenter() const;
 
     //Design
         ColorState
-            _dropDownArrowColorState { ColorState::Enabled },
             _dropDownBackgroundColorSate { ColorState::Enabled },
             _dropDownBorderColorSate { ColorState::Enabled };
         std::vector<glm::vec4>
@@ -174,10 +192,6 @@ namespace RetroFuturaGUI
             _backgroundColorsDisabled { { 0.1f, 0.1f, 0.45f, 1.0f } },
             _backgroundColorsHover { { 0.3f, 0.3f, 0.9f, 1.0f } },
             _backgroundColorsClicked { { 0.4f, 0.4f, 1.0f, 1.0f } },
-            _dropDownArrowColorsEnabled { { 0.7f, 0.7f, 0.7f, 1.0f } },
-            _dropDownArrowColorsDisabled { { 0.3f, 0.3f, 0.3f, 1.0f } },
-            _dropDownArrowColorsHover { { 0.85f, 0.85f, 0.85f, 1.0f } },
-            _dropDownArrowColorsClicked { { 1.0f, 1.0f, 1.0f, 1.0f } },
             _dropDownBorderColorsEnabled { { 0.7f, 0.7f, 0.7f, 1.0f } },
             _dropDownBorderColorsDisabled { { 0.3f, 0.3f, 0.3f, 1.0f } },
             _dropDownBorderColorsHover { { 0.85f, 0.85f, 0.85f, 1.0f } },
@@ -187,18 +201,6 @@ namespace RetroFuturaGUI
             _dropDownBackgroundColorsHover { { 0.3f, 0.3f, 0.9f, 1.0f } },
             _dropDownBackgroundColorsClicked { { 0.4f, 0.4f, 1.0f, 1.0f } },
             _highLightColor { { 0.3f, 0.9f, 2.0f, 1.0f } };
-        SvgPathFill _dropDownArrowPathFill
-        {
-            SvgPathFill
-            {
-                ._FillType = FillType::Solid,
-                ._Colors = { glm::vec4(1.0f) },
-                ._GradientDegree = 35.0f,
-                ._GradientOffset = 0.0f,
-                ._GradientAnimationSpeed = 0.05f,
-                ._GradientRotationSpeed = 5.0f
-            }
-        };
         static const constexpr f32
             _zOffset { 0.05f },
             _arrowPadding { 15.0f };
