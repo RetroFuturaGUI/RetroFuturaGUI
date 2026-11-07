@@ -178,7 +178,8 @@ void RetroFuturaGUI::Border::SetPrimaryRasterWidthTransfer(std::span<f32> widthT
     if(!_borderFrame)
         return;
 
-    _borderFrame->SetPrimaryRasterWidthTransfer(widthTransfer);
+    _primaryRasterWidthTransfer.assign(widthTransfer.begin(), widthTransfer.end());
+    _borderFrame->SetPrimaryRasterWidthTransfer(_primaryRasterWidthTransfer);
 }
 
 void RetroFuturaGUI::Border::SetDotTransparencyTransfer(const f32 transparencyTransfer)

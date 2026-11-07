@@ -107,6 +107,7 @@ namespace RetroFuturaGUI
         void setCornerRadii() override;
 
         std::unique_ptr<Frame> _borderFrame;
-        std::function<void()> _onWidthChange {};
+        std::function<void()> _onWidthChange {};//Border.hpp, private:
+        std::vector<f32> _primaryRasterWidthTransfer {};
     };
 }

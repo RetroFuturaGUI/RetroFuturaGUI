@@ -21,6 +21,7 @@ RetroFuturaGUI::ScrollView::ScrollView(std::string_view name, Projection* projec
     : IWidget(name, projection, parentWidget, parentWidgetTypeID, parentWindow)
 {
     _widgetTypeID = WidgetTypeID::ScrollView;
+    _background.SetTransitionSettings(&_transitionSettings);
     _border.SetTransitionSettings(&_transitionSettings);
 }
 
@@ -50,6 +51,9 @@ void RetroFuturaGUI::ScrollView::Draw()
         else
             std::for_each(_items.begin(), _items.end(), draw);
     }
+
+    if(_showBackground)
+        _background.Draw();
 
     if(_showBorder)
         _border.Draw();
@@ -254,6 +258,7 @@ const RetroFuturaGUI::ScrollView::ScrollViewCell* RetroFuturaGUI::ScrollView::fi
 void RetroFuturaGUI::ScrollView::applySize(const glm::vec3& size)
 {
     IWidget::applySize(size);
+    _background.SetSize(size);
     _border.SetSize(size);
     layoutCells();
 }
@@ -261,7 +266,8 @@ void RetroFuturaGUI::ScrollView::applySize(const glm::vec3& size)
 void RetroFuturaGUI::ScrollView::applyPosition(const glm::vec3& position)
 {
     IWidget::applyPosition(position);
-    _border.SetPosition(position + glm::vec3(0.0f, 0.0f, 0.01f));
+    _background.SetPosition(position + glm::vec3(0.0f, 0.0f, 0.01f));
+    _border.SetPosition(position + glm::vec3(0.0f, 0.0f, 0.02f));
     layoutCells();
 }
 
