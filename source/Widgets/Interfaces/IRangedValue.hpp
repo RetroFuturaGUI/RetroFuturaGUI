@@ -14,22 +14,17 @@
 #include <vector>
 #include "Background.hpp"
 #include "Border.hpp"
+#include "Indicator.hpp"
 #include "IClickable.hpp"
 #include "IWidget.hpp"
 #include "IncludeHelper.hpp"
 
 namespace RetroFuturaGUI
 {
-    /// @brief Shared range, track, indicator and graph for widgets that map values into a min/max range. IRangedSingleValue holds one value (Slider, ProgressBar), IRangedMultiValue many (Histogram, LineGraph).
+    /// @brief Shared range, track, indicator and graph for widgets that map values into a min/max range. IRangedSingleValue holds one value (Slider, ProgressBar), IRangedMultiValue many (Histogram, LineGraph)
     class IRangedValue : public IWidget, public IClickable
     {
     public:
-        enum class ElementSizing : u32
-        {
-            Pixels,
-            Percent
-        };
-
         enum class GraphMode : u32
         {
             Bar,
@@ -41,13 +36,6 @@ namespace RetroFuturaGUI
             None,
             Sweep,
             Indicator
-        };
-
-        enum class IndicatorType : u32
-        {
-            None,
-            Stroke,
-            Circle
         };
 
         enum class Orientation : u32
@@ -71,15 +59,16 @@ namespace RetroFuturaGUI
         /// @brief Sets which end of the track holds the minimum value
         void SetTrackDirection(const TrackDirection direction);
 
-        /// @brief Sets the indicator's size along the track's length
-        /// @param size (glm::vec2): indicator's size
-        /// @param sizingMode (ElementSizing): Whether the size is set in pixelsize (abolute) or in percent (relative to the track's total length)
-        void SetIndicatorSize(const glm::vec2& size, const ElementSizing sizingMode);
-
         Background& GetBackground();
         const Background& GetBackground() const;
         Border& GetBorder();
         const Border& GetBorder() const;
+
+        /// @brief Returns the marker riding the track: shown or hidden, its shape, size, background and border
+        RetroFuturaGUI::Indicator& GetIndicator();
+
+        /// @brief Returns the marker riding the track: shown or hidden, its shape, size, background and border
+        const RetroFuturaGUI::Indicator& GetIndicator() const;
 
         /// @brief Sets the range's lower bound, stored in the type resolveValueType picks: T on a single-value widget (converting the value and step to T
         /// as well, see setValueType), the data's type on a multi-value widget that has data (so 0.5f becomes 0 for u8 data).
@@ -98,109 +87,6 @@ namespace RetroFuturaGUI
             _maxValue = convertPrimitiveTo(value, _valueType);
             alignValueToRange();
         }
-
-        /// @brief Shows or hides the indicator marker. Builds it (background only) the first time it's shown.
-        void ShowIndicator(const bool show);
-
-        /// @brief Sets the indicator's shape (a plain stroke or a fully-rounded circle).
-        void SetIndicatorType(const IndicatorType type);
-
-        void SetIndicatorBackgroundColors(std::span<const glm::vec4> colors, const ColorState state);
-
-        void SetIndicatorBorderColors(std::span<const glm::vec4> colors, const ColorState state);
-
-        /// @brief Sets the corner rounding radii of the indicator's background and border.
-        void SetIndicatorCornerRadii(const glm::vec4& radii);
-
-        /// @brief Sets the indicator background fill type (solid, linear/radial/huestar gradient).
-        void SetIndicatorBackgroundFillType(const FillType fillType);
-
-        /// @brief Sets the offset applied to the indicator background gradient's start position.
-        void SetIndicatorBackgroundGradientOffset(const f32 gradientOffset);
-
-        /// @brief Sets the speed at which the indicator background gradient animates over time.
-        void SetIndicatorBackgroundGradientAnimationSpeed(const f32 animationSpeed);
-
-        /// @brief Sets the angle of the indicator background's linear gradient, in degrees.
-        void SetIndicatorBackgroundGradientDegree(const f32 degree);
-
-        /// @brief Sets the speed at which the indicator background gradient rotates over time.
-        void SetIndicatorBackgroundGradientRotationSpeed(const f32 rotationSpeed);
-
-        /// @brief Sets the texture ID sampled for the indicator background's glass-effect-with-image shader feature.
-        void SetIndicatorWindowBackgroundImageTextureID(const u32 textureID);
-
-        /// @brief Sets the dot color used for the indicator background's Dotted raster pattern.
-        void SetIndicatorBackgroundPrimaryRasterColor(const glm::vec4& color);
-
-        /// @brief Sets the gap, in pixels, between the largest elements of the indicator background's raster: 0 lets them touch. Spreads the grid without changing any element's size.
-        void SetIndicatorBackgroundRasterSpacing(const f32 spacing);
-
-        /// @brief Sets the direction, in degrees, along which the indicator background's raster widths/animation transfer.
-        void SetIndicatorBackgroundRasterDegree(const f32 degree);
-
-        /// @brief Sets the per-position dot width curve, in pixels (each value is a dot's full width across), for the indicator background's Dotted raster pattern. Enables the Raster shader feature when non-empty.
-        void SetIndicatorBackgroundPrimaryRasterWidthTransfer(std::span<f32> widthTransfer);
-
-        /// @brief Sets how far each indicator background dot's opacity reaches from its center before fading to transparent.
-        void SetIndicatorBackgroundDotTransparencyTransfer(const f32 transparencyTransfer);
-
-        /// @brief Sets the speed at which the indicator background's raster pattern animates.
-        void SetIndicatorBackgroundRasterAnimationSpeed(const f32 animationSpeed);
-
-        /// @brief Sets the overall opacity of the indicator background's FogEffect shader feature.
-        void SetIndicatorBackgroundFogAlpha(const f32 alpha);
-
-        /// @brief Sets the speed at which the indicator background's fog drifts over time.
-        void SetIndicatorBackgroundFogSpeed(const f32 speed);
-
-        /// @brief Sets the per-octave density/weight curve driving the indicator background's fog. Enables the FogEffect shader feature when non-empty.
-        void SetIndicatorBackgroundFogDensity(std::span<f32> density);
-
-        /// @brief Sets the coverage threshold above which the indicator background's fog appears; higher values carve larger clear gaps out of the cloud.
-        void SetIndicatorBackgroundFogClearing(const f32 clearing);
-
-        /// @brief Sets the indicator border fill type (solid, linear/radial/huestar gradient).
-        void SetIndicatorBorderFillType(const FillType fillType);
-
-        /// @brief Sets the offset applied to the indicator border gradient's start position.
-        void SetIndicatorBorderGradientOffset(const f32 gradientOffset);
-
-        /// @brief Sets the speed at which the indicator border gradient animates over time.
-        void SetIndicatorBorderGradientAnimationSpeed(const f32 animationSpeed);
-
-        /// @brief Sets the angle of the indicator border's linear gradient, in degrees.
-        void SetIndicatorBorderGradientDegree(const f32 degree);
-
-        /// @brief Sets the speed at which the indicator border gradient rotates over time.
-        void SetIndicatorBorderGradientRotationSpeed(const f32 rotationSpeed);
-
-        /// @brief Sets the texture ID sampled for the indicator border's glass-effect-with-image shader feature.
-        void SetIndicatorWindowBorderImageTextureID(const u32 textureID);
-
-        /// @brief Sets the dot color used for the indicator border's Dotted raster pattern.
-        void SetIndicatorBorderPrimaryRasterColor(const glm::vec4& color);
-
-        /// @brief Sets the gap, in pixels, between the largest elements of the indicator border's raster: 0 lets them touch. Spreads the grid without changing any element's size.
-        void SetIndicatorBorderRasterSpacing(const f32 spacing);
-
-        /// @brief Sets the direction, in degrees, along which the indicator border's raster widths/animation transfer.
-        void SetIndicatorBorderRasterDegree(const f32 degree);
-
-        /// @brief Sets the per-position dot width curve, in pixels (each value is a dot's full width across), for the indicator border's Dotted raster pattern. Enables the Raster shader feature when non-empty.
-        void SetIndicatorBorderPrimaryRasterWidthTransfer(std::span<f32> widthTransfer);
-
-        /// @brief Sets how far each indicator border dot's opacity reaches from its center before fading to transparent.
-        void SetIndicatorBorderDotTransparencyTransfer(const f32 transparencyTransfer);
-
-        /// @brief Sets the speed at which the indicator border's raster pattern animates.
-        void SetIndicatorBorderRasterAnimationSpeed(const f32 animationSpeed);
-
-        /// @brief Sets the indicator's border width.
-        void SetIndicatorBorderWidth(const f32 borderWidth);
-
-        /// @brief Sets sections of the indicator's border to skip drawing; see Frame::SetBorderGaps.
-        void SetIndicatorBorderGaps(std::span<BorderGap> gaps);
 
         /// @brief Shows or hides the graph (growing fill). Builds it the first time it's shown.
         void ShowGraph(const bool show);
@@ -416,44 +302,26 @@ namespace RetroFuturaGUI
         // Elements
         Background _background { &_projection };
         Border _border { &_projection };
-        std::unique_ptr<Plane> _indicatorBackground { nullptr };
-        std::unique_ptr<Frame> _indicatorBorder { nullptr };
+        RetroFuturaGUI::Indicator _indicator { &_projection, { ._OnLayoutChange = [this]() { setIndicatorSize(); alignElementsToTrack(); } } }; //the GraphDecoration enumerator hides the type's own name in here
         std::unique_ptr<WavePlane> _graph { nullptr };
-        ElementSizing _indicatorSizingMode { ElementSizing::Percent };
 
         // Settings
-        bool _useIndicator { false };
         bool _useGraph { false };
-        IndicatorType _indicatorType { IndicatorType::None };
         GraphMode _graphMode { GraphMode::Bar };
         f32 _graphWidth { 0.0f }; // graph thickness; 0 matches the track's height
         Orientation _orientation { Orientation::Horizontal };
         TrackDirection _trackDirection { TrackDirection::Normal };
         glm::i32vec2 _previousIndicatorPosition { glm::i32vec2(0) };
-        glm::vec2 _indicatorSize { 25.0f, 100.0f };
 
         // Design
         std::vector<glm::vec4>
-            _indicatorBackgroundColorEnabled { glm::vec4(1.0f, 0.0f, 0.0f, 1.0f) },
-            _indicatorBackgroundColorClicked { glm::vec4(0.0f, 1.0f, 0.0f, 1.0f) },
-            _indicatorBackgroundColorHover { glm::vec4(0.0f, 0.0f, 1.0f, 1.0f) },
-            _indicatorBackgroundColorDisabled { glm::vec4(0.5f, .5f, 0.5f, 1.0f) },
-            _indicatorBorderColorEnabled { glm::vec4(1.0f) },
-            _indicatorBorderColorClicked { glm::vec4(1.0f) },
-            _indicatorBorderColorHover { glm::vec4(1.0f) },
-            _indicatorBorderColorDisabled { glm::vec4(1.0f) },
             _graphColorEnabled { glm::vec4(1.0f, 0.0f, 0.0f, 1.0f) },
             _graphColorClicked { glm::vec4(1.0f, 1.0f, 0.0f, 1.0f) },
             _graphColorHover { glm::vec4(0.0f, 0.0f, 1.0f, 1.0f) },
             _graphColorDisabled { glm::vec4(0.5f, .5f, 0.5f, 1.0f) };
         ColorState
-            _indicatorBackgroundColorState { ColorState::Enabled },
-            _indicatorBorderColorState { ColorState::Enabled },
             _graphColorState { ColorState::Enabled };
         std::vector<f32>
-            _indicatorBackgroundPrimaryRasterWidthTransfer,
-            _indicatorBackgroundFogDensity,
-            _indicatorBorderPrimaryRasterWidthTransfer,
             _graphPrimaryRasterWidthTransfer,
             _graphFogDensity;
 
@@ -465,8 +333,6 @@ namespace RetroFuturaGUI
         void applySize(const glm::vec3& size) override final;
 
     private:
-        void setIndicatorBackgroundColors();
-        void setIndicatorBorderColors();
         void setGraphColorsApply();
         void setIndicatorSize();
     };

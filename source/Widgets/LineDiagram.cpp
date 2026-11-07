@@ -28,9 +28,9 @@ RetroFuturaGUI::LineDiagram::LineDiagram(std::string_view name, Projection* proj
     useTransitions({ _hoverText.get(), _hoverTextBackground.get() });
     _hoverTextBackground->SetColors(_hoverTextBackgroundColors);
     _hoverTextBackground->SetCornerRadii(glm::vec4(3.0f));
-    SetIndicatorSize(glm::vec2(10.0f), ElementSizing::Pixels);
-    SetIndicatorType(IndicatorType::Circle);
-    SetIndicatorBorderWidth(2.0f);
+    _indicator.SetSize(glm::vec2(10.0f), ElementSizing::Pixels);
+    _indicator.SetType(IndicatorType::Circle);
+    _indicator.GetBorder().SetWidth(2.0f);
 }
 
 void RetroFuturaGUI::LineDiagram::Draw()
@@ -306,20 +306,10 @@ void RetroFuturaGUI::LineDiagram::drawHoverPointer()
 
 void RetroFuturaGUI::LineDiagram::drawHoverMarker(const glm::vec2& pointerPosition, const Background& track)
 {
-    if(!_useIndicator)
+    if(!_indicator.IsShown())
         return;
 
-    if(!_indicatorBackground)
-        return;
-
-    if(!_indicatorBorder)
-        return;
-
-    const glm::vec3 position { toWorldSpace(pointerPosition, track, 0.03f) };
-    _indicatorBackground->SetPosition(position);
-    _indicatorBackground->SetRotation(track.GetRotation());
-    _indicatorBorder->SetPosition(position + glm::vec3(0.0f, 0.0f, 0.005f));
-    _indicatorBorder->SetRotation(track.GetRotation());
+    _indicator.Place(toWorldSpace(pointerPosition, track, 0.03f), track.GetRotation());
     drawIndicator();
 }
 
@@ -334,9 +324,6 @@ void RetroFuturaGUI::LineDiagram::drawHoverText(const glm::vec2& pointerPosition
     if(!_hoverTextBackground)
         return;
 
-    if(!_indicatorBackground)
-        return;
-
     const std::string text { composeHoverText() };
 
     if(text != _hoverText->GetTextUTF8())
@@ -349,7 +336,7 @@ void RetroFuturaGUI::LineDiagram::drawHoverText(const glm::vec2& pointerPosition
     const glm::vec2
         boxSize { _hoverText->GetWidth() + _hoverTextPadding * 2.0f, glyphSize * 1.1f + _hoverTextPadding * 2.0f },
         textOffset { 0.0f, glyphSize * 0.15f },
-        pointerSize { _useIndicator ? _indicatorBackground->GetSize() : glm::vec2(0.0f) },
+        pointerSize { _indicator.IsShown() ? _indicator.GetDrawnSize() : glm::vec2(0.0f) },
         halfTrack { track.GetSize() * 0.5f };
     const f32
         gap { (glm::max)((glm::max)(pointerSize.x, pointerSize.y), _lineThickness + _hoverThicknessIncrease) * 0.5f + _labelGap },

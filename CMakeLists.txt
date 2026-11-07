@@ -134,6 +134,7 @@ list(APPEND RetroFuturaGuiSources
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/Parts/Outline.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/Parts/Caret.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/Parts/SelectedArea.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/Parts/Indicator.cpp"
     
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/Table/ITableTextProperties.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/Table/ITableWidget.cpp"

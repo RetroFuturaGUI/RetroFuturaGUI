@@ -5,20 +5,10 @@
 RetroFuturaGUI::IRangedValue::IRangedValue(std::string_view name, Projection* projection, IHierarchyNode* parentWidget, const WidgetTypeID parentWidgetTypeID, GLFWwindow* parentWindow)
     : IWidget(name, projection, parentWidget, parentWidgetTypeID, parentWindow)
 {
-    _indicatorBackground = std::make_unique<Plane>(projection);
-    _indicatorBorder = std::make_unique<Frame>(projection);
-    useTransitions({ _indicatorBackground.get(), _indicatorBorder.get() });
+    _indicator.SetTransitionSettings(&_transitionSettings);
     _background.SetTransitionSettings(&_transitionSettings);
     _border.SetTransitionSettings(&_transitionSettings);
-
-    if(!_indicatorBackground)
-        return;
-
-    if(!_indicatorBorder)
-        return;
-
     _elementProjection = projection;
-    _useIndicator = true;
 }
 
 RetroFuturaGUI::Background& RetroFuturaGUI::IRangedValue::GetBackground()
@@ -29,6 +19,16 @@ RetroFuturaGUI::Background& RetroFuturaGUI::IRangedValue::GetBackground()
 const RetroFuturaGUI::Background& RetroFuturaGUI::IRangedValue::GetBackground() const
 {
     return _background;
+}
+
+RetroFuturaGUI::Indicator& RetroFuturaGUI::IRangedValue::GetIndicator()
+{
+    return _indicator;
+}
+
+const RetroFuturaGUI::Indicator& RetroFuturaGUI::IRangedValue::GetIndicator() const
+{
+    return _indicator;
 }
 
 RetroFuturaGUI::Border& RetroFuturaGUI::IRangedValue::GetBorder()
@@ -81,342 +81,6 @@ void RetroFuturaGUI::IRangedValue::SetTrackDirection(const TrackDirection direct
 {
     _trackDirection = direction;
     alignElementsToTrack();
-}
-
-void RetroFuturaGUI::IRangedValue::SetIndicatorSize(const glm::vec2& size, const ElementSizing sizingMode)
-{
-    _indicatorSize = size;
-    _indicatorSizingMode = sizingMode;
-    setIndicatorSize();
-    alignElementsToTrack();
-}
-
-void RetroFuturaGUI::IRangedValue::ShowIndicator(const bool show)
-{
-    _useIndicator = show;
-
-    if(_useIndicator && !_indicatorBackground)
-    {
-        _indicatorBackground = std::make_unique<Plane>(_elementProjection);
-        useTransitions({ _indicatorBackground.get() });
-        setIndicatorBackgroundColors();
-    }
-
-    alignElementsToTrack();
-}
-
-void RetroFuturaGUI::IRangedValue::SetIndicatorType(const IndicatorType type)
-{
-    if(!_indicatorBackground)
-        return;
-
-    if(!_indicatorBorder)
-        return;
-
-    _indicatorType = type;
-    const bool isCircle { _indicatorType == IndicatorType::Circle };
-
-    //Radii above 0 round the corners, 0 squares them
-    _indicatorBackground->SetCornerRadii(glm::vec4(isCircle ? _indicatorBackground->GetSize().x * 0.5f : 0.0f));
-    _indicatorBorder->SetCornerRadii(glm::vec4(isCircle ? _indicatorBorder->GetSize().x * 0.5f : 0.0f));
-}
-
-void RetroFuturaGUI::IRangedValue::SetIndicatorBackgroundColors(std::span<const glm::vec4> colors, const ColorState state)
-{
-    switch(state)
-    {
-        case ColorState::Clicked:
-            _indicatorBackgroundColorClicked.assign(colors.begin(), colors.end());
-        break;
-        case ColorState::Disabled:
-            _indicatorBackgroundColorDisabled.assign(colors.begin(), colors.end());
-        break;
-        case ColorState::Hover:
-            _indicatorBackgroundColorHover.assign(colors.begin(), colors.end());
-        break;
-        default: // Enabled
-            _indicatorBackgroundColorEnabled.assign(colors.begin(), colors.end());
-    }
-
-    setIndicatorBackgroundColors();
-}
-
-void RetroFuturaGUI::IRangedValue::SetIndicatorBorderColors(std::span<const glm::vec4> colors, const ColorState state)
-{
-    switch(state)
-    {
-        case ColorState::Clicked:
-            _indicatorBorderColorClicked.assign(colors.begin(), colors.end());
-        break;
-        case ColorState::Disabled:
-            _indicatorBorderColorDisabled.assign(colors.begin(), colors.end());
-        break;
-        case ColorState::Hover:
-            _indicatorBorderColorHover.assign(colors.begin(), colors.end());
-        break;
-        default: // Enabled
-            _indicatorBorderColorEnabled.assign(colors.begin(), colors.end());
-    }
-
-    setIndicatorBorderColors();
-}
-
-void RetroFuturaGUI::IRangedValue::SetIndicatorCornerRadii(const glm::vec4& radii)
-{
-    if(!_indicatorBackground)
-        return;
-
-    if(!_indicatorBorder)
-        return;
-
-    _indicatorBackground->SetCornerRadii(radii);
-    _indicatorBorder->SetCornerRadii(radii);
-}
-
-void RetroFuturaGUI::IRangedValue::SetIndicatorBackgroundFillType(const FillType fillType)
-{
-    if(!_indicatorBackground)
-        return;
-
-    _indicatorBackground->SetFillType(fillType);
-}
-
-void RetroFuturaGUI::IRangedValue::SetIndicatorBackgroundGradientOffset(const f32 gradientOffset)
-{
-    if(!_indicatorBackground)
-        return;
-
-    _indicatorBackground->SetGradientOffset(gradientOffset);
-}
-
-void RetroFuturaGUI::IRangedValue::SetIndicatorBackgroundGradientAnimationSpeed(const f32 animationSpeed)
-{
-    if(!_indicatorBackground)
-        return;
-
-    _indicatorBackground->SetGradientAnimationSpeed(animationSpeed);
-}
-
-void RetroFuturaGUI::IRangedValue::SetIndicatorBackgroundGradientDegree(const f32 degree)
-{
-    if(!_indicatorBackground)
-        return;
-
-    _indicatorBackground->SetGradientDegree(degree);
-}
-
-void RetroFuturaGUI::IRangedValue::SetIndicatorBackgroundGradientRotationSpeed(const f32 rotationSpeed)
-{
-    if(!_indicatorBackground)
-        return;
-
-    _indicatorBackground->SetGradientRotationSpeed(rotationSpeed);
-}
-
-void RetroFuturaGUI::IRangedValue::SetIndicatorWindowBackgroundImageTextureID(const u32 textureID)
-{
-    if(!_indicatorBackground)
-        return;
-
-    _indicatorBackground->SetWindowBackgroundImageTextureID(textureID);
-}
-
-void RetroFuturaGUI::IRangedValue::SetIndicatorBackgroundPrimaryRasterColor(const glm::vec4& color)
-{
-    if(!_indicatorBackground)
-        return;
-
-    _indicatorBackground->SetPrimaryRasterColor(color);
-}
-
-void RetroFuturaGUI::IRangedValue::SetIndicatorBackgroundRasterSpacing(const f32 spacing)
-{
-    if(!_indicatorBackground)
-        return;
-
-    _indicatorBackground->SetRasterSpacing(spacing);
-}
-
-void RetroFuturaGUI::IRangedValue::SetIndicatorBackgroundRasterDegree(const f32 degree)
-{
-    if(!_indicatorBackground)
-        return;
-
-    _indicatorBackground->SetRasterDegree(degree);
-}
-
-void RetroFuturaGUI::IRangedValue::SetIndicatorBackgroundPrimaryRasterWidthTransfer(std::span<f32> widthTransfer)
-{
-    _indicatorBackgroundPrimaryRasterWidthTransfer.assign(widthTransfer.begin(), widthTransfer.end());
-
-    if(!_indicatorBackground)
-        return;
-
-    _indicatorBackground->SetPrimaryRasterWidthTransfer(_indicatorBackgroundPrimaryRasterWidthTransfer);
-}
-
-void RetroFuturaGUI::IRangedValue::SetIndicatorBackgroundDotTransparencyTransfer(const f32 transparencyTransfer)
-{
-    if(!_indicatorBackground)
-        return;
-
-    _indicatorBackground->SetDotTransparencyTransfer(transparencyTransfer);
-}
-
-void RetroFuturaGUI::IRangedValue::SetIndicatorBackgroundRasterAnimationSpeed(const f32 animationSpeed)
-{
-    if(!_indicatorBackground)
-        return;
-
-    _indicatorBackground->SetRasterAnimationSpeed(animationSpeed);
-}
-
-void RetroFuturaGUI::IRangedValue::SetIndicatorBackgroundFogAlpha(const f32 alpha)
-{
-    if(!_indicatorBackground)
-        return;
-
-    _indicatorBackground->SetFogAlpha(alpha);
-}
-
-void RetroFuturaGUI::IRangedValue::SetIndicatorBackgroundFogSpeed(const f32 speed)
-{
-    if(!_indicatorBackground)
-        return;
-
-    _indicatorBackground->SetFogSpeed(speed);
-}
-
-void RetroFuturaGUI::IRangedValue::SetIndicatorBackgroundFogDensity(std::span<f32> density)
-{
-    _indicatorBackgroundFogDensity.assign(density.begin(), density.end());
-
-    if(!_indicatorBackground)
-        return;
-
-    _indicatorBackground->SetFogDensity(_indicatorBackgroundFogDensity);
-}
-
-void RetroFuturaGUI::IRangedValue::SetIndicatorBackgroundFogClearing(const f32 clearing)
-{
-    if(!_indicatorBackground)
-        return;
-
-    _indicatorBackground->SetFogClearing(clearing);
-}
-
-void RetroFuturaGUI::IRangedValue::SetIndicatorBorderFillType(const FillType fillType)
-{
-    if(!_indicatorBorder)
-        return;
-
-    _indicatorBorder->SetFillType(fillType);
-}
-
-void RetroFuturaGUI::IRangedValue::SetIndicatorBorderGradientOffset(const f32 gradientOffset)
-{
-    if(!_indicatorBorder)
-        return;
-
-    _indicatorBorder->SetGradientOffset(gradientOffset);
-}
-
-void RetroFuturaGUI::IRangedValue::SetIndicatorBorderGradientAnimationSpeed(const f32 animationSpeed)
-{
-    if(!_indicatorBorder)
-        return;
-
-    _indicatorBorder->SetGradientAnimationSpeed(animationSpeed);
-}
-
-void RetroFuturaGUI::IRangedValue::SetIndicatorBorderGradientDegree(const f32 degree)
-{
-    if(!_indicatorBorder)
-        return;
-
-    _indicatorBorder->SetGradientDegree(degree);
-}
-
-void RetroFuturaGUI::IRangedValue::SetIndicatorBorderGradientRotationSpeed(const f32 rotationSpeed)
-{
-    if(!_indicatorBorder)
-        return;
-
-    _indicatorBorder->SetGradientRotationSpeed(rotationSpeed);
-}
-
-void RetroFuturaGUI::IRangedValue::SetIndicatorWindowBorderImageTextureID(const u32 textureID)
-{
-    if(!_indicatorBorder)
-        return;
-
-    _indicatorBorder->SetWindowBackgroundImageTextureID(textureID);
-}
-
-void RetroFuturaGUI::IRangedValue::SetIndicatorBorderPrimaryRasterColor(const glm::vec4& color)
-{
-    if(!_indicatorBorder)
-        return;
-
-    _indicatorBorder->SetPrimaryRasterColor(color);
-}
-
-void RetroFuturaGUI::IRangedValue::SetIndicatorBorderRasterSpacing(const f32 spacing)
-{
-    if(!_indicatorBorder)
-        return;
-
-    _indicatorBorder->SetRasterSpacing(spacing);
-}
-
-void RetroFuturaGUI::IRangedValue::SetIndicatorBorderRasterDegree(const f32 degree)
-{
-    if(!_indicatorBorder)
-        return;
-
-    _indicatorBorder->SetRasterDegree(degree);
-}
-
-void RetroFuturaGUI::IRangedValue::SetIndicatorBorderPrimaryRasterWidthTransfer(std::span<f32> widthTransfer)
-{
-    if(!_indicatorBorder)
-        return;
-
-    _indicatorBorderPrimaryRasterWidthTransfer.assign(widthTransfer.begin(), widthTransfer.end());
-
-    _indicatorBorder->SetPrimaryRasterWidthTransfer(_indicatorBorderPrimaryRasterWidthTransfer);
-}
-
-void RetroFuturaGUI::IRangedValue::SetIndicatorBorderDotTransparencyTransfer(const f32 transparencyTransfer)
-{
-    if(!_indicatorBorder)
-        return;
-
-    _indicatorBorder->SetDotTransparencyTransfer(transparencyTransfer);
-}
-
-void RetroFuturaGUI::IRangedValue::SetIndicatorBorderRasterAnimationSpeed(const f32 animationSpeed)
-{
-    if(!_indicatorBorder)
-        return;
-
-    _indicatorBorder->SetRasterAnimationSpeed(animationSpeed);
-}
-
-void RetroFuturaGUI::IRangedValue::SetIndicatorBorderWidth(const f32 borderWidth)
-{
-    if(!_indicatorBorder)
-        return;
-
-    _indicatorBorder->SetBorderWidth(borderWidth);
-}
-
-void RetroFuturaGUI::IRangedValue::SetIndicatorBorderGaps(std::span<BorderGap> gaps)
-{
-    if(!_indicatorBorder)
-        return;
-
-    _indicatorBorder->SetBorderGaps(gaps);
 }
 
 void RetroFuturaGUI::IRangedValue::ShowGraph(const bool show)
@@ -738,21 +402,15 @@ RetroFuturaGUI::PrimitiveUnion RetroFuturaGUI::IRangedValue::convertPrimitive(co
 
 void RetroFuturaGUI::IRangedValue::setIndicatorPosition(const f32 trackFraction)
 {
-    if(!_indicatorBorder)
-        return;
-
     const Background* track { getTrack() };
 
     if(!track)
         return;
 
-    if(!_indicatorBackground)
-        return;
-
     const f32
         borderInset { _border.GetWidth() * 2.0f },
         trackLength { glm::max(track->GetSize().x - borderInset, 0.0f) },
-        indicatorLength { _indicatorBackground->GetSize().x },
+        indicatorLength { _indicator.GetDrawnSize().x },
         travelRange { 0.0f < trackLength - indicatorLength ? trackLength - indicatorLength : 0.0f },
         indicatorSliderPosition { indicatorLength * 0.5f + trackFraction * travelRange };
 
@@ -773,11 +431,7 @@ void RetroFuturaGUI::IRangedValue::setIndicatorPosition(const f32 trackFraction)
         track->GetPosition().z + 0.02f
     );
 
-    _indicatorBackground->SetPosition(position);
-    _indicatorBackground->SetRotation(track->GetRotation());
-
-    _indicatorBorder->SetPosition(position + glm::vec3(0.0f, 0.0f, 0.01f));
-    _indicatorBorder->SetRotation(track->GetRotation());
+    _indicator.Place(position, track->GetRotation());
 }
 
 void RetroFuturaGUI::IRangedValue::setGraphSize(const f32 trackFraction)
@@ -837,58 +491,13 @@ void RetroFuturaGUI::IRangedValue::setGraphPosition(const f32 trackFraction)
 
 void RetroFuturaGUI::IRangedValue::setIndicatorColors(const ColorState state)
 {
-    _indicatorBackgroundColorState = state;
-    _indicatorBorderColorState = state;
-    setIndicatorBackgroundColors();
-    setIndicatorBorderColors();
+    _indicator.SetColorState(state);
 }
 
 void RetroFuturaGUI::IRangedValue::setGraphColors(const ColorState state)
 {
     _graphColorState = state;
     setGraphColorsApply();
-}
-
-void RetroFuturaGUI::IRangedValue::setIndicatorBackgroundColors()
-{
-    if(!_indicatorBackground)
-        return;
-
-    switch(_indicatorBackgroundColorState)
-    {
-        case ColorState::Enabled:
-            _indicatorBackground->SetColors(_indicatorBackgroundColorEnabled);
-        break;
-        case ColorState::Clicked:
-            _indicatorBackground->SetColors(_indicatorBackgroundColorClicked);
-        break;
-        case ColorState::Hover:
-            _indicatorBackground->SetColors(_indicatorBackgroundColorHover);
-        break;
-        default: //Disabled
-            _indicatorBackground->SetColors(_indicatorBackgroundColorDisabled);
-    }
-}
-
-void RetroFuturaGUI::IRangedValue::setIndicatorBorderColors()
-{
-    if(!_indicatorBorder)
-        return;
-
-    switch(_indicatorBorderColorState)
-    {
-        case ColorState::Enabled:
-            _indicatorBorder->SetColors(_indicatorBorderColorEnabled);
-        break;
-        case ColorState::Clicked:
-            _indicatorBorder->SetColors(_indicatorBorderColorClicked);
-        break;
-        case ColorState::Hover:
-            _indicatorBorder->SetColors(_indicatorBorderColorHover);
-        break;
-        default: //Disabled
-            _indicatorBorder->SetColors(_indicatorBorderColorDisabled);
-    }
 }
 
 void RetroFuturaGUI::IRangedValue::setGraphColorsApply()
@@ -914,17 +523,7 @@ void RetroFuturaGUI::IRangedValue::setGraphColorsApply()
 
 void RetroFuturaGUI::IRangedValue::drawIndicator()
 {
-    if(!_useIndicator)
-        return;
-
-    if(!_indicatorBackground)
-        return;
-
-    if(!_indicatorBorder)
-        return;
-
-    _indicatorBackground->Draw();
-    _indicatorBorder->Draw();
+    _indicator.Draw();
 }
 
 void RetroFuturaGUI::IRangedValue::drawGraph()
@@ -937,28 +536,12 @@ void RetroFuturaGUI::IRangedValue::drawGraph()
 
 void RetroFuturaGUI::IRangedValue::setIndicatorSize()
 {
-    if(!_indicatorBackground)
-        return;
-
-    if(!_indicatorBorder)
-        return;
-
     // The border shader insets the frame uBorderWidth inward from every edge, inside the track's own bounds,
     // so the area the indicator can occupy without painting over it is the track shrunk by that much per side.
     const glm::vec2 trackSize { _background.GetSize() };
     const f32 borderInset { _border.GetWidth() * 2.0f };
     const glm::vec2 innerSize { glm::max(trackSize.x - borderInset, 0.0f), glm::max(trackSize.y - borderInset, 0.0f) };
 
-    // Both axes are the track's own - x along its length, y across its thickness - and the indicator carries the
-    // track's rotation, so this holds for Vertical without a per-orientation case.
-    const glm::vec2 resolved { _indicatorSizingMode == ElementSizing::Percent
-        ? glm::vec2(innerSize.x * _indicatorSize.x * 0.01f, innerSize.y * _indicatorSize.y * 0.01f)
-        : glm::vec2(glm::min(_indicatorSize.x, innerSize.x), glm::min(_indicatorSize.y, innerSize.y)) };
-
-    const glm::vec3 size { resolved.x, resolved.y, 0.01f };
-
-    _indicatorBackground->SetSize(size);
-    _indicatorBorder->SetSize(size);
-
-    SetIndicatorType(_indicatorType);
+    //Both axes are the track's own - x along its length, y across its thickness - and the indicator carries the track's rotation.
+    _indicator.Fit(innerSize);
 }

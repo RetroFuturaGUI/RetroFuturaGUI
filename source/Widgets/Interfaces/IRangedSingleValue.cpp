@@ -143,9 +143,6 @@ void RetroFuturaGUI::IRangedSingleValue::setValueFromMousePosition(const glm::ve
     if(!track)
         return;
 
-    if(!_indicatorBackground)
-        return;
-
     // Revert the track's rotation to bring the mouse position into the track's local space where it always runs along the local X axis
     const glm::vec2 translated { mousePos - glm::vec2(track->GetPosition().x, track->GetPosition().y) };
     const f32 radians { glm::radians(-track->GetRotation().z) };
@@ -159,7 +156,7 @@ void RetroFuturaGUI::IRangedSingleValue::setValueFromMousePosition(const glm::ve
     const f32
         borderInset { _border.GetWidth() * 2.0f },
         trackLength { glm::max(track->GetSize().x - borderInset, 0.0f) },
-        indicatorLength { _indicatorBackground->GetSize().x },
+        indicatorLength { _indicator.GetDrawnSize().x },
         travelRange { 0.0f < trackLength - indicatorLength ? trackLength - indicatorLength : 0.0f },
         trackNearEdge { -trackLength * 0.5f },
         mouseOffsetOnAxis { localMouse.x - trackNearEdge - indicatorLength * 0.5f },

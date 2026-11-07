@@ -34,7 +34,7 @@ void RetroFuturaGUI::Slider::setColors(const ColorState state)
 
 bool RetroFuturaGUI::Slider::isInsideIndicator(const glm::vec2& mousePos)
 {
-    return isPointInsideRect(mousePos, glm::vec3(_indicatorBackground->GetSize(), 0.0f), _indicatorBackground->GetPosition(), _indicatorBackground->GetRotation());
+    return isPointInsideRect(mousePos, glm::vec3(_indicator.GetDrawnSize(), 0.0f), _indicator.GetPosition(), _indicator.GetRotation());
 }
 
 void RetroFuturaGUI::Slider::interact()
@@ -48,7 +48,7 @@ void RetroFuturaGUI::Slider::interact()
     bool
         isMouseButtonPressed { pointer._LeftButtonPressed },
         isMouseInside { pointer._HasPosition && isPointInsideRect(mousePos, _size, _position, glm::vec3(0.0f)) },
-        isMouseInsideIndicator { isPointInsideRect(mousePos, glm::vec3(_indicatorBackground->GetSize(), 0.0f), _indicatorBackground->GetPosition(), _indicatorBackground->GetRotation()) };
+        isMouseInsideIndicator { isPointInsideRect(mousePos, glm::vec3(_indicator.GetDrawnSize(), 0.0f), _indicator.GetPosition(), _indicator.GetRotation()) };
 
     if(!_isEnabledFlag || !isMouseInside) //no action and mouse leave
     {

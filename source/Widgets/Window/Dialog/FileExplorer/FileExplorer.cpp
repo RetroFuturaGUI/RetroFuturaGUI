@@ -391,9 +391,9 @@ bool RetroFuturaGUI::FileExplorer::buildView(ViewHost& host, std::string_view ti
     built._Scroll->GetBackground().SetFillType(FillType::Solid);
     built._Scroll->GetBorder().SetColors(std::array { glm::vec4(0.35f, 0.35f, 0.45f, 1.0f) }, ColorState::Enabled);
     built._Scroll->GetBorder().SetWidth(1.0f);
-    built._Scroll->SetIndicatorBackgroundColors(indicatorColors, ColorState::Enabled);
-    built._Scroll->SetIndicatorBorderColors(indicatorBorderColors, ColorState::Enabled);
-    built._Scroll->SetIndicatorSize(glm::vec2(15.0f, 100.0f), IRangedValue::ElementSizing::Percent);
+    built._Scroll->GetIndicator().GetBackground().SetColors(indicatorColors, ColorState::Enabled);
+    built._Scroll->GetIndicator().GetBorder().SetColors(indicatorBorderColors, ColorState::Enabled);
+    built._Scroll->GetIndicator().SetSize(glm::vec2(15.0f, 100.0f), RetroFuturaGUI::ElementSizing::Percent);
     built._Scroll->SetMinValue<f32>(0.0f);
     built._Scroll->SetMaxValue<f32>(1.0f);
     built._Scroll->SetStepSize<f32>(rowHeight(_font));
