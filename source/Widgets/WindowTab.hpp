@@ -3,6 +3,7 @@
 #include "IncludeHelper.hpp"
 #include "IWidget.hpp"
 #include "Border.hpp"
+#include "Box.hpp"
 #include "Frame.hpp"
 #include "Plane.hpp"
 #include "SvgTexture.hpp"
@@ -94,24 +95,6 @@ namespace RetroFuturaGUI
         /// @brief Sets the gap between fields, and above them.
         void SetFieldSpacing(const f32 spacing);
 
-        /// @brief Sets the corner radii of a field, clockwise from the top-left.
-        void SetFieldCornerRadii(const glm::vec4& radii);
-
-        /// @brief Sets a field's background colors for the given state.
-        void SetFieldBackgroundColors(std::span<const glm::vec4> colors, const ColorState state);
-
-        /// @brief Sets the selected field's background colors, which usually match the content so the two join.
-        void SetSelectedFieldBackgroundColors(std::span<const glm::vec4> colors);
-
-        /// @brief Sets a field's border colors for the given state.
-        void SetFieldBorderColors(std::span<const glm::vec4> colors, const ColorState state);
-
-        /// @brief Sets the selected field's border colors.
-        void SetSelectedFieldBorderColors(std::span<const glm::vec4> colors);
-
-        /// @brief Sets the width of a field's border. 0, the default, draws none.
-        void SetFieldBorderWidth(const f32 width);
-
     //Titles
         /// @brief Sets the font of the titles. Without one they don't show.
         void SetTitleFontFamily(std::string_view fontFamily, const f32 fontSize, const FontSizeUnit sizeUnit, const PlatformBridge::Fonts::Slant slant, const PlatformBridge::Fonts::Weight weight);
@@ -141,9 +124,16 @@ namespace RetroFuturaGUI
         /// @brief Returns the cross on the close buttons. One icon draws every field's cross
         const Icon& GetCloseIcon() const;
 
+        /// @brief Returns the look of the fields: Enabled, Hover, Clicked and Disabled, and Selected for the selected window's field,
+        ///        which usually matches the content so the two join. Rounded at the top, without a border by default
+        Box& GetFieldStyle();
+
+        /// @brief Returns the look of the fields; see the other overload.
+        const Box& GetFieldStyle() const;
+
     //Content
         /// @brief Sets the corner radii of the content area, clockwise from the top-left. The docked window rounds its own
-        ///        corners to them, to match the rounded corners of the window this WindowTab fills, for instance.
+        ///        corners to them, to match the rounded corners of the window this WindowTab fills, for instance
         void SetContentCornerRadii(const glm::vec4& radii);
 
         /// @brief Returns the corner radii of the content area.
@@ -258,7 +248,13 @@ namespace RetroFuturaGUI
     //Drawing
         void drawFields();
         void drawField(const uSize index, const f32 z);
-        void drawFieldShape(const glm::vec4& rect, const f32 z, const std::vector<glm::vec4>& background, const std::vector<glm::vec4>& border);
+        void drawFieldShape(const glm::vec4& rect, const f32 z, Box& style, const ColorState state);
+
+        /// @brief The state a field's look shows: Disabled, Selected for the selected window's field, or the field's own
+        static ColorState fieldStyleState(const ColorState state, const bool selected);
+
+        /// @brief Gives the field look its default colors, corners and border width
+        void setFieldStyleDefaults();
         void drawCloseButton(const glm::vec4& field, const f32 z, const ColorState state);
         void drawTitle(Text* title, const glm::vec4& field, const f32 z, const std::vector<glm::vec4>& colors);
         void drawSelectedWindow();
@@ -301,12 +297,12 @@ namespace RetroFuturaGUI
 
     //Elements
         std::vector<Field> _fields {};
-        std::unique_ptr<Plane>
-            _fieldBackground { nullptr },
-            _closeBackground { nullptr };
+        std::unique_ptr<Plane> _closeBackground { nullptr };
         Background _background { &_projection };
         Border _border { &_projection };
-        std::unique_ptr<Frame> _fieldBorder { nullptr };
+        Box
+            _fieldStyle { &_projection }, //drawn once per field, in its colors, so it takes no transitions
+            _previewFieldStyle { &_projection }; //the selected look at half its opacity, for the field a dropped window would take
         Icon _closeIcon //its own, so its color and size are this tab's alone
         {
             ResourceManager::CreateSvgTexture(getCloseIconPath(), &_projection, glm::i32vec2(32)),
@@ -324,29 +320,11 @@ namespace RetroFuturaGUI
             _minimumFieldWidth { 80.0f },
             _maximumFieldWidth { 240.0f },
             _fieldSpacing { 4.0f },
-            _fieldBorderWidth { 0.0f },
             _titlePadding { 12.0f },
             _closeButtonSize { 24.0f };
         glm::vec4
-            _fieldCornerRadii { 8.0f, 8.0f, 0.0f, 0.0f },
             _contentCornerRadii { 0.0f };
         FieldColors
-            _fieldBackgroundColors
-            {
-                ._Enabled = { glm::vec4(0.0f) },
-                ._Hover = { glm::vec4(1.0f, 1.0f, 1.0f, 0.06f) },
-                ._Clicked = { glm::vec4(1.0f, 1.0f, 1.0f, 0.1f) },
-                ._Disabled = { glm::vec4(0.0f) },
-                ._Selected = { glm::vec4(0.086f, 0.086f, 0.1137f, 1.0f) } //a window's default background, so the selected field joins its content
-            },
-            _fieldBorderColors
-            {
-                ._Enabled = { glm::vec4(0.35f, 0.35f, 0.45f, 1.0f) },
-                ._Hover = { glm::vec4(0.45f, 0.45f, 0.55f, 1.0f) },
-                ._Clicked = { glm::vec4(0.5f, 0.5f, 0.6f, 1.0f) },
-                ._Disabled = { glm::vec4(0.25f, 0.25f, 0.3f, 1.0f) },
-                ._Selected = { glm::vec4(0.35f, 0.35f, 0.45f, 1.0f) }
-            },
             _titleColors
             {
                 ._Enabled = { glm::vec4(0.7f, 0.7f, 0.75f, 1.0f) },

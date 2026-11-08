@@ -92,5 +92,6 @@ namespace RetroFuturaGUI
         SvgPathFill _fill {};
         IconColors _colors {};
         ColorState _colorState { ColorState::Enabled };
+        bool _isFilled { false }; //the path shows the icon's colors, not the SVG's own
     };
 }

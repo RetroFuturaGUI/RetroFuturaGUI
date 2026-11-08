@@ -6,26 +6,21 @@
 RetroFuturaGUI::IDropDown::IDropDown(std::string_view name, Projection* projection, IHierarchyNode* parentWidget, const WidgetTypeID parentWidgetTypeID, GLFWwindow* parentWindow)
     : IWidget(name, projection, parentWidget, parentWidgetTypeID, parentWindow)
 {
-    _dropDownBackground = std::make_unique<Plane>(projection);
-    _dropDownBorder = std::make_unique<Frame>(projection);
-    _dropDownItemHighlight = std::make_unique<Plane>(projection);
-    useTransitions({ _dropDownBackground.get(), _dropDownBorder.get(), _dropDownItemHighlight.get() });
+    _list.SetTransitionSettings(&_transitionSettings);
     _background.SetTransitionSettings(&_transitionSettings);
     _border.SetTransitionSettings(&_transitionSettings);
 
-    if(!_dropDownBackground)
-        return;
-
-    if(!_dropDownBorder)
-        return;
-
-    if(!_dropDownItemHighlight)
-        return;
-
-    setDropDownBackgroundColors();
-    setDropDownBorderColors();
-    _dropDownItemHighlight->SetColors(_highLightColor);
     _dropDowns.push_back(this);
+}
+
+RetroFuturaGUI::DropDownList& RetroFuturaGUI::IDropDown::GetList()
+{
+    return _list;
+}
+
+const RetroFuturaGUI::DropDownList& RetroFuturaGUI::IDropDown::GetList() const
+{
+    return _list;
 }
 
 RetroFuturaGUI::Icon& RetroFuturaGUI::IDropDown::GetArrow()
@@ -161,24 +156,15 @@ void RetroFuturaGUI::IDropDown::restoreShown(std::vector<IDropDown*>&& shown)
 
 void RetroFuturaGUI::IDropDown::updateDropDownGeometry()
 {
-    if(!_dropDownBackground)
-        return;
-
-    if(!_dropDownBorder)
-        return;
-
-    if(!_dropDownItemHighlight)
-        return;
-
     const f32 panelHeight { _size.y * static_cast<f32>(getVisibleItemCount()) };
     const glm::vec3 center { getDropDownCenter() };
 
-    _dropDownBackground->SetSize(glm::vec2(getDropDownWidth(), panelHeight));
-    _dropDownBackground->SetPosition(center);
-    _dropDownBorder->SetSize(_dropDownBackground->GetSize());
-    _dropDownBorder->SetPosition(center + glm::vec3(0.0f, 0.0f, _zStep * 3.0f));
+    _list.GetBackground().SetSize(glm::vec2(getDropDownWidth(), panelHeight));
+    _list.GetBackground().SetPosition(center);
+    _list.GetBorder().SetSize(_list.GetBackground().GetSize());
+    _list.GetBorder().SetPosition(center + glm::vec3(0.0f, 0.0f, _zStep * 3.0f));
 
-    _dropDownItemHighlight->SetSize(glm::vec2(getDropDownWidth(), _size.y));
+    _list.GetHighlight().SetSize(glm::vec2(getDropDownWidth(), _size.y));
     updateDropDownArrowGeometry();
 }
 
@@ -258,48 +244,6 @@ void RetroFuturaGUI::IDropDown::updateDropDownArrowGeometry()
     }
 }
 
-void RetroFuturaGUI::IDropDown::setDropDownBackgroundColors()
-{
-    if(!_dropDownBackground)
-        return;
-
-    switch(_dropDownBackgroundColorSate)
-    {
-        case ColorState::Enabled:
-            _dropDownBackground->SetColors(_dropDownBackgroundColorsEnabled);
-        break;
-        case ColorState::Clicked:
-             _dropDownBackground->SetColors(_dropDownBackgroundColorsClicked);
-        break;
-        case ColorState::Hover:
-             _dropDownBackground->SetColors(_dropDownBackgroundColorsHover);
-        break;
-        default: //Disabled
-             _dropDownBackground->SetColors(_dropDownBackgroundColorsDisabled);
-    }
-}
-
-void RetroFuturaGUI::IDropDown::setDropDownBorderColors()
-{
-    if(!_dropDownBorder)
-        return;
-
-    switch(_dropDownBorderColorSate)
-    {
-        case ColorState::Enabled:
-            _dropDownBorder->SetColors(_dropDownBorderColorsEnabled);
-        break;
-        case ColorState::Clicked:
-             _dropDownBorder->SetColors(_dropDownBorderColorsClicked);
-        break;
-        case ColorState::Hover:
-             _dropDownBorder->SetColors(_dropDownBorderColorsHover);
-        break;
-        default: //Disabled
-             _dropDownBorder->SetColors(_dropDownBorderColorsDisabled);
-    }
-}
-
 uSize RetroFuturaGUI::IDropDown::getVisibleItemCount() const
 {
     return _itemCount < _maxItemsToDraw ? _itemCount : _maxItemsToDraw;
@@ -317,10 +261,7 @@ glm::vec3 RetroFuturaGUI::IDropDown::itemRowCenter(const uSize visibleIndex) con
 void RetroFuturaGUI::IDropDown::setColors(const ColorState state)
 {
     _arrow.SetColorState(state);
-    _dropDownBackgroundColorSate = state;
-    _dropDownBorderColorSate = state;
-    setDropDownBackgroundColors();
-    setDropDownBorderColors();
+    _list.SetColorState(state);
 }
 
 void RetroFuturaGUI::IDropDown::Connect_OnItemClicked(const typename Signal<>::Slot& slot, const bool async)
@@ -371,62 +312,6 @@ void RetroFuturaGUI::IDropDown::SetIndex(const uSize index)
     _currentIndex = index;
 }
 
-void RetroFuturaGUI::IDropDown::SetDropDownBackgroundColors(std::span<const glm::vec4> colors, const ColorState state)
-{
-    _dropDownBackgroundColorSate = state;
-
-    switch(state)
-    {
-        case ColorState::Enabled:
-            _dropDownBackgroundColorsEnabled.assign(colors.begin(), colors.end());
-        break;
-        case ColorState::Clicked:
-            _dropDownBackgroundColorsClicked.assign(colors.begin(), colors.end());
-        break;
-        case ColorState::Hover:
-            _dropDownBackgroundColorsHover.assign(colors.begin(), colors.end());
-        break;
-        default: //disabled
-            _dropDownBackgroundColorsDisabled.assign(colors.begin(), colors.end());
-    }
-
-    setDropDownBackgroundColors();
-}
-
-void RetroFuturaGUI::IDropDown::SetDropDownBorderColors(std::span<const glm::vec4> colors, const ColorState state)
-{
-    _dropDownBorderColorSate = state;
-
-    switch(state)
-    {
-        case ColorState::Enabled:
-            _dropDownBorderColorsEnabled.assign(colors.begin(), colors.end());
-        break;
-        case ColorState::Clicked:
-            _dropDownBorderColorsClicked.assign(colors.begin(), colors.end());
-        break;
-        case ColorState::Hover:
-            _dropDownBorderColorsHover.assign(colors.begin(), colors.end());
-        break;
-        default: //disabled
-            _dropDownBorderColorsDisabled.assign(colors.begin(), colors.end());
-    }
-
-    setDropDownBorderColors();
-}
-
-void RetroFuturaGUI::IDropDown::SetDropDownCornerRadii(const glm::vec4& radii)
-{
-    if(!_dropDownBackground)
-        return;
-
-    if(!_dropDownBorder)
-        return;
-
-    _dropDownBackground->SetCornerRadii(radii);
-    _dropDownBorder->SetCornerRadii(radii);
-}
-
 void RetroFuturaGUI::IDropDown::SetDropDownOpen(const bool open)
 {
     _showDropDown = open;
@@ -448,10 +333,7 @@ bool RetroFuturaGUI::IDropDown::IsPointInsideOpenDropDown(const glm::vec2& point
 
 bool RetroFuturaGUI::IDropDown::isPointInsideDropDown(const glm::vec2& point) const
 {
-    if(!_dropDownBackground)
-        return false;
-
-    return isPointInsideRect(point, glm::vec3(_dropDownBackground->GetSize(), 0.0f), _dropDownBackground->GetPosition(), glm::vec3(0.0f));
+    return isPointInsideRect(point, glm::vec3(_list.GetBackground().GetSize(), 0.0f), _list.GetBackground().GetPosition(), glm::vec3(0.0f));
 }
 
 bool RetroFuturaGUI::IDropDown::hoveredItemIndex(const glm::vec2& point, uSize& outIndex) const

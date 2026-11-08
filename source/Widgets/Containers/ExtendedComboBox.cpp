@@ -47,19 +47,13 @@ void RetroFuturaGUI::ExtendedComboBox::Draw()
 
 void RetroFuturaGUI::ExtendedComboBox::drawDropDown()
 {
-    if(!_dropDownBackground)
-        return;
-
-    if(!_dropDownBorder)
-        return;
-
-    _dropDownBackground->Draw();
-    _dropDownBorder->Draw();
+    _list.GetBackground().Draw();
+    _list.GetBorder().Draw();
 
     updateItemGeometry(); //a move or a resize only reaches the panel, so every row is placed again before the list is drawn
 
-    if(_dropDownItemHighlight && _dropDownItemHovered)
-        _dropDownItemHighlight->Draw();
+    if(_dropDownItemHovered)
+        _list.GetHighlight().Draw();
 
     uSize visibleIndex { 0 };
 
@@ -185,7 +179,7 @@ glm::vec2 RetroFuturaGUI::ExtendedComboBox::contentSize(const f32 width) const
 {
     const f32
         boxBorder { _border.GetWidth() },
-        panelBorder { _dropDownBorder ? _dropDownBorder->GetBorderWidth() : 0.0f },
+        panelBorder { _list.GetBorder().GetWidth() },
         inset { (boxBorder > panelBorder ? boxBorder : panelBorder) * 2.0f };
 
     return glm::vec2
@@ -483,8 +477,8 @@ const std::vector<glm::vec4>& RetroFuturaGUI::ExtendedComboBox::GetPreviewTextCo
 
 void RetroFuturaGUI::ExtendedComboBox::updateItemGeometry()
 {
-    if(_dropDownItemHighlight && _nthItemHovered < getVisibleItemCount())
-        _dropDownItemHighlight->SetPosition(itemRowCenter(_nthItemHovered) - glm::vec3(0.0f, 0.0f, _zStep));
+    if(_nthItemHovered < getVisibleItemCount())
+        _list.GetHighlight().SetPosition(itemRowCenter(_nthItemHovered) - glm::vec3(0.0f, 0.0f, _zStep));
 
     uSize visibleIndex { 0 };
 

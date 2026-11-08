@@ -337,11 +337,11 @@ bool RetroFuturaGUI::FileExplorer::buildView(ViewHost& host, std::string_view ti
         oddRowColors {{ 0.13f, 0.13f, 0.17f, 1.0f }},
         innerBorderColors {{ 0.18f, 0.18f, 0.22f, 1.0f }},
         headerColors {{ 0.16f, 0.16f, 0.22f, 1.0f }};
-    built._Files->SetTrackBackgroundColors(evenRowColors, ColorState::Enabled, 0);
-    built._Files->SetTrackBackgroundColors(oddRowColors, ColorState::Enabled, 1);
-    built._Files->SetTrackBorderColors(innerBorderColors, ColorState::Enabled, 0);
-    built._Files->SetTrackBorderColors(innerBorderColors, ColorState::Enabled, 1);
-    built._Files->SetInnerBorderWidth(1.0f);
+    built._Files->GetTrackStyle(0).SetBackgroundColors(evenRowColors);
+    built._Files->GetTrackStyle(1).SetBackgroundColors(oddRowColors);
+    built._Files->GetTrackStyle(0).SetInnerBorderColors(innerBorderColors);
+    built._Files->GetTrackStyle(1).SetInnerBorderColors(innerBorderColors);
+    built._Files->GetCellStyle().SetInnerBorderWidth(1.0f);
     built._Files->SetFontFamily(_font._Family, _font._Size, FontSizeUnit::Pixels, _font._Slant, _font._Weight);
     built._Files->SetTextAlignment(TextAlignment::Left);
     built._Files->SetTextPadding(6.0f);
@@ -355,8 +355,8 @@ bool RetroFuturaGUI::FileExplorer::buildView(ViewHost& host, std::string_view ti
     built._Files->SetHeaderFontFamily(_font._Family, _font._Size, FontSizeUnit::Pixels, _font._Slant, _font._Weight);
     built._Files->SetHeaderTextAlignment(TextAlignment::Left);
     built._Files->SetHeaderTextPadding(6.0f);
-    built._Files->SetHeaderBackgroundColors(headerColors, ColorState::Enabled);
-    built._Files->SetHeaderOuterBorderColors(innerBorderColors, ColorState::Enabled);
+    built._Files->GetHeaderStyle().SetBackgroundColors(headerColors, ColorState::Enabled);
+    built._Files->GetHeaderStyle().SetOuterBorderColors(innerBorderColors, ColorState::Enabled);
     built._Files->SetHorizontalHeaderSize(rowHeight(_font) + 4.0f);
     built._Files->ShowHorizontalHeader(true); //named by updateHeaderTexts, which marks the sort column; fillTable makes the columns read-only
 
@@ -507,11 +507,11 @@ RetroFuturaGUI::MenuBar* RetroFuturaGUI::FileExplorer::attachBar(ViewHost& host,
     bar->GetBorder().SetWidth(1.0f);
     bar->GetBackground().SetCornerRadii(glm::vec4(12.0f, 12.0f, 0.0f, 0.0f)); //the window's top corners, which a popup never squares
     bar->GetBorder().SetCornerRadii(glm::vec4(12.0f, 12.0f, 0.0f, 0.0f));
-    bar->SetItemBackgroundColors(std::array { glm::vec4(0.0f, 0.0f, 0.0f, 0.0f) }, ColorState::Enabled);
-    bar->SetItemBackgroundColors(std::array { glm::vec4(0.25f, 0.25f, 0.35f, 0.9f) }, ColorState::Hover);
-    bar->SetItemBackgroundColors(std::array { glm::vec4(0.35f, 0.35f, 0.5f, 0.95f) }, ColorState::Clicked);
-    bar->SetItemBorderColors(std::array { glm::vec4(0.0f, 0.0f, 0.0f, 0.0f) }, ColorState::Enabled);
-    bar->SetItemBorderWidth(0.0f);
+    bar->GetItemStyle().GetBackground().SetColors(std::array { glm::vec4(0.0f, 0.0f, 0.0f, 0.0f) }, ColorState::Enabled);
+    bar->GetItemStyle().GetBackground().SetColors(std::array { glm::vec4(0.25f, 0.25f, 0.35f, 0.9f) }, ColorState::Hover);
+    bar->GetItemStyle().GetBackground().SetColors(std::array { glm::vec4(0.35f, 0.35f, 0.5f, 0.95f) }, ColorState::Clicked);
+    bar->GetItemStyle().GetBorder().SetColors(std::array { glm::vec4(0.0f, 0.0f, 0.0f, 0.0f) }, ColorState::Enabled);
+    bar->GetItemStyle().GetBorder().SetWidth(0.0f);
 
     std::vector<MenuBar::FlexDefinition> flexDefinition
     {

@@ -2,49 +2,43 @@
 #include "ITableWidget.hpp"
 
 
-RetroFuturaGUI::TableCheckBox::TableCheckBox(Table* parentTable, Projection* projection, Plane* background, Frame* border, SvgTexture* checkmark)
-    : ITableWidget(parentTable, projection)
+RetroFuturaGUI::TableCheckBox::TableCheckBox(Table* parentTable, Projection* projection, CellCheckBox* style)
+    : ITableWidget(parentTable, projection), _style(style)
 {
     _tableWidgetID = TableWidgetTypeID::TableCheckBox;
-    _background = background;
-    _border = border;
-    _checkmark = checkmark;
 }
 
 
 void RetroFuturaGUI::TableCheckBox::Draw()
 {
-    if(!_background)
+    if(!_style)
         return;
 
-    if(!_border)
-        return;
+    Background& background { _style->GetBackground() };
+    background.SetSize(glm::vec2(_size));
+    background.SetPosition(_position);
+    background.SetRotation(_rotation);
+    background.Draw();
 
-    _background->SetSize(_size);
-    _background->SetPosition(_position);
-    _background->SetRotation(_rotation);
-    _background->Draw();
-
-    _border->SetSize(_size);
-    _border->SetPosition(_position + glm::vec3(0.0f, 0.0f, 0.01f));
-    _border->SetRotation(_rotation);
-    _border->Draw();
+    Border& border { _style->GetBorder() };
+    border.SetSize(glm::vec2(_size));
+    border.SetPosition(_position + glm::vec3(0.0f, 0.0f, 0.01f));
+    border.SetRotation(_rotation);
+    border.Draw();
 
     if(!_isChecked)
         return;
 
-    if(!_checkmark)
-        return;
-
     const f32
-        inset { _border->GetBorderWidth() + _innerPadding },
+        inset { border.GetWidth() + _innerPadding },
         extent { _size.x > 2.0f * inset ? _size.x - 2.0f * inset : 0.0f };
 
     //One checkmark for every cell, so it moves to this cell. SvgTexture rebuilds a matrix only for a value that changed
-    _checkmark->SetSize(glm::vec2(extent));
-    _checkmark->SetPosition(_position + glm::vec3(0.0f, 0.0f, 0.02f));
-    _checkmark->SetRotation(_rotation);
-    _checkmark->Draw();
+    Icon& checkmark { _style->GetCheckmark() };
+    checkmark.SetSize(glm::vec2(extent));
+    checkmark.SetPosition(_position + glm::vec3(0.0f, 0.0f, 0.02f));
+    checkmark.SetRotation(_rotation);
+    checkmark.Draw();
 }
 
 void RetroFuturaGUI::TableCheckBox::SetSize(const glm::vec3& size)

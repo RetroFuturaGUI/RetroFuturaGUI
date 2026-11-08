@@ -52,19 +52,13 @@ void RetroFuturaGUI::ComboBox::Draw()
 
 void RetroFuturaGUI::ComboBox::drawDropDown()
 {
-    if(!_dropDownBackground)
-        return;
-
-    if(!_dropDownBorder)
-        return;
-
-    _dropDownBackground->Draw();
-    _dropDownBorder->Draw();
+    _list.GetBackground().Draw();
+    _list.GetBorder().Draw();
 
     updateItemGeometry(); //the selected item was just drawn over the closed box, so every row is placed again before the list is drawn
 
-    if(_dropDownItemHighlight && _dropDownItemHovered)
-        _dropDownItemHighlight->Draw();
+    if(_dropDownItemHovered)
+        _list.GetHighlight().Draw();
 
     uSize visibleIndex { 0 };
 
@@ -94,7 +88,7 @@ void RetroFuturaGUI::ComboBox::placeItemText(Text& item, const glm::vec3& center
 {
     const f32
         boxBorder { _border.GetWidth() },
-        panelBorder { _dropDownBorder ? _dropDownBorder->GetBorderWidth() : 0.0f },
+        panelBorder { _list.GetBorder().GetWidth() },
         inset { (boxBorder > panelBorder ? boxBorder : panelBorder) * 2.0f },
         parentWidth { 0.0f < width - inset ? width - inset : 0.0f },
         parentHeight { 0.0f < _size.y - inset ? _size.y - inset : 0.0f };
@@ -313,8 +307,8 @@ void RetroFuturaGUI::ComboBox::setColors(const ColorState state)
 
 void RetroFuturaGUI::ComboBox::updateItemGeometry()
 {
-    if(_dropDownItemHighlight && _nthItemHovered < getVisibleItemCount())
-        _dropDownItemHighlight->SetPosition(itemRowCenter(_nthItemHovered) - glm::vec3(0.0f, 0.0f, _zStep));
+    if(_nthItemHovered < getVisibleItemCount())
+        _list.GetHighlight().SetPosition(itemRowCenter(_nthItemHovered) - glm::vec3(0.0f, 0.0f, _zStep));
 
     uSize visibleIndex { 0 };
 

@@ -109,6 +109,9 @@ void RetroFuturaGUI::Icon::Rasterize(const glm::i32vec2& resolution)
 
 void RetroFuturaGUI::Icon::SetColorState(const ColorState state)
 {
+    if(_isFilled && state == _colorState)
+        return; //a widget drawing one icon in many places asks for the same state again and again
+
     _colorState = state;
     applyFill();
 }
@@ -138,4 +141,5 @@ void RetroFuturaGUI::Icon::applyFill()
     const bool showsEnabled { ColorState::Selected == _colorState && _colors._Selected.empty() };
     _fill._Colors = showsEnabled ? _colors._Enabled : GetColors(_colorState);
     _svg->SetPathFill(_pathName, _fill);
+    _isFilled = true;
 }

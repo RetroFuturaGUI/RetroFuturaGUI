@@ -15,6 +15,8 @@
 #include "ITextEditVisuals.hpp"
 #include "TableColor.hpp"
 #include "TableCheckBox.hpp"
+#include "TableStyles.hpp"
+#include "Box.hpp"
 #include "TableImage.hpp"
 #include "TrackIndex.hpp"
 #include <array>
@@ -87,18 +89,11 @@ namespace RetroFuturaGUI
         Table(Table&&) = delete;
         auto operator =(const Table&) = delete;
         auto operator =(Table&&) = delete;
-        void SetTrackBackgroundColors(std::span<const glm::vec4> colors, const ColorState state, const uSize nthIndex);
-        void SetTrackBorderColors(std::span<const glm::vec4> colors, const ColorState state, const uSize nthIndex);
-        void SetCheckBoxBackgroundColors(std::span<const glm::vec4> colors, const ColorState state);
-        void SetCheckBoxBorderColors(std::span<const glm::vec4> colors, const ColorState state);
-        void SetCheckBoxCheckmarkColors(std::span<const glm::vec4> colors, const ColorState state);
-
         /// @brief Sets the gap/padding between a cell's edge and the checkbox drawn in it, in pixels. The box stays the largest centered square that fits.
         void SetCheckBoxPadding(const f32 padding);
 
         /// @brief Sets the gap/padding between a checkbox's border and its checkmark in pixels.
         void SetCheckBoxInnerPadding(const f32 padding);
-        void SetInnerBorderWidth(const f32 width);
         void SetTableOrientation(const TableOrientation orientation);
         void SetTrackAlternatingColorCount(const uSize variantCount);
 
@@ -121,40 +116,6 @@ namespace RetroFuturaGUI
             Table* _ParentTable { nullptr };
         };
 
-        struct TrackColoring
-        {
-            std::vector<glm::vec4>
-                _BackgroundColorEnabled {{ ResourceManager::_Eigengrau }},
-                _BackgroundColorDisabled {{ ResourceManager::_Eigengrau }},
-                _BackgroundColorClicked {{ ResourceManager::_Eigengrau }},
-                _BackgroundColorHover {{ ResourceManager::_Eigengrau }},
-                _InnerBorderColorEnabled {{ 0.4f, 0.4f, 0.4f, 1.0f }},
-                _InnerBorderColorDisabled {{ 0.2f, 0.2f, 0.2f, 1.0f }},
-                _InnerBorderColorClicked {{ 0.6f, 0.6f, 0.6f, 1.0f }},
-                _InnerBorderColorHover {{ 0.5f, 0.5f, 0.5f, 1.0f }},
-                _TextColorEnabled {{ 1.0f, 1.0f, 1.0f, 1.0f }},
-                _TextColorDisabled {{ 0.5f, 0.5f, 0.5f, 1.0f }},
-                _TextColorClicked {{ 1.0f, 1.0f, 1.0f, 1.0f }},
-                _TextColorHover {{ 1.0f, 1.0f, 1.0f, 1.0f }},
-                _TextColorSelected {{ 1.0f, 1.0f, 1.0f, 1.0f }},
-                _IconColorEnabled {{ 1.0f, 1.0f, 1.0f, 1.0f }},
-                _IconColorDisabled {{ 0.5f, 0.5f, 0.5f, 1.0f }},
-                _IconColorClicked {{ 1.0f, 1.0f, 1.0f, 1.0f }},
-                _IconColorHover {{ 1.0f, 1.0f, 1.0f, 1.0f }},
-                _CaretColorEnabled {{ 1.0f, 1.0f, 1.0f, 1.0f }},
-                _CaretColorDisabled {{ 0.5f, 0.5f, 0.5f, 1.0f }},
-                _CaretColorClicked {{ 1.0f, 1.0f, 1.0f, 1.0f }},
-                _CaretColorHover {{ 1.0f, 1.0f, 1.0f, 1.0f }},
-                _GraphColorEnabled {{ 1.0f, 1.0f, 1.0f, 1.0f }},
-                _GraphColorDisabled {{ 0.5f, 0.5f, 0.5f, 1.0f }},
-                _GraphColorClicked {{ 1.0f, 1.0f, 1.0f, 1.0f }},
-                _GraphColorHover {{ 1.0f, 1.0f, 1.0f, 1.0f }},
-                _IndicatorColorEnabled {{ 1.0f, 1.0f, 1.0f, 1.0f }},
-                _IndicatorColorDisabled {{ 0.5f, 0.5f, 0.5f, 1.0f }},
-                _IndicatorColorClicked {{ 1.0f, 1.0f, 1.0f, 1.0f }},
-                _IndicatorColorHover {{ 1.0f, 1.0f, 1.0f, 1.0f }};
-        };
-
         void Draw() override;
                 
         /// @brief Connects a slot to be called when the text content changes.
@@ -163,13 +124,6 @@ namespace RetroFuturaGUI
 
         /// @brief Disconnects a previously connected OnTextChange slot.
         void Disconnect_OnTextChange(const typename Signal<>::Slot& slot);
-
-        /// @brief Sets the text color for the given color state and track variant. Selected rows show the Selected colors (white
-        ///        by default). An empty list has them show the Enabled colors.
-        void SetTextColors(std::span<const glm::vec4> colors, const ColorState state, const uSize nthIndex);
-
-        /// @brief Returns the text color configured for the given color state.
-        std::vector<glm::vec4> GetTextColor(const ColorState state) const;
 
         /// @brief Sets the cell's contents in UTF-8. Does not give the cell a value store.
         void SetValue(std::string_view text, const TrackIndex& index, const bool emitSignal);
@@ -306,19 +260,6 @@ namespace RetroFuturaGUI
 
         void SetHeaderTextPadding(const f32 padding);
 
-        /// @brief Sets the header text color for the given color state. A header can't be selected, so Selected colors are ignored
-        void SetHeaderTextColors(std::span<const glm::vec4> colors, const ColorState state);
-
-        void SetHeaderInnerBorderWidth(const f32 width);
-
-        void SetHeaderOuterBorderWidth(const f32 width);
-
-        void SetHeaderInnerBorderColors(std::span<const glm::vec4> colors, const ColorState state);
-
-        void SetHeaderOuterBorderColors(std::span<const glm::vec4> colors, const ColorState state);
-
-        void SetHeaderBackgroundColors(std::span<const glm::vec4> colors, const ColorState state);
-
         /// @brief Sets the height of the column header band, in pixels. Taken out of the content viewport.
         void SetHorizontalHeaderSize(const f32 size);
 
@@ -347,10 +288,6 @@ namespace RetroFuturaGUI
 
         void Disconnect_OnCellEditEnded(const typename Signal<TrackIndex, EditEnd, std::string>::Slot& slot);
 
-        void SetCheckBoxCornerRadii(const glm::vec4& radii);
-        void SetCheckBoxSize(const glm::vec3& size);
-        void SetCheckBoxBorderWidth(const f32 width);
-
     //Row selection
         /// @brief Sets whether a press on a text cell selects its row. In Column orientation it selects the column, since rows
         ///        there are the tracks the colors alternate along. A press on a read-only track then only selects, without a caret.
@@ -367,15 +304,11 @@ namespace RetroFuturaGUI
 
         void ClearSelection(const bool emitSignal);
 
-        void SetSelectedRowBackgroundColors(std::span<const glm::vec4> colors);
-
         /// @brief Marks the row, or the column in Column orientation, that a drag would drop on: its background is drawn in the
         ///        drop target colors, over its own and the selection's. One row at a time; redefining the tracks takes it away.
         void SetDropTargetRow(const uSize row);
 
         void ClearDropTargetRow();
-
-        void SetDropTargetRowBackgroundColors(std::span<const glm::vec4> colors);
 
         void Connect_OnSelectionChanged(const typename Signal<>::Slot& slot, const bool async);
 
@@ -396,11 +329,6 @@ namespace RetroFuturaGUI
         /// @brief Sets how long after the first press the second one makes a slow double-click: 500 to 1000 ms by default. It
         ///        never starts before the system's double-click time is over, so one pair of presses is never both.
         void SetSlowDoubleClickTime(const std::chrono::milliseconds earliest, const std::chrono::milliseconds latest);
-
-        /// @brief Sets the fill of the band a drag from off the selection draws; translucent, so the rows show through.
-        void SetSelectionBandColors(std::span<const glm::vec4> colors);
-
-        void SetSelectionBandBorderColors(std::span<const glm::vec4> colors);
 
         /// @brief Connects a slot to the drag of the selected rows: a press on a selected row, or on any row in Single selection,
         ///        that moves past the drag threshold. The slot gets the phase and the pointer in window coordinates.
@@ -434,6 +362,37 @@ namespace RetroFuturaGUI
         /// @brief Scrolls just far enough for the row, or the column in Column orientation, to be in view.
         /// @param emitSignal Whether OnScrolled fires when it scrolled.
         void ScrollRowIntoView(const uSize row, const bool emitSignal);
+
+        /// @brief Returns the look of the variant the nth track takes: the tracks take the variants in turn, so n wraps around the
+        ///        variant count (SetTrackAlternatingColorCount). Only its Enabled colors alternate (see GetCellStyle)
+        TrackStyle& GetTrackStyle(const uSize nthIndex);
+
+        /// @brief Returns the look of the variant the nth track takes (see the other overload)
+        const TrackStyle& GetTrackStyle(const uSize nthIndex) const;
+
+        /// @brief Returns the look every track shares in the states besides Enabled, the drop target's colors and the inner border width
+        CellStyle& GetCellStyle();
+
+        /// @brief Returns the look every track shares in the states besides Enabled; see the other overload
+        const CellStyle& GetCellStyle() const;
+
+        /// @brief Returns the header cells' look
+        HeaderStyle& GetHeaderStyle();
+
+        /// @brief Returns the header cells' look
+        const HeaderStyle& GetHeaderStyle() const;
+
+        /// @brief Returns the checkbox every checkbox cell draws: its background, border and checkmark
+        CellCheckBox& GetCellCheckBox();
+
+        /// @brief Returns the checkbox every checkbox cell draws: its background, border and checkmark
+        const CellCheckBox& GetCellCheckBox() const;
+
+        /// @brief Returns the band a drag from off the selection draws. Translucent, so the rows show through
+        Box& GetSelectionBand();
+
+        /// @brief Returns the band a drag from off the selection draws
+        const Box& GetSelectionBand() const;
 
         /// @brief Returns the table's background
         Background& GetBackground();
@@ -554,9 +513,6 @@ namespace RetroFuturaGUI
         /// @brief Resolves which color state a checkbox cell draws in, from the hover/press state interact() recorded.
         ColorState checkBoxColorState(const uSize row, const uSize column) const;
 
-        /// @brief Pushes the given state's colors onto the checkbox background/border/checkmark every cell shares.
-        void setCheckBoxColors(const ColorState state);
-
         /// @brief Creates the cell's TableText if it has none yet, styled from the header defaults.
         void ensureHeaderWidget(TableCell& cell);
 
@@ -567,7 +523,7 @@ namespace RetroFuturaGUI
         glm::vec2 getHeaderExtents() const;
 
         /// @brief Draws a text cell through its pooled TableText, in the row's text colors
-        void drawTextCell(const uSize row, const uSize column, const TrackColoring& coloring, const ColorState state);
+        void drawTextCell(const uSize row, const uSize column, const TrackStyle& track, const ColorState state);
 
         /// @brief Draws a checkbox cell through the shared checkbox, fitted to the cell.
         void drawCheckBoxCell(const BodyCell& cell, const uSize row, const uSize column, const glm::vec3& position, const glm::vec3& size);
@@ -728,13 +684,11 @@ namespace RetroFuturaGUI
             _highlightedBackgroundCell { nullptr },
             _trackColoringOverlay { nullptr },
             _cellColorPlane { nullptr },
-            _cellImagePlane { nullptr },
-            _checkBoxBackground { nullptr };
+            _cellImagePlane { nullptr };
         std::unique_ptr<Frame>
             _highlightedCellBorder { nullptr },
-            _innerBorder { nullptr },
-            _checkBoxBorder { nullptr };
-        std::unique_ptr<SvgTexture> _checkmark { nullptr }; //the Table's own, drawn by _sharedCheckBox in every cell
+            _innerBorder { nullptr };
+        CellCheckBox _cellCheckBox { &_projection }; //drawn by _sharedCheckBox in every checkbox cell
         std::vector<glm::vec4> _imagePlaneColors { glm::vec4(0.0f) }; //transparent, so the plane draws just its image; the plane only keeps a view of it
         std::vector<ITableWidget::TableWidgetTypeID> _rowWidgetTypes {};
 
@@ -750,49 +704,17 @@ namespace RetroFuturaGUI
         glm::vec3 _checkBoxSize { _innerSize };
 
     // Design
-        std::vector<TrackColoring> _nthTrackColors {};
-        std::vector<glm::vec4>
-            _headerBackgroundColorsEnabled {{ ResourceManager::_Eigengrau }},
-            _headerBackgroundColorsDisabled {{ ResourceManager::_Eigengrau }},
-            _headerBorderColorsEnabled {{ 0.4f, 0.4f, 0.4f, 1.0f }},
-            _headerBorderColorsDisabled {{ 0.2f, 0.2f, 0.2f, 1.0f }},
-            _headerOuterBorderColorsEnabled {{ 0.4f, 0.4f, 0.4f, 1.0f }},
-            _headerOuterBorderColorsDisabled {{ 0.2f, 0.2f, 0.2f, 1.0f }},
-            _headerTextColorsEnabled {{ 1.0f, 1.0f, 1.0f, 1.0f }},
-            _headerTextColorsDisabled {{ 0.5f, 0.5f, 0.5f, 1.0f }},
-            _selectedTextColors {{ 1.0f, 1.0f, 1.0f, 1.0f }},
-            _checkBoxBackgroundColorEnabled {{ 1.0f, 1.0f, 1.0f, 1.0f }},
-            _checkBoxBackgroundColorHover {{ 1.0f, 1.0f, 1.0f, 1.0f }},
-            _checkBoxBackgroundColorClicked {{ 1.0f, 1.0f, 1.0f, 1.0f }},
-            _checkBoxBackgroundColorDisabled {{ 1.0f, 1.0f, 1.0f, 1.0f }},
-            _checkBoxBorderColorEnabled {{ 1.0f, 1.0f, 1.0f, 1.0f }},
-            _checkBoxBorderColorHover {{ 1.0f, 1.0f, 1.0f, 1.0f }},
-            _checkBoxBorderColorClicked {{ 1.0f, 1.0f, 1.0f, 1.0f }},
-            _checkBoxBorderColorDisabled {{ 1.0f, 1.0f, 1.0f, 1.0f }},
-            _checkBoxCheckmarkColorEnabled {{ 1.0f, 1.0f, 1.0f, 1.0f }},
-            _checkBoxCheckmarkColorHover {{ 1.0f, 1.0f, 1.0f, 1.0f }},
-            _checkBoxCheckmarkColorClicked {{ 1.0f, 1.0f, 1.0f, 1.0f }},
-            _checkBoxCheckmarkColorDisabled {{ 1.0f, 1.0f, 1.0f, 1.0f }};
+        std::vector<TrackStyle> _trackStyles { TrackStyle {} }; //never empty
+        CellStyle _cellStyle {};
+        HeaderStyle _headerStyle {};
         TextDefaults _headerTextDefaults {};
         f32
-            _innerBorderWidth { 1.0f },
-            _headerInnerBorderWidth { 1.0f },
-            _headerOuterBorderWidth { 1.0f },
             _horizontalHeaderHeight { 30.0f },
             _verticalHeaderWidth { 60.0f },
             _checkBoxInnerPadding { 5.0f }, // box border -> checkmark
             _checkBoxPadding  { 4.0f },   // cell edge -> box edge
             _imagePadding { 4.0f };         // cell edge -> picture edge
         static constexpr f32 _widgetZOffset { 0.05f };
-        SvgPathFill _checkmarkFill
-        {
-            ._FillType =  FillType::Solid,
-            ._Colors {{ 1.0f, 1.0f, 1.0f, 1.0f }},
-            ._GradientDegree = 0.0f,
-            ._GradientOffset = 0.0f,
-            ._GradientAnimationSpeed = 0.0f,
-            ._GradientRotationSpeed = 0.0f
-        };
 
     // Logic
         std::vector<TrackDefinition>
@@ -843,9 +765,6 @@ namespace RetroFuturaGUI
     // Row selection
         RowSelection _rowSelection { RowSelection::None };
         std::vector<bool> _selectedRowFlags {}; // one per selectable row
-        std::vector<glm::vec4>
-            _selectedRowBackgroundColors {{ 0.2f, 0.3f, 0.55f, 1.0f }},
-            _dropTargetRowBackgroundColors {{ 0.25f, 0.5f, 0.42f, 1.0f }};
         uSize _dropTargetRow { 0 };
         bool _hasDropTargetRow { false };
         uSize
@@ -880,11 +799,7 @@ namespace RetroFuturaGUI
             _onRowSlowDoubleClicked,
             _onRowSlowDoubleClickedAsync;
         std::vector<bool> _bandBaseFlags {}; // what the band adds to: the selection from before the press with Alt, nothing without
-        std::unique_ptr<Plane> _selectionBand { nullptr };
-        std::unique_ptr<Frame> _selectionBandBorder { nullptr };
-        std::vector<glm::vec4>
-            _selectionBandColors {{ 0.3f, 0.45f, 0.85f, 0.25f }},
-            _selectionBandBorderColors {{ 0.45f, 0.6f, 1.0f, 0.9f }};
+        Box _selectionBand { &_projection };
         std::chrono::steady_clock::time_point _lastAutoScrollTime {};
         f32 _wheelScrollStep { 20.0f }; //pixels per line of the wheel
         Signal<SelectionDragPhase, glm::vec2>

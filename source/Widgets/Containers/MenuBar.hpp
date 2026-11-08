@@ -3,6 +3,7 @@
 #include "IWidget.hpp"
 #include "Background.hpp"
 #include "Border.hpp"
+#include "Box.hpp"
 #include "IClickable.hpp"
 #include "Label.hpp"
 #include "Button.hpp"
@@ -144,132 +145,18 @@ namespace RetroFuturaGUI
         /// @brief Returns the sizing policy of the given cell, or the Star-weighted default when out of range.
         const FlexDefinition& GetFlexDefinition(const uSize index) const;
 
-    //Separator lines
-        /// @brief Sets the separator line colors for the given color state: one for a solid fill, the stops for a gradient.
-        void SetSeparatorLinesColors(std::span<const glm::vec4> colors, const ColorState state);
+        /// @brief Returns the look every item cell draws behind its widget, per state: Enabled, Hover, Clicked and Disabled
+        Box& GetItemStyle();
 
-        /// @brief Sets the separator lines' fill type (solid, linear/radial/huestar gradient).
-        void SetSeparatorLinesFillType(const FillType fillType);
+        /// @brief Returns the look every item cell draws behind its widget, per state: Enabled, Hover, Clicked and Disabled
+        const Box& GetItemStyle() const;
 
-        /// @brief Sets the offset applied to the separator lines' gradient start position.
-        void SetSeparatorLinesGradientOffset(const f32 gradientOffset);
+        /// @brief Returns the line drawn on every seam between two cells, while ShowSeparatorLines has them shown
+        Background& GetSeparatorLine();
 
-        /// @brief Sets the speed at which the separator lines' gradient animates over time.
-        void SetSeparatorLinesGradientAnimationSpeed(const f32 animationSpeed);
+        /// @brief Returns the line drawn on every seam between two cells, while ShowSeparatorLines has them shown
+        const Background& GetSeparatorLine() const;
 
-        /// @brief Sets the angle of the separator lines' linear gradient, in degrees.
-        void SetSeparatorLinesGradientDegree(const f32 degree);
-
-        /// @brief Sets the speed at which the separator lines' gradient rotates over time.
-        void SetSeparatorLinesGradientRotationSpeed(const f32 rotationSpeed);
-
-        /// @brief Sets sections of the separator lines to skip drawing, which is what turns them into dashed lines; see Plane::SetBackgroundGaps.
-        void SetSeparatorLinesGaps(const BackgroundGap& gap);
-
-    //Item background
-        /// @brief Sets the item background colors for the given color state: one for a solid fill, the stops for a gradient.
-        void SetItemBackgroundColors(std::span<const glm::vec4> colors, const ColorState state);
-
-        /// @brief Sets the corner rounding radii of the item background and item border.
-        void SetItemCornerRadii(const glm::vec4& radii);
-
-        /// @brief Sets the item background fill type (solid, linear/radial/huestar gradient).
-        void SetItemBackgroundFillType(const FillType fillType);
-
-        /// @brief Sets the offset applied to the item background gradient's start position.
-        void SetItemBackgroundGradientOffset(const f32 gradientOffset);
-
-        /// @brief Sets the speed at which the item background gradient animates over time.
-        void SetItemBackgroundGradientAnimationSpeed(const f32 animationSpeed);
-
-        /// @brief Sets the angle of the item background's linear gradient, in degrees.
-        void SetItemBackgroundGradientDegree(const f32 degree);
-
-        /// @brief Sets the speed at which the item background gradient rotates over time.
-        void SetItemBackgroundGradientRotationSpeed(const f32 rotationSpeed);
-
-        /// @brief Sets the texture ID sampled for the item background's glass-effect-with-image shader feature.
-        void SetItemWindowBackgroundImageTextureID(const u32 textureID);
-
-        /// @brief Sets the dot color used for the item background's Dotted raster pattern.
-        void SetItemBackgroundPrimaryRasterColor(const glm::vec4& color);
-
-        /// @brief Sets the gap, in pixels, between the largest elements of the item background's raster: 0 lets them touch. Spreads the grid without changing any element's size.
-        void SetItemBackgroundRasterSpacing(const f32 spacing);
-
-        /// @brief Sets the direction, in degrees, along which the item background's raster widths/animation transfer.
-        void SetItemBackgroundRasterDegree(const f32 degree);
-
-        /// @brief Sets the per-position dot width curve, in pixels (each value is a dot's full width across), for the item background's Dotted raster pattern. Enables the Raster shader feature when non-empty.
-        void SetItemBackgroundPrimaryRasterWidthTransfer(std::span<f32> widthTransfer);
-
-        /// @brief Sets how far each item background dot's opacity reaches from its center before fading to transparent.
-        void SetItemBackgroundDotTransparencyTransfer(const f32 transparencyTransfer);
-
-        /// @brief Sets the speed at which the item background's raster pattern animates.
-        void SetItemBackgroundRasterAnimationSpeed(const f32 animationSpeed);
-
-        /// @brief Sets the overall opacity of the item background's FogEffect shader feature.
-        void SetItemBackgroundFogAlpha(const f32 alpha);
-
-        /// @brief Sets the speed at which the item background's fog drifts over time.
-        void SetItemBackgroundFogSpeed(const f32 speed);
-
-        /// @brief Sets the per-octave density/weight curve driving the item background's fog. Enables the FogEffect shader feature when non-empty.
-        void SetItemBackgroundFogDensity(std::span<f32> density);
-
-        /// @brief Sets the coverage threshold above which the item background's fog appears; higher values carve larger clear gaps out of the cloud.
-        void SetItemBackgroundFogClearing(const f32 clearing);
-
-        /// @brief Sets sections of the item background to skip drawing; see Plane::SetBackgroundGaps.
-        void SetItemBackgroundGaps(const BackgroundGap& gap);
-
-    //Item border
-        /// @brief Sets the item border colors for the given color state: one for a solid fill, the stops for a gradient.
-        void SetItemBorderColors(std::span<const glm::vec4> colors, const ColorState state);
-
-        /// @brief Sets the item border fill type (solid, linear/radial/huestar gradient).
-        void SetItemBorderFillType(const FillType fillType);
-
-        /// @brief Sets the offset applied to the item border gradient's start position.
-        void SetItemBorderGradientOffset(const f32 gradientOffset);
-
-        /// @brief Sets the speed at which the item border gradient animates over time.
-        void SetItemBorderGradientAnimationSpeed(const f32 animationSpeed);
-
-        /// @brief Sets the angle of the item border's linear gradient, in degrees.
-        void SetItemBorderGradientDegree(const f32 degree);
-
-        /// @brief Sets the speed at which the item border gradient rotates over time.
-        void SetItemBorderGradientRotationSpeed(const f32 rotationSpeed);
-
-        /// @brief Sets the texture ID sampled for the item border's glass-effect-with-image shader feature.
-        void SetItemWindowBorderImageTextureID(const u32 textureID);
-
-        /// @brief Sets the dot color used for the item border's Dotted raster pattern.
-        void SetItemBorderPrimaryRasterColor(const glm::vec4& color);
-
-        /// @brief Sets the gap, in pixels, between the largest elements of the item border's raster: 0 lets them touch. Spreads the grid without changing any element's size.
-        void SetItemBorderRasterSpacing(const f32 spacing);
-
-        /// @brief Sets the direction, in degrees, along which the item border's raster widths/animation transfer.
-        void SetItemBorderRasterDegree(const f32 degree);
-
-        /// @brief Sets the per-position dot width curve, in pixels (each value is a dot's full width across), for the item border's Dotted raster pattern. Enables the Raster shader feature when non-empty.
-        void SetItemBorderPrimaryRasterWidthTransfer(std::span<f32> widthTransfer);
-
-        /// @brief Sets how far each item border dot's opacity reaches from its center before fading to transparent.
-        void SetItemBorderDotTransparencyTransfer(const f32 transparencyTransfer);
-
-        /// @brief Sets the speed at which the item border's raster pattern animates.
-        void SetItemBorderRasterAnimationSpeed(const f32 animationSpeed);
-
-        /// @brief Sets the item border's width.
-        void SetItemBorderWidth(const f32 borderWidth);
-
-        /// @brief Sets sections of the item border to skip drawing; see Frame::SetBorderGaps.
-        void SetItemBorderGaps(std::span<BorderGap> gaps);
-        
         /// @brief Returns the MenuBar's background
         Background& GetBackground();
         
@@ -366,26 +253,12 @@ namespace RetroFuturaGUI
         /// @brief The state the item in the given cell draws in, given what the cursor is doing.
         ColorState itemState(const uSize index) const;
 
-        /// @brief Makes the given state the one the items draw in, and pushes the matching colors.
-        void setItemColors(const ColorState state);
-
-        /// @brief Hands the colors to the element, a Plane or a Frame, unless the state they came from was never set.
-        template<typename RectangleType>
-        void pushElementColors(RectangleType* element, std::vector<glm::vec4>* colors);
-
-        void setSeparatorLinesColors();
-        void setItemBackgroundColors();
-        void setItemBorderColors();
-        void setItemBackgroundCornerRadii(const glm::vec4& radii);
-        void setItemBorderCornerRadii(const glm::vec4& radii);
 
     //Elements
         Background _background { &_projection };
         Border _border { &_projection };
-        std::unique_ptr<Plane>
-            _separatorLine { nullptr },
-            _itemBackground { nullptr };
-        std::unique_ptr<Frame> _itemBorder { nullptr };
+        Background _separatorLine { &_projection };
+        Box _itemStyle { &_projection };
         std::list<std::unique_ptr<IWidget>> _itemFlex {};
         std::vector<std::unique_ptr<IWidget>> _removedWidgets {}; //destroyed at the start of the next Interact
 
@@ -399,29 +272,9 @@ namespace RetroFuturaGUI
         f32 _margin { 0.0f }; //margin from window edge
         DockingEdge _dockingEdge { DockingEdge::Top };
         EdgeAlignment _edgeAlignment { EdgeAlignment::Center };
-        std::vector<glm::vec4>
-            _separatorLinesColorsEnabled {},
-            _separatorLinesColorsDisabled {},
-            _itemBackgroundColorsEnabled {},
-            _itemBackgroundColorsDisabled {},
-            _itemBackgroundColorsHover {},
-            _itemBackgroundColorsClick {},
-            _itemBorderColorsEnabled {},
-            _itemBorderColorsDisabled {},
-            _itemBorderColorsHover {},
-            _itemBorderColorsClick {};
-        std::vector<f32>
-            _itemBackgroundPrimaryRasterWidthTransfer {},
-            _itemBackgroundFogDensity {},
-            _itemBorderPrimaryRasterWidthTransfer {};
-
         f32 _separatorLinesThickness { 1.0f };
 
     //Logic
-        ColorState
-            _separatorLinesColorState { ColorState::Enabled },
-            _itemBackgroundColorState { ColorState::Enabled },
-            _itemBorderColorState { ColorState::Enabled };
         bool _useSeparatorLines { false };
         std::vector<FlexDefinition> _flexDefinition {};
 

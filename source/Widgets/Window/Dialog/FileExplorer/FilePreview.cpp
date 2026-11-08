@@ -46,11 +46,11 @@ RetroFuturaGUI::FileExplorer::FilePreview::FilePreview(ViewHost& host, Lasagna& 
         evenRowColors {{ 0.1f, 0.1f, 0.13f, 1.0f }},
         oddRowColors {{ 0.13f, 0.13f, 0.17f, 1.0f }},
         innerBorderColors {{ 0.18f, 0.18f, 0.22f, 1.0f }};
-    _details->SetTrackBackgroundColors(evenRowColors, ColorState::Enabled, 0);
-    _details->SetTrackBackgroundColors(oddRowColors, ColorState::Enabled, 1);
-    _details->SetTrackBorderColors(innerBorderColors, ColorState::Enabled, 0);
-    _details->SetTrackBorderColors(innerBorderColors, ColorState::Enabled, 1);
-    _details->SetInnerBorderWidth(1.0f);
+    _details->GetTrackStyle(0).SetBackgroundColors(evenRowColors);
+    _details->GetTrackStyle(1).SetBackgroundColors(oddRowColors);
+    _details->GetTrackStyle(0).SetInnerBorderColors(innerBorderColors);
+    _details->GetTrackStyle(1).SetInnerBorderColors(innerBorderColors);
+    _details->GetCellStyle().SetInnerBorderWidth(1.0f);
     _details->SetFontFamily(_font._Family, _font._Size, FontSizeUnit::Pixels, _font._Slant, _font._Weight);
     _details->SetTextAlignment(TextAlignment::Left);
     _details->SetTextPadding(6.0f);
