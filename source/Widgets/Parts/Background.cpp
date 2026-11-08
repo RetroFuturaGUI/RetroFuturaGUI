@@ -358,6 +358,7 @@ void RetroFuturaGUI::Background::setColors()
             _backgroundPlane->SetColors(_colorsEnabled);
     }
 
+    _dropShadow.SetColorState(_colorState);
     _glow.SetColorState(_colorState);
 }
 

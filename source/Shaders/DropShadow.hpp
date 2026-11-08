@@ -10,7 +10,7 @@ namespace RetroFuturaGUI
     class ShadowRectangle;
 
     /// @brief A drop shadow cast by a background, a border or a text: their shape, moved by a distance at an angle, grown by a
-    ///        scale and blurred at its edges, drawn behind them. Its colors take every fill and gradient, one set for every color
+    ///        scale and blurred at its edges, drawn behind them. Its colors take every fill and gradient, per color state like what casts it, and follow its
     ///        state. Reached by GetDropShadow(): button.GetBackground().GetDropShadow().SetDistance(4.0f). Hidden until Show(true)
     class DropShadow final : public FillStyle
     {
@@ -46,11 +46,12 @@ namespace RetroFuturaGUI
         void SetScale(const f32 scale);
         f32 GetScale() const;
 
-        /// @brief Sets the shadow's colors. Black at half opacity by default
-        void SetColors(std::span<const glm::vec4> colors);
+        /// @brief Sets the shadow's colors for a color state. A state without colors of its own shows the Enabled ones, so
+        ///        setting Enabled alone gives one shadow for every state. Enabled is black at half opacity by default
+        void SetColors(std::span<const glm::vec4> colors, const ColorState state);
 
-        /// @brief Returns the shadow's colors
-        const std::vector<glm::vec4>& GetColors() const;
+        /// @brief Returns the colors set for a color state, empty when it shows the Enabled ones
+        const std::vector<glm::vec4>& GetColors(const ColorState state) const;
 
         using FillStyle::SetFillType;
         using FillStyle::SetGradientOffset;
@@ -64,11 +65,27 @@ namespace RetroFuturaGUI
         /// @brief Returns how far the shadow is moved, in pixels with y up, from the degree and the distance
         glm::vec2 GetOffset() const;
 
+        /// @brief Shows the colors of the given state, the Enabled ones when the state has none
+        void SetColorState(const ColorState state);
+
     private:
         friend class Text; //draws it.
         friend class ShadowRectangle; //draws it.
 
-        std::vector<glm::vec4> _shadowColors { glm::vec4(0.0f, 0.0f, 0.0f, 0.5f) }; //never empty. The fill keeps a span over it
+        /// @brief The colors set for a state.
+        std::vector<glm::vec4>& colorsOf(const ColorState state);
+        const std::vector<glm::vec4>& colorsOf(const ColorState state) const;
+
+        /// @brief Hands the colors of the state shown to the fill
+        void applyColors();
+
+        std::vector<glm::vec4>
+            _colorsEnabled { glm::vec4(0.0f, 0.0f, 0.0f, 0.5f) }, //never empty: every empty state shows it
+            _colorsDisabled {},
+            _colorsHover {},
+            _colorsClicked {},
+            _colorsSelected {};
+        ColorState _colorState { ColorState::Enabled };
         f32
             _degree { 315.0f },
             _distance { 4.0f },

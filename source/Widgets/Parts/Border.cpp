@@ -230,6 +230,7 @@ void RetroFuturaGUI::Border::setColors()
             _borderFrame->SetColors(_colorsEnabled);
     }
 
+    _dropShadow.SetColorState(_colorState);
     _glow.SetColorState(_colorState);
 }
 

@@ -334,6 +334,7 @@ void RetroFuturaGUI::WidgetText::setColors()
 {
     _text.SetColors(shownColorsOf(_colors, _colorState));
     _outline.SetColorState(_colorState);
+    _text.GetDropShadow().SetColorState(_colorState);
     _text.GetGlow().SetColorState(_colorState);
 }
 
