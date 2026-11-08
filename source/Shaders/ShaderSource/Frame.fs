@@ -37,7 +37,9 @@ void main()
     float outerDist = cornerShapeSDF(scaledPos, halfSize, cornerRadius);
     float innerDist = cornerShapeSDF(scaledPos, innerHalfSize, innerRadius);
 
-    if (outerDist > 0.0 || innerDist <= 0.0 || isInBorderGap(scaledPos, halfSize, innerHalfSize))
+    float coverage = edgeCoverage(outerDist) * (1.0 - edgeCoverage(innerDist)); // inside the outer edge, outside the inner one.
+
+    if (uBorderWidth <= 0.0 || coverage <= 0.0 || isInBorderGap(scaledPos, halfSize, innerHalfSize))
         discard;
 
 #ifdef FILL_SOLID
@@ -50,5 +52,5 @@ void main()
         finalColor = applyRaster(finalColor, vLocalPos);
 
     Color = finalColor;
-    Color.a *= uOpacity; //faded with the widget and whatever fades around it
+    Color.a *= coverage * uOpacity; //faded at its edges, and with the widget and whatever fades around it.
 }

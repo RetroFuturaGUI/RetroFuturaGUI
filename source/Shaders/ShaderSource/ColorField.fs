@@ -42,10 +42,18 @@ void main()
 #elif defined(SHAPE_SQUARE)
 void main()
 {
-    vec2 uv = vLocalPos + 0.5; // 0..1 across the quad, 0,0 at the bottom left
+    vec2 uv = clamp(vLocalPos + 0.5, 0.0, 1.0); // 0..1 across the square, 0,0 at the bottom left; the quad reaches a pixel further.
+
+    // The edges fade out over about one screen pixel instead of stepping.
+    vec2 edgeDistances = abs(vLocalPos * uScale) - 0.5 * uScale;
+    float dist = max(edgeDistances.x, edgeDistances.y);
+    float coverage = clamp(0.5 - dist / max(fwidth(dist), 1e-4), 0.0, 1.0);
+
+    if (coverage <= 0.0)
+        discard;
 
     // Hue runs left to right, from red back to red. Saturation runs from white at the bottom to full at the top
-    fragColor = vec4(uBrightness * mix(vec3(1.0), hueToRgb(uv.x), uv.y), 1.0);
+    fragColor = vec4(uBrightness * mix(vec3(1.0), hueToRgb(uv.x), uv.y), coverage);
     fragColor.a *= uOpacity; //faded with the widget and whatever fades around it
 }
 #endif

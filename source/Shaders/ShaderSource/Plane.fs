@@ -35,6 +35,11 @@ layout(location = 0) out vec4 Color;
 
 void main()
 {
+    float coverage = shapeCoverage(vLocalPos);
+
+    if(coverage <= 0.0)
+        discard;
+
     vec4 finalColor = fillColor();
 
     if((uDIP & RASTER) != 0)
@@ -46,9 +51,6 @@ void main()
     if((uDIP & MASK) != 0)
         finalColor = applyMask(finalColor);
 
-    if((uDIP & ROUNDED_CORNERS) != 0 && isOutsideRoundedCorners(vLocalPos))
-        discard;
-
 #ifdef WAVE_PLANE
     if((uDIP & WAVE) != 0 && isOutsideWaveLine(vLocalPos))
         discard;
@@ -58,5 +60,5 @@ void main()
         discard;
 
     Color = finalColor;
-    Color.a *= uOpacity; //faded with the widget and whatever fades around it
+    Color.a *= coverage * uOpacity; //faded at its edges, and with the widget and whatever fades around it.
 }

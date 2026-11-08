@@ -33,13 +33,11 @@ uniform vec2 uInnerOffset; // how far the edges the inner glow is measured from 
 #ifdef GLOW
 uniform int uGlowInward; // 1 glows inward from the ring's inner edge, 0 outward from the shape's outer edge
 
-// How much of the glow covers a pixel this far beyond its edge: full at the edge, nothing past the width, none on the shape
+// How much of the glow covers a pixel this far beyond its edge: full at the edge, nothing past the width, none on the shape.
+// Under the shape's faded edge it fills what the shape leaves uncovered, so no seam shows between them.
 float glowCoverage(float distance)
 {
-    if (distance < 0.0)
-        return 0.0;
-
-    return 1.0 - smoothstep(0.0, uGlowWidth, distance);
+    return (1.0 - edgeCoverage(distance)) * (1.0 - smoothstep(0.0, uGlowWidth, max(distance, 0.0)));
 }
 #endif
 
@@ -49,7 +47,7 @@ layout(location = 0) out vec4 Color;
 float shadowCoverage(float distance)
 {
     if (uShadowBlur <= 0.0)
-        return distance <= 0.0 ? 1.0 : 0.0;
+        return edgeCoverage(distance);
 
     return 1.0 - smoothstep(-0.5 * uShadowBlur, 0.5 * uShadowBlur, distance);
 }
@@ -65,9 +63,12 @@ void main()
         ? glowCoverage(-cornerShapeSDF(p, uShapeHalfSize - vec2(uRingWidth), innerRadius))
         : glowCoverage(cornerShapeSDF(p, uShapeHalfSize, cornerRadius));
 #elif defined(INNER_GLOW)
-    // Only inside the shape, or inside a ring's outline
-    if (cornerShapeSDF(p, uShapeHalfSize, cornerRadius) > 0.0 || (uRingWidth > 0.0 && cornerShapeSDF(p, uShapeHalfSize - vec2(uRingWidth), innerRadius) <= 0.0))
-        discard;
+    // Only inside the shape, or inside a ring's outline, faded at their edges like them.
+    float insideCoverage = edgeCoverage(cornerShapeSDF(p, uShapeHalfSize, cornerRadius));
+    float ringHoleCoverage = edgeCoverage(cornerShapeSDF(p, uShapeHalfSize - vec2(uRingWidth), innerRadius));
+
+    if (uRingWidth > 0.0)
+        insideCoverage *= 1.0 - ringHoleCoverage;
 
     // How deep inside the edges moved by the offset: full at those edges and beyond them, nothing past the width
     vec2 q = p - uInnerOffset;
@@ -80,7 +81,7 @@ void main()
         depth = min(depth, cornerShapeSDF(q, uShapeHalfSize - vec2(uRingWidth), shiftedInnerRadius));
     }
 
-    float coverage = depth <= 0.0 ? 1.0 : 1.0 - smoothstep(0.0, uGlowWidth, depth);
+    float coverage = insideCoverage * (depth <= 0.0 ? 1.0 : 1.0 - smoothstep(0.0, uGlowWidth, depth));
 #else
     float coverage = shadowCoverage(cornerShapeSDF(p, uShapeHalfSize, cornerRadius));
 

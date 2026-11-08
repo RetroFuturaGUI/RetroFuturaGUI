@@ -51,29 +51,18 @@ float cornerShapeSDF(vec2 p, vec2 halfSize, float radius)
 // parallel to the outer one: 2 - sqrt(2)
 const float CUT_INSET_PER_WIDTH = 0.58578644;
 
-// Whether the pixel lies outside the rounded corner nearest to it
-bool isOutsideRoundedCorners(vec2 localPos)
+// How much of the pixel a shape covers, from the signed distance to its edge (negative inside): it fades over one screen
+// pixel, so edges come out smooth at any angle, tilt or scale. Call it outside branches that differ between pixels, since
+// the fade measures how fast the distance changes from one pixel to the next.
+float edgeCoverage(float distance)
+{
+    return clamp(0.5 - distance / max(fwidth(distance), 1e-4), 0.0, 1.0);
+}
+
+// How much of the pixel the rectangle covers, with its corners rounded or cut.
+float shapeCoverage(vec2 localPos)
 {
     vec2 scaledPos = localPos * uScale;
-    vec2 halfSize = vec2(0.5) * uScale;
-
-    float cornerRadius;
-    if (scaledPos.x >= 0.0 && scaledPos.y >= 0.0)
-    {
-        cornerRadius = uCornerRadii.y;
-    }
-    else if (scaledPos.x < 0.0 && scaledPos.y >= 0.0)
-    {
-        cornerRadius = uCornerRadii.x;
-    }
-    else if (scaledPos.x < 0.0 && scaledPos.y < 0.0)
-    {
-        cornerRadius = uCornerRadii.w;
-    }
-    else
-    {
-        cornerRadius = uCornerRadii.z;
-    }
-
-    return cornerShapeSDF(scaledPos, halfSize, cornerRadius) > 0.0;
+    float cornerRadius = ((uDIP & ROUNDED_CORNERS) != 0) ? cornerRadiusAt(scaledPos) : 0.0;
+    return edgeCoverage(cornerShapeSDF(scaledPos, vec2(0.5) * uScale, cornerRadius));
 }
