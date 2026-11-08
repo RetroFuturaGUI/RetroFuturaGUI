@@ -225,3 +225,13 @@ void RetroFuturaGUI::Graph::notifyLayoutChange()
 
     _onLayoutChange();
 }
+
+void RetroFuturaGUI::Graph::SetGlassNoise(const GlassNoise& noise)
+{
+    _wavePlane.SetGlassNoise(noise);
+}
+
+void RetroFuturaGUI::Graph::SetFogNoise(const FogNoise& noise)
+{
+    _wavePlane.SetFogNoise(noise);
+}

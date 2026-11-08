@@ -104,6 +104,7 @@ namespace RetroFuturaGUI
         using FillStyle::GetGradientOffset;
         using FillStyle::GetGradientDegree;
         using FillStyle::SetWindowBackgroundImageTextureID;
+        using FillStyle::SetGlassNoise;
         using FillStyle::SetBackgroundImageTextureID;
         using FillStyle::SetBackgroundImagePadding;
         using FillStyle::SetBackgroundImageFit;
@@ -122,6 +123,7 @@ namespace RetroFuturaGUI
         using FogStyle::SetFogSpeed;
         using FogStyle::SetFogDensity;
         using FogStyle::SetFogClearing;
+        using FogStyle::SetFogNoise;
 
         /// @brief Sets the size of the parent widget, used for alignment
         void SetParentSize(const glm::vec2 size);

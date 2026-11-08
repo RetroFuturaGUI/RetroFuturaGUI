@@ -56,13 +56,13 @@ namespace RetroFuturaGUI
         /// @return Reference to the SVG mask linear shift Shader object
         static Shader& GetSvgMaskLinearShiftShader();
 
-        /// @brief Get the SVG mask radial gradient shader
-        /// @return Reference to the SVG mask radial gradient Shader object
-        static Shader& GetSvgMaskRadialGradientShader();
+        /// @brief Get the SVG mask radial shift shader
+        /// @return Reference to the SVG mask radial shift Shader object
+        static Shader& GetSvgMaskRadialShiftShader();
 
-        /// @brief Get the SVG mask hue star gradient shader
-        /// @return Reference to the SVG mask hue star gradient Shader object
-        static Shader& GetSvgMaskHueStarGradientShader();
+        /// @brief Get the SVG mask conic shift shader
+        /// @return Reference to the SVG mask conic shift Shader object
+        static Shader& GetSvgMaskConicShiftShader();
 
         /// @brief Get the YUV to RGB shader, which converts decoded video pictures into an RGBA texture
         /// @return Reference to the YUV to RGB Shader object
@@ -99,8 +99,8 @@ namespace RetroFuturaGUI
         static inline std::unique_ptr<Shader> _textureFill;
         static inline std::unique_ptr<Shader> _svgMaskSolidFill;
         static inline std::unique_ptr<Shader> _svgMaskLinearShift;
-        static inline std::unique_ptr<Shader> _svgMaskRadialGradient;
-        static inline std::unique_ptr<Shader> _svgMaskHueStarGradient;
+        static inline std::unique_ptr<Shader> _svgMaskRadialShift;
+        static inline std::unique_ptr<Shader> _svgMaskConicShift;
         static inline std::unique_ptr<Shader> _yuvToRgb;
     };
 }

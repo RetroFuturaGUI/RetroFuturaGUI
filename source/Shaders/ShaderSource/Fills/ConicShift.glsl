@@ -1,7 +1,7 @@
 // Rays around the rectangle's center, turned by uDegree. Included by Gradient.glsl, which declares the uniforms
 float gradientPosition()
 {
-    // Hue star: map colors by angle around center (Siemens star pattern)
+    // Conic shift: map colors by angle around center (Siemens star pattern)
     vec2 center = vec2(0.5);
     // take scale into account so gradient follows scaled rectangle used for rounded corners
     vec2 pos = (vTexCoord - center) * uScale;

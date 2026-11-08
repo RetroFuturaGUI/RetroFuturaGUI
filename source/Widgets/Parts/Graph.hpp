@@ -83,6 +83,9 @@ namespace RetroFuturaGUI
         /// @brief Sets the texture ID sampled for the glass-effect-with-image shader feature. 0 turns the glass off
         void SetWindowImageTextureID(const u32 textureID);
 
+        /// @brief Sets the noise the glass is made of. How big its cells are, how far it shifts the window behind, its smoothing and seed
+        void SetGlassNoise(const GlassNoise& noise);
+
         /// @brief Sets the dot color used for the Dotted raster pattern
         void SetPrimaryRasterColor(const glm::vec4& color);
 
@@ -112,6 +115,9 @@ namespace RetroFuturaGUI
 
         /// @brief Sets the coverage threshold above which the fog appears; higher values carve larger clear gaps out of the cloud
         void SetFogClearing(const f32 clearing);
+
+        /// @brief Sets the noise the fog is made of. How big its cloud and shading cells are, its smoothing and seed
+        void SetFogNoise(const FogNoise& noise);
 
     //Called by the owning widget
         /// @brief Draws the graph, while it is shown

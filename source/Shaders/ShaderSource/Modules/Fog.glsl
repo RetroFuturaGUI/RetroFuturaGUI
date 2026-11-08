@@ -9,23 +9,16 @@ uniform float uFogClearing;
 uniform int uFogDensityCount;
 uniform float uFogDensity[MAX_FOG_DENSITY];
 
-/* Same corner-sampled value noise as noise(), but with a quintic smoothstep interpolation
-   curve (continuous 1st/2nd derivatives) instead of noise()'s linear one - this is what turns
-   the fog's cloud cells from blocky/faceted into soft, thick blobs. Kept separate from noise()
-   so the glass effect's cheaper interpolation elsewhere is unaffected. */
+// FogNoise's settings, in pixels. Quintic smoothing (the default) turns the cloud cells from blocky facets into soft, thick blobs.
+uniform float uFogCellSize = 170.0;
+uniform float uFogDetailCellSize = 55.0;
+uniform int uFogSmoothing = 2;
+uniform float uFogSeed = 0.0;
+
+// The fog's noise at p, in cells.
 float fogNoise(vec2 p)
 {
-    vec2 i = floor(p);
-    vec2 f = fract(p);
-
-    float a = random(i);
-    float b = random(i + vec2(1.0, 0.0));
-    float c = random(i + vec2(0.0, 1.0));
-    float d = random(i + vec2(1.0, 1.0));
-
-    vec2 u = f * f * f * (f * (f * 6.0 - 15.0) + 10.0);
-
-    return mix(mix(a, b, u.x), mix(c, d, u.x), u.y);
+    return noise(p, uFogSmoothing, uFogSeed);
 }
 
 /* Fractal Brownian Motion: sums `fogNoise()` across uFogDensityCount octaves, each rotated and
@@ -63,7 +56,7 @@ vec4 applyFog(vec4 baseColor, vec2 localPos)
 {
     vec2 pixelPos = localPos * uScale;
     vec2 drift = vec2(uFogAnimationOffset, uFogAnimationOffset * 0.6);
-    vec2 samplePos = (pixelPos + drift) / 170.0;
+    vec2 samplePos = (pixelPos + drift) / max(uFogCellSize, 1.0);
 
     float coverage = fogFbm(samplePos);
 
@@ -80,7 +73,7 @@ vec4 applyFog(vec4 baseColor, vec2 localPos)
     // A second, finer noise sample shades the inside of the cloud mass so it isn't a flat,
     // single-opacity fill - real fog/cloud cover has soft brightness variation running through
     // it even where the coverage mask itself is fully "in".
-    float detail = fogNoise((pixelPos + drift * 1.3) / 55.0);
+    float detail = fogNoise((pixelPos + drift * 1.3) / max(uFogDetailCellSize, 1.0));
     float shading = mix(0.55, 1.0, detail);
 
     float fogAlpha = density * shading * clamp(uFogAlpha, 0.0, 1.0);

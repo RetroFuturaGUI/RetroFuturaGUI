@@ -2,6 +2,7 @@
 #include "IncludeHelper.hpp"
 #include "Shader.hpp"
 #include "Transition.hpp"
+#include "Noise.hpp"
 #include <chrono>
 #include <span>
 #include <vector>
@@ -69,6 +70,9 @@ namespace RetroFuturaGUI
 
         /// @brief Sets the window-wide backdrop the glass shows, which turns the glass on. 0 turns it off.
         void SetWindowBackgroundImageTextureID(const u32 textureID);
+
+        /// @brief Sets the noise the glass is made of. How big its cells are, how far it shifts the window behind, its smoothing and seed
+        void SetGlassNoise(const GlassNoise& noise);
 
         /// @brief Sets an image of its own, laid over what is drawn as SetBackgroundImageFit says and inset by
         ///        SetBackgroundImagePadding. It sits behind the fill, whose alpha decides how much of it shows: a fill alpha of 0
@@ -171,6 +175,8 @@ namespace RetroFuturaGUI
             _rasterAnimationOffset { 0.0f };
 
     //Transition, with settings only: the fill moves from _fromColors to _targetColors, a copy of the colors last given
+        GlassNoise _glassNoise {};
+
         const TransitionSettings* _transitionSettings { nullptr };
         std::vector<glm::vec4>
             _targetColors {},

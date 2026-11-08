@@ -10,10 +10,10 @@ uniform float uGradientOffset;
 
 #if defined(FILL_LINEAR_SHIFT)
 #include "LinearShift.glsl"
-#elif defined(FILL_RADIAL_GRADIENT)
-#include "RadialGradient.glsl"
-#elif defined(FILL_HUESTAR_GRADIENT)
-#include "HueStarGradient.glsl"
+#elif defined(FILL_RADIAL_SHIFT)
+#include "RadialShift.glsl"
+#elif defined(FILL_CONIC_SHIFT)
+#include "ConicShift.glsl"
 #endif
 
 // The two stops this pixel lies between, and how far it is from the first to the second

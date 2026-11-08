@@ -42,8 +42,8 @@ namespace RetroFuturaGUI
     {
         Solid,
         LinearShift,
-        RadialGradient,
-        HueStarGradient
+        RadialShift,
+        ConicShift
     };
 
     /// @brief The shape of the ColorPicker's field of colors.

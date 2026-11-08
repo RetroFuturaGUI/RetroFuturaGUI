@@ -1,6 +1,7 @@
 #pragma once
 #include "IncludeHelper.hpp"
 #include "Shader.hpp"
+#include "Noise.hpp"
 #include <span>
 
 namespace RetroFuturaGUI
@@ -24,6 +25,9 @@ namespace RetroFuturaGUI
         /// @brief Sets the coverage threshold above which fog appears. Higher values carve larger clear (fog-free) gaps out of the cloud.
         void SetFogClearing(const f32 clearing);
 
+        /// @brief Sets the noise the fog is made of. How big its cloud and shading cells are, its smoothing and seed
+        void SetFogNoise(const FogNoise& noise);
+
         /// @brief ShaderFeatures::FogEffect while a fog density is set, else 0, for FillStyle::uploadFill's extra features.
         u32 getFogFeatures() const;
 
@@ -32,6 +36,7 @@ namespace RetroFuturaGUI
 
     private:
         std::span<f32> _fogDensity;
+        FogNoise _fogNoise {};
         uSize _fogDensityCount { 0 };
         f32
             _fogAlpha { 0.0f },

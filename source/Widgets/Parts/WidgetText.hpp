@@ -103,6 +103,9 @@ namespace RetroFuturaGUI
         /// @brief Sets the window-wide backdrop the glass shows, which turns the glass on. 0 turns it off
         void SetWindowBackgroundImageTextureID(const u32 textureID);
 
+        /// @brief Sets the noise the glass is made of. How big its cells are, how far it shifts the window behind, its smoothing and seed
+        void SetGlassNoise(const GlassNoise& noise);
+
         /// @brief Sets an image shown inside the glyphs, stretched across the whole text behind its fill. The colors' alpha decides how much of it shows: 0 shows the image alone. 0 shows no image
         /// @note The text only borrows the texture. A video's texture changes only while its VideoPlayback is updated, and gets a new ID when its picture size changes, so pass its current ID again then
         void SetImageTextureID(const u32 textureID);
@@ -163,6 +166,9 @@ namespace RetroFuturaGUI
 
         /// @brief Sets the coverage threshold above which the fog appears
         void SetFogClearing(const f32 clearing);
+
+        /// @brief Sets the noise the fog is made of. How big its cloud and shading cells are, its smoothing and seed
+        void SetFogNoise(const FogNoise& noise);
 
     //Outline
         /// @brief Returns the outline around the glyphs, to style it: GetOutline().SetWidth(...)

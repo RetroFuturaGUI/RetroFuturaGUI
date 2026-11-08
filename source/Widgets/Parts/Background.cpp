@@ -542,3 +542,19 @@ void RetroFuturaGUI::Background::drawInnerGlow()
     });
     _innerGlowRectangle->Draw();
 }
+
+void RetroFuturaGUI::Background::SetGlassNoise(const GlassNoise& noise)
+{
+    if(!_backgroundPlane)
+        return;
+
+    _backgroundPlane->SetGlassNoise(noise);
+}
+
+void RetroFuturaGUI::Background::SetFogNoise(const FogNoise& noise)
+{
+    if(!_backgroundPlane)
+        return;
+
+    _backgroundPlane->SetFogNoise(noise);
+}

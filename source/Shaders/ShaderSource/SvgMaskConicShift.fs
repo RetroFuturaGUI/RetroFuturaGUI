@@ -12,7 +12,7 @@ uniform sampler2D uMask;
 
 void main()
 {
-    // Hue star: map colors by angle around center (Siemens star pattern)
+    // Conic shift: map colors by angle around center (Siemens star pattern)
     vec2 center = vec2(0.5);
     vec2 pos = vTexCoord - center;
 

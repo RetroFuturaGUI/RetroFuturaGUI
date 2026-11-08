@@ -234,6 +234,16 @@ void RetroFuturaGUI::FillStyle::uploadFill(Shader& shader, const u32 extraFeatur
         glActiveTexture(GL_TEXTURE2);
         glBindTexture(GL_TEXTURE_2D, _windowBackgroundTextureID);
         glActiveTexture(GL_TEXTURE0);
+
+        //Its noise is measured in window pixels, so it needs the window's size.
+        GLint viewport[4] { 0, 0, 1, 1 };
+        glGetIntegerv(GL_VIEWPORT, viewport);
+        shader.SetUniformVec2("uWindowSize", glm::vec2(static_cast<f32>(viewport[2]), static_cast<f32>(viewport[3])));
+        shader.SetUniformFloat("uGlassCellSize", _glassNoise._CellSize);
+        shader.SetUniformFloat("uGlassDistortion", _glassNoise._Distortion);
+        shader.SetUniformFloat("uGlassBackdropCellSize", _glassNoise._BackdropCellSize);
+        shader.SetUniformInt("uGlassSmoothing", static_cast<i32>(_glassNoise._Smoothing));
+        shader.SetUniformFloat("uGlassSeed", static_cast<f32>(_glassNoise._Seed % 1024u)); //the shader reads seeds 1024 apart as the same.
     }
 }
 
@@ -342,4 +352,9 @@ void RetroFuturaGUI::FillStyle::uploadDotUniforms(Shader& shader) const
 void RetroFuturaGUI::FillStyle::uploadCheckeredUniforms(Shader& shader) const
 {
     shader.SetUniformVec4("uSecondaryRasterColor", _secondaryRasterColor);
+}
+
+void RetroFuturaGUI::FillStyle::SetGlassNoise(const GlassNoise& noise)
+{
+    _glassNoise = noise;
 }

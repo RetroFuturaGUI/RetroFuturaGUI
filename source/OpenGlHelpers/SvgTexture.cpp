@@ -147,11 +147,11 @@ void RetroFuturaGUI::SvgTexture::drawMaskedLayer(PathLayer& layer)
         case FillType::LinearShift:
             shader = &ShaderManager::GetSvgMaskLinearShiftShader();
             break;
-        case FillType::RadialGradient:
-            shader = &ShaderManager::GetSvgMaskRadialGradientShader();
+        case FillType::RadialShift:
+            shader = &ShaderManager::GetSvgMaskRadialShiftShader();
             break;
-        case FillType::HueStarGradient:
-            shader = &ShaderManager::GetSvgMaskHueStarGradientShader();
+        case FillType::ConicShift:
+            shader = &ShaderManager::GetSvgMaskConicShiftShader();
             break;
         default: // FillType::Solid
             shader = &ShaderManager::GetSvgMaskSolidFillShader();

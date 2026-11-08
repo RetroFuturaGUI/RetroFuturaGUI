@@ -413,3 +413,11 @@ void RetroFuturaGUI::Border::drawInnerGlow()
     });
     _innerGlowRectangle->Draw();
 }
+
+void RetroFuturaGUI::Border::SetGlassNoise(const GlassNoise& noise)
+{
+    if(!_borderFrame)
+        return;
+
+    _borderFrame->SetGlassNoise(noise);
+}

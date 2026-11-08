@@ -62,14 +62,14 @@ RetroFuturaGUI::Shader& RetroFuturaGUI::ShaderManager::GetSvgMaskLinearShiftShad
     return *_svgMaskLinearShift;
 }
 
-RetroFuturaGUI::Shader& RetroFuturaGUI::ShaderManager::GetSvgMaskRadialGradientShader()
+RetroFuturaGUI::Shader& RetroFuturaGUI::ShaderManager::GetSvgMaskRadialShiftShader()
 {
-    return *_svgMaskRadialGradient;
+    return *_svgMaskRadialShift;
 }
 
-RetroFuturaGUI::Shader& RetroFuturaGUI::ShaderManager::GetSvgMaskHueStarGradientShader()
+RetroFuturaGUI::Shader& RetroFuturaGUI::ShaderManager::GetSvgMaskConicShiftShader()
 {
-    return *_svgMaskHueStarGradient;
+    return *_svgMaskConicShift;
 }
 
 RetroFuturaGUI::Shader& RetroFuturaGUI::ShaderManager::GetYuvToRgbShader()
@@ -95,7 +95,7 @@ void RetroFuturaGUI::ShaderManager::compileShaders()
 #endif
 
     //One source per class, built once per fill or shape: the define picks it
-    constexpr std::array<const char*, _fillTypeCount> fillDefines { "FILL_SOLID", "FILL_LINEAR_SHIFT", "FILL_RADIAL_GRADIENT", "FILL_HUESTAR_GRADIENT" };
+    constexpr std::array<const char*, _fillTypeCount> fillDefines { "FILL_SOLID", "FILL_LINEAR_SHIFT", "FILL_RADIAL_SHIFT", "FILL_CONIC_SHIFT" };
     constexpr std::array<const char*, _colorFieldShapeCount> shapeDefines { "SHAPE_CIRCLE", "SHAPE_SQUARE" };
     const std::string quadPath { workingDir + "Quad.vs" };
     const std::string planePath { workingDir + "Plane.fs" };
@@ -140,14 +140,14 @@ void RetroFuturaGUI::ShaderManager::compileShaders()
         std::string(workingDir + "SvgMaskLinearShift.fs").c_str()
     );
 
-    _svgMaskRadialGradient = std::make_unique<Shader>(
+    _svgMaskRadialShift = std::make_unique<Shader>(
         std::string(workingDir + "SvgMask.vs").c_str(),
-        std::string(workingDir + "SvgMaskRadialGradient.fs").c_str()
+        std::string(workingDir + "SvgMaskRadialShift.fs").c_str()
     );
 
-    _svgMaskHueStarGradient = std::make_unique<Shader>(
+    _svgMaskConicShift = std::make_unique<Shader>(
         std::string(workingDir + "SvgMask.vs").c_str(),
-        std::string(workingDir + "SvgMaskHueStarGradient.fs").c_str()
+        std::string(workingDir + "SvgMaskConicShift.fs").c_str()
     );
 
     _yuvToRgb = std::make_unique<Shader>(

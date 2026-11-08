@@ -99,6 +99,9 @@ namespace RetroFuturaGUI
         /// @brief Sets the texture ID sampled for the border's glass-effect-with-image shader feature.
         void SetWindowImageTextureID(const u32 textureID);
 
+        /// @brief Sets the noise the glass is made of. How big its cells are, how far it shifts the window behind, its smoothing and seed
+        void SetGlassNoise(const GlassNoise& noise);
+
         /// @brief Sets the dot color used for the border's Dotted raster pattern.
         void SetPrimaryRasterColor(const glm::vec4& color);
 

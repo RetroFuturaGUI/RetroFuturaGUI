@@ -376,3 +376,13 @@ const RetroFuturaGUI::InnerGlow& RetroFuturaGUI::WidgetText::GetInnerGlow() cons
 {
     return _text.GetInnerGlow();
 }
+
+void RetroFuturaGUI::WidgetText::SetGlassNoise(const GlassNoise& noise)
+{
+    _text.SetGlassNoise(noise);
+}
+
+void RetroFuturaGUI::WidgetText::SetFogNoise(const FogNoise& noise)
+{
+    _text.SetFogNoise(noise);
+}

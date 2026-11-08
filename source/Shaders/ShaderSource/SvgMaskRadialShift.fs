@@ -12,7 +12,7 @@ uniform sampler2D uMask;
 
 void main()
 {
-    // Radial gradient: distance from center normalized to [0,1]
+    // Radial shift: distance from center normalized to [0,1]
     vec2 center = vec2(0.5);
     vec2 pos = vTexCoord - center;
     float dist = length(pos);
