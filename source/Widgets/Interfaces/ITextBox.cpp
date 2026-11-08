@@ -32,6 +32,7 @@ RetroFuturaGUI::ITextBox::ITextBox(std::string_view name, Projection* projection
     _editor.SetTransitionSettings(&_transitionSettings);
     _background.SetTransitionSettings(&_transitionSettings);
     _border.SetTransitionSettings(&_transitionSettings);
+    useBorderGap(&_background, &_border);
 }
 
 void RetroFuturaGUI::ITextBox::textChanged(const WidgetTextChange change)

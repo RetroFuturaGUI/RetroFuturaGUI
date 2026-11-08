@@ -19,6 +19,7 @@ RetroFuturaGUI::CheckBox::CheckBox(std::string_view name, Projection* projection
     useTransitions({ _inheritFill.get() });
     _background.SetTransitionSettings(&_transitionSettings);
     _border.SetTransitionSettings(&_transitionSettings);
+    useBorderGap(&_background, &_border);
 }
 
 void RetroFuturaGUI::CheckBox::Draw()

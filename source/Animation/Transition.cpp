@@ -53,6 +53,8 @@ std::optional<RetroFuturaGUI::Transition>& RetroFuturaGUI::Transitions::select(T
             return settings._Rotation;
         case TransitionProperty::Opacity:
             return settings._Opacity;
+        case TransitionProperty::BorderGap:
+            return settings._BorderGap;
         case TransitionProperty::Colors:
         default:
             return settings._Colors;

@@ -9,6 +9,7 @@ RetroFuturaGUI::IDropDown::IDropDown(std::string_view name, Projection* projecti
     _list.SetTransitionSettings(&_transitionSettings);
     _background.SetTransitionSettings(&_transitionSettings);
     _border.SetTransitionSettings(&_transitionSettings);
+    useBorderGap(&_background, &_border);
 
     _dropDowns.push_back(this);
 }

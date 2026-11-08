@@ -23,6 +23,7 @@ RetroFuturaGUI::ScrollView::ScrollView(std::string_view name, Projection* projec
     _widgetTypeID = WidgetTypeID::ScrollView;
     _background.SetTransitionSettings(&_transitionSettings);
     _border.SetTransitionSettings(&_transitionSettings);
+    useBorderGap(&_background, &_border);
 }
 
 void RetroFuturaGUI::ScrollView::Draw()

@@ -9,6 +9,7 @@ RetroFuturaGUI::IRangedValue::IRangedValue(std::string_view name, Projection* pr
     _graph.SetTransitionSettings(&_transitionSettings);
     _background.SetTransitionSettings(&_transitionSettings);
     _border.SetTransitionSettings(&_transitionSettings);
+    useBorderGap(&_background, &_border);
     _elementProjection = projection;
 }
 

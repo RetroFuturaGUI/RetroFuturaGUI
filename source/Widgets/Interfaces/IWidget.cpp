@@ -4,6 +4,8 @@
 #include "Tooltip.hpp"
 #include "ContextMenu.hpp"
 #include "FillStyle.hpp"
+#include "Background.hpp"
+#include "Border.hpp"
 #include "Window.hpp"
 #include "Shader.hpp"
 #include <algorithm>
@@ -409,6 +411,7 @@ void RetroFuturaGUI::IWidget::Update()
 {
     _hasUpdated = true;
     updateGeometry();
+    updateBorderGap();
     update();
 }
 
@@ -479,4 +482,74 @@ void RetroFuturaGUI::IWidget::updateContextMenu()
         return;
 
     _contextMenu->Update();
+}
+
+void RetroFuturaGUI::IWidget::SetBorderGap(const glm::vec4& gap)
+{
+    _borderGap = gap;
+    _hasBorderGap = true;
+    setBackgroundInset(true);
+}
+
+const glm::vec4& RetroFuturaGUI::IWidget::GetBorderGap() const
+{
+    return _borderGap;
+}
+
+void RetroFuturaGUI::IWidget::useBorderGap(Background* background, const Border* border)
+{
+    _gapBackground = background;
+    _gapBorder = border;
+}
+
+void RetroFuturaGUI::IWidget::updateBorderGap()
+{
+    if(!_gapBackground)
+        return;
+
+    if(!_hasBorderGap)
+        return;
+
+    if(getGapBorderWidth() != _gapBorderWidth)
+        setBackgroundInset(false); //border widths change at once, so the gap follows them at once.
+
+    if(!_isInsetMoving)
+        return;
+
+    const glm::vec4 inset { _backgroundInset.Get() };
+    _isInsetMoving = _backgroundInset.IsRunning();
+    _gapBackground->setInset(inset);
+}
+
+void RetroFuturaGUI::IWidget::setBackgroundInset(const bool animate)
+{
+    if(!_gapBackground)
+        return;
+
+    _gapBorderWidth = getGapBorderWidth();
+    const glm::vec4 target { glm::vec4(_gapBorderWidth) + _borderGap };
+    const Transition transition { Transitions::Resolve(_transitionSettings, TransitionProperty::BorderGap) };
+
+    //Before the first frame, without a transition or inside an InstantScope it applies at once, as a plain setter would
+    if(!animate || !_hasUpdated || 0 >= transition._Duration.count())
+    {
+        _isInsetMoving = false;
+        _backgroundInset.Jump(target);
+        _gapBackground->setInset(target);
+        return;
+    }
+
+    if(!_isInsetMoving)
+        _backgroundInset.Jump(_gapBackground->_inset); //from where it is now, the whole widget the first time
+
+    _backgroundInset.Set(target, transition);
+    _isInsetMoving = true;
+}
+
+f32 RetroFuturaGUI::IWidget::getGapBorderWidth() const
+{
+    if(!_gapBorder)
+        return 0.0f;
+
+    return _gapBorder->GetWidth();
 }

@@ -15,6 +15,7 @@ RetroFuturaGUI::WindowTab::WindowTab(std::string_view name, Projection* projecti
     //The field elements draw once per field, in its colors, so they switch at once
     _background.SetTransitionSettings(&_transitionSettings);
     _border.SetTransitionSettings(&_transitionSettings);
+    useBorderGap(&_background, &_border);
 
     _border.SetWidth(0.0f); //no frame until one is asked for, since a Frame starts with a 5 px border
     _background.SetColors(std::array { glm::vec4(0.055f, 0.055f, 0.075f, 1.0f) }, ColorState::Enabled);

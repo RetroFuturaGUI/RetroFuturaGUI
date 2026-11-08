@@ -18,6 +18,8 @@ namespace RetroFuturaGUI
     class Tooltip; //not included: its text pulls in windows.h, whose min/max macros would reach every widget
     class ContextMenu;
     class FillStyle;
+    class Background;
+    class Border;
     template<typename> class WidgetReference;
 
     //An interface with properties that all Widgets must implement.
@@ -140,6 +142,15 @@ namespace RetroFuturaGUI
         /// @brief Returns the transition one property follows: the widget's own, or else the global default
         Transition GetTransition(const TransitionProperty property) const;
 
+        /// @brief Sets the gap between the border's inner edge and the background, per side: top, right, bottom, left, in pixels. The
+        ///        background is then drawn at the widget's size less the border's width and the gap on each side, moving there over the
+        ///        widget's border gap transition (SetTransition(TransitionProperty::BorderGap, ...)). Until it is set the background
+        ///        spans the whole widget, under the border. Only widgets with a background and a border have one
+        void SetBorderGap(const glm::vec4& gap);
+
+        /// @brief Returns the gap set between the border and the background, per side: top, right, bottom, left
+        const glm::vec4& GetBorderGap() const;
+
     protected:
     //Identity
         std::string _name;
@@ -205,6 +216,10 @@ namespace RetroFuturaGUI
         ///        again with other colors, like a Table's shared cell checkbox, would restart its transition at every draw.
         void useTransitions(std::initializer_list<FillStyle*> elements);
 
+        /// @brief Registers the background SetBorderGap moves inward and the border whose width it moves past. Called once, by
+        ///        the constructors of widgets with both
+        void useBorderGap(Background* background, const Border* border);
+
         /// @brief Takes the size: stores it and fits whatever the widget draws to it. so what the widget resizes along with itself follows at once.
         virtual void applySize(const glm::vec3& size);
 
@@ -228,6 +243,16 @@ namespace RetroFuturaGUI
 
         /// @brief Applies the shown size, position, rotation and opacity while their transitions run, the targets once they arrive.
         void updateGeometry();
+
+        /// @brief Applies the shown background inset while its transition runs, and moves it again when the border's width changed
+        void updateBorderGap();
+
+        /// @brief Moves the background to the border's width plus the gap inside the widget's edges, over the border gap
+        ///        transition when animate is set, otherwise at once
+        void setBackgroundInset(const bool animate);
+
+        /// @brief Returns the registered border's width, 0 without one
+        f32 getGapBorderWidth() const;
 
         /// @brief Applies the pointer filters from the outermost container down to the closest one. Each container then adjusts
         ///        what the containers above it already let through. An inner ScrollView only ever sees a press its outer one passed on.
@@ -254,5 +279,15 @@ namespace RetroFuturaGUI
         f32 _opacity { 1.0f };
         TransitionValue<f32> _opacityTransition;
         bool _isFading { false };
+
+    //Border gap: _borderGap is what was set, the background is drawn inside _backgroundInset (the border's width and the gap)
+        Background* _gapBackground { nullptr };
+        const Border* _gapBorder { nullptr };
+        glm::vec4 _borderGap { 0.0f };
+        TransitionValue<glm::vec4> _backgroundInset;
+        f32 _gapBorderWidth { 0.0f }; //the border's width the inset was worked out with.
+        bool
+            _hasBorderGap { false },
+            _isInsetMoving { false };
     };
 }

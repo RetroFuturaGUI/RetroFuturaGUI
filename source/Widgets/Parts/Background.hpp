@@ -21,6 +21,8 @@ namespace RetroFuturaGUI
     ///        owns it and hands it out through GetBackground(), so it is styled as button.GetBackground().SetColors(...)
     class Background final : public IWidgetDecoration
     {
+        friend class IWidget; //sets the inset of the widget's border gap
+
     public:
         explicit Background(Projection* projection, BackgroundHooks hooks = {});
         Background() = delete;
@@ -148,6 +150,17 @@ namespace RetroFuturaGUI
         static bool isSvgPath(std::string_view path);
 
         void setCornerRadii() override;
+
+        /// @brief Draws the fill this far inside the size and position set, per side: top, right, bottom, left. IWidget sets it for its border gap
+        void setInset(const glm::vec4& inset);
+
+        /// @brief Sizes and places the fill inside the size and position set, less the inset
+        void applyInset();
+
+    //Geometry
+        glm::vec2 _size { 0.0f }; //as set by the widget; GetSize returns it, whatever the inset
+        glm::vec3 _position { 0.0f };
+        glm::vec4 _inset { 0.0f };
 
     //Elements
         std::unique_ptr<Plane> _backgroundPlane { nullptr };

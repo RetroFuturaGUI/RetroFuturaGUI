@@ -48,6 +48,7 @@ RetroFuturaGUI::Table::Table(std::string_view name, Projection* projection, IWid
     _selectionBand.GetBorder().SetWidth(1.0f);
     _background.SetTransitionSettings(&_transitionSettings);
     _border.SetTransitionSettings(&_transitionSettings);
+    useBorderGap(&_background, &_border);
 
     if(!_highlightedBackgroundCell)
         return;

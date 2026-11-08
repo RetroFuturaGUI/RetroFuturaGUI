@@ -41,18 +41,14 @@ void RetroFuturaGUI::Background::SetTransitionSettings(const TransitionSettings*
 
 void RetroFuturaGUI::Background::SetSize(const glm::vec2& size)
 {
-    if(!_backgroundPlane)
-        return;
-
-    _backgroundPlane->SetSize(size);
+    _size = size;
+    applyInset();
 }
 
 void RetroFuturaGUI::Background::SetPosition(const glm::vec3& position)
 {
-    if(!_backgroundPlane)
-        return;
-
-    _backgroundPlane->SetPosition(position);
+    _position = position;
+    applyInset();
 }
 
 void RetroFuturaGUI::Background::SetRotation(const glm::vec3& rotation)
@@ -65,18 +61,12 @@ void RetroFuturaGUI::Background::SetRotation(const glm::vec3& rotation)
 
 glm::vec2 RetroFuturaGUI::Background::GetSize() const
 {
-    if(!_backgroundPlane)
-        return glm::vec2(0.0f);
-
-    return _backgroundPlane->GetSize();
+    return _size;
 }
 
 glm::vec3 RetroFuturaGUI::Background::GetPosition() const
 {
-    if(!_backgroundPlane)
-        return glm::vec3(0.0f);
-
-    return _backgroundPlane->GetPosition();
+    return _position;
 }
 
 glm::vec3 RetroFuturaGUI::Background::GetRotation() const
@@ -385,4 +375,24 @@ bool RetroFuturaGUI::Background::isSvgPath(std::string_view path)
         {
             return std::tolower(static_cast<unsigned char>(left)) == right;
         });
+}
+
+void RetroFuturaGUI::Background::setInset(const glm::vec4& inset)
+{
+    _inset = inset;
+    applyInset();
+}
+
+void RetroFuturaGUI::Background::applyInset()
+{
+    if(!_backgroundPlane)
+        return;
+
+    //The inset runs top, right, bottom, left, and y runs up, so a larger top inset moves the fill down
+    const glm::vec2
+        size { glm::max(_size - glm::vec2(_inset.y + _inset.w, _inset.x + _inset.z), glm::vec2(0.0f)) },
+        shift { (_inset.w - _inset.y) * 0.5f, (_inset.z - _inset.x) * 0.5f };
+
+    _backgroundPlane->SetSize(size);
+    _backgroundPlane->SetPosition(_position + glm::vec3(shift, 0.0f));
 }

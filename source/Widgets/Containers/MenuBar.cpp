@@ -16,6 +16,7 @@ RetroFuturaGUI::MenuBar::MenuBar(std::string_view name, Projection* projection, 
     //The item look draws once per item, in its colors, so it switches at once and takes no transitions
     _background.SetTransitionSettings(&_transitionSettings);
     _border.SetTransitionSettings(&_transitionSettings);
+    useBorderGap(&_background, &_border);
 
     //Items show nothing behind their widgets until the app gives them colors.
     for(const ColorState state : { ColorState::Enabled, ColorState::Disabled, ColorState::Hover, ColorState::Clicked })
