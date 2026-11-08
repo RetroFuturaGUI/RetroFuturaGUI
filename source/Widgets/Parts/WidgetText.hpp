@@ -173,6 +173,10 @@ namespace RetroFuturaGUI
         DropShadow& GetDropShadow();
         const DropShadow& GetDropShadow() const;
 
+        /// @brief Returns the text's glow, to style it: GetGlow().Show(true). Colors per state, following the text's
+        Glow& GetGlow();
+        const Glow& GetGlow() const;
+
     //Called by the owning widget
         /// @brief Draws the text
         void Draw();

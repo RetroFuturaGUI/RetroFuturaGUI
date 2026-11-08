@@ -1,4 +1,5 @@
 #include "Border.hpp"
+#include "Background.hpp"
 #include <utility>
 
 RetroFuturaGUI::Border::Border(Projection* projection, BorderHooks hooks)
@@ -6,6 +7,7 @@ RetroFuturaGUI::Border::Border(Projection* projection, BorderHooks hooks)
 {
     _borderFrame = std::make_unique<Frame>(_projection);
     _shadowRectangle = std::make_unique<ShadowRectangle>(_projection, &_dropShadow);
+    _glowRectangle = std::make_unique<GlowRectangle>(_projection, &_glow);
     _colorsEnabled = { glm::vec4(0.25f, 0.25f, 0.25f, 1.0f) };
     _colorsDisabled = { glm::vec4(0.2f, 0.2f, 0.2f, 1.0f) };
     _colorsClicked = { glm::vec4(0.3f, 0.3f, 1.3f, 1.0f) };
@@ -19,7 +21,9 @@ void RetroFuturaGUI::Border::Draw()
         return;
 
     drawShadow();
+    drawGlow();
     _borderFrame->Draw();
+    drawBackgroundGlow();
 }
 
 void RetroFuturaGUI::Border::setCornerShape()
@@ -38,6 +42,7 @@ void RetroFuturaGUI::Border::SetTransitionSettings(const TransitionSettings* set
 
     _borderFrame->SetTransitionSettings(settings);
     _dropShadow.SetTransitionSettings(settings);
+    _glow.SetTransitionSettings(settings);
 }
 
 void RetroFuturaGUI::Border::SetSize(const glm::vec2& size)
@@ -224,6 +229,8 @@ void RetroFuturaGUI::Border::setColors()
         default: //Enabled
             _borderFrame->SetColors(_colorsEnabled);
     }
+
+    _glow.SetColorState(_colorState);
 }
 
 void RetroFuturaGUI::Border::SetWidth(const f32 borderWidth)
@@ -285,4 +292,87 @@ void RetroFuturaGUI::Border::drawShadow()
         ._RingWidth = _borderFrame->GetBorderWidth()
     });
     _shadowRectangle->Draw();
+}
+
+RetroFuturaGUI::Glow& RetroFuturaGUI::Border::GetGlow()
+{
+    return _glow;
+}
+
+const RetroFuturaGUI::Glow& RetroFuturaGUI::Border::GetGlow() const
+{
+    return _glow;
+}
+
+void RetroFuturaGUI::Border::EnableGlowOverBackground(const bool enable)
+{
+    _isGlowOverBackground = enable;
+}
+
+bool RetroFuturaGUI::Border::IsGlowOverBackgroundEnabled() const
+{
+    return _isGlowOverBackground;
+}
+
+void RetroFuturaGUI::Border::drawGlow()
+{
+    if(!_borderFrame)
+        return;
+
+    if(!_glowRectangle)
+        return;
+
+    if(!_glow.IsShown())
+        return;
+
+    const glm::vec3 position { glm::vec2(_borderFrame->GetPosition()), _borderFrame->GetPosition().z - _glowDepthOffset };
+    _glowRectangle->SetCaster(ShadowCaster
+    {
+        ._Size = _borderFrame->GetSize(),
+        ._Position = position,
+        ._CornerRadii = _borderFrame->GetShownCornerRadii(),
+        ._CutCorners = _borderFrame->GetCutCorners(),
+        ._RingWidth = _borderFrame->GetBorderWidth()
+    }, GlowEdge::Outer);
+    _glowRectangle->Draw();
+}
+
+void RetroFuturaGUI::Border::drawInnerGlow(const f32 depth)
+{
+    if(!_borderFrame)
+        return;
+
+    if(!_glowRectangle)
+        return;
+
+    if(!_glow.IsShown())
+        return;
+
+    if(!_hasBackgroundGap)
+        return;
+
+    const glm::vec3 position { glm::vec2(_borderFrame->GetPosition()), depth };
+    _glowRectangle->SetCaster(ShadowCaster
+    {
+        ._Size = _borderFrame->GetSize(),
+        ._Position = position,
+        ._CornerRadii = _borderFrame->GetShownCornerRadii(),
+        ._CutCorners = _borderFrame->GetCutCorners(),
+        ._RingWidth = _borderFrame->GetBorderWidth()
+    }, GlowEdge::Inner);
+    _glowRectangle->Draw();
+}
+
+void RetroFuturaGUI::Border::drawBackgroundGlow()
+{
+    if(!_borderFrame)
+        return;
+
+    if(!_linkedBackground)
+        return;
+
+    if(!_linkedBackground->_isGlowOverBorder)
+        return;
+
+    _linkedBackground->drawGlow(_borderFrame->GetPosition().z + _coverDepthOffset);
 }

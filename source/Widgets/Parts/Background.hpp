@@ -6,12 +6,15 @@
 #include <span>
 #include "Plane.hpp"
 #include "ShadowRectangle.hpp"
+#include "GlowRectangle.hpp"
 #include "SvgTexture.hpp"
 #include "Texture.hpp"
 #include "IWidgetDecoration.hpp"
 
 namespace RetroFuturaGUI
 {
+    class Border;
+
     /// @brief What a background tells its owning widget, for a layout that depends on it
     struct BackgroundHooks
     {
@@ -23,6 +26,7 @@ namespace RetroFuturaGUI
     class Background final : public IWidgetDecoration
     {
         friend class IWidget; //sets the inset of the widget's border gap
+        friend class Border; //draws the glow over itself when it may cover the border
 
     public:
         explicit Background(Projection* projection, BackgroundHooks hooks = {});
@@ -60,6 +64,16 @@ namespace RetroFuturaGUI
         /// @brief Returns the drop shadow of the background: GetDropShadow().Show(true). Drawn just behind it
         DropShadow& GetDropShadow();
         const DropShadow& GetDropShadow() const;
+
+        /// @brief Returns the glow around the background: GetGlow().Show(true). Under the border unless EnableGlowOverBorder
+        Glow& GetGlow();
+        const Glow& GetGlow() const;
+
+        /// @brief Sets whether the glow is drawn over the widget's border, or under it, showing in the gap between them and
+        ///        outside the widget. Off by default. Works where the widget links its border and background (the widgets with
+        ///        SetBorderGap); elsewhere the glow stays under the border
+        void EnableGlowOverBorder(const bool enable);
+        bool IsGlowOverBorderEnabled() const;
 
         /// @brief Sets the offset applied to the background gradient's start position.
         void SetGradientOffset(const f32 gradientOffset);
@@ -159,6 +173,15 @@ namespace RetroFuturaGUI
         /// @brief Draws the drop shadow of the element as it draws now, if the shadow is shown.
         void drawShadow();
 
+        /// @brief Draws the glow outward from the fill's edge, at the given depth
+        void drawGlow(const f32 depth);
+
+        /// @brief Draws the linked border's inner glow under the fill or over it, whichever the border allows, when isOver says so
+        void drawBorderGlow(const bool isOver);
+
+        /// @brief Whether the linked border draws the glow, over itself
+        bool isGlowDrawnByBorder() const;
+
         /// @brief Draws the fill this far inside the size and position set, per side: top, right, bottom, left. IWidget sets it for its border gap
         void setInset(const glm::vec4& inset);
 
@@ -174,6 +197,13 @@ namespace RetroFuturaGUI
         std::unique_ptr<Plane> _backgroundPlane { nullptr };
         DropShadow _dropShadow;
         std::unique_ptr<ShadowRectangle> _shadowRectangle { nullptr };
+        Glow _glow;
+        std::unique_ptr<GlowRectangle> _glowRectangle { nullptr };
+        Border* _linkedBorder { nullptr }; //the widget's border, linked by IWidget::useBorderGap
+        bool _isGlowOverBorder { false };
+        static constexpr f32
+            _glowDepthOffset { 0.0015f }, //behind the fill, in front of the drop shadow
+            _coverDepthOffset { 0.001f }; //the border's inner glow, in front of the fill or just behind it
         Texture* _backgroundImage { nullptr }; //a picture borrowed from ResourceManager, shown by _background
         std::unique_ptr<SvgTexture> _backgroundSvg { nullptr }; //an SVG background image, drawn over the fill
         f32 _backgroundImagePadding { 0.0f };

@@ -489,6 +489,7 @@ void RetroFuturaGUI::IWidget::SetBorderGap(const glm::vec4& gap)
     _borderGap = gap;
     _hasBorderGap = true;
     setBackgroundInset(true);
+    updateBorderInnerGlow();
 }
 
 const glm::vec4& RetroFuturaGUI::IWidget::GetBorderGap() const
@@ -496,10 +497,18 @@ const glm::vec4& RetroFuturaGUI::IWidget::GetBorderGap() const
     return _borderGap;
 }
 
-void RetroFuturaGUI::IWidget::useBorderGap(Background* background, const Border* border)
+void RetroFuturaGUI::IWidget::useBorderGap(Background* background, Border* border)
 {
+    if(!background)
+        return;
+
+    if(!border)
+        return;
+
     _gapBackground = background;
     _gapBorder = border;
+    background->_linkedBorder = border;
+    border->_linkedBackground = background;
 }
 
 void RetroFuturaGUI::IWidget::updateBorderGap()
@@ -552,4 +561,12 @@ f32 RetroFuturaGUI::IWidget::getGapBorderWidth() const
         return 0.0f;
 
     return _gapBorder->GetWidth();
+}
+
+void RetroFuturaGUI::IWidget::updateBorderInnerGlow()
+{
+    if(!_gapBorder)
+        return;
+
+    _gapBorder->_hasBackgroundGap = _hasBorderGap && glm::any(glm::greaterThan(_borderGap, glm::vec4(0.0f)));
 }

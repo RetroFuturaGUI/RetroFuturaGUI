@@ -71,6 +71,7 @@ list(APPEND RetroFuturaGuiSources
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Rectangles/ColorField.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Rectangles/Frame.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Rectangles/ShadowRectangle.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/source/Rectangles/GlowRectangle.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Rectangles/IRectangle.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Rectangles/Plane.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Rectangles/WavePlane.cpp"
@@ -81,6 +82,7 @@ list(APPEND RetroFuturaGuiSources
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Shaders/FillStyle.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Shaders/FogStyle.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Shaders/DropShadow.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/source/Shaders/Glow.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Shaders/Shader.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Shaders/ShaderManager.cpp"
     

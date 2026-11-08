@@ -216,9 +216,9 @@ namespace RetroFuturaGUI
         ///        again with other colors, like a Table's shared cell checkbox, would restart its transition at every draw.
         void useTransitions(std::initializer_list<FillStyle*> elements);
 
-        /// @brief Registers the background SetBorderGap moves inward and the border whose width it moves past. Called once, by
-        ///        the constructors of widgets with both
-        void useBorderGap(Background* background, const Border* border);
+        /// @brief Registers the background SetBorderGap moves inward and the border whose width it moves past, and links the
+        ///        two, so each can draw the other's glow over itself. Called once, by the constructors of widgets with both
+        void useBorderGap(Background* background, Border* border);
 
         /// @brief Takes the size: stores it and fits whatever the widget draws to it. so what the widget resizes along with itself follows at once.
         virtual void applySize(const glm::vec3& size);
@@ -254,6 +254,9 @@ namespace RetroFuturaGUI
         /// @brief Returns the registered border's width, 0 without one
         f32 getGapBorderWidth() const;
 
+        /// @brief Tells the border whether a gap above 0 lies between it and the background, for its inner glow
+        void updateBorderInnerGlow();
+
         /// @brief Applies the pointer filters from the outermost container down to the closest one. Each container then adjusts
         ///        what the containers above it already let through. An inner ScrollView only ever sees a press its outer one passed on.
         ///        An outer one that scrolls keeps the pointer captured whatever the inner one does. Each learns which widget reads it
@@ -282,7 +285,7 @@ namespace RetroFuturaGUI
 
     //Border gap: _borderGap is what was set, the background is drawn inside _backgroundInset (the border's width and the gap)
         Background* _gapBackground { nullptr };
-        const Border* _gapBorder { nullptr };
+        Border* _gapBorder { nullptr };
         glm::vec4 _borderGap { 0.0f };
         TransitionValue<glm::vec4> _backgroundInset;
         f32 _gapBorderWidth { 0.0f }; //the border's width the inset was worked out with.

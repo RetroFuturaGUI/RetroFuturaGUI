@@ -334,6 +334,7 @@ void RetroFuturaGUI::WidgetText::setColors()
 {
     _text.SetColors(shownColorsOf(_colors, _colorState));
     _outline.SetColorState(_colorState);
+    _text.GetGlow().SetColorState(_colorState);
 }
 
 void RetroFuturaGUI::WidgetText::notifyChange(const WidgetTextChange change)
@@ -352,4 +353,14 @@ RetroFuturaGUI::DropShadow& RetroFuturaGUI::WidgetText::GetDropShadow()
 const RetroFuturaGUI::DropShadow& RetroFuturaGUI::WidgetText::GetDropShadow() const
 {
     return _text.GetDropShadow();
+}
+
+RetroFuturaGUI::Glow& RetroFuturaGUI::WidgetText::GetGlow()
+{
+    return _text.GetGlow();
+}
+
+const RetroFuturaGUI::Glow& RetroFuturaGUI::WidgetText::GetGlow() const
+{
+    return _text.GetGlow();
 }

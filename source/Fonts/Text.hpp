@@ -5,6 +5,7 @@
 #include "FogStyle.hpp"
 #include "TextOutline.hpp"
 #include "DropShadow.hpp"
+#include "Glow.hpp"
 #include "IncludeHelper.hpp"
 #include "Projection.hpp"
 #include "ContextObjects.hpp"
@@ -217,6 +218,10 @@ namespace RetroFuturaGUI
         DropShadow& GetDropShadow();
         const DropShadow& GetDropShadow() const;
 
+        /// @brief Returns the glow: GetGlow().Show(true). Around the glyphs and their outline, between them and the drop shadow
+        Glow& GetGlow();
+        const Glow& GetGlow() const;
+
         /// @brief Sets how the lines run: horizontally (default), or as columns. Each '\n' starts the next column. Columns are placed by their top edge: centered on the position, or at the parent's top with SetAnchorTop
         void SetTextFlow(const TextFlow textFlow);
 
@@ -275,6 +280,7 @@ namespace RetroFuturaGUI
         static void drawMesh(Shader& shader, GlyphMesh* mesh);
         void drawOutline();
         void drawShadow();
+        void drawGlow();
 
         /// @brief How far a glyph placed by itself (its font can't shape) moves the pen along its line: its advance, or one em in a column
         f32 getAdvance(const Glyph& glyph, const f32 scale) const;
@@ -336,7 +342,8 @@ namespace RetroFuturaGUI
         GlyphMesh
             _mesh {},
             _outlineMesh {},
-            _shadowMesh {};
+            _shadowMesh {},
+            _glowMesh {};
 
     // outline
         TextOutline _outline {};
@@ -348,5 +355,11 @@ namespace RetroFuturaGUI
         f32 _shadowMeshBlur { 0.0f }; //the blur the shadow mesh was built with
         bool _hasShadowMesh { false }; //whether the mesh was built with the shadow shown
         static constexpr f32 _shadowDepthOffset { 0.002f }; //behind the outline
+
+    // glow
+        Glow _glow {};
+        f32 _glowMeshWidth { 0.0f }; //the width the glow mesh was built with
+        bool _hasGlowMesh { false }; //whether the mesh was built with the glow shown
+        static constexpr f32 _glowDepthOffset { 0.0015f }; //between the outline and the drop shadow
     };
 }
