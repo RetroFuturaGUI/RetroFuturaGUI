@@ -665,11 +665,11 @@ void RetroFuturaGUI::Table::ensureHeaderWidget(TableCell& cell)
 
     auto textWidget { std::make_unique<TableText>(this, &_projection) };
 
-    if(_headerTextDefaults._HasFont)
-        textWidget->SetFontFamily(_headerTextDefaults._FontFamily, _headerTextDefaults._FontSize, FontSizeUnit::Pixels, _headerTextDefaults._Slant, _headerTextDefaults._Weight);
+    if(_headerStyle.GetTextSettings()._HasFont)
+        textWidget->SetFontFamily(_headerStyle.GetTextSettings()._FontFamily, _headerStyle.GetTextSettings()._FontSize, FontSizeUnit::Pixels, _headerStyle.GetTextSettings()._Slant, _headerStyle.GetTextSettings()._Weight);
 
-    textWidget->SetTextAlignment(_headerTextDefaults._Alignment);
-    textWidget->SetTextPadding(_headerTextDefaults._Padding);
+    textWidget->SetTextAlignment(_headerStyle.GetTextSettings()._Alignment);
+    textWidget->SetTextPadding(_headerStyle.GetTextSettings()._Padding);
     textWidget->SetTextColors(_headerStyle.GetTextColors(ColorState::Enabled), ColorState::Enabled);
     textWidget->SetTextColors(_headerStyle.GetTextColors(ColorState::Disabled), ColorState::Disabled);
 
@@ -758,45 +758,6 @@ void RetroFuturaGUI::Table::SetVerticalHeaderText(std::string_view text, const u
     ensureHeaderWidget(cell);
     layoutHeaders();
     static_cast<TableText*>(cell._TableWidget.get())->SetText(text);
-}
-
-void RetroFuturaGUI::Table::SetHeaderFontFamily(std::string_view fontFamily, const f32 fontSize, const FontSizeUnit sizeUnit, const PlatformBridge::Fonts::Slant slant, const PlatformBridge::Fonts::Weight fontWeight)
-{
-    _headerTextDefaults._HasFont = true;
-    _headerTextDefaults._FontFamily = fontFamily;
-    _headerTextDefaults._FontSize = FontManager::ToPixels(fontSize, sizeUnit);
-    _headerTextDefaults._Slant = slant;
-    _headerTextDefaults._Weight = fontWeight;
-
-    for(std::vector<TableCell>* band : { &_horizontalHeaderCells, &_verticalHeaderCells })
-        for(TableCell& cell : *band)
-            if(cell._TableWidgetTypeID == ITableWidget::TableWidgetTypeID::TableText)
-                static_cast<TableText*>(cell._TableWidget.get())->SetFontFamily(fontFamily, fontSize, sizeUnit, slant, fontWeight);
-}
-
-f32 RetroFuturaGUI::Table::GetHeaderFontSize(const FontSizeUnit sizeUnit) const
-{
-    return FontManager::FromPixels(_headerTextDefaults._FontSize, sizeUnit);
-}
-
-void RetroFuturaGUI::Table::SetHeaderTextAlignment(const TextAlignment alignment)
-{
-    _headerTextDefaults._Alignment = alignment;
-
-    for(std::vector<TableCell>* band : { &_horizontalHeaderCells, &_verticalHeaderCells })
-        for(TableCell& cell : *band)
-            if(cell._TableWidgetTypeID == ITableWidget::TableWidgetTypeID::TableText)
-                static_cast<TableText*>(cell._TableWidget.get())->SetTextAlignment(alignment);
-}
-
-void RetroFuturaGUI::Table::SetHeaderTextPadding(const f32 padding)
-{
-    _headerTextDefaults._Padding = padding;
-
-    for(std::vector<TableCell>* band : { &_horizontalHeaderCells, &_verticalHeaderCells })
-        for(TableCell& cell : *band)
-            if(cell._TableWidgetTypeID == ITableWidget::TableWidgetTypeID::TableText)
-                static_cast<TableText*>(cell._TableWidget.get())->SetTextPadding(padding);
 }
 
 void RetroFuturaGUI::Table::SetHorizontalHeaderSize(const f32 size)
@@ -893,32 +854,29 @@ const std::string& RetroFuturaGUI::Table::GetText(const TrackIndex& index) const
     return cell->_Text;
 }
 
-void RetroFuturaGUI::Table::SetFontFamily(std::string_view fontFamily, const f32 fontSize, const FontSizeUnit sizeUnit, const PlatformBridge::Fonts::Slant slant, const PlatformBridge::Fonts::Weight fontWeight)
+void RetroFuturaGUI::Table::restyleHeaderTexts()
 {
-    //A table-wide default, which every text taken from the pool is styled with
-    _textDefaults._HasFont = true;
-    _textDefaults._FontFamily = fontFamily;
-    _textDefaults._FontSize = FontManager::ToPixels(fontSize, sizeUnit);
-    _textDefaults._Slant = slant;
-    _textDefaults._Weight = fontWeight;
-    restyleTexts();
-}
+    const TableTextSettings& settings { _headerStyle.GetTextSettings() };
 
-f32 RetroFuturaGUI::Table::GetFontSize(const FontSizeUnit sizeUnit) const
-{
-    return FontManager::FromPixels(_textDefaults._FontSize, sizeUnit);
-}
+    for(std::vector<TableCell>* band : { &_horizontalHeaderCells, &_verticalHeaderCells })
+    {
+        for(TableCell& cell : *band)
+        {
+            if(ITableWidget::TableWidgetTypeID::TableText != cell._TableWidgetTypeID)
+                continue;
 
-void RetroFuturaGUI::Table::SetTextAlignment(const TextAlignment alignment)
-{
-    _textDefaults._Alignment = alignment;
-    restyleTexts();
-}
+            TableText* text { static_cast<TableText*>(cell._TableWidget.get()) };
 
-void RetroFuturaGUI::Table::SetTextPadding(const f32 padding)
-{
-    _textDefaults._Padding = padding;
-    restyleTexts();
+            if(!text)
+                continue;
+
+            if(settings._HasFont)
+                text->SetFontFamily(settings._FontFamily, settings._FontSize, FontSizeUnit::Pixels, settings._Slant, settings._Weight);
+
+            text->SetTextAlignment(settings._Alignment);
+            text->SetTextPadding(settings._Padding);
+        }
+    }
 }
 
 void RetroFuturaGUI::Table::restyleTexts()
@@ -1380,11 +1338,11 @@ void RetroFuturaGUI::Table::refreshShownText(const uSize row, const uSize column
 
 void RetroFuturaGUI::Table::styleText(TableText& text)
 {
-    if(_textDefaults._HasFont)
-        text.SetFontFamily(_textDefaults._FontFamily, _textDefaults._FontSize, FontSizeUnit::Pixels, _textDefaults._Slant, _textDefaults._Weight);
+    if(_cellStyle.GetTextSettings()._HasFont)
+        text.SetFontFamily(_cellStyle.GetTextSettings()._FontFamily, _cellStyle.GetTextSettings()._FontSize, FontSizeUnit::Pixels, _cellStyle.GetTextSettings()._Slant, _cellStyle.GetTextSettings()._Weight);
 
-    text.SetTextAlignment(_textDefaults._Alignment);
-    text.SetTextPadding(_textDefaults._Padding);
+    text.SetTextAlignment(_cellStyle.GetTextSettings()._Alignment);
+    text.SetTextPadding(_cellStyle.GetTextSettings()._Padding);
 
     //The text keeps spans into the table's colors, which outlive every pooled text. drawTextCell sets them again for the cell it draws
     const TrackStyle& track { _trackStyles.front() };

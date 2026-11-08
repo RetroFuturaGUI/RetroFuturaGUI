@@ -23,6 +23,8 @@ RetroFuturaGUI::ComboBox::ComboBox(std::string_view name, Projection* projection
 
 void RetroFuturaGUI::ComboBox::Draw()
 {
+    updateItemColors(); //read every draw, so a changed color or a new hover shows at once
+
     if(!isLabelHidden())
     {
         _background.Draw();
@@ -116,7 +118,7 @@ void RetroFuturaGUI::ComboBox::AddItem(std::string_view name)
         _itemTexts.back()->SetFontFamily(_fontFamily, _fontSize, FontSizeUnit::Pixels, _slant, _fontWeight);
 
     _itemTexts.back()->SetTextUTF8(name);
-    _itemTexts.back()->SetColors(_itemTextColorsEnabled);
+    _itemTexts.back()->SetColors(_itemText.GetShownColors(ColorState::Enabled));
     _itemCount = _itemTexts.size();
     updateDropDownGeometry();
 }
@@ -135,7 +137,7 @@ void RetroFuturaGUI::ComboBox::SetCaption(std::string_view caption)
         _previewText->SetFontFamily(_fontFamily, _fontSize, FontSizeUnit::Pixels, _slant, _fontWeight);
 
     _previewText->SetTextUTF8(caption);
-    _previewText->SetColors(_itemTextColorsEnabled);
+    _previewText->SetColors(_itemText.GetShownColors(ColorState::Enabled));
 }
 
 void RetroFuturaGUI::ComboBox::SetItemEnabled(const uSize index, const bool enable)
@@ -152,21 +154,6 @@ bool RetroFuturaGUI::ComboBox::IsItemEnabled(const uSize index) const
     return index < _itemEnabledFlags.size() && _itemEnabledFlags[index];
 }
 
-void RetroFuturaGUI::ComboBox::SetItemTextColors(std::span<const glm::vec4> colors, const ColorState state)
-{
-    if(ColorState::Disabled == state)
-        _itemTextColorsDisabled.assign(colors.begin(), colors.end());
-    else
-        _itemTextColorsEnabled.assign(colors.begin(), colors.end());
-
-    updateItemColors();
-
-    if(!_previewText)
-        return;
-
-    _previewText->SetColors(_itemTextColorsEnabled);
-}
-
 void RetroFuturaGUI::ComboBox::updateItemColors()
 {
     uSize index { 0 };
@@ -174,10 +161,39 @@ void RetroFuturaGUI::ComboBox::updateItemColors()
     for(const auto& item : _itemTexts)
     {
         if(item)
-            item->SetColors(IsItemEnabled(index) ? _itemTextColorsEnabled : _itemTextColorsDisabled);
+            item->SetColors(_itemText.GetShownColors(itemState(index)));
 
         ++index;
     }
+
+    if(!_previewText)
+        return;
+
+    _previewText->SetColors(_itemText.GetShownColors(ColorState::Enabled)); //the caption
+}
+
+RetroFuturaGUI::ColorState RetroFuturaGUI::ComboBox::itemState(const uSize index) const
+{
+    if(!IsItemEnabled(index))
+        return ColorState::Disabled;
+
+    if(!_showDropDown && _hasPickedItem && _pickedItemIndex == index)
+        return ColorState::Clicked; //while the list fades out after the pick
+
+    if(_dropDownItemHovered && _nthItemHovered == index)
+        return ColorState::Hover;
+
+    return ColorState::Enabled;
+}
+
+RetroFuturaGUI::ItemTextStyle& RetroFuturaGUI::ComboBox::GetItemText()
+{
+    return _itemText;
+}
+
+const RetroFuturaGUI::ItemTextStyle& RetroFuturaGUI::ComboBox::GetItemText() const
+{
+    return _itemText;
 }
 
 const std::string& RetroFuturaGUI::ComboBox::GetSelectedText() const
@@ -270,6 +286,8 @@ void RetroFuturaGUI::ComboBox::interact()
 
     if(_dropDownItemHovered) //picking a row selects it and closes the list
     {
+        _hasPickedItem = true;
+        _pickedItemIndex = _nthItemHovered;
         selectItem(_nthItemHovered);
         _showDropDown = false;
         _dropDownItemHovered = false;

@@ -139,6 +139,7 @@ list(APPEND RetroFuturaGuiSources
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/Parts/Icon.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/Parts/DropDownList.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/Parts/Box.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/Parts/ItemTextStyle.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/Table/TableStyles.cpp"
     
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/Table/ITableTextProperties.cpp"

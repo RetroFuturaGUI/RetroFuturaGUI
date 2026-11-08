@@ -1,5 +1,6 @@
 #include "TableStyles.hpp"
 #include <array>
+#include <utility>
 
 void RetroFuturaGUI::TrackStyle::SetBackgroundColors(std::span<const glm::vec4> colors)
 {
@@ -39,6 +40,61 @@ void RetroFuturaGUI::TrackStyle::SetIconColors(std::span<const glm::vec4> colors
 const std::vector<glm::vec4>& RetroFuturaGUI::TrackStyle::GetIconColors() const
 {
     return _icon;
+}
+
+RetroFuturaGUI::CellStyle::CellStyle(std::function<void()> onTextChange)
+    : _onTextChange(std::move(onTextChange))
+{
+}
+
+void RetroFuturaGUI::CellStyle::SetFontFamily(std::string_view fontFamily, const f32 fontSize, const FontSizeUnit sizeUnit, const PlatformBridge::Fonts::Slant slant, const PlatformBridge::Fonts::Weight fontWeight)
+{
+    _textSettings._HasFont = true;
+    _textSettings._FontFamily = fontFamily;
+    _textSettings._FontSize = FontManager::ToPixels(fontSize, sizeUnit);
+    _textSettings._Slant = slant;
+    _textSettings._Weight = fontWeight;
+    notifyTextChange();
+}
+
+f32 RetroFuturaGUI::CellStyle::GetFontSize(const FontSizeUnit sizeUnit) const
+{
+    return FontManager::FromPixels(_textSettings._FontSize, sizeUnit);
+}
+
+void RetroFuturaGUI::CellStyle::SetTextAlignment(const TextAlignment alignment)
+{
+    _textSettings._Alignment = alignment;
+    notifyTextChange();
+}
+
+RetroFuturaGUI::TextAlignment RetroFuturaGUI::CellStyle::GetTextAlignment() const
+{
+    return _textSettings._Alignment;
+}
+
+void RetroFuturaGUI::CellStyle::SetTextPadding(const f32 padding)
+{
+    _textSettings._Padding = padding;
+    notifyTextChange();
+}
+
+f32 RetroFuturaGUI::CellStyle::GetTextPadding() const
+{
+    return _textSettings._Padding;
+}
+
+const RetroFuturaGUI::TableTextSettings& RetroFuturaGUI::CellStyle::GetTextSettings() const
+{
+    return _textSettings;
+}
+
+void RetroFuturaGUI::CellStyle::notifyTextChange()
+{
+    if(!_onTextChange)
+        return;
+
+    _onTextChange();
 }
 
 void RetroFuturaGUI::CellStyle::SetBackgroundColors(std::span<const glm::vec4> colors, const ColorState state)
@@ -180,6 +236,61 @@ const std::vector<glm::vec4>& RetroFuturaGUI::CellStyle::shown(const StateColors
         return own;
 
     return shared;
+}
+
+RetroFuturaGUI::HeaderStyle::HeaderStyle(std::function<void()> onTextChange)
+    : _onTextChange(std::move(onTextChange))
+{
+}
+
+void RetroFuturaGUI::HeaderStyle::SetFontFamily(std::string_view fontFamily, const f32 fontSize, const FontSizeUnit sizeUnit, const PlatformBridge::Fonts::Slant slant, const PlatformBridge::Fonts::Weight fontWeight)
+{
+    _textSettings._HasFont = true;
+    _textSettings._FontFamily = fontFamily;
+    _textSettings._FontSize = FontManager::ToPixels(fontSize, sizeUnit);
+    _textSettings._Slant = slant;
+    _textSettings._Weight = fontWeight;
+    notifyTextChange();
+}
+
+f32 RetroFuturaGUI::HeaderStyle::GetFontSize(const FontSizeUnit sizeUnit) const
+{
+    return FontManager::FromPixels(_textSettings._FontSize, sizeUnit);
+}
+
+void RetroFuturaGUI::HeaderStyle::SetTextAlignment(const TextAlignment alignment)
+{
+    _textSettings._Alignment = alignment;
+    notifyTextChange();
+}
+
+RetroFuturaGUI::TextAlignment RetroFuturaGUI::HeaderStyle::GetTextAlignment() const
+{
+    return _textSettings._Alignment;
+}
+
+void RetroFuturaGUI::HeaderStyle::SetTextPadding(const f32 padding)
+{
+    _textSettings._Padding = padding;
+    notifyTextChange();
+}
+
+f32 RetroFuturaGUI::HeaderStyle::GetTextPadding() const
+{
+    return _textSettings._Padding;
+}
+
+const RetroFuturaGUI::TableTextSettings& RetroFuturaGUI::HeaderStyle::GetTextSettings() const
+{
+    return _textSettings;
+}
+
+void RetroFuturaGUI::HeaderStyle::notifyTextChange()
+{
+    if(!_onTextChange)
+        return;
+
+    _onTextChange();
 }
 
 void RetroFuturaGUI::HeaderStyle::SetBackgroundColors(std::span<const glm::vec4> colors, const ColorState state)

@@ -3,6 +3,11 @@
 #include "Background.hpp"
 #include "Border.hpp"
 #include "Icon.hpp"
+#include "FontManager.hpp"
+#include "Text.hpp"
+#include <functional>
+#include <string>
+#include <string_view>
 #include "ResourceManager.hpp"
 #include <span>
 #include <vector>
@@ -12,6 +17,18 @@ namespace RetroFuturaGUI
     /// @brief One track variant's look: the colors its rows (or columns, in Column orientation) show while enabled. The tracks
     ///        take the variants in turn, so neighbors alternate. Every other state looks the same on every track (see CellStyle).
     ///        Reached through table.GetTrackStyle(n)
+    /// @brief The font, alignment and padding a group of the Table's texts share: its cells' or its headers'.
+    struct TableTextSettings
+    {
+        bool _HasFont { false }; //without one, the texts keep Text's own default font
+        std::string _FontFamily {};
+        f32 _FontSize { FontManager::ToPixels(16.0f, FontSizeUnit::Points) };
+        PlatformBridge::Fonts::Slant _Slant { PlatformBridge::Fonts::Slant::Roman };
+        PlatformBridge::Fonts::Weight _Weight { PlatformBridge::Fonts::Weight::Normal };
+        TextAlignment _Alignment { TextAlignment::Left };
+        f32 _Padding { 0.0f };
+    };
+
     class TrackStyle final
     {
     public:
@@ -53,6 +70,27 @@ namespace RetroFuturaGUI
     class CellStyle final
     {
     public:
+        /// @param onTextChange What the Table does when the font, alignment or padding change.
+        explicit CellStyle(std::function<void()> onTextChange = {});
+
+        /// @brief Sets the cells' font, loading it if necessary.
+        void SetFontFamily(std::string_view fontFamily, const f32 fontSize, const FontSizeUnit sizeUnit, const PlatformBridge::Fonts::Slant slant, const PlatformBridge::Fonts::Weight fontWeight);
+
+        /// @brief Returns the cells' font size in the given unit.
+        f32 GetFontSize(const FontSizeUnit sizeUnit) const;
+
+        /// @brief Sets the horizontal alignment of the cells' text.
+        void SetTextAlignment(const TextAlignment alignment);
+
+        /// @brief Returns the horizontal alignment of the cells' text.
+        TextAlignment GetTextAlignment() const;
+
+        /// @brief Sets the padding around the cells' text.
+        void SetTextPadding(const f32 padding);
+
+        /// @brief Returns the padding around the cells' text.
+        f32 GetTextPadding() const;
+
         /// @brief Sets the cells' background colors for the given state. Enabled is each track's own, so it is ignored here
         void SetBackgroundColors(std::span<const glm::vec4> colors, const ColorState state);
 
@@ -99,7 +137,14 @@ namespace RetroFuturaGUI
         /// @brief The text colors a cell of the track shows in the state. The shared ones, or the track's own
         const std::vector<glm::vec4>& ShownTextColors(const TrackStyle& track, const ColorState state) const;
 
+        /// @brief The font, alignment and padding, for the texts the Table builds.
+        const TableTextSettings& GetTextSettings() const;
+
+
     private:
+        /// @brief Tells the Table the texts' font, alignment or padding changed, so it styles its texts again.
+        void notifyTextChange();
+
         /// @brief One element's colors in the shared states
         struct StateColors
         {
@@ -127,12 +172,35 @@ namespace RetroFuturaGUI
             //_graph { ._Disabled = { glm::vec4(0.5f, 0.5f, 0.5f, 1.0f) }, ._Hover = {}, ._Clicked = {}, ._Selected = {} };
         std::vector<glm::vec4> _dropTarget { glm::vec4(0.25f, 0.5f, 0.42f, 1.0f) };
         f32 _innerBorderWidth { 1.0f };
+        TableTextSettings _textSettings {};
+        std::function<void()> _onTextChange {};
     };
 
     /// @brief The header cells' look: Enabled, and Disabled while the table is. Reached through table.GetHeaderStyle()
     class HeaderStyle final
     {
     public:
+        /// @param onTextChange What the Table does when the font, alignment or padding change.
+        explicit HeaderStyle(std::function<void()> onTextChange = {});
+
+        /// @brief Sets the headers' font, loading it if necessary.
+        void SetFontFamily(std::string_view fontFamily, const f32 fontSize, const FontSizeUnit sizeUnit, const PlatformBridge::Fonts::Slant slant, const PlatformBridge::Fonts::Weight fontWeight);
+
+        /// @brief Returns the headers' font size in the given unit.
+        f32 GetFontSize(const FontSizeUnit sizeUnit) const;
+
+        /// @brief Sets the horizontal alignment of the headers' text.
+        void SetTextAlignment(const TextAlignment alignment);
+
+        /// @brief Returns the horizontal alignment of the headers' text.
+        TextAlignment GetTextAlignment() const;
+
+        /// @brief Sets the padding around the headers' text.
+        void SetTextPadding(const f32 padding);
+
+        /// @brief Returns the padding around the headers' text.
+        f32 GetTextPadding() const;
+
         /// @brief Sets the header cells' background colors for Enabled or Disabled. Any other state sets the Enabled ones
         void SetBackgroundColors(std::span<const glm::vec4> colors, const ColorState state);
 
@@ -169,7 +237,14 @@ namespace RetroFuturaGUI
         /// @brief Returns the width of the border around the header band
         f32 GetOuterBorderWidth() const;
 
+    //Called by the Table
+        /// @brief The font, alignment and padding, for the texts the Table builds.
+        const TableTextSettings& GetTextSettings() const;
+
     private:
+        /// @brief Tells the Table the texts' font, alignment or padding changed, so it styles its texts again.
+        void notifyTextChange();
+
         /// @brief One element's colors, Enabled and Disabled
         struct StateColors
         {
@@ -189,6 +264,8 @@ namespace RetroFuturaGUI
         f32
             _innerBorderWidth { 1.0f },
             _outerBorderWidth { 1.0f };
+        TableTextSettings _textSettings {};
+        std::function<void()> _onTextChange {};
     };
 
     /// @brief The checkbox drawn in every checkbox cell: one background, border and checkmark, colored per cell. Enabled, Hover

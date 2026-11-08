@@ -110,7 +110,8 @@ void RetroFuturaGUI::ContextMenu::Update()
     setPosition();
     _items->SetSize(glm::vec3(_background.GetSize(), 0.01f));
     _items->SetPosition(_background.GetPosition() + glm::vec3(0.0f, 0.0f, _zStep * 2.0f));
-    _items->SetPreviewText(_text.GetString());
+    if(_items->GetPreview().GetString() != _text.GetString())
+        _items->GetPreview().SetString(_text.GetString(), false); //laid out only when it changed
     _items->Interact();
 }
 
@@ -211,7 +212,7 @@ void RetroFuturaGUI::ContextMenu::AddNode(std::string_view newNodeName, std::str
     if(!item)
         return;
 
-    item->SetPreviewText(newNodeName);
+    item->GetPreview().SetString(newNodeName, false);
 }
 
 void RetroFuturaGUI::ContextMenu::Connect_OnItemClicked(const typename Signal<>::Slot& slot, const bool async)

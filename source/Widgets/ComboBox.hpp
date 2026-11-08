@@ -7,6 +7,7 @@
 #include <vector>
 #include "Text.hpp"
 #include "IDropDown.hpp"
+#include "ItemTextStyle.hpp"
 
 namespace RetroFuturaGUI
 {
@@ -39,8 +40,12 @@ namespace RetroFuturaGUI
 
         bool IsItemEnabled(const uSize index) const;
 
-        /// @brief Sets the item texts' colors: ColorState::Disabled sets the disabled items' colors, every other state the enabled items'.
-        void SetItemTextColors(std::span<const glm::vec4> colors, const ColorState state);
+        /// @brief Returns the item texts' colors: Enabled, Disabled for disabled items, Hover for the hovered row and Clicked for
+        ///        the picked one. The caption shows the Enabled colors.
+        ItemTextStyle& GetItemText();
+
+        /// @brief Returns the item texts' colors; see the other overload.
+        const ItemTextStyle& GetItemText() const;
 
         /// @brief Returns the ComboBox's border
         Border& GetBorder();
@@ -63,8 +68,11 @@ namespace RetroFuturaGUI
         void setColors(const ColorState state) override;
         void updateItemGeometry();
 
-        /// @brief Colors every item by whether it is enabled.
+        /// @brief Colors every item by its state: disabled, picked, hovered or enabled.
         void updateItemColors();
+
+        /// @brief The state an item shows: Disabled, Clicked for the picked row while the list fades out, Hover or Enabled.
+        ColorState itemState(const uSize index) const;
 
         /// @brief Places a text in a box of the given width: the closed box's, or the open list's.
         void placeItemText(Text& item, const glm::vec3& center, const f32 width) const;
@@ -74,12 +82,13 @@ namespace RetroFuturaGUI
         inline static const std::string _invalidIndex { "" };
 
     //Design
-        std::vector<glm::vec4>
-            _itemTextColorsEnabled { glm::vec4(1.0f, 1.0f, 1.0f, 1.0f) },
-            _itemTextColorsDisabled { glm::vec4(0.5f, 0.5f, 0.5f, 1.0f) };
+        ItemTextStyle _itemText {};
 
     //Logic
         std::vector<bool> _itemEnabledFlags {}; //one per item
-        bool _hasCaption { false };
+        uSize _pickedItemIndex { 0 };
+        bool
+            _hasCaption { false },
+            _hasPickedItem { false }; //the last pick, shown Clicked while the list fades out
     };
 }

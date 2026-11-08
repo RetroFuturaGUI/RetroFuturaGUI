@@ -342,9 +342,9 @@ bool RetroFuturaGUI::FileExplorer::buildView(ViewHost& host, std::string_view ti
     built._Files->GetTrackStyle(0).SetInnerBorderColors(innerBorderColors);
     built._Files->GetTrackStyle(1).SetInnerBorderColors(innerBorderColors);
     built._Files->GetCellStyle().SetInnerBorderWidth(1.0f);
-    built._Files->SetFontFamily(_font._Family, _font._Size, FontSizeUnit::Pixels, _font._Slant, _font._Weight);
-    built._Files->SetTextAlignment(TextAlignment::Left);
-    built._Files->SetTextPadding(6.0f);
+    built._Files->GetCellStyle().SetFontFamily(_font._Family, _font._Size, FontSizeUnit::Pixels, _font._Slant, _font._Weight);
+    built._Files->GetCellStyle().SetTextAlignment(TextAlignment::Left);
+    built._Files->GetCellStyle().SetTextPadding(6.0f);
 
     //A name being renamed sits on a selected row, whose blue hides the default blue of selected text, so it is lightened instead
     std::vector<glm::vec4> renameSelectionColors {{ 0.95f, 0.95f, 1.0f, 0.35f }};
@@ -352,9 +352,9 @@ bool RetroFuturaGUI::FileExplorer::buildView(ViewHost& host, std::string_view ti
 
     //The header cells come with the columns, so they are named once these exist
     built._Files->SetTrackDefinitions(std::vector<Table::TrackDefinition> {}, columnDefinition(_font, _showThumbnails));
-    built._Files->SetHeaderFontFamily(_font._Family, _font._Size, FontSizeUnit::Pixels, _font._Slant, _font._Weight);
-    built._Files->SetHeaderTextAlignment(TextAlignment::Left);
-    built._Files->SetHeaderTextPadding(6.0f);
+    built._Files->GetHeaderStyle().SetFontFamily(_font._Family, _font._Size, FontSizeUnit::Pixels, _font._Slant, _font._Weight);
+    built._Files->GetHeaderStyle().SetTextAlignment(TextAlignment::Left);
+    built._Files->GetHeaderStyle().SetTextPadding(6.0f);
     built._Files->GetHeaderStyle().SetBackgroundColors(headerColors, ColorState::Enabled);
     built._Files->GetHeaderStyle().SetOuterBorderColors(innerBorderColors, ColorState::Enabled);
     built._Files->SetHorizontalHeaderSize(rowHeight(_font) + 4.0f);

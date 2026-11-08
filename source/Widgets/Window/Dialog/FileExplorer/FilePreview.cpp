@@ -51,9 +51,9 @@ RetroFuturaGUI::FileExplorer::FilePreview::FilePreview(ViewHost& host, Lasagna& 
     _details->GetTrackStyle(0).SetInnerBorderColors(innerBorderColors);
     _details->GetTrackStyle(1).SetInnerBorderColors(innerBorderColors);
     _details->GetCellStyle().SetInnerBorderWidth(1.0f);
-    _details->SetFontFamily(_font._Family, _font._Size, FontSizeUnit::Pixels, _font._Slant, _font._Weight);
-    _details->SetTextAlignment(TextAlignment::Left);
-    _details->SetTextPadding(6.0f);
+    _details->GetCellStyle().SetFontFamily(_font._Family, _font._Size, FontSizeUnit::Pixels, _font._Slant, _font._Weight);
+    _details->GetCellStyle().SetTextAlignment(TextAlignment::Left);
+    _details->GetCellStyle().SetTextPadding(6.0f);
     setDetails({});
     showLayer(std::nullopt);
 }

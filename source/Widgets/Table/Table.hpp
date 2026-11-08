@@ -221,18 +221,6 @@ namespace RetroFuturaGUI
         /// @brief Returns the text content, in UTF-8.
         const std::string& GetText(const TrackIndex& index) const;
 
-        /// @brief Sets the font family, size and style used to render the text, loading it if necessary.
-        void SetFontFamily(std::string_view fontFamily, const f32 fontSize, const FontSizeUnit sizeUnit, const PlatformBridge::Fonts::Slant slant, const PlatformBridge::Fonts::Weight fontWeight);
-
-        /// @brief Returns the font size in the given unit.
-        f32 GetFontSize(const FontSizeUnit sizeUnit) const;
-
-        /// @brief Sets the horizontal alignment of the text.
-        void SetTextAlignment(const TextAlignment alignment);
-
-        /// @brief Sets the padding applied around the text.
-        void SetTextPadding(const f32 padding);
-
         void SetRowWidgetTypes(const std::vector<ITableWidget::TableWidgetTypeID>& rowWidgetTypes);
 
         void ShowHorizontalHeader(const bool show);
@@ -250,15 +238,6 @@ namespace RetroFuturaGUI
         void SetVerticalHeaderTexts(const std::vector<std::string>& texts);
 
         void SetVerticalHeaderText(std::string_view text, const uSize rowIndex);
-
-        void SetHeaderFontFamily(std::string_view fontFamily, const f32 fontSize, const FontSizeUnit sizeUnit, const PlatformBridge::Fonts::Slant slant, const PlatformBridge::Fonts::Weight fontWeight);
-
-        /// @brief Returns the header font size in the given unit.
-        f32 GetHeaderFontSize(const FontSizeUnit sizeUnit) const;
-
-        void SetHeaderTextAlignment(const TextAlignment alignment);
-
-        void SetHeaderTextPadding(const f32 padding);
 
         /// @brief Sets the height of the column header band, in pixels. Taken out of the content viewport.
         void SetHorizontalHeaderSize(const f32 size);
@@ -482,6 +461,9 @@ namespace RetroFuturaGUI
         /// @brief Styles every pooled TableText again after the defaults or colors changed, laying out the ones in view anew.
         void restyleTexts();
 
+        /// @brief Gives every header text the header style's font, alignment and padding.
+        void restyleHeaderTexts();
+
         /// @brief Takes what the edit made of the TableText into its cell, which parses it as its value.
         void syncEditedCell();
 
@@ -656,17 +638,6 @@ namespace RetroFuturaGUI
         /// @brief The edited cell's bounds, so the caret and selection can't escape it
         TextArea getTextArea() const override;
 
-        struct TextDefaults
-        {
-            bool _HasFont { false };
-            std::string _FontFamily {};
-            f32 _FontSize { FontManager::ToPixels(16.0f, FontSizeUnit::Points) };
-            PlatformBridge::Fonts::Slant _Slant { PlatformBridge::Fonts::Slant::Roman };
-            PlatformBridge::Fonts::Weight _Weight { PlatformBridge::Fonts::Weight::Normal };
-            TextAlignment _Alignment { TextAlignment::Left };
-            f32 _Padding { 0.0f };
-        };
-
     //Elements
         Background _background { &_projection };
         Border _border { &_projection };
@@ -679,7 +650,6 @@ namespace RetroFuturaGUI
         std::vector<TableCell>
             _horizontalHeaderCells {},
             _verticalHeaderCells {};
-        TextDefaults _textDefaults {};
         std::unique_ptr<Plane>
             _highlightedBackgroundCell { nullptr },
             _trackColoringOverlay { nullptr },
@@ -705,9 +675,8 @@ namespace RetroFuturaGUI
 
     // Design
         std::vector<TrackStyle> _trackStyles { TrackStyle {} }; //never empty
-        CellStyle _cellStyle {};
-        HeaderStyle _headerStyle {};
-        TextDefaults _headerTextDefaults {};
+        CellStyle _cellStyle { [this]() { restyleTexts(); } };
+        HeaderStyle _headerStyle { [this]() { restyleHeaderTexts(); } };
         f32
             _horizontalHeaderHeight { 30.0f },
             _verticalHeaderWidth { 60.0f },

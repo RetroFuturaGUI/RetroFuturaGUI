@@ -81,17 +81,12 @@ namespace RetroFuturaGUI
             return itemPointer;
         }
 
-        /// @brief Sets the text shown in the closed box, which stands in for the selected item
-        void SetPreviewText(std::string_view text);
+        /// @brief Returns the text shown in the closed box, which stands in for the selected item: its string, colors per state,
+        ///        fills and effects. Its font, alignment and padding follow the box's (SetFontFamily, SetTextAlignment, SetTextPadding).
+        WidgetText& GetPreview();
 
-        /// @brief Returns the text shown in the closed box
-        const std::string& GetPreviewText() const;
-
-        /// @brief Sets the preview text colors for the given color state
-        void SetPreviewTextColors(std::span<const glm::vec4> colors, const ColorState state);
-
-        /// @brief Returns the preview text colors configured for the given color state
-        const std::vector<glm::vec4>& GetPreviewTextColors(const ColorState state) const;
+        /// @brief Returns the text shown in the closed box; see the other overload.
+        const WidgetText& GetPreview() const;
 
         bool IsPointInsideOpenDropDown(const glm::vec2& point) const override;
 
@@ -122,9 +117,8 @@ namespace RetroFuturaGUI
 
         void drawDropDown() override;
         void setColors(const ColorState state) override;
-        void setPreviewTextColors();
         void updateItemGeometry();
-        void updatePreviewTextGeometry() const;
+        void updatePreviewTextGeometry();
 
         /// @brief Returns what is left of a box of the given width, the closed box's or the open list's, once the thickest of the two borders is taken off
         glm::vec2 contentSize(const f32 width) const;
@@ -143,16 +137,9 @@ namespace RetroFuturaGUI
 
         /// @brief Drops the rows of removed items, and the widgets with them
         void performPendingRemoval();
-        inline static const std::string _emptyText { "" };
 
     //Design
-        std::vector<glm::vec4>
-            _previewTextColorsEnabled { glm::vec4(1.0f, 1.0f, 1.0f, 1.0f) },
-            _previewTextColorsDisabled { glm::vec4(0.5f, 0.5f, 0.5f, 1.0f) },
-            _previewTextColorsHover { glm::vec4(1.0f, 1.0f, 1.0f, 1.0f) },
-            _previewTextColorsClicked { glm::vec4(1.0f, 1.0f, 1.0f, 1.0f) };
+        WidgetText _preview { &_projection };
 
-    //Logic
-        ColorState _previewTextColorState { ColorState::Enabled };
     };
 }

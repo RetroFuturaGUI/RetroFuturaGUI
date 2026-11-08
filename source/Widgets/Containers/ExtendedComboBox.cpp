@@ -13,8 +13,7 @@ RetroFuturaGUI::ExtendedComboBox::ExtendedComboBox(std::string_view name, Projec
     : IDropDown(name, projection, parentWidget, parentWidgetTypeID, parentWindow)
 {
     _widgetTypeID = WidgetTypeID::ExtendedComboBox;
-    _previewText = std::make_shared<Text>(projection);
-    useTransitions({ _previewText.get() });
+    _preview.SetTransitionSettings(&_transitionSettings);
 
     setColors(ColorState::Enabled);
 }
@@ -28,9 +27,6 @@ void RetroFuturaGUI::ExtendedComboBox::SetDropDownPosition(const DropDownPositio
 
 void RetroFuturaGUI::ExtendedComboBox::Draw()
 {
-    if(!_previewText)
-        return;
-
     if(!isLabelHidden())
     {
         _background.Draw();
@@ -39,7 +35,7 @@ void RetroFuturaGUI::ExtendedComboBox::Draw()
 
         //The rows are arbitrary widgets, so the closed box stands in for the selection with its own text
         updatePreviewTextGeometry();
-        _previewText->Draw();
+        _preview.Draw();
     }
 
     showDropDownLater(); //drawn at the end of the frame, otherwise the widgets after this box would cover the list; also while it fades out
@@ -218,16 +214,13 @@ bool RetroFuturaGUI::ExtendedComboBox::isPointInsideItemDropDown(const glm::vec2
     return false;
 }
 
-void RetroFuturaGUI::ExtendedComboBox::updatePreviewTextGeometry() const
+void RetroFuturaGUI::ExtendedComboBox::updatePreviewTextGeometry()
 {
-    if(!_previewText)
-        return;
-
     //the same inset the rows get, so the closed box and the open list line their text up the same way
-    _previewText->SetParentSize(contentSize(_size.x));
-    _previewText->SetPosition(_position + glm::vec3(0.0f, 0.0f, _zStep * 2.0f));
-    _previewText->SetTextAlignment(_textAlignment);
-    _previewText->SetTextPadding(_textPadding);
+    _preview.SetSize(contentSize(_size.x));
+    _preview.SetPosition(_position + glm::vec3(0.0f, 0.0f, _zStep * 2.0f));
+    _preview.SetAlignment(_textAlignment);
+    _preview.SetPadding(_textPadding);
 }
 
 void RetroFuturaGUI::ExtendedComboBox::applySize(const glm::vec3& size)
@@ -397,82 +390,9 @@ void RetroFuturaGUI::ExtendedComboBox::selectItem(const uSize index)
 void RetroFuturaGUI::ExtendedComboBox::setColors(const ColorState state)
 {
     IDropDown::setColors(state);
-    _previewTextColorState = state;
     _background.SetColorState(state);
     _border.SetColorState(state);
-    setPreviewTextColors();
-}
-
-void RetroFuturaGUI::ExtendedComboBox::setPreviewTextColors()
-{
-    if(!_previewText)
-        return;
-
-    switch(_previewTextColorState)
-    {
-        case ColorState::Clicked:
-            _previewText->SetColors(_previewTextColorsClicked);
-        break;
-        case ColorState::Hover:
-            _previewText->SetColors(_previewTextColorsHover);
-        break;
-        case ColorState::Disabled:
-            _previewText->SetColors(_previewTextColorsDisabled);
-        break;
-        default: //Enabled
-            _previewText->SetColors(_previewTextColorsEnabled);
-    }
-}
-
-void RetroFuturaGUI::ExtendedComboBox::SetPreviewText(std::string_view text)
-{
-    if(!_previewText)
-        return;
-
-    _previewText->SetTextUTF8(text);
-}
-
-const std::string& RetroFuturaGUI::ExtendedComboBox::GetPreviewText() const
-{
-    if(!_previewText)
-        return _emptyText;
-
-    return _previewText->GetTextUTF8();
-}
-
-void RetroFuturaGUI::ExtendedComboBox::SetPreviewTextColors(std::span<const glm::vec4> colors, const ColorState state)
-{
-    switch(state)
-    {
-        case ColorState::Clicked:
-            _previewTextColorsClicked.assign(colors.begin(), colors.end());
-        break;
-        case ColorState::Hover:
-            _previewTextColorsHover.assign(colors.begin(), colors.end());
-        break;
-        case ColorState::Disabled:
-            _previewTextColorsDisabled.assign(colors.begin(), colors.end());
-        break;
-        default: //Enabled
-            _previewTextColorsEnabled.assign(colors.begin(), colors.end());
-    }
-
-    setPreviewTextColors();
-}
-
-const std::vector<glm::vec4>& RetroFuturaGUI::ExtendedComboBox::GetPreviewTextColors(const ColorState state) const
-{
-    switch(state)
-    {
-        case ColorState::Clicked:
-            return _previewTextColorsClicked;
-        case ColorState::Hover:
-            return _previewTextColorsHover;
-        case ColorState::Disabled:
-            return _previewTextColorsDisabled;
-        default: //Enabled
-            return _previewTextColorsEnabled;
-    }
+    _preview.SetColorState(state);
 }
 
 void RetroFuturaGUI::ExtendedComboBox::updateItemGeometry()
@@ -530,16 +450,14 @@ void RetroFuturaGUI::ExtendedComboBox::performPendingRemoval()
 
 void RetroFuturaGUI::ExtendedComboBox::SetFontFamily(std::string_view fontFamily, const f32 fontSize, const FontSizeUnit sizeUnit, const PlatformBridge::Fonts::Slant slant, const PlatformBridge::Fonts::Weight fontWeight)
 {
-    if(!_previewText)
-        return;
-
     _fontFamily = fontFamily;
     _fontSize = FontManager::ToPixels(fontSize, sizeUnit);
     _slant = slant;
     _fontWeight = fontWeight;
 
-    _previewText->SetFontFamily(_fontFamily, _fontSize, FontSizeUnit::Pixels, _slant, _fontWeight);
-    _previewText->SetTextUTF8(std::string(_previewText->GetTextUTF8())); //a font swap leaves the glyph mesh behind, so the text is laid out again
+    _preview.SetFontFamily(_fontFamily, _fontSize, FontSizeUnit::Pixels, _slant, _fontWeight);
+    const std::string preview { _preview.GetString() };
+    _preview.SetString(preview, false); //a font swap leaves the glyph mesh behind, so the text is laid out again
 
     for(const auto& item : _itemWidgets)
     {
@@ -585,6 +503,16 @@ void RetroFuturaGUI::ExtendedComboBox::SetFontFamily(std::string_view fontFamily
             break;
         }
     }
+}
+
+RetroFuturaGUI::WidgetText& RetroFuturaGUI::ExtendedComboBox::GetPreview()
+{
+    return _preview;
+}
+
+const RetroFuturaGUI::WidgetText& RetroFuturaGUI::ExtendedComboBox::GetPreview() const
+{
+    return _preview;
 }
 
 void RetroFuturaGUI::ExtendedComboBox::SetTextAlignment(const TextAlignment alignment)
