@@ -10,6 +10,16 @@
 
 RetroFuturaGUI::MediaPreviewResult RetroFuturaGUI::MediaPreview::ReadPreview(const MediaKind kind, std::string_view path, const i32 pictureSide)
 {
+    return readPreview(kind, path, pictureSide, VideoPicture::Decoded);
+}
+
+RetroFuturaGUI::MediaPreviewResult RetroFuturaGUI::MediaPreview::ReadPreviewDetails(const MediaKind kind, std::string_view path, const i32 pictureSide)
+{
+    return readPreview(kind, path, pictureSide, VideoPicture::LeftOut);
+}
+
+RetroFuturaGUI::MediaPreviewResult RetroFuturaGUI::MediaPreview::readPreview(const MediaKind kind, std::string_view path, const i32 pictureSide, const VideoPicture videoPicture)
+{
     MediaPreviewResult result {};
 
     switch(kind)
@@ -58,9 +68,12 @@ RetroFuturaGUI::MediaPreviewResult RetroFuturaGUI::MediaPreview::ReadPreview(con
                 break;
             }
 
+            if(VideoPicture::LeftOut == videoPicture)
+                break; //the caller has the picture already
+
             //The pane shows this picture itself, so the program never decodes the file to show it; in the decoder helper a file that
             //crashes the decoder takes only the helper down
-            result._Picture = DecodeVideoFrame(path, static_cast<i64>(video->_Seconds * 100.0), pictureSide, true); //10% in, in milliseconds
+            result._Picture = DecodeVideoFrame(path, static_cast<i64>(video->_Seconds * 100.0), StillMoment::Keyframe, pictureSide, true); //10% in, in milliseconds
             result._CanShowFrame = result._Picture.has_value();
 
             if(!result._CanShowFrame)
@@ -91,7 +104,7 @@ std::optional<RetroFuturaGUI::DecodedImage> RetroFuturaGUI::MediaPreview::ReadTh
             if(!video->_VideoCodecIsAllowed)
                 return std::nullopt;
 
-            return DecodeVideoFrame(path, static_cast<i64>(video->_Seconds * 100.0), pictureSide, true); //10% in, in milliseconds
+            return DecodeVideoFrame(path, static_cast<i64>(video->_Seconds * 100.0), StillMoment::Keyframe, pictureSide, true); //10% in, in milliseconds
         }
     }
 

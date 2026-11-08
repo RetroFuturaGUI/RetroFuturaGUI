@@ -12,7 +12,8 @@ namespace RetroFuturaGUI
     enum class MediaRequestType : u32
     {
         Preview,
-        Thumbnail
+        Thumbnail,
+        PreviewDetails //the preview without a video's picture
     };
 
     /// @brief One request to the decoder helper

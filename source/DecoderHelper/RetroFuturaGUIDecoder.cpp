@@ -70,6 +70,8 @@ int main()
 
         if(RetroFuturaGUI::MediaRequestType::Preview == request->_Type)
             result = RetroFuturaGUI::MediaPreview::ReadPreview(request->_Kind, request->_Path, request->_PictureSide);
+        else if(RetroFuturaGUI::MediaRequestType::PreviewDetails == request->_Type)
+            result = RetroFuturaGUI::MediaPreview::ReadPreviewDetails(request->_Kind, request->_Path, request->_PictureSide);
         else
             result._Picture = RetroFuturaGUI::MediaPreview::ReadThumbnail(request->_Kind, request->_Path, request->_PictureSide);
 

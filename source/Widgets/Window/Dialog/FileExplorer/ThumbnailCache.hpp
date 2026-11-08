@@ -1,6 +1,7 @@
 #pragma once
 #include "FileExplorer.hpp"
 #include "IsolatedDecoder.hpp"
+#include "StillCache.hpp"
 #include "Texture.hpp"
 #include <array>
 #include <chrono>
@@ -22,7 +23,8 @@ namespace RetroFuturaGUI
     {
     public:
         /// @brief Draws the type icons, which needs a GL context current.
-        ThumbnailCache();
+        /// @param stills The video stills shared with the preview pane, nullptr for none
+        explicit ThumbnailCache(std::shared_ptr<StillCache> stills);
         ThumbnailCache(const ThumbnailCache&) = delete;
         ThumbnailCache(ThumbnailCache&&) = delete;
         auto operator =(const ThumbnailCache&) = delete;
@@ -52,6 +54,7 @@ namespace RetroFuturaGUI
         {
             std::filesystem::path _Path {};
             FileKind _Kind { FileKind::Other };
+            std::filesystem::file_time_type _WriteTime {}; //of the file, for the shared stills.
         };
 
         /// @brief What the worker hands back.
@@ -62,7 +65,11 @@ namespace RetroFuturaGUI
         };
 
         /// @brief the worker decodes the file's picture and scales it down to a thumbnail, through the decoder - in the decoder helper's process when it's there.
-        static Decoded decode(Request&& request, IsolatedDecoder& decoder, std::stop_token stop);
+        static Decoded decode(Request&& request, IsolatedDecoder& decoder, StillCache* stills, std::stop_token stop);
+
+        /// @brief A video's thumbnail: the still shared with the preview pane, decoded at the pane's size when there is none yet,
+        ///        then scaled down. Without shared stills, decoded at the thumbnail's size
+        static std::optional<DecodedImage> readVideoThumbnail(const std::filesystem::path& filePath, const std::filesystem::file_time_type writeTime, IsolatedDecoder& decoder, StillCache* stills);
 
         /// @brief The main thread uploads a decoded picture as its file's thumbnail.
         void take(Decoded&& decoded);
@@ -82,6 +89,7 @@ namespace RetroFuturaGUI
         std::array<std::unique_ptr<Texture>, 5> _icons {}; //by FileKind
         std::unique_ptr<BackgroundWork> _work { std::make_unique<BackgroundWork>(BackgroundWork::WhenDestroyed::LetJobFinish) }; //its jobs use only copies
         std::shared_ptr<IsolatedDecoder> _decoder { std::make_shared<IsolatedDecoder>() }; //the worker's own. a stuck job keeps the one it has
+        std::shared_ptr<StillCache> _stills { nullptr }; //shared with the preview pane; the jobs keep it alive
         std::chrono::steady_clock::time_point _waitingSince {}; //for the job running now
         uSize
             _shownFirstRow { 0 },

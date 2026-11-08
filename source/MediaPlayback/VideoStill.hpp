@@ -10,12 +10,21 @@ struct AVFrame;
 
 namespace RetroFuturaGUI
 {
+    /// @brief Which picture DecodeVideoFrame takes for a moment: exactly the one shown then, decoding forward from the keyframe
+    ///        before it (up to 300 pictures), or that keyframe itself, which decodes one picture and suits previews
+    enum class StillMoment : u32
+    {
+        Exact,
+        Keyframe
+    };
+
     /// @brief Decodes the picture a video shown at a moment as RGBA pixels. GL is not touched so a worker thread can make a thumbnail of it.
     /// @param path UTF-8.
     /// @param milliseconds Frame from the start of the video. Past its end, the last frame is taken.
+    /// @param moment Exactly the picture shown then, or the keyframe at or before it.
     /// @param maxSide When above 0, the picture is scaled down to fit inside a square that size.
     /// @return Nothing when the file can't be opened, holds no video, or its codec isn't free or fails to decode.
-    std::optional<DecodedImage> DecodeVideoFrame(std::string_view path, const i64 milliseconds, const i32 maxSide, const bool flipVertically);
+    std::optional<DecodedImage> DecodeVideoFrame(std::string_view path, const i64 milliseconds, const StillMoment moment, const i32 maxSide, const bool flipVertically);
 
     /// @brief Decodes a file's cover art (AudioMetadata's _CoverArt and _CoverArtCodec) as RGBA pixels with FFmpeg's decoders:
     ///        JPEG, PNG, BMP, GIF (its first frame), WebP and TIFF. GL is not touched.

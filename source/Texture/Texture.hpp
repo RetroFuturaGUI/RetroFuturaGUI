@@ -60,6 +60,10 @@ namespace RetroFuturaGUI
         ///        SVG is told by its text. A picture over 64 megapixels is refused, as DecodeFile refuses it.
         static std::optional<DecodedImage> DecodeMemory(std::span<const u8> bytes, const bool flipVertically, const i32 maxSide = 0);
 
+        /// @brief Scales RGBA pixels down so neither side is longer than maxSide, each pixel the average of the ones it covers,
+        ///        weighted by their alpha so transparent pixels don't darken the edges
+        static void ShrinkToFit(DecodedImage& image, const i32 maxSide);
+
         /// @brief Returns the number of color channels in the texture, 4: every image is uploaded as RGBA.
         i32 GetColorChannelCount() const;
 
@@ -88,10 +92,6 @@ namespace RetroFuturaGUI
 
         /// @brief Returns whether the bytes start like an SVG document, after any byte order mark and white space.
         static bool looksLikeSvg(std::span<const u8> bytes);
-
-        /// @brief Scales RGBA pixels down so neither side is longer than maxSide, each pixel the average of the ones it covers,
-        ///        weighted by their alpha so transparent pixels don't darken the edges.
-        static void shrinkToFit(DecodedImage& image, const i32 maxSide);
 
         /// @brief Puts the bottom row first.
         static void flipRows(DecodedImage& image);

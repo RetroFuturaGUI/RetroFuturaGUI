@@ -403,7 +403,8 @@ bool RetroFuturaGUI::FileExplorer::buildView(ViewHost& host, std::string_view ti
     if(hasPreview())
     {
         const ViewCell previewCell { ._Row = 3, ._Column = _placesColumnCount + filesColumnCount + 1, ._ColumnSpan = _previewColumnCount, ._SizingMode = SizingMode::FILL, ._Layer = 0 };
-        _preview = std::make_unique<FilePreview>(host, *lasagna, previewCell, windowSize, _font, _flags);
+        _stills = std::make_shared<StillCache>();
+        _preview = std::make_unique<FilePreview>(host, *lasagna, previewCell, windowSize, _font, _flags, _stills);
 
         if(!_preview->IsBuilt())
             return false;
@@ -1384,7 +1385,7 @@ void RetroFuturaGUI::FileExplorer::fillTable()
     if(_showThumbnails)
     {
         if(!_thumbnails)
-            _thumbnails = std::make_unique<ThumbnailCache>();
+            _thumbnails = std::make_unique<ThumbnailCache>(_stills);
 
         _thumbnails->ShowIcons(*_widgets._Files, _shownEntries, 0);
     }

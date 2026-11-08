@@ -31,6 +31,9 @@ namespace RetroFuturaGUI
         /// @param path UTF-8.
         MediaPreviewResult ReadPreview(const MediaKind kind, std::string_view path, const i32 pictureSide);
 
+        /// @brief MediaPreview::ReadPreviewDetails in the helper
+        MediaPreviewResult ReadPreviewDetails(const MediaKind kind, std::string_view path, const i32 pictureSide);
+
         /// @brief MediaPreview::ReadThumbnail in the helper
         std::optional<DecodedImage> ReadThumbnail(const MediaKind kind, std::string_view path, const i32 pictureSide);
 

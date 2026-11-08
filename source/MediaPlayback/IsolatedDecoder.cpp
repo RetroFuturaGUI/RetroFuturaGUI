@@ -16,6 +16,19 @@ RetroFuturaGUI::MediaPreviewResult RetroFuturaGUI::IsolatedDecoder::ReadPreview(
     return std::move(*result);
 }
 
+RetroFuturaGUI::MediaPreviewResult RetroFuturaGUI::IsolatedDecoder::ReadPreviewDetails(const MediaKind kind, std::string_view path, const i32 pictureSide)
+{
+    if(!IsHelperAvailable())
+        return MediaPreview::ReadPreviewDetails(kind, path, pictureSide);
+
+    std::optional<MediaPreviewResult> result { exchange(MediaRequest { ._Type = MediaRequestType::PreviewDetails, ._Kind = kind, ._PictureSide = pictureSide, ._Path = std::string(path) }) };
+
+    if(!result)
+        return MediaPreviewResult { ._Details = {}, ._Picture = {}, ._Message = "Can't read this file", ._CanShowFrame = false };
+
+    return std::move(*result);
+}
+
 std::optional<RetroFuturaGUI::DecodedImage> RetroFuturaGUI::IsolatedDecoder::ReadThumbnail(const MediaKind kind, std::string_view path, const i32 pictureSide)
 {
     if(!IsHelperAvailable())

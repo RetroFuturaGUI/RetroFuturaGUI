@@ -120,7 +120,7 @@ std::optional<RetroFuturaGUI::DecodedImage> RetroFuturaGUI::Texture::decodeRaste
 
     DecodedImage image { ._Pixels = std::vector<u8>(decoded, decoded + static_cast<uSize>(width) * static_cast<uSize>(height) * 4), ._Resolution = glm::i32vec2(width, height), ._SourceResolution = glm::i32vec2(width, height), ._IsFlipped = false };
     stbi_image_free(decoded);
-    shrinkToFit(image, maxSide);
+    ShrinkToFit(image, maxSide);
 
     if(flipVertically)
         flipRows(image);
@@ -227,7 +227,7 @@ bool RetroFuturaGUI::Texture::looksLikeSvg(std::span<const u8> bytes)
     return text.starts_with("<svg") || (text.starts_with("<?xml") && std::string_view::npos != text.substr(0, 1024).find("<svg"));
 }
 
-void RetroFuturaGUI::Texture::shrinkToFit(DecodedImage& image, const i32 maxSide)
+void RetroFuturaGUI::Texture::ShrinkToFit(DecodedImage& image, const i32 maxSide)
 {
     const i32
         width { image._Resolution.x },

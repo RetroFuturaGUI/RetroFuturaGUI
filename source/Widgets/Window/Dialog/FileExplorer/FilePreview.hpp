@@ -1,6 +1,7 @@
 #pragma once
 #include "FileExplorer.hpp"
 #include "IsolatedDecoder.hpp"
+#include "StillCache.hpp"
 #include "Texture.hpp"
 #include <chrono>
 #include <filesystem>
@@ -39,7 +40,8 @@ namespace RetroFuturaGUI
 
         /// @brief Builds the pane into a cell of the explorer's Lasagna, the image's or the media's kinds only when their flags
         ///        are set.
-        FilePreview(ViewHost& host, Lasagna& lasagna, const ViewCell& cell, const glm::vec2& windowSize, const ViewFont& font, const FileExplorerFlags flags);
+        /// @param stills The video stills shared with the thumbnails, nullptr for none
+        FilePreview(ViewHost& host, Lasagna& lasagna, const ViewCell& cell, const glm::vec2& windowSize, const ViewFont& font, const FileExplorerFlags flags, std::shared_ptr<StillCache> stills);
         FilePreview() = delete;
         FilePreview(const FilePreview&) = delete;
         FilePreview(FilePreview&&) = delete;
@@ -51,7 +53,8 @@ namespace RetroFuturaGUI
         bool IsBuilt() const;
 
         /// @brief Shows the selected entries. The same file again, unchanged, keeps what shows. A cloud file that isn't on this
-        ///        computer is downloaded to be previewed, which the pane says meanwhile.
+        ///        computer is previewed only when its provider downloads just what is read (the headers and a picture), which the
+        ///        pane says meanwhile; one downloading whole files shows "Not on this computer" with the file's details
         void Show(const std::vector<Entry>& selection);
 
         /// @brief Runs each frame from the explorer's update: shows what finished loading.
@@ -91,7 +94,17 @@ namespace RetroFuturaGUI
 
         /// @brief The worker's side: reads and decodes the file - an image, a song or a video through the decoder, in the decoder
         ///        helper's process when it's there - and writes out its details.
-        static Loaded load(Request&& request, IsolatedDecoder& decoder, std::stop_token stop);
+        static Loaded load(Request&& request, IsolatedDecoder& decoder, StillCache* stills, std::stop_token stop);
+
+        /// @brief Reads a file's preview. A video whose still the thumbnails decoded already only has its details read, and a
+        ///        still decoded here is kept for them.
+        static MediaPreviewResult readMedia(const MediaKind kind, const Request& request, IsolatedDecoder& decoder, StillCache* stills);
+
+        /// @brief The longest side the pane's pictures are decoded to.
+        i32 getPictureSide() const;
+
+        /// @brief Tells the shared stills the pane's picture size, so the thumbnails decode stills the pane can show
+        void shareStillSide();
 
         /// @brief The main thread's side: shows what a job loaded, unless something else was selected since.
         void showLoaded(Loaded&& loaded);
@@ -136,6 +149,7 @@ namespace RetroFuturaGUI
         uSize _shownCount { 0 };
         std::unique_ptr<BackgroundWork> _work { std::make_unique<BackgroundWork>(BackgroundWork::WhenDestroyed::LetJobFinish) }; //its jobs use only copies
         std::shared_ptr<IsolatedDecoder> _decoder { std::make_shared<IsolatedDecoder>() }; //the worker's own; a stuck job keeps the one it has
+        std::shared_ptr<StillCache> _stills { nullptr }; //shared with the thumbnails; the jobs keep it alive
         std::chrono::steady_clock::time_point _lastPostAt {};
         u64 _generation { 0 };
 

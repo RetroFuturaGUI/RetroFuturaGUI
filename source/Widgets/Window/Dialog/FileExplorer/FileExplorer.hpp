@@ -171,6 +171,7 @@ namespace RetroFuturaGUI
         class ClashPrompt;
         class FilePreview;
         class ThumbnailCache;
+        class StillCache;
 
         /// @brief What a file is, told by its extension, for the preview and the thumbnails.
         enum class FileKind : u32
@@ -763,6 +764,7 @@ namespace RetroFuturaGUI
         ViewHost* _viewHost { nullptr }; //owned by the popup, through AddScene
         std::unique_ptr<FilePreview> _preview; //with ImagePreview or MediaPreview; its widgets are the view host's. No {}, which MSVC takes to need the whole type
         std::unique_ptr<ThumbnailCache> _thumbnails; //made once thumbnails first show, since it runs a thread of its own
+        std::shared_ptr<StillCache> _stills; //video stills the preview pane and the thumbnails share, with a preview pane only.
         std::unique_ptr<BackgroundWork> _listingWork { std::make_unique<BackgroundWork>(BackgroundWork::WhenDestroyed::LetJobFinish) }; //its jobs use only copies, so a stuck one is let go
         u64 _listingGeneration { 0 }; //of the latest listing asked for; an older one that arrives is dropped
         std::optional<PendingListing> _pending {};

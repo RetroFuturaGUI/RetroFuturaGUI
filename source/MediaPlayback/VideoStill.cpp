@@ -15,7 +15,7 @@ extern "C"
     #include <libswscale/swscale.h>
 }
 
-std::optional<RetroFuturaGUI::DecodedImage> RetroFuturaGUI::DecodeVideoFrame(std::string_view path, const i64 milliseconds, const i32 maxSide, const bool flipVertically)
+std::optional<RetroFuturaGUI::DecodedImage> RetroFuturaGUI::DecodeVideoFrame(std::string_view path, const i64 milliseconds, const StillMoment stillMoment, const i32 maxSide, const bool flipVertically)
 {
     MediaSource source;
 
@@ -100,6 +100,14 @@ std::optional<RetroFuturaGUI::DecodedImage> RetroFuturaGUI::DecodeVideoFrame(std
                         continue;
                     }
 
+                    //Taken as the still itself, a keyframe must be a whole picture: a file whose index calls every frame a keyframe (an MP4
+                    //without a sync sample table) lets the seek land on a predicted one, which the flag alone doesn't tell
+                    if(!hasPicture && StillMoment::Keyframe == stillMoment && AV_PICTURE_TYPE_I != frame->pict_type)
+                    {
+                        av_frame_unref(frame.Get());
+                        continue;
+                    }
+
                     const i64 time { frame->best_effort_timestamp };
 
                     if(!hasPicture && 0 < startMilliseconds && AV_NOPTS_VALUE != time && target < time)
@@ -108,7 +116,7 @@ std::optional<RetroFuturaGUI::DecodedImage> RetroFuturaGUI::DecodeVideoFrame(std
                     av_frame_unref(latest.Get());
                     av_frame_move_ref(latest.Get(), frame.Get());
                     hasPicture = true;
-                    isAtMoment = AV_NOPTS_VALUE == time || target <= time;
+                    isAtMoment = AV_NOPTS_VALUE == time || target <= time || StillMoment::Keyframe == stillMoment; //the keyframe itself, when that will do
                 }
             }
 

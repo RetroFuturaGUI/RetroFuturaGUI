@@ -175,6 +175,7 @@ list(APPEND RetroFuturaGuiSources
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/Window/Dialog/FileExplorer/FileTransfer.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/Window/Dialog/FileExplorer/FileUndoHistory.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/Window/Dialog/FileExplorer/ThumbnailCache.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/Window/Dialog/FileExplorer/StillCache.cpp"
 )
 
 if(DEFINED DYNLIB_MODE AND DYNLIB_MODE)

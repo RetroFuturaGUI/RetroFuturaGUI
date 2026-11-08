@@ -22,7 +22,7 @@ std::optional<RetroFuturaGUI::MediaRequest> RetroFuturaGUI::MediaPreviewProtocol
     if(!type || !kind || !side || !path)
         return std::nullopt;
 
-    if(static_cast<u32>(MediaRequestType::Thumbnail) < *type || static_cast<u32>(MediaKind::Video) < *kind || _maxPictureSide < *side)
+    if(static_cast<u32>(MediaRequestType::PreviewDetails) < *type || static_cast<u32>(MediaKind::Video) < *kind || _maxPictureSide < *side)
         return std::nullopt;
 
     return MediaRequest { ._Type = static_cast<MediaRequestType>(*type), ._Kind = static_cast<MediaKind>(*kind), ._PictureSide = static_cast<i32>(*side), ._Path = std::move(*path) };

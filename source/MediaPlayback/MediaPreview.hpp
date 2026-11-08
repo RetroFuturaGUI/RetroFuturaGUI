@@ -38,6 +38,10 @@ namespace RetroFuturaGUI
         /// @param path UTF-8
         static MediaPreviewResult ReadPreview(const MediaKind kind, std::string_view path, const i32 pictureSide);
 
+        /// @brief The preview without a video's picture, for a caller that keeps the picture from an earlier read: a video's
+        ///        details only, its frame not decoded (_CanShowFrame stays false). Other kinds read as ReadPreview does
+        static MediaPreviewResult ReadPreviewDetails(const MediaKind kind, std::string_view path, const i32 pictureSide);
+
         /// @brief The thumbnail: an image scaled down, a song's cover art, a video's frame from 10% in for royalty-free (if non-royality-free is rejected) codecs
         static std::optional<DecodedImage> ReadThumbnail(const MediaKind kind, std::string_view path, const i32 pictureSide);
 
@@ -49,6 +53,16 @@ namespace RetroFuturaGUI
 
     private:
         MediaPreview() = delete;
+
+        /// @brief Whether a video's preview decodes its picture
+        enum class VideoPicture : u32
+        {
+            Decoded,
+            LeftOut
+        };
+
+        /// @brief ReadPreview and ReadPreviewDetails
+        static MediaPreviewResult readPreview(const MediaKind kind, std::string_view path, const i32 pictureSide, const VideoPicture videoPicture);
 
         /// @brief A song's details and cover art. False with nothing added when the file can't be read as audio
         static bool readAudio(std::string_view path, const i32 pictureSide, MediaPreviewResult& result);

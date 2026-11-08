@@ -5,7 +5,8 @@
 #include <algorithm>
 #include <string_view>
 
-RetroFuturaGUI::FileExplorer::ThumbnailCache::ThumbnailCache()
+RetroFuturaGUI::FileExplorer::ThumbnailCache::ThumbnailCache(std::shared_ptr<StillCache> stills)
+    : _stills(std::move(stills))
 {
     constexpr std::array<std::string_view, 5> iconFiles { "FolderIcon.svg", "ImageIcon.svg", "AudioIcon.svg", "VideoIcon.svg", "FileIcon.svg" }; //in FileKind's order
     const std::filesystem::path iconFolder { PlatformBridge::Paths::GetExecutablePathFSPath().parent_path() / "Resources" / "img" };
@@ -64,7 +65,7 @@ void RetroFuturaGUI::FileExplorer::ThumbnailCache::Update(Table& table, const st
     letGoOfOldest();
 }
 
-RetroFuturaGUI::FileExplorer::ThumbnailCache::Decoded RetroFuturaGUI::FileExplorer::ThumbnailCache::decode(Request&& request, IsolatedDecoder& decoder, std::stop_token)
+RetroFuturaGUI::FileExplorer::ThumbnailCache::Decoded RetroFuturaGUI::FileExplorer::ThumbnailCache::decode(Request&& request, IsolatedDecoder& decoder, StillCache* stills, std::stop_token)
 {
     Decoded decoded { ._Path = std::move(request._Path), ._Image = {} };
     const std::string path { toUtf8(decoded._Path) };
@@ -78,7 +79,7 @@ RetroFuturaGUI::FileExplorer::ThumbnailCache::Decoded RetroFuturaGUI::FileExplor
             decoded._Image = decoder.ReadThumbnail(MediaKind::Audio, path, _pictureSide);
         break;
         case FileKind::Video:
-            decoded._Image = decoder.ReadThumbnail(MediaKind::Video, path, _pictureSide);
+            decoded._Image = readVideoThumbnail(decoded._Path, request._WriteTime, decoder, stills); //the path has moved into decoded
         break;
         default:
         break;
@@ -154,7 +155,7 @@ const RetroFuturaGUI::ITexture* RetroFuturaGUI::FileExplorer::ThumbnailCache::pi
         _waitingSince = std::chrono::steady_clock::now();
 
     _pendingKeys.push_back(key);
-    _work->Post([request = Request { ._Path = entry._Path, ._Kind = kind }, decoder = _decoder](std::stop_token stop) mutable { return decode(std::move(request), *decoder, stop); },
+    _work->Post([request = Request { ._Path = entry._Path, ._Kind = kind, ._WriteTime = entry._LastWriteTime }, decoder = _decoder, stills = _stills](std::stop_token stop) mutable { return decode(std::move(request), *decoder, stills.get(), stop); },
                 [this](Decoded&& decoded) { take(std::move(decoded)); });
     return shown;
 }
@@ -216,4 +217,29 @@ void RetroFuturaGUI::FileExplorer::ThumbnailCache::letGoOfStuckJob()
     _pendingKeys.clear();
     _work = std::make_unique<BackgroundWork>(BackgroundWork::WhenDestroyed::LetJobFinish);
     _decoder = std::make_shared<IsolatedDecoder>(); //the stuck job keeps the old one, and the helper it waits on
+}
+
+std::optional<RetroFuturaGUI::DecodedImage> RetroFuturaGUI::FileExplorer::ThumbnailCache::readVideoThumbnail(const std::filesystem::path& filePath, const std::filesystem::file_time_type writeTime, IsolatedDecoder& decoder, StillCache* stills)
+{
+    const std::string path { toUtf8(filePath) };
+
+    if(!stills)
+        return decoder.ReadThumbnail(MediaKind::Video, path, _pictureSide);
+
+    //Decoded once, at the pane's size, for the pane and the thumbnail
+    const i32 stillSide { stills->GetStillSide() };
+    std::optional<DecodedImage> still { stills->Find(filePath, writeTime, stillSide) };
+
+    if(!still)
+    {
+        still = decoder.ReadThumbnail(MediaKind::Video, path, stillSide);
+
+        if(!still)
+            return std::nullopt;
+
+        stills->Keep(filePath, writeTime, *still);
+    }
+
+    Texture::ShrinkToFit(*still, _pictureSide);
+    return still;
 }

@@ -8,8 +8,8 @@
 #include <array>
 #include <format>
 
-RetroFuturaGUI::FileExplorer::FilePreview::FilePreview(ViewHost& host, Lasagna& lasagna, const ViewCell& cell, const glm::vec2& windowSize, const ViewFont& font, const FileExplorerFlags flags)
-    : _host(host), _font(font), _flags(flags)
+RetroFuturaGUI::FileExplorer::FilePreview::FilePreview(ViewHost& host, Lasagna& lasagna, const ViewCell& cell, const glm::vec2& windowSize, const ViewFont& font, const FileExplorerFlags flags, std::shared_ptr<StillCache> stills)
+    : _host(host), _font(font), _flags(flags), _stills(std::move(stills))
 {
     //The pane fills its cell, and its own cells are measured from that
     const glm::vec3 fixedSize { cellSize(_viewAxis, windowSize, cell) };
@@ -24,6 +24,7 @@ RetroFuturaGUI::FileExplorer::FilePreview::FilePreview(ViewHost& host, Lasagna& 
         messageCell { ._Row = 0, ._Column = 0, ._ColumnSpan = 1, ._SizingMode = SizingMode::FIXED, ._Layer = static_cast<uSize>(MediaLayer::Message) },
         detailsCell { ._Row = 2, ._Column = 0, ._ColumnSpan = 1, ._SizingMode = SizingMode::FIXED, ._Layer = 0 };
     _mediaSize = cellSize(_axis, paneSize, pictureCell);
+    shareStillSide();
     _picture = host.Attach<Image>("PreviewPicture", *_pane, pictureCell);
     _message = host.Attach<Label>("PreviewMessage", *_pane, messageCell);
     _details = host.Attach<Table>("PreviewDetails", *_pane, detailsCell);
@@ -124,12 +125,20 @@ void RetroFuturaGUI::FileExplorer::FilePreview::Show(const std::vector<Entry>& s
     if(Kind::Other == _kind)
         return;
 
-    //Reading a cloud file that isn't on this computer downloads all of it first
+    //A cloud file that isn't on this computer: a provider fetching only what is read gives the headers and a picture; one
+    //downloading whole files would fetch all of it, so it isn't previewed
     if(entry._IsOnlineOnly && Kind::Folder != _kind)
-        showMessage("Downloading\nto preview...");
+    {
+        if(PlatformBridge::FileSystem::CloudHydration::Full == PlatformBridge::FileSystem::GetCloudHydration(entry._Path))
+        {
+            showMessage("Not on this computer");
+            return;
+        }
 
-    const i32 pictureSide { std::max(_minimumPictureSide, static_cast<i32>(std::max(_mediaSize.x, _mediaSize.y))) };
-    post(Request { ._Generation = _generation, ._Kind = _kind, ._Entry = entry, ._PictureSide = pictureSide });
+        showMessage("Downloading\nto preview...");
+    }
+
+    post(Request { ._Generation = _generation, ._Kind = _kind, ._Entry = entry, ._PictureSide = getPictureSide() });
 }
 
 void RetroFuturaGUI::FileExplorer::FilePreview::Update()
@@ -164,11 +173,11 @@ void RetroFuturaGUI::FileExplorer::FilePreview::post(Request&& request)
 
     _work->ClearPending(); //only the newest selection is worth loading
     _lastPostAt = now;
-    _work->Post([request = std::move(request), decoder = _decoder](std::stop_token stop) mutable { return load(std::move(request), *decoder, stop); },
+    _work->Post([request = std::move(request), decoder = _decoder, stills = _stills](std::stop_token stop) mutable { return load(std::move(request), *decoder, stills.get(), stop); },
                 [this](Loaded&& loaded) { showLoaded(std::move(loaded)); });
 }
 
-RetroFuturaGUI::FileExplorer::FilePreview::Loaded RetroFuturaGUI::FileExplorer::FilePreview::load(Request&& request, IsolatedDecoder& decoder, std::stop_token stop)
+RetroFuturaGUI::FileExplorer::FilePreview::Loaded RetroFuturaGUI::FileExplorer::FilePreview::load(Request&& request, IsolatedDecoder& decoder, StillCache* stills, std::stop_token stop)
 {
     const Entry& entry { request._Entry };
     Loaded loaded { ._Generation = request._Generation, ._Kind = request._Kind, ._Path = entry._Path, ._Picture = {}, ._Details = {}, ._Message = {}, ._CanShowFrame = false };
@@ -186,7 +195,7 @@ RetroFuturaGUI::FileExplorer::FilePreview::Loaded RetroFuturaGUI::FileExplorer::
     //What only this kind of file has comes first, since the pane shows as many rows as fit
     if(mediaKind)
     {
-        MediaPreviewResult media { decoder.ReadPreview(*mediaKind, path, request._PictureSide) };
+        MediaPreviewResult media { readMedia(*mediaKind, request, decoder, stills) };
         loaded._Details = std::move(media._Details);
         loaded._Picture = std::move(media._Picture);
         loaded._Message = std::move(media._Message);
@@ -363,4 +372,46 @@ std::vector<std::pair<std::string, std::string>> RetroFuturaGUI::FileExplorer::F
     details.emplace_back("Date", formatTime(entry._LastWriteTime, clock));
     details.emplace_back("Type", typeName(entry));
     return details;
+}
+
+RetroFuturaGUI::MediaPreviewResult RetroFuturaGUI::FileExplorer::FilePreview::readMedia(const MediaKind kind, const Request& request, IsolatedDecoder& decoder, StillCache* stills)
+{
+    const std::string path { toUtf8(request._Entry._Path) };
+
+    if(!stills)
+        return decoder.ReadPreview(kind, path, request._PictureSide);
+
+    if(MediaKind::Video != kind)
+        return decoder.ReadPreview(kind, path, request._PictureSide);
+
+    //A still the thumbnails decoded already: only the details are read
+    std::optional<DecodedImage> still { stills->Find(request._Entry._Path, request._Entry._LastWriteTime, request._PictureSide) };
+
+    if(still)
+    {
+        MediaPreviewResult media { decoder.ReadPreviewDetails(kind, path, request._PictureSide) };
+        media._Picture = std::move(still);
+        media._CanShowFrame = true;
+        return media;
+    }
+
+    MediaPreviewResult media { decoder.ReadPreview(kind, path, request._PictureSide) };
+
+    if(media._Picture)
+        stills->Keep(request._Entry._Path, request._Entry._LastWriteTime, *media._Picture);
+
+    return media;
+}
+
+i32 RetroFuturaGUI::FileExplorer::FilePreview::getPictureSide() const
+{
+    return std::max(_minimumPictureSide, static_cast<i32>(std::max(_mediaSize.x, _mediaSize.y)));
+}
+
+void RetroFuturaGUI::FileExplorer::FilePreview::shareStillSide()
+{
+    if(!_stills)
+        return;
+
+    _stills->SetStillSide(getPictureSide());
 }
