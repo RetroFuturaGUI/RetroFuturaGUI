@@ -142,6 +142,7 @@ list(APPEND RetroFuturaGuiSources
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/Parts/ItemTextStyle.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/Parts/ColorPickerIndicator.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/Parts/CloseButton.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/Parts/HoverText.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/Table/TableStyles.cpp"
     
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/Table/ITableTextProperties.cpp"

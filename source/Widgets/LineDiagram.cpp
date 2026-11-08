@@ -22,12 +22,7 @@ RetroFuturaGUI::LineDiagram::LineDiagram(std::string_view name, Projection* proj
     if(!_elementProjection)
         return;
 
-    _hoverText = std::make_unique<Text>(_elementProjection);
-    _hoverText->SetTextAlignment(TextAlignment::Center);
-    _hoverTextBackground = std::make_unique<Plane>(_elementProjection);
-    useTransitions({ _hoverText.get(), _hoverTextBackground.get() });
-    _hoverTextBackground->SetColors(_hoverTextBackgroundColors);
-    _hoverTextBackground->SetCornerRadii(glm::vec4(3.0f));
+    _hoverText.SetTransitionSettings(&_transitionSettings);
     _indicator.SetSize(glm::vec2(10.0f), ElementSizing::Pixels);
     _indicator.SetType(IndicatorType::Circle);
     _indicator.GetBorder().SetWidth(2.0f);
@@ -88,7 +83,7 @@ void RetroFuturaGUI::LineDiagram::SetLabelFontFamily(std::string_view fontFamily
     for(const std::unique_ptr<Text>& label : _labels)
         applyLabelFont(label.get());
 
-    applyLabelFont(_hoverText.get());
+    applyLabelFont(&_hoverText.GetText().GetElement());
 }
 
 f32 RetroFuturaGUI::LineDiagram::GetLabelFontSize(const FontSizeUnit sizeUnit) const
@@ -111,13 +106,14 @@ void RetroFuturaGUI::LineDiagram::EnableHoverValue(const bool enable)
     _showHoverValue = enable;
 }
 
-void RetroFuturaGUI::LineDiagram::SetHoverTextBackgroundColors(std::span<const glm::vec4> colors)
+RetroFuturaGUI::HoverText& RetroFuturaGUI::LineDiagram::GetHoverText()
 {
-    if(!_hoverTextBackground)
-        return;
+    return _hoverText;
+}
 
-    _hoverTextBackgroundColors.assign(colors.begin(), colors.end());
-    _hoverTextBackground->SetColors(_hoverTextBackgroundColors);
+const RetroFuturaGUI::HoverText& RetroFuturaGUI::LineDiagram::GetHoverText() const
+{
+    return _hoverText;
 }
 
 void RetroFuturaGUI::LineDiagram::alignElementsToTrack()
@@ -318,23 +314,18 @@ void RetroFuturaGUI::LineDiagram::drawHoverText(const glm::vec2& pointerPosition
     if(!_showHoverLineLabel && !_showHoverValue)
         return;
 
-    if(!_hoverText)
-        return;
-
-    if(!_hoverTextBackground)
-        return;
-
+    Text& hoverText { _hoverText.GetText().GetElement() };
     const std::string text { composeHoverText() };
 
-    if(text != _hoverText->GetTextUTF8())
+    if(text != hoverText.GetTextUTF8())
     {
-        _hoverText->SetTextUTF8(text);
-        fitClipBox(*_hoverText);
+        hoverText.SetTextUTF8(text);
+        fitClipBox(hoverText);
     }
 
-    const f32 glyphSize { _hoverText->GetGlyphSize() };
+    const f32 glyphSize { hoverText.GetGlyphSize() };
     const glm::vec2
-        boxSize { _hoverText->GetWidth() + _hoverTextPadding * 2.0f, glyphSize * 1.1f + _hoverTextPadding * 2.0f },
+        boxSize { hoverText.GetWidth() + _hoverTextPadding * 2.0f, glyphSize * 1.1f + _hoverTextPadding * 2.0f },
         textOffset { 0.0f, glyphSize * 0.15f },
         pointerSize { _indicator.IsShown() ? _indicator.GetDrawnSize() : glm::vec2(0.0f) },
         halfTrack { track.GetSize() * 0.5f };
@@ -346,15 +337,18 @@ void RetroFuturaGUI::LineDiagram::drawHoverText(const glm::vec2& pointerPosition
         centerY { aboveY + boxSize.y * 0.5f > halfTrack.y ? pointerPosition.y - gap - boxSize.y * 0.5f : aboveY }; // below it where above would
 
     const glm::vec2 boxCenter { centerX, centerY };
-    _hoverTextBackground->SetSize(boxSize);
-    _hoverTextBackground->SetRotation(track.GetRotation());
-    _hoverTextBackground->SetPosition(toWorldSpace(boxCenter, track, 0.04f));
-    _hoverTextBackground->Draw();
+    Background& box { _hoverText.GetBackground() };
+    box.SetSize(boxSize);
+    box.SetRotation(track.GetRotation());
+    box.SetPosition(toWorldSpace(boxCenter, track, 0.04f));
+    box.Draw();
 
-    _hoverText->SetColors(getLineColors(_hoveredLineIndex));
-    _hoverText->SetRotation(track.GetRotation());
-    _hoverText->SetPosition(toWorldSpace(boxCenter + textOffset, track, 0.045f));
-    _hoverText->Draw();
+    if(_hoverText.IsLineColorEnabled())
+        hoverText.SetColors(getLineColors(_hoveredLineIndex));
+
+    hoverText.SetRotation(track.GetRotation());
+    hoverText.SetPosition(toWorldSpace(boxCenter + textOffset, track, 0.045f));
+    hoverText.Draw();
 }
 
 std::string RetroFuturaGUI::LineDiagram::composeHoverText() const

@@ -1,4 +1,5 @@
 #pragma once
+#include "HoverText.hpp"
 #include "IncludeHelper.hpp"
 #include "config.hpp"
 #include "IRangedMultiValue.hpp"
@@ -50,9 +51,12 @@ namespace RetroFuturaGUI
         /// @brief Shows the value at the pointer next to it - "Label: value" together with EnableHoverLineLabel. Hexadecimal while ShowHexNumbers is on.
         void EnableHoverValue(const bool enable);
 
-        /// @brief Sets the colors of the box behind the text next to the pointer. The text has its line's color, so without the box it would
-        /// vanish where it crosses its own line. Translucent black by default.
-        void SetHoverTextBackgroundColors(std::span<const glm::vec4> colors);
+        /// @brief Returns the text next to the pointer and the box behind it. The text has its line's color by default, so without
+        ///        the box it would vanish where it crosses its own line
+        HoverText& GetHoverText();
+
+        /// @brief Returns the text next to the pointer and the box behind it
+        const HoverText& GetHoverText() const;
 
     private:
         void alignElementsToTrack() override;
@@ -125,9 +129,7 @@ namespace RetroFuturaGUI
         bool _lineHovered { false };
 
     // Labels
-        std::unique_ptr<Text> _hoverText { nullptr };
-        std::unique_ptr<Plane> _hoverTextBackground { nullptr };
-        std::vector<glm::vec4> _hoverTextBackgroundColors { glm::vec4(0.0f, 0.0f, 0.0f, 0.75f) };
+        HoverText _hoverText { &_projection };
         std::string _labelFontFamily {};
         f32 _labelFontSize { FontManager::ToPixels(16.0f, FontSizeUnit::Points) };
         PlatformBridge::Fonts::Slant _labelFontSlant { PlatformBridge::Fonts::Slant::Roman };
