@@ -11,21 +11,17 @@ RetroFuturaGUI::WindowTab::WindowTab(std::string_view name, Projection* projecti
     : IWidget(name, projection, parentWidget, parentWidgetTypeID, parentWindow)
 {
     _widgetTypeID = WidgetTypeID::WindowTab;
-    _closeBackground = std::make_unique<Plane>(projection);
     _previewTitle = std::make_unique<Text>(projection);
     //The field elements draw once per field, in its colors, so they switch at once
     _background.SetTransitionSettings(&_transitionSettings);
     _border.SetTransitionSettings(&_transitionSettings);
-
-    if(!_closeBackground)
-        return;
 
     _border.SetWidth(0.0f); //no frame until one is asked for, since a Frame starts with a 5 px border
     _background.SetColors(std::array { glm::vec4(0.055f, 0.055f, 0.075f, 1.0f) }, ColorState::Enabled);
     _background.SetColors(std::array { glm::vec4(0.055f, 0.055f, 0.075f, 1.0f) }, ColorState::Disabled);
     //_border.SetColors(std::span<const glm::vec4> colors, const ColorState state)
     applyTitleFont(_previewTitle.get());
-    _closeIcon.SetColorState(ColorState::Enabled); //the cross takes its color at once, not the SVG's own.
+    _closeButton.GetBackground().SetCornerRadii(glm::vec4(_closeButtonSize * 0.25f));
     setFieldStyleDefaults();
 
     Window* host { GetHostWindow() };
@@ -262,12 +258,10 @@ f32 RetroFuturaGUI::WindowTab::GetTitleFontSize(const FontSizeUnit sizeUnit) con
 
 void RetroFuturaGUI::WindowTab::SetTitleColors(std::span<const glm::vec4> colors, const ColorState state)
 {
-    colorOf(_titleColors, state).assign(colors.begin(), colors.end());
-}
+    if(ColorState::Selected == state)
+        return; //the selected window's title shows the same colors as the others
 
-void RetroFuturaGUI::WindowTab::SetSelectedTitleColors(std::span<const glm::vec4> colors)
-{
-    _titleColors._Selected.assign(colors.begin(), colors.end());
+    colorOf(_titleColors, state).assign(colors.begin(), colors.end());
 }
 
 void RetroFuturaGUI::WindowTab::SetTitlePadding(const f32 padding)
@@ -281,12 +275,8 @@ void RetroFuturaGUI::WindowTab::SetCloseButtonSize(const f32 size)
 
     //Rasterized at twice the size the cross draws at, so it stays smooth when it is scaled down
     const i32 resolution { std::max(static_cast<i32>(std::lround(_closeButtonSize * _closeIconScale * 2.0f)), 8) };
-    _closeIcon.Rasterize(glm::i32vec2(resolution));
-}
-
-void RetroFuturaGUI::WindowTab::SetCloseButtonBackgroundColors(std::span<const glm::vec4> colors, const ColorState state)
-{
-    colorOf(_closeBackgroundColors, state).assign(colors.begin(), colors.end());
+    _closeButton.GetIcon().Rasterize(glm::i32vec2(resolution));
+    _closeButton.GetBackground().SetCornerRadii(glm::vec4(_closeButtonSize * 0.25f));
 }
 
 void RetroFuturaGUI::WindowTab::SetContentCornerRadii(const glm::vec4& radii)
@@ -734,7 +724,7 @@ void RetroFuturaGUI::WindowTab::drawField(const uSize index, const f32 z)
     const bool selected { field._Window == _selectedWindow };
     const ColorState state { fieldState(index) };
     drawFieldShape(rect, z, _fieldStyle, fieldStyleState(state, selected));
-    drawTitle(field._Title.get(), rect, z + _zStep, colorFor(_titleColors, state, selected));
+    drawTitle(field._Title.get(), rect, z + _zStep, colorFor(_titleColors, state, false));
 
     ColorState closeState { _isEnabledFlag ? ColorState::Enabled : ColorState::Disabled };
 
@@ -781,29 +771,27 @@ RetroFuturaGUI::ColorState RetroFuturaGUI::WindowTab::fieldStyleState(const Colo
 
 void RetroFuturaGUI::WindowTab::drawCloseButton(const glm::vec4& field, const f32 z, const ColorState state)
 {
-    if(!_closeBackground)
-        return;
-
     const glm::vec4 button { closeButtonRect(field) };
 
     if(0.0f >= button.z)
         return;
 
     const glm::vec3 center { button.x + button.z * 0.5f, button.y + button.w * 0.5f, z };
-    const std::vector<glm::vec4>& background { colorFor(_closeBackgroundColors, state, false) };
+    Background& background { _closeButton.GetBackground() };
 
-    if(isVisible(background))
+    if(isVisible(background.GetColors(state)))
     {
-        _closeBackground->SetColors(background);
-        _closeBackground->SetCornerRadii(glm::vec4(button.z * 0.25f));
-        _closeBackground->SetSize(glm::vec2(button.z, button.w));
-        _closeBackground->SetPosition(center);
-        _closeBackground->Draw();
+        background.SetColorState(state);
+        background.SetSize(glm::vec2(button.z, button.w));
+        background.SetPosition(center);
+        background.Draw();
     }
 
-    _closeIcon.SetSize(glm::vec2(button.z * _closeIconScale)); //the cross keeps clear of the button's edges
-    _closeIcon.SetPosition(center + glm::vec3(0.0f, 0.0f, _zStep));
-    _closeIcon.Draw();
+    Icon& icon { _closeButton.GetIcon() };
+    icon.SetColorState(icon.GetColors(state).empty() ? ColorState::Enabled : state); //a state without colors of its own shows the Enabled ones
+    icon.SetSize(glm::vec2(button.z * _closeIconScale)); //the cross keeps clear of the button's edges
+    icon.SetPosition(center + glm::vec3(0.0f, 0.0f, _zStep));
+    icon.Draw();
 }
 
 void RetroFuturaGUI::WindowTab::drawTitle(Text* title, const glm::vec4& field, const f32 z, const std::vector<glm::vec4>& colors)
@@ -868,7 +856,7 @@ void RetroFuturaGUI::WindowTab::drawDropPreview()
     //See-through, since the window isn't in yet: the selected field's look at half its opacity. Copies, since the title only points at the colors it draws
     std::vector<glm::vec4>
         background { _fieldStyle.GetBackground().GetColors(ColorState::Selected) },
-        titleColors { _titleColors._Selected };
+        titleColors { _titleColors._Enabled };
 
     for(glm::vec4& color : background)
         color.a *= 0.5f;
@@ -1101,14 +1089,14 @@ void RetroFuturaGUI::WindowTab::setFieldStyleDefaults()
     border.SetWidth(0.0f); //no border until one is asked for.
 }
 
-RetroFuturaGUI::Icon& RetroFuturaGUI::WindowTab::GetCloseIcon()
+RetroFuturaGUI::CloseButton& RetroFuturaGUI::WindowTab::GetCloseButton()
 {
-    return _closeIcon;
+    return _closeButton;
 }
 
-const RetroFuturaGUI::Icon& RetroFuturaGUI::WindowTab::GetCloseIcon() const
+const RetroFuturaGUI::CloseButton& RetroFuturaGUI::WindowTab::GetCloseButton() const
 {
-    return _closeIcon;
+    return _closeButton;
 }
 
 RetroFuturaGUI::Background& RetroFuturaGUI::WindowTab::GetBackground()

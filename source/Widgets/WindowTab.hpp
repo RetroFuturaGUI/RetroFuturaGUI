@@ -4,6 +4,7 @@
 #include "IWidget.hpp"
 #include "Border.hpp"
 #include "Box.hpp"
+#include "CloseButton.hpp"
 #include "Frame.hpp"
 #include "Plane.hpp"
 #include "SvgTexture.hpp"
@@ -102,11 +103,9 @@ namespace RetroFuturaGUI
         /// @brief Returns the title font size in the given unit.
         f32 GetTitleFontSize(const FontSizeUnit sizeUnit) const;
 
-        /// @brief Sets a title's colors for the given state.
+        /// @brief Sets a title's colors for Enabled, Disabled, Hover or Clicked. The selected window's title shows the same colors as
+        ///        the others, so Selected is ignored
         void SetTitleColors(std::span<const glm::vec4> colors, const ColorState state);
-
-        /// @brief Sets the selected field's title colors.
-        void SetSelectedTitleColors(std::span<const glm::vec4> colors);
 
         /// @brief Sets the space between a field's left edge and its title.
         void SetTitlePadding(const f32 padding);
@@ -115,14 +114,12 @@ namespace RetroFuturaGUI
         /// @brief Sets the width and height of the close buttons.
         void SetCloseButtonSize(const f32 size);
 
-        /// @brief Sets a close button's background colors for the given state. It is transparent until hovered by default.
-        void SetCloseButtonBackgroundColors(std::span<const glm::vec4> colors, const ColorState state);
+        /// @brief Returns the close button every field draws: its background, transparent until hovered by default, and its
+        ///        cross. Each field's button shows that field's state. Its corners round with a quarter of SetCloseButtonSize
+        CloseButton& GetCloseButton();
 
-        /// @brief Returns the cross on the close buttons. One icon draws every field's cross
-        Icon& GetCloseIcon();
-
-        /// @brief Returns the cross on the close buttons. One icon draws every field's cross
-        const Icon& GetCloseIcon() const;
+        /// @brief Returns the close button every field draws (see the other overload)
+        const CloseButton& GetCloseButton() const;
 
         /// @brief Returns the look of the fields: Enabled, Hover, Clicked and Disabled, and Selected for the selected window's field,
         ///        which usually matches the content so the two join. Rounded at the top, without a border by default
@@ -297,19 +294,12 @@ namespace RetroFuturaGUI
 
     //Elements
         std::vector<Field> _fields {};
-        std::unique_ptr<Plane> _closeBackground { nullptr };
         Background _background { &_projection };
         Border _border { &_projection };
         Box
             _fieldStyle { &_projection }, //drawn once per field, in its colors, so it takes no transitions
             _previewFieldStyle { &_projection }; //the selected look at half its opacity, for the field a dropped window would take
-        Icon _closeIcon //its own, so its color and size are this tab's alone
-        {
-            ResourceManager::CreateSvgTexture(getCloseIconPath(), &_projection, glm::i32vec2(32)),
-            "CloseIcon",
-            SvgPathFill { ._FillType = FillType::Solid, ._Colors = {}, ._GradientDegree = 0.0f, ._GradientOffset = 0.0f, ._GradientAnimationSpeed = 0.0f, ._GradientRotationSpeed = 0.0f },
-            IconColors { ._Enabled = { glm::vec4(0.85f, 0.85f, 0.9f, 1.0f) }, ._Disabled = {}, ._Clicked = {}, ._Hover = {}, ._Selected = {} }
-        };
+        CloseButton _closeButton { &_projection, ResourceManager::CreateSvgTexture(getCloseIconPath(), &_projection, glm::i32vec2(32)) }; //its own, so its colors and size are this tab's alone.
         std::unique_ptr<Text> _previewTitle { nullptr };
         TransitionValue<glm::vec2> _previewShown {}; //the drop preview field's left edge and width as drawn
         bool _isPreviewShown { false }; //a dropped window's field starts where the preview was
@@ -332,14 +322,6 @@ namespace RetroFuturaGUI
                 ._Clicked = { glm::vec4(1.0f) },
                 ._Disabled = { glm::vec4(0.4f, 0.4f, 0.45f, 1.0f) },
                 ._Selected = { glm::vec4(1.0f) }
-            },
-            _closeBackgroundColors
-            {
-                ._Enabled = { glm::vec4(0.0f) },
-                ._Hover = { glm::vec4(1.0f, 1.0f, 1.0f, 0.15f) },
-                ._Clicked = { glm::vec4(1.0f, 1.0f, 1.0f, 0.25f) },
-                ._Disabled = { glm::vec4(0.0f) },
-                ._Selected = { glm::vec4(0.0f) }
             };
         std::string _titleFontFamily {};
         f32 _titleFontSize { FontManager::ToPixels(18.0f, FontSizeUnit::Points) }; //in pixels, as every stored font size
