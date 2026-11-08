@@ -40,6 +40,13 @@ namespace RetroFuturaGUI
         explicit StateFillStyle(const glm::vec4& enabledColor);
         ~StateFillStyle() = default;
 
+        /// @brief Carries one of the effect's values (an angle, a distance, a blur, a width, a scale) to a new target over the
+        ///        widget's Effects transition. Set before the first draw, or without transition settings, it shows at once
+        void setEffectValue(TransitionValue<f32>& value, const f32 target);
+
+        /// @brief How far an effect is moved, in pixels with y up, by an angle in degrees and a distance
+        static glm::vec2 getOffset(const f32 degree, const f32 distance);
+
     private:
         /// @brief The colors set for a state.
         std::vector<glm::vec4>& colorsOf(const ColorState state);

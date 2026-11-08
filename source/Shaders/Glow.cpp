@@ -4,6 +4,7 @@
 RetroFuturaGUI::Glow::Glow()
     : StateFillStyle(glm::vec4(1.0f, 1.0f, 1.0f, 0.75f))
 {
+    _width.Jump(8.0f);
 }
 
 void RetroFuturaGUI::Glow::Show(const bool show)
@@ -18,10 +19,15 @@ bool RetroFuturaGUI::Glow::IsShown() const
 
 void RetroFuturaGUI::Glow::SetWidth(const f32 width)
 {
-    _width = std::max(width, 0.0f);
+    setEffectValue(_width, std::max(width, 0.0f));
 }
 
 f32 RetroFuturaGUI::Glow::GetWidth() const
 {
-    return _width;
+    return _width.GetTarget();
+}
+
+f32 RetroFuturaGUI::Glow::getShownWidth() const
+{
+    return _width.Get();
 }

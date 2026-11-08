@@ -33,7 +33,10 @@ namespace RetroFuturaGUI
         friend class Text; //draws it.
         friend class GlowRectangle; //draws it.
 
-        f32 _width { 8.0f };
+        /// @brief The width shown now
+        f32 getShownWidth() const;
+
+        TransitionValue<f32> _width {};
         bool _isShown { false };
     };
 }

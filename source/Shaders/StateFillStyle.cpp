@@ -1,5 +1,7 @@
 #include "StateFillStyle.hpp"
+#include <cmath>
 #include <utility>
+#include <glm/trigonometric.hpp>
 
 RetroFuturaGUI::StateFillStyle::StateFillStyle(const glm::vec4& enabledColor)
     : _colorsEnabled { enabledColor }
@@ -56,4 +58,21 @@ void RetroFuturaGUI::StateFillStyle::applyColors()
 {
     const std::vector<glm::vec4>& colors { colorsOf(_colorState) };
     FillStyle::SetColors(colors.empty() ? _colorsEnabled : colors);
+}
+
+void RetroFuturaGUI::StateFillStyle::setEffectValue(TransitionValue<f32>& value, const f32 target)
+{
+    if(!_transitionSettings || !_hasShownColors)
+    {
+        value.Jump(target);
+        return;
+    }
+
+    value.Set(target, Transitions::Resolve(*_transitionSettings, TransitionProperty::Effects));
+}
+
+glm::vec2 RetroFuturaGUI::StateFillStyle::getOffset(const f32 degree, const f32 distance)
+{
+    const f32 radians { glm::radians(degree) };
+    return glm::vec2(std::cos(radians), std::sin(radians)) * distance;
 }

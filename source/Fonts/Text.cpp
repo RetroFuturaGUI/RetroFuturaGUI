@@ -88,10 +88,10 @@ void RetroFuturaGUI::Text::drawShadow()
 
     //Scaled around the middle of the text's span, then moved. Behind the outline, which draws next
     const glm::vec3 center { _textSpan.x * 0.5f, (TextFlow::Horizontal == _textFlow ? _ascender : 0.0f) - _textSpan.y * 0.5f, 0.0f };
-    const f32 scale { _dropShadow.GetScale() };
+    const f32 scale { _dropShadow.getShownScale() }; //moved and scaled as drawn, so these follow the transition. The blur is in the glyphs
     const glm::mat4 placement
     {
-        glm::translate(_translationMatrix, glm::vec3(_dropShadow.GetOffset(), -_shadowDepthOffset))
+        glm::translate(_translationMatrix, glm::vec3(_dropShadow.getShownOffset(), -_shadowDepthOffset))
         * glm::translate(glm::mat4(1.0f), center)
         * glm::scale(glm::mat4(1.0f), glm::vec3(scale, scale, 1.0f))
         * glm::translate(glm::mat4(1.0f), -center)
@@ -386,6 +386,7 @@ void RetroFuturaGUI::Text::updateMesh()
         _glyphPositions.clear();
         _glyphLines.clear();
         _characterSpans.clear();
+        _isInsideCluster.clear();
         return;
     }
 
@@ -405,6 +406,7 @@ void RetroFuturaGUI::Text::updateMesh()
     _glyphPositions.clear();
     _glyphLines.clear();
     _characterSpans.clear();
+    _isInsideCluster.clear();
 
     for(uSize line = 0; line < _shapedLines.size(); ++line)
     {
@@ -480,6 +482,7 @@ void RetroFuturaGUI::Text::updateMesh()
             _glyphPositions.push_back(isStart != isRightToLeft ? span.x : span.y);
             _glyphLines.push_back(line);
             _characterSpans.push_back(span);
+            _isInsideCluster.push_back(!isStart);
         }
 
         //The first boundary of a later line is the one after its '\n'
@@ -487,6 +490,7 @@ void RetroFuturaGUI::Text::updateMesh()
         _glyphPositions.push_back(isLineRightToLeft ? lineLeft : along);
         _glyphLines.push_back(line);
         _characterSpans.push_back(glm::vec2(_glyphPositions.back()));
+        _isInsideCluster.push_back(false);
         lineStart = lineEnd + 1;
     }
 
@@ -728,6 +732,9 @@ uSize RetroFuturaGUI::Text::getClosestOnLine(const uSize line, const f32 along) 
 
     for(uSize i = first + 1; i < end; ++i)
     {
+        if(isInsideCluster(i))
+            continue;
+
         const f32 distance { std::abs(_glyphPositions[i] - along) };
 
         if(distance < closestDistance)
@@ -738,6 +745,11 @@ uSize RetroFuturaGUI::Text::getClosestOnLine(const uSize line, const f32 along) 
     }
 
     return closest;
+}
+
+bool RetroFuturaGUI::Text::isInsideCluster(const uSize boundary) const
+{
+    return boundary < _isInsideCluster.size() && _isInsideCluster[boundary];
 }
 
 void RetroFuturaGUI::Text::alignPosition()
@@ -903,11 +915,26 @@ uSize RetroFuturaGUI::Text::GetBoundaryBeside(const uSize boundary, const CaretM
     //Down a column a step is a character; across, the next column that way, as far down as the caret is
     if(TextFlow::Horizontal != _textFlow)
     {
+        //Past the characters inside a cluster, which the caret never stops between
         if(CaretMove::Up == move)
-            return 0 < current ? current - 1 : 0;
+        {
+            uSize above { 0 < current ? current - 1 : 0 };
+
+            while(isInsideCluster(above))
+                --above;
+
+            return above;
+        }
 
         if(CaretMove::Down == move)
-            return std::min(current + 1, glyphCount);
+        {
+            uSize below { std::min(current + 1, glyphCount) };
+
+            while(isInsideCluster(below))
+                ++below;
+
+            return below;
+        }
 
         const bool isTowardNextColumn { (CaretMove::Left == move) == (TextFlow::VerticalRightToLeft == _textFlow) };
 
@@ -934,7 +961,7 @@ uSize RetroFuturaGUI::Text::GetBoundaryBeside(const uSize boundary, const CaretM
     {
         const f32 candidateAlong { _glyphPositions[candidate] };
 
-        if(isRightward ? candidateAlong <= along + _sameSpotDistance : candidateAlong >= along - _sameSpotDistance)
+        if(isInsideCluster(candidate) || (isRightward ? candidateAlong <= along + _sameSpotDistance : candidateAlong >= along - _sameSpotDistance))
             continue;
 
         const bool isCloser { nearest == current
@@ -1100,25 +1127,4 @@ uSize RetroFuturaGUI::Text::GetLineLastBoundary(const uSize line) const
 f32 RetroFuturaGUI::Text::GetLineHeight() const
 {
     return _lineHeight;
-}
-
-uSize RetroFuturaGUI::Text::GetClusterStart(const uSize boundary) const
-{
-    if(0 == boundary)
-        return 0;
-
-    const uSize last { boundary - 1 };
-
-    if(_characterSpans.size() <= last || _glyphLines.size() <= last)
-        return last; //not laid out: a character alone
-
-    //The characters of one cluster share the stretch its glyphs cover
-    const glm::vec2 span { _characterSpans[last] };
-    const uSize line { _glyphLines[last] };
-    uSize start { last };
-
-    while(0 < start && line == _glyphLines[start - 1] && span == _characterSpans[start - 1])
-        --start;
-
-    return start;
 }

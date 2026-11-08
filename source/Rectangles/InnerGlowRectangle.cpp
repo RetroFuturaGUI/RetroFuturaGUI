@@ -12,8 +12,8 @@ void RetroFuturaGUI::InnerGlowRectangle::SetCaster(const ShadowCaster& caster)
         return;
 
     //As big as the caster: the glow never leaves its shape
-    _width = _innerGlow->GetWidth();
-    _offset = _innerGlow->GetOffset();
+    _width = _innerGlow->getShownWidth();
+    _offset = _innerGlow->getShownOffset();
     _shapeSize = caster._Size;
     _ringWidth = caster._RingWidth;
     SetSize(_shapeSize);

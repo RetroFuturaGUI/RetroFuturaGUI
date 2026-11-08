@@ -1,11 +1,13 @@
 #include "DropShadow.hpp"
 #include <algorithm>
-#include <cmath>
-#include <glm/trigonometric.hpp>
 
 RetroFuturaGUI::DropShadow::DropShadow()
     : StateFillStyle(glm::vec4(0.0f, 0.0f, 0.0f, 0.5f))
 {
+    _degree.Jump(315.0f);
+    _distance.Jump(4.0f);
+    _blur.Jump(8.0f);
+    _scale.Jump(1.0f);
 }
 
 void RetroFuturaGUI::DropShadow::Show(const bool show)
@@ -20,46 +22,60 @@ bool RetroFuturaGUI::DropShadow::IsShown() const
 
 void RetroFuturaGUI::DropShadow::SetDegree(const f32 degree)
 {
-    _degree = degree;
+    setEffectValue(_degree, degree);
 }
 
 f32 RetroFuturaGUI::DropShadow::GetDegree() const
 {
-    return _degree;
+    return _degree.GetTarget();
 }
 
 void RetroFuturaGUI::DropShadow::SetDistance(const f32 distance)
 {
-    _distance = distance;
+    setEffectValue(_distance, distance);
 }
 
 f32 RetroFuturaGUI::DropShadow::GetDistance() const
 {
-    return _distance;
+    return _distance.GetTarget();
 }
 
 void RetroFuturaGUI::DropShadow::SetBlur(const f32 blur)
 {
-    _blur = std::max(blur, 0.0f);
+    setEffectValue(_blur, std::max(blur, 0.0f));
 }
 
 f32 RetroFuturaGUI::DropShadow::GetBlur() const
 {
-    return _blur;
+    return _blur.GetTarget();
 }
 
 void RetroFuturaGUI::DropShadow::SetScale(const f32 scale)
 {
-    _scale = std::max(scale, 0.0f);
+    setEffectValue(_scale, std::max(scale, 0.0f));
 }
 
 f32 RetroFuturaGUI::DropShadow::GetScale() const
 {
-    return _scale;
+    return _scale.GetTarget();
 }
 
 glm::vec2 RetroFuturaGUI::DropShadow::GetOffset() const
 {
-    const f32 radians { glm::radians(_degree) };
-    return glm::vec2(std::cos(radians), std::sin(radians)) * _distance;
+    return getOffset(_degree.GetTarget(), _distance.GetTarget());
+}
+
+glm::vec2 RetroFuturaGUI::DropShadow::getShownOffset() const
+{
+    return getOffset(_degree.Get(), _distance.Get());
+}
+
+f32 RetroFuturaGUI::DropShadow::getShownBlur() const
+{
+    return _blur.Get();
+}
+
+f32 RetroFuturaGUI::DropShadow::getShownScale() const
+{
+    return _scale.Get();
 }

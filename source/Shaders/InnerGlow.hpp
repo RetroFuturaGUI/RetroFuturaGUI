@@ -49,10 +49,14 @@ namespace RetroFuturaGUI
         friend class Text; //draws it.
         friend class InnerGlowRectangle; //draws it.
 
-        f32
-            _width { 6.0f },
-            _degree { 315.0f },
-            _distance { 0.0f };
+        /// @brief The values shown now, on their way to the ones set
+        f32 getShownWidth() const;
+        glm::vec2 getShownOffset() const;
+
+        TransitionValue<f32>
+            _width {},
+            _degree {},
+            _distance {};
         bool _isShown { false };
     };
 }

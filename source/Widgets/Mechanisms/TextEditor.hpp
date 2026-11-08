@@ -7,6 +7,7 @@
 #include <chrono>
 #include <functional>
 #include <string>
+#include <string_view>
 #include <vector>
 
 namespace RetroFuturaGUI
@@ -223,6 +224,26 @@ namespace RetroFuturaGUI
                 || (0xD800u <= codepoint && 0xDFFFu >= codepoint)
                 || 0x10FFFFu < codepoint;
         }
+
+        
+        static constexpr bool isEmojiComponent(const char32_t codepoint)
+        {
+            return (0xFE00u <= codepoint && 0xFE0Fu >= codepoint)
+                || (0xE0100u <= codepoint && 0xE01EFu >= codepoint)
+                || (0x1F3FBu <= codepoint && 0x1F3FFu >= codepoint)
+                || 0x20E3u == codepoint
+                || (0xE0020u <= codepoint && 0xE007Fu >= codepoint);
+        }
+
+        /// @brief Whether a code point is half of a flag.
+        static constexpr bool isRegionalIndicator(const char32_t codepoint)
+        {
+            return 0x1F1E6u <= codepoint && 0x1F1FFu >= codepoint;
+        }
+
+        /// @brief Where Backspace starts deleting. A whole emoji sequence (its skin tone, presentation selector, keycap, tags and
+        ///        whatever a joiner joins), a whole flag, else the one character before the caret, so a diacritic goes on its own
+        static uSize getDeletionStart(std::u32string_view text, const uSize caret);
 
         bool checkForTextCopy();
         bool checkForTextCut();

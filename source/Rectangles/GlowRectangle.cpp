@@ -13,7 +13,7 @@ void RetroFuturaGUI::GlowRectangle::SetCaster(const ShadowCaster& caster, const 
 
     //Outward the quad grows by the width on every side. Inward the glow stays within the ring, as big as the caster
     _edge = edge;
-    _width = _glow->GetWidth();
+    _width = _glow->getShownWidth();
     _shapeSize = caster._Size;
     _ringWidth = caster._RingWidth;
     SetSize(GlowEdge::Outer == edge ? _shapeSize + glm::vec2(_width * 2.0f + 2.0f) : _shapeSize);

@@ -569,9 +569,43 @@ void RetroFuturaGUI::TextEditor::checkForEnterPress()
     _enterPressed = true;
 }
 
+uSize RetroFuturaGUI::TextEditor::getDeletionStart(std::u32string_view text, const uSize caret)
+{
+    if(0 == caret)
+        return 0;
+
+    if(isRegionalIndicator(text[caret - 1]))
+    {
+        uSize runStart { caret - 1 };
+
+        while(0 < runStart && isRegionalIndicator(text[runStart - 1]))
+            --runStart;
+
+        return 0 == (caret - runStart) % 2 ? caret - 2 : caret - 1;
+    }
+
+    uSize start { caret };
+
+    while(0 < start)
+    {
+        while(0 < start && isEmojiComponent(text[start - 1]))
+            --start;
+
+        if(0 < start)
+            --start;
+
+        if(0 == start || 0x200Du != text[start - 1])
+            break;
+
+        --start;
+    }
+
+    return start;
+}
+
 void RetroFuturaGUI::TextEditor::checkForTextInput()
 {
-    if(PlatformBridge::Input::GetLastKeySym() == _focusKeySym && PlatformBridge::Input::GetKeyPressCount(_focusKeySym) == _focusKeyPressCountSeen)
+    if(0 != _focusKeySym && PlatformBridge::Input::GetLastKeySym() == _focusKeySym && PlatformBridge::Input::GetKeyPressCount(_focusKeySym) == _focusKeyPressCountSeen)
         return; //the key that was down when the focus came
 
     const std::u32string keyText { DoubleEncodedString::Utf8ToUtf32(PlatformBridge::Input::GetInputString()) };
@@ -671,13 +705,13 @@ void RetroFuturaGUI::TextEditor::deleteBackward()
     if(0 == _caretPosition)
         return;
 
-    //The whole cluster before the caret, so an emoji sequence or a letter with its marks never goes half
-    const uSize clusterStart { std::min(text->GetClusterStart(_caretPosition), _caretPosition - 1) };
-    std::u32string left { text->GetTextUTF32().substr(0, clusterStart) };
+    //A whole emoji sequence or flag, so it never goes half
+    const uSize deletionStart { getDeletionStart(text->GetTextUTF32(), _caretPosition) };
+    std::u32string left { text->GetTextUTF32().substr(0, deletionStart) };
     std::u32string right { text->GetTextUTF32().substr(_caretPosition) };
 
     text->SetTextUTF32(left + right);
-    _caretPosition = clusterStart;
+    _caretPosition = deletionStart;
     deselect();
     updateCaretPosition();
     emitChange();

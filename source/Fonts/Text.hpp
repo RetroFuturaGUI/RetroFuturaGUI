@@ -200,10 +200,6 @@ namespace RetroFuturaGUI
         ///        start and end. In columns, Up and Down step along the column, Left and Right go to the next column that way.
         uSize GetBoundaryBeside(const uSize boundary, const CaretMove move) const;
 
-        /// @brief Returns the boundary where the cluster holding the character before the given boundary starts: an emoji
-        ///        sequence, a ligature, a letter with its marks. Backspace deletes back to it, so a cluster goes whole
-        uSize GetClusterStart(const uSize boundary) const;
-
         /// @brief Returns the boxes covering the characters from one boundary to another, in world space: one per stretch
         ///        drawn without a break, as mixed left-to-right and right-to-left text splits a selection on its line. A
         ///        selected line break shows as a narrow box at its line's end.
@@ -315,6 +311,9 @@ namespace RetroFuturaGUI
         /// @brief The boundary on a line closest to a distance along it, or the end of the text if there is no such line
         uSize getClosestOnLine(const uSize line, const f32 along) const;
 
+        /// @brief Whether a boundary lies inside a cluster (an emoji sequence, a ligature, a letter with its marks), where the caret never goes
+        bool isInsideCluster(const uSize boundary) const;
+
         Projection& _projection;
         glm::vec2 _glyphSize { 16.0f };
         f32 _fontSize { 16.0f };
@@ -350,6 +349,7 @@ namespace RetroFuturaGUI
         std::vector<f32> _glyphPositions {}; //where each boundary sits along its line
         std::vector<uSize> _glyphLines {};
         std::vector<glm::vec2> _characterSpans {}; //per boundary, the stretch along the line its character's glyphs cover
+        std::vector<bool> _isInsideCluster {}; //per boundary, whether it sits between the characters of one cluster
         bool _anchorTop { false };
 
     // mesh
