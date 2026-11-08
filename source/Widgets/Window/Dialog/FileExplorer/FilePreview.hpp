@@ -78,7 +78,7 @@ namespace RetroFuturaGUI
             std::optional<DecodedImage> _Picture {};
             std::vector<std::pair<std::string, std::string>> _Details {};
             std::string _Message {}; //shown in the picture's place: no cover art, a codec that isn't royalty-free
-            bool _CanShowFrame { false }; //a video whose picture may be decoded: opened on the main thread for its frame
+            bool _CanShowFrame { false }; //a video the decoder helper decoded a picture of, so it may be opened to play
         };
 
         /// @brief The media cell's layers; one shows at a time.
@@ -96,7 +96,8 @@ namespace RetroFuturaGUI
         /// @brief The main thread's side: shows what a job loaded, unless something else was selected since.
         void showLoaded(Loaded&& loaded);
 
-        /// @brief Opens a video for its frame from 10% in, paused; on the main thread, since the frame's texture is GL's.
+        /// @brief Opens a video in the pane at 10% in, paused, on the main thread since the frame's texture is GL's. For playing it,
+        ///        once the pane has its controls: its picture comes from the decoder helper without opening it here.
         void showFrame(const std::filesystem::path& path);
         void showMessage(std::string_view message);
 

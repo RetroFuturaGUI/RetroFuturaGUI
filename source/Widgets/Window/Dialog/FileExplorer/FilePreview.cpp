@@ -229,12 +229,6 @@ void RetroFuturaGUI::FileExplorer::FilePreview::showLoaded(Loaded&& loaded)
         return;
     }
 
-    if(loaded._CanShowFrame)
-    {
-        showFrame(loaded._Path);
-        return;
-    }
-
     if(!loaded._Message.empty())
     {
         showMessage(loaded._Message);

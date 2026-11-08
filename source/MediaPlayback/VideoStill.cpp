@@ -19,7 +19,9 @@ std::optional<RetroFuturaGUI::DecodedImage> RetroFuturaGUI::DecodeVideoFrame(std
 {
     MediaSource source;
 
-    if(!source.Open(path))
+    //The container's headers where they tell the codec, size, rate and length (Matroska, MP4, Ogg), so the open reads no
+    //packets ahead. A file without a header, an MPEG program stream, is still probed
+    if(!source.Open(path, StreamProbing::HeadersOnly))
         return std::nullopt;
 
     const AVStream* stream { source.GetStream(source.FindVideoStream()) };

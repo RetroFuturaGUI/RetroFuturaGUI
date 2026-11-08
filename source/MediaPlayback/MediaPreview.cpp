@@ -58,8 +58,10 @@ RetroFuturaGUI::MediaPreviewResult RetroFuturaGUI::MediaPreview::ReadPreview(con
                 break;
             }
 
-            // Decoded once here first: in the decoder helper a file that crashes the decoder takes only the helper down
-            result._CanShowFrame = DecodeVideoFrame(path, static_cast<i64>(video->_Seconds * 100.0), _frameTestSide, true).has_value(); //10% in in milliseconds
+            //The pane shows this picture itself, so the program never decodes the file to show it; in the decoder helper a file that
+            //crashes the decoder takes only the helper down
+            result._Picture = DecodeVideoFrame(path, static_cast<i64>(video->_Seconds * 100.0), pictureSide, true); //10% in, in milliseconds
+            result._CanShowFrame = result._Picture.has_value();
 
             if(!result._CanShowFrame)
                 result._Message = "Can't show this video";
