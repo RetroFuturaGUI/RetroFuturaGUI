@@ -23,12 +23,13 @@ void RetroFuturaGUI::Background::Draw()
     drawSvg();
 }
 
-void RetroFuturaGUI::Background::setCornerRadii()
+void RetroFuturaGUI::Background::setCornerShape()
 {
     if(!_backgroundPlane)
         return;
 
     _backgroundPlane->SetCornerRadii(_cornerRadii);
+    _backgroundPlane->SetCutCorners(_cutCorners);
 }
 
 void RetroFuturaGUI::Background::SetTransitionSettings(const TransitionSettings* settings)

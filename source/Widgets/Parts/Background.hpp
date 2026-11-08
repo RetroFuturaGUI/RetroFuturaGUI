@@ -149,7 +149,7 @@ namespace RetroFuturaGUI
         /// @brief Whether the path names an SVG file, by its extension in any case.
         static bool isSvgPath(std::string_view path);
 
-        void setCornerRadii() override;
+        void setCornerShape() override;
 
         /// @brief Draws the fill this far inside the size and position set, per side: top, right, bottom, left. IWidget sets it for its border gap
         void setInset(const glm::vec4& inset);

@@ -32,10 +32,10 @@ void main()
     vec2 innerHalfSize = halfSize - vec2(uBorderWidth);
 
     float cornerRadius = ((uDIP & ROUNDED_CORNERS) != 0) ? cornerRadiusAt(scaledPos) : 0.0; // each corner its own radius, so the outline follows the fill
-    float innerRadius = max(cornerRadius - uBorderWidth, 0.0);
+    float innerRadius = max(cornerRadius - uBorderWidth * (isCutCornerAt(scaledPos) ? CUT_INSET_PER_WIDTH : 1.0), 0.0); // the inner edge's cut runs parallel to the outer one
 
-    float outerDist = roundedRectSDF(scaledPos, halfSize, cornerRadius);
-    float innerDist = roundedRectSDF(scaledPos, innerHalfSize, innerRadius);
+    float outerDist = cornerShapeSDF(scaledPos, halfSize, cornerRadius);
+    float innerDist = cornerShapeSDF(scaledPos, innerHalfSize, innerRadius);
 
     if (outerDist > 0.0 || innerDist <= 0.0 || isInBorderGap(scaledPos, halfSize, innerHalfSize))
         discard;

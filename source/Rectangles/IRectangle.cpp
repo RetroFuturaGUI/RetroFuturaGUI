@@ -90,6 +90,16 @@ const glm::vec4& RetroFuturaGUI::IRectangle::GetCornerRadii() const
     return _cornerRadii;
 }
 
+void RetroFuturaGUI::IRectangle::SetCutCorners(const CutCorners corners)
+{
+    _cutCorners = corners;
+}
+
+RetroFuturaGUI::CutCorners RetroFuturaGUI::IRectangle::GetCutCorners() const
+{
+    return _cutCorners;
+}
+
 void RetroFuturaGUI::IRectangle::uploadTransform(Shader& shader)
 {
     updateShownCornerRadii();
@@ -100,7 +110,10 @@ void RetroFuturaGUI::IRectangle::uploadTransform(Shader& shader)
     shader.SetUniformVec2("uScale", _scale);
 
     if(_shaderFeatureDIP & ShaderFeatures::RoundedCorners)
+    {
         shader.SetUniformVec4("uCornerRadii", _shownCornerRadii);
+        shader.SetUniformInt("uCutCorners", static_cast<i32>(_cutCorners));
+    }
 }
 
 void RetroFuturaGUI::IRectangle::updateShownCornerRadii()

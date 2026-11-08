@@ -20,12 +20,13 @@ void RetroFuturaGUI::Border::Draw()
     _borderFrame->Draw();
 }
 
-void RetroFuturaGUI::Border::setCornerRadii()
+void RetroFuturaGUI::Border::setCornerShape()
 {
     if(!_borderFrame)
         return;
 
     _borderFrame->SetCornerRadii(_cornerRadii);
+    _borderFrame->SetCutCorners(_cutCorners);
 }
 
 void RetroFuturaGUI::Border::SetTransitionSettings(const TransitionSettings* settings)

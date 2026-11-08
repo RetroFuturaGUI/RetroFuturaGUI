@@ -113,6 +113,7 @@ void RetroFuturaGUI::RadioButton::updateIndicatorShape()
         return;
 
     _indicator->SetCornerRadii(_background.GetCornerRadii() - _border.GetWidth() - _indicatorPadding);
+    _indicator->SetCutCorners(_background.GetCutCorners());
 }
 
 void RetroFuturaGUI::RadioButton::SetIndicatorGradientOffset(const f32 gradientOffset)

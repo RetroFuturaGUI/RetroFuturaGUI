@@ -141,7 +141,7 @@ namespace RetroFuturaGUI
     private:
         /// @brief Hands the wave plane the colors of the current state. A Selected state without colors shows the Enabled ones
         void setColors() override;
-        void setCornerRadii() override;
+        void setCornerShape() override;
 
         /// @brief Tells the widget its layout changed, if it asked to know
         void notifyLayoutChange();

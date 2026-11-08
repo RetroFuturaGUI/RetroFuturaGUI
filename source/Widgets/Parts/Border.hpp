@@ -104,7 +104,7 @@ namespace RetroFuturaGUI
 
     private:
         void setColors() override;
-        void setCornerRadii() override;
+        void setCornerShape() override;
 
         std::unique_ptr<Frame> _borderFrame;
         std::function<void()> _onWidthChange {};//Border.hpp, private:

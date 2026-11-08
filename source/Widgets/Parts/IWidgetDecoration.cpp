@@ -44,10 +44,26 @@ const glm::vec4& RetroFuturaGUI::IWidgetDecoration::GetCornerRadii() const
 void RetroFuturaGUI::IWidgetDecoration::SetCornerRadii(const glm::vec4& radii)
 {
    _cornerRadii = radii;
-   setCornerRadii();
+   setCornerShape();
 
     if(!_onCornerRadiiChange)
         return;
 
     _onCornerRadiiChange();
+}
+
+void RetroFuturaGUI::IWidgetDecoration::SetCutCorners(const CutCorners corners)
+{
+    _cutCorners = corners;
+    setCornerShape();
+
+    if(!_onCornerRadiiChange)
+        return;
+
+    _onCornerRadiiChange(); //what follows the corners follows their cut too
+}
+
+RetroFuturaGUI::CutCorners RetroFuturaGUI::IWidgetDecoration::GetCutCorners() const
+{
+    return _cutCorners;
 }

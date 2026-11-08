@@ -1,6 +1,7 @@
 #pragma once
 #include "Projection.hpp"
 #include "IncludeHelper.hpp"
+#include "IRectangle.hpp"
 #include <glm/ext/vector_float4.hpp>
 #include <functional>
 #include <vector>
@@ -31,9 +32,15 @@ namespace RetroFuturaGUI
         const glm::vec4& GetCornerRadii() const;
         void SetCornerRadii(const glm::vec4& radii);
 
+        /// @brief Sets which corners are cut off straight instead of rounded: SetCutCorners(CutCorners::TopLeft | CutCorners::BottomRight).
+        ///        A cut corner is cut by its corner radius along each edge; the others stay rounded, or square with a radius of 0
+        void SetCutCorners(const CutCorners corners);
+        CutCorners GetCutCorners() const;
+
     protected:
         virtual void setColors() = 0;
-        virtual void setCornerRadii() = 0;
+        /// @brief Hands the corner radii and the cut corners to the element
+        virtual void setCornerShape() = 0;
 
 
 
@@ -46,6 +53,7 @@ namespace RetroFuturaGUI
             _colorsHover { glm::vec4(0.55f, 0.55f, 0.55f, 1.0f) },
             _colorsSelected { };
         glm::vec4 _cornerRadii { 0.0f };
+        CutCorners _cutCorners { CutCorners::None };
 
         ColorState _colorState { ColorState::Enabled };
     };

@@ -114,6 +114,7 @@ void RetroFuturaGUI::CheckBox::updateInheritFillShape()
         return;
 
     _inheritFill->SetCornerRadii(_background.GetCornerRadii());
+    _inheritFill->SetCutCorners(_background.GetCutCorners());
 }
 
 void RetroFuturaGUI::CheckBox::SetInheritColors(std::span<const glm::vec4> colors, const ColorState state)

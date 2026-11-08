@@ -212,9 +212,10 @@ void RetroFuturaGUI::Graph::setColors()
     _wavePlane.SetColors(GetColors(_colorState));
 }
 
-void RetroFuturaGUI::Graph::setCornerRadii()
+void RetroFuturaGUI::Graph::setCornerShape()
 {
     _wavePlane.SetCornerRadii(_cornerRadii);
+    _wavePlane.SetCutCorners(_cutCorners);
 }
 
 void RetroFuturaGUI::Graph::notifyLayoutChange()

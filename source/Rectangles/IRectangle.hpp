@@ -8,6 +8,28 @@
 
 namespace RetroFuturaGUI
 {
+    /// @brief The corners cut off straight instead of rounded, as a mask: SetCutCorners(CutCorners::TopLeft | CutCorners::BottomRight).
+    ///        A cut corner takes its corner radius as the length cut off along each edge; a corner with a radius of 0 stays square
+    enum class CutCorners : u32
+    {
+        None = 0,
+        TopLeft = 1,
+        TopRight = 1 << 1,
+        BottomRight = 1 << 2,
+        BottomLeft = 1 << 3,
+        All = TopLeft | TopRight | BottomRight | BottomLeft
+    };
+
+    constexpr CutCorners operator |(const CutCorners left, const CutCorners right)
+    {
+        return static_cast<CutCorners>(static_cast<u32>(left) | static_cast<u32>(right));
+    }
+
+    constexpr bool HasCutCorner(const CutCorners corners, const CutCorners corner)
+    {
+        return 0 != (static_cast<u32>(corners) & static_cast<u32>(corner));
+    }
+
     /// @brief The base of every rectangle: its size, position, rotation and corners, and the quad all rectangles share. The
     ///        fill, the glass and the raster come from FillStyle, and Plane and Frame make them public.
     class IRectangle : public FillStyle
@@ -51,6 +73,11 @@ namespace RetroFuturaGUI
         void SetCornerRadii(const glm::vec4& radii);
         const glm::vec4& GetCornerRadii() const;
 
+        /// @brief Sets which corners are cut off straight instead of rounded, by their corner radius. Switches at once, while the
+        ///        radii themselves may still be moving. Public on Plane and Frame
+        void SetCutCorners(const CutCorners corners);
+        CutCorners GetCutCorners() const;
+
         /// @brief Uploads the projection, the three matrices, the size in pixels, and the corner radii shown now when the
         ///        corners are rounded.
         void uploadTransform(Shader& shader);
@@ -68,6 +95,7 @@ namespace RetroFuturaGUI
         glm::vec3
             _position { 0.0f },
             _rotation { 0.0f };
+        CutCorners _cutCorners { CutCorners::None };
         glm::vec4 _cornerRadii { 0.0f }; //the radii given; _shownCornerRadii are drawn, on the way to them while a transition runs
 
     private:
