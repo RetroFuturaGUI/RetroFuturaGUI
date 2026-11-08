@@ -343,3 +343,13 @@ void RetroFuturaGUI::WidgetText::notifyChange(const WidgetTextChange change)
 
     _changeHook(change);
 }
+
+RetroFuturaGUI::DropShadow& RetroFuturaGUI::WidgetText::GetDropShadow()
+{
+    return _text.GetDropShadow();
+}
+
+const RetroFuturaGUI::DropShadow& RetroFuturaGUI::WidgetText::GetDropShadow() const
+{
+    return _text.GetDropShadow();
+}

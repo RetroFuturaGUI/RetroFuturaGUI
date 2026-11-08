@@ -169,6 +169,10 @@ namespace RetroFuturaGUI
         Outline& GetOutline();
         const Outline& GetOutline() const;
 
+        /// @brief Returns the text's drop shadow, to style it: GetDropShadow().Show(true). One set of colors for every state
+        DropShadow& GetDropShadow();
+        const DropShadow& GetDropShadow() const;
+
     //Called by the owning widget
         /// @brief Draws the text
         void Draw();

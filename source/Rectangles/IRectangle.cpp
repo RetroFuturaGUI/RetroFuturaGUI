@@ -100,6 +100,11 @@ RetroFuturaGUI::CutCorners RetroFuturaGUI::IRectangle::GetCutCorners() const
     return _cutCorners;
 }
 
+const glm::vec4& RetroFuturaGUI::IRectangle::GetShownCornerRadii() const
+{
+    return _shownCornerRadii;
+}
+
 void RetroFuturaGUI::IRectangle::uploadTransform(Shader& shader)
 {
     updateShownCornerRadii();

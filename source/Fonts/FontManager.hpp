@@ -60,7 +60,8 @@ namespace RetroFuturaGUI
         std::unordered_map<u32, Glyph> _Glyphs; // keyed by codepoint; a glyph keeps its address when others are added
         std::unordered_map<u64, Glyph> _OutlineGlyphs; // glyphs widened for text outlines, keyed by the width (FontSizeToKey) above the codepoint
         std::unordered_map<u32, Glyph> _IndexGlyphs; // glyphs found by shaping, keyed by their index in the source
-        std::unordered_map<u64, Glyph> _IndexOutlineGlyphs; // those widened for text outlines, keyed by the width above the index.
+        std::unordered_map<u64, Glyph> _IndexOutlineGlyphs; // those widened for text outlines, keyed by the width above the index
+        std::unordered_map<u64, Glyph> _ShadowGlyphs; // blurred for drop shadows, keyed by shadowGlyphKey
         std::string _FontFile {}; // the font file and face the source draws from: neighboring blocks of one file are shaped together
         std::unique_ptr<IGlyphSource> _Source { nullptr }; // kept until the program ends, for glyphs rendered on first use and for outlines
         std::vector<GlyphPage>
@@ -191,6 +192,12 @@ namespace RetroFuturaGUI
         /// @brief Finds the glyph a placed glyph draws widened for a text outline, as FindGlyphOutline does.
         static const Glyph* FindPlacedGlyphOutline(const FontInfo& font, const u32 sizeKey, const PlacedGlyph& placed, const f32 width);
 
+        /// @brief Finds the glyph a placed glyph casts as a drop shadow: its coverage (a color glyph's alpha), widened by the
+        ///        outline width when the text has an outline, and blurred so its edges fade over blur pixels. Rendered into the
+        ///        block's pages the first time, once per blur and outline width, which are kept to 1/16 px below 4096 px.
+        /// @return nullptr when nothing covers it, or no context is there to render it with.
+        static const Glyph* FindPlacedGlyphShadow(const PlacedGlyph& placed, const f32 blur, const f32 outlineWidth);
+
         /// @brief Extends an already-loaded fontset by loading glyphs for the given codepoint range from a fallback font family.
         static void ExtendFontset(std::string_view fontFamily, std::string_view fontFamilyExtension, const f32 size, const FontSizeUnit sizeUnit, const PlatformBridge::Fonts::Slant slant, const PlatformBridge::Fonts::Weight weight, const u32 codePointFirst, const u32 codePointLast);
 
@@ -266,6 +273,17 @@ namespace RetroFuturaGUI
 
         /// @brief Puts a rendered glyph onto a page of the block and fills in where it is and how big, scaled to the font's size.
         static void storeGlyph(GlyphBlock& block, const GlyphBitmap& bitmap, Glyph* glyph);
+
+        /// @brief The key of a shadow glyph in its block: whether it is a shaped glyph's index or a code point, the blur and the
+        ///        outline width in 1/16 px (15 and 16 bits), and the index or code point.
+        static u64 shadowGlyphKey(const PlacedGlyph& placed, const f32 blur, const f32 outlineWidth);
+
+        /// @brief Renders the shape a placed glyph's shadow is cast by: the glyph, or its outline when width is above 0.
+        static bool renderShadowShape(GlyphBlock& block, const PlacedGlyph& placed, const f32 outlineWidth, GlyphBitmap* bitmap);
+
+        /// @brief Turns a rendered glyph into its shadow: coverage only (a color glyph's alpha), grown and blurred so its edges
+        ///        fade over blur pixels, a Gaussian whose spread is a quarter of the blur.
+        static void castShadow(const f32 blur, GlyphBitmap* bitmap);
 
         /// @brief The block of the font covering a character, nullptr when none does.
         static GlyphBlock* findBlock(const GlyphAtlas& atlas, const u32 codePoint);

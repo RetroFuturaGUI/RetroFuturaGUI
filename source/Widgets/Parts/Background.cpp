@@ -11,6 +11,7 @@ RetroFuturaGUI::Background::Background(Projection* projection, BackgroundHooks h
     : IWidgetDecoration(projection, std::move(hooks._OnCornerRadiiChange))
 {
     _backgroundPlane = std::make_unique<Plane>(_projection);
+    _shadowRectangle = std::make_unique<ShadowRectangle>(_projection, &_dropShadow);
     setColors();
 }
 
@@ -19,6 +20,7 @@ void RetroFuturaGUI::Background::Draw()
     if(!_backgroundPlane)
         return;
 
+    drawShadow();
     _backgroundPlane->Draw();
     drawSvg();
 }
@@ -38,6 +40,7 @@ void RetroFuturaGUI::Background::SetTransitionSettings(const TransitionSettings*
         return;
 
     _backgroundPlane->SetTransitionSettings(settings);
+    _dropShadow.SetTransitionSettings(settings);
 }
 
 void RetroFuturaGUI::Background::SetSize(const glm::vec2& size)
@@ -396,4 +399,36 @@ void RetroFuturaGUI::Background::applyInset()
 
     _backgroundPlane->SetSize(size);
     _backgroundPlane->SetPosition(_position + glm::vec3(shift, 0.0f));
+}
+
+RetroFuturaGUI::DropShadow& RetroFuturaGUI::Background::GetDropShadow()
+{
+    return _dropShadow;
+}
+
+const RetroFuturaGUI::DropShadow& RetroFuturaGUI::Background::GetDropShadow() const
+{
+    return _dropShadow;
+}
+
+void RetroFuturaGUI::Background::drawShadow()
+{
+    if(!_backgroundPlane)
+        return;
+
+    if(!_shadowRectangle)
+        return;
+
+    if(!_dropShadow.IsShown())
+        return;
+
+    _shadowRectangle->SetCaster(ShadowCaster
+    {
+        ._Size = _backgroundPlane->GetSize(),
+        ._Position = _backgroundPlane->GetPosition(),
+        ._CornerRadii = _backgroundPlane->GetShownCornerRadii(),
+        ._CutCorners = _backgroundPlane->GetCutCorners(),
+        ._RingWidth = 0.0f
+    });
+    _shadowRectangle->Draw();
 }

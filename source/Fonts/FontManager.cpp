@@ -152,6 +152,7 @@ RetroFuturaGUI::FontManager::LoadFontResult RetroFuturaGUI::FontManager::LoadFon
             ._OutlineGlyphs = {},
             ._IndexGlyphs = {},
             ._IndexOutlineGlyphs = {},
+            ._ShadowGlyphs = {},
             ._FontFile = fontProperty._Path + "#" + std::to_string(fontProperty._FaceIndex),
             ._Source = std::move(source),
             ._Pages = {},
@@ -179,6 +180,7 @@ RetroFuturaGUI::FontManager::LoadFontResult RetroFuturaGUI::FontManager::LoadFon
         ._OutlineGlyphs = {},
         ._IndexGlyphs = {},
         ._IndexOutlineGlyphs = {},
+        ._ShadowGlyphs = {},
         ._FontFile = fontProperty._Path + "#" + std::to_string(fontProperty._FaceIndex),
         ._Source = std::move(source), //every glyph is made, but outlines are rendered from it later.
         ._Pages = {},
@@ -861,6 +863,7 @@ RetroFuturaGUI::GlyphBlock* RetroFuturaGUI::FontManager::getDefaultFontBlock(con
         ._OutlineGlyphs = {},
         ._IndexGlyphs = {},
         ._IndexOutlineGlyphs = {},
+        ._ShadowGlyphs = {},
         ._FontFile = fontFile,
         ._Source = std::move(source),
         ._Pages = {},
@@ -970,4 +973,152 @@ bool RetroFuturaGUI::FontManager::isAttaching(const u32 codePoint)
     }};
 
     return std::ranges::any_of(attaching, [codePoint](const std::pair<u32, u32>& range) { return range.first <= codePoint && range.second >= codePoint; });
+}
+
+const RetroFuturaGUI::Glyph* RetroFuturaGUI::FontManager::FindPlacedGlyphShadow(const PlacedGlyph& placed, const f32 blur, const f32 outlineWidth)
+{
+    if(!placed._Block)
+        return nullptr;
+
+    GlyphBlock& block { *placed._Block };
+    const u64 key { shadowGlyphKey(placed, blur, outlineWidth) };
+    const auto found { block._ShadowGlyphs.find(key) };
+
+    if(block._ShadowGlyphs.end() != found)
+        return &found->second;
+
+    if(!block._Source)
+        return nullptr;
+
+    const UploadContextScope context {};
+
+    if(!context.HasContext())
+        return nullptr;
+
+    Glyph glyph;
+    glyph._CodePoint = placed._CodePoint;
+    GlyphBitmap bitmap {};
+
+    //At the source's own size, like an outline, so the outline and the blur are as asked once scaled to the font's size. Kept
+    //when it fails too, so it isn't tried again
+    if(renderShadowShape(block, placed, outlineWidth / block._Scale, &bitmap))
+    {
+        castShadow(blur / block._Scale, &bitmap);
+        storeGlyph(block, bitmap, &glyph);
+    }
+
+    return &block._ShadowGlyphs.emplace(key, glyph).first->second;
+}
+
+u64 RetroFuturaGUI::FontManager::shadowGlyphKey(const PlacedGlyph& placed, const f32 blur, const f32 outlineWidth)
+{
+    const u64
+        isShaped { placed._IsShaped ? 1ull : 0ull },
+        blurKey { static_cast<u64>(std::clamp(std::lround(blur * 16.0f), 0l, 0x7FFFl)) },
+        outlineKey { static_cast<u64>(std::clamp(std::lround(outlineWidth * 16.0f), 0l, 0xFFFFl)) },
+        glyphKey { placed._IsShaped ? placed._GlyphIndex : placed._CodePoint };
+
+    return isShaped << 63 | blurKey << 48 | outlineKey << 32 | glyphKey;
+}
+
+bool RetroFuturaGUI::FontManager::renderShadowShape(GlyphBlock& block, const PlacedGlyph& placed, const f32 outlineWidth, GlyphBitmap* bitmap)
+{
+    if(!block._Source)
+        return false;
+
+    if(placed._IsShaped)
+    {
+        if(0.0f < outlineWidth)
+            return block._Source->RenderGlyphIndexOutline(placed._GlyphIndex, outlineWidth, bitmap);
+
+        return block._Source->RenderGlyphIndex(placed._GlyphIndex, bitmap);
+    }
+
+    if(0.0f < outlineWidth)
+        return block._Source->RenderGlyphOutline(placed._CodePoint, outlineWidth, bitmap);
+
+    return block._Source->RenderGlyph(placed._CodePoint, bitmap);
+}
+
+void RetroFuturaGUI::FontManager::castShadow(const f32 blur, GlyphBitmap* bitmap)
+{
+    if(!bitmap)
+        return;
+
+    //A color glyph casts its shadow by its alpha.
+    if(GlyphPixelFormat::Color == bitmap->_Format)
+    {
+        const uSize pixelCount { static_cast<uSize>(bitmap->_Width) * bitmap->_Height };
+        std::vector<u8> coverage(pixelCount);
+
+        for(uSize pixel { 0 }; pixel < pixelCount; ++pixel)
+            coverage[pixel] = bitmap->_Pixels[pixel * 4 + 3];
+
+        bitmap->_Pixels = std::move(coverage);
+        bitmap->_Format = GlyphPixelFormat::Coverage;
+    }
+
+    if(0.0f >= blur || 0 == bitmap->_Width || 0 == bitmap->_Height)
+        return;
+
+    //A Gaussian reaching two spreads to each side fades an edge over the whole blur, as the rectangles' shadows do. The
+    //bitmap grows by that reach, so nothing of the fade is cut off.
+    const f32 spread { blur * 0.25f };
+    const i32 reach { static_cast<i32>(std::ceil(spread * 2.0f)) };
+    std::vector<f32> weights(static_cast<uSize>(reach) * 2 + 1);
+    f32 weightSum { 0.0f };
+
+    for(i32 offset { -reach }; offset <= reach; ++offset)
+    {
+        const f32 weight { std::exp(-static_cast<f32>(offset * offset) / (2.0f * spread * spread)) };
+        weights[static_cast<uSize>(offset + reach)] = weight;
+        weightSum += weight;
+    }
+
+    for(f32& weight : weights)
+        weight /= weightSum;
+
+    const i32
+        width { static_cast<i32>(bitmap->_Width) },
+        height { static_cast<i32>(bitmap->_Height) },
+        grownWidth { width + reach * 2 },
+        grownHeight { height + reach * 2 };
+    std::vector<f32>
+        rows(static_cast<uSize>(grownWidth) * height, 0.0f),
+        columns(static_cast<uSize>(grownWidth) * grownHeight, 0.0f);
+
+    //Across first, into the grown width, then down, into the grown height.
+    for(i32 y { 0 }; y < height; ++y)
+        for(i32 x { 0 }; x < width; ++x)
+        {
+            const f32 value { bitmap->_Pixels[static_cast<uSize>(y) * width + x] / 255.0f };
+
+            if(0.0f == value)
+                continue;
+
+            for(i32 offset { -reach }; offset <= reach; ++offset)
+                rows[static_cast<uSize>(y) * grownWidth + x + reach + offset] += value * weights[static_cast<uSize>(offset + reach)];
+        }
+
+    for(i32 y { 0 }; y < height; ++y)
+        for(i32 x { 0 }; x < grownWidth; ++x)
+        {
+            const f32 value { rows[static_cast<uSize>(y) * grownWidth + x] };
+
+            if(0.0f == value)
+                continue;
+
+            for(i32 offset { -reach }; offset <= reach; ++offset)
+                columns[static_cast<uSize>(y + reach + offset) * grownWidth + x] += value * weights[static_cast<uSize>(offset + reach)];
+        }
+
+    bitmap->_Pixels.resize(columns.size());
+
+    for(uSize pixel { 0 }; pixel < columns.size(); ++pixel)
+        bitmap->_Pixels[pixel] = static_cast<u8>(std::lround(std::clamp(columns[pixel], 0.0f, 1.0f) * 255.0f));
+
+    bitmap->_Width = static_cast<u32>(grownWidth);
+    bitmap->_Height = static_cast<u32>(grownHeight);
+    bitmap->_BearingX -= reach;
+    bitmap->_BearingY += reach;
 }

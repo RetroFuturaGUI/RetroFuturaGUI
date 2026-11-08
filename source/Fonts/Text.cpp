@@ -9,6 +9,7 @@ RetroFuturaGUI::Text::Text(Projection* projection)
 {
     initMesh(&_mesh);
     initMesh(&_outlineMesh);
+    initMesh(&_shadowMesh);
     SetColors(std::span<const glm::vec4>(&_defaultColor, 1));
 }
 
@@ -16,6 +17,7 @@ RetroFuturaGUI::Text::~Text()
 {
     glDeleteBuffers(1, &_mesh._Vbo);
     glDeleteBuffers(1, &_outlineMesh._Vbo);
+    glDeleteBuffers(1, &_shadowMesh._Vbo);
 }
 
 void RetroFuturaGUI::Text::initMesh(GlyphMesh* mesh)
@@ -42,6 +44,11 @@ void RetroFuturaGUI::Text::Draw()
     if(_colors.empty())
         return;
 
+    //Shadow glyphs are rendered per blur, so a shadow shown or blurred anew lays the glyphs out again.
+    if(_dropShadow.IsShown() != _hasShadowMesh || (_hasShadowMesh && _dropShadow.GetBlur() != _shadowMeshBlur))
+        updateMesh();
+
+    drawShadow();
     drawOutline();
 
     if(_mesh._Draws.empty())
@@ -70,6 +77,30 @@ void RetroFuturaGUI::Text::drawOutline()
     _outline.uploadFill(shader, 0);
     _outline.uploadImage(shader, glm::max(_textSpan, glm::vec2(1.0f)));
     drawMesh(shader, &_outlineMesh);
+}
+
+void RetroFuturaGUI::Text::drawShadow()
+{
+    if(!_hasShadowMesh || _shadowMesh._Draws.empty())
+        return;
+
+    //Scaled around the middle of the text's span, then moved. Behind the outline, which draws next
+    const glm::vec3 center { _textSpan.x * 0.5f, (TextFlow::Horizontal == _textFlow ? _ascender : 0.0f) - _textSpan.y * 0.5f, 0.0f };
+    const f32 scale { _dropShadow.GetScale() };
+    const glm::mat4 placement
+    {
+        glm::translate(_translationMatrix, glm::vec3(_dropShadow.GetOffset(), -_shadowDepthOffset))
+        * glm::translate(glm::mat4(1.0f), center)
+        * glm::scale(glm::mat4(1.0f), glm::vec3(scale, scale, 1.0f))
+        * glm::translate(glm::mat4(1.0f), -center)
+    };
+
+    _dropShadow.SetTransitionSettings(_transitionSettings);
+    Shader& shader { ShaderManager::GetTextShader(_dropShadow._fillType) };
+    uploadPlacement(shader, placement);
+    _dropShadow.uploadFill(shader, 0);
+    _dropShadow.uploadImage(shader, glm::max(_textSpan, glm::vec2(1.0f)));
+    drawMesh(shader, &_shadowMesh);
 }
 
 void RetroFuturaGUI::Text::uploadPlacement(Shader& shader, const glm::mat4& translation) const
@@ -144,6 +175,16 @@ f32 RetroFuturaGUI::Text::GetOutlineWidth() const
 RetroFuturaGUI::TextOutline& RetroFuturaGUI::Text::GetOutline()
 {
     return _outline;
+}
+
+RetroFuturaGUI::DropShadow& RetroFuturaGUI::Text::GetDropShadow()
+{
+    return _dropShadow;
+}
+
+const RetroFuturaGUI::DropShadow& RetroFuturaGUI::Text::GetDropShadow() const
+{
+    return _dropShadow;
 }
 
 void RetroFuturaGUI::Text::SetTextPadding(const f32 padding)
@@ -258,6 +299,11 @@ void RetroFuturaGUI::Text::updateMesh()
     _mesh._Draws.clear();
     _outlineMesh._Vertices.clear();
     _outlineMesh._Draws.clear();
+    _shadowMesh._Vertices.clear();
+    _shadowMesh._Draws.clear();
+    _hasShadowMesh = _dropShadow.IsShown();
+    _shadowMeshBlur = _dropShadow.GetBlur();
+    _shadowMesh._IsChanged = true;
 
     if(!_fontInfo)
         return;
@@ -275,7 +321,8 @@ void RetroFuturaGUI::Text::updateMesh()
     const f32
         nativeSize { atlas._FontSize },
         scale { _glyphSize.y / nativeSize },
-        outlineWidth { _outlineWidth / scale }; //widened at the glyphs' own size, so it's as wide as asked once they're scaled
+        outlineWidth { _outlineWidth / scale }, //widened at the glyphs' own size, so it's as wide as asked once they're scaled
+        shadowBlur { _dropShadow.GetBlur() / scale }; //blurred there too.
     const std::u32string& text { _text.GetUtf32() };
     uSize lineStart { 0 };
 
@@ -311,7 +358,12 @@ void RetroFuturaGUI::Text::updateMesh()
             if(!glyph)
                 continue;
 
-            //The outline first, so the glyph's quad comes after it in the same order.
+            //The shadow and the outline first, so the glyph's quad comes after them in the same order.
+            const Glyph* shadow { _hasShadowMesh ? FontManager::FindPlacedGlyphShadow(placed, shadowBlur, 0.0f < _outlineWidth ? outlineWidth : 0.0f) : nullptr };
+
+            if(shadow)
+                appendGlyphQuad(*shadow, pen, scale, getLineCenter(line), &_shadowMesh);
+
             const Glyph* outline { 0.0f < _outlineWidth ? FontManager::FindPlacedGlyphOutline(*_fontInfo, _fontKey, placed, outlineWidth) : nullptr };
 
             if(outline)
@@ -348,6 +400,7 @@ void RetroFuturaGUI::Text::updateMesh()
 
     _mesh._IsChanged = true;
     _outlineMesh._IsChanged = true;
+    _shadowMesh._IsChanged = true;
     FontManager::FlushGlyphUploads();
 }
 

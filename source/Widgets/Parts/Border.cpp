@@ -5,6 +5,7 @@ RetroFuturaGUI::Border::Border(Projection* projection, BorderHooks hooks)
     : IWidgetDecoration(projection, std::move(hooks._OnCornerRadiiChange)), _onWidthChange(std::move(hooks._OnWidthChange))
 {
     _borderFrame = std::make_unique<Frame>(_projection);
+    _shadowRectangle = std::make_unique<ShadowRectangle>(_projection, &_dropShadow);
     _colorsEnabled = { glm::vec4(0.25f, 0.25f, 0.25f, 1.0f) };
     _colorsDisabled = { glm::vec4(0.2f, 0.2f, 0.2f, 1.0f) };
     _colorsClicked = { glm::vec4(0.3f, 0.3f, 1.3f, 1.0f) };
@@ -17,6 +18,7 @@ void RetroFuturaGUI::Border::Draw()
     if(!_borderFrame)
         return;
 
+    drawShadow();
     _borderFrame->Draw();
 }
 
@@ -35,6 +37,7 @@ void RetroFuturaGUI::Border::SetTransitionSettings(const TransitionSettings* set
         return;
 
     _borderFrame->SetTransitionSettings(settings);
+    _dropShadow.SetTransitionSettings(settings);
 }
 
 void RetroFuturaGUI::Border::SetSize(const glm::vec2& size)
@@ -250,4 +253,36 @@ f32 RetroFuturaGUI::Border::GetWidth() const
         return 0.0f;
 
     return _borderFrame->GetBorderWidth();
+}
+
+RetroFuturaGUI::DropShadow& RetroFuturaGUI::Border::GetDropShadow()
+{
+    return _dropShadow;
+}
+
+const RetroFuturaGUI::DropShadow& RetroFuturaGUI::Border::GetDropShadow() const
+{
+    return _dropShadow;
+}
+
+void RetroFuturaGUI::Border::drawShadow()
+{
+    if(!_borderFrame)
+        return;
+
+    if(!_shadowRectangle)
+        return;
+
+    if(!_dropShadow.IsShown())
+        return;
+
+    _shadowRectangle->SetCaster(ShadowCaster
+    {
+        ._Size = _borderFrame->GetSize(),
+        ._Position = _borderFrame->GetPosition(),
+        ._CornerRadii = _borderFrame->GetShownCornerRadii(),
+        ._CutCorners = _borderFrame->GetCutCorners(),
+        ._RingWidth = _borderFrame->GetBorderWidth()
+    });
+    _shadowRectangle->Draw();
 }

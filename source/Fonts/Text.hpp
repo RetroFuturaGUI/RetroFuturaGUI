@@ -4,6 +4,7 @@
 #include "FillStyle.hpp"
 #include "FogStyle.hpp"
 #include "TextOutline.hpp"
+#include "DropShadow.hpp"
 #include "IncludeHelper.hpp"
 #include "Projection.hpp"
 #include "ContextObjects.hpp"
@@ -212,6 +213,10 @@ namespace RetroFuturaGUI
         /// @brief Returns the outline's style: its colors, fill, raster and image, set like the text's own
         TextOutline& GetOutline();
 
+        /// @brief Returns the drop shadow. GetDropShadow().Show(true). Cast by the glyphs and their outline, drawn behind both
+        DropShadow& GetDropShadow();
+        const DropShadow& GetDropShadow() const;
+
         /// @brief Sets how the lines run: horizontally (default), or as columns. Each '\n' starts the next column. Columns are placed by their top edge: centered on the position, or at the parent's top with SetAnchorTop
         void SetTextFlow(const TextFlow textFlow);
 
@@ -269,6 +274,7 @@ namespace RetroFuturaGUI
         void uploadPlacement(Shader& shader, const glm::mat4& translation) const;
         static void drawMesh(Shader& shader, GlyphMesh* mesh);
         void drawOutline();
+        void drawShadow();
 
         /// @brief How far a glyph placed by itself (its font can't shape) moves the pen along its line: its advance, or one em in a column
         f32 getAdvance(const Glyph& glyph, const f32 scale) const;
@@ -329,11 +335,18 @@ namespace RetroFuturaGUI
     // mesh
         GlyphMesh
             _mesh {},
-            _outlineMesh {};
+            _outlineMesh {},
+            _shadowMesh {};
 
     // outline
         TextOutline _outline {};
         f32 _outlineWidth { 0.0f };
         static constexpr f32 _outlineDepthOffset { 0.001f }; //behind the glyphs, well within the step between widgets
+
+    // drop shadow
+        DropShadow _dropShadow {};
+        f32 _shadowMeshBlur { 0.0f }; //the blur the shadow mesh was built with
+        bool _hasShadowMesh { false }; //whether the mesh was built with the shadow shown
+        static constexpr f32 _shadowDepthOffset { 0.002f }; //behind the outline
     };
 }

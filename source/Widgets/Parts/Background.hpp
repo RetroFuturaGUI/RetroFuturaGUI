@@ -5,6 +5,7 @@
 #include <memory>
 #include <span>
 #include "Plane.hpp"
+#include "ShadowRectangle.hpp"
 #include "SvgTexture.hpp"
 #include "Texture.hpp"
 #include "IWidgetDecoration.hpp"
@@ -55,6 +56,10 @@ namespace RetroFuturaGUI
 
         /// @brief Has the colors and corner radii move to new values over the owning widget's transitions.
         void SetTransitionSettings(const TransitionSettings* settings);
+
+        /// @brief Returns the drop shadow of the background: GetDropShadow().Show(true). Drawn just behind it
+        DropShadow& GetDropShadow();
+        const DropShadow& GetDropShadow() const;
 
         /// @brief Sets the offset applied to the background gradient's start position.
         void SetGradientOffset(const f32 gradientOffset);
@@ -151,6 +156,9 @@ namespace RetroFuturaGUI
 
         void setCornerShape() override;
 
+        /// @brief Draws the drop shadow of the element as it draws now, if the shadow is shown.
+        void drawShadow();
+
         /// @brief Draws the fill this far inside the size and position set, per side: top, right, bottom, left. IWidget sets it for its border gap
         void setInset(const glm::vec4& inset);
 
@@ -164,6 +172,8 @@ namespace RetroFuturaGUI
 
     //Elements
         std::unique_ptr<Plane> _backgroundPlane { nullptr };
+        DropShadow _dropShadow;
+        std::unique_ptr<ShadowRectangle> _shadowRectangle { nullptr };
         Texture* _backgroundImage { nullptr }; //a picture borrowed from ResourceManager, shown by _background
         std::unique_ptr<SvgTexture> _backgroundSvg { nullptr }; //an SVG background image, drawn over the fill
         f32 _backgroundImagePadding { 0.0f };

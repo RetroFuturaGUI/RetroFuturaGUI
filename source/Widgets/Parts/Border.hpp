@@ -5,6 +5,7 @@
 #include <memory>
 #include <span>
 #include "Frame.hpp"
+#include "ShadowRectangle.hpp"
 #include "Projection.hpp"
 #include "IWidgetDecoration.hpp"
 
@@ -57,6 +58,10 @@ namespace RetroFuturaGUI
         /// @brief Has the colors and corner radii move to new values over the owning widget's transitions.
         void SetTransitionSettings(const TransitionSettings* settings);
 
+        /// @brief Returns the drop shadow of the border, cast by its outline: GetDropShadow().Show(true). Drawn just behind it
+        DropShadow& GetDropShadow();
+        const DropShadow& GetDropShadow() const;
+
         /// @brief Sets the offset applied to the border gradient's start position.
         void SetGradientOffset(const f32 gradientOffset);
 
@@ -106,7 +111,12 @@ namespace RetroFuturaGUI
         void setColors() override;
         void setCornerShape() override;
 
+        /// @brief Draws the drop shadow of the element as it draws now, if the shadow is shown
+        void drawShadow();
+
         std::unique_ptr<Frame> _borderFrame;
+        DropShadow _dropShadow;
+        std::unique_ptr<ShadowRectangle> _shadowRectangle { nullptr };
         std::function<void()> _onWidthChange {};//Border.hpp, private:
         std::vector<f32> _primaryRasterWidthTransfer {};
     };

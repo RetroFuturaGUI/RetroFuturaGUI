@@ -20,6 +20,10 @@ namespace RetroFuturaGUI
         /// @return Reference to the Frame Shader object for that fill
         static Shader& GetFrameShader(FillType fillType);
 
+        /// @brief Get the shader of a ShadowRectangle with the given fill
+        /// @return Reference to the drop shadow Shader object for that fill
+        static Shader& GetShadowShader(FillType fillType);
+
         /// @brief Get the shader of a ColorField with the given shape
         /// @return Reference to the ColorField Shader object for that shape
         static Shader& GetColorFieldShader(ColorFieldShape shape);
@@ -78,6 +82,7 @@ namespace RetroFuturaGUI
         static inline std::array<std::unique_ptr<Shader>, _fillTypeCount> _planeShaders;
         static inline std::array<std::unique_ptr<Shader>, _fillTypeCount> _wavePlaneShaders;
         static inline std::array<std::unique_ptr<Shader>, _fillTypeCount> _frameShaders;
+        static inline std::array<std::unique_ptr<Shader>, _fillTypeCount> _shadowShaders;
         static inline std::array<std::unique_ptr<Shader>, _colorFieldShapeCount> _colorFieldShaders;
         static inline std::array<std::unique_ptr<Shader>, _fillTypeCount> _textShaders;
         static inline std::unique_ptr<Shader> _lineFill;

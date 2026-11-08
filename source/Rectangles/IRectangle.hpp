@@ -73,6 +73,9 @@ namespace RetroFuturaGUI
         void SetCornerRadii(const glm::vec4& radii);
         const glm::vec4& GetCornerRadii() const;
 
+        /// @brief Returns the corner radii drawn now. On the way to GetCornerRadii while a transition runs. Public on Plane and Frame
+        const glm::vec4& GetShownCornerRadii() const;
+
         /// @brief Sets which corners are cut off straight instead of rounded, by their corner radius. Switches at once, while the
         ///        radii themselves may still be moving. Public on Plane and Frame
         void SetCutCorners(const CutCorners corners);

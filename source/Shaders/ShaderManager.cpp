@@ -17,6 +17,11 @@ RetroFuturaGUI::Shader& RetroFuturaGUI::ShaderManager::GetFrameShader(FillType f
     return *_frameShaders[static_cast<uSize>(fillType)];
 }
 
+RetroFuturaGUI::Shader& RetroFuturaGUI::ShaderManager::GetShadowShader(FillType fillType)
+{
+    return *_shadowShaders[static_cast<uSize>(fillType)];
+}
+
 RetroFuturaGUI::Shader& RetroFuturaGUI::ShaderManager::GetColorFieldShader(ColorFieldShape shape)
 {
     return *_colorFieldShaders[static_cast<uSize>(shape)];
@@ -85,6 +90,7 @@ void RetroFuturaGUI::ShaderManager::compileShaders()
     const std::string quadPath { workingDir + "Quad.vs" };
     const std::string planePath { workingDir + "Plane.fs" };
     const std::string framePath { workingDir + "Frame.fs" };
+    const std::string shadowPath { workingDir + "Shadow.fs" };
     const std::string colorFieldPath { workingDir + "ColorField.fs" };
     const std::string textVertexPath { workingDir + "Text.vs" };
     const std::string textPath { workingDir + "Text.fs" };
@@ -94,6 +100,7 @@ void RetroFuturaGUI::ShaderManager::compileShaders()
         _planeShaders[fill] = std::make_unique<Shader>(quadPath.c_str(), planePath.c_str(), nullptr, std::vector<std::string> { fillDefines[fill] });
         _wavePlaneShaders[fill] = std::make_unique<Shader>(quadPath.c_str(), planePath.c_str(), nullptr, std::vector<std::string> { fillDefines[fill], "WAVE_PLANE" });
         _frameShaders[fill] = std::make_unique<Shader>(quadPath.c_str(), framePath.c_str(), nullptr, std::vector<std::string> { fillDefines[fill] });
+        _shadowShaders[fill] = std::make_unique<Shader>(quadPath.c_str(), shadowPath.c_str(), nullptr, std::vector<std::string> { fillDefines[fill] });
         _textShaders[fill] = std::make_unique<Shader>(textVertexPath.c_str(), textPath.c_str(), nullptr, std::vector<std::string> { fillDefines[fill] });
     }
 
