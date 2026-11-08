@@ -7,7 +7,6 @@
 #include <string>
 #include <string_view>
 #include "Signal.hpp"
-#include "IWindowAccessor.hpp"
 #include "IHierarchyNode.hpp"
 #include "IPointerFilter.hpp"
 #include "CursorIcon.hpp"
@@ -22,7 +21,7 @@ namespace RetroFuturaGUI
     template<typename> class WidgetReference;
 
     //An interface with properties that all Widgets must implement.
-    class IWidget : virtual public IWindowAccessor, public IHierarchyNode
+    class IWidget : public IHierarchyNode
     {
         friend class Tooltip;
         friend class ContextMenu;
@@ -51,69 +50,69 @@ namespace RetroFuturaGUI
         void DrawAtOpacity();
 
         /// @brief Sets how opaque the widget and everything inside it draw, 0 to 1, fading there over the widget's Opacity
-        ///        transition (SetTransition). A fully transparent widget still takes the input; hide it to stop that.
+        ///        transition (SetTransition). A fully transparent widget still takes the input. Hide it to stop that
         void SetOpacity(const f32 opacity);
 
-        /// @brief Returns how opaque the widget draws now, midway while a fade runs.
+        /// @brief Returns how opaque the widget draws now, midway while a fade runs
         f32 GetOpacity() const;
 
-        /// @brief Connects a slot to be called when the widget is enabled.
-        /// @param async If true, the slot is invoked asynchronously.
+        /// @brief Connects a slot to be called when the widget is enabled
+        /// @param async If true, the slot is invoked asynchronously
         void Connect_OnEnable(const typename Signal<>::Slot& slot, const bool async);
 
-        /// @brief Connects a slot to be called when the widget is disabled.
-        /// @param async If true, the slot is invoked asynchronously.
+        /// @brief Connects a slot to be called when the widget is disabled
+        /// @param async If true, the slot is invoked asynchronously
         void Connect_OnDisable(const typename Signal<>::Slot& slot, const bool async);
 
-        /// @brief Disconnects a previously connected OnEnable slot.
+        /// @brief Disconnects a previously connected OnEnable slot
         void Disconnect_OnEnable(const typename Signal<>::Slot& slot);
 
-        /// @brief Disconnects a previously connected OnDisable slot.
+        /// @brief Disconnects a previously connected OnDisable slot
         void Disconnect_OnDisable(const typename Signal<>::Slot& slot);
 
         /// @brief Sets the size of the widget, moving to it over the widget's size transition when one is set (SetTransition).
-        ///        A container laying the widget out sets it at once.
+        ///        A container laying the widget out sets it at once
         void SetSize(const glm::vec3& size);
 
-        /// @brief Returns the current size of the widget, midway while a transition runs.
+        /// @brief Returns the current size of the widget, midway while a transition runs
         glm::vec3 GetSize() const;
 
         /// @brief Sets the world position of the widget, moving to it over the widget's position transition when one is set.
-        ///        A container laying the widget out sets it at once.
+        ///        A container laying the widget out sets it at once
         void SetPosition(const glm::vec3& position);
 
-        /// @brief Returns the current world position of the widget, midway while a transition runs.
+        /// @brief Returns the current world position of the widget, midway while a transition runs
         glm::vec3 GetPosition() const;
 
         /// @brief Sets the rotation of the widget in degrees. Turning to it over the widget's rotation transition when one is set. The 
         //         widget turns around its center, with everything in it. A container turns its widgets along
         void SetRotation(const glm::vec3& rotation);
 
-        /// @brief Returns the current rotation of the widget, midway while a transition runs.
+        /// @brief Returns the current rotation of the widget, midway while a transition runs
         glm::vec3 GetRotation() const;
 
-        /// @brief Returns the widget's name.
+        /// @brief Returns the widget's name
         const std::string& GetName() const final override;
 
-        /// @brief Returns the widget this one is parented to, or nullptr when it hangs directly off a window.
+        /// @brief Returns the widget this one is parented to, or nullptr when it hangs directly off a window
         const IHierarchyNode* GetParent() const final override;
 
         /// @brief Sets the widget's name.
         void SetName(std::string_view name);
 
-        /// @brief Returns the widget's type ID.
+        /// @brief Returns the widget's type ID
         WidgetTypeID GetWidgetTypeID() const;
 
-        /// @brief Returns the GLFW window that owns this widget.
+        /// @brief Returns the GLFW window that owns this widget
         GLFWwindow* GetParentWindow() const;
 
-        /// @brief Enables or disables the widget, switching it to that state's colors, and emits OnEnable or OnDisable if emitSignal is set.
+        /// @brief Enables or disables the widget, switching it to that state's colors, and emits OnEnable or OnDisable if emitSignal is set
         void SetEnabled(const bool enable, const bool emitSignal);
 
-        /// @brief Returns whether the widget is currently enabled.
+        /// @brief Returns whether the widget is currently enabled
         bool IsEnabled() const;
 
-        /// @brief Returns the parent widget, cast to the given type.
+        /// @brief Returns the parent widget, cast to the given type
         template<typename T> T* GetParentWidget() const
         {
             return static_cast<T*>(_parentWidget);
@@ -122,7 +121,7 @@ namespace RetroFuturaGUI
         void SetTooltipText(std::string_view text);
         void ShowTooltip(const bool show);
 
-        /// @brief Returns the widget's tooltip for styling (font, colors, corner radii), or nullptr until SetTooltipText created it.
+        /// @brief Returns the widget's tooltip for styling (font, colors, corner radii), or nullptr until SetTooltipText created it
         Tooltip* GetTooltip() const;
 
         void AddContextMenuItem(std::string_view itemName, std::string_view node, std::string_view imagePath, std::string_view text, std::string_view note);
@@ -132,18 +131,19 @@ namespace RetroFuturaGUI
         ContextMenu* GetContextMenu() const;
 
         /// @brief Sets how this widget's colors or corner radii move to new values, its hover and pressed colors included, in
-        ///        place of the global default (Transitions::SetDefault): SetTransition(Colors | CornerRadii, { 200ms, EaseInOut }).
+        ///        place of the global default (Transitions::SetDefault): SetTransition(Colors | CornerRadii, { 200ms, EaseInOut })
         void SetTransition(const TransitionProperty properties, const Transition& transition);
 
-        /// @brief Has these properties follow the global default again.
+        /// @brief Has these properties follow the global default again
         void ResetTransition(const TransitionProperty properties);
 
-        /// @brief Returns the transition one property follows: the widget's own, or else the global default.
+        /// @brief Returns the transition one property follows: the widget's own, or else the global default
         Transition GetTransition(const TransitionProperty property) const;
 
     protected:
     //Identity
         std::string _name;
+        GLFWwindow* _parentWindow { nullptr };
         IHierarchyNode* _parentWidget { nullptr };
         WidgetTypeID 
             _parentWidgetTypeID { WidgetTypeID::None },

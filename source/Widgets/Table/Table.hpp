@@ -12,7 +12,7 @@
 #include "SvgTexture.hpp"
 #include "config.hpp"
 #include "TableText.hpp"
-#include "ITextEditVisuals.hpp"
+#include "TextEditor.hpp"
 #include "TableColor.hpp"
 #include "TableCheckBox.hpp"
 #include "TableStyles.hpp"
@@ -29,7 +29,7 @@
 
 namespace RetroFuturaGUI
 {
-    class Table final : public IWidget, public IClickable, public ITextEditVisuals
+    class Table final : public IWidget, public IClickable
     {
     public:
         enum class TableOrientation : u32
@@ -255,6 +255,61 @@ namespace RetroFuturaGUI
 
         /// @brief Returns the cell currently being edited, or false when no cell has focus.
         bool GetEditedCell(uSize& outRow, uSize& outColumn) const;
+
+        /// @brief Returns the caret for styling: GetCaret().SetColors(...)
+        Caret& GetCaret();
+        const Caret& GetCaret() const;
+
+        /// @brief Returns the highlight behind the selection for styling: GetSelectedArea().SetColors(...)
+        SelectedArea& GetSelectedArea();
+        const SelectedArea& GetSelectedArea() const;
+
+        /// @brief Returns the text most recently copied or cut
+        const std::string& GetCopiedText() const;
+
+        /// @brief Returns a pointer to the first selected character of the edited cell's UTF-8 string, or nullptr when nothing is selected. It
+        ///        runs on to the string's end, not to the selection's. GetSelectedString has the selection alone. It stays valid until the text changes
+        const char* GetSelection() const;
+
+        /// @brief Returns the edited cell's selected text (UTF-8). Empty when nothing is selected
+        std::string GetSelectedString() const;
+
+        /// @brief Copies the edited cell's selection to the clipboard
+        void CopySelectedText();
+
+        /// @brief Cuts the edited cell's selection to the clipboard unless its track is read-only
+        void CutSelectedText();
+
+        /// @brief Replaces the selection, or inserts at the caret, with clipboard text unless the edited cell's track is read-only
+        void PasteSelectedText();
+
+        /// @brief Connects a slot to be called when the Enter key is pressed in an edited cell
+        /// @param async If true, the slot is invoked asynchronously
+        void Connect_OnEnterPressed(const typename Signal<>::Slot& slot, const bool async);
+
+        /// @brief Connects a slot to be called when the Enter key is released in an edited cell
+        /// @param async If true, the slot is invoked asynchronously
+        void Connect_OnEnterReleased(const typename Signal<>::Slot& slot, const bool async);
+
+        /// @brief Connects a slot to be called when text is copied
+        /// @param async If true, the slot is invoked asynchronously
+        void Connect_OnCopy(const typename Signal<>::Slot& slot, const bool async);
+
+        /// @brief Connects a slot to be called when text is pasted
+        /// @param async If true, the slot is invoked asynchronously
+        void Connect_OnPaste(const typename Signal<>::Slot& slot, const bool async);
+
+        /// @brief Disconnects a previously connected OnEnterPressed slot
+        void Disconnect_OnEnterPressed(const typename Signal<>::Slot& slot);
+
+        /// @brief Disconnects a previously connected OnEnterReleased slot
+        void Disconnect_OnEnterReleased(const typename Signal<>::Slot& slot);
+
+        /// @brief Disconnects a previously connected OnCopy slot
+        void Disconnect_OnCopy(const typename Signal<>::Slot& slot);
+
+        /// @brief Disconnects a previously connected OnPaste slot
+        void Disconnect_OnPaste(const typename Signal<>::Slot& slot);
 
         /// @brief Gives up editing focus, hiding the caret and dropping any selection. The edit is kept!
         void EndEdit();
@@ -628,19 +683,19 @@ namespace RetroFuturaGUI
         void followEditKeys();
         void drawCaretAndSelection();
 
-        //ITextInteraction hooks: edits apply to whichever cell is active, and read-only is per track.
-        Text* getActiveText() const override;
-        void emitChange() override;
-        bool isTextReadOnly() const override { return isEditedTrackReadOnly(); }
+        //TextEditor hooks: edits apply to whichever cell is active, and read-only is per track
+        Text* getActiveText() const;
+        void emitChange();
 
         bool isEditedTrackReadOnly() const;
 
         /// @brief The edited cell's bounds, so the caret and selection can't escape it
-        TextArea getTextArea() const override;
+        TextEditArea getTextArea() const;
 
     //Elements
         Background _background { &_projection };
         Border _border { &_projection };
+        TextEditor _editor;
         std::vector<BodyCell> _cells {}; //row after row, as many per row as there are columns
         std::vector<ShownText> _shownTexts {}; //the pooled texts drawing cells, about as many as fit in the view
         std::vector<std::unique_ptr<TableText>> _freeTexts {}; //the pool's texts not drawing a cell right now

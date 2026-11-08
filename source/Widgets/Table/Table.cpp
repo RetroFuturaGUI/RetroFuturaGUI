@@ -19,7 +19,20 @@
 #include <GLFW/glfw3native.h>
 
 RetroFuturaGUI::Table::Table(std::string_view name, Projection* projection, IWidget* parentWidget, const WidgetTypeID parentWidgetTypeID, GLFWwindow* parentWindow)
-    : IWidget(name, projection, parentWidget, parentWidgetTypeID, parentWindow), ITextEditVisuals(projection)
+    : IWidget(name, projection, parentWidget, parentWidgetTypeID, parentWindow),
+      _editor
+      {
+          projection,
+          parentWindow,
+          TextLines::Single,
+          TextEditorHooks
+          {
+              ._GetActiveText = [this]() { return getActiveText(); },
+              ._GetTextArea = [this]() { return getTextArea(); },
+              ._IsReadOnly = [this]() { return isEditedTrackReadOnly(); },
+              ._OnChange = [this]() { emitChange(); }
+          }
+      }
 {
     _widgetTypeID = WidgetTypeID::Table;
     _highlightedBackgroundCell = std::make_unique<Plane>(projection);
@@ -294,7 +307,7 @@ void RetroFuturaGUI::Table::applyPosition(const glm::vec3& position)
     IWidget::applyPosition(position);
     _background.SetPosition(position);
     _border.SetPosition(position + glm::vec3(0.0f, 0.0f, 0.1f));
-    _selectedArea.SetPosition(position + glm::vec3(0.0f, 0.0f, _widgetZOffset - 0.01f));
+    _editor.GetSelectedArea().SetPosition(position + glm::vec3(0.0f, 0.0f, _widgetZOffset - 0.01f));
     layoutCells();
 }
 
@@ -789,7 +802,7 @@ bool RetroFuturaGUI::Table::IsTrackReadOnly(const uSize trackIndex) const
 
 void RetroFuturaGUI::Table::SetCaretSize(const glm::vec2& size)
 {
-    _caret.SetSize(size);
+    _editor.GetCaret().SetSize(size);
 }
 
 bool RetroFuturaGUI::Table::GetEditedCell(uSize& outRow, uSize& outColumn) const
@@ -949,7 +962,7 @@ bool RetroFuturaGUI::Table::isEditedTrackReadOnly() const
     return track < _trackReadOnlyFlags.size() ? _trackReadOnlyFlags[track] : false;
 }
 
-RetroFuturaGUI::ITextEditVisuals::TextArea RetroFuturaGUI::Table::getTextArea() const
+RetroFuturaGUI::TextEditArea RetroFuturaGUI::Table::getTextArea() const
 {
     if(!_hasEditCell || !cellAt(_editRow, _editColumn)) //nothing edited: fall back to the whole table
         return { ._Left = _position.x - _size.x * 0.5f, ._Bottom = _position.y - _size.y * 0.5f, ._Right = _position.x + _size.x * 0.5f, ._Top = _position.y + _size.y * 0.5f };
@@ -971,9 +984,7 @@ void RetroFuturaGUI::Table::openEdit(const uSize row, const uSize column)
     _editRow = row;
     _editColumn = column;
     _hasEditCell = true;
-    _editingEnabled = true;
-    _showCaret = true;
-    takeKeyboardFocus();
+    _editor.BeginEditing();
     bindText(row, column); //the caret and the edits need the cell's Text before it draws
 
     if(!isNewEdit)
@@ -993,10 +1004,7 @@ void RetroFuturaGUI::Table::beginEdit(const uSize row, const uSize column, const
     if(!text)
         return;
 
-    _selectedPositionFirst = _selectedPositionLast = text->GetBoundaryAtPosition(clampToTextBounds(worldX));
-    setCaretFromBoundary(_selectedPositionFirst);
-    updateSelectedArea();
-    _isMarking = true;
+    _editor.StartMarking(text->GetBoundaryAtPosition(_editor.ClampToTextBounds(worldX)));
 }
 
 void RetroFuturaGUI::Table::EditCell(const TrackIndex& index, const uSize selectedLength)
@@ -1021,13 +1029,7 @@ void RetroFuturaGUI::Table::EditCell(const TrackIndex& index, const uSize select
         glyphCount { text->GetGlyphCount() },
         selectedCount { selectedLength < glyphCount ? selectedLength : glyphCount };
 
-    _selectedPositionFirst = 0;
-    _selectedPositionLast = selectedCount;
-    _isSelected = 0 < selectedCount;
-    _isMarking = false;
-    setCaretFromBoundary(selectedCount);
-    updateSelectedArea();
-    resetCaretBlink();
+    _editor.SelectFromStart(selectedCount);
 }
 
 void RetroFuturaGUI::Table::EndEdit()
@@ -1048,11 +1050,8 @@ void RetroFuturaGUI::Table::endEdit(const EditEnd end)
 
     _hasEditCell = false;
     _isEditFromCode = false;
-    _editingEnabled = false;
-    _showCaret = false;
-    _selectedPositionFirst = 0;
-    _selectedPositionLast = 0;
-    deselect();
+    _editor.EndEditing();
+    _editor.ClearSelection();
 
     if(!wasEditing)
         return;
@@ -1082,7 +1081,7 @@ void RetroFuturaGUI::Table::followEditKeys()
     if(!_hasEditCell)
         return;
 
-    if(!hasInputFocus())
+    if(!_editor.HasKeyboardFocus())
         return;
 
     //Both taken every frame of the edit, so neither fires late
@@ -1512,24 +1511,20 @@ bool RetroFuturaGUI::Table::isOverEditableText(const MouseState& mouse) const
 
 void RetroFuturaGUI::Table::interactTableText(const MouseState& mouse)
 {
-    if(_isMarking || isOverEditableText(mouse))
+    if(_editor.IsMarking() || isOverEditableText(mouse))
         requestCursorIcon(PlatformBridge::CursorIcon::Text); //also all through a drag that marks text
 
     // Dragging extends the selection within the cell that already has focus
-    if(_isMarking)
+    if(_editor.IsMarking())
     {
         if(mouse._IsPressed && mouse._HasPosition)
         {
             if(Text* text { getActiveText() })
-            {
-                _selectedPositionLast = text->GetBoundaryAtPosition(clampToTextBounds(mouse._Position.x));
-                setCaretFromBoundary(_selectedPositionLast);
-                updateSelectedArea();
-            }
+                _editor.MarkTo(text->GetBoundaryAtPosition(_editor.ClampToTextBounds(mouse._Position.x)));
         }
         else
         {
-            _isMarking = false;
+            _editor.StopMarking();
         }
     }
 
@@ -1587,12 +1582,8 @@ void RetroFuturaGUI::Table::interactTableText(const MouseState& mouse)
         }
     }
 
-    editText();
-    moveCaret();
+    _editor.Interact();
     followEditKeys();
-
-    if(!_caret.NeverBlinks())
-        updateCaretBlink();
 }
 
 void RetroFuturaGUI::Table::drawCaretAndSelection()
@@ -1600,8 +1591,8 @@ void RetroFuturaGUI::Table::drawCaretAndSelection()
     if(!_hasEditCell)
         return;
 
-    drawSelectedArea();
-    drawCaret();
+    _editor.DrawSelectedArea();
+    _editor.DrawCaret();
 }
 
 void RetroFuturaGUI::Table::SetValue(const bool value, const TrackIndex& index, const bool emitSignal)
@@ -2152,7 +2143,7 @@ void RetroFuturaGUI::Table::drawSelectionBand()
 
 void RetroFuturaGUI::Table::navigateByKeys()
 {
-    if(_hasEditCell || RowSelection::None == _rowSelection || !_isEnabledFlag || !hasInputFocus())
+    if(_hasEditCell || RowSelection::None == _rowSelection || !_isEnabledFlag || !_editor.HasKeyboardFocus())
     {
         _hadKeyboardFocus = false; //the keys belong to the edited cell, or to another widget
         return;
@@ -2308,14 +2299,14 @@ void RetroFuturaGUI::Table::syncKeyCounts()
 
 void RetroFuturaGUI::Table::TakeKeyboardFocus()
 {
-    takeKeyboardFocus();
+    _editor.TakeKeyboardFocus();
     syncKeyCounts();
     _hadKeyboardFocus = true;
 }
 
 bool RetroFuturaGUI::Table::HasKeyboardFocus() const
 {
-    return hasInputFocus();
+    return _editor.HasKeyboardFocus();
 }
 
 bool RetroFuturaGUI::Table::findHorizontalHeaderAt(const glm::vec2& point, uSize& outColumn) const
@@ -2512,4 +2503,94 @@ RetroFuturaGUI::Border& RetroFuturaGUI::Table::GetBorder()
 const RetroFuturaGUI::Border& RetroFuturaGUI::Table::GetBorder() const
 {
     return _border;
+}
+
+RetroFuturaGUI::Caret& RetroFuturaGUI::Table::GetCaret()
+{
+    return _editor.GetCaret();
+}
+
+const RetroFuturaGUI::Caret& RetroFuturaGUI::Table::GetCaret() const
+{
+    return _editor.GetCaret();
+}
+
+RetroFuturaGUI::SelectedArea& RetroFuturaGUI::Table::GetSelectedArea()
+{
+    return _editor.GetSelectedArea();
+}
+
+const RetroFuturaGUI::SelectedArea& RetroFuturaGUI::Table::GetSelectedArea() const
+{
+    return _editor.GetSelectedArea();
+}
+
+const std::string& RetroFuturaGUI::Table::GetCopiedText() const
+{
+    return _editor.GetCopiedText();
+}
+
+const char* RetroFuturaGUI::Table::GetSelection() const
+{
+    return _editor.GetSelection();
+}
+
+std::string RetroFuturaGUI::Table::GetSelectedString() const
+{
+    return _editor.GetSelectedString();
+}
+
+void RetroFuturaGUI::Table::CopySelectedText()
+{
+    _editor.CopySelectedText();
+}
+
+void RetroFuturaGUI::Table::CutSelectedText()
+{
+    _editor.CutSelectedText();
+}
+
+void RetroFuturaGUI::Table::PasteSelectedText()
+{
+    _editor.PasteSelectedText();
+}
+
+void RetroFuturaGUI::Table::Connect_OnEnterPressed(const typename Signal<>::Slot& slot, const bool async)
+{
+    _editor.Connect_OnEnterPressed(slot, async);
+}
+
+void RetroFuturaGUI::Table::Connect_OnEnterReleased(const typename Signal<>::Slot& slot, const bool async)
+{
+    _editor.Connect_OnEnterReleased(slot, async);
+}
+
+void RetroFuturaGUI::Table::Connect_OnCopy(const typename Signal<>::Slot& slot, const bool async)
+{
+    _editor.Connect_OnCopy(slot, async);
+}
+
+void RetroFuturaGUI::Table::Connect_OnPaste(const typename Signal<>::Slot& slot, const bool async)
+{
+    _editor.Connect_OnPaste(slot, async);
+}
+
+void RetroFuturaGUI::Table::Disconnect_OnEnterPressed(const typename Signal<>::Slot& slot)
+{
+    _editor.Disconnect_OnEnterPressed(slot);
+}
+
+void RetroFuturaGUI::Table::Disconnect_OnEnterReleased(const typename Signal<>::Slot& slot)
+{
+    _editor.Disconnect_OnEnterReleased(slot);
+}
+
+void RetroFuturaGUI::Table::Disconnect_OnCopy(const typename Signal<>::Slot& slot)
+{
+    _editor.Disconnect_OnCopy(slot);
+}
+
+void RetroFuturaGUI::Table::Disconnect_OnPaste(const typename Signal<>::Slot& slot)
+{
+    _editor.Disconnect_OnPaste(slot);
 }

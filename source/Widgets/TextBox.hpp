@@ -20,7 +20,7 @@ namespace RetroFuturaGUI
 
     private:
         void renderValueText(std::string_view text, const bool emitSignal) override;
-        void emitChange() override;
+        void textEdited() override;
         void textChanged(const WidgetTextChange change) override;
     };
 }

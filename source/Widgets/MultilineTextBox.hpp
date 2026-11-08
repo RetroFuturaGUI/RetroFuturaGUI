@@ -16,12 +16,5 @@ namespace RetroFuturaGUI
         ~MultilineTextBox() = default;
         auto operator =(const MultilineTextBox&) = delete;
         auto operator =(MultilineTextBox&&) = delete;
-
-    private:
-    //ITextInteraction multiline hooks
-        void moveCaretUp() override;
-        void moveCaretDown() override;
-        void insertLineBreak() override;
-        void filterPastedText(std::u32string& text) const override;
     };
 }
