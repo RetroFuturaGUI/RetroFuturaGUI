@@ -25,6 +25,7 @@ RetroFuturaGUI::Table::Table(std::string_view name, Projection* projection, IWid
           projection,
           parentWindow,
           TextLines::Single,
+          OverwriteCaret::Underline, //the cells' texts draw before the caret, so a block would lie over them
           TextEditorHooks
           {
               ._GetActiveText = [this]() { return getActiveText(); },

@@ -18,6 +18,14 @@ namespace RetroFuturaGUI
         Multiple
     };
 
+    /// @brief How the caret shows the character insert mode overwrites: a block behind it, from halfway into the gap before it
+    ///        to halfway into the gap after it, or a bar under it. A block needs its owner to draw the caret before the text
+    enum class OverwriteCaret
+    {
+        Block,
+        Underline
+    };
+
     /// @brief The world-space area the edited text is visible in. The caret and selection are clipped to it
     struct TextEditArea
     {
@@ -45,7 +53,8 @@ namespace RetroFuturaGUI
     public:
         /// @param parentWindow The owning widget's window, whose native window takes the keystrokes
         /// @param hooks Every hook must be set
-        TextEditor(Projection* projection, GLFWwindow* parentWindow, const TextLines lines, TextEditorHooks hooks);
+        /// @param overwriteCaret How the caret shows the character insert mode overwrites
+        TextEditor(Projection* projection, GLFWwindow* parentWindow, const TextLines lines, const OverwriteCaret overwriteCaret, TextEditorHooks hooks);
         TextEditor() = delete;
         TextEditor(const TextEditor&) = delete;
         TextEditor(TextEditor&&) = delete;
@@ -118,7 +127,12 @@ namespace RetroFuturaGUI
         void Interact();
 
         void DrawSelectedArea();
+
+        /// @brief Draws the caret, unless it is a block behind the text, which DrawCaretBehindText draws
         void DrawCaret();
+
+        /// @brief Draws the caret while it is a block behind the overwritten character. Drawn before the text, so the text covers it
+        void DrawCaretBehindText();
 
         /// @brief Lets typing in, shows the caret and takes the keystrokes
         void BeginEditing();
@@ -150,6 +164,9 @@ namespace RetroFuturaGUI
 
         /// @brief Returns whether Enter was pressed in the last editing frame. Its release is signalled in the next
         bool WasEnterPressed() const;
+
+        /// @brief Returns whether typing overwrites the characters after the caret: switched by the Insert key
+        bool IsOverwriting() const;
 
         /// @brief Makes this text the one the keystrokes go to, and captures them on the native window they arrive at. The
         ///        widget's own window, or the host's while that window sits in a tab
@@ -215,6 +232,18 @@ namespace RetroFuturaGUI
         /// @brief Applies the frame's typed text in the order it was typed: characters go in, \b deletes like Backspace and \r breaks the line where the text can have several
         void checkForTextInput();
 
+        /// @brief Switches between inserting and overwriting once per press of the Insert key
+        void checkForInsertKey();
+
+        /// @brief Lays the caret behind or under the character it would overwrite, or a short way past the line's end where none is
+        void moveOverwriteCaret(Text& text, const glm::vec3& caretPosition, const f32 fullHeight);
+
+        /// @brief Whether the caret is a block behind the text now
+        bool isCaretBehindText() const;
+
+        /// @brief Draws the caret if it is shown, in view and not blinked off
+        void drawShownCaret();
+
         /// @brief Puts the characters in at the caret' position (over the selection if there is one)
         void insertText(const std::u32string& characters);
 
@@ -265,6 +294,7 @@ namespace RetroFuturaGUI
     //Owner
         GLFWwindow* _parentWindow { nullptr };
         TextLines _lines { TextLines::Single };
+        OverwriteCaret _overwriteCaret { OverwriteCaret::Underline };
         TextEditorHooks _hooks {};
 
     //Caret movement
@@ -280,7 +310,9 @@ namespace RetroFuturaGUI
         u32
             _focusKeySym { 0 }, //the key down when the focus came
             _focusKeyPressCountSeen { 0 },
-            _enterPressCountSeen { 0 };
+            _enterPressCountSeen { 0 },
+            _insertPressCountSeen { 0 };
+        bool _isOverwriting { false }; //insert mode: typing replaces the characters after the caret
         std::string _copiedText {};
 
         Signal<>
@@ -303,6 +335,7 @@ namespace RetroFuturaGUI
         Caret _caret;
         static constexpr f32 _caretHeightFactor { 1.6f };
         static constexpr f32 _caretThickness { 2.0f };
+        static constexpr f32 _blockCaretDepthOffset { 0.02f }; //behind the text, whose boundaries lie 0.01 in front of it
         bool _isCaretInView { true };
 
     //Selection

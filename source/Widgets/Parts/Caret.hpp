@@ -1,6 +1,7 @@
 #pragma once
 #include "IncludeHelper.hpp"
 #include "Plane.hpp"
+#include <chrono>
 #include <span>
 #include <vector>
 
@@ -37,6 +38,13 @@ namespace RetroFuturaGUI
         /// @brief Returns whether the caret stays solid
         bool NeverBlinks() const;
 
+        /// @brief Sets how the caret moves when its place in the text changes (typing, clicks, arrow keys, insert mode): it
+        ///        glides there over the transition instead of jumping. Every move takes the transition's duration, however far it
+        ///        goes, so a line change or a jump across the text takes no longer than a step. Off (0 ms) by default. When the
+        ///        widget itself moves, the caret moves with it at once
+        void SetMoveTransition(const Transition& transition);
+        const Transition& GetMoveTransition() const;
+
     //Called by the owning widget
         /// @brief Draws the caret
         void Draw();
@@ -44,8 +52,11 @@ namespace RetroFuturaGUI
         /// @brief Sizes the caret to the text it edits
         void SetSize(const glm::vec2& size);
 
-        /// @brief Places the caret in the text
+        /// @brief Places the caret in the text at once, as when the widget moves
         void SetPosition(const glm::vec3& position);
+
+        /// @brief Moves the caret to a new place and size in the text, gliding over the move transition. The first move jumps
+        void MoveTo(const glm::vec3& position, const glm::vec2& size);
 
         /// @brief Has the colors move to new values over the widget's transitions
         void SetTransitionSettings(const TransitionSettings* settings);
@@ -55,5 +66,14 @@ namespace RetroFuturaGUI
         std::vector<glm::vec4> _colors { glm::vec4(1.0f) };
         f64 _blinkTime { 650.0 };
         bool _neverBlinks { false };
+
+    //Gliding
+        Transition _moveTransition {};
+        TransitionValue<glm::vec3> _position;
+        TransitionValue<glm::vec2> _size;
+        bool
+            _hasPlace { false }, //moved once: the first move jumps
+            _isMoving { false };
+        std::chrono::steady_clock::time_point _lastMoveTime {}; //when the caret last moved, so moves coming faster than the transition keep up
     };
 }

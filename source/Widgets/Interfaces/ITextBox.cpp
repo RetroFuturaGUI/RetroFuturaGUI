@@ -17,6 +17,7 @@ RetroFuturaGUI::ITextBox::ITextBox(std::string_view name, Projection* projection
          projection,
          parentWindow,
          lines,
+         OverwriteCaret::Block,
          TextEditorHooks
          {
              ._GetActiveText = [this]() { return &_text.GetElement(); },
@@ -49,6 +50,7 @@ void RetroFuturaGUI::ITextBox::Draw()
     _background.Draw();
     _border.Draw();
     _editor.DrawSelectedArea();
+    _editor.DrawCaretBehindText();
 
     if(!_text.GetElement().GetTextUTF32().empty())
     {
