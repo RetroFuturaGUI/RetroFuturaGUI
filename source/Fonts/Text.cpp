@@ -18,6 +18,9 @@ RetroFuturaGUI::Text::~Text()
     glDeleteBuffers(1, &_shadowMesh._Vbo);
     glDeleteBuffers(1, &_glowMesh._Vbo);
     glDeleteBuffers(1, &_innerGlowMesh._Vbo);
+    glDeleteBuffers(1, &_shadowFade._Mesh._Vbo);
+    glDeleteBuffers(1, &_glowFade._Mesh._Vbo);
+    glDeleteBuffers(1, &_innerGlowFade._Mesh._Vbo);
 }
 
 void RetroFuturaGUI::Text::initMesh(GlyphMesh* mesh)
@@ -46,7 +49,10 @@ void RetroFuturaGUI::Text::Draw()
 
     //Shadow, glow and inner glow glyphs are rendered per blur, width and offset, so a change to them lays the glyphs out again
     if(areEffectMeshesStale())
+    {
+        beginEffectFades();
         updateMesh();
+    }
 
     drawShadow();
     drawGlow();
@@ -102,7 +108,7 @@ void RetroFuturaGUI::Text::drawShadow()
     uploadPlacement(shader, placement);
     _dropShadow.uploadFill(shader, 0);
     _dropShadow.uploadImage(shader, glm::max(_textSpan, glm::vec2(1.0f)));
-    drawMesh(shader, &_shadowMesh);
+    drawFading(shader, &_shadowMesh, &_shadowFade, _dropShadow.getGlyphProgress());
 }
 
 void RetroFuturaGUI::Text::drawGlow()
@@ -115,7 +121,7 @@ void RetroFuturaGUI::Text::drawGlow()
     uploadPlacement(shader, glm::translate(_translationMatrix, glm::vec3(0.0f, 0.0f, -_glowDepthOffset)));
     _glow.uploadFill(shader, 0);
     _glow.uploadImage(shader, glm::max(_textSpan, glm::vec2(1.0f)));
-    drawMesh(shader, &_glowMesh);
+    drawFading(shader, &_glowMesh, &_glowFade, _glow.getGlyphProgress());
 }
 
 void RetroFuturaGUI::Text::drawInnerGlow()
@@ -128,7 +134,71 @@ void RetroFuturaGUI::Text::drawInnerGlow()
     uploadPlacement(shader, glm::translate(_translationMatrix, glm::vec3(0.0f, 0.0f, _innerGlowDepthOffset)));
     _innerGlow.uploadFill(shader, 0);
     _innerGlow.uploadImage(shader, glm::max(_textSpan, glm::vec2(1.0f)));
-    drawMesh(shader, &_innerGlowMesh);
+    drawFading(shader, &_innerGlowMesh, &_innerGlowFade, _innerGlow.getGlyphProgress());
+}
+
+void RetroFuturaGUI::Text::beginEffectFades()
+{
+    //Only a shown effect whose glyph values changed. Showing or hiding one switches at once
+    if(_hasShadowMesh && _dropShadow.IsShown() && _dropShadow.GetBlur() != _shadowMeshBlur)
+        beginFade(&_shadowFade, _dropShadow.getGlyphProgress(), _shadowMeshBlur, glm::vec2(0.0f));
+
+    if(_hasGlowMesh && _glow.IsShown() && _glow.GetWidth() != _glowMeshWidth)
+        beginFade(&_glowFade, _glow.getGlyphProgress(), _glowMeshWidth, glm::vec2(0.0f));
+
+    if(_hasInnerGlowMesh && _innerGlow.IsShown() && (_innerGlow.GetWidth() != _innerGlowMeshWidth || _innerGlow.GetOffset() != _innerGlowMeshOffset))
+        beginFade(&_innerGlowFade, _innerGlow.getGlyphProgress(), _innerGlowMeshWidth, _innerGlowMeshOffset);
+}
+
+void RetroFuturaGUI::Text::beginFade(EffectFade* fade, const f32 progress, const f32 width, const glm::vec2& offset)
+{
+    if(!fade)
+        return;
+
+    if(1.0f <= progress)
+    {
+        fade->_IsShown = false;
+        return;
+    }
+
+    //Changed again midway: whichever glyphs show more fade out, the older ones while the newer hadn't taken over yet
+    const bool keepsOlderGlyphs { fade->_IsShown && 0.5f > fade->_Progress };
+    fade->_Progress = 0.0f;
+    fade->_IsShown = true;
+
+    if(keepsOlderGlyphs)
+        return;
+
+    fade->_Width = width;
+    fade->_Offset = offset;
+}
+
+void RetroFuturaGUI::Text::drawFading(Shader& shader, GlyphMesh* mesh, EffectFade* fade, const f32 progress)
+{
+    if(!fade)
+        return;
+
+    if(1.0f <= progress)
+        fade->_IsShown = false;
+
+    if(!fade->_IsShown)
+    {
+        drawMesh(shader, mesh);
+        return;
+    }
+
+    fade->_Progress = progress;
+
+    //The program again in each scope, which uploads the opacity
+    {
+        Shader::OpacityScope fadingOut { 1.0f - progress };
+        shader.UseProgram();
+        drawMesh(shader, &fade->_Mesh);
+    }
+
+    Shader::OpacityScope fadingIn { progress };
+    shader.UseProgram();
+    drawMesh(shader, mesh);
 }
 
 bool RetroFuturaGUI::Text::areEffectMeshesStale() const
@@ -378,6 +448,13 @@ void RetroFuturaGUI::Text::updateMesh()
     _innerGlowMeshOffset = _innerGlow.GetOffset();
     _innerGlowMesh._IsChanged = true;
 
+    for(EffectFade* fade : { &_shadowFade, &_glowFade, &_innerGlowFade })
+    {
+        fade->_Mesh._Vertices.clear();
+        fade->_Mesh._Draws.clear();
+        fade->_Mesh._IsChanged = true;
+    }
+
     if(!_fontInfo)
         return;
 
@@ -398,8 +475,14 @@ void RetroFuturaGUI::Text::updateMesh()
         outlineWidth { _outlineWidth / scale }, //widened at the glyphs' own size, so it's as wide as asked once they're scaled
         shadowBlur { _dropShadow.GetBlur() / scale }, //blurred there too.
         glowWidth { _glow.GetWidth() / scale },
-        innerGlowWidth { _innerGlow.GetWidth() / scale };
-    const glm::vec2 innerGlowOffset { _innerGlow.GetOffset() / scale };
+        innerGlowWidth { _innerGlow.GetWidth() / scale },
+        fadingShadowBlur { _shadowFade._Width / scale }, //the old values' glyphs, while they fade out
+        fadingGlowWidth { _glowFade._Width / scale },
+        fadingInnerGlowWidth { _innerGlowFade._Width / scale };
+    const glm::vec2
+        innerGlowOffset { _innerGlow.GetOffset() / scale },
+        fadingInnerGlowOffset { _innerGlowFade._Offset / scale };
+    const f32 glyphOutlineWidth { 0.0f < _outlineWidth ? outlineWidth : 0.0f };
     const std::u32string& text { _text.GetUtf32() };
     uSize lineStart { 0 };
 
@@ -442,11 +525,21 @@ void RetroFuturaGUI::Text::updateMesh()
             if(shadow)
                 appendGlyphQuad(*shadow, pen, scale, getLineCenter(line), &_shadowMesh);
 
+            const Glyph* fadingShadow { _shadowFade._IsShown ? FontManager::FindPlacedGlyphShadow(placed, fadingShadowBlur, glyphOutlineWidth) : nullptr };
+
+            if(fadingShadow)
+                appendGlyphQuad(*fadingShadow, pen, scale, getLineCenter(line), &_shadowFade._Mesh);
+
             //A glow is the glyph widened by half its width and blurred over all of it, so it is full at the glyph's edge and gone at the width.
             const Glyph* glow { _hasGlowMesh ? FontManager::FindPlacedGlyphShadow(placed, glowWidth, (0.0f < _outlineWidth ? outlineWidth : 0.0f) + glowWidth * 0.5f) : nullptr };
 
             if(glow)
                 appendGlyphQuad(*glow, pen, scale, getLineCenter(line), &_glowMesh);
+
+            const Glyph* fadingGlow { _glowFade._IsShown ? FontManager::FindPlacedGlyphShadow(placed, fadingGlowWidth, glyphOutlineWidth + fadingGlowWidth * 0.5f) : nullptr };
+
+            if(fadingGlow)
+                appendGlyphQuad(*fadingGlow, pen, scale, getLineCenter(line), &_glowFade._Mesh);
 
             const Glyph* outline { 0.0f < _outlineWidth ? FontManager::FindPlacedGlyphOutline(*_fontInfo, _fontKey, placed, outlineWidth) : nullptr };
 
@@ -455,15 +548,16 @@ void RetroFuturaGUI::Text::updateMesh()
 
             appendGlyphQuad(*glyph, pen, scale, getLineCenter(line), &_mesh);
 
-
             //Over the glyph, the same size: it never leaves the glyph
-
             const Glyph* innerGlow { _hasInnerGlowMesh ? FontManager::FindPlacedGlyphInnerGlow(placed, innerGlowWidth, innerGlowOffset) : nullptr };
 
-
             if(innerGlow)
-
                 appendGlyphQuad(*innerGlow, pen, scale, getLineCenter(line), &_innerGlowMesh);
+
+            const Glyph* fadingInnerGlow { _innerGlowFade._IsShown ? FontManager::FindPlacedGlyphInnerGlow(placed, fadingInnerGlowWidth, fadingInnerGlowOffset) : nullptr };
+
+            if(fadingInnerGlow)
+                appendGlyphQuad(*fadingInnerGlow, pen, scale, getLineCenter(line), &_innerGlowFade._Mesh);
         }
 
         //A boundary sits where its character starts: the left edge of its cluster, the right edge right to left. The

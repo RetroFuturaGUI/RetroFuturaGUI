@@ -171,6 +171,15 @@ namespace RetroFuturaGUI
             return _target;
         }
 
+        /// @brief Returns how far it has come toward its target eased. 1 once arrived, without a transition or inside an InstantScope
+        f32 GetProgress() const
+        {
+            if(Transitions::IsInstant())
+                return 1.0f;
+
+            return Transitions::GetProgress(_start, std::chrono::steady_clock::now(), _transition);
+        }
+
         /// @brief Whether it hasn't arrived at its target yet.
         bool IsRunning() const
         {

@@ -10,7 +10,7 @@ namespace RetroFuturaGUI
     /// @brief A drop shadow cast by a background, a border or a text: their shape, moved by a distance at an angle, grown by a
     ///        scale and blurred at its edges, drawn behind them. Its colors take every fill and gradient, per color state like
     ///        what casts it, and follow its state; Enabled is black at half opacity by default. The degree, distance, blur and
-    ///        scale move to new values over the widget's Effects transition; a text's blur switches at once. Reached by GetDropShadow():
+    ///        scale move to new values over the widget's Effects transition; a text crossfades its blur. Reached by GetDropShadow():
     ///        button.GetBackground().GetDropShadow().SetDistance(4.0f). Hidden until Show(true)
     class DropShadow final : public StateFillStyle
     {
@@ -54,6 +54,9 @@ namespace RetroFuturaGUI
         glm::vec2 getShownOffset() const;
         f32 getShownBlur() const;
         f32 getShownScale() const;
+
+        /// @brief How far the blur has come toward the one set. A text crossfades its shadow glyphs by it
+        f32 getGlyphProgress() const;
 
         TransitionValue<f32>
             _degree {},

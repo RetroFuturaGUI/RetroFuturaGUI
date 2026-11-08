@@ -63,3 +63,8 @@ glm::vec2 RetroFuturaGUI::InnerGlow::getShownOffset() const
 {
     return getOffset(_degree.Get(), _distance.Get());
 }
+
+f32 RetroFuturaGUI::InnerGlow::getGlyphProgress() const
+{
+    return std::min({ _width.GetProgress(), _degree.GetProgress(), _distance.GetProgress() });
+}

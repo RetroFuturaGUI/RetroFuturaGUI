@@ -79,3 +79,8 @@ f32 RetroFuturaGUI::DropShadow::getShownScale() const
 {
     return _scale.Get();
 }
+
+f32 RetroFuturaGUI::DropShadow::getGlyphProgress() const
+{
+    return _blur.GetProgress();
+}

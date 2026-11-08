@@ -36,6 +36,9 @@ namespace RetroFuturaGUI
         /// @brief The width shown now
         f32 getShownWidth() const;
 
+        /// @brief How far the width has come toward the one set. A text crossfades its glow glyphs by it
+        f32 getGlyphProgress() const;
+
         TransitionValue<f32> _width {};
         bool _isShown { false };
     };

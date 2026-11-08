@@ -31,3 +31,8 @@ f32 RetroFuturaGUI::Glow::getShownWidth() const
 {
     return _width.Get();
 }
+
+f32 RetroFuturaGUI::Glow::getGlyphProgress() const
+{
+    return _width.GetProgress();
+}

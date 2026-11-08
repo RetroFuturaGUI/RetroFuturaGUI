@@ -53,6 +53,10 @@ namespace RetroFuturaGUI
         f32 getShownWidth() const;
         glm::vec2 getShownOffset() const;
 
+        /// @brief How far the width and the offset have come toward the ones set, the slowest of them. A text crossfades
+        ///        its inner glow glyphs by it
+        f32 getGlyphProgress() const;
+
         TransitionValue<f32>
             _width {},
             _degree {},

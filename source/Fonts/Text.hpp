@@ -260,6 +260,16 @@ namespace RetroFuturaGUI
             bool _IsChanged { false };
         };
 
+        /// @brief An effect's glyphs at its values before a change, fading out while the glyphs at the new values fade in
+        struct EffectFade
+        {
+            GlyphMesh _Mesh {};
+            f32 _Width { 0.0f }; // the blur or width they were rendered at
+            glm::vec2 _Offset { 0.0f }; // and the inner glow's offset
+            f32 _Progress { 0.0f }; // how far the new glyphs had faded in when last drawn
+            bool _IsShown { false };
+        };
+
         void updateMesh();
         void alignPosition();
         void calculateTextSpan();
@@ -288,6 +298,15 @@ namespace RetroFuturaGUI
         void drawShadow();
         void drawGlow();
         void drawInnerGlow();
+
+        /// @brief Has the effects whose glyph values changed fade out their old glyphs, where the change has a transition
+        void beginEffectFades();
+
+        /// @brief Fades out an effect's glyphs at the values its mesh was built with, unless the change takes no time
+        static void beginFade(EffectFade* fade, const f32 progress, const f32 width, const glm::vec2& offset);
+
+        /// @brief Draws an effect's glyphs, crossfading from the glyphs at its old values while the change runs
+        static void drawFading(Shader& shader, GlyphMesh* mesh, EffectFade* fade, const f32 progress);
 
         /// @brief Whether the shadow, glow or inner glow was shown, blurred, widened or moved since their glyphs were laid out
         bool areEffectMeshesStale() const;
@@ -359,6 +378,10 @@ namespace RetroFuturaGUI
             _shadowMesh {},
             _glowMesh {},
             _innerGlowMesh {};
+        EffectFade
+            _shadowFade {},
+            _glowFade {},
+            _innerGlowFade {};
 
     // outline
         TextOutline _outline {};
