@@ -122,9 +122,9 @@ const RetroFuturaGUI::IHierarchyNode* RetroFuturaGUI::Scene::GetParent() const
     return _parentWindow;
 }
 
-void RetroFuturaGUI::Scene::SetLasagnaAxis(const AxisDefinition axisdefinition, Projection* projection)
+void RetroFuturaGUI::Scene::SetLasagnaAxis(const AxisDefinition axisDefinition, Projection* projection)
 {
-    SetRootContainer<Lasagna>(projection, axisdefinition);
+    SetRootContainer<Lasagna>(projection, axisDefinition);
 }
 
 void RetroFuturaGUI::Scene::SetSize(const glm::vec3& size)

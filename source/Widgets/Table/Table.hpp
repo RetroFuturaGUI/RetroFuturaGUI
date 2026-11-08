@@ -84,7 +84,7 @@ namespace RetroFuturaGUI
             f32 _Value { 1.0f }; // Star: a relative weight. Fixed/Auto: pixels.
         };
 
-        Table(const std::string& name, Projection* projection, IWidget* parentWidget, const WidgetTypeID parentWidgetTypeID, GLFWwindow* parentWindow);
+        Table(std::string_view name, Projection* projection, IWidget* parentWidget, const WidgetTypeID parentWidgetTypeID, GLFWwindow* parentWindow);
         Table(const Table&) = delete;
         Table(Table&&) = delete;
         auto operator =(const Table&) = delete;

@@ -210,7 +210,7 @@ u32 RetroFuturaGUI::FontManager::generateGlyphAtlas(IGlyphSource& source, const 
 {
     std::vector<Glyph>& glyphsRef = *glyphs;
     const uSize glyphCount { codePointLast - codePointFirst + 1 };
-    u32 maxGlyphDimension { (1 + static_cast<u32>(source.GetMetrics()._LineHeight)) * (u32)ceilf(sqrtf(static_cast<float>(glyphCount))) },
+    u32 maxGlyphDimension { (1 + static_cast<u32>(source.GetMetrics()._LineHeight)) * (u32)ceilf(sqrtf(static_cast<f32>(glyphCount))) },
         atlasWidth { 1 };
     glyphsRef.resize(glyphCount);
 

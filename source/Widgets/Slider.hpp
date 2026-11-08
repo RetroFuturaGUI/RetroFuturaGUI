@@ -13,7 +13,7 @@ namespace RetroFuturaGUI
     {
     public:
     /// @brief Constructs the Slider
-        Slider(const std::string& name, Projection* projection, IWidget* parentWidget, const WidgetTypeID parentWidgetTypeID, GLFWwindow* parentWindow);
+        Slider(std::string_view name, Projection* projection, IWidget* parentWidget, const WidgetTypeID parentWidgetTypeID, GLFWwindow* parentWindow);
         ~Slider() = default;
         Slider(const Slider&) = delete;
         Slider(Slider&&) = delete;

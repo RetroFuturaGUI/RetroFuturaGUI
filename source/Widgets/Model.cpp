@@ -4,7 +4,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <print>
 
-RetroFuturaGUI::Model::Model(const std::string& name, Projection* projection, IWidget* parentWidget, const WidgetTypeID parentWidgetTypeID, GLFWwindow* parentWindow)
+RetroFuturaGUI::Model::Model(std::string_view name, Projection* projection, IWidget* parentWidget, const WidgetTypeID parentWidgetTypeID, GLFWwindow* parentWindow)
     : IWidget(name, projection, parentWidget, parentWidgetTypeID, parentWindow)
 {
     _widgetTypeID = WidgetTypeID::Model;

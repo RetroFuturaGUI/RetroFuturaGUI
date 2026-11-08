@@ -526,6 +526,48 @@ void RetroFuturaGUI::ScrollView::applyScrollPosition(const glm::vec3& scrollPosi
     }
 }
 
+void RetroFuturaGUI::ScrollView::Connect_OnXScrolled(const typename Signal<>::Slot& slot, const bool async)
+{
+    if(async)
+        _onXScrolledAsync.Connect(slot);
+    else
+        _onXScrolled.Connect(slot);
+}
+
+void RetroFuturaGUI::ScrollView::Disconnect_OnXScrolled(const typename Signal<>::Slot& slot)
+{
+    _onXScrolled.Disconnect(slot);
+    _onXScrolledAsync.Disconnect(slot);
+}
+
+void RetroFuturaGUI::ScrollView::Connect_OnYScrolled(const typename Signal<>::Slot& slot, const bool async)
+{
+    if(async)
+        _onYScrolledAsync.Connect(slot);
+    else
+        _onYScrolled.Connect(slot);
+}
+
+void RetroFuturaGUI::ScrollView::Disconnect_OnYScrolled(const typename Signal<>::Slot& slot)
+{
+    _onYScrolled.Disconnect(slot);
+    _onYScrolledAsync.Disconnect(slot);
+}
+
+void RetroFuturaGUI::ScrollView::Connect_OnZScrolled(const typename Signal<>::Slot& slot, const bool async)
+{
+    if(async)
+        _onZScrolledAsync.Connect(slot);
+    else
+        _onZScrolled.Connect(slot);
+}
+
+void RetroFuturaGUI::ScrollView::Disconnect_OnZScrolled(const typename Signal<>::Slot& slot)
+{
+    _onZScrolled.Disconnect(slot);
+    _onZScrolledAsync.Disconnect(slot);
+}
+
 bool RetroFuturaGUI::ScrollView::isScrollEnabled(const ScrollEnable axis) const
 {
     return 0 != (static_cast<u32>(_enableMask) & static_cast<u32>(axis));

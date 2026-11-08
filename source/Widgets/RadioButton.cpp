@@ -11,7 +11,7 @@
 #endif
 #include <GLFW/glfw3native.h>
 
-RetroFuturaGUI::RadioButton::RadioButton(const std::string& name, Projection* projection, IWidget* parentWidget, const WidgetTypeID parentWidgetTypeID, GLFWwindow* parentWindow, RadioButtonGroup* parentGroup)
+RetroFuturaGUI::RadioButton::RadioButton(std::string_view name, Projection* projection, IWidget* parentWidget, const WidgetTypeID parentWidgetTypeID, GLFWwindow* parentWindow, RadioButtonGroup* parentGroup)
     : IWidget(name, projection, parentWidget, parentWidgetTypeID, parentWindow)
 {
     _widgetTypeID = WidgetTypeID::RadioButton;

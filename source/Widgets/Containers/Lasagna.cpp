@@ -2,37 +2,37 @@
 #include <optional>
 #include <utility>
 
-RetroFuturaGUI::Lasagna::Lasagna(const std::string& name, Projection* projection, IHierarchyNode* parentWidget, const WidgetTypeID parentWidgetTypeID, GLFWwindow* parentWindow, const AxisDefinition& axisDefinition)
-    : IWidget(name, projection, parentWidget, parentWidgetTypeID, parentWindow), _axisdefinition(axisDefinition)
+RetroFuturaGUI::Lasagna::Lasagna(std::string_view name, Projection* projection, IHierarchyNode* parentWidget, const WidgetTypeID parentWidgetTypeID, GLFWwindow* parentWindow, const AxisDefinition& axisDefinition)
+    : IWidget(name, projection, parentWidget, parentWidgetTypeID, parentWindow), _axisDefinition(axisDefinition)
 {
     _widgetTypeID = WidgetTypeID::Lasagna;
     _size = glm::vec3(_projection.GetResolution().x, _projection.GetResolution().y, _projection.GetDepth());
     _position = glm::vec3(_size.x * 0.5f, _size.y * 0.5f, 0.0f);
 
-    if(_axisdefinition._RowDefinition.size() > _maxCountPerAxis)
-        _axisdefinition._RowDefinition.resize(_maxCountPerAxis);
+    if(_axisDefinition._RowDefinition.size() > _maxCountPerAxis)
+        _axisDefinition._RowDefinition.resize(_maxCountPerAxis);
 
-    if(_axisdefinition._ColumnDefinition.size() > _maxCountPerAxis)
-        _axisdefinition._ColumnDefinition.resize(_maxCountPerAxis);
+    if(_axisDefinition._ColumnDefinition.size() > _maxCountPerAxis)
+        _axisDefinition._ColumnDefinition.resize(_maxCountPerAxis);
 
-    if(_axisdefinition._LayerDefinition.size() > _maxCountPerAxis)
-        _axisdefinition._LayerDefinition.resize(_maxCountPerAxis);
+    if(_axisDefinition._LayerDefinition.size() > _maxCountPerAxis)
+        _axisDefinition._LayerDefinition.resize(_maxCountPerAxis);
 
-    _lasagna.resize(_axisdefinition._RowDefinition.size());
+    _lasagna.resize(_axisDefinition._RowDefinition.size());
 
     for(std::vector<std::vector<LasagnaCell>>& _row : _lasagna)
     {
-        _row.resize(_axisdefinition._ColumnDefinition.size());
+        _row.resize(_axisDefinition._ColumnDefinition.size());
 
         for(std::vector<LasagnaCell>& _column : _row)
-            _column.reserve(_axisdefinition._LayerDefinition.size());
+            _column.reserve(_axisDefinition._LayerDefinition.size());
     }
 
-    for(uSize row = 0; row < _axisdefinition._RowDefinition.size(); ++row)
+    for(uSize row = 0; row < _axisDefinition._RowDefinition.size(); ++row)
     {
-        for(uSize column = 0; column < _axisdefinition._ColumnDefinition.size(); ++column)
+        for(uSize column = 0; column < _axisDefinition._ColumnDefinition.size(); ++column)
         {
-            for(uSize layer = 0; layer < _axisdefinition._LayerDefinition.size(); ++layer)
+            for(uSize layer = 0; layer < _axisDefinition._LayerDefinition.size(); ++layer)
             {
                 f32
                     posX { 0.0f },
@@ -40,13 +40,13 @@ RetroFuturaGUI::Lasagna::Lasagna(const std::string& name, Projection* projection
                     posZ { 0.0f };
 
                 for(uSize i = 0; i < column; ++i)
-                    posX += _axisdefinition._ColumnDefinition[i];
+                    posX += _axisDefinition._ColumnDefinition[i];
 
                 for(uSize i = 0; i < row; ++i)
-                    posY += _axisdefinition._RowDefinition[i];
+                    posY += _axisDefinition._RowDefinition[i];
 
                 for(uSize i = 0; i < layer; ++i)
-                    posZ += _axisdefinition._LayerDefinition[i];
+                    posZ += _axisDefinition._LayerDefinition[i];
 
                 posZ = -posZ; // Higher layer indices sit further from the camera (behind lower layers),
 
@@ -54,11 +54,11 @@ RetroFuturaGUI::Lasagna::Lasagna(const std::string& name, Projection* projection
                     {
                         ._PositionPixels = glm::vec3(_projection.GetResolution().x * posX, _projection.GetResolution().y * posY, _projection.GetDepth() * posZ),
                         ._PositionNormalized = glm::vec3(posX, posY, posZ),
-                        ._SizePixels = glm::vec3(_projection.GetResolution().x * _axisdefinition._ColumnDefinition[column],
-                                                 _projection.GetResolution().y * _axisdefinition._RowDefinition[row],
-                                                 _projection.GetDepth() * _axisdefinition._LayerDefinition[layer]
+                        ._SizePixels = glm::vec3(_projection.GetResolution().x * _axisDefinition._ColumnDefinition[column],
+                                                 _projection.GetResolution().y * _axisDefinition._RowDefinition[row],
+                                                 _projection.GetDepth() * _axisDefinition._LayerDefinition[layer]
                                                 ),
-                        ._SizeNormalized = glm::vec3(_axisdefinition._ColumnDefinition[column], _axisdefinition._RowDefinition[row], _axisdefinition._LayerDefinition[layer]),
+                        ._SizeNormalized = glm::vec3(_axisDefinition._ColumnDefinition[column], _axisDefinition._RowDefinition[row], _axisDefinition._LayerDefinition[layer]),
                         ._PaddingPixels = glm::vec3(0.0f),
                         ._PaddingNormalized = glm::vec3(0.0f),
                         ._RowSpan = 1,
@@ -168,9 +168,9 @@ bool RetroFuturaGUI::Lasagna::isPlacementFree(const CellPlacement& placement) co
         colSpan { 0 == placement._ColSpan ? 1 : placement._ColSpan },
         layerSpan { 0 == placement._LayerSpan ? 1 : placement._LayerSpan };
 
-    if(_axisdefinition._RowDefinition.size() < placement._Row + rowSpan
-    || _axisdefinition._ColumnDefinition.size() < placement._Column + colSpan
-    || _axisdefinition._LayerDefinition.size() < placement._Layer + layerSpan)
+    if(_axisDefinition._RowDefinition.size() < placement._Row + rowSpan
+    || _axisDefinition._ColumnDefinition.size() < placement._Column + colSpan
+    || _axisDefinition._LayerDefinition.size() < placement._Layer + layerSpan)
         return false;
 
     for(u32 r = placement._Row; r < placement._Row + rowSpan; ++r)
@@ -234,9 +234,9 @@ const RetroFuturaGUI::LasagnaCell* RetroFuturaGUI::Lasagna::GetCell(const TrackI
 
 RetroFuturaGUI::TrackIndex RetroFuturaGUI::Lasagna::GetTrackCounts() const
 {
-    return TrackIndex { ._Row = _axisdefinition._RowDefinition.size(),
-                        ._Column = _axisdefinition._ColumnDefinition.size(),
-                        ._Layer = _axisdefinition._LayerDefinition.size() };
+    return TrackIndex { ._Row = _axisDefinition._RowDefinition.size(),
+                        ._Column = _axisDefinition._ColumnDefinition.size(),
+                        ._Layer = _axisDefinition._LayerDefinition.size() };
 }
 
 void RetroFuturaGUI::Lasagna::Draw()
@@ -311,17 +311,17 @@ void RetroFuturaGUI::Lasagna::applySize(const glm::vec3& size)
 
 void RetroFuturaGUI::Lasagna::SetColumnDefinition(std::vector<f32> columnDefinition)
 {
-    if(columnDefinition.size() != _axisdefinition._ColumnDefinition.size())
+    if(columnDefinition.size() != _axisDefinition._ColumnDefinition.size())
         return;
 
     for(const f32 width : columnDefinition)
         if(0.0f >= width)
             return;
 
-    if(columnDefinition == _axisdefinition._ColumnDefinition)
+    if(columnDefinition == _axisDefinition._ColumnDefinition)
         return;
 
-    _axisdefinition._ColumnDefinition = std::move(columnDefinition);
+    _axisDefinition._ColumnDefinition = std::move(columnDefinition);
     resizeCells();
     resizeAllWidgets();
     moveWidgets();
@@ -329,17 +329,17 @@ void RetroFuturaGUI::Lasagna::SetColumnDefinition(std::vector<f32> columnDefinit
 
 void RetroFuturaGUI::Lasagna::SetRowDefinition(std::vector<f32> rowDefinition)
 {
-    if(rowDefinition.size() != _axisdefinition._RowDefinition.size())
+    if(rowDefinition.size() != _axisDefinition._RowDefinition.size())
         return;
 
     for(const f32 height : rowDefinition)
         if(0.0f >= height)
             return;
 
-    if(rowDefinition == _axisdefinition._RowDefinition)
+    if(rowDefinition == _axisDefinition._RowDefinition)
         return;
 
-    _axisdefinition._RowDefinition = std::move(rowDefinition);
+    _axisDefinition._RowDefinition = std::move(rowDefinition);
     resizeCells();
     resizeAllWidgets();
     moveWidgets();
@@ -347,17 +347,17 @@ void RetroFuturaGUI::Lasagna::SetRowDefinition(std::vector<f32> rowDefinition)
 
 void RetroFuturaGUI::Lasagna::SetLayerDefinition(std::vector<f32> layerDefinition)
 {
-    if(layerDefinition.size() != _axisdefinition._LayerDefinition.size())
+    if(layerDefinition.size() != _axisDefinition._LayerDefinition.size())
         return;
 
     for(const f32 depth : layerDefinition)
         if(0.0f >= depth)
             return;
 
-    if(layerDefinition == _axisdefinition._LayerDefinition)
+    if(layerDefinition == _axisDefinition._LayerDefinition)
         return;
 
-    _axisdefinition._LayerDefinition = std::move(layerDefinition);
+    _axisDefinition._LayerDefinition = std::move(layerDefinition);
     resizeCells();
     resizeAllWidgets();
     moveWidgets();
@@ -417,11 +417,11 @@ void RetroFuturaGUI::Lasagna::updateSpanSize(LasagnaCell& originCell, const uSiz
 
 void RetroFuturaGUI::Lasagna::resizeCells()
 {
-    for(uSize row = 0; row < _axisdefinition._RowDefinition.size(); ++row)
+    for(uSize row = 0; row < _axisDefinition._RowDefinition.size(); ++row)
     {
-        for(uSize column = 0; column < _axisdefinition._ColumnDefinition.size(); ++column)
+        for(uSize column = 0; column < _axisDefinition._ColumnDefinition.size(); ++column)
         {
-            for(uSize layer = 0; layer < _axisdefinition._LayerDefinition.size(); ++layer)
+            for(uSize layer = 0; layer < _axisDefinition._LayerDefinition.size(); ++layer)
             {
                 f32
                     posX { 0.0f },
@@ -429,31 +429,31 @@ void RetroFuturaGUI::Lasagna::resizeCells()
                     posZ { 0.0f };
 
                 for(uSize i = 0; i < column; ++i)
-                    posX += _axisdefinition._ColumnDefinition[i] * _size.x;
+                    posX += _axisDefinition._ColumnDefinition[i] * _size.x;
 
                 for(uSize i = 0; i < row; ++i)
-                    posY += _axisdefinition._RowDefinition[i] * _size.y;
+                    posY += _axisDefinition._RowDefinition[i] * _size.y;
 
                 for(uSize i = 0; i < layer; ++i)
-                    posZ += _axisdefinition._LayerDefinition[i] * _size.z;
+                    posZ += _axisDefinition._LayerDefinition[i] * _size.z;
 
                 posZ = -posZ; // Higher layer indices sit further from the camera (behind lower layers),
 
                 _lasagna[row][column][layer]._PositionPixels = glm::vec3(posX, posY, posZ);
                 _lasagna[row][column][layer]._PositionNormalized = glm::vec3(posX / _size.x, posY / _size.y, posZ / _size.z);
-                _lasagna[row][column][layer]._SizePixels = glm::vec3(_axisdefinition._ColumnDefinition[column] * _size.x, _axisdefinition._RowDefinition[row] * _size.y, _axisdefinition._LayerDefinition[layer] * _size.z);
-                _lasagna[row][column][layer]._SizeNormalized = glm::vec3(_axisdefinition._ColumnDefinition[column], _axisdefinition._RowDefinition[row], _axisdefinition._LayerDefinition[layer]);
+                _lasagna[row][column][layer]._SizePixels = glm::vec3(_axisDefinition._ColumnDefinition[column] * _size.x, _axisDefinition._RowDefinition[row] * _size.y, _axisDefinition._LayerDefinition[layer] * _size.z);
+                _lasagna[row][column][layer]._SizeNormalized = glm::vec3(_axisDefinition._ColumnDefinition[column], _axisDefinition._RowDefinition[row], _axisDefinition._LayerDefinition[layer]);
             }
         }
     }
 
     // Cells that were attached with a span merge their base sizes across the spanned range,
     // so this must run after every cell above has its up-to-date single-cell size.
-    for(uSize row = 0; row < _axisdefinition._RowDefinition.size(); ++row)
+    for(uSize row = 0; row < _axisDefinition._RowDefinition.size(); ++row)
     {
-        for(uSize column = 0; column < _axisdefinition._ColumnDefinition.size(); ++column)
+        for(uSize column = 0; column < _axisDefinition._ColumnDefinition.size(); ++column)
         {
-            for(uSize layer = 0; layer < _axisdefinition._LayerDefinition.size(); ++layer)
+            for(uSize layer = 0; layer < _axisDefinition._LayerDefinition.size(); ++layer)
             {
                 LasagnaCell& cell = _lasagna[row][column][layer];
 

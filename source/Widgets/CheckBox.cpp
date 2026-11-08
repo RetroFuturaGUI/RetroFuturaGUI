@@ -11,7 +11,7 @@
 #endif
 #include <GLFW/glfw3native.h>
 
-RetroFuturaGUI::CheckBox::CheckBox(const std::string& name, Projection* projection, IWidget* parentWidget, const WidgetTypeID parentWidgetTypeID, GLFWwindow* parentWindow)
+RetroFuturaGUI::CheckBox::CheckBox(std::string_view name, Projection* projection, IWidget* parentWidget, const WidgetTypeID parentWidgetTypeID, GLFWwindow* parentWindow)
     : IWidget(name, projection, parentWidget, parentWidgetTypeID, parentWindow)
 {
     _widgetTypeID = WidgetTypeID::CheckBox;

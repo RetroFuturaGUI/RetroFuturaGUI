@@ -10,7 +10,7 @@ namespace RetroFuturaGUI
     {
     public:
         /// @brief Constructs a TextBox widget under the given parent widget/window
-        TextBox(const std::string& name, Projection* projection, IWidget* parentWidget, const WidgetTypeID parentWidgetTypeID, GLFWwindow* parentWindow);
+        TextBox(std::string_view name, Projection* projection, IWidget* parentWidget, const WidgetTypeID parentWidgetTypeID, GLFWwindow* parentWindow);
         TextBox() = delete;
         TextBox(const TextBox&) = delete;
         TextBox(TextBox&&) = delete;

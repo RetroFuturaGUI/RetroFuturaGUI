@@ -12,10 +12,10 @@ namespace RetroFuturaGUI
     public:
         /// @brief Constructs an Image widget that shows the image at imagePath (UTF-8). ResourceManager loads it and keeps it
         ///        until ResourceManager::Free.
-        Image(const std::string& name, Projection* projection, IWidget* parentWidget, const WidgetTypeID parentWidgetTypeID, GLFWwindow* parentWindow, std::string_view imagePath);
+        Image(std::string_view name, Projection* projection, IWidget* parentWidget, const WidgetTypeID parentWidgetTypeID, GLFWwindow* parentWindow, std::string_view imagePath);
 
         /// @brief Constructs an Image widget that shows nothing until SetImage gives it a picture.
-        Image(const std::string& name, Projection* projection, IWidget* parentWidget, const WidgetTypeID parentWidgetTypeID, GLFWwindow* parentWindow);
+        Image(std::string_view name, Projection* projection, IWidget* parentWidget, const WidgetTypeID parentWidgetTypeID, GLFWwindow* parentWindow);
         Image() = delete;
         Image(const Image&) = delete;
         Image(Image&&) = delete;

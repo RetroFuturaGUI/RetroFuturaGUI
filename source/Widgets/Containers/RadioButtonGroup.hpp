@@ -17,7 +17,7 @@ namespace RetroFuturaGUI
     {
     public:
         /// @brief Constructs a RadioButtonGroup under the given parent widget/window.
-        RadioButtonGroup(const std::string& name, Projection* projection, IWidget* parentWidget, const WidgetTypeID parentWidgetTypeID, GLFWwindow* parentWindow);
+        RadioButtonGroup(std::string_view name, Projection* projection, IWidget* parentWidget, const WidgetTypeID parentWidgetTypeID, GLFWwindow* parentWindow);
         RadioButtonGroup(const RadioButtonGroup&) = delete;
         RadioButtonGroup(RadioButton&&) = delete;
         ~RadioButtonGroup() = default;

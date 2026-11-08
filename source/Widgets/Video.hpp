@@ -13,7 +13,7 @@ namespace RetroFuturaGUI
     class Video final : public IWidget
     {
     public:
-        Video(const std::string& name, Projection* projection, IWidget* parentWidget, const WidgetTypeID parentWidgetTypeID, GLFWwindow* parentWindow);
+        Video(std::string_view name, Projection* projection, IWidget* parentWidget, const WidgetTypeID parentWidgetTypeID, GLFWwindow* parentWindow);
         ~Video();
         Video(const Video&) = delete;
         Video(Video&&) = delete;

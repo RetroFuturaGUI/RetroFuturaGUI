@@ -11,7 +11,7 @@ namespace RetroFuturaGUI
     {
     public:
         /// @brief Constructs a Label widget under the given parent widget/window
-        Label(const std::string& name, Projection* projection, IWidget* parentWidget, const WidgetTypeID parentWidgetTypeID, GLFWwindow* parentWindow);
+        Label(std::string_view name, Projection* projection, IWidget* parentWidget, const WidgetTypeID parentWidgetTypeID, GLFWwindow* parentWindow);
         Label() = delete;
         Label(const Label&) = delete;
         Label(Label&&) = delete;

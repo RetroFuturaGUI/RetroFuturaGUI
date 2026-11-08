@@ -200,7 +200,7 @@ void RetroFuturaGUI::Shader::SetUniformInt(std::string_view name, int32_t value)
     glUniform1i(getUniformLocation(name), value);
 }
 
-void RetroFuturaGUI::Shader::SetUniformFloat(std::string_view name, float value) const
+void RetroFuturaGUI::Shader::SetUniformFloat(std::string_view name, f32 value) const
 {
     glUniform1f(getUniformLocation(name), value);
 }
@@ -220,7 +220,7 @@ void RetroFuturaGUI::Shader::SetUniformVec2(std::string_view name, const f32 * v
     glUniform2fv(getUniformLocation(name), count, value);
 }
 
-void RetroFuturaGUI::Shader::SetUniformVec2(std::string_view name, float x, float y) const
+void RetroFuturaGUI::Shader::SetUniformVec2(std::string_view name, f32 x, f32 y) const
 {
     glUniform2f(getUniformLocation(name), x, y);
 }
@@ -235,7 +235,7 @@ void RetroFuturaGUI::Shader::SetUniformVec3(std::string_view name, const f32 * v
     glUniform3fv(getUniformLocation(name), count, value);
 }
 
-void RetroFuturaGUI::Shader::SetUniformVec3(std::string_view name, float x, float y, float z) const
+void RetroFuturaGUI::Shader::SetUniformVec3(std::string_view name, f32 x, f32 y, f32 z) const
 {
     glUniform3f(getUniformLocation(name), x, y, z);
 }
@@ -245,12 +245,12 @@ void RetroFuturaGUI::Shader::SetUniformVec4(std::string_view name, const glm::ve
     glUniform4fv(getUniformLocation(name), 1, &value[0]);
 }
 
-void RetroFuturaGUI::Shader::SetUniformVec4(std::string_view name, const float* value, const u32 count) const
+void RetroFuturaGUI::Shader::SetUniformVec4(std::string_view name, const f32* value, const u32 count) const
 {
     glUniform4fv(getUniformLocation(name), count, value);
 }
 
-void RetroFuturaGUI::Shader::SetUniformVec4(std::string_view name, float x, float y, float z, float w) const
+void RetroFuturaGUI::Shader::SetUniformVec4(std::string_view name, f32 x, f32 y, f32 z, f32 w) const
 {
     glUniform4f(getUniformLocation(name), x, y, z, w);
 }

@@ -463,7 +463,7 @@ void RetroFuturaGUI::Text::appendGlyphQuad(const Glyph& glyph, const glm::vec2& 
         height { glyph._Size[1] * scale };
 
     // Clipping calculations
-    const float
+    const f32
         widgetLeft { _position.x - _parentSize.x * 0.5f },
         widgetRight { widgetLeft + _parentSize.x },
         widgetBottom { _position.y - _parentSize.y * 0.5f },
@@ -478,7 +478,7 @@ void RetroFuturaGUI::Text::appendGlyphQuad(const Glyph& glyph, const glm::vec2& 
     if (clippedLocalRight <= clippedLocalLeft || clippedLocalTop <= clippedLocalBottom)
         return;
 
-    const float
+    const f32
         clippedWidth { clippedLocalRight - clippedLocalLeft },
         uSpan { glyph._UV[2] - glyph._UV[0] },
         vSpan { glyph._UV[3] - glyph._UV[1] },
@@ -898,7 +898,7 @@ const std::u32string& RetroFuturaGUI::Text::GetTextUTF32() const
     return _text.GetUtf32();
 }
 
-float RetroFuturaGUI::Text::GetGlyphSize() const
+f32 RetroFuturaGUI::Text::GetGlyphSize() const
 {
     return _glyphSize.x;
 }

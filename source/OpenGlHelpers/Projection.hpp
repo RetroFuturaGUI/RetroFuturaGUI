@@ -31,7 +31,7 @@ namespace RetroFuturaGUI
 
         /// @brief Returns the depth layouts spread over such as Lasagna's layers. 1000 px orthographic, 1 px under
         ///        perspective, so stacking stays flat there and only what is meant to be 3D shows depth
-        const float& GetDepth() const { return _depth; }
+        f32 GetDepth() const { return _depth; }
 
         /// @brief Shows depth in perspective. The eye sits viewingDistance pixels in front of the screen plane looking at the
         ///        vanishing point (bottom-up window pixels), or at the middle of the resolution following it, when none is given
@@ -57,7 +57,7 @@ namespace RetroFuturaGUI
 
         glm::mat4 _projectionMatrix  { 1.0f };
         glm::vec2 _resolution { 1.0f };
-        float _depth { _orthographicDepth };
+        f32 _depth { _orthographicDepth };
         ProjectionMode _mode { ProjectionMode::Orthographic };
         f32 _viewingDistance { 1000.0f };
         std::optional<glm::vec2> _vanishingPoint {}; //the middle of the resolution

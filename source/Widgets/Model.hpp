@@ -12,7 +12,7 @@ namespace RetroFuturaGUI
     {
         public:
             /// @brief Constructs an empty Model widget under the given parent widget/window. Call LoadModel to populate it.
-            Model(const std::string& name, Projection* projection, IWidget* parentWidget, const WidgetTypeID parentWidgetTypeID, GLFWwindow* parentWindow);
+            Model(std::string_view name, Projection* projection, IWidget* parentWidget, const WidgetTypeID parentWidgetTypeID, GLFWwindow* parentWindow);
             Model(const Model&) = delete;
             Model(Model&&) = delete;
             auto operator =(const Model&) = delete;

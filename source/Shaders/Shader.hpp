@@ -160,7 +160,7 @@ namespace RetroFuturaGUI
         void SetUniformVec4(std::string_view name, const f32* value, const u32 count = 1) const;
 
         /// @brief Sets a vec4 uniform from separate x, y, z, w components.
-        void SetUniformVec4(std::string_view name, float x, float y, float z, float w) const;
+        void SetUniformVec4(std::string_view name, f32 x, f32 y, f32 z, f32 w) const;
 
         /// @brief Sets a mat2 uniform.
         void SetUniformMat2(std::string_view name, const glm::mat2& mat) const;

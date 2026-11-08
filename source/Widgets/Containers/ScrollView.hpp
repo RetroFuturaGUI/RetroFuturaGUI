@@ -24,7 +24,7 @@ namespace RetroFuturaGUI
            std::same_as<T, Label>  || std::same_as<T, Button> || std::same_as<T, Lasagna> || std::same_as<T, TextBox>
         || std::same_as<T, Model> || std::same_as<T, Image> || std::same_as<T, SvgImage> || std::same_as<T, CheckBox> 
         || std::same_as<T, RadioButtonGroup> || std::same_as<T, Slider> || std::same_as<T, ProgressBar> || std::same_as<T, Table>
-        || std::same_as<T, Prefab> || std::same_as<T, Environment> || std::same_as<T, ScrollView> || std::same_as<T, Prefab>
+        || std::same_as<T, Prefab> || std::same_as<T, Environment> || std::same_as<T, ScrollView>
         || std::same_as<T, SeparatorLine> || std::same_as<T, ColorPreview> || std::same_as<T, Video> || std::same_as<T, Histogram>
         || std::same_as<T, MultilineTextBox> || std::same_as<T, LineDiagram> || std::same_as<T, ColorPicker>;
 
@@ -100,6 +100,27 @@ namespace RetroFuturaGUI
         void EnableScrolling(const ScrollEnable enableMask);
         f32 GetScrollPosition(const ScrollAxis axis) const;
         void SetScrollPosition(const ScrollAxis axis, const f32 scrollPosition);
+
+        /// @brief Connects a slot to be called when the content scrolled along X. Only an axis that actually moved emits
+        /// @param async If true, the slot is invoked asynchronously
+        void Connect_OnXScrolled(const typename Signal<>::Slot& slot, const bool async);
+
+        /// @brief Disconnects a previously connected OnXScrolled slot
+        void Disconnect_OnXScrolled(const typename Signal<>::Slot& slot);
+
+        /// @brief Connects a slot to be called when the content scrolled along Y. Only an axis that actually moved emits
+        /// @param async If true, the slot is invoked asynchronously
+        void Connect_OnYScrolled(const typename Signal<>::Slot& slot, const bool async);
+
+        /// @brief Disconnects a previously connected OnYScrolled slot
+        void Disconnect_OnYScrolled(const typename Signal<>::Slot& slot);
+
+        /// @brief Connects a slot to be called when the content scrolled along Z. Only an axis that actually moved emits
+        /// @param async If true, the slot is invoked asynchronously
+        void Connect_OnZScrolled(const typename Signal<>::Slot& slot, const bool async);
+
+        /// @brief Disconnects a previously connected OnZScrolled slot
+        void Disconnect_OnZScrolled(const typename Signal<>::Slot& slot);
 
         /// @brief Sets the axis the cells stack along, one after the other (Vertical by default). Along Z they stack away from the
         ///        eye, from the view's front face, and draw from the back. With Z scrolling on (EnableScrolling), the cells scrolled

@@ -4,7 +4,7 @@
 #include "IncludeHelper.hpp"
 #include <memory>
 
-RetroFuturaGUI::Video::Video(const std::string& name, Projection* projection, IWidget* parentWidget, const WidgetTypeID parentWidgetTypeID, GLFWwindow* parentWindow)
+RetroFuturaGUI::Video::Video(std::string_view name, Projection* projection, IWidget* parentWidget, const WidgetTypeID parentWidgetTypeID, GLFWwindow* parentWindow)
     : IWidget(name, projection, parentWidget, parentWidgetTypeID, parentWindow)
 {
     _widgetTypeID = WidgetTypeID::Video;

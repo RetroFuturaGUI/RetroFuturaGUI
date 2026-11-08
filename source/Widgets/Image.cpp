@@ -1,13 +1,13 @@
 #include "Image.hpp"
 #include "ResourceManager.hpp"
 
-RetroFuturaGUI::Image::Image(const std::string& name, Projection* projection, IWidget* parentWidget, const WidgetTypeID parentWidgetTypeID, GLFWwindow* parentWindow, std::string_view imagePath)
+RetroFuturaGUI::Image::Image(std::string_view name, Projection* projection, IWidget* parentWidget, const WidgetTypeID parentWidgetTypeID, GLFWwindow* parentWindow, std::string_view imagePath)
     : Image(name, projection, parentWidget, parentWidgetTypeID, parentWindow)
 {
     showTexture(ResourceManager::GetTexture(imagePath));
 }
 
-RetroFuturaGUI::Image::Image(const std::string& name, Projection* projection, IWidget* parentWidget, const WidgetTypeID parentWidgetTypeID, GLFWwindow* parentWindow)
+RetroFuturaGUI::Image::Image(std::string_view name, Projection* projection, IWidget* parentWidget, const WidgetTypeID parentWidgetTypeID, GLFWwindow* parentWindow)
     : IWidget(name, projection, parentWidget, parentWidgetTypeID, parentWindow)
 {
     _widgetTypeID = WidgetTypeID::Image;

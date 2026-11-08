@@ -25,7 +25,7 @@ namespace RetroFuturaGUI
         };
 
         /// @brief Constructs the ColorPicker
-        ColorPicker(const std::string& name, Projection* projection, IWidget* parentWidget, const WidgetTypeID parentWidgetTypeID, GLFWwindow* parentWindow);
+        ColorPicker(std::string_view name, Projection* projection, IWidget* parentWidget, const WidgetTypeID parentWidgetTypeID, GLFWwindow* parentWindow);
         ~ColorPicker() = default;
         ColorPicker(const ColorPicker&) = delete;
         ColorPicker(ColorPicker&&) = delete;

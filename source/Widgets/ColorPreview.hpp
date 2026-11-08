@@ -12,7 +12,7 @@ namespace RetroFuturaGUI
     class ColorPreview final : public IWidget
     {
     public:
-        enum class DualPrevieAlignment : u32
+        enum class DualPreviewAlignment : u32
         {
             Horizontal,
             Vertical
@@ -39,7 +39,7 @@ namespace RetroFuturaGUI
         void EnableDualPreviewBackground(const bool enable);
 
         /// @brief Sets which way the dual preview is split: Horizontal puts the halves side by side, Vertical stacks them.
-        void SetDualPreviewAlignment(const DualPrevieAlignment alignment);
+        void SetDualPreviewAlignment(const DualPreviewAlignment alignment);
 
         /// @brief Returns the ColorPreviews's border
         Border& GetBorder();
@@ -68,7 +68,7 @@ namespace RetroFuturaGUI
             _whiteBackground { nullptr },
             _colorRect { nullptr };
         Border _border { &_projection };
-        DualPrevieAlignment _previewAlignment { DualPrevieAlignment::Horizontal };
+        DualPreviewAlignment _previewAlignment { DualPreviewAlignment::Horizontal };
         bool _useWhiteBackgroundRect { true };
 
         /// @brief The fill the checkerboard's squares are drawn over. A Plane draws nothing at all until it holds a color.

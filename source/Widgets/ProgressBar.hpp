@@ -14,7 +14,7 @@ namespace RetroFuturaGUI
     {
     public:
         /// @brief Constructs the ProgressBar
-        ProgressBar(const std::string& name, Projection* projection, IWidget* parentWidget, const WidgetTypeID parentWidgetTypeID, GLFWwindow* parentWindow);
+        ProgressBar(std::string_view name, Projection* projection, IWidget* parentWidget, const WidgetTypeID parentWidgetTypeID, GLFWwindow* parentWindow);
         ~ProgressBar() = default;
         ProgressBar(const ProgressBar&) = delete;
         ProgressBar(ProgressBar&&) = delete;

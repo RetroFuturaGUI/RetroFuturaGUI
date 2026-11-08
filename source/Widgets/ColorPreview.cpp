@@ -84,7 +84,7 @@ void RetroFuturaGUI::ColorPreview::EnableDualPreviewBackground(const bool enable
     alignColorPreview();
 }
 
-void RetroFuturaGUI::ColorPreview::SetDualPreviewAlignment(const DualPrevieAlignment alignment)
+void RetroFuturaGUI::ColorPreview::SetDualPreviewAlignment(const DualPreviewAlignment alignment)
 {
     _previewAlignment = alignment;
     alignColorPreview();
@@ -113,7 +113,7 @@ void RetroFuturaGUI::ColorPreview::alignColorPreview()
         return;
     }
 
-    const bool horizontal { _previewAlignment == DualPrevieAlignment::Horizontal };
+    const bool horizontal { _previewAlignment == DualPreviewAlignment::Horizontal };
     const glm::vec2 halfSize { horizontal ? glm::vec2(_size.x * 0.5f, _size.y) : glm::vec2(_size.x, _size.y * 0.5f) };
 
     const glm::vec3 checkeredOffset { horizontal

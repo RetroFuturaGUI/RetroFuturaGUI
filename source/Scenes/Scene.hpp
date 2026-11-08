@@ -92,7 +92,7 @@ namespace RetroFuturaGUI
         }
 
         /// @brief Builds the scene's root Lasagna. Replaces any previous one, discarding its cells.
-        void SetLasagnaAxis(const AxisDefinition axisdefinition, Projection* projection);
+        void SetLasagnaAxis(const AxisDefinition axisDefinition, Projection* projection);
 
     //Geometry
         void SetSize(const glm::vec3& size);

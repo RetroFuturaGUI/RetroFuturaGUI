@@ -1,7 +1,7 @@
 #include "SvgImage.hpp"
 #include "ResourceManager.hpp"
 
-RetroFuturaGUI::SvgImage::SvgImage(const std::string& name, Projection* projection, IWidget* parentWidget, const WidgetTypeID parentWidgetTypeID, GLFWwindow* parentWindow, std::string_view SvgImagePath)
+RetroFuturaGUI::SvgImage::SvgImage(std::string_view name, Projection* projection, IWidget* parentWidget, const WidgetTypeID parentWidgetTypeID, GLFWwindow* parentWindow, std::string_view SvgImagePath)
     : IWidget(name, projection, parentWidget, parentWidgetTypeID, parentWindow)
 {
     _widgetTypeID = WidgetTypeID::SvgImage;

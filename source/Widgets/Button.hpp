@@ -12,7 +12,7 @@ namespace RetroFuturaGUI
     {
     public:
         /// @brief Constructs a Button widget under the given parent widget/window
-        Button(const std::string& name, Projection* projection, IWidget* parentWidget, const WidgetTypeID parentWidgetTypeID, GLFWwindow* parentWindow);
+        Button(std::string_view name, Projection* projection, IWidget* parentWidget, const WidgetTypeID parentWidgetTypeID, GLFWwindow* parentWindow);
         Button() = delete;
         Button(const Button&) = delete;
         Button(Button&&) = delete;

@@ -1,6 +1,6 @@
 #include "MultilineTextBox.hpp"
 
-RetroFuturaGUI::MultilineTextBox::MultilineTextBox(const std::string& name, Projection* projection, IWidget* parentWidget, const WidgetTypeID parentWidgetTypeID, GLFWwindow* parentWindow)
+RetroFuturaGUI::MultilineTextBox::MultilineTextBox(std::string_view name, Projection* projection, IWidget* parentWidget, const WidgetTypeID parentWidgetTypeID, GLFWwindow* parentWindow)
    : ITextBox(name, projection, parentWidget, parentWidgetTypeID, parentWindow)
 {
     _widgetTypeID = WidgetTypeID::MultilineTextBox;

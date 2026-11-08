@@ -44,7 +44,7 @@ namespace RetroFuturaGUI
     {
     public:
         /// @brief Constructs an empty Environment that covers the whole projection until a parent places it
-        Environment(const std::string& name, Projection* projection, IHierarchyNode* parentWidget, const WidgetTypeID parentWidgetTypeID, GLFWwindow* parentWindow);
+        Environment(std::string_view name, Projection* projection, IHierarchyNode* parentWidget, const WidgetTypeID parentWidgetTypeID, GLFWwindow* parentWindow);
         Environment() = delete;
         Environment(const Environment&) = delete;
         Environment(Environment&&) = delete;

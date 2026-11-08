@@ -68,7 +68,7 @@ namespace RetroFuturaGUI
             bool _IsWindowUndock { false }; //A drag that starts in this cell takes the owning window out of its docking group first, then drags it alone. True is suppressed if the widget is clickable. The bar disables the cell's widget while the window is docked to nothing
         };
 
-        MenuBar(const std::string& name, Projection* projection, IWidget* parentWidget, const WidgetTypeID parentWidgetTypeID, GLFWwindow* parentWindow);
+        MenuBar(std::string_view name, Projection* projection, IWidget* parentWidget, const WidgetTypeID parentWidgetTypeID, GLFWwindow* parentWindow);
         MenuBar() = delete;
         MenuBar(const Button&) = delete;
         MenuBar(MenuBar&&) = delete;

@@ -8,7 +8,7 @@ namespace RetroFuturaGUI
     {
     public:
         /// @brief Constructs an SvgImage widget that loads and displays the texture at SvgImagePath.
-        SvgImage(const std::string& name, Projection* projection, IWidget* parentWidget, const WidgetTypeID parentWidgetTypeID, GLFWwindow* parentWindow, std::string_view SvgImagePath);
+        SvgImage(std::string_view name, Projection* projection, IWidget* parentWidget, const WidgetTypeID parentWidgetTypeID, GLFWwindow* parentWindow, std::string_view SvgImagePath);
         SvgImage() = delete;
         SvgImage(const SvgImage&) = delete;
         SvgImage(SvgImage&&) = delete;

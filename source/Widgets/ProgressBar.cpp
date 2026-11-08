@@ -10,7 +10,7 @@
 #endif
 #include <GLFW/glfw3native.h>
 
-RetroFuturaGUI::ProgressBar::ProgressBar(const std::string& name, Projection* projection, IWidget* parentWidget, const WidgetTypeID parentWidgetTypeID, GLFWwindow* parentWindow)
+RetroFuturaGUI::ProgressBar::ProgressBar(std::string_view name, Projection* projection, IWidget* parentWidget, const WidgetTypeID parentWidgetTypeID, GLFWwindow* parentWindow)
    : IRangedSingleValue(name, projection, parentWidget, parentWidgetTypeID, parentWindow)
 {
     _widgetTypeID = WidgetTypeID::ProgressBar;

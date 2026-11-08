@@ -26,6 +26,7 @@ namespace RetroFuturaGUI
     {
         friend class Tooltip;
         friend class ContextMenu;
+        friend class ScrollView; //finds the frontmost cell under the pointer with its widgets' own hit tests
         template<typename> friend class WidgetReference;
 
     public:
@@ -140,6 +141,7 @@ namespace RetroFuturaGUI
         /// @brief Returns the transition one property follows: the widget's own, or else the global default.
         Transition GetTransition(const TransitionProperty property) const;
 
+    protected:
     //Identity
         std::string _name;
         IHierarchyNode* _parentWidget { nullptr };
@@ -193,7 +195,6 @@ namespace RetroFuturaGUI
         /// @brief Switches the widget to the colors of the given state. Does nothing in a widget without colors per state.
         virtual void setColors([[maybe_unused]] const ColorState state) {}
 
-    protected:
         /// @brief The widget's own reaction to the frame's input, after its tooltip and context menu. A container calls its widgets' Interact here.
         virtual void interact() {}
 

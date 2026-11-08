@@ -18,7 +18,7 @@ namespace RetroFuturaGUI
     {
     public:
         /// @brief Constructs a CheckBox widget under the given parent widget/window.
-        CheckBox(const std::string& name, Projection* projection, IWidget* parentWidget, const WidgetTypeID parentWidgetTypeID, GLFWwindow* parentWindow);
+        CheckBox(std::string_view name, Projection* projection, IWidget* parentWidget, const WidgetTypeID parentWidgetTypeID, GLFWwindow* parentWindow);
         CheckBox(const CheckBox&) = delete;
         CheckBox(CheckBox&&) = delete;
         ~CheckBox() = default;

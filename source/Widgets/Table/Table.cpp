@@ -18,7 +18,7 @@
 #endif
 #include <GLFW/glfw3native.h>
 
-RetroFuturaGUI::Table::Table(const std::string& name, Projection* projection, IWidget* parentWidget, const WidgetTypeID parentWidgetTypeID, GLFWwindow* parentWindow)
+RetroFuturaGUI::Table::Table(std::string_view name, Projection* projection, IWidget* parentWidget, const WidgetTypeID parentWidgetTypeID, GLFWwindow* parentWindow)
     : IWidget(name, projection, parentWidget, parentWidgetTypeID, parentWindow), ITextEditVisuals(projection)
 {
     _widgetTypeID = WidgetTypeID::Table;

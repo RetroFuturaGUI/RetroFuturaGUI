@@ -403,7 +403,7 @@ void RetroFuturaGUI::Window::createWindow()
         shadersInitialized = true;
     }
 
-    _projection = std::make_unique<Projection>((float)_width, (float)_height);
+    _projection = std::make_unique<Projection>(static_cast<f32>(_width), static_cast<f32>(_height));
     _background.emplace(_projection.get(), BackgroundHooks { ._OnCornerRadiiChange = [this]() { takeCornerRadii(_backgroundCornerRadii, *_background); } });
     _border.emplace(_projection.get(), BorderHooks { ._OnWidthChange = {}, ._OnCornerRadiiChange = [this]() { takeCornerRadii(_borderCornerRadii, *_border); } });
     _background->SetTransitionSettings(&_transitionSettings);

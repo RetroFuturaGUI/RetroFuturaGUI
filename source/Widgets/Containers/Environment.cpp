@@ -7,7 +7,7 @@
 #include <print>
 #include <utility>
 
-RetroFuturaGUI::Environment::Environment(const std::string& name, Projection* projection, IHierarchyNode* parentWidget, const WidgetTypeID parentWidgetTypeID, GLFWwindow* parentWindow)
+RetroFuturaGUI::Environment::Environment(std::string_view name, Projection* projection, IHierarchyNode* parentWidget, const WidgetTypeID parentWidgetTypeID, GLFWwindow* parentWindow)
     : IWidget(name, projection, parentWidget, parentWidgetTypeID, parentWindow), _viewProjection(_projection)
 {
     _widgetTypeID = WidgetTypeID::Environment;

@@ -139,19 +139,19 @@ namespace RetroFuturaGUI
         f32 GetScrollOffset() const;
 
         /// @brief Returns the glyph size. The font size in pixels, unless SetSize scaled the glyphs
-        float GetGlyphSize() const;
+        f32 GetGlyphSize() const;
 
         /// @brief Returns one line's height from the font's lowest descender to its highest ascender, without the gap between lines
-        float GetHeight() const;
+        f32 GetHeight() const;
 
         /// @brief Returns the width of the rendered text span
-        float GetWidth() const;
+        f32 GetWidth() const;
 
         /// @brief Returns the height of the rendered text span, line spacing included (covering ascenders and decenders)
-        float GetSpanHeight() const;
+        f32 GetSpanHeight() const;
 
         /// @brief Returns the padding
-        float GetPadding() const;
+        f32 GetPadding() const;
 
         /// @brief Returns the world position of the given glyph boundary, useful for placing a caret
         /// @param boundary The glyph boundary index

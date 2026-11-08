@@ -12,7 +12,7 @@
 #include <utility>
 #include <memory>
 
-RetroFuturaGUI::RadioButtonGroup::RadioButtonGroup(const std::string& name, Projection* projection, IWidget* parentWidget, const WidgetTypeID parentWidgetTypeID, GLFWwindow* parentWindow)
+RetroFuturaGUI::RadioButtonGroup::RadioButtonGroup(std::string_view name, Projection* projection, IWidget* parentWidget, const WidgetTypeID parentWidgetTypeID, GLFWwindow* parentWindow)
     : IWidget(name, projection, parentWidget, parentWidgetTypeID, parentWindow)
 {
     _widgetTypeID = WidgetTypeID::RadioButtonGroup;
@@ -125,8 +125,7 @@ RetroFuturaGUI::RadioButton* RetroFuturaGUI::RadioButtonGroup::AddRadioButton(st
         return nullptr;
     }
 
-    //Most widget constructors take the name as const std::string&, so it is materialised here
-    const std::string radioButtonName { name };
+    const std::string radioButtonName { name }; //the label's name is built from it.
     cell._RadioButton = std::make_unique<RadioButton>(radioButtonName, &_projection, this, _widgetTypeID, _parentWindow, this);
     cell._Label = std::make_unique<Label>(radioButtonName + "Label", &_projection, this, _widgetTypeID, _parentWindow);
     updateGridLayout();

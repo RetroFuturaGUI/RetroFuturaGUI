@@ -9,7 +9,7 @@ namespace RetroFuturaGUI
     {
     public:
         /// @brief Constructs a MultilineTextBox widget under the given parent widget/window.
-        MultilineTextBox(const std::string& name, Projection* projection, IWidget* parentWidget, const WidgetTypeID parentWidgetTypeID, GLFWwindow* parentWindow);
+        MultilineTextBox(std::string_view name, Projection* projection, IWidget* parentWidget, const WidgetTypeID parentWidgetTypeID, GLFWwindow* parentWindow);
         MultilineTextBox() = delete;
         MultilineTextBox(const MultilineTextBox&) = delete;
         MultilineTextBox(MultilineTextBox&&) = delete;

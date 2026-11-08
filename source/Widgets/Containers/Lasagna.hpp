@@ -86,7 +86,7 @@ namespace RetroFuturaGUI
         using AxisIndex = RetroFuturaGUI::AxisIndex;
 
         /// @brief Constructs a Lasagna layout container with the given row/column/layer definitions.
-        Lasagna(const std::string& name, Projection* projection, IHierarchyNode* parentWidget, const WidgetTypeID parentWidgetTypeID, GLFWwindow* parentWindow, const AxisDefinition& axisDefinition);
+        Lasagna(std::string_view name, Projection* projection, IHierarchyNode* parentWidget, const WidgetTypeID parentWidgetTypeID, GLFWwindow* parentWindow, const AxisDefinition& axisDefinition);
         Lasagna() = delete;
         Lasagna(const Lasagna&) = delete;
         Lasagna(Lasagna&&) = delete;
@@ -183,7 +183,7 @@ namespace RetroFuturaGUI
     // Data
         std::vector<std::vector<std::vector<LasagnaCell>>> _lasagna {};
         static constinit const u32 _maxCountPerAxis { MaxTracksPerAxis };
-        AxisDefinition _axisdefinition {};
+        AxisDefinition _axisDefinition {};
         std::unique_ptr<Frame> _debugBorder { nullptr };
         std::vector<glm::vec4> _debugBorderColor { glm::vec4(1.0f) };
         bool _drawDebugLines { false };
