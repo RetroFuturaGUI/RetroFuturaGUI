@@ -162,6 +162,9 @@ namespace RetroFuturaGUI
         ///        keystroke placed them, and the old place may lie past the new text's end
         void PlaceCaretAfterText();
 
+        /// @brief Lays the caret and the selection out again where the text is now, after the widget moved, resized or scrolled
+        void FollowText();
+
         /// @brief Returns whether Enter was pressed in the last editing frame. Its release is signalled in the next
         bool WasEnterPressed() const;
 

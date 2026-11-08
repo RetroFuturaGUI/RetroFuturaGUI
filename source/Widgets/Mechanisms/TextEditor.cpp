@@ -671,11 +671,13 @@ void RetroFuturaGUI::TextEditor::deleteBackward()
     if(0 == _caretPosition)
         return;
 
-    std::u32string left { text->GetTextUTF32().substr(0, _caretPosition - 1) };
+    //The whole cluster before the caret, so an emoji sequence or a letter with its marks never goes half
+    const uSize clusterStart { std::min(text->GetClusterStart(_caretPosition), _caretPosition - 1) };
+    std::u32string left { text->GetTextUTF32().substr(0, clusterStart) };
     std::u32string right { text->GetTextUTF32().substr(_caretPosition) };
 
     text->SetTextUTF32(left + right);
-    --_caretPosition;
+    _caretPosition = clusterStart;
     deselect();
     updateCaretPosition();
     emitChange();
@@ -842,6 +844,13 @@ void RetroFuturaGUI::TextEditor::updateCaretPosition()
     //In a column the caret lies across it, as wide as the column, between the characters above and below
     if(TextFlow::Horizontal != text->GetTextFlow())
     {
+        if(_isOverwriting)
+        {
+            moveOverwriteCaret(*text, caretPosition, fullHeight);
+            resetCaretBlink();
+            return;
+        }
+
         const f32
             halfLength { text->GetLineHeight() * 0.5f },
             clippedLeftX { ClampToTextBounds(caretPosition.x - halfLength) },
@@ -1075,12 +1084,22 @@ void RetroFuturaGUI::TextEditor::checkForInsertKey()
 
 void RetroFuturaGUI::TextEditor::moveOverwriteCaret(Text& text, const glm::vec3& caretPosition, const f32 fullHeight)
 {
-    //The character after the caret, as it is drawn: right to left it may lie to the caret's left
+    //The character after the caret, as it is drawn: right to left it may lie to the caret's left, in a column below it. Past
+    //the line's end, a box about a narrow character long
     const std::u32string& characters { text.GetTextUTF32() };
-    const bool hasCharacter { _caretPosition < characters.size() && U'\n' != characters[_caretPosition] };
-    f32
-        left { caretPosition.x },
-        right { caretPosition.x + fullHeight * 0.35f }; //past the line's end, about a narrow character's width
+    const bool
+        hasCharacter { _caretPosition < characters.size() && U'\n' != characters[_caretPosition] },
+        isColumn { TextFlow::Horizontal != text.GetTextFlow() };
+    const f32
+        narrowLength { fullHeight * 0.35f },
+        halfColumnWidth { text.GetLineHeight() * 0.5f };
+    glm::vec4 box //left, bottom, right, top
+    {
+        isColumn ? caretPosition.x - halfColumnWidth : caretPosition.x,
+        isColumn ? caretPosition.y - narrowLength : caretPosition.y - fullHeight * 0.5f,
+        isColumn ? caretPosition.x + halfColumnWidth : caretPosition.x + narrowLength,
+        isColumn ? caretPosition.y : caretPosition.y + fullHeight * 0.5f
+    };
 
     if(hasCharacter)
     {
@@ -1088,22 +1107,24 @@ void RetroFuturaGUI::TextEditor::moveOverwriteCaret(Text& text, const glm::vec3&
 
         if(!areas.empty())
         {
-            left = areas.front()._Center.x - areas.front()._Size.x * 0.5f;
-            right = areas.front()._Center.x + areas.front()._Size.x * 0.5f;
+            const glm::vec2
+                center { areas.front()._Center },
+                halfSize { areas.front()._Size * 0.5f };
+            box = glm::vec4(center - halfSize, center + halfSize);
         }
     }
 
-    //A block behind the character, as tall as the caret: a little further back than the text, which is drawn over it
+    const f32
+        clippedLeftX { ClampToTextBounds(box.x) },
+        clippedRightX { ClampToTextBounds(box.z) },
+        clippedWidth { clippedRightX - clippedLeftX },
+        clippedBottomY { clampToTextBoundsY(box.y) },
+        clippedTopY { clampToTextBoundsY(box.w) },
+        clippedHeight { clippedTopY - clippedBottomY };
+
+    //A block behind the character: a little further back than the text, which is drawn over it
     if(OverwriteCaret::Block == _overwriteCaret)
     {
-        const f32
-            clippedTopY { clampToTextBoundsY(caretPosition.y + fullHeight * 0.5f) },
-            clippedBottomY { clampToTextBoundsY(caretPosition.y - fullHeight * 0.5f) },
-            clippedHeight { clippedTopY - clippedBottomY },
-            clippedLeftX { ClampToTextBounds(left) },
-            clippedRightX { ClampToTextBounds(right) },
-            clippedWidth { clippedRightX - clippedLeftX };
-
         _isCaretInView = 0.0f < clippedWidth && 0.0f < clippedHeight;
         _caret.MoveTo(glm::vec3(clippedLeftX + clippedWidth * 0.5f, clippedBottomY + clippedHeight * 0.5f, caretPosition.z - _blockCaretDepthOffset), glm::vec2(clippedWidth, clippedHeight));
         return;
@@ -1112,11 +1133,19 @@ void RetroFuturaGUI::TextEditor::moveOverwriteCaret(Text& text, const glm::vec3&
     //Under the character, as thick as the caret is wide
     const f32
         thickness { _caretThickness * 1.5f },
-        bottomY { caretPosition.y - fullHeight * 0.5f + thickness * 0.5f },
-        clippedLeftX { ClampToTextBounds(left) },
-        clippedRightX { ClampToTextBounds(right) },
-        clippedWidth { clippedRightX - clippedLeftX };
+        bottomY { box.y + thickness * 0.5f };
 
     _isCaretInView = 0.0f < clippedWidth && clampToTextBoundsY(bottomY) == bottomY;
     _caret.MoveTo(glm::vec3(clippedLeftX + clippedWidth * 0.5f, bottomY, caretPosition.z), glm::vec2(clippedWidth, thickness));
+}
+
+void RetroFuturaGUI::TextEditor::FollowText()
+{
+    updateCaretPosition();
+
+    //Only a selection shown: the marks of one dropped (by an arrow key, say) stay, and would show it again
+    if(!_isSelected)
+        return;
+
+    updateSelectedArea();
 }

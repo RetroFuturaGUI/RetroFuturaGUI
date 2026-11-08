@@ -7,11 +7,7 @@
 RetroFuturaGUI::Text::Text(Projection* projection)
     : _projection(*projection)
 {
-    initMesh(&_mesh);
-    initMesh(&_outlineMesh);
-    initMesh(&_shadowMesh);
-    initMesh(&_glowMesh);
-    initMesh(&_innerGlowMesh);
+    initMesh(&_mesh); //the outline's and the effects' meshes get theirs once they have glyphs to draw
     SetColors(std::span<const glm::vec4>(&_defaultColor, 1));
 }
 
@@ -166,6 +162,12 @@ void RetroFuturaGUI::Text::uploadPlacement(Shader& shader, const glm::mat4& tran
 
 void RetroFuturaGUI::Text::drawMesh(Shader& shader, GlyphMesh* mesh)
 {
+    if(!mesh)
+        return;
+
+    if(!mesh->_VertexArray)
+        initMesh(mesh); //an outline's or effect's mesh, the first time it is drawn
+
     if(!mesh->_VertexArray)
         return;
 
@@ -1098,4 +1100,25 @@ uSize RetroFuturaGUI::Text::GetLineLastBoundary(const uSize line) const
 f32 RetroFuturaGUI::Text::GetLineHeight() const
 {
     return _lineHeight;
+}
+
+uSize RetroFuturaGUI::Text::GetClusterStart(const uSize boundary) const
+{
+    if(0 == boundary)
+        return 0;
+
+    const uSize last { boundary - 1 };
+
+    if(_characterSpans.size() <= last || _glyphLines.size() <= last)
+        return last; //not laid out: a character alone
+
+    //The characters of one cluster share the stretch its glyphs cover
+    const glm::vec2 span { _characterSpans[last] };
+    const uSize line { _glyphLines[last] };
+    uSize start { last };
+
+    while(0 < start && line == _glyphLines[start - 1] && span == _characterSpans[start - 1])
+        --start;
+
+    return start;
 }

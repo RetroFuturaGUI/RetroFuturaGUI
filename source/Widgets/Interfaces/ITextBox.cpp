@@ -72,6 +72,7 @@ void RetroFuturaGUI::ITextBox::applySize(const glm::vec3& size)
     _border.SetSize(size);
     _text.SetSize(glm::vec2(size.x, size.y));
     _placeholder.SetSize(glm::vec2(size.x, size.y));
+    _editor.FollowText(); //the area they are clipped to changed
 }
 
 void RetroFuturaGUI::ITextBox::applyPosition(const glm::vec3& position)
@@ -84,6 +85,7 @@ void RetroFuturaGUI::ITextBox::applyPosition(const glm::vec3& position)
     _text.SetPosition(position + glm::vec3(0.0f, 0.0f, 0.3f));
     _placeholder.SetPosition(position + glm::vec3(0.0f, 0.0f, 0.3f));
     _editor.GetCaret().SetPosition(position + glm::vec3(0.0f, 0.0f, 0.5f));
+    _editor.FollowText(); //after the text, which they are laid out on
 }
 
 void RetroFuturaGUI::ITextBox::interact()

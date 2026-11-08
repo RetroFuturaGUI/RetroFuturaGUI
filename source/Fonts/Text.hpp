@@ -200,6 +200,10 @@ namespace RetroFuturaGUI
         ///        start and end. In columns, Up and Down step along the column, Left and Right go to the next column that way.
         uSize GetBoundaryBeside(const uSize boundary, const CaretMove move) const;
 
+        /// @brief Returns the boundary where the cluster holding the character before the given boundary starts: an emoji
+        ///        sequence, a ligature, a letter with its marks. Backspace deletes back to it, so a cluster goes whole
+        uSize GetClusterStart(const uSize boundary) const;
+
         /// @brief Returns the boxes covering the characters from one boundary to another, in world space: one per stretch
         ///        drawn without a break, as mixed left-to-right and right-to-left text splits a selection on its line. A
         ///        selected line break shows as a narrow box at its line's end.

@@ -605,6 +605,7 @@ void RetroFuturaGUI::Table::layoutView()
     }
 
     layoutHeaders();
+    _editor.FollowText(); //an edited cell moved, scrolled or resized with the rest
 }
 
 void RetroFuturaGUI::Table::layoutHeaders()
