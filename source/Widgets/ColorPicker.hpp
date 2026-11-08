@@ -1,6 +1,8 @@
 #pragma once
 #include "IWidget.hpp"
 #include "IncludeHelper.hpp"
+#include "Border.hpp"
+#include "ColorPickerIndicator.hpp"
 #include "ColorField.hpp"
 #include "Frame.hpp"
 #include "Plane.hpp"
@@ -58,8 +60,17 @@ namespace RetroFuturaGUI
         /// @brief Sets the picked color from code: moves the indicator and updates brightness and alpha to match.
         void SetColor(const glm::vec3& color, const bool emitSignal);
 
-        void SetColorPickerFieldBorderColors(std::span<const glm::vec4> colors, const ColorState state);
-        void SetColorPickerIndicatorBorderColors(std::span<const glm::vec4> colors, const ColorState state);
+        /// @brief Returns the field's border. Hover while the pointer is over the field, Clicked while it drags the indicator
+        Border& GetBorder();
+
+        /// @brief Returns the field's border
+        const Border& GetBorder() const;
+
+        /// @brief Returns the marker on the picked color. Only its border is styled. The dot always shows the picked color
+        ColorPickerIndicator& GetIndicator();
+
+        /// @brief Returns the marker on the picked color
+        const ColorPickerIndicator& GetIndicator() const;
 
         /// @brief Connects a slot to be called when the picked color has changed, by dragging or by any setter.
         void Connect_OnColorChanged(const typename Signal<>::Slot& slot, const bool async);
@@ -75,8 +86,6 @@ namespace RetroFuturaGUI
         
         /// @brief Rebuilds _rgbaf from hue, saturation, brightness and alpha, then emits OnColorChanged.
         void updateColor(const bool emitSignal);
-        void setColorPickerFieldBorderColors();
-        void setIndicatorBorderColors();
 
         /// @brief Sets the field's and the indicator's border state and applies the colors for them.
         void setBorderStates(const ColorState fieldState, const ColorState indicatorState);
@@ -95,25 +104,11 @@ namespace RetroFuturaGUI
 
     // Color Picker Field
         std::unique_ptr<ColorField> _colorPickerBackground { nullptr };
-        std::unique_ptr<Frame> _colorPickerBorder { nullptr };
-        std::vector<glm::vec4> 
-            _colorPickerBorderColorsEnabled {},
-            _colorPickerBorderColorsHover {},
-            _colorPickerBorderColorsClicked {},
-            _colorPickerBorderColorsDisabled {};
-        ColorState _colorPickerFieldState { ColorState::Disabled };
+        Border _border { &_projection };
 
     // Indicator
-        std::unique_ptr<Plane> _indicatorBackground { nullptr };
-        std::unique_ptr<Frame> _indicatorBorder { nullptr };
-        std::vector<glm::vec4>
-            _indicatorBackgroundColors { glm::vec4(1.0f) }, //the picked color, opaque. Always one element: the indicator's Plane keeps a span over it
-            _indicatorBorderColorsEnabled {},
-            _indicatorBorderColorsHover {},
-            _indicatorBorderColorsClicked {},
-            _indicatorBorderColorsDisabled {};
+        ColorPickerIndicator _indicator { &_projection };
         glm::vec3 _indicatorPosition {};
-        ColorState _indicatorState { ColorState::Disabled };
         static constexpr f32 _indicatorDiameter { 10.0f }; //sizes the dot and its border, and rounds both with half of it
 
     // Colors

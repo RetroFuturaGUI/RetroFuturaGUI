@@ -10,31 +10,16 @@ RetroFuturaGUI::ColorPicker::ColorPicker(std::string_view name, Projection* proj
 {
     _widgetTypeID = WidgetTypeID::ColorPicker;
     _colorPickerBackground = std::make_unique<ColorField>(projection);
-    _colorPickerBorder = std::make_unique<Frame>(projection);
-    _indicatorBackground = std::make_unique<Plane>(projection);
-    _indicatorBorder = std::make_unique<Frame>(projection);
-    useTransitions({ _colorPickerBackground.get(), _colorPickerBorder.get(), _indicatorBackground.get(), _indicatorBorder.get() });
+    useTransitions({ _colorPickerBackground.get() });
+    _border.SetTransitionSettings(&_transitionSettings);
+    _indicator.SetTransitionSettings(&_transitionSettings);
+    _border.SetWidth(2.0f);
+    _indicator.SetDiameter(_indicatorDiameter);
 
     if(!_colorPickerBackground)
         return;
 
-    if(!_colorPickerBorder)
-        return;
-
-    if(!_indicatorBackground)
-        return;
-
-    if(!_indicatorBorder)
-        return;
-
     _colorPickerBackground->SetShape(ColorFieldShape::Circle);
-    _colorPickerBorder->SetBorderWidth(2.0f);
-    _indicatorBackground->SetSize(glm::vec2(_indicatorDiameter));
-    _indicatorBackground->SetCornerRadii(glm::vec4(0.5f * _indicatorDiameter));
-    _indicatorBackground->SetColors(_indicatorBackgroundColors);
-    _indicatorBorder->SetSize(glm::vec2(_indicatorDiameter));
-    _indicatorBorder->SetCornerRadii(glm::vec4(0.5f * _indicatorDiameter));
-    _indicatorBorder->SetBorderWidth(2.0f);
     updateColor(false);
 }
 
@@ -43,20 +28,10 @@ void RetroFuturaGUI::ColorPicker::Draw()
     if(!_colorPickerBackground)
         return;
 
-    if(!_colorPickerBorder)
-        return;
-
-    if(!_indicatorBackground)
-        return;
-
-    if(!_indicatorBorder)
-        return;
-
     _colorPickerBackground->SetBrightness(_brightness);
     _colorPickerBackground->Draw();
-    _colorPickerBorder->Draw();
-    _indicatorBackground->Draw();
-    _indicatorBorder->Draw();
+    _border.Draw();
+    _indicator.Draw();
 }
 
 void RetroFuturaGUI::ColorPicker::applySize(const glm::vec3& size)
@@ -66,13 +41,10 @@ void RetroFuturaGUI::ColorPicker::applySize(const glm::vec3& size)
     if(!_colorPickerBackground)
         return;
 
-    if(!_colorPickerBorder)
-        return;
-
     const bool isCircle { _colorPickerType == ColorPickerType::Circle };
     const glm::vec2 fieldSize { isCircle ? glm::vec2(glm::min(_size.x, _size.y)) : glm::vec2(_size) };
-    _colorPickerBorder->SetSize(fieldSize);
-    _colorPickerBorder->SetCornerRadii(glm::vec4(isCircle ? 0.5f * fieldSize.x : 0.0f)); //0 turns rounding off for the square
+    _border.SetSize(fieldSize);
+    _border.SetCornerRadii(glm::vec4(isCircle ? 0.5f * fieldSize.x : 0.0f)); //0 turns rounding off for the square
     _colorPickerBackground->SetSize(fieldSize - 2.0f); //1 px in from the border's outer edge, so the field's edge stays under the 2 px border
     alignIndicator();
 }
@@ -84,16 +56,7 @@ void RetroFuturaGUI::ColorPicker::applyPosition(const glm::vec3& position)
     if(!_colorPickerBackground)
         return;
 
-    if(!_colorPickerBorder)
-        return;
-
-    if(!_indicatorBackground)
-        return;
-
-    if(!_indicatorBorder)
-        return;
-
-    _colorPickerBorder->SetPosition(_position + glm::vec3(0.0f, 0.0f, 0.01f));
+    _border.SetPosition(_position + glm::vec3(0.0f, 0.0f, 0.01f));
     _colorPickerBackground->SetPosition(_position);
     alignIndicator();
 }
@@ -206,12 +169,29 @@ void RetroFuturaGUI::ColorPicker::Disconnect_OnColorChanged(const typename Signa
     _onColorChangedAsync.Disconnect(slot);
 }
 
+RetroFuturaGUI::Border& RetroFuturaGUI::ColorPicker::GetBorder()
+{
+    return _border;
+}
+
+const RetroFuturaGUI::Border& RetroFuturaGUI::ColorPicker::GetBorder() const
+{
+    return _border;
+}
+
+RetroFuturaGUI::ColorPickerIndicator& RetroFuturaGUI::ColorPicker::GetIndicator()
+{
+    return _indicator;
+}
+
+const RetroFuturaGUI::ColorPickerIndicator& RetroFuturaGUI::ColorPicker::GetIndicator() const
+{
+    return _indicator;
+}
+
 void RetroFuturaGUI::ColorPicker::interact()
 {
     if(!_colorPickerBackground)
-        return;
-
-    if(!_indicatorBackground)
         return;
 
     const PointerState pointer { readPointer() };
@@ -248,27 +228,19 @@ void RetroFuturaGUI::ColorPicker::interact()
         return;
     }
 
-    const bool isPointerOnIndicator { isPointInsideRect(pointer._Position, glm::vec3(_indicatorBackground->GetSize(), 0.0f), _indicatorBackground->GetPosition(), glm::vec3(0.0f)) };
+    const bool isPointerOnIndicator { isPointInsideRect(pointer._Position, glm::vec3(_indicator.GetSize(), 0.0f), _indicator.GetPosition(), glm::vec3(0.0f)) };
     setBorderStates(isPointerOnField ? ColorState::Hover : ColorState::Enabled, isPointerOnIndicator ? ColorState::Hover : ColorState::Enabled);
 }
 
 void RetroFuturaGUI::ColorPicker::setBorderStates(const ColorState fieldState, const ColorState indicatorState)
 {
-    _colorPickerFieldState = fieldState;
-    _indicatorState = indicatorState;
-    setColorPickerFieldBorderColors();
-    setIndicatorBorderColors();
+    _border.SetColorState(fieldState);
+    _indicator.SetColorState(indicatorState);
 }
 
 void RetroFuturaGUI::ColorPicker::alignIndicator()
 {
     if(!_colorPickerBackground)
-        return;
-
-    if(!_indicatorBackground)
-        return;
-
-    if(!_indicatorBorder)
         return;
 
     const glm::vec2 fieldSize { _colorPickerBackground->GetSize() };
@@ -286,8 +258,7 @@ void RetroFuturaGUI::ColorPicker::alignIndicator()
 
     // In front of the field (0.0) and its border (0.01), laid out untilted: the frame turns it with the widget.
     _indicatorPosition = glm::vec3(fieldPoint, 0.02f);
-    _indicatorBackground->SetPosition(_position + _indicatorPosition);
-    _indicatorBorder->SetPosition(_position + _indicatorPosition + glm::vec3(0.0f, 0.0f, 0.01f));
+    _indicator.SetPosition(_position + _indicatorPosition);
 }
 
 glm::vec2 RetroFuturaGUI::ColorPicker::toFieldSpace(const glm::vec2& point) const
@@ -345,7 +316,7 @@ void RetroFuturaGUI::ColorPicker::updateColor(const bool emitSignal)
     const glm::u32vec4 channels { glm::round(_rgbaf * 255.0f) };
     _rgba = channels.r << 24 | channels.g << 16 | channels.b << 8 | channels.a; //alpha in the low byte, like the 0x000000FF default
 
-    _indicatorBackgroundColors[0] = glm::vec4(glm::vec3(_rgbaf), 1.0f); //opaque, or the field would show through a transparent pick
+    _indicator.SetColor(_rgbaf);
     alignIndicator();
 
     if(!emitSignal)
@@ -355,84 +326,3 @@ void RetroFuturaGUI::ColorPicker::updateColor(const bool emitSignal)
     _onColorChangedAsync.EmitAsync();
 }
 
-void RetroFuturaGUI::ColorPicker::SetColorPickerFieldBorderColors(std::span<const glm::vec4> colors, const ColorState state)
-{
-    switch(state)
-    {
-        case ColorState::Clicked:
-            _colorPickerBorderColorsClicked.assign(colors.begin(), colors.end());
-        break;
-        case ColorState::Disabled:
-            _colorPickerBorderColorsDisabled.assign(colors.begin(), colors.end());
-        break;
-        case ColorState::Hover:
-            _colorPickerBorderColorsHover.assign(colors.begin(), colors.end());
-        break;
-        default: // Enabled
-            _colorPickerBorderColorsEnabled.assign(colors.begin(), colors.end());
-    }
-
-    setColorPickerFieldBorderColors();
-}
-
-void RetroFuturaGUI::ColorPicker::SetColorPickerIndicatorBorderColors(std::span<const glm::vec4> colors, const ColorState state)
-{
-    switch(state)
-    {
-        case ColorState::Clicked:
-            _indicatorBorderColorsClicked.assign(colors.begin(), colors.end());
-        break;
-        case ColorState::Disabled:
-            _indicatorBorderColorsDisabled.assign(colors.begin(), colors.end());
-        break;
-        case ColorState::Hover:
-            _indicatorBorderColorsHover.assign(colors.begin(), colors.end());
-        break;
-        default: // Enabled
-            _indicatorBorderColorsEnabled.assign(colors.begin(), colors.end());
-    }
-
-    setIndicatorBorderColors();
-}
-
-void RetroFuturaGUI::ColorPicker::setColorPickerFieldBorderColors()
-{
-    if(!_colorPickerBorder)
-        return;
-
-    switch(_colorPickerFieldState)
-    {
-        case ColorState::Enabled:
-            _colorPickerBorder->SetColors(_colorPickerBorderColorsEnabled);
-        break;
-        case ColorState::Clicked:
-            _colorPickerBorder->SetColors(_colorPickerBorderColorsClicked);
-        break;
-        case ColorState::Hover:
-            _colorPickerBorder->SetColors(_colorPickerBorderColorsHover);
-        break;
-        default: //Disabled
-            _colorPickerBorder->SetColors(_colorPickerBorderColorsDisabled);
-    }
-}
-
-void RetroFuturaGUI::ColorPicker::setIndicatorBorderColors()
-{
-    if(!_indicatorBorder)
-        return;
-
-    switch(_indicatorState)
-    {
-        case ColorState::Enabled:
-            _indicatorBorder->SetColors(_indicatorBorderColorsEnabled);
-        break;
-        case ColorState::Clicked:
-            _indicatorBorder->SetColors(_indicatorBorderColorsClicked);
-        break;
-        case ColorState::Hover:
-            _indicatorBorder->SetColors(_indicatorBorderColorsHover);
-        break;
-        default: //Disabled
-            _indicatorBorder->SetColors(_indicatorBorderColorsDisabled);
-    }
-}
