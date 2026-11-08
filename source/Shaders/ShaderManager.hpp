@@ -28,6 +28,10 @@ namespace RetroFuturaGUI
         /// @return Reference to the glow Shader object for that fill
         static Shader& GetGlowShader(FillType fillType);
 
+        /// @brief Get the shader of an InnerGlowRectangle with the given fill, which is the drop shadow's with INNER_GLOW
+        /// @return Reference to the inner glow Shader object for that fill
+        static Shader& GetInnerGlowShader(FillType fillType);
+
         /// @brief Get the shader of a ColorField with the given shape
         /// @return Reference to the ColorField Shader object for that shape
         static Shader& GetColorFieldShader(ColorFieldShape shape);
@@ -88,6 +92,7 @@ namespace RetroFuturaGUI
         static inline std::array<std::unique_ptr<Shader>, _fillTypeCount> _frameShaders;
         static inline std::array<std::unique_ptr<Shader>, _fillTypeCount> _shadowShaders;
         static inline std::array<std::unique_ptr<Shader>, _fillTypeCount> _glowShaders;
+        static inline std::array<std::unique_ptr<Shader>, _fillTypeCount> _innerGlowShaders;
         static inline std::array<std::unique_ptr<Shader>, _colorFieldShapeCount> _colorFieldShaders;
         static inline std::array<std::unique_ptr<Shader>, _fillTypeCount> _textShaders;
         static inline std::unique_ptr<Shader> _lineFill;

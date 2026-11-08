@@ -62,6 +62,7 @@ namespace RetroFuturaGUI
         std::unordered_map<u32, Glyph> _IndexGlyphs; // glyphs found by shaping, keyed by their index in the source
         std::unordered_map<u64, Glyph> _IndexOutlineGlyphs; // those widened for text outlines, keyed by the width above the index
         std::unordered_map<u64, Glyph> _ShadowGlyphs; // blurred for drop shadows, keyed by shadowGlyphKey
+        std::unordered_map<u64, Glyph> _InnerGlowGlyphs; // lit inside for inner glows, keyed by innerGlowGlyphKey
         std::string _FontFile {}; // the font file and face the source draws from: neighboring blocks of one file are shaped together
         std::unique_ptr<IGlyphSource> _Source { nullptr }; // kept until the program ends, for glyphs rendered on first use and for outlines
         std::vector<GlyphPage>
@@ -198,6 +199,12 @@ namespace RetroFuturaGUI
         /// @return nullptr when nothing covers it, or no context is there to render it with.
         static const Glyph* FindPlacedGlyphShadow(const PlacedGlyph& placed, const f32 blur, const f32 outlineWidth);
 
+        /// @brief Finds the glyph a placed glyph draws as an inner glow. Its coverage (a color glyph's alpha), full at its
+        ///        edges and fading inward over width pixels, the edges measured from moved by offset (pixels, y up). Rendered
+        ///        into the block's pages the first time, once per width (1/16 px below 512 px) and offset (whole pixels within 255).
+        /// @return nullptr when nothing covers it, or no context is there to render it with
+        static const Glyph* FindPlacedGlyphInnerGlow(const PlacedGlyph& placed, const f32 width, const glm::vec2& offset);
+
         /// @brief Extends an already-loaded fontset by loading glyphs for the given codepoint range from a fallback font family.
         static void ExtendFontset(std::string_view fontFamily, std::string_view fontFamilyExtension, const f32 size, const FontSizeUnit sizeUnit, const PlatformBridge::Fonts::Slant slant, const PlatformBridge::Fonts::Weight weight, const u32 codePointFirst, const u32 codePointLast);
 
@@ -284,6 +291,20 @@ namespace RetroFuturaGUI
         /// @brief Turns a rendered glyph into its shadow: coverage only (a color glyph's alpha), grown and blurred so its edges
         ///        fade over blur pixels, a Gaussian whose spread is a quarter of the blur.
         static void castShadow(const f32 blur, GlyphBitmap* bitmap);
+
+        /// @brief The key of an inner glow glyph in its block. Whether it is a shaped glyph's index or a code point, the width
+        ///        in 1/16 px (13 bits), the offset in whole pixels (9 bits each), and the index or code point.
+        static u64 innerGlowGlyphKey(const PlacedGlyph& placed, const f32 width, const glm::ivec2& offset);
+
+        /// @brief Turns a rendered glyph into its inner glow. Its coverage times how near each pixel lies to the edges moved by
+        ///        offset (whole pixels, y up), full at them and nothing width pixels in
+        static void castInnerGlow(const f32 width, const glm::ivec2& offset, GlyphBitmap* bitmap);
+
+        /// @brief Keeps a rendered glyph's coverage only. A color glyph's alpha
+        static void toCoverage(GlyphBitmap* bitmap);
+
+        /// @brief Blurs a coverage bitmap with a Gaussian of the given spread into a buffer grown by reach on every side
+        static std::vector<f32> blurCoverage(const GlyphBitmap& bitmap, const f32 spread, const i32 reach);
 
         /// @brief The block of the font covering a character, nullptr when none does.
         static GlyphBlock* findBlock(const GlyphAtlas& atlas, const u32 codePoint);

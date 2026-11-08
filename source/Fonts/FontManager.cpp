@@ -153,6 +153,7 @@ RetroFuturaGUI::FontManager::LoadFontResult RetroFuturaGUI::FontManager::LoadFon
             ._IndexGlyphs = {},
             ._IndexOutlineGlyphs = {},
             ._ShadowGlyphs = {},
+            ._InnerGlowGlyphs = {},
             ._FontFile = fontProperty._Path + "#" + std::to_string(fontProperty._FaceIndex),
             ._Source = std::move(source),
             ._Pages = {},
@@ -181,6 +182,7 @@ RetroFuturaGUI::FontManager::LoadFontResult RetroFuturaGUI::FontManager::LoadFon
         ._IndexGlyphs = {},
         ._IndexOutlineGlyphs = {},
         ._ShadowGlyphs = {},
+        ._InnerGlowGlyphs = {},
         ._FontFile = fontProperty._Path + "#" + std::to_string(fontProperty._FaceIndex),
         ._Source = std::move(source), //every glyph is made, but outlines are rendered from it later.
         ._Pages = {},
@@ -864,6 +866,7 @@ RetroFuturaGUI::GlyphBlock* RetroFuturaGUI::FontManager::getDefaultFontBlock(con
         ._IndexGlyphs = {},
         ._IndexOutlineGlyphs = {},
         ._ShadowGlyphs = {},
+        ._InnerGlowGlyphs = {},
         ._FontFile = fontFile,
         ._Source = std::move(source),
         ._Pages = {},
@@ -1045,26 +1048,144 @@ void RetroFuturaGUI::FontManager::castShadow(const f32 blur, GlyphBitmap* bitmap
     if(!bitmap)
         return;
 
-    //A color glyph casts its shadow by its alpha.
-    if(GlyphPixelFormat::Color == bitmap->_Format)
-    {
-        const uSize pixelCount { static_cast<uSize>(bitmap->_Width) * bitmap->_Height };
-        std::vector<u8> coverage(pixelCount);
-
-        for(uSize pixel { 0 }; pixel < pixelCount; ++pixel)
-            coverage[pixel] = bitmap->_Pixels[pixel * 4 + 3];
-
-        bitmap->_Pixels = std::move(coverage);
-        bitmap->_Format = GlyphPixelFormat::Coverage;
-    }
+    toCoverage(bitmap); //a color glyph casts its shadow by its alpha
 
     if(0.0f >= blur || 0 == bitmap->_Width || 0 == bitmap->_Height)
         return;
 
     //A Gaussian reaching two spreads to each side fades an edge over the whole blur, as the rectangles' shadows do. The
-    //bitmap grows by that reach, so nothing of the fade is cut off.
+    //bitmap grows by that reach, so nothing of the fade is cut off
     const f32 spread { blur * 0.25f };
     const i32 reach { static_cast<i32>(std::ceil(spread * 2.0f)) };
+    const std::vector<f32> blurred { blurCoverage(*bitmap, spread, reach) };
+    bitmap->_Pixels.resize(blurred.size());
+
+    for(uSize pixel { 0 }; pixel < blurred.size(); ++pixel)
+        bitmap->_Pixels[pixel] = static_cast<u8>(std::lround(std::clamp(blurred[pixel], 0.0f, 1.0f) * 255.0f));
+
+    bitmap->_Width += static_cast<u32>(reach) * 2;
+    bitmap->_Height += static_cast<u32>(reach) * 2;
+    bitmap->_BearingX -= reach;
+    bitmap->_BearingY += reach;
+}
+
+const RetroFuturaGUI::Glyph* RetroFuturaGUI::FontManager::FindPlacedGlyphInnerGlow(const PlacedGlyph& placed, const f32 width, const glm::vec2& offset)
+{
+    if(!placed._Block)
+        return nullptr;
+
+    GlyphBlock& block { *placed._Block };
+
+    //At the source's own size, so the width and the offset are as asked once scaled to the font's size
+    const glm::ivec2 sourceOffset { glm::round(offset / block._Scale) };
+    const u64 key { innerGlowGlyphKey(placed, width, sourceOffset) };
+    const auto found { block._InnerGlowGlyphs.find(key) };
+
+    if(block._InnerGlowGlyphs.end() != found)
+        return &found->second;
+
+    if(!block._Source)
+        return nullptr;
+
+    const UploadContextScope context {};
+
+    if(!context.HasContext())
+        return nullptr;
+
+    Glyph glyph;
+    glyph._CodePoint = placed._CodePoint;
+    GlyphBitmap bitmap {};
+
+    //Kept when it fails too, so it isn't tried again.
+    if(renderShadowShape(block, placed, 0.0f, &bitmap))
+    {
+        castInnerGlow(width / block._Scale, sourceOffset, &bitmap);
+        storeGlyph(block, bitmap, &glyph);
+    }
+
+    return &block._InnerGlowGlyphs.emplace(key, glyph).first->second;
+}
+
+u64 RetroFuturaGUI::FontManager::innerGlowGlyphKey(const PlacedGlyph& placed, const f32 width, const glm::ivec2& offset)
+{
+    const u64
+        isShaped { placed._IsShaped ? 1ull : 0ull },
+        widthKey { static_cast<u64>(std::clamp(std::lround(width * 16.0f), 0l, 0x1FFFl)) },
+        offsetXKey { static_cast<u64>(std::clamp(offset.x, -255, 255) + 256) },
+        offsetYKey { static_cast<u64>(std::clamp(offset.y, -255, 255) + 256) },
+        glyphKey { placed._IsShaped ? placed._GlyphIndex : placed._CodePoint };
+
+    return isShaped << 63 | widthKey << 50 | offsetXKey << 41 | offsetYKey << 32 | glyphKey;
+}
+
+void RetroFuturaGUI::FontManager::castInnerGlow(const f32 width, const glm::ivec2& offset, GlyphBitmap* bitmap)
+{
+    if(!bitmap)
+        return;
+
+    toCoverage(bitmap); //a color glyph glows inside its alpha.
+
+    if(0 == bitmap->_Width || 0 == bitmap->_Height)
+        return;
+
+    if(0.0f >= width)
+    {
+        std::ranges::fill(bitmap->_Pixels, u8 { 0 });
+        return;
+    }
+
+    //The blurred glyph is a half at its edges and rises to whole within two spreads inside, so twice what it lacks of whole
+    //is full at the edge and gone at the width. Read where the moved edges lie, and nothing beyond the blur
+    const f32 spread { width * 0.5f };
+    const i32
+        reach { static_cast<i32>(std::ceil(spread * 2.0f)) },
+        glyphWidth { static_cast<i32>(bitmap->_Width) },
+        glyphHeight { static_cast<i32>(bitmap->_Height) },
+        grownWidth { glyphWidth + reach * 2 },
+        grownHeight { glyphHeight + reach * 2 };
+    const std::vector<f32> blurred { blurCoverage(*bitmap, spread, reach) };
+
+    for(i32 y { 0 }; y < glyphHeight; ++y)
+        for(i32 x { 0 }; x < glyphWidth; ++x)
+        {
+            u8& pixel { bitmap->_Pixels[static_cast<uSize>(y) * glyphWidth + x] };
+
+            if(0 == pixel)
+                continue;
+
+            //Rows run down, the offset up
+            const i32
+                sourceX { x - offset.x + reach },
+                sourceY { y + offset.y + reach };
+            const bool isInside { 0 <= sourceX && grownWidth > sourceX && 0 <= sourceY && grownHeight > sourceY };
+            const f32
+                inside { isInside ? blurred[static_cast<uSize>(sourceY) * grownWidth + sourceX] : 0.0f },
+                light { std::clamp((1.0f - inside) * 2.0f, 0.0f, 1.0f) };
+
+            pixel = static_cast<u8>(std::lround(pixel * light));
+        }
+}
+
+void RetroFuturaGUI::FontManager::toCoverage(GlyphBitmap* bitmap)
+{
+    if(!bitmap)
+        return;
+
+    if(GlyphPixelFormat::Color != bitmap->_Format)
+        return;
+
+    const uSize pixelCount { static_cast<uSize>(bitmap->_Width) * bitmap->_Height };
+    std::vector<u8> coverage(pixelCount);
+
+    for(uSize pixel { 0 }; pixel < pixelCount; ++pixel)
+        coverage[pixel] = bitmap->_Pixels[pixel * 4 + 3];
+
+    bitmap->_Pixels = std::move(coverage);
+    bitmap->_Format = GlyphPixelFormat::Coverage;
+}
+
+std::vector<f32> RetroFuturaGUI::FontManager::blurCoverage(const GlyphBitmap& bitmap, const f32 spread, const i32 reach)
+{
     std::vector<f32> weights(static_cast<uSize>(reach) * 2 + 1);
     f32 weightSum { 0.0f };
 
@@ -1079,8 +1200,8 @@ void RetroFuturaGUI::FontManager::castShadow(const f32 blur, GlyphBitmap* bitmap
         weight /= weightSum;
 
     const i32
-        width { static_cast<i32>(bitmap->_Width) },
-        height { static_cast<i32>(bitmap->_Height) },
+        width { static_cast<i32>(bitmap._Width) },
+        height { static_cast<i32>(bitmap._Height) },
         grownWidth { width + reach * 2 },
         grownHeight { height + reach * 2 };
     std::vector<f32>
@@ -1091,7 +1212,7 @@ void RetroFuturaGUI::FontManager::castShadow(const f32 blur, GlyphBitmap* bitmap
     for(i32 y { 0 }; y < height; ++y)
         for(i32 x { 0 }; x < width; ++x)
         {
-            const f32 value { bitmap->_Pixels[static_cast<uSize>(y) * width + x] / 255.0f };
+            const f32 value { bitmap._Pixels[static_cast<uSize>(y) * width + x] / 255.0f };
 
             if(0.0f == value)
                 continue;
@@ -1112,13 +1233,5 @@ void RetroFuturaGUI::FontManager::castShadow(const f32 blur, GlyphBitmap* bitmap
                 columns[static_cast<uSize>(y + reach + offset) * grownWidth + x] += value * weights[static_cast<uSize>(offset + reach)];
         }
 
-    bitmap->_Pixels.resize(columns.size());
-
-    for(uSize pixel { 0 }; pixel < columns.size(); ++pixel)
-        bitmap->_Pixels[pixel] = static_cast<u8>(std::lround(std::clamp(columns[pixel], 0.0f, 1.0f) * 255.0f));
-
-    bitmap->_Width = static_cast<u32>(grownWidth);
-    bitmap->_Height = static_cast<u32>(grownHeight);
-    bitmap->_BearingX -= reach;
-    bitmap->_BearingY += reach;
+    return columns;
 }

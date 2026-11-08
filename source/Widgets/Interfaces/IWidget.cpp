@@ -489,7 +489,7 @@ void RetroFuturaGUI::IWidget::SetBorderGap(const glm::vec4& gap)
     _borderGap = gap;
     _hasBorderGap = true;
     setBackgroundInset(true);
-    updateBorderInnerGlow();
+    updateBorderInwardGlow();
 }
 
 const glm::vec4& RetroFuturaGUI::IWidget::GetBorderGap() const
@@ -563,7 +563,7 @@ f32 RetroFuturaGUI::IWidget::getGapBorderWidth() const
     return _gapBorder->GetWidth();
 }
 
-void RetroFuturaGUI::IWidget::updateBorderInnerGlow()
+void RetroFuturaGUI::IWidget::updateBorderInwardGlow()
 {
     if(!_gapBorder)
         return;

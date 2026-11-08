@@ -27,6 +27,11 @@ RetroFuturaGUI::Shader& RetroFuturaGUI::ShaderManager::GetGlowShader(FillType fi
     return *_glowShaders[static_cast<uSize>(fillType)];
 }
 
+RetroFuturaGUI::Shader& RetroFuturaGUI::ShaderManager::GetInnerGlowShader(FillType fillType)
+{
+    return *_innerGlowShaders[static_cast<uSize>(fillType)];
+}
+
 RetroFuturaGUI::Shader& RetroFuturaGUI::ShaderManager::GetColorFieldShader(ColorFieldShape shape)
 {
     return *_colorFieldShaders[static_cast<uSize>(shape)];
@@ -107,6 +112,7 @@ void RetroFuturaGUI::ShaderManager::compileShaders()
         _frameShaders[fill] = std::make_unique<Shader>(quadPath.c_str(), framePath.c_str(), nullptr, std::vector<std::string> { fillDefines[fill] });
         _shadowShaders[fill] = std::make_unique<Shader>(quadPath.c_str(), shadowPath.c_str(), nullptr, std::vector<std::string> { fillDefines[fill] });
         _glowShaders[fill] = std::make_unique<Shader>(quadPath.c_str(), shadowPath.c_str(), nullptr, std::vector<std::string> { fillDefines[fill], "GLOW" });
+        _innerGlowShaders[fill] = std::make_unique<Shader>(quadPath.c_str(), shadowPath.c_str(), nullptr, std::vector<std::string> { fillDefines[fill], "INNER_GLOW" });
         _textShaders[fill] = std::make_unique<Shader>(textVertexPath.c_str(), textPath.c_str(), nullptr, std::vector<std::string> { fillDefines[fill] });
     }
 

@@ -6,6 +6,7 @@
 #include "TextOutline.hpp"
 #include "DropShadow.hpp"
 #include "Glow.hpp"
+#include "InnerGlow.hpp"
 #include "IncludeHelper.hpp"
 #include "Projection.hpp"
 #include "ContextObjects.hpp"
@@ -222,6 +223,11 @@ namespace RetroFuturaGUI
         Glow& GetGlow();
         const Glow& GetGlow() const;
 
+        /// @brief Returns the inner glow: GetInnerGlow().Show(true). Inside the glyphs, fading in from their edges, drawn over
+        ///        them. Set off with SetDistance in a dark color, it is an inner shadow
+        InnerGlow& GetInnerGlow();
+        const InnerGlow& GetInnerGlow() const;
+
         /// @brief Sets how the lines run: horizontally (default), or as columns. Each '\n' starts the next column. Columns are placed by their top edge: centered on the position, or at the parent's top with SetAnchorTop
         void SetTextFlow(const TextFlow textFlow);
 
@@ -281,6 +287,10 @@ namespace RetroFuturaGUI
         void drawOutline();
         void drawShadow();
         void drawGlow();
+        void drawInnerGlow();
+
+        /// @brief Whether the shadow, glow or inner glow was shown, blurred, widened or moved since their glyphs were laid out
+        bool areEffectMeshesStale() const;
 
         /// @brief How far a glyph placed by itself (its font can't shape) moves the pen along its line: its advance, or one em in a column
         f32 getAdvance(const Glyph& glyph, const f32 scale) const;
@@ -343,7 +353,8 @@ namespace RetroFuturaGUI
             _mesh {},
             _outlineMesh {},
             _shadowMesh {},
-            _glowMesh {};
+            _glowMesh {},
+            _innerGlowMesh {};
 
     // outline
         TextOutline _outline {};
@@ -361,5 +372,12 @@ namespace RetroFuturaGUI
         f32 _glowMeshWidth { 0.0f }; //the width the glow mesh was built with
         bool _hasGlowMesh { false }; //whether the mesh was built with the glow shown
         static constexpr f32 _glowDepthOffset { 0.0015f }; //between the outline and the drop shadow
+
+    // inner glow
+        InnerGlow _innerGlow {};
+        f32 _innerGlowMeshWidth { 0.0f }; //the width the inner glow mesh was built with
+        glm::vec2 _innerGlowMeshOffset { 0.0f }; //and the offset
+        bool _hasInnerGlowMesh { false }; //whether the mesh was built with the inner glow shown
+        static constexpr f32 _innerGlowDepthOffset { 0.0005f }; //just in front of the glyphs, which it lies over
     };
 }

@@ -2,7 +2,8 @@
 uniform float uOpacity = 1.0; //Shader::OpacityScope's product, uploaded with every UseProgram
 // A rectangle's drop shadow: the shape of what casts it, rounded or cut like it, faded over uShadowBlur at its edges. The
 // quad is grown by the blur around the shape. The FILL_ define picks the fill. GLOW turns it into the glow around the
-// shape, fading away from its edge over uGlowWidth
+// shape, fading away from its edge over uGlowWidth. INNER_GLOW draws the light inside the shape instead, fading in from its
+// edges, moved by uInnerOffset, over uGlowWidth
 #include "Modules/RoundedCorners.glsl"
 
 // A shadow lies under nothing of its own, so the fill shows as it is.
@@ -21,8 +22,15 @@ uniform vec2 uShapeHalfSize; // the half size of the shape casting the shadow, s
 uniform float uShadowBlur; // how wide the edges fade, in pixels: half inside the shape, half outside
 uniform float uRingWidth; // a border's width, casting the shadow of its outline only; 0 casts the whole shape
 
+#if defined(GLOW) || defined(INNER_GLOW)
+uniform float uGlowWidth; // how far the glow reaches from the edge, in pixels
+#endif
+
+#ifdef INNER_GLOW
+uniform vec2 uInnerOffset; // how far the edges the inner glow is measured from are moved, in pixels
+#endif
+
 #ifdef GLOW
-uniform float uGlowWidth; // how far the glow reaches out of the edge, in pixels
 uniform int uGlowInward; // 1 glows inward from the ring's inner edge, 0 outward from the shape's outer edge
 
 // How much of the glow covers a pixel this far beyond its edge: full at the edge, nothing past the width, none on the shape
@@ -56,6 +64,23 @@ void main()
     float coverage = uGlowInward != 0
         ? glowCoverage(-cornerShapeSDF(p, uShapeHalfSize - vec2(uRingWidth), innerRadius))
         : glowCoverage(cornerShapeSDF(p, uShapeHalfSize, cornerRadius));
+#elif defined(INNER_GLOW)
+    // Only inside the shape, or inside a ring's outline
+    if (cornerShapeSDF(p, uShapeHalfSize, cornerRadius) > 0.0 || (uRingWidth > 0.0 && cornerShapeSDF(p, uShapeHalfSize - vec2(uRingWidth), innerRadius) <= 0.0))
+        discard;
+
+    // How deep inside the edges moved by the offset: full at those edges and beyond them, nothing past the width
+    vec2 q = p - uInnerOffset;
+    float shiftedRadius = ((uDIP & ROUNDED_CORNERS) != 0) ? cornerRadiusAt(q) : 0.0;
+    float depth = -cornerShapeSDF(q, uShapeHalfSize, shiftedRadius);
+
+    if (uRingWidth > 0.0)
+    {
+        float shiftedInnerRadius = max(shiftedRadius - uRingWidth * (isCutCornerAt(q) ? CUT_INSET_PER_WIDTH : 1.0), 0.0);
+        depth = min(depth, cornerShapeSDF(q, uShapeHalfSize - vec2(uRingWidth), shiftedInnerRadius));
+    }
+
+    float coverage = depth <= 0.0 ? 1.0 : 1.0 - smoothstep(0.0, uGlowWidth, depth);
 #else
     float coverage = shadowCoverage(cornerShapeSDF(p, uShapeHalfSize, cornerRadius));
 

@@ -8,6 +8,7 @@ RetroFuturaGUI::Border::Border(Projection* projection, BorderHooks hooks)
     _borderFrame = std::make_unique<Frame>(_projection);
     _shadowRectangle = std::make_unique<ShadowRectangle>(_projection, &_dropShadow);
     _glowRectangle = std::make_unique<GlowRectangle>(_projection, &_glow);
+    _innerGlowRectangle = std::make_unique<InnerGlowRectangle>(_projection, &_innerGlow);
     _colorsEnabled = { glm::vec4(0.25f, 0.25f, 0.25f, 1.0f) };
     _colorsDisabled = { glm::vec4(0.2f, 0.2f, 0.2f, 1.0f) };
     _colorsClicked = { glm::vec4(0.3f, 0.3f, 1.3f, 1.0f) };
@@ -23,6 +24,7 @@ void RetroFuturaGUI::Border::Draw()
     drawShadow();
     drawGlow();
     _borderFrame->Draw();
+    drawInnerGlow();
     drawBackgroundGlow();
 }
 
@@ -43,6 +45,7 @@ void RetroFuturaGUI::Border::SetTransitionSettings(const TransitionSettings* set
     _borderFrame->SetTransitionSettings(settings);
     _dropShadow.SetTransitionSettings(settings);
     _glow.SetTransitionSettings(settings);
+    _innerGlow.SetTransitionSettings(settings);
 }
 
 void RetroFuturaGUI::Border::SetSize(const glm::vec2& size)
@@ -232,6 +235,7 @@ void RetroFuturaGUI::Border::setColors()
 
     _dropShadow.SetColorState(_colorState);
     _glow.SetColorState(_colorState);
+    _innerGlow.SetColorState(_colorState);
 }
 
 void RetroFuturaGUI::Border::SetWidth(const f32 borderWidth)
@@ -338,7 +342,7 @@ void RetroFuturaGUI::Border::drawGlow()
     _glowRectangle->Draw();
 }
 
-void RetroFuturaGUI::Border::drawInnerGlow(const f32 depth)
+void RetroFuturaGUI::Border::drawInwardGlow(const f32 depth)
 {
     if(!_borderFrame)
         return;
@@ -376,4 +380,36 @@ void RetroFuturaGUI::Border::drawBackgroundGlow()
         return;
 
     _linkedBackground->drawGlow(_borderFrame->GetPosition().z + _coverDepthOffset);
+}
+
+RetroFuturaGUI::InnerGlow& RetroFuturaGUI::Border::GetInnerGlow()
+{
+    return _innerGlow;
+}
+
+const RetroFuturaGUI::InnerGlow& RetroFuturaGUI::Border::GetInnerGlow() const
+{
+    return _innerGlow;
+}
+
+void RetroFuturaGUI::Border::drawInnerGlow()
+{
+    if(!_borderFrame)
+        return;
+
+    if(!_innerGlowRectangle)
+        return;
+
+    if(!_innerGlow.IsShown())
+        return;
+
+    _innerGlowRectangle->SetCaster(ShadowCaster
+    {
+        ._Size = _borderFrame->GetSize(),
+        ._Position = _borderFrame->GetPosition() + glm::vec3(0.0f, 0.0f, _innerGlowDepthOffset),
+        ._CornerRadii = _borderFrame->GetShownCornerRadii(),
+        ._CutCorners = _borderFrame->GetCutCorners(),
+        ._RingWidth = _borderFrame->GetBorderWidth()
+    });
+    _innerGlowRectangle->Draw();
 }

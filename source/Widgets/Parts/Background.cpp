@@ -14,6 +14,7 @@ RetroFuturaGUI::Background::Background(Projection* projection, BackgroundHooks h
     _backgroundPlane = std::make_unique<Plane>(_projection);
     _shadowRectangle = std::make_unique<ShadowRectangle>(_projection, &_dropShadow);
     _glowRectangle = std::make_unique<GlowRectangle>(_projection, &_glow);
+    _innerGlowRectangle = std::make_unique<InnerGlowRectangle>(_projection, &_innerGlow);
     setColors();
 }
 
@@ -30,6 +31,7 @@ void RetroFuturaGUI::Background::Draw()
 
     _backgroundPlane->Draw();
     drawSvg();
+    drawInnerGlow();
     drawBorderGlow(true);
 }
 
@@ -50,6 +52,7 @@ void RetroFuturaGUI::Background::SetTransitionSettings(const TransitionSettings*
     _backgroundPlane->SetTransitionSettings(settings);
     _dropShadow.SetTransitionSettings(settings);
     _glow.SetTransitionSettings(settings);
+    _innerGlow.SetTransitionSettings(settings);
 }
 
 void RetroFuturaGUI::Background::SetSize(const glm::vec2& size)
@@ -360,6 +363,7 @@ void RetroFuturaGUI::Background::setColors()
 
     _dropShadow.SetColorState(_colorState);
     _glow.SetColorState(_colorState);
+    _innerGlow.SetColorState(_colorState);
 }
 
 void RetroFuturaGUI::Background::drawSvg()
@@ -499,10 +503,42 @@ void RetroFuturaGUI::Background::drawBorderGlow(const bool isOver)
     if(isOver != _linkedBorder->_isGlowOverBackground)
         return;
 
-    _linkedBorder->drawInnerGlow(_backgroundPlane->GetPosition().z + (isOver ? _coverDepthOffset : -_coverDepthOffset));
+    _linkedBorder->drawInwardGlow(_backgroundPlane->GetPosition().z + (isOver ? _coverDepthOffset : -_coverDepthOffset));
 }
 
 bool RetroFuturaGUI::Background::isGlowDrawnByBorder() const
 {
     return _linkedBorder != nullptr && _isGlowOverBorder;
+}
+
+RetroFuturaGUI::InnerGlow& RetroFuturaGUI::Background::GetInnerGlow()
+{
+    return _innerGlow;
+}
+
+const RetroFuturaGUI::InnerGlow& RetroFuturaGUI::Background::GetInnerGlow() const
+{
+    return _innerGlow;
+}
+
+void RetroFuturaGUI::Background::drawInnerGlow()
+{
+    if(!_backgroundPlane)
+        return;
+
+    if(!_innerGlowRectangle)
+        return;
+
+    if(!_innerGlow.IsShown())
+        return;
+
+    _innerGlowRectangle->SetCaster(ShadowCaster
+    {
+        ._Size = _backgroundPlane->GetSize(),
+        ._Position = _backgroundPlane->GetPosition() + glm::vec3(0.0f, 0.0f, _innerGlowDepthOffset),
+        ._CornerRadii = _backgroundPlane->GetShownCornerRadii(),
+        ._CutCorners = _backgroundPlane->GetCutCorners(),
+        ._RingWidth = 0.0f
+    });
+    _innerGlowRectangle->Draw();
 }

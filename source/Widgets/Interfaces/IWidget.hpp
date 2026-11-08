@@ -254,8 +254,8 @@ namespace RetroFuturaGUI
         /// @brief Returns the registered border's width, 0 without one
         f32 getGapBorderWidth() const;
 
-        /// @brief Tells the border whether a gap above 0 lies between it and the background, for its inner glow
-        void updateBorderInnerGlow();
+        /// @brief Tells the border whether a gap above 0 lies between it and the background, for its inward glow
+        void updateBorderInwardGlow();
 
         /// @brief Applies the pointer filters from the outermost container down to the closest one. Each container then adjusts
         ///        what the containers above it already let through. An inner ScrollView only ever sees a press its outer one passed on.

@@ -7,6 +7,7 @@
 #include "Plane.hpp"
 #include "ShadowRectangle.hpp"
 #include "GlowRectangle.hpp"
+#include "InnerGlowRectangle.hpp"
 #include "SvgTexture.hpp"
 #include "Texture.hpp"
 #include "IWidgetDecoration.hpp"
@@ -68,6 +69,11 @@ namespace RetroFuturaGUI
         /// @brief Returns the glow around the background: GetGlow().Show(true). Under the border unless EnableGlowOverBorder
         Glow& GetGlow();
         const Glow& GetGlow() const;
+
+        /// @brief Returns the light inside the background, fading in from its edges, drawn over it: GetInnerGlow().Show(true). Set off
+        ///        with SetDistance in a dark color, it is an inner shadow
+        InnerGlow& GetInnerGlow();
+        const InnerGlow& GetInnerGlow() const;
 
         /// @brief Sets whether the glow is drawn over the widget's border, or under it, showing in the gap between them and
         ///        outside the widget. Off by default. Works where the widget links its border and background (the widgets with
@@ -159,6 +165,9 @@ namespace RetroFuturaGUI
         void SetGaps(const BackgroundGap& gap);
 
     private:
+        /// @brief Draws the inner glow over the element as it draws now, if it is shown
+        void drawInnerGlow();
+
         /// @brief Hands the colors of the current state to the fill.
         void setColors() override;
         
@@ -176,7 +185,7 @@ namespace RetroFuturaGUI
         /// @brief Draws the glow outward from the fill's edge, at the given depth
         void drawGlow(const f32 depth);
 
-        /// @brief Draws the linked border's inner glow under the fill or over it, whichever the border allows, when isOver says so
+        /// @brief Draws the linked border's inward glow under the fill or over it, whichever the border allows, when isOver says so
         void drawBorderGlow(const bool isOver);
 
         /// @brief Whether the linked border draws the glow, over itself
@@ -199,11 +208,14 @@ namespace RetroFuturaGUI
         std::unique_ptr<ShadowRectangle> _shadowRectangle { nullptr };
         Glow _glow;
         std::unique_ptr<GlowRectangle> _glowRectangle { nullptr };
+        InnerGlow _innerGlow;
+        std::unique_ptr<InnerGlowRectangle> _innerGlowRectangle { nullptr };
+        static constexpr f32 _innerGlowDepthOffset { 0.0005f }; //just in front of the background, which it lies over
         Border* _linkedBorder { nullptr }; //the widget's border, linked by IWidget::useBorderGap
         bool _isGlowOverBorder { false };
         static constexpr f32
             _glowDepthOffset { 0.0015f }, //behind the fill, in front of the drop shadow
-            _coverDepthOffset { 0.001f }; //the border's inner glow, in front of the fill or just behind it
+            _coverDepthOffset { 0.001f }; //the border's inward glow, in front of the fill or just behind it
         Texture* _backgroundImage { nullptr }; //a picture borrowed from ResourceManager, shown by _background
         std::unique_ptr<SvgTexture> _backgroundSvg { nullptr }; //an SVG background image, drawn over the fill
         f32 _backgroundImagePadding { 0.0f };

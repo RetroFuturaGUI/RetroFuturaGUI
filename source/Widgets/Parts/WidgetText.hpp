@@ -177,6 +177,11 @@ namespace RetroFuturaGUI
         Glow& GetGlow();
         const Glow& GetGlow() const;
 
+        /// @brief Returns the text's inner glow, to style it: GetInnerGlow().Show(true). Colors per state, following the text's.
+        ///        Set off with SetDistance in a dark color, it is an inner shadow
+        InnerGlow& GetInnerGlow();
+        const InnerGlow& GetInnerGlow() const;
+
     //Called by the owning widget
         /// @brief Draws the text
         void Draw();

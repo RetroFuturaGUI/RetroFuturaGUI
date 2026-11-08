@@ -7,6 +7,7 @@
 #include "Frame.hpp"
 #include "ShadowRectangle.hpp"
 #include "GlowRectangle.hpp"
+#include "InnerGlowRectangle.hpp"
 #include "Projection.hpp"
 #include "IWidgetDecoration.hpp"
 
@@ -26,8 +27,8 @@ namespace RetroFuturaGUI
     ///        owns it and hands it out through GetBorder(), so it is styled as button.GetBorder().SetColors(...)
     class Border final : public IWidgetDecoration
     {
-        friend class IWidget; //links the background and tells whether there is a gap for the inner glow
-        friend class Background; //draws the inner glow around its fill
+        friend class IWidget; //links the background and tells whether there is a gap for the inward glow
+        friend class Background; //draws the inward glow around its fill
 
     public:
         explicit Border(Projection* projection, BorderHooks hooks = {});
@@ -73,7 +74,12 @@ namespace RetroFuturaGUI
         Glow& GetGlow();
         const Glow& GetGlow() const;
 
-        /// @brief Sets whether the inner glow is drawn over the widget's background, or under it, showing in the gap between
+        /// @brief Returns the light inside the outline, fading in from its edges, drawn over it: GetInnerGlow().Show(true). Set off
+        ///        with SetDistance in a dark color, it is an inner shadow
+        InnerGlow& GetInnerGlow();
+        const InnerGlow& GetInnerGlow() const;
+
+        /// @brief Sets whether the glow from the inner edge is drawn over the widget's background, or under it, showing in the gap between
         ///        them only. Off by default
         void EnableGlowOverBackground(const bool enable);
         bool IsGlowOverBackgroundEnabled() const;
@@ -124,6 +130,9 @@ namespace RetroFuturaGUI
         void SetGaps(std::span<BorderGap> gaps);
 
     private:
+        /// @brief Draws the inner glow over the element as it draws now, if it is shown.
+        void drawInnerGlow();
+
         void setColors() override;
         void setCornerShape() override;
 
@@ -134,7 +143,7 @@ namespace RetroFuturaGUI
         void drawGlow();
 
         /// @brief Draws the glow inward from the inner edge at the given depth, while there is a gap to the background
-        void drawInnerGlow(const f32 depth);
+        void drawInwardGlow(const f32 depth);
 
         /// @brief Draws the linked background's glow over the outline, when it may cover the border
         void drawBackgroundGlow();
@@ -144,10 +153,13 @@ namespace RetroFuturaGUI
         std::unique_ptr<ShadowRectangle> _shadowRectangle { nullptr };
         Glow _glow;
         std::unique_ptr<GlowRectangle> _glowRectangle { nullptr };
+        InnerGlow _innerGlow;
+        std::unique_ptr<InnerGlowRectangle> _innerGlowRectangle { nullptr };
+        static constexpr f32 _innerGlowDepthOffset { 0.0005f }; //just in front of the border, which it lies over.
         Background* _linkedBackground { nullptr }; //the widget's background, linked by IWidget::useBorderGap
         bool
             _isGlowOverBackground { false },
-            _hasBackgroundGap { false }; //set by IWidget: the inner glow shows only while the gap is above 0
+            _hasBackgroundGap { false }; //set by IWidget: the inward glow shows only while the gap is above 0
         static constexpr f32
             _glowDepthOffset { 0.0015f }, //behind the outline, in front of the drop shadow
             _coverDepthOffset { 0.001f }; //the background's glow, in front of the outline
