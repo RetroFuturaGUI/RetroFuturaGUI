@@ -102,8 +102,16 @@ namespace RetroFuturaGUI
         /// @brief Sets the noise the glass is made of. How big its cells are, how far it shifts the window behind, its smoothing and seed
         void SetGlassNoise(const GlassNoise& noise);
 
-        /// @brief Sets the dot color used for the border's Dotted raster pattern.
+        /// @brief Sets which pattern the border's raster draws. Dotted (the default), Checkered, Striped or Grid
+        void SetRasterPattern(const RasterPattern rasterPattern);
+
+        /// @brief Sets the border's raster's primary color. The dots, one of the two square colors, every other stripe, or the grid's
+        ///        lines across the raster degree
         void SetPrimaryRasterColor(const glm::vec4& color);
+
+        /// @brief Sets the border's raster's secondary color. The other square color, the stripes between the primary ones, or the
+        ///        grid's lines along the raster degree
+        void SetSecondaryRasterColor(const glm::vec4& color);
 
         /// @brief Sets the gap, in pixels, between the largest elements of the border's raster: 0 lets them touch. Spreads the grid without changing any element's size.
         void SetRasterSpacing(const f32 spacing);

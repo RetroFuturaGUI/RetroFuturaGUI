@@ -166,12 +166,28 @@ void RetroFuturaGUI::Background::SetWindowImageTextureID(const u32 textureID)
     _backgroundPlane->SetWindowBackgroundImageTextureID(textureID);
 }
 
+void RetroFuturaGUI::Background::SetRasterPattern(const RasterPattern rasterPattern)
+{
+    if(!_backgroundPlane)
+        return;
+
+    _backgroundPlane->SetRasterPattern(rasterPattern);
+}
+
 void RetroFuturaGUI::Background::SetPrimaryRasterColor(const glm::vec4& color)
 {
     if(!_backgroundPlane)
         return;
 
     _backgroundPlane->SetPrimaryRasterColor(color);
+}
+
+void RetroFuturaGUI::Background::SetSecondaryRasterColor(const glm::vec4& color)
+{
+    if(!_backgroundPlane)
+        return;
+
+    _backgroundPlane->SetSecondaryRasterColor(color);
 }
 
 void RetroFuturaGUI::Background::SetRasterSpacing(const f32 spacing)

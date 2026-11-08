@@ -106,9 +106,19 @@ void RetroFuturaGUI::Graph::SetWindowImageTextureID(const u32 textureID)
     _wavePlane.SetWindowBackgroundImageTextureID(textureID);
 }
 
+void RetroFuturaGUI::Graph::SetRasterPattern(const RasterPattern rasterPattern)
+{
+    _wavePlane.SetRasterPattern(rasterPattern);
+}
+
 void RetroFuturaGUI::Graph::SetPrimaryRasterColor(const glm::vec4& color)
 {
     _wavePlane.SetPrimaryRasterColor(color);
+}
+
+void RetroFuturaGUI::Graph::SetSecondaryRasterColor(const glm::vec4& color)
+{
+    _wavePlane.SetSecondaryRasterColor(color);
 }
 
 void RetroFuturaGUI::Graph::SetRasterSpacing(const f32 spacing)

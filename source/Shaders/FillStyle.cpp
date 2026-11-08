@@ -334,8 +334,10 @@ void RetroFuturaGUI::FillStyle::uploadRaster(Shader& shader)
     switch(_rasterPattern)
     {
         case RasterPattern::Checkered:
+        case RasterPattern::Striped:
+        case RasterPattern::Grid:
         {
-            uploadCheckeredUniforms(shader);
+            uploadSecondaryRasterColor(shader);
         } break;
         default: // RasterPattern::Dotted
         {
@@ -349,7 +351,7 @@ void RetroFuturaGUI::FillStyle::uploadDotUniforms(Shader& shader) const
     shader.SetUniformFloat("uDotTransparencyTransfer", _dotTransparencyTransfer);
 }
 
-void RetroFuturaGUI::FillStyle::uploadCheckeredUniforms(Shader& shader) const
+void RetroFuturaGUI::FillStyle::uploadSecondaryRasterColor(Shader& shader) const
 {
     shader.SetUniformVec4("uSecondaryRasterColor", _secondaryRasterColor);
 }

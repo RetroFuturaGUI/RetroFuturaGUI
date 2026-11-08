@@ -12,9 +12,9 @@ namespace RetroFuturaGUI
     enum class RasterPattern : u32
     {
         Dotted,
-        Checkered
-        //Striped
-        //Grid
+        Checkered,
+        Striped,
+        Grid
     };
 
     /// @brief How an image or a mask is projected
@@ -99,10 +99,10 @@ namespace RetroFuturaGUI
         /// @brief Sets which pattern the raster draws.
         void SetRasterPattern(const RasterPattern rasterPattern);
 
-        /// @brief Sets the primary raster color: the dot color for Dotted, and one of the two square colors for Checkered. Alpha blends over whatever the shader has already drawn.
+        /// @brief Sets the primary raster color. The dot color for Dotted, one of the two square colors for Checkered, every other stripe for Striped, and the lines across the RasterDegree direction for Grid. Alpha blends over whatever the shader has already drawn
         void SetPrimaryRasterColor(const glm::vec4& color);
 
-        /// @brief Sets the second of the two square colors used by the Checkered raster pattern. Alpha blends over whatever the shader has already drawn.
+        /// @brief Sets the secondary raster color. The other square color for Checkered, every other stripe for Striped, and the lines along the RasterDegree direction for Grid. Alpha blends over whatever the shader has already drawn
         void SetSecondaryRasterColor(const glm::vec4& color);
 
         /// @brief Sets the gap, in pixels, between the raster elements: 0 lets them touch
@@ -111,7 +111,7 @@ namespace RetroFuturaGUI
         /// @brief Sets the direction in degrees along which raster widths
         void SetRasterDegree(const f32 degree);
 
-        /// @brief Sets the per-position raster width curve in pixels sampled along the RasterDegree direction across what is drawn. Each value is a dot's full width across for Dotted, and a square's side length for Checkered, each element sized by the value at its center. The largest value plus RasterSpacing sets the grid. Turns the raster on when non-empty.
+        /// @brief Sets the per-position raster width curve in pixels sampled along the RasterDegree direction across what is drawn. Each value is a dot's full width across for Dotted, a square's side length for Checkered, and a line's width for Striped and Grid, each element sized by the value at its center (Grid's lines along the direction by the value where they pass). The largest value plus RasterSpacing sets the grid. Turns the raster on when non-empty
         void SetPrimaryRasterWidthTransfer(std::span<f32> widthTransfer);
 
         /// @brief Sets how far each dot's opacity reaches from its center before fading to transparent. 1.0 = fully opaque disc, 0.5 = opaque inner half then fades out, 0.0 = only the center pixel is opaque.
@@ -197,6 +197,6 @@ namespace RetroFuturaGUI
         void uploadBackgroundImage(Shader& shader, const glm::vec2& size) const;
         void uploadMask(Shader& shader, const glm::vec2& size) const;
         void uploadDotUniforms(Shader& shader) const;
-        void uploadCheckeredUniforms(Shader& shader) const;
+        void uploadSecondaryRasterColor(Shader& shader) const;
     };
 }

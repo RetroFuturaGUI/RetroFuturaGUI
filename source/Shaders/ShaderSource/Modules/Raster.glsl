@@ -2,6 +2,8 @@
 
 #define RASTER_PATTERN_DOTTED 0
 #define RASTER_PATTERN_CHECKERED 1
+#define RASTER_PATTERN_STRIPED 2
+#define RASTER_PATTERN_GRID 3
 #define MAX_PRIMARY_RASTER_WIDTH_TRANSFER 255
 
 uniform int uRasterPattern;
@@ -135,11 +137,91 @@ vec4 applyCheckeredPattern(vec4 baseColor, vec2 localPos)
     return result;
 }
 
+// How much of the pixel the line of its cell covers, along one axis of the raster's board (one unit per cell, a line
+// centered in each). Smoothed over about a pixel; lines that touch leave no seam of the fill where they meet.
+float rasterLineCoverage(float boardCoord, float cellSize, float lineWidth)
+{
+    float edgeDistance = abs(fract(boardCoord) - 0.5) * cellSize - lineWidth * 0.5; // px outside the line, negative inside.
+    float edgeAA = max(fwidth(edgeDistance), 1e-4);
+    float coverage = 1.0 - smoothstep(-edgeAA, edgeAA, edgeDistance);
+    return mix(1.0, coverage, clamp((cellSize - lineWidth) / (2.0 * edgeAA), 0.0, 1.0));
+}
+
+// Lays a color over baseColor as far as alpha covers it.
+vec4 blendRasterColor(vec4 baseColor, vec3 color, float alpha)
+{
+    vec4 result = baseColor;
+    result.rgb = mix(baseColor.rgb, color, alpha);
+    result.a = mix(baseColor.a, 1.0, alpha);
+    return result;
+}
+
+/* Blends stripes over baseColor. They run across the uRasterDegree direction, one centered in every uRasterCellSize along
+   it, and slide along it over time via uRasterAnimationOffset. Each is as wide as uPrimaryRasterWidthTransfer at its
+   center, and they alternate between the primary and the secondary color. Between them the fill shows. */
+vec4 applyStripedPattern(vec4 baseColor, vec2 localPos)
+{
+    vec2 pixelPos = localPos * uScale;
+    vec2 halfSize = uScale * 0.5;
+
+    float angleRad = radians(uRasterDegree);
+    vec2 direction = vec2(cos(angleRad), sin(angleRad));
+    vec2 animatedPos = pixelPos + direction * uRasterAnimationOffset;
+
+    float cellSize = max(uRasterCellSize, 0.0001);
+    float along = dot(animatedPos, direction) / cellSize;
+    vec2 stripeCenter = direction * (floor(along) + 0.5) * cellSize;
+    float stripeWidth = sampleRasterWidth(rasterTransferCoord(stripeCenter, direction, halfSize));
+    float coverage = rasterLineCoverage(along, cellSize, stripeWidth);
+
+    // sin() is positive across one stripe's cell and negative across the next, so the colors alternate and blend
+    // smoothly where touching stripes meet, as the checkered squares do.
+    float parity = sin(along * 3.14159265359);
+    float parityAA = max(fwidth(parity), 1e-4);
+    vec4 stripeColor = mix(uSecondaryRasterColor, uPrimaryRasterColor, smoothstep(-parityAA, parityAA, parity));
+
+    return blendRasterColor(baseColor, stripeColor.rgb, stripeColor.a * coverage);
+}
+
+/* Blends a grid of lines over baseColor: the stripes, and as many again turned a quarter, so the fill shows in the cells
+   between them. The lines across the uRasterDegree direction take the primary color and are as wide as
+   uPrimaryRasterWidthTransfer at their center; the lines along it take the secondary color, as wide as the transfer
+   where they pass, so they narrow and widen with the lines across. Where they cross, the primary lines lie on top. */
+vec4 applyGridPattern(vec4 baseColor, vec2 localPos)
+{
+    vec2 pixelPos = localPos * uScale;
+    vec2 halfSize = uScale * 0.5;
+
+    float angleRad = radians(uRasterDegree);
+    vec2 direction = vec2(cos(angleRad), sin(angleRad));
+    vec2 crossDirection = vec2(-direction.y, direction.x);
+    vec2 animatedPos = pixelPos + direction * uRasterAnimationOffset;
+
+    float cellSize = max(uRasterCellSize, 0.0001);
+    vec2 board = vec2(dot(animatedPos, direction), dot(animatedPos, crossDirection)) / cellSize;
+
+    vec2 acrossCenter = direction * (floor(board.x) + 0.5) * cellSize;
+    float acrossWidth = sampleRasterWidth(rasterTransferCoord(acrossCenter, direction, halfSize));
+    float acrossCoverage = rasterLineCoverage(board.x, cellSize, acrossWidth);
+
+    float alongWidth = sampleRasterWidth(rasterTransferCoord(animatedPos, direction, halfSize));
+    float alongCoverage = rasterLineCoverage(board.y, cellSize, alongWidth);
+
+    vec4 result = blendRasterColor(baseColor, uSecondaryRasterColor.rgb, uSecondaryRasterColor.a * alongCoverage);
+    return blendRasterColor(result, uPrimaryRasterColor.rgb, uPrimaryRasterColor.a * acrossCoverage);
+}
+
 // Blends the selected raster pattern over baseColor
 vec4 applyRaster(vec4 baseColor, vec2 localPos)
 {
     if(uRasterPattern == RASTER_PATTERN_CHECKERED)
         return applyCheckeredPattern(baseColor, localPos);
+
+    if(uRasterPattern == RASTER_PATTERN_STRIPED)
+        return applyStripedPattern(baseColor, localPos);
+
+    if(uRasterPattern == RASTER_PATTERN_GRID)
+        return applyGridPattern(baseColor, localPos);
 
     return applyDottedPattern(baseColor, localPos);
 }

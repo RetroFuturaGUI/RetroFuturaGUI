@@ -133,10 +133,12 @@ namespace RetroFuturaGUI
         /// @brief Sets which pattern the raster draws
         void SetRasterPattern(const RasterPattern rasterPattern);
 
-        /// @brief Sets the raster's primary color. The dot color for Dotted, one of the two square colors for Checkered
+        /// @brief Sets the raster's primary color. The dots, one of the two square colors, every other stripe, or the grid's lines
+        ///        across the raster degree
         void SetPrimaryRasterColor(const glm::vec4& color);
 
-        /// @brief Sets the second of the two square colors of the Checkered raster
+        /// @brief Sets the raster's secondary color. The other square color, the stripes between the primary ones, or the grid's
+        ///        lines along the raster degree
         void SetSecondaryRasterColor(const glm::vec4& color);
 
         /// @brief Sets the gap (in pixels) between the largest elements of the raster. 0 lets them touch. Spreads the grid without changing any element's size
