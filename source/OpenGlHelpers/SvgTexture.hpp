@@ -3,6 +3,7 @@
 #include "Projection.hpp"
 #include "ContextObjects.hpp"
 #include "config.hpp"
+#include "Transition.hpp"
 #include <string>
 #include <string_view>
 #include <vector>
@@ -108,13 +109,15 @@ namespace RetroFuturaGUI
         void uploadBaseLayer(const std::vector<u8>& rgba, glm::i32vec2 resolution);
         void uploadMask(PathLayer& layer, const std::vector<u8>& alphaOnly, glm::i32vec2 resolution);
         void setupQuad();
-        void drawMaskedLayer(PathLayer& layer);
+        /// @param seconds The time since the last draw, which the layer's gradient moves on by.
+        void drawMaskedLayer(PathLayer& layer, const f32 seconds);
         PathLayer* findLayer(std::string_view name);
         void releaseGPUResources();
 
         std::unique_ptr<lunasvg::Document> _document;
         glm::vec2 _documentIntrinsicSize { 0.0f };
         std::vector<PathLayer> _layers;
+        StepClock _stepClock {}; //the time between draws, which the layers' gradients move on by.
         std::vector<SvgPathInfo> _pathInfoCache;
 
         u32 _baseLayerTextureId { 0 };

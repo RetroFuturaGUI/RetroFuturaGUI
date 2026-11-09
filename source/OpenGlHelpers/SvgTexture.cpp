@@ -119,9 +119,11 @@ void RetroFuturaGUI::SvgTexture::Draw()
 
     glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
 
+    const f32 seconds { _stepClock.TakeSeconds() };
+
     for (PathLayer& layer : _layers)
         if (layer._HasActiveOverride && 0 != layer._MaskTextureId)
-            drawMaskedLayer(layer);
+            drawMaskedLayer(layer, seconds);
 
     glEnable(GL_DEPTH_TEST);
 
@@ -136,7 +138,7 @@ void RetroFuturaGUI::SvgTexture::SetProjection(Projection* projection)
         setupQuad();
 }
 
-void RetroFuturaGUI::SvgTexture::drawMaskedLayer(PathLayer& layer)
+void RetroFuturaGUI::SvgTexture::drawMaskedLayer(PathLayer& layer, const f32 seconds)
 {
     if (layer._Fill._Colors.empty())
         return;
@@ -170,13 +172,8 @@ void RetroFuturaGUI::SvgTexture::drawMaskedLayer(PathLayer& layer)
     }
     else
     {
-        layer._Fill._GradientOffset += layer._Fill._GradientAnimationSpeed;
-        if (1.0f < layer._Fill._GradientOffset)
-            layer._Fill._GradientOffset = 0.0f;
-
-        layer._Fill._GradientDegree += layer._Fill._GradientRotationSpeed;
-        if (360.0f <= layer._Fill._GradientDegree)
-            layer._Fill._GradientDegree = 0.0f;
+        layer._Fill._GradientOffset = StepClock::Wrap(layer._Fill._GradientOffset, layer._Fill._GradientAnimationSpeed * seconds, 1.0f);
+        layer._Fill._GradientDegree = StepClock::Wrap(layer._Fill._GradientDegree, layer._Fill._GradientRotationSpeed * seconds, 360.0f);
 
         shader->SetUniformVec4("uColors", &layer._Fill._Colors[0][0], static_cast<u32>(layer._Fill._Colors.size()));
         shader->SetUniformInt("uNumColors", static_cast<i32>(layer._Fill._Colors.size()));

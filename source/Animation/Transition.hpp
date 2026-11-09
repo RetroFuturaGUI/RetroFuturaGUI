@@ -2,6 +2,7 @@
 #include "IncludeHelper.hpp"
 #include <array>
 #include <chrono>
+#include <cmath>
 #include <optional>
 #include <span>
 #include <vector>
@@ -205,5 +206,31 @@ namespace RetroFuturaGUI
             _target {};
         Transition _transition {};
         std::chrono::steady_clock::time_point _start {};
+    };
+
+    /// @brief Measures the seconds from one call to the next, for values that move on at a speed per second: they run the
+    ///        same at any frame rate, and something drawn more than once a frame doesn't move on faster. The first call returns 0
+    class StepClock
+    {
+    public:
+        f32 TakeSeconds()
+        {
+            const std::chrono::steady_clock::time_point now { std::chrono::steady_clock::now() };
+            const f32 seconds { _hasStarted ? std::chrono::duration<f32>(now - _last).count() : 0.0f };
+            _last = now;
+            _hasStarted = true;
+            return seconds;
+        }
+
+        /// @brief Moves a value that runs in circles on by a step, wrapping it into 0 .. period either way round
+        static f32 Wrap(const f32 value, const f32 step, const f32 period)
+        {
+            const f32 wrapped { std::fmod(value + step, period) };
+            return 0.0f > wrapped ? wrapped + period : wrapped;
+        }
+
+    private:
+        std::chrono::steady_clock::time_point _last {};
+        bool _hasStarted { false };
     };
 }

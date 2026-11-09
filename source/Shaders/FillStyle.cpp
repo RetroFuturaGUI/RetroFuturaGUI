@@ -203,6 +203,7 @@ void RetroFuturaGUI::FillStyle::SetRasterAnimationSpeed(const f32 animationSpeed
 void RetroFuturaGUI::FillStyle::uploadFill(Shader& shader, const u32 extraFeatures)
 {
     shader.SetUniformInt("uDIP", _shaderFeatureDIP | extraFeatures);
+    const f32 seconds { _stepClock.TakeSeconds() };
     const std::span<const glm::vec4> colors { getShownColors() };
 
     if(_fillType == FillType::Solid)
@@ -211,13 +212,8 @@ void RetroFuturaGUI::FillStyle::uploadFill(Shader& shader, const u32 extraFeatur
     }
     else
     {
-        _gradientOffset += _gradientAnimationSpeed;
-        if (1.0f < _gradientOffset)
-            _gradientOffset = 0.0f;
-
-        _gradientDegree += _gradientRotationSpeed;
-        if(360.0f <= _gradientDegree)
-            _gradientDegree = 0.0f;
+        _gradientOffset = StepClock::Wrap(_gradientOffset, _gradientAnimationSpeed * seconds, 1.0f);
+        _gradientDegree = StepClock::Wrap(_gradientDegree, _gradientRotationSpeed * seconds, 360.0f);
 
         shader.SetUniformVec4("uColors", &colors[0][0], static_cast<u32>(colors.size()));
         shader.SetUniformInt("uNumColors", static_cast<i32>(colors.size()));
@@ -226,7 +222,7 @@ void RetroFuturaGUI::FillStyle::uploadFill(Shader& shader, const u32 extraFeatur
     }
 
     if(_shaderFeatureDIP & ShaderFeatures::Raster)
-        uploadRaster(shader);
+        uploadRaster(shader, seconds);
 
     if(_shaderFeatureDIP & (ShaderFeatures::Pixelate | ShaderFeatures::Crt))
         uploadWindowBehind(shader);
@@ -313,9 +309,9 @@ glm::vec2 RetroFuturaGUI::FillStyle::getCoverage(const ImageFit fit, const glm::
     return textureSize * factor / size;
 }
 
-void RetroFuturaGUI::FillStyle::uploadRaster(Shader& shader)
+void RetroFuturaGUI::FillStyle::uploadRaster(Shader& shader, const f32 seconds)
 {
-    _rasterAnimationOffset += _rasterAnimationSpeed;
+    _rasterAnimationOffset += _rasterAnimationSpeed * seconds;
 
     // The width transfer, the cell size, the primary color, the angle and the animation drive every pattern, so they go up whichever one is selected. Each pattern then adds only the uniforms it owns.
     shader.SetUniformInt("uRasterPattern", static_cast<i32>(_rasterPattern));
