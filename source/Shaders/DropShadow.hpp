@@ -18,12 +18,6 @@ namespace RetroFuturaGUI
         DropShadow();
         ~DropShadow() = default;
 
-        /// @brief Shows or hides the shadow. Hidden by default
-        void Show(const bool show);
-
-        /// @brief Returns whether the shadow is shown
-        bool IsShown() const;
-
         /// @brief Sets the direction the shadow falls in, in degrees: 0 to the right, counterclockwise as the gradients turn, so
         ///        315 (the default) falls to the bottom right. A transition turns it the way the numbers run: 0 to 360 is a full turn
         void SetDegree(const f32 degree);
@@ -47,6 +41,10 @@ namespace RetroFuturaGUI
         glm::vec2 GetOffset() const;
 
     private:
+        const FlavorEffect& pickFlavor(const FlavorPart& part) const override;
+        void resolveNumbers() override;
+        bool resetNumber(const EffectSetting setting) override;
+
         friend class Text; //draws it.
         friend class ShadowRectangle; //draws it.
 
@@ -63,6 +61,10 @@ namespace RetroFuturaGUI
             _distance {},
             _blur {},
             _scale {};
-        bool _isShown { false };
+        LayeredSetting<f32>
+            _degreeLayer {},
+            _distanceLayer {},
+            _blurLayer {},
+            _scaleLayer {}; //the numbers through the style layers; the transition values above show them
     };
 }

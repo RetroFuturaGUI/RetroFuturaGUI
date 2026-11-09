@@ -139,9 +139,6 @@ namespace RetroFuturaGUI
         /// @brief Sets the border width.
         void SetWidth(const f32 borderWidth);
 
-        /// @brief Leaves the width to the widget's flavors, .default and the built-in width
-        void ResetWidth();
-
         /// @brief Sets the built-in width: the widget type's own, which everything else overrides. Called by the widget that owns the border
         void SetBuiltInWidth(const StyleKey& key, const f32 borderWidth);
 
@@ -154,7 +151,8 @@ namespace RetroFuturaGUI
 
         void setColors() override;
         void setCornerShape() override;
-        void setFill() override;
+        void setShader() override;
+        bool resetPartSetting(const StyleSetting setting) override;
 
         /// @brief Takes the colors, the corner shape and the width through their layers again
         void restyle() override;
@@ -192,6 +190,5 @@ namespace RetroFuturaGUI
         std::optional<f32> _ownWidth {};
         f32 _builtInWidth { 0.0f }; //the frame's own until the widget sets one
         std::function<void()> _onWidthChange {};//Border.hpp, private:
-        std::vector<f32> _primaryRasterWidthTransfer {};
     };
 }

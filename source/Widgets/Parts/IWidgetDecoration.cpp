@@ -51,21 +51,9 @@ void RetroFuturaGUI::IWidgetDecoration::SetCornerRadii(const glm::vec4& radii)
     resolveCornerShape();
 }
 
-void RetroFuturaGUI::IWidgetDecoration::ResetCornerRadii()
-{
-    _ownCornerRadii.reset();
-    resolveCornerShape();
-}
-
 void RetroFuturaGUI::IWidgetDecoration::SetCutCorners(const CutCorners corners)
 {
     _ownCutCorners = corners;
-    resolveCornerShape();
-}
-
-void RetroFuturaGUI::IWidgetDecoration::ResetCutCorners()
-{
-    _ownCutCorners.reset();
     resolveCornerShape();
 }
 
@@ -86,36 +74,6 @@ void RetroFuturaGUI::IWidgetDecoration::SetBuiltInCornerRadii(const StyleKey&, c
     resolveCornerShape();
 }
 
-void RetroFuturaGUI::IWidgetDecoration::ResetFillType()
-{
-    _fill.ResetFillType();
-    setFill();
-}
-
-void RetroFuturaGUI::IWidgetDecoration::ResetGradientOffset()
-{
-    _fill.ResetGradientOffset();
-    setFill();
-}
-
-void RetroFuturaGUI::IWidgetDecoration::ResetGradientAnimationSpeed()
-{
-    _fill.ResetGradientAnimationSpeed();
-    setFill();
-}
-
-void RetroFuturaGUI::IWidgetDecoration::ResetGradientDegree()
-{
-    _fill.ResetGradientDegree();
-    setFill();
-}
-
-void RetroFuturaGUI::IWidgetDecoration::ResetGradientRotationSpeed()
-{
-    _fill.ResetGradientRotationSpeed();
-    setFill();
-}
-
 const std::vector<glm::vec4>& RetroFuturaGUI::IWidgetDecoration::getOwnColors(const ColorState state) const
 {
     return _ownColors[static_cast<uSize>(state)];
@@ -133,7 +91,7 @@ void RetroFuturaGUI::IWidgetDecoration::restyle()
 {
     _styleGeneration = StylingManager::GetGeneration();
     setColors(); //the colors are handed on by reference, so they go again even when unchanged: a flavor's list may have moved.
-    setFill();
+    setShader();
     resolveCornerShape();
 }
 
@@ -169,4 +127,30 @@ void RetroFuturaGUI::IWidgetDecoration::resolveCornerShape()
         return;
 
     _onCornerRadiiChange(); //what follows the corners follows their cut too.
+}
+
+void RetroFuturaGUI::IWidgetDecoration::ResetSetting(const StyleSetting setting)
+{
+    if(resetPartSetting(setting))
+        return;
+
+    switch(setting)
+    {
+        case StyleSetting::CornerRadii:
+            _ownCornerRadii.reset();
+            resolveCornerShape();
+        break;
+        case StyleSetting::CutCorners:
+            _ownCutCorners.reset();
+            resolveCornerShape();
+        break;
+        default:
+            _shader.Reset(setting);
+            setShader();
+    }
+}
+
+bool RetroFuturaGUI::IWidgetDecoration::resetPartSetting(const StyleSetting)
+{
+    return false;
 }

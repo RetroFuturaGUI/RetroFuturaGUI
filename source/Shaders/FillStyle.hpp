@@ -25,6 +25,8 @@ namespace RetroFuturaGUI
             _ChannelDisplacement { 0.0f },
             _ScanlineWidth { 0.0f },
             _ScanlineAlpha { 0.5f };
+
+        bool operator ==(const CrtEffect&) const = default;
     };
 
     /// @brief How an image or a mask is projected

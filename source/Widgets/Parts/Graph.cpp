@@ -66,99 +66,110 @@ const std::vector<glm::vec4>& RetroFuturaGUI::Graph::GetColors(const ColorState 
 
 void RetroFuturaGUI::Graph::SetFillType(const FillType fillType)
 {
-    _fill.SetFillType(fillType);
-    setFill();
+    _shader._FillType.Set(fillType);
+    setShader();
 }
 
 void RetroFuturaGUI::Graph::SetGradientOffset(const f32 gradientOffset)
 {
-    _fill.SetGradientOffset(gradientOffset);
-    setFill();
+    _shader._GradientOffset.Set(gradientOffset);
+    setShader();
 }
 
 void RetroFuturaGUI::Graph::SetGradientAnimationSpeed(const f32 animationSpeed)
 {
-    _fill.SetGradientAnimationSpeed(animationSpeed);
-    setFill();
+    _shader._GradientAnimationSpeed.Set(animationSpeed);
+    setShader();
 }
 
 void RetroFuturaGUI::Graph::SetGradientDegree(const f32 degree)
 {
-    _fill.SetGradientDegree(degree);
-    setFill();
+    _shader._GradientDegree.Set(degree);
+    setShader();
 }
 
 void RetroFuturaGUI::Graph::SetGradientRotationSpeed(const f32 rotationSpeed)
 {
-    _fill.SetGradientRotationSpeed(rotationSpeed);
-    setFill();
+    _shader._GradientRotationSpeed.Set(rotationSpeed);
+    setShader();
 }
 
 void RetroFuturaGUI::Graph::SetWindowImageTextureID(const u32 textureID)
 {
-    _wavePlane.SetWindowBackgroundImageTextureID(textureID);
+    _shader._WindowImageTextureID.Set(textureID);
+    setShader();
 }
 
 void RetroFuturaGUI::Graph::SetRasterPattern(const RasterPattern rasterPattern)
 {
-    _wavePlane.SetRasterPattern(rasterPattern);
+    _shader._RasterPattern.Set(rasterPattern);
+    setShader();
 }
 
 void RetroFuturaGUI::Graph::SetPrimaryRasterColor(const glm::vec4& color)
 {
-    _wavePlane.SetPrimaryRasterColor(color);
+    _shader._PrimaryRasterColor.Set(color);
+    setShader();
 }
 
 void RetroFuturaGUI::Graph::SetSecondaryRasterColor(const glm::vec4& color)
 {
-    _wavePlane.SetSecondaryRasterColor(color);
+    _shader._SecondaryRasterColor.Set(color);
+    setShader();
 }
 
 void RetroFuturaGUI::Graph::SetRasterSpacing(const f32 spacing)
 {
-    _wavePlane.SetRasterSpacing(spacing);
+    _shader._RasterSpacing.Set(spacing);
+    setShader();
 }
 
 void RetroFuturaGUI::Graph::SetRasterDegree(const f32 degree)
 {
-    _wavePlane.SetRasterDegree(degree);
+    _shader._RasterDegree.Set(degree);
+    setShader();
 }
 
 void RetroFuturaGUI::Graph::SetPrimaryRasterWidthTransfer(std::span<f32> widthTransfer)
 {
-    _primaryRasterWidthTransfer.assign(widthTransfer.begin(), widthTransfer.end());
-    _wavePlane.SetPrimaryRasterWidthTransfer(_primaryRasterWidthTransfer);
+    _shader._PrimaryRasterWidthTransfer.Set(std::vector(widthTransfer.begin(), widthTransfer.end()));
+    setShader();
 }
 
 void RetroFuturaGUI::Graph::SetDotTransparencyTransfer(const f32 transparencyTransfer)
 {
-    _wavePlane.SetDotTransparencyTransfer(transparencyTransfer);
+    _shader._DotTransparencyTransfer.Set(transparencyTransfer);
+    setShader();
 }
 
 void RetroFuturaGUI::Graph::SetRasterAnimationSpeed(const f32 animationSpeed)
 {
-    _wavePlane.SetRasterAnimationSpeed(animationSpeed);
+    _shader._RasterAnimationSpeed.Set(animationSpeed);
+    setShader();
 }
 
 void RetroFuturaGUI::Graph::SetFogAlpha(const f32 alpha)
 {
-    _wavePlane.SetFogAlpha(alpha);
+    _shader._FogAlpha.Set(alpha);
+    setShader();
 }
 
 void RetroFuturaGUI::Graph::SetFogSpeed(const f32 speed)
 {
-    _wavePlane.SetFogSpeed(speed);
+    _shader._FogSpeed.Set(speed);
+    setShader();
 }
 
 void RetroFuturaGUI::Graph::SetFogDensity(std::span<f32> density)
 {
-    _fogDensity.assign(density.begin(), density.end());
-    _wavePlane.SetFogDensity(_fogDensity);
+    _shader._FogDensity.Set(std::vector(density.begin(), density.end()));
+    setShader();
 }
 
 void RetroFuturaGUI::Graph::SetFogClearing(const f32 clearing)
 {
-    _wavePlane.SetFogClearing(clearing);
+    _shader._FogClearing.Set(clearing);
+    setShader();
 }
 
 void RetroFuturaGUI::Graph::Draw()
@@ -225,25 +236,29 @@ void RetroFuturaGUI::Graph::notifyLayoutChange()
 
 void RetroFuturaGUI::Graph::SetGlassNoise(const GlassNoise& noise)
 {
-    _wavePlane.SetGlassNoise(noise);
+    _shader._GlassNoise.Set(noise);
+    setShader();
 }
 
 void RetroFuturaGUI::Graph::SetFogNoise(const FogNoise& noise)
 {
-    _wavePlane.SetFogNoise(noise);
+    _shader._FogNoise.Set(noise);
+    setShader();
 }
 
 void RetroFuturaGUI::Graph::SetPixelateBlockSize(const f32 blockSize)
 {
-    _wavePlane.SetPixelateBlockSize(blockSize);
+    _shader._PixelateBlockSize.Set(blockSize);
+    setShader();
 }
 
 void RetroFuturaGUI::Graph::SetCrtEffect(const CrtEffect& crtEffect)
 {
-    _wavePlane.SetCrtEffect(crtEffect);
+    _shader._CrtEffect.Set(crtEffect);
+    setShader();
 }
 
-void RetroFuturaGUI::Graph::setFill()
+void RetroFuturaGUI::Graph::setShader()
 {
-    _fill.Apply(_wavePlane, getFlavors(), nullptr != _flavors, _stylePart);
+    _shader.Apply(_wavePlane, getFlavors(), nullptr != _flavors, _stylePart);
 }

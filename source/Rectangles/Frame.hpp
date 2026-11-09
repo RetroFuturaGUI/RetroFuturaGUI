@@ -24,6 +24,8 @@ namespace RetroFuturaGUI
                                             1: a single gap
                                             >1: amount of gaps in a repeating pattern (dashed/dotted lines)
                                             <0: the same repeating pattern, but tiled for the whole edge*/
+
+        bool operator ==(const BorderGap&) const = default;
     };
 
     /// @brief A rectangle's outline, such as a widget's border. It takes the fill, the corners, the glass and the raster,

@@ -9,19 +9,10 @@ RetroFuturaGUI::InnerGlow::InnerGlow()
     _distance.Jump(0.0f);
 }
 
-void RetroFuturaGUI::InnerGlow::Show(const bool show)
-{
-    _isShown = show;
-}
-
-bool RetroFuturaGUI::InnerGlow::IsShown() const
-{
-    return _isShown;
-}
-
 void RetroFuturaGUI::InnerGlow::SetWidth(const f32 width)
 {
-    setEffectValue(_width, std::max(width, 0.0f));
+    _widthLayer.Set(std::max(width, 0.0f));
+    resolveNumbers();
 }
 
 f32 RetroFuturaGUI::InnerGlow::GetWidth() const
@@ -31,7 +22,8 @@ f32 RetroFuturaGUI::InnerGlow::GetWidth() const
 
 void RetroFuturaGUI::InnerGlow::SetDegree(const f32 degree)
 {
-    setEffectValue(_degree, degree);
+    _degreeLayer.Set(degree);
+    resolveNumbers();
 }
 
 f32 RetroFuturaGUI::InnerGlow::GetDegree() const
@@ -41,7 +33,8 @@ f32 RetroFuturaGUI::InnerGlow::GetDegree() const
 
 void RetroFuturaGUI::InnerGlow::SetDistance(const f32 distance)
 {
-    setEffectValue(_distance, distance);
+    _distanceLayer.Set(distance);
+    resolveNumbers();
 }
 
 f32 RetroFuturaGUI::InnerGlow::GetDistance() const
@@ -67,4 +60,34 @@ glm::vec2 RetroFuturaGUI::InnerGlow::getShownOffset() const
 f32 RetroFuturaGUI::InnerGlow::getGlyphProgress() const
 {
     return std::min({ _width.GetProgress(), _degree.GetProgress(), _distance.GetProgress() });
+}
+
+const RetroFuturaGUI::FlavorEffect& RetroFuturaGUI::InnerGlow::pickFlavor(const FlavorPart& part) const
+{
+    return part.GetInnerGlow();
+}
+
+void RetroFuturaGUI::InnerGlow::resolveNumbers()
+{
+    resolveNumber(_widthLayer, _width, 6.0f, &FlavorEffect::GetWidth, true);
+    resolveNumber(_degreeLayer, _degree, 315.0f, &FlavorEffect::GetDegree, false);
+    resolveNumber(_distanceLayer, _distance, 0.0f, &FlavorEffect::GetDistance, false);
+}
+
+bool RetroFuturaGUI::InnerGlow::resetNumber(const EffectSetting setting)
+{
+    switch(setting)
+    {
+        case EffectSetting::Width:
+            _widthLayer.Reset();
+            return true;
+        case EffectSetting::Degree:
+            _degreeLayer.Reset();
+            return true;
+        case EffectSetting::Distance:
+            _distanceLayer.Reset();
+            return true;
+        default:
+            return false;
+    }
 }

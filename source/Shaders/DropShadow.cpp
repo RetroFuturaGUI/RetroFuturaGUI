@@ -10,19 +10,10 @@ RetroFuturaGUI::DropShadow::DropShadow()
     _scale.Jump(1.0f);
 }
 
-void RetroFuturaGUI::DropShadow::Show(const bool show)
-{
-    _isShown = show;
-}
-
-bool RetroFuturaGUI::DropShadow::IsShown() const
-{
-    return _isShown;
-}
-
 void RetroFuturaGUI::DropShadow::SetDegree(const f32 degree)
 {
-    setEffectValue(_degree, degree);
+    _degreeLayer.Set(degree);
+    resolveNumbers();
 }
 
 f32 RetroFuturaGUI::DropShadow::GetDegree() const
@@ -32,7 +23,8 @@ f32 RetroFuturaGUI::DropShadow::GetDegree() const
 
 void RetroFuturaGUI::DropShadow::SetDistance(const f32 distance)
 {
-    setEffectValue(_distance, distance);
+    _distanceLayer.Set(distance);
+    resolveNumbers();
 }
 
 f32 RetroFuturaGUI::DropShadow::GetDistance() const
@@ -42,7 +34,8 @@ f32 RetroFuturaGUI::DropShadow::GetDistance() const
 
 void RetroFuturaGUI::DropShadow::SetBlur(const f32 blur)
 {
-    setEffectValue(_blur, std::max(blur, 0.0f));
+    _blurLayer.Set(std::max(blur, 0.0f));
+    resolveNumbers();
 }
 
 f32 RetroFuturaGUI::DropShadow::GetBlur() const
@@ -52,7 +45,8 @@ f32 RetroFuturaGUI::DropShadow::GetBlur() const
 
 void RetroFuturaGUI::DropShadow::SetScale(const f32 scale)
 {
-    setEffectValue(_scale, std::max(scale, 0.0f));
+    _scaleLayer.Set(std::max(scale, 0.0f));
+    resolveNumbers();
 }
 
 f32 RetroFuturaGUI::DropShadow::GetScale() const
@@ -83,4 +77,38 @@ f32 RetroFuturaGUI::DropShadow::getShownScale() const
 f32 RetroFuturaGUI::DropShadow::getGlyphProgress() const
 {
     return _blur.GetProgress();
+}
+
+const RetroFuturaGUI::FlavorEffect& RetroFuturaGUI::DropShadow::pickFlavor(const FlavorPart& part) const
+{
+    return part.GetDropShadow();
+}
+
+void RetroFuturaGUI::DropShadow::resolveNumbers()
+{
+    resolveNumber(_degreeLayer, _degree, 315.0f, &FlavorEffect::GetDegree, false);
+    resolveNumber(_distanceLayer, _distance, 4.0f, &FlavorEffect::GetDistance, false);
+    resolveNumber(_blurLayer, _blur, 8.0f, &FlavorEffect::GetBlur, true);
+    resolveNumber(_scaleLayer, _scale, 1.0f, &FlavorEffect::GetScale, true);
+}
+
+bool RetroFuturaGUI::DropShadow::resetNumber(const EffectSetting setting)
+{
+    switch(setting)
+    {
+        case EffectSetting::Degree:
+            _degreeLayer.Reset();
+            return true;
+        case EffectSetting::Distance:
+            _distanceLayer.Reset();
+            return true;
+        case EffectSetting::Blur:
+            _blurLayer.Reset();
+            return true;
+        case EffectSetting::Scale:
+            _scaleLayer.Reset();
+            return true;
+        default:
+            return false;
+    }
 }

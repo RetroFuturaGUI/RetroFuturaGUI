@@ -105,105 +105,86 @@ const std::vector<glm::vec4>& RetroFuturaGUI::Border::GetColors(const ColorState
 
 void RetroFuturaGUI::Border::SetFillType(const FillType fillType)
 {
-    _fill.SetFillType(fillType);
-    setFill();
+    _shader._FillType.Set(fillType);
+    setShader();
 }
 
 void RetroFuturaGUI::Border::SetGradientOffset(const f32 gradientOffset)
 {
-    _fill.SetGradientOffset(gradientOffset);
-    setFill();
+    _shader._GradientOffset.Set(gradientOffset);
+    setShader();
 }
 
 void RetroFuturaGUI::Border::SetGradientAnimationSpeed(const f32 animationSpeed)
 {
-    _fill.SetGradientAnimationSpeed(animationSpeed);
-    setFill();
+    _shader._GradientAnimationSpeed.Set(animationSpeed);
+    setShader();
 }
 
 void RetroFuturaGUI::Border::SetGradientDegree(const f32 degree)
 {
-    _fill.SetGradientDegree(degree);
-    setFill();
+    _shader._GradientDegree.Set(degree);
+    setShader();
 }
 
 void RetroFuturaGUI::Border::SetGradientRotationSpeed(const f32 rotationSpeed)
 {
-    _fill.SetGradientRotationSpeed(rotationSpeed);
-    setFill();
+    _shader._GradientRotationSpeed.Set(rotationSpeed);
+    setShader();
 }
 
 void RetroFuturaGUI::Border::SetWindowImageTextureID(const u32 textureID)
 {
-    if(!_borderFrame)
-        return;
-
-    _borderFrame->SetWindowBackgroundImageTextureID(textureID);
+    _shader._WindowImageTextureID.Set(textureID);
+    setShader();
 }
 
 void RetroFuturaGUI::Border::SetRasterPattern(const RasterPattern rasterPattern)
 {
-    if(!_borderFrame)
-        return;
-
-    _borderFrame->SetRasterPattern(rasterPattern);
+    _shader._RasterPattern.Set(rasterPattern);
+    setShader();
 }
 
 void RetroFuturaGUI::Border::SetPrimaryRasterColor(const glm::vec4& color)
 {
-    if(!_borderFrame)
-        return;
-
-    _borderFrame->SetPrimaryRasterColor(color);
+    _shader._PrimaryRasterColor.Set(color);
+    setShader();
 }
 
 void RetroFuturaGUI::Border::SetSecondaryRasterColor(const glm::vec4& color)
 {
-    if(!_borderFrame)
-        return;
-
-    _borderFrame->SetSecondaryRasterColor(color);
+    _shader._SecondaryRasterColor.Set(color);
+    setShader();
 }
 
 void RetroFuturaGUI::Border::SetRasterSpacing(const f32 spacing)
 {
-    if(!_borderFrame)
-        return;
-
-    _borderFrame->SetRasterSpacing(spacing);
+    _shader._RasterSpacing.Set(spacing);
+    setShader();
 }
 
 void RetroFuturaGUI::Border::SetRasterDegree(const f32 degree)
 {
-    if(!_borderFrame)
-        return;
-
-    _borderFrame->SetRasterDegree(degree);
+    _shader._RasterDegree.Set(degree);
+    setShader();
 }
 
 void RetroFuturaGUI::Border::SetPrimaryRasterWidthTransfer(std::span<f32> widthTransfer)
 {
-    if(!_borderFrame)
-        return;
-
-    _primaryRasterWidthTransfer.assign(widthTransfer.begin(), widthTransfer.end());
-    _borderFrame->SetPrimaryRasterWidthTransfer(_primaryRasterWidthTransfer);
+    _shader._PrimaryRasterWidthTransfer.Set(std::vector(widthTransfer.begin(), widthTransfer.end()));
+    setShader();
 }
 
 void RetroFuturaGUI::Border::SetDotTransparencyTransfer(const f32 transparencyTransfer)
 {
-    if(!_borderFrame)
-        return;
-
-    _borderFrame->SetDotTransparencyTransfer(transparencyTransfer);
+    _shader._DotTransparencyTransfer.Set(transparencyTransfer);
+    setShader();
 }
 
 void RetroFuturaGUI::Border::SetRasterAnimationSpeed(const f32 animationSpeed)
 {
-    if(!_borderFrame)
-        return;
-
-    _borderFrame->SetRasterAnimationSpeed(animationSpeed);
+    _shader._RasterAnimationSpeed.Set(animationSpeed);
+    setShader();
 }
 
 void RetroFuturaGUI::Border::setColors()
@@ -224,10 +205,14 @@ void RetroFuturaGUI::Border::SetWidth(const f32 borderWidth)
     resolveWidth();
 }
 
-void RetroFuturaGUI::Border::ResetWidth()
+bool RetroFuturaGUI::Border::resetPartSetting(const StyleSetting setting)
 {
+    if(StyleSetting::Width != setting)
+        return false;
+
     _ownWidth.reset();
     resolveWidth();
+    return true;
 }
 
 void RetroFuturaGUI::Border::SetBuiltInWidth(const StyleKey&, const f32 borderWidth)
@@ -240,6 +225,9 @@ void RetroFuturaGUI::Border::restyle()
 {
     IWidgetDecoration::restyle();
     resolveWidth();
+    _dropShadow.followFlavors(_flavors, _stylePart);
+    _glow.followFlavors(_flavors, _stylePart);
+    _innerGlow.followFlavors(_flavors, _stylePart);
 }
 
 void RetroFuturaGUI::Border::resolveWidth()
@@ -263,10 +251,8 @@ void RetroFuturaGUI::Border::resolveWidth()
 
 void RetroFuturaGUI::Border::SetGaps(std::span<BorderGap> gaps)
 {
-    if(!_borderFrame)
-        return;
-
-    _borderFrame->SetBorderGaps(gaps);
+    _shader._BorderGaps.Set(std::vector(gaps.begin(), gaps.end()));
+    setShader();
 }
 
 f32 RetroFuturaGUI::Border::GetWidth() const
@@ -426,16 +412,14 @@ void RetroFuturaGUI::Border::drawInnerGlow()
 
 void RetroFuturaGUI::Border::SetGlassNoise(const GlassNoise& noise)
 {
-    if(!_borderFrame)
-        return;
-
-    _borderFrame->SetGlassNoise(noise);
+    _shader._GlassNoise.Set(noise);
+    setShader();
 }
 
-void RetroFuturaGUI::Border::setFill()
+void RetroFuturaGUI::Border::setShader()
 {
     if(!_borderFrame)
         return;
 
-    _fill.Apply(*_borderFrame, getFlavors(), nullptr != _flavors, _stylePart);
+    _shader.Apply(*_borderFrame, getFlavors(), nullptr != _flavors, _stylePart);
 }

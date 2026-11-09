@@ -96,26 +96,26 @@ glm::vec3 RetroFuturaGUI::Background::GetRotation() const
 
 void RetroFuturaGUI::Background::SetGradientOffset(const f32 gradientOffset)
 {
-    _fill.SetGradientOffset(gradientOffset);
-    setFill();
+    _shader._GradientOffset.Set(gradientOffset);
+    setShader();
 }
 
 void RetroFuturaGUI::Background::SetGradientAnimationSpeed(const f32 animationSpeed)
 {
-    _fill.SetGradientAnimationSpeed(animationSpeed);
-    setFill();
+    _shader._GradientAnimationSpeed.Set(animationSpeed);
+    setShader();
 }
 
 void RetroFuturaGUI::Background::SetGradientDegree(const f32 degree)
 {
-    _fill.SetGradientDegree(degree);
-    setFill();
+    _shader._GradientDegree.Set(degree);
+    setShader();
 }
 
 void RetroFuturaGUI::Background::SetGradientRotationSpeed(const f32 rotationSpeed)
 {
-    _fill.SetGradientRotationSpeed(rotationSpeed);
-    setFill();
+    _shader._GradientRotationSpeed.Set(rotationSpeed);
+    setShader();
 }
 
 const std::vector<glm::vec4>& RetroFuturaGUI::Background::GetColors(const ColorState state) const
@@ -125,130 +125,112 @@ const std::vector<glm::vec4>& RetroFuturaGUI::Background::GetColors(const ColorS
 
 void RetroFuturaGUI::Background::SetFillType(const FillType fillType)
 {
-    _fill.SetFillType(fillType);
-    setFill();
+    _shader._FillType.Set(fillType);
+    setShader();
 }
 
 void RetroFuturaGUI::Background::SetGaps(const BackgroundGap& gap)
 {
-    if(!_backgroundPlane)
-        return;
-
-    _backgroundPlane->SetBackgroundGaps(gap);
+    _shader._BackgroundGaps.Set(gap);
+    setShader();
 }
 
 void RetroFuturaGUI::Background::SetWindowImageTextureID(const u32 textureID)
 {
-    if(!_backgroundPlane)
-        return;
-
-    _backgroundPlane->SetWindowBackgroundImageTextureID(textureID);
+    _shader._WindowImageTextureID.Set(textureID);
+    setShader();
 }
 
 void RetroFuturaGUI::Background::SetRasterPattern(const RasterPattern rasterPattern)
 {
-    if(!_backgroundPlane)
-        return;
-
-    _backgroundPlane->SetRasterPattern(rasterPattern);
+    _shader._RasterPattern.Set(rasterPattern);
+    setShader();
 }
 
 void RetroFuturaGUI::Background::SetPrimaryRasterColor(const glm::vec4& color)
 {
-    if(!_backgroundPlane)
-        return;
-
-    _backgroundPlane->SetPrimaryRasterColor(color);
+    _shader._PrimaryRasterColor.Set(color);
+    setShader();
 }
 
 void RetroFuturaGUI::Background::SetSecondaryRasterColor(const glm::vec4& color)
 {
-    if(!_backgroundPlane)
-        return;
-
-    _backgroundPlane->SetSecondaryRasterColor(color);
+    _shader._SecondaryRasterColor.Set(color);
+    setShader();
 }
 
 void RetroFuturaGUI::Background::SetRasterSpacing(const f32 spacing)
 {
-    if(!_backgroundPlane)
-        return;
-
-    _backgroundPlane->SetRasterSpacing(spacing);
+    _shader._RasterSpacing.Set(spacing);
+    setShader();
 }
 
 void RetroFuturaGUI::Background::SetRasterDegree(const f32 degree)
 {
-    if(!_backgroundPlane)
-        return;
-
-    _backgroundPlane->SetRasterDegree(degree);
+    _shader._RasterDegree.Set(degree);
+    setShader();
 }
 
 void RetroFuturaGUI::Background::SetPrimaryRasterWidthTransfer(std::span<f32> widthTransfer)
 {
-    _backgroundPrimaryRasterWidthTransfer.assign(widthTransfer.begin(), widthTransfer.end());
-
-    if(!_backgroundPlane)
-        return;
-
-    _backgroundPlane->SetPrimaryRasterWidthTransfer(_backgroundPrimaryRasterWidthTransfer);
+    _shader._PrimaryRasterWidthTransfer.Set(std::vector(widthTransfer.begin(), widthTransfer.end()));
+    setShader();
 }
 
 void RetroFuturaGUI::Background::SetDotTransparencyTransfer(const f32 transparencyTransfer)
 {
-    if(!_backgroundPlane)
-        return;
-
-    _backgroundPlane->SetDotTransparencyTransfer(transparencyTransfer);
+    _shader._DotTransparencyTransfer.Set(transparencyTransfer);
+    setShader();
 }
 
 void RetroFuturaGUI::Background::SetRasterAnimationSpeed(const f32 animationSpeed)
 {
-    if(!_backgroundPlane)
-        return;
-
-    _backgroundPlane->SetRasterAnimationSpeed(animationSpeed);
+    _shader._RasterAnimationSpeed.Set(animationSpeed);
+    setShader();
 }
 
 void RetroFuturaGUI::Background::SetFogAlpha(const f32 alpha)
 {
-    if(!_backgroundPlane)
-        return;
-
-    _backgroundPlane->SetFogAlpha(alpha);
+    _shader._FogAlpha.Set(alpha);
+    setShader();
 }
 
 void RetroFuturaGUI::Background::SetFogSpeed(const f32 speed)
 {
-    if(!_backgroundPlane)
-        return;
-
-    _backgroundPlane->SetFogSpeed(speed);
+    _shader._FogSpeed.Set(speed);
+    setShader();
 }
 
 void RetroFuturaGUI::Background::SetFogDensity(std::span<f32> density)
 {
-    _backgroundFogDensity.assign(density.begin(), density.end());
-
-    if(!_backgroundPlane)
-        return;
-
-    _backgroundPlane->SetFogDensity(_backgroundFogDensity);
+    _shader._FogDensity.Set(std::vector(density.begin(), density.end()));
+    setShader();
 }
 
 void RetroFuturaGUI::Background::SetFogClearing(const f32 clearing)
 {
-    if(!_backgroundPlane)
-        return;
-
-    _backgroundPlane->SetFogClearing(clearing);
+    _shader._FogClearing.Set(clearing);
+    setShader();
 }
 
 void RetroFuturaGUI::Background::SetImage(std::string_view imagePath)
 {
+    _image.Set(std::string(imagePath));
+    setShader();
+}
+
+void RetroFuturaGUI::Background::loadImage(std::string_view imagePath)
+{
     if(!_backgroundPlane)
         return;
+
+    if(imagePath.empty())
+    {
+        _backgroundSvg.reset();
+        _backgroundImage = nullptr;
+        _backgroundPlane->SetBackgroundImageTextureID(0);
+        return;
+    }
 
     if(isSvgPath(imagePath))
     {
@@ -277,44 +259,32 @@ u32 RetroFuturaGUI::Background::GetImageTextureID() const
 
 void RetroFuturaGUI::Background::SetImagePadding(const f32 padding)
 {
-    _backgroundImagePadding = padding;
-
-    if(!_backgroundPlane)
-        return;
-
-    _backgroundPlane->SetBackgroundImagePadding(padding);
+    _shader._ImagePadding.Set(padding);
+    setShader();
 }
 
 void RetroFuturaGUI::Background::SetImageFit(const ImageFit fit)
 {
-    if(!_backgroundPlane)
-        return;
-
-    _backgroundPlane->SetBackgroundImageFit(fit);
+    _shader._ImageFit.Set(fit);
+    setShader();
 }
 
 void RetroFuturaGUI::Background::SetMaskTextureID(const u32 textureID)
 {
-    if(!_backgroundPlane)
-        return;
-
-    _backgroundPlane->SetMaskTextureID(textureID);
+    _shader._MaskTextureID.Set(textureID);
+    setShader();
 }
 
 void RetroFuturaGUI::Background::SetMaskMode(const MaskMode mode)
 {
-    if(!_backgroundPlane)
-        return;
-
-    _backgroundPlane->SetMaskMode(mode);
+    _shader._MaskMode.Set(mode);
+    setShader();
 }
 
 void RetroFuturaGUI::Background::SetMaskFit(const ImageFit fit)
 {
-    if(!_backgroundPlane)
-        return;
-
-    _backgroundPlane->SetMaskFit(fit);
+    _shader._MaskFit.Set(fit);
+    setShader();
 }
 
 void RetroFuturaGUI::Background::SetImagePathFill(std::string_view name, const SvgPathFill& fill)
@@ -354,7 +324,7 @@ void RetroFuturaGUI::Background::drawSvg()
         return;
 
     //Widgets place _backgroundPlane themselves, so the SVG follows it here. SvgTexture rebuilds a matrix only for a value that changed
-    const glm::vec2 size { glm::max(_backgroundPlane->GetSize() - glm::vec2(_backgroundImagePadding * 2.0f), glm::vec2(0.0f)) };
+    const glm::vec2 size { glm::max(_backgroundPlane->GetSize() - glm::vec2(_shader._ImagePadding.GetShown().value_or(0.0f) * 2.0f), glm::vec2(0.0f)) };
     _backgroundSvg->SetSize(size);
     _backgroundSvg->SetPosition(_backgroundPlane->GetPosition() + glm::vec3(0.0f, 0.0f, 0.005f));
     _backgroundSvg->SetRotation(_backgroundPlane->GetRotation());
@@ -524,40 +494,54 @@ void RetroFuturaGUI::Background::drawInnerGlow()
 
 void RetroFuturaGUI::Background::SetGlassNoise(const GlassNoise& noise)
 {
-    if(!_backgroundPlane)
-        return;
-
-    _backgroundPlane->SetGlassNoise(noise);
+    _shader._GlassNoise.Set(noise);
+    setShader();
 }
 
 void RetroFuturaGUI::Background::SetFogNoise(const FogNoise& noise)
 {
-    if(!_backgroundPlane)
-        return;
-
-    _backgroundPlane->SetFogNoise(noise);
+    _shader._FogNoise.Set(noise);
+    setShader();
 }
 
 void RetroFuturaGUI::Background::SetPixelateBlockSize(const f32 blockSize)
 {
-    if(!_backgroundPlane)
-        return;
-
-    _backgroundPlane->SetPixelateBlockSize(blockSize);
+    _shader._PixelateBlockSize.Set(blockSize);
+    setShader();
 }
 
 void RetroFuturaGUI::Background::SetCrtEffect(const CrtEffect& crtEffect)
 {
-    if(!_backgroundPlane)
-        return;
-
-    _backgroundPlane->SetCrtEffect(crtEffect);
+    _shader._CrtEffect.Set(crtEffect);
+    setShader();
 }
 
-void RetroFuturaGUI::Background::setFill()
+void RetroFuturaGUI::Background::setShader()
 {
     if(!_backgroundPlane)
         return;
 
-    _fill.Apply(*_backgroundPlane, getFlavors(), nullptr != _flavors, _stylePart);
+    _shader.Apply(*_backgroundPlane, getFlavors(), nullptr != _flavors, _stylePart);
+
+    //The image goes by its path: loading it is the background's job, not its element's.
+    if(std::string* path { _image.Resolve(getFlavors(), nullptr != _flavors, _stylePart, std::string {}, [](const FlavorPart& style) -> const std::optional<std::string>& { return style.GetImage(); }) })
+        loadImage(*path);
+}
+
+bool RetroFuturaGUI::Background::resetPartSetting(const StyleSetting setting)
+{
+    if(StyleSetting::Image != setting)
+        return false;
+
+    _image.Reset();
+    setShader();
+    return true;
+}
+
+void RetroFuturaGUI::Background::restyle()
+{
+    IWidgetDecoration::restyle();
+    _dropShadow.followFlavors(_flavors, _stylePart);
+    _glow.followFlavors(_flavors, _stylePart);
+    _innerGlow.followFlavors(_flavors, _stylePart);
 }

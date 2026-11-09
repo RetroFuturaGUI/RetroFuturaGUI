@@ -80,6 +80,7 @@ namespace RetroFuturaGUI
 
     private:
         friend class FlavorPart; //tells of its changes
+        friend class FlavorEffect;
 
         /// @brief Moves the generation on: a flavor changed, came or went
         static void markChanged();

@@ -202,7 +202,14 @@ namespace RetroFuturaGUI
         static bool isSvgPath(std::string_view path);
 
         void setCornerShape() override;
-        void setFill() override;
+        void setShader() override;
+
+        /// @brief Takes its values and its effects' through their layers again
+        void restyle() override;
+        bool resetPartSetting(const StyleSetting setting) override;
+
+        /// @brief Shows the picture or SVG at the path, or none for an empty path
+        void loadImage(std::string_view imagePath);
 
         /// @brief Draws the drop shadow of the element as it draws now, if the shadow is shown.
         void drawShadow();
@@ -243,10 +250,8 @@ namespace RetroFuturaGUI
             _coverDepthOffset { 0.001f }; //the border's inward glow, in front of the fill or just behind it
         Texture* _backgroundImage { nullptr }; //a picture borrowed from ResourceManager, shown by _background
         std::unique_ptr<SvgTexture> _backgroundSvg { nullptr }; //an SVG background image, drawn over the fill
-        f32 _backgroundImagePadding { 0.0f };
 
     //Style
-        std::vector<f32> _backgroundPrimaryRasterWidthTransfer;
-        std::vector<f32> _backgroundFogDensity;
+        LayeredSetting<std::string> _image {}; //the image's path, which loadImage shows.
     };
 }

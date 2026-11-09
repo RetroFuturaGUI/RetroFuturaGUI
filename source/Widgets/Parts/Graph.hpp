@@ -166,16 +166,13 @@ namespace RetroFuturaGUI
         /// @brief Hands the wave plane the colors of the current state. A Selected state without colors shows the Enabled ones
         void setColors() override;
         void setCornerShape() override;
-        void setFill() override;
+        void setShader() override;
 
         /// @brief Tells the widget its layout changed, if it asked to know
         void notifyLayoutChange();
 
         WavePlane _wavePlane;
         std::function<void()> _onLayoutChange {};
-        std::vector<f32>
-            _primaryRasterWidthTransfer {},
-            _fogDensity {}; //the wave plane keeps spans over these
         GraphMode _mode { GraphMode::Bar };
         f32 _width { 0.0f };
         bool _isShown { false };

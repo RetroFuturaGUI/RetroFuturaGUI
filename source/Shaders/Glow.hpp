@@ -18,18 +18,16 @@ namespace RetroFuturaGUI
         Glow();
         ~Glow() = default;
 
-        /// @brief Shows or hides the glow. Hidden by default
-        void Show(const bool show);
-
-        /// @brief Returns whether the glow is shown
-        bool IsShown() const;
-
         /// @brief Sets how far the glow reaches out of the edge, in pixels, fading from full at the edge to nothing there. 8 by
         ///        default. A text renders its glow's glyphs once per width, so a text's width is best not changed every frame
         void SetWidth(const f32 width);
         f32 GetWidth() const;
 
     private:
+        const FlavorEffect& pickFlavor(const FlavorPart& part) const override;
+        void resolveNumbers() override;
+        bool resetNumber(const EffectSetting setting) override;
+
         friend class Text; //draws it.
         friend class GlowRectangle; //draws it.
 
@@ -40,6 +38,7 @@ namespace RetroFuturaGUI
         f32 getGlyphProgress() const;
 
         TransitionValue<f32> _width {};
-        bool _isShown { false };
+        LayeredSetting<f32>
+            _widthLayer {}; //the numbers through the style layers. The transition values above show them
     };
 }

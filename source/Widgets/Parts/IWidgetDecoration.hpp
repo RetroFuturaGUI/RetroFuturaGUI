@@ -3,7 +3,7 @@
 #include "IncludeHelper.hpp"
 #include "IRectangle.hpp"
 #include "StylingManager.hpp"
-#include "FillLayers.hpp"
+#include "ShaderLayers.hpp"
 #include <glm/ext/vector_float4.hpp>
 #include <array>
 #include <functional>
@@ -47,25 +47,15 @@ namespace RetroFuturaGUI
         /// @brief Sets the corner radii, clockwise from the top left, which win over every flavor
         void SetCornerRadii(const glm::vec4& radii);
 
-        /// @brief Leaves the corner radii to the widget's flavors, .default and the built-in look
-        void ResetCornerRadii();
-
         /// @brief Sets which corners are cut off straight instead of rounded: SetCutCorners(CutCorners::TopLeft | CutCorners::BottomRight).
         ///        A cut corner is cut by its corner radius along each edge; the others stay rounded, or square with a radius of 0
         void SetCutCorners(const CutCorners corners);
 
-        /// @brief Leaves the cut corners to the widget's flavors, .default and the built-in look
-        void ResetCutCorners();
-
         /// @brief Returns the cut corners shown
         CutCorners GetCutCorners() const;
 
-        /// @brief Leave a fill setting to the widget's flavors, .default and the element's default
-        void ResetFillType();
-        void ResetGradientDegree();
-        void ResetGradientOffset();
-        void ResetGradientAnimationSpeed();
-        void ResetGradientRotationSpeed();
+        /// @brief Leaves a setting to the widget's flavors, .default and the built-in look (colors: set none instead)
+        void ResetSetting(const StyleSetting setting);
 
     //Called by the widget that owns the part, which alone holds a StyleKey
         /// @brief Sets the built-in colors for a state: the widget type's own look, which everything else overrides
@@ -79,8 +69,11 @@ namespace RetroFuturaGUI
         /// @brief Hands the corner radii and the cut corners to the element
         virtual void setCornerShape() = 0;
 
-        /// @brief Hands the element the fill settings whose value through the layers changed
-        virtual void setFill() = 0;
+        /// @brief Hands the element the shader settings whose value through the layers changed
+        virtual void setShader() = 0;
+
+        /// @brief Resets a setting only the derived part keeps (a border's width, a background's image). False for any other
+        virtual bool resetPartSetting(const StyleSetting setting);
 
         /// @brief Returns the colors set on the part itself for the state, empty when unset
         const std::vector<glm::vec4>& getOwnColors(const ColorState state) const;
@@ -117,7 +110,7 @@ namespace RetroFuturaGUI
         StylePart _stylePart { StylePart::Background };
         u32 _styleGeneration { 0 }; //the StylingManager's generation the values were last taken at
 
-        FillLayers _fill {};
+        ShaderLayers _shader {};
         ColorState _colorState { ColorState::Enabled };
 
     private:

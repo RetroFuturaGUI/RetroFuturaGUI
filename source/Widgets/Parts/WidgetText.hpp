@@ -1,7 +1,7 @@
 #pragma once
 #include "IncludeHelper.hpp"
 #include "StylingManager.hpp"
-#include "FillLayers.hpp"
+#include "ShaderLayers.hpp"
 #include "Outline.hpp"
 #include "Signal.hpp"
 #include "Text.hpp"
@@ -84,12 +84,8 @@ namespace RetroFuturaGUI
         /// @brief Returns the colors set on the text itself for the given color state, empty when unset
         const std::vector<glm::vec4>& GetColors(const ColorState state) const;
 
-        /// @brief Leave a fill setting to the widget's flavors, .default and the text's default
-        void ResetFillType();
-        void ResetGradientDegree();
-        void ResetGradientOffset();
-        void ResetGradientAnimationSpeed();
-        void ResetGradientRotationSpeed();
+        /// @brief Leaves a setting to the widget's flavors, .default and the text's default (colors: set none instead)
+        void ResetSetting(const StyleSetting setting);
 
         /// @brief Returns the colors shown in the state: the text's own, else its flavors', .default's or the built-in ones
         const std::vector<glm::vec4>& GetShownColors(const ColorState state) const;
@@ -256,7 +252,10 @@ namespace RetroFuturaGUI
         void followStyles();
 
         /// @brief Hands the text the fill settings whose value through the layers changed
-        void setFill();
+        void setShader();
+
+        /// @brief Has the text's drop shadow, glow and inner glow take their values through the layers again
+        void restyleEffects();
 
         /// @brief Hands the text and its outline the colors of the current state
         void setColors();
@@ -270,7 +269,7 @@ namespace RetroFuturaGUI
             _builtInColors { ._Enabled = { glm::vec4(1.0f) }, ._Disabled = { glm::vec4(0.5f, 0.5f, 0.5f, 1.0f) }, ._Clicked = { glm::vec4(1.0f) }, ._Selected = {}, ._Hover = { glm::vec4(1.0f) } };
         const std::vector<u32>* _flavors { nullptr }; //the widget's flavors; nullptr for a text no flavor styles
         u32 _styleGeneration { 0 }; //the StylingManager's generation the colors were last taken at
-        FillLayers _fill {};
+        ShaderLayers _shader {};
         Outline _outline; //goes around _text, so it is declared after it
         ColorState _colorState { ColorState::Enabled };
         std::vector<f32>

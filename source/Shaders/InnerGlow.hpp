@@ -19,12 +19,6 @@ namespace RetroFuturaGUI
         InnerGlow();
         ~InnerGlow() = default;
 
-        /// @brief Shows or hides the inner glow. Hidden by default
-        void Show(const bool show);
-
-        /// @brief Returns whether the inner glow is shown
-        bool IsShown() const;
-
         /// @brief Sets how far the inner glow reaches in from the edge, in pixels, fading from full at the edge to nothing
         ///        there. 6 by default. A text renders its inner glow's glyphs once per width and offset, so a text's are best
         ///        not changed every frame
@@ -46,6 +40,10 @@ namespace RetroFuturaGUI
         glm::vec2 GetOffset() const;
 
     private:
+        const FlavorEffect& pickFlavor(const FlavorPart& part) const override;
+        void resolveNumbers() override;
+        bool resetNumber(const EffectSetting setting) override;
+
         friend class Text; //draws it.
         friend class InnerGlowRectangle; //draws it.
 
@@ -61,6 +59,9 @@ namespace RetroFuturaGUI
             _width {},
             _degree {},
             _distance {};
-        bool _isShown { false };
+        LayeredSetting<f32>
+            _widthLayer {},
+            _degreeLayer {},
+            _distanceLayer {}; //the numbers through the style layers; the transition values above show them.
     };
 }

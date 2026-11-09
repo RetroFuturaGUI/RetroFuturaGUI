@@ -7,19 +7,10 @@ RetroFuturaGUI::Glow::Glow()
     _width.Jump(8.0f);
 }
 
-void RetroFuturaGUI::Glow::Show(const bool show)
-{
-    _isShown = show;
-}
-
-bool RetroFuturaGUI::Glow::IsShown() const
-{
-    return _isShown;
-}
-
 void RetroFuturaGUI::Glow::SetWidth(const f32 width)
 {
-    setEffectValue(_width, std::max(width, 0.0f));
+    _widthLayer.Set(std::max(width, 0.0f));
+    resolveNumbers();
 }
 
 f32 RetroFuturaGUI::Glow::GetWidth() const
@@ -35,4 +26,26 @@ f32 RetroFuturaGUI::Glow::getShownWidth() const
 f32 RetroFuturaGUI::Glow::getGlyphProgress() const
 {
     return _width.GetProgress();
+}
+
+const RetroFuturaGUI::FlavorEffect& RetroFuturaGUI::Glow::pickFlavor(const FlavorPart& part) const
+{
+    return part.GetGlow();
+}
+
+void RetroFuturaGUI::Glow::resolveNumbers()
+{
+    resolveNumber(_widthLayer, _width, 8.0f, &FlavorEffect::GetWidth, true);
+}
+
+bool RetroFuturaGUI::Glow::resetNumber(const EffectSetting setting)
+{
+    switch(setting)
+    {
+        case EffectSetting::Width:
+            _widthLayer.Reset();
+            return true;
+        default:
+            return false;
+    }
 }

@@ -15,6 +15,8 @@ namespace RetroFuturaGUI
                                     1: a single gap
                                     >1: amount of gaps in a repeating pattern (dashed/dotted lines)
                                     <0: the same repeating pattern, but tiled for the whole background*/
+
+        bool operator ==(const BackgroundGap&) const = default;
     };
 
     /// @brief A filled rectangle, such as a widget's background, a highlight or a track. Besides the fill, the corners, the

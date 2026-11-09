@@ -21,6 +21,8 @@ namespace RetroFuturaGUI
         f32 _BackdropCellSize { 256.0f }; // the gray backdrop's cells, shown when the glass has no backdrop image
         NoiseSmoothing _Smoothing { NoiseSmoothing::Linear };
         u32 _Seed { 0 }; // another seed gives another pattern
+
+        bool operator ==(const GlassNoise&) const = default;
     };
 
     /// @brief The noise the fog is made of. How many layers of finer noise it adds up, and how strongly, is SetFogDensity's.
@@ -31,5 +33,7 @@ namespace RetroFuturaGUI
         f32 _DetailCellSize { 55.0f }; // the finer shading inside the cloud
         NoiseSmoothing _Smoothing { NoiseSmoothing::Quintic };
         u32 _Seed { 0 }; // another seed gives another pattern
+
+        bool operator ==(const FogNoise&) const = default;
     };
 }
