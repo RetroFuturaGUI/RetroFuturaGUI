@@ -6,6 +6,7 @@
 #include "Signal.hpp"
 #include "Text.hpp"
 #include <functional>
+#include <optional>
 #include <span>
 #include <string>
 #include <string_view>
@@ -54,7 +55,8 @@ namespace RetroFuturaGUI
         void Disconnect_OnTextChange(const typename Signal<>::Slot& slot);
 
     //Layout
-        /// @brief Sets the font family, size and style, loading it if necessary
+        /// @brief Sets the font family, size and style, loading it if necessary. All four win over every flavor; ResetSetting
+        ///        leaves any of them to the flavors again
         void SetFontFamily(std::string_view fontFamily, const f32 fontSize, const FontSizeUnit sizeUnit, const PlatformBridge::Fonts::Slant slant, const PlatformBridge::Fonts::Weight fontWeight);
 
         /// @brief Returns the font size in the given unit
@@ -120,6 +122,7 @@ namespace RetroFuturaGUI
         void SetGlassNoise(const GlassNoise& noise);
 
         /// @brief Sets an image shown inside the glyphs, stretched across the whole text behind its fill. The colors' alpha decides how much of it shows: 0 shows the image alone. 0 shows no image
+        ///        It wins over a flavor's image (FlavorPart::SetImage, a picture's path; SVGs don't show on text)
         /// @note The text only borrows the texture. A video's texture changes only while its VideoPlayback is updated, and gets a new ID when its picture size changes, so pass its current ID again then
         void SetImageTextureID(const u32 textureID);
 
@@ -251,10 +254,28 @@ namespace RetroFuturaGUI
         /// @brief Takes the colors again when the flavors changed since it last did. Called first in Draw
         void followStyles();
 
-        /// @brief Hands the text the fill settings whose value through the layers changed
+        /// @brief Hands the text the shader settings and the image whose value through the layers changed
         void setShader();
 
-        /// @brief Has the text's drop shadow, glow and inner glow take their values through the layers again
+        /// @brief Hands the text the font, alignment, padding, flow, emoji tint and mask span whose value through the layers changed
+        void setLayout();
+
+        /// @brief Hands the text the font when any of its four settings changed and a family is known, then tells the widget
+        void layoutFont();
+
+        /// @brief Hands the text and the follower the alignment when it changed
+        void layoutAlignment();
+
+        /// @brief Hands the text and the follower the padding when it changed, then tells the widget
+        void layoutPadding();
+
+        /// @brief The widget's flavors, empty for a text no flavor styles
+        std::span<const u32> getFlavors() const;
+
+        /// @brief The texture a flavor's image path shows on text: nothing when it sets no image, 0 for none or a picture that didn't load
+        static std::optional<u32> imageTextureOf(const FlavorPart& part);
+
+        /// @brief Has the text's outline, drop shadow, glow and inner glow take their values through the layers again
         void restyleEffects();
 
         /// @brief Hands the text and its outline the colors of the current state
@@ -272,9 +293,18 @@ namespace RetroFuturaGUI
         ShaderLayers _shader {};
         Outline _outline; //goes around _text, so it is declared after it
         ColorState _colorState { ColorState::Enabled };
-        std::vector<f32>
-            _primaryRasterWidthTransfer {},
-            _fogDensity {}; //the text keeps spans over these
+        LayeredSetting<u32> _imageTextureID {};
+        LayeredSetting<std::string> _fontFamily {};
+        LayeredSetting<f32>
+            _fontSize {}, //in pixels
+            _padding {},
+            _colorGlyphTint {};
+        LayeredSetting<PlatformBridge::Fonts::Slant> _fontSlant {};
+        LayeredSetting<PlatformBridge::Fonts::Weight> _fontWeight {};
+        LayeredSetting<TextAlignment> _alignment {};
+        LayeredSetting<TextFlow> _flow {};
+        LayeredSetting<MaskSpan> _maskSpan {};
+        static constexpr f32 _defaultFontSize { 16.0f }; //what a text shows without a size, in pixels
         std::function<void(WidgetTextChange)> _changeHook {};
         WidgetText* _follower { nullptr };
         Signal<>

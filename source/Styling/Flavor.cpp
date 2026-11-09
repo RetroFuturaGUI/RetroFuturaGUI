@@ -119,6 +119,33 @@ void RetroFuturaGUI::FlavorPart::Reset(const StyleSetting setting)
         case StyleSetting::CrtEffect:
             _crtEffect.reset();
         break;
+        case StyleSetting::FontFamily:
+            _fontFamily.reset();
+        break;
+        case StyleSetting::FontSize:
+            _fontSize.reset();
+        break;
+        case StyleSetting::FontSlant:
+            _fontSlant.reset();
+        break;
+        case StyleSetting::FontWeight:
+            _fontWeight.reset();
+        break;
+        case StyleSetting::Alignment:
+            _alignment.reset();
+        break;
+        case StyleSetting::Padding:
+            _padding.reset();
+        break;
+        case StyleSetting::Flow:
+            _flow.reset();
+        break;
+        case StyleSetting::ColorGlyphTint:
+            _colorGlyphTint.reset();
+        break;
+        case StyleSetting::MaskSpan:
+            _maskSpan.reset();
+        break;
     }
 
     StylingManager::markChanged();
@@ -485,6 +512,115 @@ void RetroFuturaGUI::FlavorPart::SetCrtEffect(const CrtEffect& value)
 const std::optional<RetroFuturaGUI::CrtEffect>& RetroFuturaGUI::FlavorPart::GetCrtEffect() const
 {
     return _crtEffect;
+}
+
+void RetroFuturaGUI::FlavorPart::SetFontSize(const f32 size, const FontSizeUnit sizeUnit)
+{
+    _fontSize = FontManager::ToPixels(size, sizeUnit);
+    StylingManager::markChanged();
+}
+
+const std::optional<f32>& RetroFuturaGUI::FlavorPart::GetFontSize() const
+{
+    return _fontSize;
+}
+
+void RetroFuturaGUI::FlavorPart::SetFontFamily(std::string_view value)
+{
+    _fontFamily = std::string(value);
+    StylingManager::markChanged();
+}
+
+const std::optional<std::string>& RetroFuturaGUI::FlavorPart::GetFontFamily() const
+{
+    return _fontFamily;
+}
+
+void RetroFuturaGUI::FlavorPart::SetFontSlant(const PlatformBridge::Fonts::Slant value)
+{
+    _fontSlant = value;
+    StylingManager::markChanged();
+}
+
+const std::optional<PlatformBridge::Fonts::Slant>& RetroFuturaGUI::FlavorPart::GetFontSlant() const
+{
+    return _fontSlant;
+}
+
+void RetroFuturaGUI::FlavorPart::SetFontWeight(const PlatformBridge::Fonts::Weight value)
+{
+    _fontWeight = value;
+    StylingManager::markChanged();
+}
+
+const std::optional<PlatformBridge::Fonts::Weight>& RetroFuturaGUI::FlavorPart::GetFontWeight() const
+{
+    return _fontWeight;
+}
+
+void RetroFuturaGUI::FlavorPart::SetAlignment(const TextAlignment value)
+{
+    _alignment = value;
+    StylingManager::markChanged();
+}
+
+const std::optional<RetroFuturaGUI::TextAlignment>& RetroFuturaGUI::FlavorPart::GetAlignment() const
+{
+    return _alignment;
+}
+
+void RetroFuturaGUI::FlavorPart::SetPadding(const f32 value)
+{
+    _padding = value;
+    StylingManager::markChanged();
+}
+
+const std::optional<f32>& RetroFuturaGUI::FlavorPart::GetPadding() const
+{
+    return _padding;
+}
+
+void RetroFuturaGUI::FlavorPart::SetFlow(const TextFlow value)
+{
+    _flow = value;
+    StylingManager::markChanged();
+}
+
+const std::optional<RetroFuturaGUI::TextFlow>& RetroFuturaGUI::FlavorPart::GetFlow() const
+{
+    return _flow;
+}
+
+void RetroFuturaGUI::FlavorPart::SetColorGlyphTint(const f32 value)
+{
+    _colorGlyphTint = value;
+    StylingManager::markChanged();
+}
+
+const std::optional<f32>& RetroFuturaGUI::FlavorPart::GetColorGlyphTint() const
+{
+    return _colorGlyphTint;
+}
+
+void RetroFuturaGUI::FlavorPart::SetMaskSpan(const MaskSpan value)
+{
+    _maskSpan = value;
+    StylingManager::markChanged();
+}
+
+const std::optional<RetroFuturaGUI::MaskSpan>& RetroFuturaGUI::FlavorPart::GetMaskSpan() const
+{
+    return _maskSpan;
+}
+
+RetroFuturaGUI::FlavorEffect& RetroFuturaGUI::FlavorPart::GetOutline()
+{
+    return _outline;
+}
+
+const RetroFuturaGUI::FlavorEffect& RetroFuturaGUI::FlavorPart::GetOutline() const
+{
+    return _outline;
 }
 
 void RetroFuturaGUI::FlavorEffect::Show(const bool show)

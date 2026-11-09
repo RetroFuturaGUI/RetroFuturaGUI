@@ -5,6 +5,8 @@
 #include "Frame.hpp"
 #include "FillStyle.hpp"
 #include "Noise.hpp"
+#include "FontManager.hpp"
+#include "TextLayout.hpp"
 #include <array>
 #include <optional>
 #include <span>
@@ -57,7 +59,16 @@ namespace RetroFuturaGUI
         MaskFit,
         Gaps,
         PixelateBlockSize,
-        CrtEffect
+        CrtEffect,
+        FontFamily,
+        FontSize,
+        FontSlant,
+        FontWeight,
+        Alignment,
+        Padding,
+        Flow,
+        ColorGlyphTint,
+        MaskSpan
     };
 
     /// @brief A setting of an effect (drop shadow, glow, inner glow) that a part's effect or a flavor can leave unset.
@@ -157,9 +168,9 @@ namespace RetroFuturaGUI
     };
 
     /// @brief What a flavor sets for one part of the widgets that have it: colors per state, the corner shape, a border's
-    ///        width, an image, and every shader setting (fill, raster, glass, fog, masks, gaps, pixelation, CRT). Whatever it
-    ///        leaves unset comes from the widget's next flavor, then .default, then the widget's built-in look; whatever the
-    ///        widget sets itself wins over all of them. A change shows on every widget with the flavor from its next draw.
+    ///        width, an image, every shader setting (fill, raster, glass, fog, masks, gaps, pixelation, CRT), and for a text its
+    ///        font, alignment, padding, flow and outline. Whatever it leaves unset comes from the widget's next flavor, then
+    ///        .default, then the widget's built-in look; whatever the widget sets itself wins over all of them. A change shows on every widget with the flavor from its next draw.
     ///        A setting a part doesn't have, such as fog on a border, is ignored there.
     ///        Reached by StylingManager::GetFlavor("primary").GetBackground()
     RFG_EXPORT class FlavorPart final
@@ -321,6 +332,49 @@ namespace RetroFuturaGUI
         void SetCrtEffect(const CrtEffect& value);
         const std::optional<CrtEffect>& GetCrtEffect() const;
 
+        /// @brief Sets a text's font size, kept in pixels
+        void SetFontSize(const f32 size, const FontSizeUnit sizeUnit);
+
+        /// @brief Returns the font size set, in pixels
+        const std::optional<f32>& GetFontSize() const;
+
+        /// @brief Sets a text's font family, loaded when a text first shows it
+        void SetFontFamily(std::string_view value);
+        const std::optional<std::string>& GetFontFamily() const;
+
+        /// @brief Sets a text's slant
+        void SetFontSlant(const PlatformBridge::Fonts::Slant value);
+        const std::optional<PlatformBridge::Fonts::Slant>& GetFontSlant() const;
+
+        /// @brief Sets a text's weight
+        void SetFontWeight(const PlatformBridge::Fonts::Weight value);
+        const std::optional<PlatformBridge::Fonts::Weight>& GetFontWeight() const;
+
+        /// @brief Sets a text's horizontal alignment
+        void SetAlignment(const TextAlignment value);
+        const std::optional<TextAlignment>& GetAlignment() const;
+
+        /// @brief Sets the padding around a text, in pixels
+        void SetPadding(const f32 value);
+        const std::optional<f32>& GetPadding() const;
+
+        /// @brief Sets how a text's lines run
+        void SetFlow(const TextFlow value);
+        const std::optional<TextFlow>& GetFlow() const;
+
+        /// @brief Sets how far emoji take on a text's fill color, 0 to 1
+        void SetColorGlyphTint(const f32 value);
+        const std::optional<f32>& GetColorGlyphTint() const;
+
+        /// @brief Sets what a text's mask is laid over
+        void SetMaskSpan(const MaskSpan value);
+        const std::optional<MaskSpan>& GetMaskSpan() const;
+
+        /// @brief Returns what the flavor sets for a text's outline: its width, colors per state and fill. Shown and the
+        ///        other effect numbers don't apply to it
+        FlavorEffect& GetOutline();
+        const FlavorEffect& GetOutline() const;
+
     private:
         std::array<std::vector<glm::vec4>, 5> _colors {}; //per ColorState, in its order.
         std::optional<glm::vec4> _cornerRadii {};
@@ -360,6 +414,16 @@ namespace RetroFuturaGUI
         std::optional<std::vector<BorderGap>> _borderGaps {};
         std::optional<f32> _pixelateBlockSize {};
         std::optional<CrtEffect> _crtEffect {};
+        std::optional<f32> _fontSize {}; //in pixels
+        std::optional<std::string> _fontFamily {};
+        std::optional<PlatformBridge::Fonts::Slant> _fontSlant {};
+        std::optional<PlatformBridge::Fonts::Weight> _fontWeight {};
+        std::optional<TextAlignment> _alignment {};
+        std::optional<f32> _padding {};
+        std::optional<TextFlow> _flow {};
+        std::optional<f32> _colorGlyphTint {};
+        std::optional<MaskSpan> _maskSpan {};
+        FlavorEffect _outline {};
     };
 
     /// @brief A named style rule, like a CSS class: what it sets for the background, the border and the text of every
