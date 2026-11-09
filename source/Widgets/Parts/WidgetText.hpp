@@ -158,7 +158,9 @@ namespace RetroFuturaGUI
         ///        lines along the raster degree
         void SetSecondaryRasterColor(const glm::vec4& color);
 
-        /// @brief Sets the gap (in pixels) between the largest elements of the raster. 0 lets them touch. Spreads the grid without changing any element's size
+        /// @brief Sets the gap, in pixels, between the widest raster elements: each element sits centered in a grid cell as large as
+        ///        the largest width plus this gap, so 0 lets the widest elements touch while narrower ones keep more room. The
+        ///        elements keep their size; a larger largest width spreads the grid with it
         void SetRasterSpacing(const f32 spacing);
 
         /// @brief Sets the direction (in degrees) along which the raster's widths are sampled and along which it animates

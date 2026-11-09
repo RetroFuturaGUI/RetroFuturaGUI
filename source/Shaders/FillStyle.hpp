@@ -135,7 +135,9 @@ namespace RetroFuturaGUI
         /// @brief Sets the secondary raster color. The other square color for Checkered, every other stripe for Striped, and the lines along the RasterDegree direction for Grid. Alpha blends over whatever the shader has already drawn
         void SetSecondaryRasterColor(const glm::vec4& color);
 
-        /// @brief Sets the gap, in pixels, between the raster elements: 0 lets them touch
+        /// @brief Sets the gap, in pixels, between the widest raster elements: each element sits centered in a grid cell as large as
+        ///        the largest width plus this gap, so 0 lets the widest elements touch while narrower ones keep more room. The
+        ///        elements keep their size. A larger largest width spreads the grid with it
         void SetRasterSpacing(const f32 spacing);
 
         /// @brief Sets the direction in degrees along which raster widths
