@@ -57,19 +57,19 @@ namespace RetroFuturaGUI
         /// @brief Sets the colors of the fill
         void SetColors(std::span<const glm::vec4> colors);
 
-        /// @brief Sets the fill type (solid, linear shift, radial or hue star gradient).
+        /// @brief Sets the fill type (solid, linear, radial or conic shift)
         void SetFillType(const FillType fillType);
 
         /// @brief Sets the offset applied to the gradient's start position.
         void SetGradientOffset(const f32 gradientOffset);
 
-        /// @brief Sets the speed at which the gradient animates over time.
+        /// @brief Sets how fast the gradient's colors move on, in runs through all its colors per second. 1 runs through them once a second
         void SetGradientAnimationSpeed(const f32 animationSpeed);
 
         /// @brief Sets the angle of a linear shift in degrees.
         void SetGradientDegree(const f32 degree);
 
-        /// @brief Sets the speed at which the gradient rotates over time
+        /// @brief Sets how fast the gradient turns, in degrees per second
         void SetGradientRotationSpeed(const f32 rotationSpeed);
 
         /// @brief Returns the offset of the gradient's start position.
@@ -147,7 +147,7 @@ namespace RetroFuturaGUI
         /// @brief Sets how far each dot's opacity reaches from its center before fading to transparent. 1.0 = fully opaque disc, 0.5 = opaque inner half then fades out, 0.0 = only the center pixel is opaque.
         void SetDotTransparencyTransfer(const f32 transparencyTransfer);
 
-        /// @brief Sets the speed at which the raster pattern animates along the RasterDegree direction.
+        /// @brief Sets how fast the raster pattern moves along the RasterDegree direction, in pixels per second.
         void SetRasterAnimationSpeed(const f32 animationSpeed);
 
         /// @brief Uploads the feature bits with extraFeatures added, the fill, and the raster and the glass when they are on. A
@@ -172,9 +172,9 @@ namespace RetroFuturaGUI
         uSize _colorCount { 0 };
         f32
             _gradientOffset { 0.0f },
-            _gradientAnimationSpeed { 0.0003f },
+            _gradientAnimationSpeed { 0.018f }, //runs per second
             _gradientDegree { 45.0f },
-            _gradientRotationSpeed { 0.02f };
+            _gradientRotationSpeed { 1.2f }; //degrees per second
         u32
             _shaderFeatureDIP { 0 },
             _windowBackgroundTextureID { 0 };
@@ -215,6 +215,8 @@ namespace RetroFuturaGUI
         glm::vec2 _windowBehindViewportSize { 1.0f };
         glm::mat4 _windowBehindPlacement { 1.0f };
 
+        StepClock _stepClock {}; //the time between draws, which the gradient and the raster move on by.
+
         const TransitionSettings* _transitionSettings { nullptr };
         std::vector<glm::vec4>
             _targetColors {},
@@ -231,7 +233,8 @@ namespace RetroFuturaGUI
         /// @brief Takes the colors given as the new target: at once, or from the colors shown now over the transition.
         void startColorTransition(std::span<const glm::vec4> target, const std::chrono::steady_clock::time_point now);
 
-        void uploadRaster(Shader& shader);
+        /// @param seconds The time since the last draw, which the pattern moves on by.
+        void uploadRaster(Shader& shader, const f32 seconds);
         void uploadBackgroundImage(Shader& shader, const glm::vec2& size) const;
         void uploadMask(Shader& shader, const glm::vec2& size) const;
         void uploadDotUniforms(Shader& shader) const;

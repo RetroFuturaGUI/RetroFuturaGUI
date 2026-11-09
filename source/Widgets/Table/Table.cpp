@@ -151,10 +151,8 @@ void RetroFuturaGUI::Table::Draw()
 
                 const uSize selectableRow { _tableOrientation == TableOrientation::Row ? row : column };
                 const TrackStyle& track { _trackStyles[selectableRow % variantCount] };
-                const bool
-                    isSelected { selectableRow < _selectedRowFlags.size() && _selectedRowFlags[selectableRow] },
-                    isDropTarget { _hasDropTargetRow && _dropTargetRow == selectableRow };
-                const ColorState state { !_isEnabledFlag ? ColorState::Disabled : isSelected ? ColorState::Selected : ColorState::Enabled }; //Hover and Clicked aren't drawn yet
+                const bool isDropTarget { _hasDropTargetRow && _dropTargetRow == selectableRow };
+                const ColorState state { trackColorState(selectableRow) };
 
                 _trackColoringOverlay->SetSize(size);
                 _trackColoringOverlay->SetPosition(position - glm::vec3(0.0f, 0.0f, _widgetZOffset));
@@ -173,7 +171,7 @@ void RetroFuturaGUI::Table::Draw()
                         drawTextCell(row, column, track, state);
                     break;
                     case ITableWidget::TableWidgetTypeID::TableCheckBox:
-                        drawCheckBoxCell(*cell, row, column, position, size);
+                        drawCheckBoxCell(*cell, row, column, position, size, track, state);
                     break;
                     case ITableWidget::TableWidgetTypeID::TableColor:
                         drawColorCell(*cell, position, size);
@@ -200,6 +198,7 @@ void RetroFuturaGUI::Table::Draw()
         const uSize headerColumnEnd { _horizontalHeaderCells.size() < _displayedColumns[1] ? _horizontalHeaderCells.size() : _displayedColumns[1] };
         const Shader::ClipScope headerClip { glm::vec4(contentOrigin.x, tableBottom, _innerSize.x, _size.y), _position.z, _projection };
         drawHeaderBand(_horizontalHeaderCells, _displayedColumns[0], headerColumnEnd);
+        drawHeaderOuterBorder(_horizontalHeaderCells, std::min(_horizontalHeaderCells.size(), _resolvedColumnSizes.size()), true);
     }
 
     if(_displayVerticalHeader)
@@ -207,6 +206,7 @@ void RetroFuturaGUI::Table::Draw()
         const uSize rowEnd2 { _verticalHeaderCells.size() < _displayedRows[1] ? _verticalHeaderCells.size() : _displayedRows[1] };
         const Shader::ClipScope headerClip { glm::vec4(tableLeft, contentOrigin.y - _innerSize.y, _size.x, _innerSize.y), _position.z, _projection };
         drawHeaderBand(_verticalHeaderCells, _displayedRows[0], rowEnd2);
+        drawHeaderOuterBorder(_verticalHeaderCells, std::min(_verticalHeaderCells.size(), _resolvedRowSizes.size()), false);
     }
 }
 
@@ -223,12 +223,16 @@ void RetroFuturaGUI::Table::drawTextCell(const uSize row, const uSize column, co
     text->Draw();
 }
 
-void RetroFuturaGUI::Table::drawCheckBoxCell(const BodyCell& cell, const uSize row, const uSize column, const glm::vec3& position, const glm::vec3& size)
+void RetroFuturaGUI::Table::drawCheckBoxCell(const BodyCell& cell, const uSize row, const uSize column, const glm::vec3& position, const glm::vec3& size, const TrackStyle& track, const ColorState trackState)
 {
     if(!_sharedCheckBox)
         return;
 
-    _cellCheckBox.SetColorState(checkBoxColorState(row, column)); //the boxes share one background, border and checkmark, so each cell is colored just before it draws
+    //The boxes share one background, border and checkmark, so each cell is colored just before it draws. The box follows
+    //the pointer on itself, the checkmark its track like the text, Disabled with the box.
+    const ColorState boxState { checkBoxColorState(row, column) };
+    _cellCheckBox.SetColorState(boxState);
+    _cellCheckBox.SetCheckmarkColors(_cellStyle.ShownIconColors(track, ColorState::Disabled == boxState ? ColorState::Disabled : trackState));
     _sharedCheckBox->SetValue(cell._IsChecked);
     _sharedCheckBox->SetSize(size); //fits the box into this cell
     _sharedCheckBox->SetPosition(position);
@@ -1413,6 +1417,7 @@ void RetroFuturaGUI::Table::interact()
         _onMouseLeave.Emit();
     }
 
+    followHoveredTrack(mouse);
     interactTableText(mouse);
     interactTableCheckBox(mouse);
     followPress(mouse);
@@ -1424,6 +1429,79 @@ void RetroFuturaGUI::Table::interact()
         _onReleaseAsync.EmitAsync();
         _onRelease.Emit();
     }
+}
+
+void RetroFuturaGUI::Table::followHoveredTrack(const MouseState& mouse)
+{
+    uSize track { 0 };
+    _hasHoveredTrack = _isEnabledFlag && mouse._IsInside && GetRowAt(mouse._Position, track); //the headers aren't tracks
+    _hoveredTrack = track;
+    _isHoveredTrackHeld = _hasHoveredTrack && mouse._IsPressed;
+}
+
+RetroFuturaGUI::ColorState RetroFuturaGUI::Table::trackColorState(const uSize selectableTrack) const
+{
+    if(!_isEnabledFlag)
+        return ColorState::Disabled;
+
+    //The track under the pointer shows it even when selected, so the pointer's place is always visible.
+    if(_hasHoveredTrack && _hoveredTrack == selectableTrack)
+        return _isHoveredTrackHeld ? ColorState::Clicked : ColorState::Hover;
+
+    const bool isSelected { selectableTrack < _selectedRowFlags.size() && _selectedRowFlags[selectableTrack] };
+    return isSelected ? ColorState::Selected : ColorState::Enabled;
+}
+
+void RetroFuturaGUI::Table::drawHeaderOuterBorder(const std::vector<TableCell>& cells, const uSize cellCount, const bool isHorizontal)
+{
+    if(!_innerBorder)
+        return;
+
+    const f32 width { _headerStyle.GetOuterBorderWidth() };
+
+    if(0 == cellCount || 0.0f >= width)
+        return;
+
+    //Around the cells laid out, as far as they show in the viewport.
+    const glm::vec2 contentOrigin { getContentTopLeft() };
+    const TableCell
+        &first { cells[0] },
+        &last { cells[cellCount - 1] };
+    glm::vec3
+        position { first._PositionPixels },
+        size { first._SizePixels };
+
+    if(isHorizontal)
+    {
+        const f32
+            left { std::max(first._PositionPixels.x - first._SizePixels.x * 0.5f, contentOrigin.x) },
+            right { std::min(last._PositionPixels.x + last._SizePixels.x * 0.5f, contentOrigin.x + _innerSize.x) };
+
+        if(right <= left)
+            return;
+
+        position.x = (left + right) * 0.5f;
+        size.x = right - left;
+    }
+    else
+    {
+        const f32
+            top { std::min(first._PositionPixels.y + first._SizePixels.y * 0.5f, contentOrigin.y) },
+            bottom { std::max(last._PositionPixels.y - last._SizePixels.y * 0.5f, contentOrigin.y - _innerSize.y) };
+
+        if(top <= bottom)
+            return;
+
+        position.y = (top + bottom) * 0.5f;
+        size.y = top - bottom;
+    }
+
+    const ColorState state { _isEnabledFlag ? ColorState::Enabled : ColorState::Disabled };
+    _innerBorder->SetBorderWidth(width);
+    _innerBorder->SetSize(size);
+    _innerBorder->SetPosition(position - glm::vec3(0.0f, 0.0f, _widgetZOffset - 0.02f)); //over the cells' own borders.
+    _innerBorder->SetColors(_headerStyle.GetOuterBorderColors(state));
+    _innerBorder->Draw();
 }
 
 void RetroFuturaGUI::Table::interactTableCheckBox(const MouseState& mouse)

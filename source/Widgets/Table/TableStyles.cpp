@@ -1,4 +1,5 @@
 #include "TableStyles.hpp"
+#include <algorithm>
 #include <array>
 #include <utility>
 
@@ -190,6 +191,11 @@ const std::vector<glm::vec4>& RetroFuturaGUI::CellStyle::ShownInnerBorderColors(
 const std::vector<glm::vec4>& RetroFuturaGUI::CellStyle::ShownTextColors(const TrackStyle& track, const ColorState state) const
 {
     return shown(_text, track.GetTextColors(), state);
+}
+
+const std::vector<glm::vec4>& RetroFuturaGUI::CellStyle::ShownIconColors(const TrackStyle& track, const ColorState state) const
+{
+    return shown(_icon, track.GetIconColors(), state);
 }
 
 std::vector<glm::vec4>* RetroFuturaGUI::CellStyle::colorsOf(StateColors& colors, const ColorState state)
@@ -421,5 +427,15 @@ void RetroFuturaGUI::CellCheckBox::SetColorState(const ColorState state)
 {
     _background.SetColorState(state);
     _border.SetColorState(state);
-    _checkmark.SetColorState(state);
+}
+
+void RetroFuturaGUI::CellCheckBox::SetCheckmarkColors(std::span<const glm::vec4> colors)
+{
+    //Shown as its Enabled colors, so one state carries whatever the track's state gives it.
+    _checkmark.SetColorState(ColorState::Enabled);
+
+    if(std::ranges::equal(colors, _checkmark.GetColors(ColorState::Enabled)))
+        return; //neighboring cells of one track ask for the same colors again and again.
+
+    _checkmark.SetColors(colors, ColorState::Enabled);
 }

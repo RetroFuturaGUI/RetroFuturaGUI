@@ -93,7 +93,7 @@ namespace RetroFuturaGUI
         /// @brief Sets the angle of the linear shift (degrees)
         void SetGradientDegree(const f32 degree);
 
-        /// @brief Sets the speed at which the gradient rotates over time (degrees per frame)
+        /// @brief Sets the speed at which the gradient rotates over time (degrees per second)
         void SetGradientRotationSpeed(const f32 rotationSpeed);
 
         /// @brief Sets how far emoji take on the fill color, from 0, their own colors (default), to 1. The raster, fog, glass and mask apply to them either way

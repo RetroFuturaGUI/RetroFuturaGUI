@@ -35,7 +35,7 @@ u32 RetroFuturaGUI::FogStyle::getFogFeatures() const
 
 void RetroFuturaGUI::FogStyle::uploadFog(Shader& shader)
 {
-    _fogAnimationOffset += _fogSpeed;
+    _fogAnimationOffset += _fogSpeed * _stepClock.TakeSeconds();
 
     shader.SetUniformFloat("uFogAlpha", _fogAlpha);
     shader.SetUniformFloat("uFogAnimationOffset", _fogAnimationOffset);

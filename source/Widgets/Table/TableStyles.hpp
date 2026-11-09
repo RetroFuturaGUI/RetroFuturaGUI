@@ -50,7 +50,7 @@ namespace RetroFuturaGUI
         /// @brief Returns the text colors
         const std::vector<glm::vec4>& GetTextColors() const;
 
-        /// @brief Sets the icon colors. Kept for later. No cell draws them yet
+        /// @brief Sets the icon colors. The checkmark of the track's checkbox cells
         void SetIconColors(std::span<const glm::vec4> colors);
 
         /// @brief Returns the icon colors
@@ -65,7 +65,7 @@ namespace RetroFuturaGUI
     };
 
     /// @brief The look every track shares in the states besides Enabled: Disabled while the table is, Selected for selected
-    ///        tracks, and Hover and Clicked, which no cell draws yet. A state without colors shows the track's own Enabled colors,
+    ///        tracks, Hover for the track under the pointer and Clicked while it is pressed. A state without colors shows the track's own Enabled colors,
     ///        so the alternation stays. Reached through table.GetCellStyle()
     class CellStyle final
     {
@@ -109,7 +109,7 @@ namespace RetroFuturaGUI
         /// @brief Returns the text colors for the given state, empty for Enabled
         const std::vector<glm::vec4>& GetTextColors(const ColorState state) const;
 
-        /// @brief Sets the icon colors for the given state. Kept for later: no cell draws them yet
+        /// @brief Sets the icon colors (the checkbox cells' checkmark) for the given state
         void SetIconColors(std::span<const glm::vec4> colors, const ColorState state);
 
         /// @brief Returns the icon colors for the given state, empty for Enabled
@@ -136,6 +136,9 @@ namespace RetroFuturaGUI
 
         /// @brief The text colors a cell of the track shows in the state. The shared ones, or the track's own
         const std::vector<glm::vec4>& ShownTextColors(const TrackStyle& track, const ColorState state) const;
+
+        /// @brief The icon colors (the checkmark) a cell of the track shows in the state. The shared ones, or the track's own
+        const std::vector<glm::vec4>& ShownIconColors(const TrackStyle& track, const ColorState state) const;
 
         /// @brief The font, alignment and padding, for the texts the Table builds.
         const TableTextSettings& GetTextSettings() const;
@@ -269,7 +272,8 @@ namespace RetroFuturaGUI
     };
 
     /// @brief The checkbox drawn in every checkbox cell: one background, border and checkmark, colored per cell. Enabled, Hover
-    ///        and Clicked, and Disabled for a read-only track or a disabled table. Reached through table.GetCellCheckBox()
+    ///        and Clicked, and Disabled for a read-only track or a disabled table; the checkmark follows its track's state and
+    ///        icon colors. Reached through table.GetCellCheckBox()
     class CellCheckBox final
     {
     public:
@@ -293,7 +297,8 @@ namespace RetroFuturaGUI
         /// @brief Returns the box's border
         const Border& GetBorder() const;
 
-        /// @brief Returns the checkmark drawn in checked boxes
+        /// @brief Returns the checkmark drawn in checked boxes. Its colors are the tracks' icon colors (GetTrackStyle(n) and
+        ///        GetCellStyle()), set for each cell; its fill type and gradient are set here
         Icon& GetCheckmark();
 
         /// @brief Returns the checkmark drawn in checked boxes
@@ -302,6 +307,9 @@ namespace RetroFuturaGUI
     //Called by the Table
         /// @brief Shows the colors of the given state, for the cell drawn next
         void SetColorState(const ColorState state);
+
+        /// @brief Colors the checkmark for the cell drawn next: its track's icon colors in the track's state
+        void SetCheckmarkColors(std::span<const glm::vec4> colors);
 
     private:
         Background _background;

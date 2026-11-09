@@ -544,6 +544,17 @@ namespace RetroFuturaGUI
         /// @brief Finds the visible cell of the given kind under a world-space point.
         bool findCellAt(const glm::vec2& point, const ITableWidget::TableWidgetTypeID typeID, uSize& outRow, uSize& outColumn) const;
 
+        /// @brief Finds the selectable track under the pointer, which draws in the Hover colors, or in the Clicked ones while pressed
+        void followHoveredTrack(const MouseState& mouse);
+
+        /// @brief The state a selectable track draws in: Disabled while the table is, Clicked or Hover under the pointer, then
+        ///        Selected, else Enabled
+        ColorState trackColorState(const uSize selectableTrack) const;
+
+        /// @brief Draws the frame around a header band's visible part, in the header style's outer border width and colors
+        /// @param cellCount The band's laid out cells, from the first.
+        void drawHeaderOuterBorder(const std::vector<TableCell>& cells, const uSize cellCount, const bool isHorizontal);
+
         /// @brief Returns whether a window space point lies on the box of a checkbox cell, which can be smaller than the cell.
         bool isPointOnCheckBox(const glm::vec2& point, const uSize row, const uSize column);
 
@@ -563,7 +574,7 @@ namespace RetroFuturaGUI
         void drawTextCell(const uSize row, const uSize column, const TrackStyle& track, const ColorState state);
 
         /// @brief Draws a checkbox cell through the shared checkbox, fitted to the cell.
-        void drawCheckBoxCell(const BodyCell& cell, const uSize row, const uSize column, const glm::vec3& position, const glm::vec3& size);
+        void drawCheckBoxCell(const BodyCell& cell, const uSize row, const uSize column, const glm::vec3& position, const glm::vec3& size, const TrackStyle& track, const ColorState trackState);
 
         /// @brief Draws a color cell through the shared color swatch.
         void drawColorCell(const BodyCell& cell, const glm::vec3& position, const glm::vec3& size);
@@ -770,6 +781,12 @@ namespace RetroFuturaGUI
         bool
             _hasHoveredCheckBox { false },
             _isHoveredCheckBoxHeld { false }; // the hovered box is being pressed, i.e. it draws in its Clicked colors
+
+    // Track hover: the selectable track under the pointer draws in the Hover colors, and in the Clicked ones while pressed
+        uSize _hoveredTrack { 0 };
+        bool
+            _hasHoveredTrack { false },
+            _isHoveredTrackHeld { false };
 
     // Text interaction
         uSize

@@ -2,6 +2,7 @@
 #include "IncludeHelper.hpp"
 #include "Shader.hpp"
 #include "Noise.hpp"
+#include "Transition.hpp"
 #include <span>
 
 namespace RetroFuturaGUI
@@ -16,7 +17,7 @@ namespace RetroFuturaGUI
         /// @brief Sets the overall opacity of the fog.
         void SetFogAlpha(const f32 alpha);
 
-        /// @brief Sets the speed at which the fog drifts over time.
+        /// @brief Sets how fast the fog drifts, in pixels per second
         void SetFogSpeed(const f32 speed);
 
         /// @brief Sets the per-octave density/weight curve driving the fog's fractal noise. Turns the fog on when non-empty.
@@ -37,6 +38,7 @@ namespace RetroFuturaGUI
     private:
         std::span<f32> _fogDensity;
         FogNoise _fogNoise {};
+        StepClock _stepClock {}; //the time between draws, which the fog drifts on by
         uSize _fogDensityCount { 0 };
         f32
             _fogAlpha { 0.0f },
