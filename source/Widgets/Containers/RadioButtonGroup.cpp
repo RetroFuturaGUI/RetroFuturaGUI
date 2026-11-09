@@ -16,6 +16,7 @@ RetroFuturaGUI::RadioButtonGroup::RadioButtonGroup(std::string_view name, Projec
     : IWidget(name, projection, parentWidget, parentWidgetTypeID, parentWindow)
 {
     _widgetTypeID = WidgetTypeID::RadioButtonGroup;
+    useFlavors(nullptr, &_border, &_text);
     _text.SetTransitionSettings(&_transitionSettings);
     _border.SetTransitionSettings(&_transitionSettings);
 }

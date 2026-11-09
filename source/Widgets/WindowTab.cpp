@@ -16,10 +16,11 @@ RetroFuturaGUI::WindowTab::WindowTab(std::string_view name, Projection* projecti
     _background.SetTransitionSettings(&_transitionSettings);
     _border.SetTransitionSettings(&_transitionSettings);
     useBorderGap(&_background, &_border);
+    useFlavors(&_background, &_border, nullptr);
 
-    _border.SetWidth(0.0f); //no frame until one is asked for, since a Frame starts with a 5 px border
-    _background.SetColors(std::array { glm::vec4(0.055f, 0.055f, 0.075f, 1.0f) }, ColorState::Enabled);
-    _background.SetColors(std::array { glm::vec4(0.055f, 0.055f, 0.075f, 1.0f) }, ColorState::Disabled);
+    _border.SetBuiltInWidth(styleKey(), 0.0f); //no frame until one is asked for, since a Frame starts with a 5 px border
+    _background.SetBuiltInColors(styleKey(), std::array { glm::vec4(0.055f, 0.055f, 0.075f, 1.0f) }, ColorState::Enabled);
+    _background.SetBuiltInColors(styleKey(), std::array { glm::vec4(0.055f, 0.055f, 0.075f, 1.0f) }, ColorState::Disabled);
     //_border.SetColors(std::span<const glm::vec4> colors, const ColorState state)
     applyTitleFont(_previewTitle.get());
     _closeButton.GetBackground().SetCornerRadii(glm::vec4(_closeButtonSize * 0.25f));
@@ -745,7 +746,7 @@ void RetroFuturaGUI::WindowTab::drawFieldShape(const glm::vec4& rect, const f32 
     Background& background { style.GetBackground() };
     Border& border { style.GetBorder() };
 
-    if(isVisible(background.GetColors(state)))
+    if(isVisible(background.GetShownColors(state)))
     {
         background.SetColorState(state);
         background.SetSize(size);
@@ -753,7 +754,7 @@ void RetroFuturaGUI::WindowTab::drawFieldShape(const glm::vec4& rect, const f32 
         background.Draw();
     }
 
-    if(0.0f >= border.GetWidth() || !isVisible(border.GetColors(state)))
+    if(0.0f >= border.GetWidth() || !isVisible(border.GetShownColors(state)))
         return;
 
     border.SetColorState(state);
@@ -780,7 +781,7 @@ void RetroFuturaGUI::WindowTab::drawCloseButton(const glm::vec4& field, const f3
     const glm::vec3 center { button.x + button.z * 0.5f, button.y + button.w * 0.5f, z };
     Background& background { _closeButton.GetBackground() };
 
-    if(isVisible(background.GetColors(state)))
+    if(isVisible(background.GetShownColors(state)))
     {
         background.SetColorState(state);
         background.SetSize(glm::vec2(button.z, button.w));
@@ -856,7 +857,7 @@ void RetroFuturaGUI::WindowTab::drawDropPreview()
 
     //See-through, since the window isn't in yet: the selected field's look at half its opacity. Copies, since the title only points at the colors it draws
     std::vector<glm::vec4>
-        background { _fieldStyle.GetBackground().GetColors(ColorState::Selected) },
+        background { _fieldStyle.GetBackground().GetShownColors(ColorState::Selected) },
         titleColors { _titleColors._Enabled };
 
     for(glm::vec4& color : background)
@@ -868,7 +869,7 @@ void RetroFuturaGUI::WindowTab::drawDropPreview()
     const f32 z { _position.z + _zStep * 2.0f };
     _previewFieldStyle.GetBackground().SetColors(background, ColorState::Enabled);
     _previewFieldStyle.GetBackground().SetCornerRadii(_fieldStyle.GetBackground().GetCornerRadii());
-    _previewFieldStyle.GetBorder().SetColors(_fieldStyle.GetBorder().GetColors(ColorState::Selected), ColorState::Enabled);
+    _previewFieldStyle.GetBorder().SetColors(_fieldStyle.GetBorder().GetShownColors(ColorState::Selected), ColorState::Enabled);
     _previewFieldStyle.GetBorder().SetCornerRadii(_fieldStyle.GetBorder().GetCornerRadii());
     _previewFieldStyle.GetBorder().SetWidth(_fieldStyle.GetBorder().GetWidth());
     drawFieldShape(rect, z, _previewFieldStyle, ColorState::Enabled);

@@ -11,6 +11,7 @@
 #include "IPointerFilter.hpp"
 #include "CursorIcon.hpp"
 #include "Transition.hpp"
+#include "StylingManager.hpp"
 #include <initializer_list>
 
 namespace RetroFuturaGUI
@@ -20,6 +21,8 @@ namespace RetroFuturaGUI
     class FillStyle;
     class Background;
     class Border;
+    class IWidgetDecoration;
+    class WidgetText;
     template<typename> class WidgetReference;
 
     //An interface with properties that all Widgets must implement.
@@ -29,6 +32,7 @@ namespace RetroFuturaGUI
         friend class ContextMenu;
         friend class ScrollView; //finds the frontmost cell under the pointer with its widgets' own hit tests
         template<typename> friend class WidgetReference;
+        friend class WidgetRegistry; //keeps the path hash up to date
 
     public:
         /// @brief Constructs a widget with the given name, under the given parent widget/window.
@@ -102,6 +106,23 @@ namespace RetroFuturaGUI
         /// @brief Sets the widget's name.
         void SetName(std::string_view name);
 
+        /// @brief Returns the hash of the widget's path (Fnv1aHash of GetPath()), which finds it through WidgetRegistry::Find
+        u32 GetPathHash() const;
+
+        /// @brief Adds a flavor (StylingManager) after the ones the widget has. What its background, border and text don't
+        ///        set themselves comes from the first of its flavors that sets it, then from .default, then from its built-in
+        ///        look. "primary" and ".primary" are the same flavor; a flavor it has already keeps its place
+        void AddFlavor(std::string_view name);
+
+        /// @brief Removes a flavor
+        void RemoveFlavor(std::string_view name);
+
+        /// @brief Whether the widget has the flavor
+        bool HasFlavor(std::string_view name) const;
+
+        /// @brief Returns the widget's flavors, in order, as they were given
+        const std::vector<std::string>& GetFlavors() const;
+
         /// @brief Returns the widget's type ID
         WidgetTypeID GetWidgetTypeID() const;
 
@@ -154,6 +175,13 @@ namespace RetroFuturaGUI
     protected:
     //Identity
         std::string _name;
+        u32 _pathHash { 0 }; //Fnv1aHash of the path, kept up to date by WidgetRegistry
+        std::vector<std::string> _flavorNames {};
+        std::vector<u32> _flavorHashes {}; //the same flavors, as the StylingManager keeps them. The styled parts read these
+        IWidgetDecoration
+            *_styledBackground { nullptr },
+            *_styledBorder { nullptr };
+        WidgetText* _styledText { nullptr };
         GLFWwindow* _parentWindow { nullptr };
         IHierarchyNode* _parentWidget { nullptr };
         WidgetTypeID 
@@ -220,6 +248,14 @@ namespace RetroFuturaGUI
         ///        two, so each can draw the other's glow over itself. Called once, by the constructors of widgets with both
         void useBorderGap(Background* background, Border* border);
 
+        /// @brief Lets the widget set its parts' built-in look (SetBuiltInColors, SetBuiltInWidth, ...), which its flavors
+        ///        and its own settings override
+        static StyleKey styleKey();
+
+        /// @brief Has the widget's flavors style its background, border and text; nullptr for a part it doesn't have.
+        ///        Called once in the constructor. Parts not handed over take their own values and their built-in look only
+        void useFlavors(IWidgetDecoration* background, IWidgetDecoration* border, WidgetText* text);
+
         /// @brief Takes the size: stores it and fits whatever the widget draws to it. so what the widget resizes along with itself follows at once.
         virtual void applySize(const glm::vec3& size);
 
@@ -240,6 +276,9 @@ namespace RetroFuturaGUI
     private:
         void updateTooltip();
         void updateContextMenu();
+
+        /// @brief Has the styled parts take their values again: the widget's flavors changed
+        void restyleParts();
 
         /// @brief Applies the shown size, position, rotation and opacity while their transitions run, the targets once they arrive.
         void updateGeometry();

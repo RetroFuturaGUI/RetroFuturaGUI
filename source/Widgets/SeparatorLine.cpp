@@ -9,6 +9,7 @@ RetroFuturaGUI::SeparatorLine::SeparatorLine(std::string_view name, Projection* 
     : IWidget(name, projection, parentWidget, parentWidgetTypeID, parentWindow)
 {
     _widgetTypeID = WidgetTypeID::SeparatorLine;
+    useFlavors(&_background, nullptr, &_text);
     _text.SetTransitionSettings(&_transitionSettings);
     _background.SetTransitionSettings(&_transitionSettings);
 }

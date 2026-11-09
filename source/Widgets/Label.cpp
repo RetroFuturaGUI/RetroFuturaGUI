@@ -4,6 +4,7 @@ RetroFuturaGUI::Label::Label(std::string_view name, Projection* projection, IWid
     : IWidget(name, projection, parentWidget, parentWidgetTypeID, parentWindow)
 {
     _widgetTypeID = WidgetTypeID::Label;
+    useFlavors(nullptr, nullptr, &_text);
     _text.SetTransitionSettings(&_transitionSettings);
 }
 

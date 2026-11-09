@@ -1,4 +1,10 @@
+#ifdef RETROFUTURAGUI_MODULES
+module;
+#include "ModuleExternals.hpp"
+module RetroFuturaGUI;
+#else
 #include "Transition.hpp"
+#endif
 #include <algorithm>
 #include <cmath>
 

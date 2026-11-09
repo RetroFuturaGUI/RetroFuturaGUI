@@ -1,4 +1,9 @@
 #pragma once
+
+//Marks what the RetroFuturaGUI module exports. Empty while the library is used as headers; the module makes it "export".
+#ifndef RFG_EXPORT
+    #define RFG_EXPORT
+#endif
 #include <cstdint>
 #include <cstdlib>
 #include <string_view>

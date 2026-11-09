@@ -10,7 +10,7 @@
 namespace RetroFuturaGUI
 {
     /// @brief How a transition speeds up and slows down on its way to the target.
-    enum class Easing : u32
+    RFG_EXPORT enum class Easing : u32
     {
         Linear,
         EaseIn,
@@ -19,14 +19,14 @@ namespace RetroFuturaGUI
     };
 
     /// @brief How long a value takes to reach a new target, and along which curve. A duration of 0 switches at once.
-    struct Transition
+    RFG_EXPORT struct Transition
     {
         std::chrono::milliseconds _Duration { 0 };
         Easing _Easing { Easing::EaseInOut };
     };
 
     /// @brief The values a transition carries, as a mask: SetTransition(Colors | CornerRadii, transition)
-    enum class TransitionProperty : u32
+    RFG_EXPORT enum class TransitionProperty : u32
     {
         None = 0,
         Colors = 1,
@@ -39,18 +39,18 @@ namespace RetroFuturaGUI
         Effects = 1 << 7 //the drop shadow's, glow's and inner glow's angle, distance, blur, width and scale
     };
 
-    constexpr TransitionProperty operator |(const TransitionProperty left, const TransitionProperty right)
+    RFG_EXPORT constexpr TransitionProperty operator |(const TransitionProperty left, const TransitionProperty right)
     {
         return static_cast<TransitionProperty>(static_cast<u32>(left) | static_cast<u32>(right));
     }
 
-    constexpr bool HasTransitionProperty(const TransitionProperty properties, const TransitionProperty property)
+    RFG_EXPORT constexpr bool HasTransitionProperty(const TransitionProperty properties, const TransitionProperty property)
     {
         return 0 != (static_cast<u32>(properties) & static_cast<u32>(property));
     }
 
     /// @brief A widget's own transitions. A property it has none for follows the global default (Transitions::SetDefault).
-    struct TransitionSettings
+    RFG_EXPORT struct TransitionSettings
     {
         std::optional<Transition>
             _Colors,
@@ -65,7 +65,7 @@ namespace RetroFuturaGUI
 
     /// @brief The global transition defaults, and the arithmetic of a running transition. A transition is worked out from the
     ///        clock whenever its value is drawn, so it runs the same at any frame rate and costs nothing once it has arrived.
-    class Transitions
+    RFG_EXPORT class Transitions
     {
     public:
         /// @brief While one with active set lives, every transition takes no time. A window draws under one after it was hidden,
@@ -139,7 +139,7 @@ namespace RetroFuturaGUI
 
     /// @brief One value carried to its target over a transition, worked out from the clock whenever it is read. Works for every
     ///        type glm::mix blends: f32, glm::vec2, glm::vec3 and glm::vec4.
-    template<typename T> class TransitionValue
+    RFG_EXPORT template<typename T> class TransitionValue
     {
     public:
         /// @brief Moves toward a new target from the value shown now, over the transition: at once with 0 ms.
@@ -210,7 +210,7 @@ namespace RetroFuturaGUI
 
     /// @brief Measures the seconds from one call to the next, for values that move on at a speed per second: they run the
     ///        same at any frame rate, and something drawn more than once a frame doesn't move on faster. The first call returns 0
-    class StepClock
+    RFG_EXPORT class StepClock
     {
     public:
         f32 TakeSeconds()

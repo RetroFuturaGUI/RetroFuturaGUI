@@ -137,6 +137,12 @@ namespace RetroFuturaGUI
         /// @brief Sets the border width.
         void SetWidth(const f32 borderWidth);
 
+        /// @brief Leaves the width to the widget's flavors, .default and the built-in width
+        void ResetWidth();
+
+        /// @brief Sets the built-in width: the widget type's own, which everything else overrides. Called by the widget that owns the border
+        void SetBuiltInWidth(const StyleKey& key, const f32 borderWidth);
+
         /// @brief Sets sections of the border to skip drawing; see Frame::SetBorderGaps.
         void SetGaps(std::span<BorderGap> gaps);
 
@@ -146,6 +152,13 @@ namespace RetroFuturaGUI
 
         void setColors() override;
         void setCornerShape() override;
+        void setFill() override;
+
+        /// @brief Takes the colors, the corner shape and the width through their layers again
+        void restyle() override;
+
+        /// @brief Takes the width through its layers; hands it to the frame and tells the owner when it changed
+        void resolveWidth();
 
         /// @brief Draws the drop shadow of the element as it draws now, if the shadow is shown
         void drawShadow();
@@ -174,6 +187,8 @@ namespace RetroFuturaGUI
         static constexpr f32
             _glowDepthOffset { 0.0015f }, //behind the outline, in front of the drop shadow
             _coverDepthOffset { 0.001f }; //the background's glow, in front of the outline
+        std::optional<f32> _ownWidth {};
+        f32 _builtInWidth { 0.0f }; //the frame's own until the widget sets one
         std::function<void()> _onWidthChange {};//Border.hpp, private:
         std::vector<f32> _primaryRasterWidthTransfer {};
     };

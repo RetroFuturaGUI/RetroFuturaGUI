@@ -7,6 +7,7 @@ RetroFuturaGUI::ColorPreview::ColorPreview(std::string_view name, Projection* pr
     : IWidget(name, projection, parentWidget, parentWidgetTypeID, parentWindow)
 {
     _widgetTypeID = WidgetTypeID::ColorPreview;
+    useFlavors(nullptr, &_border, nullptr);
     _checkeredBackground = std::make_unique<Plane>(&_projection);
     _whiteBackground = std::make_unique<Plane>(&_projection);
     _colorRect = std::make_unique<Plane>(&_projection);

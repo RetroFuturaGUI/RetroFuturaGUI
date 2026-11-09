@@ -200,6 +200,7 @@ namespace RetroFuturaGUI
         static bool isSvgPath(std::string_view path);
 
         void setCornerShape() override;
+        void setFill() override;
 
         /// @brief Draws the drop shadow of the element as it draws now, if the shadow is shown.
         void drawShadow();

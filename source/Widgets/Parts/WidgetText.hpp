@@ -1,5 +1,7 @@
 #pragma once
 #include "IncludeHelper.hpp"
+#include "StylingManager.hpp"
+#include "FillLayers.hpp"
 #include "Outline.hpp"
 #include "Signal.hpp"
 #include "Text.hpp"
@@ -74,12 +76,27 @@ namespace RetroFuturaGUI
         f32 GetWidth() const;
 
     //Fill
-        /// @brief Sets the colors for the given color state. One for a solid fill, the stops for a gradient. Selected colors are
-        ///        optional: without any, the Selected state shows the Enabled colors. A widget that can't be selected, like a Label, never shows them.
+        /// @brief Sets the colors for the given color state, which win over every flavor. One for a solid fill, the stops
+        ///        for a gradient. No colors leave the state to the widget's flavors, .default and the built-in look; a state none
+        ///        of them sets, such as Selected, shows the Enabled colors. A widget that can't be selected, like a Label, never shows Selected
         void SetColors(std::span<const glm::vec4> colors, const ColorState state);
 
-        /// @brief Returns the colors configured for the given color state
+        /// @brief Returns the colors set on the text itself for the given color state, empty when unset
         const std::vector<glm::vec4>& GetColors(const ColorState state) const;
+
+        /// @brief Leave a fill setting to the widget's flavors, .default and the text's default
+        void ResetFillType();
+        void ResetGradientDegree();
+        void ResetGradientOffset();
+        void ResetGradientAnimationSpeed();
+        void ResetGradientRotationSpeed();
+
+        /// @brief Returns the colors shown in the state: the text's own, else its flavors', .default's or the built-in ones
+        const std::vector<glm::vec4>& GetShownColors(const ColorState state) const;
+
+        /// @brief Sets the built-in colors for a state: the widget type's own look, which everything else overrides. Called by
+        ///        the widget that owns the text, which alone holds a StyleKey
+        void SetBuiltInColors(const StyleKey& key, std::span<const glm::vec4> colors, const ColorState state);
 
         /// @brief Sets the fill type (solid, linear shift, radial or hue star gradient). A gradient runs across the whole text
         void SetFillType(const FillType fillType);
@@ -228,8 +245,16 @@ namespace RetroFuturaGUI
         static std::vector<glm::vec4>& colorsOf(StateColors& colors, const ColorState state);
         static const std::vector<glm::vec4>& colorsOf(const StateColors& colors, const ColorState state);
 
-        /// @brief The colors a state shows. Its own, or the Enabled ones for a Selected state that has none
-        static const std::vector<glm::vec4>& shownColorsOf(const StateColors& colors, const ColorState state);
+        friend class IWidget; //makes it one of its styled parts
+
+        /// @brief Has the text take unset values from the widget's flavors
+        void setStyleSource(const std::vector<u32>* flavors);
+
+        /// @brief Takes the colors again when the flavors changed since it last did. Called first in Draw
+        void followStyles();
+
+        /// @brief Hands the text the fill settings whose value through the layers changed
+        void setFill();
 
         /// @brief Hands the text and its outline the colors of the current state
         void setColors();
@@ -238,7 +263,12 @@ namespace RetroFuturaGUI
         void notifyChange(const WidgetTextChange change);
 
         Text _text;
-        StateColors _colors { ._Enabled = { glm::vec4(1.0f) }, ._Disabled = { glm::vec4(0.5f, 0.5f, 0.5f, 1.0f) }, ._Clicked = { glm::vec4(1.0f) }, ._Selected = {}, ._Hover = { glm::vec4(1.0f) } };
+        StateColors
+            _colors {}, //its own
+            _builtInColors { ._Enabled = { glm::vec4(1.0f) }, ._Disabled = { glm::vec4(0.5f, 0.5f, 0.5f, 1.0f) }, ._Clicked = { glm::vec4(1.0f) }, ._Selected = {}, ._Hover = { glm::vec4(1.0f) } };
+        const std::vector<u32>* _flavors { nullptr }; //the widget's flavors; nullptr for a text no flavor styles
+        u32 _styleGeneration { 0 }; //the StylingManager's generation the colors were last taken at
+        FillLayers _fill {};
         Outline _outline; //goes around _text, so it is declared after it
         ColorState _colorState { ColorState::Enabled };
         std::vector<f32>

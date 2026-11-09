@@ -104,29 +104,61 @@ const std::vector<glm::vec4>& RetroFuturaGUI::WidgetText::GetColors(const ColorS
     return colorsOf(_colors, state);
 }
 
+const std::vector<glm::vec4>& RetroFuturaGUI::WidgetText::GetShownColors(const ColorState state) const
+{
+    const std::vector<glm::vec4>& own { colorsOf(_colors, state) };
+
+    if(!own.empty())
+        return own;
+
+    //A text without a widget's flavors goes from its own colors straight to its built-in ones
+    const std::vector<glm::vec4>* styled { _flavors ? StylingManager::FindColors(*_flavors, StylePart::Text, state) : nullptr };
+
+    if(styled)
+        return *styled;
+
+    const std::vector<glm::vec4>& builtIn { colorsOf(_builtInColors, state) };
+
+    if(!builtIn.empty() || ColorState::Enabled == state)
+        return builtIn;
+
+    return GetShownColors(ColorState::Enabled); //a state nothing sets, such as Selected, looks like Enabled
+}
+
+void RetroFuturaGUI::WidgetText::SetBuiltInColors(const StyleKey&, std::span<const glm::vec4> colors, const ColorState state)
+{
+    colorsOf(_builtInColors, state).assign(colors.begin(), colors.end());
+    setColors();
+}
+
 void RetroFuturaGUI::WidgetText::SetFillType(const FillType fillType)
 {
-    _text.SetFillType(fillType);
+    _fill.SetFillType(fillType);
+    setFill();
 }
 
 void RetroFuturaGUI::WidgetText::SetGradientOffset(const f32 gradientOffset)
 {
-    _text.SetGradientOffset(gradientOffset);
+    _fill.SetGradientOffset(gradientOffset);
+    setFill();
 }
 
 void RetroFuturaGUI::WidgetText::SetGradientAnimationSpeed(const f32 animationSpeed)
 {
-    _text.SetGradientAnimationSpeed(animationSpeed);
+    _fill.SetGradientAnimationSpeed(animationSpeed);
+    setFill();
 }
 
 void RetroFuturaGUI::WidgetText::SetGradientDegree(const f32 degree)
 {
-    _text.SetGradientDegree(degree);
+    _fill.SetGradientDegree(degree);
+    setFill();
 }
 
 void RetroFuturaGUI::WidgetText::SetGradientRotationSpeed(const f32 rotationSpeed)
 {
-    _text.SetGradientRotationSpeed(rotationSpeed);
+    _fill.SetGradientRotationSpeed(rotationSpeed);
+    setFill();
 }
 
 void RetroFuturaGUI::WidgetText::SetColorGlyphTint(const f32 tint)
@@ -238,6 +270,7 @@ void RetroFuturaGUI::WidgetText::SetFogClearing(const f32 clearing)
 
 void RetroFuturaGUI::WidgetText::Draw()
 {
+    followStyles();
     _text.Draw();
 }
 
@@ -322,17 +355,28 @@ const std::vector<glm::vec4>& RetroFuturaGUI::WidgetText::colorsOf(const StateCo
     }
 }
 
-const std::vector<glm::vec4>& RetroFuturaGUI::WidgetText::shownColorsOf(const StateColors& colors, const ColorState state)
+void RetroFuturaGUI::WidgetText::setStyleSource(const std::vector<u32>* flavors)
 {
-    if(ColorState::Selected == state && colors._Selected.empty())
-        return colors._Enabled;
+    _flavors = flavors;
+    _styleGeneration = StylingManager::GetGeneration();
+    setColors();
+    setFill();
+}
 
-    return colorsOf(colors, state);
+void RetroFuturaGUI::WidgetText::followStyles()
+{
+    if(StylingManager::GetGeneration() == _styleGeneration)
+        return;
+
+    //The colors are handed on by reference, so they go again even when unchanged. A flavor's list may have moved
+    _styleGeneration = StylingManager::GetGeneration();
+    setColors();
+    setFill();
 }
 
 void RetroFuturaGUI::WidgetText::setColors()
 {
-    _text.SetColors(shownColorsOf(_colors, _colorState));
+    _text.SetColors(GetShownColors(_colorState));
     _outline.SetColorState(_colorState);
     _text.GetDropShadow().SetColorState(_colorState);
     _text.GetGlow().SetColorState(_colorState);
@@ -385,4 +429,39 @@ void RetroFuturaGUI::WidgetText::SetGlassNoise(const GlassNoise& noise)
 void RetroFuturaGUI::WidgetText::SetFogNoise(const FogNoise& noise)
 {
     _text.SetFogNoise(noise);
+}
+
+void RetroFuturaGUI::WidgetText::ResetFillType()
+{
+    _fill.ResetFillType();
+    setFill();
+}
+
+void RetroFuturaGUI::WidgetText::ResetGradientOffset()
+{
+    _fill.ResetGradientOffset();
+    setFill();
+}
+
+void RetroFuturaGUI::WidgetText::ResetGradientAnimationSpeed()
+{
+    _fill.ResetGradientAnimationSpeed();
+    setFill();
+}
+
+void RetroFuturaGUI::WidgetText::ResetGradientDegree()
+{
+    _fill.ResetGradientDegree();
+    setFill();
+}
+
+void RetroFuturaGUI::WidgetText::ResetGradientRotationSpeed()
+{
+    _fill.ResetGradientRotationSpeed();
+    setFill();
+}
+
+void RetroFuturaGUI::WidgetText::setFill()
+{
+    _fill.Apply(_text, _flavors ? std::span<const u32>(*_flavors) : std::span<const u32>(), nullptr != _flavors, StylePart::Text);
 }

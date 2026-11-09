@@ -23,6 +23,7 @@ void RetroFuturaGUI::Background::Draw()
     if(!_backgroundPlane)
         return;
 
+    followStyles();
     drawShadow();
     drawBorderGlow(false); //under the fill, showing in the gap
 
@@ -95,59 +96,37 @@ glm::vec3 RetroFuturaGUI::Background::GetRotation() const
 
 void RetroFuturaGUI::Background::SetGradientOffset(const f32 gradientOffset)
 {
-    if(!_backgroundPlane)
-        return;
-
-    _backgroundPlane->SetGradientOffset(gradientOffset);
+    _fill.SetGradientOffset(gradientOffset);
+    setFill();
 }
 
 void RetroFuturaGUI::Background::SetGradientAnimationSpeed(const f32 animationSpeed)
 {
-    if(!_backgroundPlane)
-        return;
-
-    _backgroundPlane->SetGradientAnimationSpeed(animationSpeed);
+    _fill.SetGradientAnimationSpeed(animationSpeed);
+    setFill();
 }
 
 void RetroFuturaGUI::Background::SetGradientDegree(const f32 degree)
 {
-    if(!_backgroundPlane)
-        return;
-
-    _backgroundPlane->SetGradientDegree(degree);
+    _fill.SetGradientDegree(degree);
+    setFill();
 }
 
 void RetroFuturaGUI::Background::SetGradientRotationSpeed(const f32 rotationSpeed)
-{    
-    if(!_backgroundPlane)
-        return;
-
-    _backgroundPlane->SetGradientRotationSpeed(rotationSpeed);
+{
+    _fill.SetGradientRotationSpeed(rotationSpeed);
+    setFill();
 }
 
 const std::vector<glm::vec4>& RetroFuturaGUI::Background::GetColors(const ColorState state) const
 {
-    switch(state)
-    {
-        case ColorState::Clicked:
-            return _colorsClicked;
-        case ColorState::Disabled:
-            return _colorsDisabled;
-        case ColorState::Hover:
-            return _colorsHover;
-        case ColorState::Selected:
-            return _colorsSelected;
-        default: // Enabled
-            return _colorsEnabled;
-    }
+    return getOwnColors(state);
 }
 
 void RetroFuturaGUI::Background::SetFillType(const FillType fillType)
 {
-    if(!_backgroundPlane)
-        return;
-
-    _backgroundPlane->SetFillType(fillType);
+    _fill.SetFillType(fillType);
+    setFill();
 }
 
 void RetroFuturaGUI::Background::SetGaps(const BackgroundGap& gap)
@@ -359,23 +338,7 @@ void RetroFuturaGUI::Background::setColors()
     if(!_backgroundPlane)
         return;
 
-    switch(_colorState)
-    {
-        case ColorState::Disabled:
-            _backgroundPlane->SetColors(_colorsDisabled);
-        break;
-        case ColorState::Clicked:
-            _backgroundPlane->SetColors(_colorsClicked);
-        break;
-        case ColorState::Hover:
-            _backgroundPlane->SetColors(_colorsHover);
-        break;
-        case ColorState::Selected:
-            _backgroundPlane->SetColors(_colorsSelected);
-        break;
-        default: //Enabled
-            _backgroundPlane->SetColors(_colorsEnabled);
-    }
+    _backgroundPlane->SetColors(GetShownColors(_colorState));
 
     _dropShadow.SetColorState(_colorState);
     _glow.SetColorState(_colorState);
@@ -589,4 +552,12 @@ void RetroFuturaGUI::Background::SetCrtEffect(const CrtEffect& crtEffect)
         return;
 
     _backgroundPlane->SetCrtEffect(crtEffect);
+}
+
+void RetroFuturaGUI::Background::setFill()
+{
+    if(!_backgroundPlane)
+        return;
+
+    _fill.Apply(*_backgroundPlane, getFlavors(), nullptr != _flavors, _stylePart);
 }

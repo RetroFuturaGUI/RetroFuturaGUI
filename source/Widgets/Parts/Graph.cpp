@@ -4,10 +4,10 @@
 RetroFuturaGUI::Graph::Graph(Projection* projection, GraphHooks hooks)
     : IWidgetDecoration(projection, {}), _wavePlane(projection), _onLayoutChange(std::move(hooks._OnLayoutChange))
 {
-    _colorsEnabled = { glm::vec4(1.0f, 0.0f, 0.0f, 1.0f) };
-    _colorsClicked = { glm::vec4(1.0f, 1.0f, 0.0f, 1.0f) };
-    _colorsHover = { glm::vec4(0.0f, 0.0f, 1.0f, 1.0f) };
-    _colorsDisabled = { glm::vec4(0.5f, 0.5f, 0.5f, 1.0f) };
+    _builtInColors[static_cast<uSize>(ColorState::Enabled)] = { glm::vec4(1.0f, 0.0f, 0.0f, 1.0f) };
+    _builtInColors[static_cast<uSize>(ColorState::Clicked)] = { glm::vec4(1.0f, 1.0f, 0.0f, 1.0f) };
+    _builtInColors[static_cast<uSize>(ColorState::Hover)] = { glm::vec4(0.0f, 0.0f, 1.0f, 1.0f) };
+    _builtInColors[static_cast<uSize>(ColorState::Disabled)] = { glm::vec4(0.5f, 0.5f, 0.5f, 1.0f) };
     setColors();
 }
 
@@ -61,44 +61,37 @@ f32 RetroFuturaGUI::Graph::GetWidth() const
 
 const std::vector<glm::vec4>& RetroFuturaGUI::Graph::GetColors(const ColorState state) const
 {
-    switch(state)
-    {
-        case ColorState::Clicked:
-            return _colorsClicked;
-        case ColorState::Disabled:
-            return _colorsDisabled;
-        case ColorState::Hover:
-            return _colorsHover;
-        case ColorState::Selected:
-            return _colorsSelected;
-        default: // Enabled
-            return _colorsEnabled;
-    }
+    return getOwnColors(state);
 }
 
 void RetroFuturaGUI::Graph::SetFillType(const FillType fillType)
 {
-    _wavePlane.SetFillType(fillType);
+    _fill.SetFillType(fillType);
+    setFill();
 }
 
 void RetroFuturaGUI::Graph::SetGradientOffset(const f32 gradientOffset)
 {
-    _wavePlane.SetGradientOffset(gradientOffset);
+    _fill.SetGradientOffset(gradientOffset);
+    setFill();
 }
 
 void RetroFuturaGUI::Graph::SetGradientAnimationSpeed(const f32 animationSpeed)
 {
-    _wavePlane.SetGradientAnimationSpeed(animationSpeed);
+    _fill.SetGradientAnimationSpeed(animationSpeed);
+    setFill();
 }
 
 void RetroFuturaGUI::Graph::SetGradientDegree(const f32 degree)
 {
-    _wavePlane.SetGradientDegree(degree);
+    _fill.SetGradientDegree(degree);
+    setFill();
 }
 
 void RetroFuturaGUI::Graph::SetGradientRotationSpeed(const f32 rotationSpeed)
 {
-    _wavePlane.SetGradientRotationSpeed(rotationSpeed);
+    _fill.SetGradientRotationSpeed(rotationSpeed);
+    setFill();
 }
 
 void RetroFuturaGUI::Graph::SetWindowImageTextureID(const u32 textureID)
@@ -213,13 +206,7 @@ void RetroFuturaGUI::Graph::SetTransitionSettings(const TransitionSettings* sett
 
 void RetroFuturaGUI::Graph::setColors()
 {
-    if(ColorState::Selected == _colorState && _colorsSelected.empty())
-    {
-        _wavePlane.SetColors(_colorsEnabled);
-        return;
-    }
-
-    _wavePlane.SetColors(GetColors(_colorState));
+    _wavePlane.SetColors(GetShownColors(_colorState));
 }
 
 void RetroFuturaGUI::Graph::setCornerShape()
@@ -254,4 +241,9 @@ void RetroFuturaGUI::Graph::SetPixelateBlockSize(const f32 blockSize)
 void RetroFuturaGUI::Graph::SetCrtEffect(const CrtEffect& crtEffect)
 {
     _wavePlane.SetCrtEffect(crtEffect);
+}
+
+void RetroFuturaGUI::Graph::setFill()
+{
+    _fill.Apply(_wavePlane, getFlavors(), nullptr != _flavors, _stylePart);
 }

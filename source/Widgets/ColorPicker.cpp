@@ -9,11 +9,12 @@ RetroFuturaGUI::ColorPicker::ColorPicker(std::string_view name, Projection* proj
     : IWidget(name, projection, parentWidget, parentWidgetTypeID, parentWindow)
 {
     _widgetTypeID = WidgetTypeID::ColorPicker;
+    useFlavors(nullptr, &_border, nullptr);
     _colorPickerBackground = std::make_unique<ColorField>(projection);
     useTransitions({ _colorPickerBackground.get() });
     _border.SetTransitionSettings(&_transitionSettings);
     _indicator.SetTransitionSettings(&_transitionSettings);
-    _border.SetWidth(2.0f);
+    _border.SetBuiltInWidth(styleKey(), 2.0f);
     _indicator.SetDiameter(_indicatorDiameter);
 
     if(!_colorPickerBackground)
@@ -44,7 +45,7 @@ void RetroFuturaGUI::ColorPicker::applySize(const glm::vec3& size)
     const bool isCircle { _colorPickerType == ColorPickerType::Circle };
     const glm::vec2 fieldSize { isCircle ? glm::vec2(glm::min(_size.x, _size.y)) : glm::vec2(_size) };
     _border.SetSize(fieldSize);
-    _border.SetCornerRadii(glm::vec4(isCircle ? 0.5f * fieldSize.x : 0.0f)); //0 turns rounding off for the square
+    _border.SetBuiltInCornerRadii(styleKey(), glm::vec4(isCircle ? 0.5f * fieldSize.x : 0.0f)); //0 turns rounding off for the square
     _colorPickerBackground->SetSize(fieldSize - 2.0f); //1 px in from the border's outer edge, so the field's edge stays under the 2 px border
     alignIndicator();
 }

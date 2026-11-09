@@ -38,7 +38,7 @@ namespace RetroFuturaGUI
     class ColorPicker;
     class WindowTab;
 
-    enum class FillType: u32
+    RFG_EXPORT enum class FillType: u32
     {
         Solid,
         LinearShift,
@@ -47,13 +47,13 @@ namespace RetroFuturaGUI
     };
 
     /// @brief The shape of the ColorPicker's field of colors.
-    enum class ColorFieldShape : u32
+    RFG_EXPORT enum class ColorFieldShape : u32
     {
         Circle,
         Square
     };
 
-    template<typename T>
+    RFG_EXPORT template<typename T>
     concept WidgetTypes =
            std::same_as<T, Window> || std::same_as<T, Label>  || std::same_as<T, Button> 
         || std::same_as<T, Lasagna> || std::same_as<T, TextBox>
@@ -62,7 +62,7 @@ namespace RetroFuturaGUI
         || std::same_as<T, Slider> || std::same_as<T, ProgressBar> || std::same_as<T, Table>
         || std::same_as<T, Prefab> || std::same_as<T, ColorPicker>;
 
-    enum class WidgetTypeID : i32
+    RFG_EXPORT enum class WidgetTypeID : i32
     {
         None,
         Window,
@@ -96,7 +96,7 @@ namespace RetroFuturaGUI
         Unknown = -1
     };   
 
-    enum class SizingMode : u32
+    RFG_EXPORT enum class SizingMode : u32
     {
         FIXED,
         FILL,
@@ -109,7 +109,7 @@ namespace RetroFuturaGUI
         FILL_XYZ
     };
 
-    enum class ColorState : u32
+    RFG_EXPORT enum class ColorState : u32
     {
         Enabled,
         Disabled,

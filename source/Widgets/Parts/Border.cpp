@@ -9,10 +9,11 @@ RetroFuturaGUI::Border::Border(Projection* projection, BorderHooks hooks)
     _shadowRectangle = std::make_unique<ShadowRectangle>(_projection, &_dropShadow);
     _glowRectangle = std::make_unique<GlowRectangle>(_projection, &_glow);
     _innerGlowRectangle = std::make_unique<InnerGlowRectangle>(_projection, &_innerGlow);
-    _colorsEnabled = { glm::vec4(0.25f, 0.25f, 0.25f, 1.0f) };
-    _colorsDisabled = { glm::vec4(0.2f, 0.2f, 0.2f, 1.0f) };
-    _colorsClicked = { glm::vec4(0.3f, 0.3f, 1.3f, 1.0f) };
-    _colorsHover = { glm::vec4(0.275f, 0.275f, 0.275f, 1.0f) };
+    _builtInColors[static_cast<uSize>(ColorState::Enabled)] = { glm::vec4(0.25f, 0.25f, 0.25f, 1.0f) };
+    _builtInColors[static_cast<uSize>(ColorState::Disabled)] = { glm::vec4(0.2f, 0.2f, 0.2f, 1.0f) };
+    _builtInColors[static_cast<uSize>(ColorState::Clicked)] = { glm::vec4(0.3f, 0.3f, 1.3f, 1.0f) };
+    _builtInColors[static_cast<uSize>(ColorState::Hover)] = { glm::vec4(0.275f, 0.275f, 0.275f, 1.0f) };
+    _builtInWidth = _borderFrame->GetBorderWidth();
     setColors();
 }
 
@@ -21,6 +22,7 @@ void RetroFuturaGUI::Border::Draw()
     if(!_borderFrame)
         return;
 
+    followStyles();
     drawShadow();
     drawGlow();
     _borderFrame->Draw();
@@ -98,59 +100,37 @@ glm::vec3 RetroFuturaGUI::Border::GetRotation() const
 
 const std::vector<glm::vec4>& RetroFuturaGUI::Border::GetColors(const ColorState state) const
 {
-    switch(state)
-    {
-        case ColorState::Clicked:
-            return _colorsClicked;
-        case ColorState::Disabled:
-            return _colorsDisabled;
-        case ColorState::Hover:
-            return _colorsHover;
-        case ColorState::Selected:
-            return _colorsSelected;
-        default: // Enabled
-            return _colorsEnabled;
-    }
+    return getOwnColors(state);
 }
 
 void RetroFuturaGUI::Border::SetFillType(const FillType fillType)
 {
-    if(!_borderFrame)
-        return;
-
-    _borderFrame->SetFillType(fillType);
+    _fill.SetFillType(fillType);
+    setFill();
 }
 
 void RetroFuturaGUI::Border::SetGradientOffset(const f32 gradientOffset)
 {
-    if(!_borderFrame)
-        return;
-
-    _borderFrame->SetGradientOffset(gradientOffset);
+    _fill.SetGradientOffset(gradientOffset);
+    setFill();
 }
 
 void RetroFuturaGUI::Border::SetGradientAnimationSpeed(const f32 animationSpeed)
 {
-    if(!_borderFrame)
-        return;
-
-    _borderFrame->SetGradientAnimationSpeed(animationSpeed);
+    _fill.SetGradientAnimationSpeed(animationSpeed);
+    setFill();
 }
 
 void RetroFuturaGUI::Border::SetGradientDegree(const f32 degree)
 {
-    if(!_borderFrame)
-        return;
-
-    _borderFrame->SetGradientDegree(degree);
+    _fill.SetGradientDegree(degree);
+    setFill();
 }
 
 void RetroFuturaGUI::Border::SetGradientRotationSpeed(const f32 rotationSpeed)
 {
-    if(!_borderFrame)
-        return;
-
-    _borderFrame->SetGradientRotationSpeed(rotationSpeed);
+    _fill.SetGradientRotationSpeed(rotationSpeed);
+    setFill();
 }
 
 void RetroFuturaGUI::Border::SetWindowImageTextureID(const u32 textureID)
@@ -231,23 +211,7 @@ void RetroFuturaGUI::Border::setColors()
     if(!_borderFrame)
         return;
 
-    switch(_colorState)
-    {
-        case ColorState::Disabled:
-            _borderFrame->SetColors(_colorsDisabled);
-        break;
-        case ColorState::Clicked:
-            _borderFrame->SetColors(_colorsClicked);
-        break;
-        case ColorState::Hover:
-            _borderFrame->SetColors(_colorsHover);
-        break;
-        case ColorState::Selected:
-            _borderFrame->SetColors(_colorsSelected);
-        break;
-        default: //Enabled
-            _borderFrame->SetColors(_colorsEnabled);
-    }
+    _borderFrame->SetColors(GetShownColors(_colorState));
 
     _dropShadow.SetColorState(_colorState);
     _glow.SetColorState(_colorState);
@@ -256,10 +220,40 @@ void RetroFuturaGUI::Border::setColors()
 
 void RetroFuturaGUI::Border::SetWidth(const f32 borderWidth)
 {
+    _ownWidth = borderWidth;
+    resolveWidth();
+}
+
+void RetroFuturaGUI::Border::ResetWidth()
+{
+    _ownWidth.reset();
+    resolveWidth();
+}
+
+void RetroFuturaGUI::Border::SetBuiltInWidth(const StyleKey&, const f32 borderWidth)
+{
+    _builtInWidth = borderWidth;
+    resolveWidth();
+}
+
+void RetroFuturaGUI::Border::restyle()
+{
+    IWidgetDecoration::restyle();
+    resolveWidth();
+}
+
+void RetroFuturaGUI::Border::resolveWidth()
+{
     if(!_borderFrame)
         return;
 
-    _borderFrame->SetBorderWidth(borderWidth);
+    //A border without a widget's flavors (a sub-part, a window's) goes from its own width straight to its built-in one.
+    const f32 width { _ownWidth.value_or(_flavors ? StylingManager::FindWidth(getFlavors(), _stylePart).value_or(_builtInWidth) : _builtInWidth) };
+
+    if(width == _borderFrame->GetBorderWidth())
+        return;
+
+    _borderFrame->SetBorderWidth(width);
 
     if(!_onWidthChange)
         return;
@@ -436,4 +430,12 @@ void RetroFuturaGUI::Border::SetGlassNoise(const GlassNoise& noise)
         return;
 
     _borderFrame->SetGlassNoise(noise);
+}
+
+void RetroFuturaGUI::Border::setFill()
+{
+    if(!_borderFrame)
+        return;
+
+    _fill.Apply(*_borderFrame, getFlavors(), nullptr != _flavors, _stylePart);
 }

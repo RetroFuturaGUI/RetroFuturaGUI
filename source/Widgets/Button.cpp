@@ -17,6 +17,7 @@ RetroFuturaGUI::Button::Button(std::string_view name, Projection* projection, IW
     _background.SetTransitionSettings(&_transitionSettings);
     _border.SetTransitionSettings(&_transitionSettings);
     useBorderGap(&_background, &_border);
+    useFlavors(&_background, &_border, &_text);
 }
 
 void RetroFuturaGUI::Button::Draw()

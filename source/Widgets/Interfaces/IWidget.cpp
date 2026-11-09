@@ -3,6 +3,10 @@
 #include "IDropDown.hpp"
 #include "Tooltip.hpp"
 #include "ContextMenu.hpp"
+#include "WidgetRegistry.hpp"
+#include "IWidgetDecoration.hpp"
+#include "WidgetText.hpp"
+#include <algorithm>
 #include "FillStyle.hpp"
 #include "Background.hpp"
 #include "Border.hpp"
@@ -22,9 +26,13 @@ RetroFuturaGUI::IWidget::IWidget(std::string_view name, Projection* projection, 
     : _name(name), _parentWidget(parentWidget), _parentWidgetTypeID(parentWidgetTypeID), _projection(*projection)
 {
     _parentWindow = parentWindow;
+    WidgetRegistry::add(this);
 }
 
-RetroFuturaGUI::IWidget::~IWidget() = default;
+RetroFuturaGUI::IWidget::~IWidget()
+{
+    WidgetRegistry::remove(this);
+}
 
 void RetroFuturaGUI::IWidget::Connect_OnEnable(const typename Signal<>::Slot& slot, const bool async)
 {
@@ -268,6 +276,12 @@ const RetroFuturaGUI::IHierarchyNode* RetroFuturaGUI::IWidget::GetParent() const
 void RetroFuturaGUI::IWidget::SetName(std::string_view name)
 {
     _name = name;
+    WidgetRegistry::markChanged(); //this path changed, and with it those of everything inside
+}
+
+u32 RetroFuturaGUI::IWidget::GetPathHash() const
+{
+    return WidgetRegistry::getPathHash(*this);
 }
 
 RetroFuturaGUI::WidgetTypeID RetroFuturaGUI::IWidget::GetWidgetTypeID() const
@@ -495,6 +509,71 @@ void RetroFuturaGUI::IWidget::SetBorderGap(const glm::vec4& gap)
 const glm::vec4& RetroFuturaGUI::IWidget::GetBorderGap() const
 {
     return _borderGap;
+}
+
+RetroFuturaGUI::StyleKey RetroFuturaGUI::IWidget::styleKey()
+{
+    return StyleKey {};
+}
+
+void RetroFuturaGUI::IWidget::useFlavors(IWidgetDecoration* background, IWidgetDecoration* border, WidgetText* text)
+{
+    _styledBackground = background;
+    _styledBorder = border;
+    _styledText = text;
+
+    if(_styledBackground)
+        _styledBackground->setStyleSource(&_flavorHashes, StylePart::Background);
+
+    if(_styledBorder)
+        _styledBorder->setStyleSource(&_flavorHashes, StylePart::Border);
+
+    if(_styledText)
+        _styledText->setStyleSource(&_flavorHashes);
+}
+
+void RetroFuturaGUI::IWidget::AddFlavor(std::string_view name)
+{
+    if(HasFlavor(name))
+        return;
+
+    _flavorNames.emplace_back(name);
+    _flavorHashes.push_back(StylingManager::GetFlavorHash(name));
+    restyleParts();
+}
+
+void RetroFuturaGUI::IWidget::RemoveFlavor(std::string_view name)
+{
+    const auto found { std::ranges::find(_flavorHashes, StylingManager::GetFlavorHash(name)) };
+
+    if(_flavorHashes.end() == found)
+        return;
+
+    _flavorNames.erase(_flavorNames.begin() + (found - _flavorHashes.begin()));
+    _flavorHashes.erase(found);
+    restyleParts();
+}
+
+bool RetroFuturaGUI::IWidget::HasFlavor(std::string_view name) const
+{
+    return std::ranges::contains(_flavorHashes, StylingManager::GetFlavorHash(name));
+}
+
+const std::vector<std::string>& RetroFuturaGUI::IWidget::GetFlavors() const
+{
+    return _flavorNames;
+}
+
+void RetroFuturaGUI::IWidget::restyleParts()
+{
+    if(_styledBackground)
+        _styledBackground->restyle();
+
+    if(_styledBorder)
+        _styledBorder->restyle();
+
+    if(_styledText)
+        _styledText->setStyleSource(&_flavorHashes);
 }
 
 void RetroFuturaGUI::IWidget::useBorderGap(Background* background, Border* border)

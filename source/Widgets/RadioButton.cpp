@@ -20,6 +20,7 @@ RetroFuturaGUI::RadioButton::RadioButton(std::string_view name, Projection* proj
     _background.SetTransitionSettings(&_transitionSettings);
     _border.SetTransitionSettings(&_transitionSettings);
     useBorderGap(&_background, &_border);
+    useFlavors(&_background, &_border, nullptr);
     _parentGroup = parentGroup;
 }
 
