@@ -23,7 +23,8 @@ namespace RetroFuturaGUI
         Wave = 1 << 5,
         BackgroundImage = 1 << 6,
         Mask = 1 << 7,
-        Pixelate = 1 << 8
+        Pixelate = 1 << 8,
+        Crt = 1 << 9
     };
 
     class Shader

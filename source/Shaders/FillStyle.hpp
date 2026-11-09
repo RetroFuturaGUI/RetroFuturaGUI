@@ -17,6 +17,16 @@ namespace RetroFuturaGUI
         Grid
     };
 
+    /// @brief A CRT screen's look laid over what was drawn behind: its color channels pulled apart sideways and dark
+    ///        horizontal scanlines. Sizes are in pixels. With neither a displacement nor scanlines it is off
+    struct CrtEffect
+    {
+        f32 
+            _ChannelDisplacement { 0.0f },
+            _ScanlineWidth { 0.0f },
+            _ScanlineAlpha { 0.5f };
+    };
+
     /// @brief How an image or a mask is projected
     enum class ImageFit : u32
     {
@@ -82,10 +92,17 @@ namespace RetroFuturaGUI
         /// @brief Returns the pixelation's block width in pixels, 0 when it is off
         f32 GetPixelateBlockSize() const;
 
-        /// @brief Copies the part of the window the quad covers, a block wider all round, for the pixelation to show. Called
+        /// @brief Shows what was drawn behind, before this draws, as on a CRT screen. Red and blue pulled apart sideways by the
+        ///        displacement, and every other line of the scanline width darkened, counted from the top edge. Laid under the
+        ///        fill like the pixelation, and never pixelated: where both are on, it takes the pixelation's place
+        void SetCrtEffect(const CrtEffect& crtEffect);
+
+        const CrtEffect& GetCrtEffect() const;
+
+        /// @brief Copies the part of the window the quad covers, a block and the CRT displacement wider all round, for the pixelation to show. Called
         ///        right before the draw, so the copy holds everything drawn behind until then. Does nothing while it is off
         /// @param placement The quad's placement into clip space: projection, frame, position, rotation and scaling
-        void capturePixelateBackdrop(const glm::mat4& placement);
+        void captureWindowBehind(const glm::mat4& placement);
 
         /// @brief Sets an image of its own, laid over what is drawn as SetBackgroundImageFit says and inset by
         ///        SetBackgroundImagePadding. It sits behind the fill, whose alpha decides how much of it shows: a fill alpha of 0
@@ -189,14 +206,14 @@ namespace RetroFuturaGUI
 
     //Transition, with settings only: the fill moves from _fromColors to _targetColors, a copy of the colors last given
         GlassNoise _glassNoise {};
-
-    //Pixelate (ShaderFeatures::Pixelate): a copy of the window behind, made right before each draw
+    //Pixelate and CRT (ShaderFeatures::Pixelate, Crt): a copy of the window behind, made right before each draw, serves both
         f32 _pixelateBlockSize { 0.0f };
-        u32 _pixelateTextureID { 0 };
-        glm::ivec2 _pixelateTextureSize { 0 }; //grown when a larger copy is needed, never shrunk
-        glm::vec4 _pixelateRegion { 0.0f }; //where the copy came from in the window: x, y, width, height
-        glm::vec2 _pixelateViewportSize { 1.0f };
-        glm::mat4 _pixelatePlacement { 1.0f };
+        CrtEffect _crtEffect {};
+        u32 _windowBehindTextureID { 0 };
+        glm::ivec2 _windowBehindTextureSize { 0 }; //grown when a larger copy is needed, never shrunk
+        glm::vec4 _windowBehindRegion { 0.0f }; //where the copy came from in the window: x, y, width, height
+        glm::vec2 _windowBehindViewportSize { 1.0f };
+        glm::mat4 _windowBehindPlacement { 1.0f };
 
         const TransitionSettings* _transitionSettings { nullptr };
         std::vector<glm::vec4>
@@ -219,6 +236,6 @@ namespace RetroFuturaGUI
         void uploadMask(Shader& shader, const glm::vec2& size) const;
         void uploadDotUniforms(Shader& shader) const;
         void uploadSecondaryRasterColor(Shader& shader) const;
-        void uploadPixelate(Shader& shader) const;
+        void uploadWindowBehind(Shader& shader) const;
     };
 }

@@ -250,3 +250,8 @@ void RetroFuturaGUI::Graph::SetPixelateBlockSize(const f32 blockSize)
 {
     _wavePlane.SetPixelateBlockSize(blockSize);
 }
+
+void RetroFuturaGUI::Graph::SetCrtEffect(const CrtEffect& crtEffect)
+{
+    _wavePlane.SetCrtEffect(crtEffect);
+}

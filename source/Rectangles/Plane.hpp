@@ -46,6 +46,8 @@ namespace RetroFuturaGUI
         using IRectangle::SetGlassNoise;
         using IRectangle::SetPixelateBlockSize;
         using IRectangle::GetPixelateBlockSize;
+        using IRectangle::SetCrtEffect;
+        using IRectangle::GetCrtEffect;
         using IRectangle::SetRasterPattern;
         using IRectangle::SetPrimaryRasterColor;
         using IRectangle::SetSecondaryRasterColor;

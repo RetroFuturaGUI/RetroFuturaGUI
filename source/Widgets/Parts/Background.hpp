@@ -103,6 +103,10 @@ namespace RetroFuturaGUI
         ///        The fill's alpha decides how much of it shows. It takes the glass's place where both are on. 0 turns it off
         void SetPixelateBlockSize(const f32 blockSize);
 
+        /// @brief Shows what was drawn behind, before this draws, as on a CRT screen. Red and blue pulled apart sideways and
+        ///        dark horizontal scanlines, under the fill. Never pixelated: where both are on, it takes the pixelation's place
+        void SetCrtEffect(const CrtEffect& crtEffect);
+
         /// @brief Sets which pattern the background's raster draws. Dotted (the default), Checkered, Striped or Grid.
         void SetRasterPattern(const RasterPattern rasterPattern);
 

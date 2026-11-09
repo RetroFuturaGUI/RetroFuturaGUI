@@ -582,3 +582,11 @@ void RetroFuturaGUI::Background::SetPixelateBlockSize(const f32 blockSize)
 
     _backgroundPlane->SetPixelateBlockSize(blockSize);
 }
+
+void RetroFuturaGUI::Background::SetCrtEffect(const CrtEffect& crtEffect)
+{
+    if(!_backgroundPlane)
+        return;
+
+    _backgroundPlane->SetCrtEffect(crtEffect);
+}

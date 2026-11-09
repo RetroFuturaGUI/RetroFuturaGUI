@@ -9,6 +9,7 @@
 #define BACKGROUND_IMAGE 64
 #define MASK 128
 #define PIXELATE 256
+#define CRT 512
 
 uniform vec2 uScale;
 uniform int uDIP;

@@ -228,8 +228,8 @@ void RetroFuturaGUI::FillStyle::uploadFill(Shader& shader, const u32 extraFeatur
     if(_shaderFeatureDIP & ShaderFeatures::Raster)
         uploadRaster(shader);
 
-    if(_shaderFeatureDIP & ShaderFeatures::Pixelate)
-        uploadPixelate(shader);
+    if(_shaderFeatureDIP & (ShaderFeatures::Pixelate | ShaderFeatures::Crt))
+        uploadWindowBehind(shader);
 
     if(_shaderFeatureDIP & ShaderFeatures::GlassEffect)
     {
@@ -367,7 +367,7 @@ void RetroFuturaGUI::FillStyle::SetGlassNoise(const GlassNoise& noise)
 
 RetroFuturaGUI::FillStyle::~FillStyle()
 {
-    glDeleteTextures(1, &_pixelateTextureID); //0 is ignored.
+    glDeleteTextures(1, &_windowBehindTextureID); //0 is ignored
 }
 
 void RetroFuturaGUI::FillStyle::SetPixelateBlockSize(const f32 blockSize)
@@ -385,15 +385,30 @@ f32 RetroFuturaGUI::FillStyle::GetPixelateBlockSize() const
     return _pixelateBlockSize;
 }
 
-void RetroFuturaGUI::FillStyle::capturePixelateBackdrop(const glm::mat4& placement)
+void RetroFuturaGUI::FillStyle::SetCrtEffect(const CrtEffect& crtEffect)
 {
-    if(0 == (_shaderFeatureDIP & ShaderFeatures::Pixelate))
+    _crtEffect = crtEffect;
+
+    if(0.0f != _crtEffect._ChannelDisplacement || 0.0f < _crtEffect._ScanlineWidth)
+        _shaderFeatureDIP |= ShaderFeatures::Crt;
+    else
+        _shaderFeatureDIP &= ~ShaderFeatures::Crt;
+}
+
+const RetroFuturaGUI::CrtEffect& RetroFuturaGUI::FillStyle::GetCrtEffect() const
+{
+    return _crtEffect;
+}
+
+void RetroFuturaGUI::FillStyle::captureWindowBehind(const glm::mat4& placement)
+{
+    if(0 == (_shaderFeatureDIP & (ShaderFeatures::Pixelate | ShaderFeatures::Crt)))
         return;
 
     GLint viewport[4] { 0, 0, 1, 1 };
     glGetIntegerv(GL_VIEWPORT, viewport);
-    _pixelateViewportSize = glm::vec2(static_cast<f32>(viewport[2]), static_cast<f32>(viewport[3]));
-    _pixelatePlacement = placement;
+    _windowBehindViewportSize = glm::vec2(static_cast<f32>(viewport[2]), static_cast<f32>(viewport[3]));
+    _windowBehindPlacement = placement;
 
     //The quad's corners in the window. A corner behind the eye leaves the box unknown, so the whole window is copied
     glm::vec2
@@ -411,7 +426,7 @@ void RetroFuturaGUI::FillStyle::capturePixelateBackdrop(const glm::mat4& placeme
             break;
         }
 
-        const glm::vec2 windowPosition { (glm::vec2(clipPosition) / clipPosition.w * 0.5f + 0.5f) * _pixelateViewportSize };
+        const glm::vec2 windowPosition { (glm::vec2(clipPosition) / clipPosition.w * 0.5f + 0.5f) * _windowBehindViewportSize };
         lowest = glm::min(lowest, windowPosition);
         highest = glm::max(highest, windowPosition);
     }
@@ -419,15 +434,16 @@ void RetroFuturaGUI::FillStyle::capturePixelateBackdrop(const glm::mat4& placeme
     if(isBehindEye)
     {
         lowest = glm::vec2(0.0f);
-        highest = _pixelateViewportSize;
+        highest = _windowBehindViewportSize;
     }
 
-    //A block wider all round, so an edge block finds the pixel behind its middle even where the plane stops short of it
+    //A block and the displacement wider all round, so an edge block or a pulled channel finds what lies behind it
+    const f32 margin { _pixelateBlockSize + std::abs(_crtEffect._ChannelDisplacement) + 1.0f };
     const glm::ivec2
-        regionStart { glm::clamp(glm::ivec2(glm::floor(lowest - _pixelateBlockSize)), glm::ivec2(0), glm::ivec2(viewport[2], viewport[3])) },
-        regionEnd { glm::clamp(glm::ivec2(glm::ceil(highest + _pixelateBlockSize)), glm::ivec2(0), glm::ivec2(viewport[2], viewport[3])) },
+        regionStart { glm::clamp(glm::ivec2(glm::floor(lowest - margin)), glm::ivec2(0), glm::ivec2(viewport[2], viewport[3])) },
+        regionEnd { glm::clamp(glm::ivec2(glm::ceil(highest + margin)), glm::ivec2(0), glm::ivec2(viewport[2], viewport[3])) },
         regionSize { regionEnd - regionStart };
-    _pixelateRegion = glm::vec4(glm::vec2(regionStart), glm::vec2(regionSize));
+    _windowBehindRegion = glm::vec4(glm::vec2(regionStart), glm::vec2(regionSize));
 
     if(0 >= regionSize.x || 0 >= regionSize.y)
         return;
@@ -435,15 +451,15 @@ void RetroFuturaGUI::FillStyle::capturePixelateBackdrop(const glm::mat4& placeme
     //Unit 4, apart from the glyphs, the image, the glass and the mask.
     glActiveTexture(GL_TEXTURE4);
 
-    if(0 == _pixelateTextureID)
-        glGenTextures(1, &_pixelateTextureID);
+    if(0 == _windowBehindTextureID)
+        glGenTextures(1, &_windowBehindTextureID);
 
-    glBindTexture(GL_TEXTURE_2D, _pixelateTextureID);
+    glBindTexture(GL_TEXTURE_2D, _windowBehindTextureID);
 
-    if(regionSize.x > _pixelateTextureSize.x || regionSize.y > _pixelateTextureSize.y)
+    if(regionSize.x > _windowBehindTextureSize.x || regionSize.y > _windowBehindTextureSize.y)
     {
-        _pixelateTextureSize = glm::max(_pixelateTextureSize, regionSize);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, _pixelateTextureSize.x, _pixelateTextureSize.y, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
+        _windowBehindTextureSize = glm::max(_windowBehindTextureSize, regionSize);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, _windowBehindTextureSize.x, _windowBehindTextureSize.y, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST); //each block shows one pixel, unblended
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
@@ -454,15 +470,18 @@ void RetroFuturaGUI::FillStyle::capturePixelateBackdrop(const glm::mat4& placeme
     glActiveTexture(GL_TEXTURE0);
 }
 
-void RetroFuturaGUI::FillStyle::uploadPixelate(Shader& shader) const
+void RetroFuturaGUI::FillStyle::uploadWindowBehind(Shader& shader) const
 {
-    shader.SetUniformInt("uPixelateTexture", 4);
+    shader.SetUniformInt("uWindowBehindTexture", 4);
     glActiveTexture(GL_TEXTURE4);
-    glBindTexture(GL_TEXTURE_2D, _pixelateTextureID);
+    glBindTexture(GL_TEXTURE_2D, _windowBehindTextureID);
     glActiveTexture(GL_TEXTURE0);
-    shader.SetUniformVec4("uPixelateRegion", _pixelateRegion);
-    shader.SetUniformVec2("uPixelateTextureSize", glm::vec2(_pixelateTextureSize));
+    shader.SetUniformVec4("uWindowBehindRegion", _windowBehindRegion);
+    shader.SetUniformVec2("uWindowBehindTextureSize", glm::vec2(_windowBehindTextureSize));
     shader.SetUniformFloat("uPixelateBlockSize", _pixelateBlockSize);
-    shader.SetUniformMat4("uPixelatePlacement", _pixelatePlacement);
-    shader.SetUniformVec2("uPixelateViewportSize", _pixelateViewportSize);
+    shader.SetUniformFloat("uCrtChannelDisplacement", _crtEffect._ChannelDisplacement);
+    shader.SetUniformFloat("uCrtScanlineWidth", _crtEffect._ScanlineWidth);
+    shader.SetUniformFloat("uCrtScanlineAlpha", _crtEffect._ScanlineAlpha);
+    shader.SetUniformMat4("uWindowBehindPlacement", _windowBehindPlacement);
+    shader.SetUniformVec2("uWindowBehindViewportSize", _windowBehindViewportSize);
 }
