@@ -22,7 +22,8 @@ namespace RetroFuturaGUI
         FogEffect = 1 << 4,
         Wave = 1 << 5,
         BackgroundImage = 1 << 6,
-        Mask = 1 << 7
+        Mask = 1 << 7,
+        Pixelate = 1 << 8
     };
 
     class Shader

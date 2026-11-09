@@ -99,6 +99,10 @@ namespace RetroFuturaGUI
         /// @brief Sets the noise the glass is made of. How big its cells are, how far it shifts the window behind, its smoothing and seed
         void SetGlassNoise(const GlassNoise& noise);
 
+        /// @brief Pixelates what was drawn behind, before this draws, in square blocks this many pixels wide, under the fill.
+        ///        The fill's alpha decides how much of it shows. It takes the glass's place where both are on. 0 turns it off
+        void SetPixelateBlockSize(const f32 blockSize);
+
         /// @brief Sets which pattern the background's raster draws. Dotted (the default), Checkered, Striped or Grid.
         void SetRasterPattern(const RasterPattern rasterPattern);
 

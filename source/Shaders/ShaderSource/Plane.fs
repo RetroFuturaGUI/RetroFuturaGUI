@@ -8,16 +8,21 @@ uniform float uOpacity = 1.0; //Shader::OpacityScope's product, uploaded with ev
 #include "Modules/Glass.glsl"
 #include "Modules/Image.glsl"
 #include "Modules/Mask.glsl"
+#include "Modules/Pixelate.glsl"
 
 #ifdef WAVE_PLANE
 #include "Modules/Wave.glsl"
 #endif
 
-// Lays a fill color over what shows through it, nearest first: the plane's image, then the window behind the glass
+// Lays a fill color over what shows through it, nearest first: the plane's image, then the window behind, pixelated or
+// through the glass. Pixelation shows what was really drawn behind, so it takes the glass's place where both are on.
 vec4 overBackground(vec4 color)
 {
     if((uDIP & BACKGROUND_IMAGE) != 0)
         color = applyImage(color);
+
+    if((uDIP & PIXELATE) != 0)
+        return applyPixelate(color);
 
     if((uDIP & GLASS_EFFECT) != 0)
         color = applyGlass(color, glassUV());

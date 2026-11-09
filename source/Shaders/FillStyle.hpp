@@ -42,7 +42,7 @@ namespace RetroFuturaGUI
 
     protected:
         FillStyle() = default;
-        ~FillStyle() = default;
+        ~FillStyle();
 
         /// @brief Sets the colors of the fill
         void SetColors(std::span<const glm::vec4> colors);
@@ -73,6 +73,19 @@ namespace RetroFuturaGUI
 
         /// @brief Sets the noise the glass is made of. How big its cells are, how far it shifts the window behind, its smoothing and seed
         void SetGlassNoise(const GlassNoise& noise);
+
+        /// @brief Pixelates what was drawn behind, before this draws, in square blocks this many pixels wide on its own grid, so
+        ///        they tilt with it. Laid under the fill like the glass: the fill's alpha decides how much of it shows, so a
+        ///        transparent fill shows the pixelation alone. It takes the glass's place where both are on. 0 turns it off
+        void SetPixelateBlockSize(const f32 blockSize);
+
+        /// @brief Returns the pixelation's block width in pixels, 0 when it is off
+        f32 GetPixelateBlockSize() const;
+
+        /// @brief Copies the part of the window the quad covers, a block wider all round, for the pixelation to show. Called
+        ///        right before the draw, so the copy holds everything drawn behind until then. Does nothing while it is off
+        /// @param placement The quad's placement into clip space: projection, frame, position, rotation and scaling
+        void capturePixelateBackdrop(const glm::mat4& placement);
 
         /// @brief Sets an image of its own, laid over what is drawn as SetBackgroundImageFit says and inset by
         ///        SetBackgroundImagePadding. It sits behind the fill, whose alpha decides how much of it shows: a fill alpha of 0
@@ -177,6 +190,14 @@ namespace RetroFuturaGUI
     //Transition, with settings only: the fill moves from _fromColors to _targetColors, a copy of the colors last given
         GlassNoise _glassNoise {};
 
+    //Pixelate (ShaderFeatures::Pixelate): a copy of the window behind, made right before each draw
+        f32 _pixelateBlockSize { 0.0f };
+        u32 _pixelateTextureID { 0 };
+        glm::ivec2 _pixelateTextureSize { 0 }; //grown when a larger copy is needed, never shrunk
+        glm::vec4 _pixelateRegion { 0.0f }; //where the copy came from in the window: x, y, width, height
+        glm::vec2 _pixelateViewportSize { 1.0f };
+        glm::mat4 _pixelatePlacement { 1.0f };
+
         const TransitionSettings* _transitionSettings { nullptr };
         std::vector<glm::vec4>
             _targetColors {},
@@ -198,5 +219,6 @@ namespace RetroFuturaGUI
         void uploadMask(Shader& shader, const glm::vec2& size) const;
         void uploadDotUniforms(Shader& shader) const;
         void uploadSecondaryRasterColor(Shader& shader) const;
+        void uploadPixelate(Shader& shader) const;
     };
 }

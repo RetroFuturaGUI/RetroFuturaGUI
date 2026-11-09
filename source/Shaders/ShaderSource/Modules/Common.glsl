@@ -8,6 +8,7 @@
 #define WAVE 32
 #define BACKGROUND_IMAGE 64
 #define MASK 128
+#define PIXELATE 256
 
 uniform vec2 uScale;
 uniform int uDIP;

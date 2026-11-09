@@ -29,6 +29,8 @@ void RetroFuturaGUI::Plane::SetBackgroundGaps(const BackgroundGap& gaps)
 
 void RetroFuturaGUI::Plane::uploadPlane(Shader& shader)
 {
+    //What was drawn behind until now, before this draws over it
+    capturePixelateBackdrop(_projection.GetProjectionMatrix() * Shader::GetDrawFrame() * _translationMatrix * _rotationMatrix * _scalingMatrix);
     shader.UseProgram();
     uploadTransform(shader);
     uploadFill(shader, getFogFeatures());

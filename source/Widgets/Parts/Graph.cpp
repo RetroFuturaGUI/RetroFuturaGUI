@@ -245,3 +245,8 @@ void RetroFuturaGUI::Graph::SetFogNoise(const FogNoise& noise)
 {
     _wavePlane.SetFogNoise(noise);
 }
+
+void RetroFuturaGUI::Graph::SetPixelateBlockSize(const f32 blockSize)
+{
+    _wavePlane.SetPixelateBlockSize(blockSize);
+}

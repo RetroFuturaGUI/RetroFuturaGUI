@@ -574,3 +574,11 @@ void RetroFuturaGUI::Background::SetFogNoise(const FogNoise& noise)
 
     _backgroundPlane->SetFogNoise(noise);
 }
+
+void RetroFuturaGUI::Background::SetPixelateBlockSize(const f32 blockSize)
+{
+    if(!_backgroundPlane)
+        return;
+
+    _backgroundPlane->SetPixelateBlockSize(blockSize);
+}
