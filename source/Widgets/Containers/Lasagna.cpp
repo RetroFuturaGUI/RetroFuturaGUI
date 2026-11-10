@@ -18,60 +18,7 @@ RetroFuturaGUI::Lasagna::Lasagna(std::string_view name, Projection* projection, 
     if(_axisDefinition._LayerDefinition.size() > _maxCountPerAxis)
         _axisDefinition._LayerDefinition.resize(_maxCountPerAxis);
 
-    _lasagna.resize(_axisDefinition._RowDefinition.size());
-
-    for(std::vector<std::vector<LasagnaCell>>& _row : _lasagna)
-    {
-        _row.resize(_axisDefinition._ColumnDefinition.size());
-
-        for(std::vector<LasagnaCell>& _column : _row)
-            _column.reserve(_axisDefinition._LayerDefinition.size());
-    }
-
-    for(uSize row = 0; row < _axisDefinition._RowDefinition.size(); ++row)
-    {
-        for(uSize column = 0; column < _axisDefinition._ColumnDefinition.size(); ++column)
-        {
-            for(uSize layer = 0; layer < _axisDefinition._LayerDefinition.size(); ++layer)
-            {
-                f32
-                    posX { 0.0f },
-                    posY { 0.0f },
-                    posZ { 0.0f };
-
-                for(uSize i = 0; i < column; ++i)
-                    posX += _axisDefinition._ColumnDefinition[i];
-
-                for(uSize i = 0; i < row; ++i)
-                    posY += _axisDefinition._RowDefinition[i];
-
-                for(uSize i = 0; i < layer; ++i)
-                    posZ += _axisDefinition._LayerDefinition[i];
-
-                posZ = -posZ; // Higher layer indices sit further from the camera (behind lower layers),
-
-                _lasagna[row][column].push_back(LasagnaCell
-                    {
-                        ._PositionPixels = glm::vec3(_projection.GetResolution().x * posX, _projection.GetResolution().y * posY, _projection.GetDepth() * posZ),
-                        ._PositionNormalized = glm::vec3(posX, posY, posZ),
-                        ._SizePixels = glm::vec3(_projection.GetResolution().x * _axisDefinition._ColumnDefinition[column],
-                                                 _projection.GetResolution().y * _axisDefinition._RowDefinition[row],
-                                                 _projection.GetDepth() * _axisDefinition._LayerDefinition[layer]
-                                                ),
-                        ._SizeNormalized = glm::vec3(_axisDefinition._ColumnDefinition[column], _axisDefinition._RowDefinition[row], _axisDefinition._LayerDefinition[layer]),
-                        ._PaddingPixels = glm::vec3(0.0f),
-                        ._PaddingNormalized = glm::vec3(0.0f),
-                        ._RowSpan = 1,
-                        ._ColSpan = 1,
-                        ._LayerSpan = 1,
-                        ._Widget = nullptr,
-                        ._SizingMode = SizingMode::FILL,
-                        ._SpanOccupied = false
-                    }
-                );
-            }
-        }
-    }
+    buildCells();
 
     _debugBorder = std::make_unique<Frame>(&_projection);
 
@@ -262,6 +209,7 @@ void RetroFuturaGUI::Lasagna::Draw()
 void RetroFuturaGUI::Lasagna::interact()
 {
     _removedWidgets.clear(); //no slot of theirs runs between frames
+    _retiredCells.clear(); //nor a loop over them
 
     for(auto& row : _lasagna)
     {
@@ -309,58 +257,115 @@ void RetroFuturaGUI::Lasagna::applySize(const glm::vec3& size)
     moveWidgets();
 }
 
-void RetroFuturaGUI::Lasagna::SetColumnDefinition(std::vector<f32> columnDefinition)
+
+std::vector<std::string> RetroFuturaGUI::Lasagna::SetAxisDefinition(const AxisDefinition& axisDefinition)
 {
-    if(columnDefinition.size() != _axisDefinition._ColumnDefinition.size())
-        return;
+    if(!axisDefinition.IsValid())
+    {
+        std::println("ERROR::LASAGNA::INVALID_AXIS_DEFINITION::{}", _name);
+        return {};
+    }
 
-    for(const f32 width : columnDefinition)
-        if(0.0f >= width)
-            return;
+    if(axisDefinition._RowDefinition == _axisDefinition._RowDefinition
+    && axisDefinition._ColumnDefinition == _axisDefinition._ColumnDefinition
+    && axisDefinition._LayerDefinition == _axisDefinition._LayerDefinition)
+        return {};
 
-    if(columnDefinition == _axisDefinition._ColumnDefinition)
-        return;
+    const bool keepsTrackCounts
+    {
+        axisDefinition._RowDefinition.size() == _axisDefinition._RowDefinition.size()
+        && axisDefinition._ColumnDefinition.size() == _axisDefinition._ColumnDefinition.size()
+        && axisDefinition._LayerDefinition.size() == _axisDefinition._LayerDefinition.size()
+    };
+    _axisDefinition = axisDefinition;
 
-    _axisDefinition._ColumnDefinition = std::move(columnDefinition);
-    resizeCells();
-    resizeAllWidgets();
-    moveWidgets();
+    if(keepsTrackCounts) //only the sizes change, so the cells stay
+    {
+        resizeCells();
+        resizeAllWidgets();
+        moveWidgets();
+        return {};
+    }
+
+    //New cells for the new tracks. The old ones stay until the next Interact, since a loop over them may be what called this
+    _retiredCells.push_back(std::exchange(_lasagna, {}));
+    buildCells();
+    CellArray& previousCells { _retiredCells.back() };
+    std::vector<std::string> removedNames {};
+
+    for(uSize row = 0; row < previousCells.size(); ++row)
+        for(uSize column = 0; column < previousCells[row].size(); ++column)
+            for(uSize layer = 0; layer < previousCells[row][column].size(); ++layer)
+            {
+                LasagnaCell& cell { previousCells[row][column][layer] };
+
+                if(!cell._Widget)
+                    continue;
+
+                const CellPlacement placement
+                {
+                    ._Row = static_cast<u32>(row),
+                    ._Column = static_cast<u32>(column),
+                    ._Layer = static_cast<u32>(layer),
+                    ._SizingMode = cell._SizingMode,
+                    ._RowSpan = cell._RowSpan,
+                    ._ColSpan = cell._ColSpan,
+                    ._LayerSpan = cell._LayerSpan
+                };
+
+                if(!isPlacementFree(placement)) //its cell or span reaches past the new last track
+                {
+                    removedNames.emplace_back(cell._Widget->GetName());
+                    _removedWidgets.push_back(std::move(cell._Widget)); //kept alive until the next Interact, as RemoveWidget does
+                    continue;
+                }
+
+                placeWidget(std::move(cell._Widget), placement);
+                _lasagna[row][column][layer]._Show = cell._Show;
+            }
+
+    return removedNames;
 }
 
-void RetroFuturaGUI::Lasagna::SetRowDefinition(std::vector<f32> rowDefinition)
+const RetroFuturaGUI::AxisDefinition& RetroFuturaGUI::Lasagna::GetAxisDefinition() const
 {
-    if(rowDefinition.size() != _axisDefinition._RowDefinition.size())
-        return;
-
-    for(const f32 height : rowDefinition)
-        if(0.0f >= height)
-            return;
-
-    if(rowDefinition == _axisDefinition._RowDefinition)
-        return;
-
-    _axisDefinition._RowDefinition = std::move(rowDefinition);
-    resizeCells();
-    resizeAllWidgets();
-    moveWidgets();
+    return _axisDefinition;
 }
 
-void RetroFuturaGUI::Lasagna::SetLayerDefinition(std::vector<f32> layerDefinition)
+std::vector<std::string> RetroFuturaGUI::Lasagna::SetColumnDefinition(std::vector<f32> columnDefinition)
 {
-    if(layerDefinition.size() != _axisDefinition._LayerDefinition.size())
-        return;
+    AxisDefinition axisDefinition { _axisDefinition };
+    axisDefinition._ColumnDefinition = std::move(columnDefinition);
+    return SetAxisDefinition(axisDefinition);
+}
 
-    for(const f32 depth : layerDefinition)
-        if(0.0f >= depth)
-            return;
+std::vector<std::string> RetroFuturaGUI::Lasagna::SetRowDefinition(std::vector<f32> rowDefinition)
+{
+    AxisDefinition axisDefinition { _axisDefinition };
+    axisDefinition._RowDefinition = std::move(rowDefinition);
+    return SetAxisDefinition(axisDefinition);
+}
 
-    if(layerDefinition == _axisDefinition._LayerDefinition)
-        return;
+std::vector<std::string> RetroFuturaGUI::Lasagna::SetLayerDefinition(std::vector<f32> layerDefinition)
+{
+    AxisDefinition axisDefinition { _axisDefinition };
+    axisDefinition._LayerDefinition = std::move(layerDefinition);
+    return SetAxisDefinition(axisDefinition);
+}
 
-    _axisDefinition._LayerDefinition = std::move(layerDefinition);
+void RetroFuturaGUI::Lasagna::buildCells()
+{
+    _lasagna.resize(_axisDefinition._RowDefinition.size());
+
+    for(std::vector<std::vector<LasagnaCell>>& row : _lasagna)
+    {
+        row.resize(_axisDefinition._ColumnDefinition.size());
+
+        for(std::vector<LasagnaCell>& column : row)
+            column.resize(_axisDefinition._LayerDefinition.size());
+    }
+
     resizeCells();
-    resizeAllWidgets();
-    moveWidgets();
 }
 
 void RetroFuturaGUI::Lasagna::applyPosition(const glm::vec3& position)

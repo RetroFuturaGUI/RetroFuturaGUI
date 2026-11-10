@@ -144,7 +144,10 @@ void RetroFuturaGUI::ExtendedComboBox::placeItemWidget(IWidget* item, const glm:
             const f32
                 imageWidth { std::min(parentHeight, parentWidth * 0.4f) },
                 imageFraction { 0.0f < parentWidth ? imageWidth / parentWidth : 0.0f };
-            prefab->SetColumnDefinition({ imageFraction, 0.6f, 0.4f - imageFraction });
+
+            //A ContextMenu row. Image, text and note. Another prefab keeps its own columns, since a different count would rebuild it
+            if(3 == prefab->GetAxisDefinition()._ColumnDefinition.size() && 0.0f < imageFraction && 0.4f > imageFraction)
+                prefab->SetColumnDefinition({ imageFraction, 0.6f, 0.4f - imageFraction });
             prefab->SetPosition(center);
         } break;
         case WidgetTypeID::ComboBox:

@@ -72,20 +72,44 @@ void RetroFuturaGUI::Prefab::applyPosition(const glm::vec3& position)
     _lasagna->SetPosition(position);
 }
 
-void RetroFuturaGUI::Prefab::SetColumnDefinition(std::vector<f32> columnDefinition)
+std::vector<std::string> RetroFuturaGUI::Prefab::SetAxisDefinition(const AxisDefinition& axisDefinition)
 {
     if(!_lasagna)
-        return;
+        return {};
 
-    _lasagna->SetColumnDefinition(std::move(columnDefinition));
+    return _lasagna->SetAxisDefinition(axisDefinition);
 }
 
-void RetroFuturaGUI::Prefab::SetRowDefinition(std::vector<f32> rowDefinition)
+const RetroFuturaGUI::AxisDefinition& RetroFuturaGUI::Prefab::GetAxisDefinition() const
 {
     if(!_lasagna)
-        return;
+        return SingleCellAxis;
 
-    _lasagna->SetRowDefinition(std::move(rowDefinition));
+    return _lasagna->GetAxisDefinition();
+}
+
+std::vector<std::string> RetroFuturaGUI::Prefab::SetColumnDefinition(std::vector<f32> columnDefinition)
+{
+    if(!_lasagna)
+        return {};
+
+    return _lasagna->SetColumnDefinition(std::move(columnDefinition));
+}
+
+std::vector<std::string> RetroFuturaGUI::Prefab::SetRowDefinition(std::vector<f32> rowDefinition)
+{
+    if(!_lasagna)
+        return {};
+
+    return _lasagna->SetRowDefinition(std::move(rowDefinition));
+}
+
+std::vector<std::string> RetroFuturaGUI::Prefab::SetLayerDefinition(std::vector<f32> layerDefinition)
+{
+    if(!_lasagna)
+        return {};
+
+    return _lasagna->SetLayerDefinition(std::move(layerDefinition));
 }
 
 void RetroFuturaGUI::Prefab::ShowChildWidget(std::string_view name, const bool show)

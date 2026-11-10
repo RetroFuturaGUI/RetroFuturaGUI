@@ -31,8 +31,6 @@ The framework is designed for cross-platform use, and its logic can be compiled 
 |    | Environment Lights, Node | | |
 
 ### WIP in detail
-- Prefab
-  - The Lasagna is fixed at construction; a prefab keeps whatever AxisDefinition it was built with
 - Scene
   - Shared, cross-window scenes. SceneLoader::CreateScene hands back a std::unique_ptr, so a scene is one instance belonging to one window, and "the same scene in two windows" means instantiating the same description twice. Returning a shared scene is planned and needs three things: windows created with a shared GL context (done: every window shares textures, buffers and shaders with the first one created), per-context VAOs over shared buffers (done: the spec never shares VAOs or framebuffers, so VertexArray and Framebuffer keep one for each context that draws the object), and splitting shared state from per-window view. Consequence until then: a 3D Model changed in one window does not propagate to another - they are separate objects with separate transform matrices. For 2D widgets sharing is incoherent anyway, because Window::UpdateLayout writes screen-space positions into the widgets and two differently sized windows need different values in the same fields; for 3D content it is coherent, and the shape it wants is one world with a camera per window, which belongs to the planned Environment container rather than to Scene
   - Widgets are owned by the generated _p struct, not by the Scene, and the Scene owns only its root container. Closing a scene therefore has to tear down its owner's entry too - SceneLoader registers scenes and borrows a pointer, but whoever holds the unique_ptr owns the lifetime, so CloseScene needs a release hook to make closing actually complete rather than just unregistering
@@ -168,8 +166,8 @@ The framework is designed for cross-platform use, and its logic can be compiled 
   - Tooltip and ContextMenu: every widget can have a tooltip (SetTooltipText) and a context menu of items and submenus (AddContextMenuItem, AddContextMenuNode); a click on an item closes the menu and reports its index path from the root list down (Connect_OnItemClicked, GetClickedPath), a submenu's row only opens its list
 - Containers
   - Every container builds and owns its widgets (AddWidget&lt;T&gt;(name, placement, arguments)), finds them by name (GetWidget&lt;T&gt;) and removes them safely, even from their own slots (RemoveWidget)
-  - Lasagna (three-dimensional successor of Grid): lays widgets out in rows, columns and layers, with spans and sizing policies
-  - Prefab: a group of widgets in its own Lasagna, treated as one widget
+  - Lasagna (three-dimensional successor of Grid): lays widgets out in rows, columns and layers, with spans and sizing policies. SetAxisDefinition (or one axis at a time) changes the tracks, their number included, keeping each widget in its cell and span; a widget reaching past the new last track is removed, and its name returned
+  - Prefab: a group of widgets in its own Lasagna, treated as one widget; its rows, columns and layers can be changed after construction, as a Lasagna's
   - Environment: a 3D room in which widgets and models sit freely, scaled into its rectangle, optionally clipped, with its own perspective if wanted
   - ScrollView: scrolls its widgets by dragging, the mouse wheel, touchpad swipes and pinch, along X, Y or into the depth (Z); nested ScrollViews each take what they can scroll
   - MenuBar: a bar of flexible cells holding widgets; a cell can move or undock the window

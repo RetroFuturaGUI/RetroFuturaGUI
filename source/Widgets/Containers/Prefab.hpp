@@ -23,9 +23,26 @@ namespace RetroFuturaGUI
         auto operator =(const Prefab&) = delete;
         auto operator =(Prefab&&) = delete;
         void Draw() override;
-        void SetColumnDefinition(std::vector<f32> columnDefinition);
-        void SetRowDefinition(std::vector<f32> rowDefinition);
-        void SetLayerDefinition(std::vector<f32> rowDefinition);
+        /// @brief Replaces the rows, columns and layers of the prefab's Lasagna, keeping every child in its cell and span. A child
+        ///        reaching past the new last track is removed, destroyed at the start of the next Interact. An invalid definition
+        ///        changes nothing
+        /// @return The names of the children removed
+        std::vector<std::string> SetAxisDefinition(const AxisDefinition& axisDefinition);
+
+        /// @brief Returns the rows, columns and layers of the prefab's Lasagna
+        const AxisDefinition& GetAxisDefinition() const;
+
+        /// @brief Replaces the column tracks, as SetAxisDefinition does with the rows and layers kept
+        /// @return The names of the children removed.
+        std::vector<std::string> SetColumnDefinition(std::vector<f32> columnDefinition);
+
+        /// @brief Replaces the row tracks, as SetAxisDefinition does with the columns and layers kept
+        /// @return The names of the children removed.
+        std::vector<std::string> SetRowDefinition(std::vector<f32> rowDefinition);
+
+        /// @brief Replaces the layer tracks, as SetAxisDefinition does with the rows and columns kept
+        /// @return The names of the children removed
+        std::vector<std::string> SetLayerDefinition(std::vector<f32> layerDefinition);
 
         void ShowChildWidget(std::string_view name, const bool show);
         bool IsChildWidgetShown(std::string_view name) const;

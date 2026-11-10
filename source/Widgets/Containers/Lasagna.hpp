@@ -157,14 +157,25 @@ namespace RetroFuturaGUI
         /// @brief Sets whether the cell debug borders
         void ShowDebugLines(const bool show);
 
-        /// @brief Replaces the column track widths and relays out the attached widgets.
-        void SetColumnDefinition(std::vector<f32> columnDefinition);
+        /// @brief Replaces the rows, columns and layers, and lays every widget out again in the cell and span it had. Tracks may be
+        ///        added or taken away. A widget whose cell or span reaches past the new last track is removed, and destroyed at
+        ///        the start of the next Interact, as by RemoveWidget. An invalid definition (AxisDefinition::IsValid) changes nothing
+        /// @return The names of the widgets removed
+        std::vector<std::string> SetAxisDefinition(const AxisDefinition& axisDefinition);
 
-        /// @brief Replaces the row track widths and relays out the attached widgets.
-        void SetRowDefinition(std::vector<f32> rowDefinition);
+        const AxisDefinition& GetAxisDefinition() const;
 
-        /// @brief Replaces the layer track widths and relays out the attached widgets.
-        void SetLayerDefinition(std::vector<f32> layerDefinition);
+        /// @brief Replaces the column tracks, as SetAxisDefinition does with the rows and layers kept
+        /// @return The names of the widgets removed.
+        std::vector<std::string> SetColumnDefinition(std::vector<f32> columnDefinition);
+
+        /// @brief Replaces the row tracks, as SetAxisDefinition does with the columns and layers kept
+        /// @return The names of the widgets removed.
+        std::vector<std::string> SetRowDefinition(std::vector<f32> rowDefinition);
+
+        /// @brief Replaces the layer tracks, as SetAxisDefinition does with the rows and columns kept
+        /// @return The names of the widgets removed.
+        std::vector<std::string> SetLayerDefinition(std::vector<f32> layerDefinition);
 
     protected:
         /// @brief Sets the size of the Lasagna, resizing and repositioning all attached widgets.
@@ -181,7 +192,10 @@ namespace RetroFuturaGUI
         void update() override;
 
     // Data
-        std::vector<std::vector<std::vector<LasagnaCell>>> _lasagna {};
+        using CellArray = std::vector<std::vector<std::vector<LasagnaCell>>>; //by row, then column, then layer
+
+        CellArray _lasagna {};
+        std::vector<CellArray> _retiredCells {};
         static constinit const u32 _maxCountPerAxis { MaxTracksPerAxis };
         AxisDefinition _axisDefinition {};
         std::unique_ptr<Frame> _debugBorder { nullptr };
@@ -204,6 +218,9 @@ namespace RetroFuturaGUI
 
         /// @brief Returns the Lasagna's top-left corner in world space. Cell offsets count from there, so every placement measures from here rather than from the window.
         glm::vec3 getTopLeftCorner() const;
+
+        /// @brief Makes empty cells for the axis definition's tracks, sized to the Lasagna.
+        void buildCells();
 
         void drawDebugLines(const LasagnaCell& cell);
         void updateSpanSize(LasagnaCell& originCell, const uSize row, const uSize column, const uSize layer);
