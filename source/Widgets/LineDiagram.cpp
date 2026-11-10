@@ -440,7 +440,18 @@ void RetroFuturaGUI::LineDiagram::interact()
 
     updatePoints(); //so the cursor is tested against the lines of the current data
     const PointerState pointer { readPointer() };
+    const bool wasHovered { _lineHovered };
+    const uSize
+        previousLine { _hoveredLineIndex },
+        previousPoint { _hoveredPointIndex };
 
+    followHover(pointer);
+    emitHoverChange(wasHovered, previousLine, previousPoint);
+    followPointClick(pointer);
+}
+
+void RetroFuturaGUI::LineDiagram::followHover(const PointerState& pointer)
+{
     if(pointer._IsCaptured)
         return; //ScrollView above has taken the pointer
 
@@ -598,4 +609,87 @@ void RetroFuturaGUI::LineDiagram::followGlowFlavors()
     _glowStyleGeneration = StylingManager::GetGeneration();
     _glowFlavorHashes = _flavorHashes;
     _lineGlow.followFlavors(&_flavorHashes, StylePart::Graph);
+}
+
+void RetroFuturaGUI::LineDiagram::emitHoverChange(const bool wasHovered, const uSize previousLine, const uSize previousPoint)
+{
+    if(!_lineHovered)
+    {
+        if(!wasHovered)
+            return;
+
+        _onHoverEndedAsync.EmitAsync();
+        _onHoverEnded.Emit();
+        return;
+    }
+
+    if(wasHovered && previousLine == _hoveredLineIndex && previousPoint == _hoveredPointIndex)
+        return;
+
+    _onHoverChangedAsync.EmitAsync(_hoveredLineIndex, _hoveredPointIndex);
+    _onHoverChanged.Emit(_hoveredLineIndex, _hoveredPointIndex);
+}
+
+void RetroFuturaGUI::LineDiagram::followPointClick(const PointerState& pointer)
+{
+    const bool isPressedNow { pointer._LeftButtonPressed && !_wasPressed };
+    _wasPressed = pointer._LeftButtonPressed;
+
+    if(!isPressedNow || pointer._IsCaptured || !_lineHovered)
+        return;
+
+    _onPointClickedAsync.EmitAsync(_hoveredLineIndex, _hoveredPointIndex);
+    _onPointClicked.Emit(_hoveredLineIndex, _hoveredPointIndex);
+}
+
+bool RetroFuturaGUI::LineDiagram::GetHoveredPoint(uSize& outLine, uSize& outPoint) const
+{
+    if(!_lineHovered)
+        return false;
+
+    outLine = _hoveredLineIndex;
+    outPoint = _hoveredPointIndex;
+    return true;
+}
+
+void RetroFuturaGUI::LineDiagram::Connect_OnHoverChanged(const typename Signal<uSize, uSize>::Slot& slot, const bool async)
+{
+    if(async)
+        _onHoverChangedAsync.Connect(slot);
+    else
+        _onHoverChanged.Connect(slot);
+}
+
+void RetroFuturaGUI::LineDiagram::Disconnect_OnHoverChanged(const typename Signal<uSize, uSize>::Slot& slot)
+{
+    _onHoverChanged.Disconnect(slot);
+    _onHoverChangedAsync.Disconnect(slot);
+}
+
+void RetroFuturaGUI::LineDiagram::Connect_OnHoverEnded(const typename Signal<>::Slot& slot, const bool async)
+{
+    if(async)
+        _onHoverEndedAsync.Connect(slot);
+    else
+        _onHoverEnded.Connect(slot);
+}
+
+void RetroFuturaGUI::LineDiagram::Disconnect_OnHoverEnded(const typename Signal<>::Slot& slot)
+{
+    _onHoverEnded.Disconnect(slot);
+    _onHoverEndedAsync.Disconnect(slot);
+}
+
+void RetroFuturaGUI::LineDiagram::Connect_OnPointClicked(const typename Signal<uSize, uSize>::Slot& slot, const bool async)
+{
+    if(async)
+        _onPointClickedAsync.Connect(slot);
+    else
+        _onPointClicked.Connect(slot);
+}
+
+void RetroFuturaGUI::LineDiagram::Disconnect_OnPointClicked(const typename Signal<uSize, uSize>::Slot& slot)
+{
+    _onPointClicked.Disconnect(slot);
+    _onPointClickedAsync.Disconnect(slot);
 }

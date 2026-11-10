@@ -70,6 +70,23 @@ namespace RetroFuturaGUI
         /// @brief Has each line's glow take its line's color (the default), or, with false, the glow's own colors
         void EnableGlowLineColor(const bool enable);
 
+        /// @brief Returns the line and the data point under the pointer, the point nearest it along the line
+        /// @return false when the pointer is on no line, leaving both as they were
+        bool GetHoveredPoint(uSize& outLine, uSize& outPoint) const;
+
+        /// @brief Connects a slot called when the hovered line or its data point under the pointer changes, hovering a line
+        ///        included, with the line and the point
+        void Connect_OnHoverChanged(const typename Signal<uSize, uSize>::Slot& slot, const bool async);
+        void Disconnect_OnHoverChanged(const typename Signal<uSize, uSize>::Slot& slot);
+
+        /// @brief Connects a slot called when the pointer leaves the lines
+        void Connect_OnHoverEnded(const typename Signal<>::Slot& slot, const bool async);
+        void Disconnect_OnHoverEnded(const typename Signal<>::Slot& slot);
+
+        /// @brief Connects a slot called on a press on a line, with the line and the data point nearest the press
+        void Connect_OnPointClicked(const typename Signal<uSize, uSize>::Slot& slot, const bool async);
+        void Disconnect_OnPointClicked(const typename Signal<uSize, uSize>::Slot& slot);
+
         /// @brief Returns the text next to the pointer and the box behind it. The text has its line's color by default, so without
         ///        the box it would vanish where it crosses its own line
         /// @brief Sets how lines of different lengths are laid along the track: spaced by the longest set (ByIndex, the default),
@@ -89,6 +106,15 @@ namespace RetroFuturaGUI
         void alignElementsToTrack() override;
         void drawGraph() override;
         void interact() override;
+
+        /// @brief Finds the line and the point under the pointer
+        void followHover(const PointerState& pointer);
+
+        /// @brief Tells the slots when the hovered line or point changed, or the hover ended
+        void emitHoverChange(const bool wasHovered, const uSize previousLine, const uSize previousPoint);
+
+        /// @brief Tells the slots of a press on a line.
+        void followPointClick(const PointerState& pointer);
 
         /// @brief Creates lines, each with its own points, until there are lineCount of them.
         void growLinesTo(const uSize lineCount);
@@ -165,7 +191,17 @@ namespace RetroFuturaGUI
         uSize
             _hoveredLineIndex { 0 },
             _hoveredPointIndex { 0 };
-        bool _lineHovered { false };
+        Signal<uSize, uSize>
+            _onHoverChanged,
+            _onHoverChangedAsync,
+            _onPointClicked,
+            _onPointClickedAsync;
+        Signal<>
+            _onHoverEnded,
+            _onHoverEndedAsync;
+        bool
+            _lineHovered { false },
+            _wasPressed { false };
 
     // Labels
         HoverText _hoverText { &_projection };
