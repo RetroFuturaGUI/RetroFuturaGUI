@@ -8,6 +8,7 @@
 #include <string>
 #include <string_view>
 #include <unordered_map>
+#include <vector>
 #include "Background.hpp"
 
 namespace RetroFuturaGUI
@@ -42,14 +43,17 @@ namespace RetroFuturaGUI
         /// @param imagePath The SVG file path. Each item creates and owns its own SvgImage through ResourceManager
         void AddItem(std::string_view itemName, std::string_view node, std::string_view imagePath, std::string_view text, std::string_view note);
 
-        /// @brief Adds a dropdown node beneath the named dropdown node. Use "Root" for the root dropdown
+        /// @brief Adds a dropdown node (a submenu) beneath the named dropdown node. Use "Root" for the root dropdown. Clicking its row
+        ///        opens its list; only clicks on items report
         void AddNode(std::string_view newNodeName, std::string_view node);
 
-        /// @brief Connects to clicks on items in the root dropdown
-        void Connect_OnItemClicked(const typename Signal<>::Slot& slot, const bool async);
+        /// @brief Connects a slot called with the index path of each clicked item: the indices from the root list down to the
+        ///        item, {2} for the third root item, {1, 0} for the first item in the submenu that is root row 1. The menu closes first
+        void Connect_OnItemClicked(const typename Signal<std::vector<uSize>>::Slot& slot, const bool async);
+        void Disconnect_OnItemClicked(const typename Signal<std::vector<uSize>>::Slot& slot);
 
-        /// @brief Returns the selected root dropdown item index
-        uSize GetSelectedIndex() const;
+        /// @brief Returns the index path of the item clicked last (see Connect_OnItemClicked), empty before any click
+        const std::vector<uSize>& GetClickedPath() const;
 
         /// @brief Returns the widget's text: its string, font, colors and effects
         WidgetText& GetText();
@@ -82,6 +86,22 @@ namespace RetroFuturaGUI
 
         ExtendedComboBox* iterateNode(ExtendedComboBox* comboBox, std::string_view node);
 
+        /// @brief Has the node report the items picked in its list: a row that is an item closes the menu and emits its path, a
+        ///        row that is a node only opens its own list
+        void followNode(ExtendedComboBox& node);
+
+        /// @brief Reports the item the node's list picked, unless it is a node's row
+        void takeItemClick(ExtendedComboBox& node);
+
+        /// @brief The indices from the given list down to the node, in path; false when the node isn't beneath it
+        static bool findPath(const ExtendedComboBox& list, const ExtendedComboBox& node, std::vector<uSize>& path);
+
+        /// @brief Closes the node's list and every list beneath it, so the menu opens again with only the root list open
+        static void closeLists(ExtendedComboBox& node);
+
+        /// @brief Hides the menu and closes its lists
+        void hide();
+
         Projection& _projection;
         IWidget* _widget { nullptr };
         std::unique_ptr<ExtendedComboBox> _items { nullptr };
@@ -98,6 +118,10 @@ namespace RetroFuturaGUI
             _wasRightButtonPressed { false },
             _hasPendingItemClose { false };
         glm::vec2 _pointerPosition { 0.0f };
+        std::vector<uSize> _clickedPath {};
+        Signal<std::vector<uSize>>
+            _onItemClicked,
+            _onItemClickedAsync;
         TransitionValue<f32> _opacity {};
         u32 _appliedDefaultFontVersion { 0 };
 

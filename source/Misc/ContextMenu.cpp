@@ -45,14 +45,7 @@ RetroFuturaGUI::ContextMenu::ContextMenu(Projection* projection, IWidget* widget
     {
         _items->SetLabelHiddenWhenOpen(true);
         _items->SetTransition(TransitionProperty::Opacity, Transition {}); //its list fades with the menu (not on its own as well)
-        _items->Connect_OnItemClicked([this]()
-        {
-            if(!_items)
-                return;
-
-            _isShown = false;
-            _hasPendingItemClose = true;
-        }, false);
+        followNode(*_items);
     }
 
     useWidgetTransitions();
@@ -82,7 +75,7 @@ void RetroFuturaGUI::ContextMenu::Update()
     if(_hasPendingItemClose)
     {
         _hasPendingItemClose = false;
-        _items->SetDropDownOpen(false);
+        closeLists(*_items);
     }
 
     interact();
@@ -213,22 +206,118 @@ void RetroFuturaGUI::ContextMenu::AddNode(std::string_view newNodeName, std::str
         return;
 
     item->GetPreview().SetString(newNodeName, false);
+    followNode(*item);
 }
 
-void RetroFuturaGUI::ContextMenu::Connect_OnItemClicked(const typename Signal<>::Slot& slot, const bool async)
+void RetroFuturaGUI::ContextMenu::Connect_OnItemClicked(const typename Signal<std::vector<uSize>>::Slot& slot, const bool async)
+{
+    if(async)
+        _onItemClickedAsync.Connect(slot);
+    else
+        _onItemClicked.Connect(slot);
+}
+
+void RetroFuturaGUI::ContextMenu::Disconnect_OnItemClicked(const typename Signal<std::vector<uSize>>::Slot& slot)
+{
+    _onItemClicked.Disconnect(slot);
+    _onItemClickedAsync.Disconnect(slot);
+}
+
+const std::vector<uSize>& RetroFuturaGUI::ContextMenu::GetClickedPath() const
+{
+    return _clickedPath;
+}
+
+void RetroFuturaGUI::ContextMenu::followNode(ExtendedComboBox& node)
+{
+    //The node lives as long as the menu, which owns it through the root list
+    node.Connect_OnItemClicked([this, &node]() { takeItemClick(node); }, false);
+}
+
+void RetroFuturaGUI::ContextMenu::takeItemClick(ExtendedComboBox& node)
 {
     if(!_items)
         return;
 
-    _items->Connect_OnItemClicked(slot, async);
+    const uSize index { node.GetSelectedIndex() };
+    const std::list<std::unique_ptr<IWidget>>& rows { node.GetItems() };
+
+    if(index >= rows.size())
+        return;
+
+    const IWidget* row { std::next(rows.begin(), static_cast<i64>(index))->get() };
+
+    if(!row)
+        return; //a row removed this frame.
+
+    if(WidgetTypeID::ExtendedComboBox == row->GetWidgetTypeID())
+        return; //a submenu's row only opens its list.
+
+    std::vector<uSize> path {};
+
+    if(!findPath(*_items, node, path))
+        return;
+
+    path.push_back(index);
+    _clickedPath = path;
+
+    //Its lists close at the next Update, since the node that reported is still taking the input
+    _isShown = false;
+    _hasPendingItemClose = true;
+    _onItemClickedAsync.EmitAsync(path);
+    _onItemClicked.Emit(std::move(path));
 }
 
-uSize RetroFuturaGUI::ContextMenu::GetSelectedIndex() const
+bool RetroFuturaGUI::ContextMenu::findPath(const ExtendedComboBox& list, const ExtendedComboBox& node, std::vector<uSize>& path)
 {
-    if(!_items)
-        return 0;
+    if(&list == &node)
+        return true;
 
-    return _items->GetSelectedIndex();
+    uSize index { 0 };
+
+    for(const auto& row : list.GetItems())
+    {
+        const ExtendedComboBox* childNode { dynamic_cast<const ExtendedComboBox*>(row.get()) };
+
+        if(childNode)
+        {
+            path.push_back(index);
+
+            if(findPath(*childNode, node, path))
+                return true;
+
+            path.pop_back();
+        }
+
+        ++index;
+    }
+
+    return false;
+}
+
+void RetroFuturaGUI::ContextMenu::closeLists(ExtendedComboBox& node)
+{
+    node.SetDropDownOpen(false);
+
+    for(const auto& row : node.GetItems())
+    {
+        ExtendedComboBox* childNode { dynamic_cast<ExtendedComboBox*>(row.get()) };
+
+        if(!childNode)
+            continue;
+
+        closeLists(*childNode);
+    }
+}
+
+void RetroFuturaGUI::ContextMenu::hide()
+{
+    _isShown = false;
+
+    if(!_items)
+        return;
+
+    closeLists(*_items);
 }
 
 RetroFuturaGUI::ExtendedComboBox* RetroFuturaGUI::ContextMenu::iterateNode(ExtendedComboBox* comboBox, std::string_view node)
@@ -412,21 +501,26 @@ void RetroFuturaGUI::ContextMenu::interact()
     if(rightButtonPressedThisFrame && isOverWidget)
     {
         _pointerPosition = pointer._WindowPosition;
-        _isShown = !_isShown;
+
+        if(_isShown)
+        {
+            hide(); //a right-click on the widget again puts it away.
+            return;
+        }
+
+        _isShown = true;
 
         if(_items)
-            _items->SetDropDownOpen(_isShown);
-    }
-    else if(_isShown
-            && ((pointer._LeftButtonPressed && !isOverMenu)
-                || (rightButtonPressedThisFrame && !isOverMenu)))
-    {
-        _isShown = false;
+            _items->SetDropDownOpen(true);
 
-        if(_items)
-            _items->SetDropDownOpen(false);
+        return;
     }
 
+    if(!_isShown || isOverMenu)
+        return;
+
+    if(pointer._LeftButtonPressed || rightButtonPressedThisFrame)
+        hide(); //a press anywhere else puts it away.
 }
 
 RetroFuturaGUI::Background& RetroFuturaGUI::ContextMenu::GetBackground()
