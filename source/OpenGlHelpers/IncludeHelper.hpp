@@ -37,6 +37,7 @@ namespace RetroFuturaGUI
     class ScrollView;
     class ColorPicker;
     class WindowTab;
+    class Tab;
 
     RFG_EXPORT enum class FillType: u32
     {
@@ -60,7 +61,7 @@ namespace RetroFuturaGUI
         || std::same_as<T, Model> || std::same_as<T, Image> || std::same_as<T, SvgImage> 
         || std::same_as<T, CheckBox> || std::same_as<T, RadioButton> || std::same_as<T, RadioButtonGroup>
         || std::same_as<T, Slider> || std::same_as<T, ProgressBar> || std::same_as<T, Table>
-        || std::same_as<T, Prefab> || std::same_as<T, ColorPicker>;
+        || std::same_as<T, Prefab> || std::same_as<T, ColorPicker> || std::same_as<T, Tab>;
 
     RFG_EXPORT enum class WidgetTypeID : i32
     {
@@ -93,6 +94,7 @@ namespace RetroFuturaGUI
         ScrollView,
         ColorPicker,
         WindowTab,
+        Tab,
         Unknown = -1
     };   
 

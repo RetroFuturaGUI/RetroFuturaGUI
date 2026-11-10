@@ -13,10 +13,11 @@
 namespace RetroFuturaGUI
 {
     class Window;
+    class Tab;
 
     template<typename T>
     concept RootContainer =
-        std::same_as<T, Lasagna> || std::same_as<T, Environment> || std::same_as<T, ScrollView> || std::same_as<T, WindowTab>;
+        std::same_as<T, Lasagna> || std::same_as<T, Environment> || std::same_as<T, ScrollView> || std::same_as<T, WindowTab> || std::same_as<T, Tab>;
 
     class Scene final : public IHierarchyNode
     {
