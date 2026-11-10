@@ -79,6 +79,7 @@ namespace RetroFuturaGUI
         friend class Background; //hand their flavors to their effects.
         friend class Border;
         friend class WidgetText;
+        friend class LineDiagram;
 
         /// @brief Has the effect take unset values from its part's flavors, and takes them now
         void followFlavors(const std::vector<u32>* flavors, const StylePart part);

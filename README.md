@@ -32,8 +32,7 @@ The framework is designed for cross-platform use, and its logic can be compiled 
 
 ### WIP in detail
 - LineDiagram
-  - Where points sit closer together than the line is wide, the inner side of a mitered corner can fold back over the previous segment
-  - A translucent line blends twice where a bevel overlaps its segments at a sharp turn - Polyline draws with GL_LEQUAL so the overlap isn't rejected by the depth test
+  - The line glow shows the first of its colors only (a line has no gradients), ends square with the line, and where two faded glow edges overlap at a sharp turn the one drawn first wins, which can leave faint steps
   - No signal tells the application which line or data point is hovered
   - Labels always take their line's color; there is no label color of their own
 - IDropDown (shared base of ComboBox and ExtendedComboBox)
@@ -164,7 +163,7 @@ The framework is designed for cross-platform use, and its logic can be compiled 
   - ProgressBar: a Slider's value and display without the dragging
   - Their indicator is a Stroke (square corners), a Circle (round, its diameter the smaller of its two sizes) or a Pill (its size kept, rounded fully at the shorter sides); the indicator and the graph stay inside the track's border, following its width when it changes
   - Histogram: one bar per value of a bound array, read every frame, so data updated in place shows live (SetData)
-  - LineDiagram: one line per bound data set, live like the Histogram; the hovered line is highlighted with its nearest value, labels and hexadecimal values on request; lines of different lengths are spaced by the longest set or each stretched across the whole track (SetLineSpacing)
+  - LineDiagram: one line per bound data set, live like the Histogram; the hovered line is highlighted with its nearest value, labels and hexadecimal values on request; lines of different lengths are spaced by the longest set or each stretched across the whole track (SetLineSpacing); a glow around the lines in their own colors or the glow's (GetLineGlow, EnableGlowLineColor); translucent lines blend once where their pieces overlap at a turn
   - ColorPicker: picks a color from a field of every hue, with brightness and optional alpha (SetColor, SetBrightness, SetAlpha, OnColorChanged)
   - ColorPreview: a color over a checkerboard, so transparency reads as such, optionally split against white
   - Table: a grid of text, number, color, checkbox and image cells
@@ -292,6 +291,7 @@ The framework is designed for cross-platform use, and its logic can be compiled 
   </ul>
 <li>Shaders</li>
   <ul>
+  <li>LineDiagram and Polyline: where points sit closer together than the line is wide, the inner side of a mitered corner can fold back over the previous segment</li>
   <li>Anti-aliasing of the cuts inside a shape: border gaps, background gaps and the wave line are still cut hard, while the edges and corners fade over a pixel</li>
   <li>Pixelate and CRT: only Plane-based parts have them (Background, Graph), not Border or Text; untested under tilt and perspective, which the shaders account for</li>
   <li>Glass could show the live copy of the window behind, as Pixelate and CRT do, instead of a fixed backdrop image set by the app</li>

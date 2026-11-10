@@ -5,6 +5,7 @@
 #include <span>
 #include "Projection.hpp"
 #include "ContextObjects.hpp"
+#include "Shader.hpp"
 
 namespace RetroFuturaGUI
 {
@@ -43,11 +44,20 @@ namespace RetroFuturaGUI
         /// @brief Sets the line's width, in pixels.
         void SetThickness(const f32 thickness);
 
-        /// @brief Draws the line through the points last set.
+        /// @brief Sets the glow drawn under the line: full at the line's edge and fading to nothing over width pixels. A width of
+        ///        0, the default, or a fully transparent color draws none
+        void SetGlow(const f32 width, const glm::vec4& color);
+
+        /// @brief Draws the line through the points last set, over its glow. Each covers every pixel once, so where segments
+        ///        overlap at a sharp turn a translucent line doesn't blend twice.
         void Draw();
 
     private:
         void setupMesh();
+
+        /// @brief Draws the strip once, thickness pixels wide, each pixel at most once
+        /// @param glowWidth Above 0, the strip is a glow around a line _thickness wide, fading out over that many pixels
+        void drawPass(Shader& shader, const f32 thickness, const glm::vec4& color, const f32 glowWidth);
 
     //Geometry
         u32 _vbo { 0 };
@@ -63,7 +73,11 @@ namespace RetroFuturaGUI
             _rotationMatrix { 1.0f };
 
     //Design
-        glm::vec4 _color { 1.0f };
-        f32 _thickness { 2.0f };
+        glm::vec4
+            _color { 1.0f },
+            _glowColor { 0.0f };
+        f32
+            _thickness { 2.0f },
+            _glowWidth { 0.0f };
     };
 }

@@ -23,6 +23,8 @@ RetroFuturaGUI::LineDiagram::LineDiagram(std::string_view name, Projection* proj
         return;
 
     _hoverText.SetTransitionSettings(&_transitionSettings);
+    _lineGlow.SetTransitionSettings(&_transitionSettings);
+    followGlowFlavors();
     useSubPartFlavors(_hoverText.GetBackground(), StylePart::HoverTextBackground);
     useSubPartFlavors(_hoverText.GetText(), StylePart::HoverTextText);
     _indicator.SetSize(glm::vec2(10.0f), ElementSizing::Pixels);
@@ -208,6 +210,8 @@ void RetroFuturaGUI::LineDiagram::updateLinePoints(const uSize lineIndex)
 
 void RetroFuturaGUI::LineDiagram::drawGraph()
 {
+    followGlowFlavors();
+
     if(!_graph.IsShown())
         return;
 
@@ -234,6 +238,11 @@ void RetroFuturaGUI::LineDiagram::drawLine(const uSize lineIndex, const f32 thic
 
     _lines[lineIndex]->SetThickness(thickness);
     _lines[lineIndex]->SetPoints(_points[lineIndex]);
+
+    //The line's own color, or the glow's first one
+    const std::span<const glm::vec4> glowColors { _isGlowLineColorEnabled ? getLineColors(lineIndex) : _lineGlow.FillStyle::getShownColors() }; //what the fill shows now, its transition included
+    const bool hasGlow { _lineGlow.IsShown() && !glowColors.empty() };
+    _lines[lineIndex]->SetGlow(hasGlow ? _lineGlow.getShownWidth() : 0.0f, hasGlow ? glowColors.front() : glm::vec4(0.0f));
     _lines[lineIndex]->Draw();
 }
 
@@ -564,4 +573,29 @@ glm::vec2 RetroFuturaGUI::LineDiagram::getUprightExtents(const glm::vec2& halfSi
         sine { std::abs(std::sin(radians)) };
 
     return glm::vec2(halfSize.x * cosine + halfSize.y * sine, halfSize.x * sine + halfSize.y * cosine);
+}
+
+RetroFuturaGUI::Glow& RetroFuturaGUI::LineDiagram::GetLineGlow()
+{
+    return _lineGlow;
+}
+
+const RetroFuturaGUI::Glow& RetroFuturaGUI::LineDiagram::GetLineGlow() const
+{
+    return _lineGlow;
+}
+
+void RetroFuturaGUI::LineDiagram::EnableGlowLineColor(const bool enable)
+{
+    _isGlowLineColorEnabled = enable;
+}
+
+void RetroFuturaGUI::LineDiagram::followGlowFlavors()
+{
+    if(StylingManager::GetGeneration() == _glowStyleGeneration && _flavorHashes == _glowFlavorHashes)
+        return;
+
+    _glowStyleGeneration = StylingManager::GetGeneration();
+    _glowFlavorHashes = _flavorHashes;
+    _lineGlow.followFlavors(&_flavorHashes, StylePart::Graph);
 }

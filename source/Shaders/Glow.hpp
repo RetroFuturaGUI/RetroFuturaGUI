@@ -30,6 +30,7 @@ namespace RetroFuturaGUI
 
         friend class Text; //draws it.
         friend class GlowRectangle; //draws it.
+        friend class LineDiagram;
 
         /// @brief The width shown now
         f32 getShownWidth() const;

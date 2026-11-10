@@ -84,20 +84,51 @@ void RetroFuturaGUI::Polyline::Draw()
     shader.SetUniformMat4("uPosition", _translationMatrix);
     shader.SetUniformMat4("uScaling", _scalingMatrix);
     shader.SetUniformMat4("uRotation", _rotationMatrix);
-    shader.SetUniformVec4("uColor", _color);
-    shader.SetUniformFloat("uLineThickness", _thickness);
 
-    // Where a sharp turn gets a bevel, its two segments overlap at the same depth.
-    // anti-aliased edge instead of failing the depth test against it
+    //The pieces of a turn lie at the same depth, so the line draws over its own glow and its pieces pass the depth test
+    //against each other; the stencil, not the depth, keeps each pixel to one fragment per pass
     GLint depthFunction { GL_LESS };
     glGetIntegerv(GL_DEPTH_FUNC, &depthFunction);
     glDepthFunc(GL_LEQUAL);
+    glEnable(GL_STENCIL_TEST);
+    glStencilMask(0xFF);
+    glStencilFunc(GL_EQUAL, 0, 0xFF);
+    glStencilOp(GL_KEEP, GL_KEEP, GL_INCR); //a pixel drawn once takes no second fragment
 
-    _vertexArray->Bind();
-    glDrawArrays(GL_LINE_STRIP_ADJACENCY, 0, static_cast<GLsizei>(_vertexCount));
-    VertexArray::Unbind();
+    if(0.0f < _glowWidth && 0.0f < _glowColor.a)
+        drawPass(shader, _thickness + _glowWidth * 2.0f, _glowColor, _glowWidth);
 
+    drawPass(shader, _thickness, _color, 0.0f);
+
+    glDisable(GL_STENCIL_TEST);
     glDepthFunc(static_cast<GLenum>(depthFunction));
+}
+
+void RetroFuturaGUI::Polyline::SetGlow(const f32 width, const glm::vec4& color)
+{
+    _glowWidth = width;
+    _glowColor = color;
+}
+
+void RetroFuturaGUI::Polyline::drawPass(Shader& shader, const f32 thickness, const glm::vec4& color, const f32 glowWidth)
+{
+    glClear(GL_STENCIL_BUFFER_BIT); //every pass starts with no pixel drawn
+    shader.SetUniformVec4("uColor", color);
+    shader.SetUniformFloat("uLineThickness", thickness);
+    shader.SetUniformFloat("uGlowWidth", glowWidth);
+    shader.SetUniformFloat("uCoreThickness", _thickness);
+
+    //The fully covered fragments first, then the faded edges into the pixels still free, so where pieces of a turn overlap a
+    //faded edge never keeps a full fragment out
+    _vertexArray->Bind();
+
+    for(const i32 band : { 1, 2 })
+    {
+        shader.SetUniformInt("uCoverageBand", band);
+        glDrawArrays(GL_LINE_STRIP_ADJACENCY, 0, static_cast<GLsizei>(_vertexCount));
+    }
+
+    VertexArray::Unbind();
 }
 
 void RetroFuturaGUI::Polyline::setupMesh()

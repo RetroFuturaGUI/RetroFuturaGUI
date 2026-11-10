@@ -1,5 +1,6 @@
 #pragma once
 #include "HoverText.hpp"
+#include "Glow.hpp"
 #include "IncludeHelper.hpp"
 #include "config.hpp"
 #include "IRangedMultiValue.hpp"
@@ -58,6 +59,17 @@ namespace RetroFuturaGUI
         /// @brief Shows the value at the pointer next to it - "Label: value" together with EnableHoverLineLabel. Hexadecimal while ShowHexNumbers is on.
         void EnableHoverValue(const bool enable);
 
+        /// @brief Returns the glow around the lines, drawn under them and hidden until GetLineGlow().Show(true): full at a line's
+        ///        edge and fading out over its width. Each line's glow has its line's color unless EnableGlowLineColor(false) gives
+        ///        them the glow's own; a line shows a glow's first color, without gradients. Flavors reach it as the graph's glow
+        Glow& GetLineGlow();
+
+        /// @brief Returns the glow around the lines
+        const Glow& GetLineGlow() const;
+
+        /// @brief Has each line's glow take its line's color (the default), or, with false, the glow's own colors
+        void EnableGlowLineColor(const bool enable);
+
         /// @brief Returns the text next to the pointer and the box behind it. The text has its line's color by default, so without
         ///        the box it would vanish where it crosses its own line
         /// @brief Sets how lines of different lengths are laid along the track: spaced by the longest set (ByIndex, the default),
@@ -91,6 +103,9 @@ namespace RetroFuturaGUI
         void updateLinePoints(const uSize lineIndex);
 
         void drawLine(const uSize lineIndex, const f32 thickness);
+
+        /// @brief Has the glow take the graph part of the widget's flavors again when they changed since it last did
+        void followGlowFlavors();
 
         /// @brief Whether point, in window pixels, lies on the line drawn thickness wide - within half of that of its center.
         bool isPointOnLine(const glm::vec2& point, const uSize lineIndex, const f32 thickness) const;
@@ -139,6 +154,10 @@ namespace RetroFuturaGUI
         f32
             _lineThickness { 4.0f };
         LineSpacing _lineSpacing { LineSpacing::ByIndex };
+        Glow _lineGlow {};
+        std::vector<u32> _glowFlavorHashes {}; //the flavors the glow last took, to notice when the widget's change
+        u32 _glowStyleGeneration { 0 };
+        bool _isGlowLineColorEnabled { true };
         std::vector<std::unique_ptr<Text>> _labels {};
         std::vector<std::unique_ptr<Polyline>> _lines {};
         std::vector<std::vector<glm::vec2>> _points {};
