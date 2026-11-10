@@ -18,6 +18,7 @@ RetroFuturaGUI::ComboBox::ComboBox(std::string_view name, Projection* projection
     : IDropDown(name, projection, parentWidget, parentWidgetTypeID, parentWindow)
 {
     _widgetTypeID = WidgetTypeID::ComboBox;
+    useSubPartFlavors(_itemText, StylePart::ItemText);
     setColors(ColorState::Enabled);
 }
 

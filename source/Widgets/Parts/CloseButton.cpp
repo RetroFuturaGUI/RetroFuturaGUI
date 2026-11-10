@@ -12,10 +12,10 @@ RetroFuturaGUI::CloseButton::CloseButton(Projection* projection, std::unique_ptr
           IconColors { ._Enabled = { glm::vec4(0.85f, 0.85f, 0.9f, 1.0f) }, ._Disabled = {}, ._Clicked = {}, ._Hover = {}, ._Selected = {} }
       }
 {
-    _background.SetColors(std::array { glm::vec4(0.0f) }, ColorState::Enabled);
-    _background.SetColors(std::array { glm::vec4(1.0f, 1.0f, 1.0f, 0.15f) }, ColorState::Hover);
-    _background.SetColors(std::array { glm::vec4(1.0f, 1.0f, 1.0f, 0.25f) }, ColorState::Clicked);
-    _background.SetColors(std::array { glm::vec4(0.0f) }, ColorState::Disabled);
+    _background.SetBuiltInColors(StyleKey {}, std::array { glm::vec4(0.0f) }, ColorState::Enabled);
+    _background.SetBuiltInColors(StyleKey {}, std::array { glm::vec4(1.0f, 1.0f, 1.0f, 0.15f) }, ColorState::Hover);
+    _background.SetBuiltInColors(StyleKey {}, std::array { glm::vec4(1.0f, 1.0f, 1.0f, 0.25f) }, ColorState::Clicked);
+    _background.SetBuiltInColors(StyleKey {}, std::array { glm::vec4(0.0f) }, ColorState::Disabled);
     _icon.SetColorState(ColorState::Enabled); //the cross takes its color at once, not the SVG's own.
 }
 

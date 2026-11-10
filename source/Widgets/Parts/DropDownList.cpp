@@ -4,15 +4,15 @@
 RetroFuturaGUI::DropDownList::DropDownList(Projection* projection)
     : _background(projection), _highlight(projection), _border(projection)
 {
-    _background.SetColors(std::array { glm::vec4(0.25f, 0.25f, 0.8f, 1.0f) }, ColorState::Enabled);
-    _background.SetColors(std::array { glm::vec4(0.1f, 0.1f, 0.45f, 1.0f) }, ColorState::Disabled);
-    _background.SetColors(std::array { glm::vec4(0.3f, 0.3f, 0.9f, 1.0f) }, ColorState::Hover);
-    _background.SetColors(std::array { glm::vec4(0.4f, 0.4f, 1.0f, 1.0f) }, ColorState::Clicked);
-    _border.SetColors(std::array { glm::vec4(0.7f, 0.7f, 0.7f, 1.0f) }, ColorState::Enabled);
-    _border.SetColors(std::array { glm::vec4(0.3f, 0.3f, 0.3f, 1.0f) }, ColorState::Disabled);
-    _border.SetColors(std::array { glm::vec4(0.85f, 0.85f, 0.85f, 1.0f) }, ColorState::Hover);
-    _border.SetColors(std::array { glm::vec4(1.0f, 1.0f, 1.0f, 1.0f) }, ColorState::Clicked);
-    _highlight.SetColors(std::array { glm::vec4(0.3f, 0.9f, 2.0f, 1.0f) }, ColorState::Enabled);
+    _background.SetBuiltInColors(StyleKey {}, std::array { glm::vec4(0.25f, 0.25f, 0.8f, 1.0f) }, ColorState::Enabled);
+    _background.SetBuiltInColors(StyleKey {}, std::array { glm::vec4(0.1f, 0.1f, 0.45f, 1.0f) }, ColorState::Disabled);
+    _background.SetBuiltInColors(StyleKey {}, std::array { glm::vec4(0.3f, 0.3f, 0.9f, 1.0f) }, ColorState::Hover);
+    _background.SetBuiltInColors(StyleKey {}, std::array { glm::vec4(0.4f, 0.4f, 1.0f, 1.0f) }, ColorState::Clicked);
+    _border.SetBuiltInColors(StyleKey {}, std::array { glm::vec4(0.7f, 0.7f, 0.7f, 1.0f) }, ColorState::Enabled);
+    _border.SetBuiltInColors(StyleKey {}, std::array { glm::vec4(0.3f, 0.3f, 0.3f, 1.0f) }, ColorState::Disabled);
+    _border.SetBuiltInColors(StyleKey {}, std::array { glm::vec4(0.85f, 0.85f, 0.85f, 1.0f) }, ColorState::Hover);
+    _border.SetBuiltInColors(StyleKey {}, std::array { glm::vec4(1.0f, 1.0f, 1.0f, 1.0f) }, ColorState::Clicked);
+    _highlight.SetBuiltInColors(StyleKey {}, std::array { glm::vec4(0.3f, 0.9f, 2.0f, 1.0f) }, ColorState::Enabled);
 }
 
 RetroFuturaGUI::Background& RetroFuturaGUI::DropDownList::GetBackground()

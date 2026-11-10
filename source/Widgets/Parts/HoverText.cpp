@@ -4,8 +4,8 @@
 RetroFuturaGUI::HoverText::HoverText(Projection* projection)
     : _background(projection), _text(projection)
 {
-    _background.SetColors(std::array { glm::vec4(0.0f, 0.0f, 0.0f, 0.75f) }, ColorState::Enabled);
-    _background.SetCornerRadii(glm::vec4(3.0f));
+    _background.SetBuiltInColors(StyleKey {}, std::array { glm::vec4(0.0f, 0.0f, 0.0f, 0.75f) }, ColorState::Enabled);
+    _background.SetBuiltInCornerRadii(StyleKey {}, glm::vec4(3.0f));
     _text.SetAlignment(TextAlignment::Center);
 }
 

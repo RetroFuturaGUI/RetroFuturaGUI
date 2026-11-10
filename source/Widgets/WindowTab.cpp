@@ -17,13 +17,17 @@ RetroFuturaGUI::WindowTab::WindowTab(std::string_view name, Projection* projecti
     _border.SetTransitionSettings(&_transitionSettings);
     useBorderGap(&_background, &_border);
     useFlavors(&_background, &_border, nullptr);
+    useSubPartFlavors(_fieldStyle.GetBackground(), StylePart::FieldStyleBackground);
+    useSubPartFlavors(_fieldStyle.GetBorder(), StylePart::FieldStyleBorder);
+    useSubPartFlavors(_closeButton.GetBackground(), StylePart::CloseButtonBackground);
+    useSubPartFlavors(_closeButton.GetIcon(), StylePart::CloseButtonIcon);
 
     _border.SetBuiltInWidth(styleKey(), 0.0f); //no frame until one is asked for, since a Frame starts with a 5 px border
     _background.SetBuiltInColors(styleKey(), std::array { glm::vec4(0.055f, 0.055f, 0.075f, 1.0f) }, ColorState::Enabled);
     _background.SetBuiltInColors(styleKey(), std::array { glm::vec4(0.055f, 0.055f, 0.075f, 1.0f) }, ColorState::Disabled);
     //_border.SetColors(std::span<const glm::vec4> colors, const ColorState state)
     applyTitleFont(_previewTitle.get());
-    _closeButton.GetBackground().SetCornerRadii(glm::vec4(_closeButtonSize * 0.25f));
+    _closeButton.GetBackground().SetBuiltInCornerRadii(styleKey(), glm::vec4(_closeButtonSize * 0.25f));
     setFieldStyleDefaults();
 
     Window* host { GetHostWindow() };
@@ -278,7 +282,7 @@ void RetroFuturaGUI::WindowTab::SetCloseButtonSize(const f32 size)
     //Rasterized at twice the size the cross draws at, so it stays smooth when it is scaled down
     const i32 resolution { std::max(static_cast<i32>(std::lround(_closeButtonSize * _closeIconScale * 2.0f)), 8) };
     _closeButton.GetIcon().Rasterize(glm::i32vec2(resolution));
-    _closeButton.GetBackground().SetCornerRadii(glm::vec4(_closeButtonSize * 0.25f));
+    _closeButton.GetBackground().SetBuiltInCornerRadii(styleKey(), glm::vec4(_closeButtonSize * 0.25f));
 }
 
 void RetroFuturaGUI::WindowTab::SetContentCornerRadii(const glm::vec4& radii)
@@ -1074,21 +1078,21 @@ const RetroFuturaGUI::Box& RetroFuturaGUI::WindowTab::GetFieldStyle() const
 void RetroFuturaGUI::WindowTab::setFieldStyleDefaults()
 {
     Background& background { _fieldStyle.GetBackground() };
-    background.SetColors(std::array { glm::vec4(0.0f) }, ColorState::Enabled);
-    background.SetColors(std::array { glm::vec4(1.0f, 1.0f, 1.0f, 0.06f) }, ColorState::Hover);
-    background.SetColors(std::array { glm::vec4(1.0f, 1.0f, 1.0f, 0.1f) }, ColorState::Clicked);
-    background.SetColors(std::array { glm::vec4(0.0f) }, ColorState::Disabled);
-    background.SetColors(std::array { glm::vec4(0.086f, 0.086f, 0.1137f, 1.0f) }, ColorState::Selected); //a window's default background, so the selected field joins its content.
-    background.SetCornerRadii(glm::vec4(8.0f, 8.0f, 0.0f, 0.0f));
+    background.SetBuiltInColors(styleKey(), std::array { glm::vec4(0.0f) }, ColorState::Enabled);
+    background.SetBuiltInColors(styleKey(), std::array { glm::vec4(1.0f, 1.0f, 1.0f, 0.06f) }, ColorState::Hover);
+    background.SetBuiltInColors(styleKey(), std::array { glm::vec4(1.0f, 1.0f, 1.0f, 0.1f) }, ColorState::Clicked);
+    background.SetBuiltInColors(styleKey(), std::array { glm::vec4(0.0f) }, ColorState::Disabled);
+    background.SetBuiltInColors(styleKey(), std::array { glm::vec4(0.086f, 0.086f, 0.1137f, 1.0f) }, ColorState::Selected); //a window's default background, so the selected field joins its content.
+    background.SetBuiltInCornerRadii(styleKey(), glm::vec4(8.0f, 8.0f, 0.0f, 0.0f));
 
     Border& border { _fieldStyle.GetBorder() };
-    border.SetColors(std::array { glm::vec4(0.35f, 0.35f, 0.45f, 1.0f) }, ColorState::Enabled);
-    border.SetColors(std::array { glm::vec4(0.45f, 0.45f, 0.55f, 1.0f) }, ColorState::Hover);
-    border.SetColors(std::array { glm::vec4(0.5f, 0.5f, 0.6f, 1.0f) }, ColorState::Clicked);
-    border.SetColors(std::array { glm::vec4(0.25f, 0.25f, 0.3f, 1.0f) }, ColorState::Disabled);
-    border.SetColors(std::array { glm::vec4(0.35f, 0.35f, 0.45f, 1.0f) }, ColorState::Selected);
-    border.SetCornerRadii(glm::vec4(8.0f, 8.0f, 0.0f, 0.0f));
-    border.SetWidth(0.0f); //no border until one is asked for.
+    border.SetBuiltInColors(styleKey(), std::array { glm::vec4(0.35f, 0.35f, 0.45f, 1.0f) }, ColorState::Enabled);
+    border.SetBuiltInColors(styleKey(), std::array { glm::vec4(0.45f, 0.45f, 0.55f, 1.0f) }, ColorState::Hover);
+    border.SetBuiltInColors(styleKey(), std::array { glm::vec4(0.5f, 0.5f, 0.6f, 1.0f) }, ColorState::Clicked);
+    border.SetBuiltInColors(styleKey(), std::array { glm::vec4(0.25f, 0.25f, 0.3f, 1.0f) }, ColorState::Disabled);
+    border.SetBuiltInColors(styleKey(), std::array { glm::vec4(0.35f, 0.35f, 0.45f, 1.0f) }, ColorState::Selected);
+    border.SetBuiltInCornerRadii(styleKey(), glm::vec4(8.0f, 8.0f, 0.0f, 0.0f));
+    border.SetBuiltInWidth(styleKey(), 0.0f); //no border until one is asked for.
 }
 
 RetroFuturaGUI::CloseButton& RetroFuturaGUI::WindowTab::GetCloseButton()

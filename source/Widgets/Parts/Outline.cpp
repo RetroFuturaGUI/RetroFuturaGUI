@@ -109,9 +109,10 @@ void RetroFuturaGUI::Outline::SetColorState(const ColorState state)
     _text.GetOutline().SetColors(getShownColors(state));
 }
 
-void RetroFuturaGUI::Outline::followFlavors(const std::vector<u32>* flavors)
+void RetroFuturaGUI::Outline::followFlavors(const std::vector<u32>* flavors, const StylePart part)
 {
     _flavors = flavors;
+    _stylePart = part;
     restyle();
 }
 
@@ -128,7 +129,7 @@ const std::vector<glm::vec4>& RetroFuturaGUI::Outline::getShownColors(const Colo
     if(!own.empty())
         return own;
 
-    const std::vector<glm::vec4>* styled { _flavors ? StylingManager::FindFirst<const std::vector<glm::vec4>*>(getFlavors(), StylePart::Text, [state](const FlavorPart& part) -> const std::vector<glm::vec4>*
+    const std::vector<glm::vec4>* styled { _flavors ? StylingManager::FindFirst<const std::vector<glm::vec4>*>(getFlavors(), _stylePart, [state](const FlavorPart& part) -> const std::vector<glm::vec4>*
     {
         const std::vector<glm::vec4>& colors { part.GetOutline().GetColors(state) };
         return colors.empty() ? nullptr : &colors;
@@ -150,22 +151,22 @@ void RetroFuturaGUI::Outline::resolveSettings()
     const std::span<const u32> flavors { getFlavors() };
     const bool isStyled { nullptr != _flavors };
 
-    if(const f32* width { _widthLayer.Resolve(flavors, isStyled, StylePart::Text, 0.0f, [](const FlavorPart& part) -> const std::optional<f32>& { return part.GetOutline().GetWidth(); }) })
+    if(const f32* width { _widthLayer.Resolve(flavors, isStyled, _stylePart, 0.0f, [](const FlavorPart& part) -> const std::optional<f32>& { return part.GetOutline().GetWidth(); }) })
         _text.SetOutlineWidth(*width);
 
-    if(const FillType* fillType { _fillTypeLayer.Resolve(flavors, isStyled, StylePart::Text, FillType::Solid, [](const FlavorPart& part) -> const std::optional<FillType>& { return part.GetOutline().GetFillType(); }) })
+    if(const FillType* fillType { _fillTypeLayer.Resolve(flavors, isStyled, _stylePart, FillType::Solid, [](const FlavorPart& part) -> const std::optional<FillType>& { return part.GetOutline().GetFillType(); }) })
         _text.GetOutline().SetFillType(*fillType);
 
-    if(const f32* degree { _gradientDegreeLayer.Resolve(flavors, isStyled, StylePart::Text, 45.0f, [](const FlavorPart& part) -> const std::optional<f32>& { return part.GetOutline().GetGradientDegree(); }) })
+    if(const f32* degree { _gradientDegreeLayer.Resolve(flavors, isStyled, _stylePart, 45.0f, [](const FlavorPart& part) -> const std::optional<f32>& { return part.GetOutline().GetGradientDegree(); }) })
         _text.GetOutline().SetGradientDegree(*degree);
 
-    if(const f32* offset { _gradientOffsetLayer.Resolve(flavors, isStyled, StylePart::Text, 0.0f, [](const FlavorPart& part) -> const std::optional<f32>& { return part.GetOutline().GetGradientOffset(); }) })
+    if(const f32* offset { _gradientOffsetLayer.Resolve(flavors, isStyled, _stylePart, 0.0f, [](const FlavorPart& part) -> const std::optional<f32>& { return part.GetOutline().GetGradientOffset(); }) })
         _text.GetOutline().SetGradientOffset(*offset);
 
-    if(const f32* speed { _gradientAnimationSpeedLayer.Resolve(flavors, isStyled, StylePart::Text, 0.018f, [](const FlavorPart& part) -> const std::optional<f32>& { return part.GetOutline().GetGradientAnimationSpeed(); }) })
+    if(const f32* speed { _gradientAnimationSpeedLayer.Resolve(flavors, isStyled, _stylePart, 0.018f, [](const FlavorPart& part) -> const std::optional<f32>& { return part.GetOutline().GetGradientAnimationSpeed(); }) })
         _text.GetOutline().SetGradientAnimationSpeed(*speed);
 
-    if(const f32* speed { _gradientRotationSpeedLayer.Resolve(flavors, isStyled, StylePart::Text, 1.2f, [](const FlavorPart& part) -> const std::optional<f32>& { return part.GetOutline().GetGradientRotationSpeed(); }) })
+    if(const f32* speed { _gradientRotationSpeedLayer.Resolve(flavors, isStyled, _stylePart, 1.2f, [](const FlavorPart& part) -> const std::optional<f32>& { return part.GetOutline().GetGradientRotationSpeed(); }) })
         _text.GetOutline().SetGradientRotationSpeed(*speed);
 }
 

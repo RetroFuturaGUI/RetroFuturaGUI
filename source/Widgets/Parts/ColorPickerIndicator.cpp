@@ -4,7 +4,7 @@ RetroFuturaGUI::ColorPickerIndicator::ColorPickerIndicator(Projection* projectio
     : _dot(projection), _border(projection)
 {
     _dot.SetColors(_dotColors);
-    _border.SetWidth(2.0f);
+    _border.SetBuiltInWidth(StyleKey {}, 2.0f);
 }
 
 RetroFuturaGUI::Border& RetroFuturaGUI::ColorPickerIndicator::GetBorder()
@@ -27,7 +27,7 @@ void RetroFuturaGUI::ColorPickerIndicator::SetDiameter(const f32 diameter)
     _dot.SetSize(glm::vec2(diameter));
     _dot.SetCornerRadii(glm::vec4(0.5f * diameter));
     _border.SetSize(glm::vec2(diameter));
-    _border.SetCornerRadii(glm::vec4(0.5f * diameter));
+    _border.SetBuiltInCornerRadii(StyleKey {}, glm::vec4(0.5f * diameter));
 }
 
 void RetroFuturaGUI::ColorPickerIndicator::SetPosition(const glm::vec3& position)

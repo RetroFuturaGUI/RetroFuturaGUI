@@ -5,13 +5,13 @@
 RetroFuturaGUI::Indicator::Indicator(Projection* projection, IndicatorHooks hooks)
     : _background(projection), _border(projection), _onLayoutChange(std::move(hooks._OnLayoutChange))
 {
-    _background.SetColors(std::array { glm::vec4(1.0f, 0.0f, 0.0f, 1.0f) }, ColorState::Enabled);
-    _background.SetColors(std::array { glm::vec4(0.0f, 1.0f, 0.0f, 1.0f) }, ColorState::Clicked);
-    _background.SetColors(std::array { glm::vec4(0.0f, 0.0f, 1.0f, 1.0f) }, ColorState::Hover);
-    _background.SetColors(std::array { glm::vec4(0.5f, 0.5f, 0.5f, 1.0f) }, ColorState::Disabled);
+    _background.SetBuiltInColors(StyleKey {}, std::array { glm::vec4(1.0f, 0.0f, 0.0f, 1.0f) }, ColorState::Enabled);
+    _background.SetBuiltInColors(StyleKey {}, std::array { glm::vec4(0.0f, 1.0f, 0.0f, 1.0f) }, ColorState::Clicked);
+    _background.SetBuiltInColors(StyleKey {}, std::array { glm::vec4(0.0f, 0.0f, 1.0f, 1.0f) }, ColorState::Hover);
+    _background.SetBuiltInColors(StyleKey {}, std::array { glm::vec4(0.5f, 0.5f, 0.5f, 1.0f) }, ColorState::Disabled);
 
     for(const ColorState state : { ColorState::Enabled, ColorState::Clicked, ColorState::Hover, ColorState::Disabled })
-        _border.SetColors(std::array { glm::vec4(1.0f) }, state);
+        _border.SetBuiltInColors(StyleKey {}, std::array { glm::vec4(1.0f) }, state);
 }
 
 void RetroFuturaGUI::Indicator::Show(const bool show)
@@ -121,8 +121,8 @@ void RetroFuturaGUI::Indicator::applyType()
         return;
 
     const glm::vec4 radii { IndicatorType::Circle == _type ? _background.GetSize().x * 0.5f : 0.0f };
-    _background.SetCornerRadii(radii);
-    _border.SetCornerRadii(radii);
+    _background.SetBuiltInCornerRadii(StyleKey {}, radii);
+    _border.SetBuiltInCornerRadii(StyleKey {}, radii);
 }
 
 void RetroFuturaGUI::Indicator::notifyLayoutChange()

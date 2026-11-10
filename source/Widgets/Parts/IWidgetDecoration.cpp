@@ -154,3 +154,16 @@ bool RetroFuturaGUI::IWidgetDecoration::resetPartSetting(const StyleSetting)
 {
     return false;
 }
+glm::vec4 RetroFuturaGUI::IWidgetDecoration::getDrawnCornerRadii() const
+{
+    return _drawnCornerRadii.value_or(_cornerRadii);
+}
+
+void RetroFuturaGUI::IWidgetDecoration::setDrawnCornerRadii(const std::optional<glm::vec4>& radii)
+{
+    if(radii == _drawnCornerRadii)
+        return;
+
+    _drawnCornerRadii = radii;
+    setCornerShape();
+}

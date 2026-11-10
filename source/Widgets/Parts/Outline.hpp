@@ -72,7 +72,7 @@ namespace RetroFuturaGUI
         friend class WidgetText; //hands it the text's flavors.
 
         /// @brief Has the outline take unset values from the text's flavors, and takes them now
-        void followFlavors(const std::vector<u32>* flavors);
+        void followFlavors(const std::vector<u32>* flavors, const StylePart part);
 
         /// @brief Takes every setting through the layers again.
         void restyle();
@@ -92,6 +92,7 @@ namespace RetroFuturaGUI
             _builtInColors {};
         ColorState _colorState { ColorState::Enabled };
         const std::vector<u32>* _flavors { nullptr }; //the widget's flavors, kept by the widget. nullptr for a text no flavor styles
+        StylePart _stylePart { StylePart::Text }; //which of a flavor's parts it takes its values from
         LayeredSetting<f32> _widthLayer {};
         LayeredSetting<FillType> _fillTypeLayer {};
         LayeredSetting<f32>

@@ -3,6 +3,43 @@
 #include <array>
 #include <utility>
 
+RetroFuturaGUI::TableTextLayers::TableTextLayers(FlavorPick pick)
+    : _pick(pick)
+{
+}
+
+RetroFuturaGUI::TableTextLayer& RetroFuturaGUI::TableTextLayers::GetOwn()
+{
+    return _own;
+}
+
+const RetroFuturaGUI::TableTextSettings& RetroFuturaGUI::TableTextLayers::GetShown() const
+{
+    return _shown;
+}
+
+bool RetroFuturaGUI::TableTextLayers::Resolve(std::span<const u32> flavors, const bool isStyled)
+{
+    const TableTextSettings defaults {};
+    const std::optional<std::string> family { find(&TableTextLayer::_FontFamily, flavors, isStyled) };
+    const TableTextSettings shown
+    {
+        ._HasFont = family.has_value() && !family->empty(),
+        ._FontFamily = family.value_or(std::string {}),
+        ._FontSize = find(&TableTextLayer::_FontSize, flavors, isStyled).value_or(defaults._FontSize),
+        ._Slant = find(&TableTextLayer::_Slant, flavors, isStyled).value_or(defaults._Slant),
+        ._Weight = find(&TableTextLayer::_Weight, flavors, isStyled).value_or(defaults._Weight),
+        ._Alignment = find(&TableTextLayer::_Alignment, flavors, isStyled).value_or(defaults._Alignment),
+        ._Padding = find(&TableTextLayer::_Padding, flavors, isStyled).value_or(defaults._Padding)
+    };
+
+    if(shown == _shown)
+        return false;
+
+    _shown = shown;
+    return true;
+}
+
 void RetroFuturaGUI::TrackStyle::SetBackgroundColors(std::span<const glm::vec4> colors)
 {
     _background.assign(colors.begin(), colors.end());
@@ -43,51 +80,128 @@ const std::vector<glm::vec4>& RetroFuturaGUI::TrackStyle::GetIconColors() const
     return _icon;
 }
 
-RetroFuturaGUI::CellStyle::CellStyle(std::function<void()> onTextChange)
-    : _onTextChange(std::move(onTextChange))
+const std::vector<glm::vec4>& RetroFuturaGUI::TrackStyle::ShownBackgroundColors() const
 {
+    return shown(_background, _builtInBackground, &FlavorTrackStyle::GetBackgroundColors);
+}
+
+const std::vector<glm::vec4>& RetroFuturaGUI::TrackStyle::ShownInnerBorderColors() const
+{
+    return shown(_innerBorder, _builtInInnerBorder, &FlavorTrackStyle::GetInnerBorderColors);
+}
+
+const std::vector<glm::vec4>& RetroFuturaGUI::TrackStyle::ShownTextColors() const
+{
+    return shown(_text, _builtInText, &FlavorTrackStyle::GetTextColors);
+}
+
+const std::vector<glm::vec4>& RetroFuturaGUI::TrackStyle::ShownIconColors() const
+{
+    return shown(_icon, _builtInIcon, &FlavorTrackStyle::GetIconColors);
+}
+
+void RetroFuturaGUI::TrackStyle::setStyleSource(const std::vector<u32>* flavors, const uSize index)
+{
+    _flavors = flavors;
+    _index = index;
+}
+
+const std::vector<glm::vec4>& RetroFuturaGUI::TrackStyle::shown(const std::vector<glm::vec4>& own, const std::vector<glm::vec4>& builtIn, const std::vector<glm::vec4>& (FlavorTrackStyle::*get)() const) const
+{
+    if(!own.empty())
+        return own;
+
+    if(!_flavors)
+        return builtIn;
+
+    const std::vector<glm::vec4>* styled { StylingManager::FindFirst<const std::vector<glm::vec4>*>(*_flavors, [this, get](const Flavor& flavor) -> const std::vector<glm::vec4>*
+    {
+        const FlavorTrackStyle* trackStyle { flavor.FindTrackStyle(_index) };
+
+        if(!trackStyle)
+            return nullptr;
+
+        const std::vector<glm::vec4>& colors { (trackStyle->*get)() };
+        return colors.empty() ? nullptr : &colors;
+    }) };
+
+    if(!styled)
+        return builtIn;
+
+    return *styled;
+}
+
+RetroFuturaGUI::CellStyle::CellStyle(std::function<void()> onTextChange)
+    : _textSettings([](const Flavor& flavor) -> const TableTextLayer*
+      {
+          const FlavorCellStyle* cellStyle { flavor.FindCellStyle() };
+          return cellStyle ? &cellStyle->GetTextSettings() : nullptr;
+      }),
+      _onTextChange(std::move(onTextChange))
+{
+    _background.SetBuiltIn(std::array { glm::vec4(0.2f, 0.3f, 0.55f, 1.0f) }, ColorState::Selected);
+    _innerBorder.SetBuiltIn(std::array { glm::vec4(0.2f, 0.2f, 0.2f, 1.0f) }, ColorState::Disabled);
+    _innerBorder.SetBuiltIn(std::array { glm::vec4(0.5f, 0.5f, 0.5f, 1.0f) }, ColorState::Hover);
+    _innerBorder.SetBuiltIn(std::array { glm::vec4(0.6f, 0.6f, 0.6f, 1.0f) }, ColorState::Clicked);
+    _text.SetBuiltIn(std::array { glm::vec4(0.5f, 0.5f, 0.5f, 1.0f) }, ColorState::Disabled);
+    _text.SetBuiltIn(std::array { glm::vec4(1.0f) }, ColorState::Selected);
+    _icon.SetBuiltIn(std::array { glm::vec4(0.5f, 0.5f, 0.5f, 1.0f) }, ColorState::Disabled);
+    _dropTarget.SetBuiltIn(std::array { glm::vec4(0.25f, 0.5f, 0.42f, 1.0f) }, ColorState::Enabled);
 }
 
 void RetroFuturaGUI::CellStyle::SetFontFamily(std::string_view fontFamily, const f32 fontSize, const FontSizeUnit sizeUnit, const PlatformBridge::Fonts::Slant slant, const PlatformBridge::Fonts::Weight fontWeight)
 {
-    _textSettings._HasFont = true;
-    _textSettings._FontFamily = fontFamily;
-    _textSettings._FontSize = FontManager::ToPixels(fontSize, sizeUnit);
-    _textSettings._Slant = slant;
-    _textSettings._Weight = fontWeight;
-    notifyTextChange();
+    TableTextLayer& own { _textSettings.GetOwn() };
+    own._FontFamily = std::string(fontFamily);
+    own._FontSize = FontManager::ToPixels(fontSize, sizeUnit);
+    own._Slant = slant;
+    own._Weight = fontWeight;
+    resolveText();
 }
 
 f32 RetroFuturaGUI::CellStyle::GetFontSize(const FontSizeUnit sizeUnit) const
 {
-    return FontManager::FromPixels(_textSettings._FontSize, sizeUnit);
+    return FontManager::FromPixels(_textSettings.GetShown()._FontSize, sizeUnit);
 }
 
 void RetroFuturaGUI::CellStyle::SetTextAlignment(const TextAlignment alignment)
 {
-    _textSettings._Alignment = alignment;
-    notifyTextChange();
+    _textSettings.GetOwn()._Alignment = alignment;
+    resolveText();
 }
 
 RetroFuturaGUI::TextAlignment RetroFuturaGUI::CellStyle::GetTextAlignment() const
 {
-    return _textSettings._Alignment;
+    return _textSettings.GetShown()._Alignment;
 }
 
 void RetroFuturaGUI::CellStyle::SetTextPadding(const f32 padding)
 {
-    _textSettings._Padding = padding;
-    notifyTextChange();
+    _textSettings.GetOwn()._Padding = padding;
+    resolveText();
 }
 
 f32 RetroFuturaGUI::CellStyle::GetTextPadding() const
 {
-    return _textSettings._Padding;
+    return _textSettings.GetShown()._Padding;
 }
 
 const RetroFuturaGUI::TableTextSettings& RetroFuturaGUI::CellStyle::GetTextSettings() const
 {
-    return _textSettings;
+    return _textSettings.GetShown();
+}
+
+void RetroFuturaGUI::CellStyle::restyle()
+{
+    resolveText();
+}
+
+void RetroFuturaGUI::CellStyle::resolveText()
+{
+    if(!_textSettings.Resolve(getFlavors(), isStyled()))
+        return;
+
+    notifyTextChange();
 }
 
 void RetroFuturaGUI::CellStyle::notifyTextChange()
@@ -100,72 +214,64 @@ void RetroFuturaGUI::CellStyle::notifyTextChange()
 
 void RetroFuturaGUI::CellStyle::SetBackgroundColors(std::span<const glm::vec4> colors, const ColorState state)
 {
-    std::vector<glm::vec4>* target { colorsOf(_background, state) };
+    if(ColorState::Enabled == state)
+        return; //each track's own.
 
-    if(!target)
-        return;
-
-    target->assign(colors.begin(), colors.end());
+    _background.SetOwn(colors, state);
 }
 
 const std::vector<glm::vec4>& RetroFuturaGUI::CellStyle::GetBackgroundColors(const ColorState state) const
 {
-    return colorsOf(_background, state);
+    return _background.GetOwn(state);
 }
 
 void RetroFuturaGUI::CellStyle::SetInnerBorderColors(std::span<const glm::vec4> colors, const ColorState state)
 {
-    std::vector<glm::vec4>* target { colorsOf(_innerBorder, state) };
-
-    if(!target)
+    if(ColorState::Enabled == state)
         return;
 
-    target->assign(colors.begin(), colors.end());
+    _innerBorder.SetOwn(colors, state);
 }
 
 const std::vector<glm::vec4>& RetroFuturaGUI::CellStyle::GetInnerBorderColors(const ColorState state) const
 {
-    return colorsOf(_innerBorder, state);
+    return _innerBorder.GetOwn(state);
 }
 
 void RetroFuturaGUI::CellStyle::SetTextColors(std::span<const glm::vec4> colors, const ColorState state)
 {
-    std::vector<glm::vec4>* target { colorsOf(_text, state) };
-
-    if(!target)
+    if(ColorState::Enabled == state)
         return;
 
-    target->assign(colors.begin(), colors.end());
+    _text.SetOwn(colors, state);
 }
 
 const std::vector<glm::vec4>& RetroFuturaGUI::CellStyle::GetTextColors(const ColorState state) const
 {
-    return colorsOf(_text, state);
+    return _text.GetOwn(state);
 }
 
 void RetroFuturaGUI::CellStyle::SetIconColors(std::span<const glm::vec4> colors, const ColorState state)
 {
-    std::vector<glm::vec4>* target { colorsOf(_icon, state) };
-
-    if(!target)
+    if(ColorState::Enabled == state)
         return;
 
-    target->assign(colors.begin(), colors.end());
+    _icon.SetOwn(colors, state);
 }
 
 const std::vector<glm::vec4>& RetroFuturaGUI::CellStyle::GetIconColors(const ColorState state) const
 {
-    return colorsOf(_icon, state);
+    return _icon.GetOwn(state);
 }
 
 void RetroFuturaGUI::CellStyle::SetDropTargetColors(std::span<const glm::vec4> colors)
 {
-    _dropTarget.assign(colors.begin(), colors.end());
+    _dropTarget.SetOwn(colors, ColorState::Enabled);
 }
 
 const std::vector<glm::vec4>& RetroFuturaGUI::CellStyle::GetDropTargetColors() const
 {
-    return _dropTarget;
+    return _dropTarget.GetOwn(ColorState::Enabled);
 }
 
 void RetroFuturaGUI::CellStyle::SetInnerBorderWidth(const f32 width)
@@ -175,120 +281,121 @@ void RetroFuturaGUI::CellStyle::SetInnerBorderWidth(const f32 width)
 
 f32 RetroFuturaGUI::CellStyle::GetInnerBorderWidth() const
 {
-    return _innerBorderWidth;
+    if(_innerBorderWidth)
+        return *_innerBorderWidth;
+
+    return StylingManager::FindWidth(getFlavors(), StylePart::CellStyleInnerBorder).value_or(1.0f);
 }
 
 const std::vector<glm::vec4>& RetroFuturaGUI::CellStyle::ShownBackgroundColors(const TrackStyle& track, const ColorState state) const
 {
-    return shown(_background, track.GetBackgroundColors(), state);
+    return shown(_background, StylePart::CellStyleBackground, track.ShownBackgroundColors(), state);
 }
 
 const std::vector<glm::vec4>& RetroFuturaGUI::CellStyle::ShownInnerBorderColors(const TrackStyle& track, const ColorState state) const
 {
-    return shown(_innerBorder, track.GetInnerBorderColors(), state);
+    return shown(_innerBorder, StylePart::CellStyleInnerBorder, track.ShownInnerBorderColors(), state);
 }
 
 const std::vector<glm::vec4>& RetroFuturaGUI::CellStyle::ShownTextColors(const TrackStyle& track, const ColorState state) const
 {
-    return shown(_text, track.GetTextColors(), state);
+    return shown(_text, StylePart::CellStyleText, track.ShownTextColors(), state);
 }
 
 const std::vector<glm::vec4>& RetroFuturaGUI::CellStyle::ShownIconColors(const TrackStyle& track, const ColorState state) const
 {
-    return shown(_icon, track.GetIconColors(), state);
+    return shown(_icon, StylePart::CellStyleIcon, track.ShownIconColors(), state);
 }
 
-std::vector<glm::vec4>* RetroFuturaGUI::CellStyle::colorsOf(StateColors& colors, const ColorState state)
+const std::vector<glm::vec4>& RetroFuturaGUI::CellStyle::ShownDropTargetColors() const
 {
-    switch(state)
-    {
-        case ColorState::Disabled:
-            return &colors._Disabled;
-        case ColorState::Hover:
-            return &colors._Hover;
-        case ColorState::Clicked:
-            return &colors._Clicked;
-        case ColorState::Selected:
-            return &colors._Selected;
-        default: //Enabled is each track's own
-            return nullptr;
-    }
+    return _dropTarget.GetShown(ColorState::Enabled, getFlavors(), isStyled(), StylePart::CellStyleDropTarget);
 }
 
-const std::vector<glm::vec4>& RetroFuturaGUI::CellStyle::colorsOf(const StateColors& colors, const ColorState state)
+const std::vector<glm::vec4>& RetroFuturaGUI::CellStyle::shown(const LayeredColors& colors, const StylePart part, const std::vector<glm::vec4>& own, const ColorState state) const
 {
-    static const std::vector<glm::vec4> none {};
-
-    switch(state)
-    {
-        case ColorState::Disabled:
-            return colors._Disabled;
-        case ColorState::Hover:
-            return colors._Hover;
-        case ColorState::Clicked:
-            return colors._Clicked;
-        case ColorState::Selected:
-            return colors._Selected;
-        default: //Enabled is each track's own
-            return none;
-    }
-}
-
-const std::vector<glm::vec4>& RetroFuturaGUI::CellStyle::shown(const StateColors& colors, const std::vector<glm::vec4>& own, const ColorState state)
-{
-    const std::vector<glm::vec4>& shared { colorsOf(colors, state) };
-
-    if(shared.empty())
+    if(ColorState::Enabled == state)
         return own;
 
-    return shared;
+    const std::vector<glm::vec4>* shared { colors.Find(state, getFlavors(), isStyled(), part) };
+
+    if(!shared)
+        return own;
+
+    return *shared;
 }
 
 RetroFuturaGUI::HeaderStyle::HeaderStyle(std::function<void()> onTextChange)
-    : _onTextChange(std::move(onTextChange))
+    : _textSettings([](const Flavor& flavor) -> const TableTextLayer*
+      {
+          const FlavorHeaderStyle* headerStyle { flavor.FindHeaderStyle() };
+          return headerStyle ? &headerStyle->GetTextSettings() : nullptr;
+      }),
+      _onTextChange(std::move(onTextChange))
 {
+    _background.SetBuiltIn(std::array { ResourceManager::_Eigengrau }, ColorState::Enabled);
+    _background.SetBuiltIn(std::array { ResourceManager::_Eigengrau }, ColorState::Disabled);
+    _innerBorder.SetBuiltIn(std::array { glm::vec4(0.4f, 0.4f, 0.4f, 1.0f) }, ColorState::Enabled);
+    _innerBorder.SetBuiltIn(std::array { glm::vec4(0.2f, 0.2f, 0.2f, 1.0f) }, ColorState::Disabled);
+    _outerBorder.SetBuiltIn(std::array { glm::vec4(0.4f, 0.4f, 0.4f, 1.0f) }, ColorState::Enabled);
+    _outerBorder.SetBuiltIn(std::array { glm::vec4(0.2f, 0.2f, 0.2f, 1.0f) }, ColorState::Disabled);
+    _text.SetBuiltIn(std::array { glm::vec4(1.0f) }, ColorState::Enabled);
+    _text.SetBuiltIn(std::array { glm::vec4(0.5f, 0.5f, 0.5f, 1.0f) }, ColorState::Disabled);
 }
 
 void RetroFuturaGUI::HeaderStyle::SetFontFamily(std::string_view fontFamily, const f32 fontSize, const FontSizeUnit sizeUnit, const PlatformBridge::Fonts::Slant slant, const PlatformBridge::Fonts::Weight fontWeight)
 {
-    _textSettings._HasFont = true;
-    _textSettings._FontFamily = fontFamily;
-    _textSettings._FontSize = FontManager::ToPixels(fontSize, sizeUnit);
-    _textSettings._Slant = slant;
-    _textSettings._Weight = fontWeight;
-    notifyTextChange();
+    TableTextLayer& own { _textSettings.GetOwn() };
+    own._FontFamily = std::string(fontFamily);
+    own._FontSize = FontManager::ToPixels(fontSize, sizeUnit);
+    own._Slant = slant;
+    own._Weight = fontWeight;
+    resolveText();
 }
 
 f32 RetroFuturaGUI::HeaderStyle::GetFontSize(const FontSizeUnit sizeUnit) const
 {
-    return FontManager::FromPixels(_textSettings._FontSize, sizeUnit);
+    return FontManager::FromPixels(_textSettings.GetShown()._FontSize, sizeUnit);
 }
 
 void RetroFuturaGUI::HeaderStyle::SetTextAlignment(const TextAlignment alignment)
 {
-    _textSettings._Alignment = alignment;
-    notifyTextChange();
+    _textSettings.GetOwn()._Alignment = alignment;
+    resolveText();
 }
 
 RetroFuturaGUI::TextAlignment RetroFuturaGUI::HeaderStyle::GetTextAlignment() const
 {
-    return _textSettings._Alignment;
+    return _textSettings.GetShown()._Alignment;
 }
 
 void RetroFuturaGUI::HeaderStyle::SetTextPadding(const f32 padding)
 {
-    _textSettings._Padding = padding;
-    notifyTextChange();
+    _textSettings.GetOwn()._Padding = padding;
+    resolveText();
 }
 
 f32 RetroFuturaGUI::HeaderStyle::GetTextPadding() const
 {
-    return _textSettings._Padding;
+    return _textSettings.GetShown()._Padding;
 }
 
 const RetroFuturaGUI::TableTextSettings& RetroFuturaGUI::HeaderStyle::GetTextSettings() const
 {
-    return _textSettings;
+    return _textSettings.GetShown();
+}
+
+void RetroFuturaGUI::HeaderStyle::restyle()
+{
+    resolveText();
+}
+
+void RetroFuturaGUI::HeaderStyle::resolveText()
+{
+    if(!_textSettings.Resolve(getFlavors(), isStyled()))
+        return;
+
+    notifyTextChange();
 }
 
 void RetroFuturaGUI::HeaderStyle::notifyTextChange()
@@ -301,42 +408,42 @@ void RetroFuturaGUI::HeaderStyle::notifyTextChange()
 
 void RetroFuturaGUI::HeaderStyle::SetBackgroundColors(std::span<const glm::vec4> colors, const ColorState state)
 {
-    colorsOf(_background, state).assign(colors.begin(), colors.end());
+    _background.SetOwn(colors, headerState(state));
 }
 
 const std::vector<glm::vec4>& RetroFuturaGUI::HeaderStyle::GetBackgroundColors(const ColorState state) const
 {
-    return colorsOf(_background, state);
+    return _background.GetOwn(headerState(state));
 }
 
 void RetroFuturaGUI::HeaderStyle::SetInnerBorderColors(std::span<const glm::vec4> colors, const ColorState state)
 {
-    colorsOf(_innerBorder, state).assign(colors.begin(), colors.end());
+    _innerBorder.SetOwn(colors, headerState(state));
 }
 
 const std::vector<glm::vec4>& RetroFuturaGUI::HeaderStyle::GetInnerBorderColors(const ColorState state) const
 {
-    return colorsOf(_innerBorder, state);
+    return _innerBorder.GetOwn(headerState(state));
 }
 
 void RetroFuturaGUI::HeaderStyle::SetOuterBorderColors(std::span<const glm::vec4> colors, const ColorState state)
 {
-    colorsOf(_outerBorder, state).assign(colors.begin(), colors.end());
+    _outerBorder.SetOwn(colors, headerState(state));
 }
 
 const std::vector<glm::vec4>& RetroFuturaGUI::HeaderStyle::GetOuterBorderColors(const ColorState state) const
 {
-    return colorsOf(_outerBorder, state);
+    return _outerBorder.GetOwn(headerState(state));
 }
 
 void RetroFuturaGUI::HeaderStyle::SetTextColors(std::span<const glm::vec4> colors, const ColorState state)
 {
-    colorsOf(_text, state).assign(colors.begin(), colors.end());
+    _text.SetOwn(colors, headerState(state));
 }
 
 const std::vector<glm::vec4>& RetroFuturaGUI::HeaderStyle::GetTextColors(const ColorState state) const
 {
-    return colorsOf(_text, state);
+    return _text.GetOwn(headerState(state));
 }
 
 void RetroFuturaGUI::HeaderStyle::SetInnerBorderWidth(const f32 width)
@@ -346,7 +453,7 @@ void RetroFuturaGUI::HeaderStyle::SetInnerBorderWidth(const f32 width)
 
 f32 RetroFuturaGUI::HeaderStyle::GetInnerBorderWidth() const
 {
-    return _innerBorderWidth;
+    return shownWidth(_innerBorderWidth, StylePart::HeaderStyleInnerBorder);
 }
 
 void RetroFuturaGUI::HeaderStyle::SetOuterBorderWidth(const f32 width)
@@ -356,17 +463,40 @@ void RetroFuturaGUI::HeaderStyle::SetOuterBorderWidth(const f32 width)
 
 f32 RetroFuturaGUI::HeaderStyle::GetOuterBorderWidth() const
 {
-    return _outerBorderWidth;
+    return shownWidth(_outerBorderWidth, StylePart::HeaderStyleOuterBorder);
 }
 
-std::vector<glm::vec4>& RetroFuturaGUI::HeaderStyle::colorsOf(StateColors& colors, const ColorState state)
+const std::vector<glm::vec4>& RetroFuturaGUI::HeaderStyle::ShownBackgroundColors(const ColorState state) const
 {
-    return ColorState::Disabled == state ? colors._Disabled : colors._Enabled;
+    return _background.GetShown(headerState(state), getFlavors(), isStyled(), StylePart::HeaderStyleBackground);
 }
 
-const std::vector<glm::vec4>& RetroFuturaGUI::HeaderStyle::colorsOf(const StateColors& colors, const ColorState state)
+const std::vector<glm::vec4>& RetroFuturaGUI::HeaderStyle::ShownInnerBorderColors(const ColorState state) const
 {
-    return ColorState::Disabled == state ? colors._Disabled : colors._Enabled;
+    return _innerBorder.GetShown(headerState(state), getFlavors(), isStyled(), StylePart::HeaderStyleInnerBorder);
+}
+
+const std::vector<glm::vec4>& RetroFuturaGUI::HeaderStyle::ShownOuterBorderColors(const ColorState state) const
+{
+    return _outerBorder.GetShown(headerState(state), getFlavors(), isStyled(), StylePart::HeaderStyleOuterBorder);
+}
+
+const std::vector<glm::vec4>& RetroFuturaGUI::HeaderStyle::ShownTextColors(const ColorState state) const
+{
+    return _text.GetShown(headerState(state), getFlavors(), isStyled(), StylePart::HeaderStyleText);
+}
+
+RetroFuturaGUI::ColorState RetroFuturaGUI::HeaderStyle::headerState(const ColorState state)
+{
+    return ColorState::Disabled == state ? ColorState::Disabled : ColorState::Enabled;
+}
+
+f32 RetroFuturaGUI::HeaderStyle::shownWidth(const std::optional<f32>& own, const StylePart part) const
+{
+    if(own)
+        return *own;
+
+    return StylingManager::FindWidth(getFlavors(), part).value_or(1.0f);
 }
 
 RetroFuturaGUI::CellCheckBox::CellCheckBox(Projection* projection)
@@ -388,8 +518,8 @@ RetroFuturaGUI::CellCheckBox::CellCheckBox(Projection* projection)
 {
     for(const ColorState state : { ColorState::Enabled, ColorState::Hover, ColorState::Clicked, ColorState::Disabled })
     {
-        _background.SetColors(std::array { glm::vec4(1.0f) }, state);
-        _border.SetColors(std::array { glm::vec4(1.0f) }, state);
+        _background.SetBuiltInColors(StyleKey {}, std::array { glm::vec4(1.0f) }, state);
+        _border.SetBuiltInColors(StyleKey {}, std::array { glm::vec4(1.0f) }, state);
     }
 }
 

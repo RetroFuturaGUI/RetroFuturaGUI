@@ -27,7 +27,7 @@ RetroFuturaGUI::ITextBox::ITextBox(std::string_view name, Projection* projection
          }
      }
 {
-    _placeholder.SetColors(std::array { glm::vec4(0.5f, 0.5f, 0.5f, 1.0f) }, ColorState::Enabled);
+    _placeholder.SetBuiltInColors(styleKey(), std::array { glm::vec4(0.5f, 0.5f, 0.5f, 1.0f) }, ColorState::Enabled);
     _text.SetTransitionSettings(&_transitionSettings);
     _placeholder.SetTransitionSettings(&_transitionSettings);
     _editor.SetTransitionSettings(&_transitionSettings);
@@ -35,6 +35,9 @@ RetroFuturaGUI::ITextBox::ITextBox(std::string_view name, Projection* projection
     _border.SetTransitionSettings(&_transitionSettings);
     useBorderGap(&_background, &_border);
     useFlavors(&_background, &_border, &_text);
+    useSubPartFlavors(_placeholder, StylePart::Placeholder);
+    useSubPartFlavors(_editor.GetCaret(), StylePart::Caret);
+    useSubPartFlavors(_editor.GetSelectedArea(), StylePart::SelectedArea);
 }
 
 void RetroFuturaGUI::ITextBox::textChanged(const WidgetTextChange change)

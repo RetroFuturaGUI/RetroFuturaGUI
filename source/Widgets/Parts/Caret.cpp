@@ -1,27 +1,31 @@
 #include "Caret.hpp"
+#include <array>
 #include <algorithm>
 
 RetroFuturaGUI::Caret::Caret(Projection* projection)
     : _plane(projection)
 {
     _plane.SetFillType(FillType::Solid);
-    _plane.SetColors(_colors);
+    _colors.SetBuiltIn(std::array { glm::vec4(1.0f) }, ColorState::Enabled);
+    applyStyle();
 }
 
 void RetroFuturaGUI::Caret::SetColors(std::span<const glm::vec4> colors)
 {
-    _colors.assign(colors.begin(), colors.end());
-    _plane.SetColors(_colors);
+    _colors.SetOwn(colors, ColorState::Enabled);
+    applyStyle();
 }
 
 void RetroFuturaGUI::Caret::SetFillType(const FillType fillType)
 {
-    _plane.SetFillType(fillType);
+    _fillTypeLayer.Set(fillType);
+    applyStyle();
 }
 
 void RetroFuturaGUI::Caret::SetGradientAnimationSpeed(const f32 speed)
 {
-    _plane.SetGradientAnimationSpeed(speed);
+    _gradientAnimationSpeedLayer.Set(speed);
+    applyStyle();
 }
 
 void RetroFuturaGUI::Caret::SetBlinkTime(const f64 milliseconds)
@@ -48,6 +52,8 @@ bool RetroFuturaGUI::Caret::NeverBlinks() const
 
 void RetroFuturaGUI::Caret::Draw()
 {
+    followFlavors();
+
     //Read before the check: Get reads arrived once the transition is done
     if(_isMoving)
     {
@@ -123,4 +129,40 @@ void RetroFuturaGUI::Caret::MoveTo(const glm::vec3& position, const glm::vec2& s
     _position.Set(position, transition);
     _size.Set(size, transition);
     _isMoving = true;
+}
+
+void RetroFuturaGUI::Caret::ResetSetting(const StyleSetting setting)
+{
+    switch(setting)
+    {
+        case StyleSetting::FillType:
+            _fillTypeLayer.Reset();
+        break;
+        case StyleSetting::GradientAnimationSpeed:
+            _gradientAnimationSpeedLayer.Reset();
+        break;
+        default: //a setting the caret doesn't have.
+            return;
+    }
+
+    applyStyle();
+}
+
+void RetroFuturaGUI::Caret::restyle()
+{
+    applyStyle();
+}
+
+void RetroFuturaGUI::Caret::applyStyle()
+{
+    const std::span<const u32> flavors { getFlavors() };
+    const StylePart part { getStylePart() };
+
+    _plane.SetColors(_colors.GetShown(ColorState::Enabled, flavors, isStyled(), part));
+
+    if(const FillType* value { _fillTypeLayer.Resolve(flavors, isStyled(), part, FillType::Solid, [](const FlavorPart& style) -> const std::optional<FillType>& { return style.GetFillType(); }) })
+        _plane.SetFillType(*value);
+
+    if(const f32* value { _gradientAnimationSpeedLayer.Resolve(flavors, isStyled(), part, 0.018f, [](const FlavorPart& style) -> const std::optional<f32>& { return style.GetGradientAnimationSpeed(); }) })
+        _plane.SetGradientAnimationSpeed(*value);
 }

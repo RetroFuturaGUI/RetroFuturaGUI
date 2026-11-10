@@ -85,6 +85,11 @@ RetroFuturaGUI::Transitions::InstantScope::~InstantScope()
     _areInstant = _wasInstant;
 }
 
+const std::optional<RetroFuturaGUI::Transition>& RetroFuturaGUI::Transitions::GetOverride(const TransitionSettings& settings, const TransitionProperty property)
+{
+    return select(settings, property);
+}
+
 RetroFuturaGUI::Transition RetroFuturaGUI::Transitions::Resolve(const TransitionSettings& settings, const TransitionProperty property)
 {
     if(_areInstant)

@@ -1,6 +1,8 @@
 #pragma once
 #include "IncludeHelper.hpp"
 #include "Plane.hpp"
+#include "StyledPart.hpp"
+#include "ShaderLayers.hpp"
 #include <span>
 #include <vector>
 
@@ -8,7 +10,7 @@ namespace RetroFuturaGUI
 {
     /// @brief The highlight behind an editable text's selection. The widget owns it and hands it out through GetSelectedArea(),
     ///        so it is styled as textBox.GetSelectedArea().SetColors(...)
-    class SelectedArea final
+    class SelectedArea final : public IStyledPart
     {
     public:
         /// @brief One box of the highlight. A stretch of selected text drawn without a break
@@ -27,7 +29,7 @@ namespace RetroFuturaGUI
         auto operator =(const SelectedArea&) = delete;
         auto operator =(SelectedArea&&) = delete;
 
-        /// @brief Sets the highlight color(s)
+        /// @brief Sets the highlight color(s), over every flavor. None leave them to the widget's flavors and the built-in ones
         void SetColors(std::span<const glm::vec4> colors);
 
         /// @brief Sets the fill type (solid, linear/radial/huestar gradient)
@@ -48,6 +50,9 @@ namespace RetroFuturaGUI
         /// @brief Sets the corner rounding radii
         void SetCornerRadii(const glm::vec4& radii);
 
+        /// @brief Leaves a fill setting to the widget's flavors and the built-in look (colors: set none instead)
+        void ResetSetting(const StyleSetting setting);
+
     //Called by the owning widget
         /// @brief Draws one box per area, at the depth SetPosition gave
         void Draw(std::span<const LineArea> areas);
@@ -59,7 +64,19 @@ namespace RetroFuturaGUI
         void SetTransitionSettings(const TransitionSettings* settings);
 
     private:
+        void restyle() override;
+
+        /// @brief Hands the plane the colors and the fill settings that changed through the layers
+        void applyStyle();
+
         Plane _plane;
-        std::vector<glm::vec4> _colors { glm::vec4(0.24f, 0.47f, 0.85f, 0.4f) };
+        LayeredColors _colors {}; //its colors are its Enabled ones
+        LayeredSetting<FillType> _fillTypeLayer {};
+        LayeredSetting<f32>
+            _gradientAnimationSpeedLayer {},
+            _gradientOffsetLayer {},
+            _gradientDegreeLayer {},
+            _gradientRotationSpeedLayer {};
+        LayeredSetting<glm::vec4> _cornerRadiiLayer {};
     };
 }

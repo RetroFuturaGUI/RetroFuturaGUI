@@ -79,6 +79,20 @@ std::optional<f32> RetroFuturaGUI::StylingManager::FindWidth(std::span<const u32
     return FindFirst<std::optional<f32>>(flavorHashes, part, [](const FlavorPart& style) { return style.GetWidth(); });
 }
 
+void RetroFuturaGUI::StylingManager::ResolveTransitions(const TransitionSettings& own, std::span<const u32> flavorHashes, TransitionSettings& shown)
+{
+    for(const TransitionProperty property : Transitions::AllProperties)
+    {
+        const std::optional<Transition>& ownTransition { Transitions::GetOverride(own, property) };
+        const std::optional<Transition> transition { ownTransition ? ownTransition : FindFirst<std::optional<Transition>>(flavorHashes, [property](const Flavor& flavor) -> const std::optional<Transition>& { return Transitions::GetOverride(flavor.GetTransitions(), property); }) };
+
+        if(transition)
+            Transitions::Override(shown, property, *transition);
+        else
+            Transitions::Reset(shown, property);
+    }
+}
+
 void RetroFuturaGUI::StylingManager::markChanged()
 {
     ++_generation;

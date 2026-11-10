@@ -44,13 +44,23 @@ RetroFuturaGUI::Table::Table(std::string_view name, Projection* projection, IWid
     _cellImagePlane = std::make_unique<Plane>(projection);
     _selectionBand.GetBackground().SetTransitionSettings(&_transitionSettings); //the cell elements draw once per cell, in its colors, so they switch at once
     _selectionBand.GetBorder().SetTransitionSettings(&_transitionSettings);
-    _selectionBand.GetBackground().SetColors(std::array { glm::vec4(0.3f, 0.45f, 0.85f, 0.25f) }, ColorState::Enabled);
-    _selectionBand.GetBorder().SetColors(std::array { glm::vec4(0.45f, 0.6f, 1.0f, 0.9f) }, ColorState::Enabled);
-    _selectionBand.GetBorder().SetWidth(1.0f);
+    _selectionBand.GetBackground().SetBuiltInColors(styleKey(), std::array { glm::vec4(0.3f, 0.45f, 0.85f, 0.25f) }, ColorState::Enabled);
+    _selectionBand.GetBorder().SetBuiltInColors(styleKey(), std::array { glm::vec4(0.45f, 0.6f, 1.0f, 0.9f) }, ColorState::Enabled);
+    _selectionBand.GetBorder().SetBuiltInWidth(styleKey(), 1.0f);
     _background.SetTransitionSettings(&_transitionSettings);
     _border.SetTransitionSettings(&_transitionSettings);
     useBorderGap(&_background, &_border);
     useFlavors(&_background, &_border, nullptr);
+    useSubPartFlavors(_selectionBand.GetBackground(), StylePart::SelectionBandBackground);
+    useSubPartFlavors(_selectionBand.GetBorder(), StylePart::SelectionBandBorder);
+    useSubPartFlavors(_editor.GetCaret(), StylePart::Caret);
+    useSubPartFlavors(_editor.GetSelectedArea(), StylePart::SelectedArea);
+    useSubPartFlavors(_cellStyle, StylePart::CellStyleText);
+    useSubPartFlavors(_headerStyle, StylePart::HeaderStyleText);
+    useSubPartFlavors(_cellCheckBox.GetBackground(), StylePart::CellCheckBoxBackground);
+    useSubPartFlavors(_cellCheckBox.GetBorder(), StylePart::CellCheckBoxBorder);
+    useSubPartFlavors(_cellCheckBox.GetCheckmark(), StylePart::CellCheckBoxCheckmark);
+    followTrackFlavors();
 
     if(!_highlightedBackgroundCell)
         return;
@@ -118,6 +128,8 @@ void RetroFuturaGUI::Table::Draw()
     if(!_innerBorder)
         return;
 
+    _cellStyle.followFlavors();
+    _headerStyle.followFlavors();
     _border.Draw();
 
     const uSize variantCount { _trackStyles.size() };
@@ -157,7 +169,7 @@ void RetroFuturaGUI::Table::Draw()
 
                 _trackColoringOverlay->SetSize(size);
                 _trackColoringOverlay->SetPosition(position - glm::vec3(0.0f, 0.0f, _widgetZOffset));
-                _trackColoringOverlay->SetColors(isDropTarget ? _cellStyle.GetDropTargetColors() : _cellStyle.ShownBackgroundColors(track, state));
+                _trackColoringOverlay->SetColors(isDropTarget ? _cellStyle.ShownDropTargetColors() : _cellStyle.ShownBackgroundColors(track, state));
                 _trackColoringOverlay->Draw();
 
                 _innerBorder->SetBorderWidth(_cellStyle.GetInnerBorderWidth());
@@ -218,7 +230,7 @@ void RetroFuturaGUI::Table::drawTextCell(const uSize row, const uSize column, co
     if(!text)
         return;
 
-    text->SetTextColors(track.GetTextColors(), ColorState::Enabled);
+    text->SetTextColors(track.ShownTextColors(), ColorState::Enabled);
     text->SetTextColors(_cellStyle.ShownTextColors(track, state), state);
     text->SetTextColorState(state);
     text->Draw();
@@ -281,19 +293,19 @@ void RetroFuturaGUI::Table::drawHeaderBand(std::vector<TableCell>& cells, const 
 
         _trackColoringOverlay->SetSize(cell._SizePixels);
         _trackColoringOverlay->SetPosition(cell._PositionPixels - glm::vec3(0.0f, 0.0f, _widgetZOffset));
-        _trackColoringOverlay->SetColors(_headerStyle.GetBackgroundColors(state));
+        _trackColoringOverlay->SetColors(_headerStyle.ShownBackgroundColors(state));
         _trackColoringOverlay->Draw();
 
         _innerBorder->SetBorderWidth(_headerStyle.GetInnerBorderWidth());
         _innerBorder->SetSize(cell._SizePixels);
         _innerBorder->SetPosition(cell._PositionPixels - glm::vec3(0.0f, 0.0f, _widgetZOffset - 0.01f));
-        _innerBorder->SetColors(_headerStyle.GetInnerBorderColors(state));
+        _innerBorder->SetColors(_headerStyle.ShownInnerBorderColors(state));
         _innerBorder->Draw();
 
         if(cell._TableWidgetTypeID == ITableWidget::TableWidgetTypeID::TableText)
         {
             TableText* text { static_cast<TableText*>(cell._TableWidget.get()) };
-            text->SetTextColors(_headerStyle.GetTextColors(state), state);
+            text->SetTextColors(_headerStyle.ShownTextColors(state), state);
             text->SetTextColorState(state);
         }
 
@@ -691,8 +703,8 @@ void RetroFuturaGUI::Table::ensureHeaderWidget(TableCell& cell)
 
     textWidget->SetTextAlignment(_headerStyle.GetTextSettings()._Alignment);
     textWidget->SetTextPadding(_headerStyle.GetTextSettings()._Padding);
-    textWidget->SetTextColors(_headerStyle.GetTextColors(ColorState::Enabled), ColorState::Enabled);
-    textWidget->SetTextColors(_headerStyle.GetTextColors(ColorState::Disabled), ColorState::Disabled);
+    textWidget->SetTextColors(_headerStyle.ShownTextColors(ColorState::Enabled), ColorState::Enabled);
+    textWidget->SetTextColors(_headerStyle.ShownTextColors(ColorState::Disabled), ColorState::Disabled);
 
     cell._TableWidget = std::move(textWidget);
     cell._TableWidgetTypeID = ITableWidget::TableWidgetTypeID::TableText;
@@ -936,6 +948,13 @@ void RetroFuturaGUI::Table::SetTableOrientation(const TableOrientation orientati
 void RetroFuturaGUI::Table::SetTrackAlternatingColorCount(const uSize variantCount)
 {
     _trackStyles.resize(std::max<uSize>(variantCount, 1)); //at least one, so every track has a look
+    followTrackFlavors();
+}
+
+void RetroFuturaGUI::Table::followTrackFlavors()
+{
+    for(uSize variant { 0 }; variant < _trackStyles.size(); ++variant)
+        _trackStyles[variant].setStyleSource(&_flavorHashes, variant);
 }
 
 void RetroFuturaGUI::Table::SetRowWidgetTypes(const std::vector<ITableWidget::TableWidgetTypeID>& rowWidgetTypes)
@@ -1353,7 +1372,7 @@ void RetroFuturaGUI::Table::styleText(TableText& text)
 
     //The text keeps spans into the table's colors, which outlive every pooled text. drawTextCell sets them again for the cell it draws
     const TrackStyle& track { _trackStyles.front() };
-    text.SetTextColors(track.GetTextColors(), ColorState::Enabled);
+    text.SetTextColors(track.ShownTextColors(), ColorState::Enabled);
     text.SetTextColors(_cellStyle.ShownTextColors(track, ColorState::Disabled), ColorState::Disabled);
     text.SetTextColors(_cellStyle.ShownTextColors(track, ColorState::Selected), ColorState::Selected);
 }
@@ -1501,7 +1520,7 @@ void RetroFuturaGUI::Table::drawHeaderOuterBorder(const std::vector<TableCell>& 
     _innerBorder->SetBorderWidth(width);
     _innerBorder->SetSize(size);
     _innerBorder->SetPosition(position - glm::vec3(0.0f, 0.0f, _widgetZOffset - 0.02f)); //over the cells' own borders.
-    _innerBorder->SetColors(_headerStyle.GetOuterBorderColors(state));
+    _innerBorder->SetColors(_headerStyle.ShownOuterBorderColors(state));
     _innerBorder->Draw();
 }
 

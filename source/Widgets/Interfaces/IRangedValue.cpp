@@ -11,6 +11,9 @@ RetroFuturaGUI::IRangedValue::IRangedValue(std::string_view name, Projection* pr
     _border.SetTransitionSettings(&_transitionSettings);
     useBorderGap(&_background, &_border);
     useFlavors(&_background, &_border, nullptr);
+    useSubPartFlavors(_indicator.GetBackground(), StylePart::IndicatorBackground);
+    useSubPartFlavors(_indicator.GetBorder(), StylePart::IndicatorBorder);
+    useSubPartFlavors(_graph, StylePart::Graph);
     _elementProjection = projection;
 }
 

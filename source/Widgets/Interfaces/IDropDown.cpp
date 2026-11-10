@@ -11,6 +11,10 @@ RetroFuturaGUI::IDropDown::IDropDown(std::string_view name, Projection* projecti
     _border.SetTransitionSettings(&_transitionSettings);
     useBorderGap(&_background, &_border);
     useFlavors(&_background, &_border, nullptr);
+    useSubPartFlavors(_list.GetBackground(), StylePart::ListBackground);
+    useSubPartFlavors(_list.GetBorder(), StylePart::ListBorder);
+    useSubPartFlavors(_list.GetHighlight(), StylePart::ListHighlight);
+    useSubPartFlavors(_arrow, StylePart::Arrow);
 
     _dropDowns.push_back(this);
 }

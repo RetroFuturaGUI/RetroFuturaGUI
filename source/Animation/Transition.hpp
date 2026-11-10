@@ -128,6 +128,9 @@ namespace RetroFuturaGUI
         ///        gradients with different stop counts can blend stop by stop.
         static void ResampleStops(std::span<const glm::vec4> colors, const uSize stopCount, std::vector<glm::vec4>& stops);
 
+        /// @brief Returns the settings' own transition of one property, nothing when it follows the global default
+        static const std::optional<Transition>& GetOverride(const TransitionSettings& settings, const TransitionProperty property);
+
     private:
         /// @brief The settings' own transition of one property.
         static std::optional<Transition>& select(TransitionSettings& settings, const TransitionProperty property);

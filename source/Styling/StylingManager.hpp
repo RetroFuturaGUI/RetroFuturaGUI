@@ -16,6 +16,13 @@ namespace RetroFuturaGUI
     {
     private:
         friend class IWidget;
+        friend class Indicator; //the parts that give the parts inside them their built-in look
+        friend class DropDownList;
+        friend class CloseButton;
+        friend class HoverText;
+        friend class ColorPickerIndicator;
+        friend class CellCheckBox;
+        friend class Window;
         StyleKey() = default;
     };
 
@@ -55,9 +62,28 @@ namespace RetroFuturaGUI
         static std::optional<CutCorners> FindCutCorners(std::span<const u32> flavorHashes, const StylePart part);
         static std::optional<f32> FindWidth(std::span<const u32> flavorHashes, const StylePart part);
 
+        /// @brief Works out the transitions shown per property: the own one, else the first of the flavors' (then .default's). A
+        ///        property none of them sets follows the global default
+        static void ResolveTransitions(const TransitionSettings& own, std::span<const u32> flavorHashes, TransitionSettings& shown);
+
         /// @brief The first of the flavors, then .default, whose part style gives a value through pick (an optional or a
         ///        pointer that is empty when the style leaves it unset), or an empty value when none does
         template<typename Value, typename Pick> static Value FindFirst(std::span<const u32> flavorHashes, const StylePart part, Pick pick)
+        {
+            return FindFirst<Value>(flavorHashes, [part, &pick](const Flavor& flavor) -> Value
+            {
+                const FlavorPart* style { flavor.FindPart(part) };
+
+                if(!style)
+                    return Value {}; //the flavor sets nothing for this part inside the widget
+
+                return pick(*style);
+            });
+        }
+
+        /// @brief The first of the flavors, then .default, that gives a value through pick, for what a flavor sets on the widget
+        ///        itself (its transitions, its border gap), or an empty value when none does
+        template<typename Value, typename Pick> static Value FindFirst(std::span<const u32> flavorHashes, Pick pick)
         {
             for(const u32 flavorHash : flavorHashes)
             {
@@ -66,7 +92,7 @@ namespace RetroFuturaGUI
                 if(!flavor)
                     continue; //named but not made, or removed
 
-                if(const Value value { pick(flavor->GetPart(part)) })
+                if(const Value value { pick(*flavor) })
                     return value;
             }
 
@@ -75,11 +101,15 @@ namespace RetroFuturaGUI
             if(!defaultFlavor)
                 return Value {};
 
-            return pick(defaultFlavor->GetPart(part));
+            return pick(*defaultFlavor);
         }
 
     private:
         friend class FlavorPart; //tells of its changes
+        friend class Flavor;
+        friend class FlavorTrackStyle;
+        friend class FlavorCellStyle;
+        friend class FlavorHeaderStyle;
         friend class FlavorEffect;
 
         /// @brief Moves the generation on: a flavor changed, came or went

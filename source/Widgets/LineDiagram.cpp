@@ -23,9 +23,11 @@ RetroFuturaGUI::LineDiagram::LineDiagram(std::string_view name, Projection* proj
         return;
 
     _hoverText.SetTransitionSettings(&_transitionSettings);
+    useSubPartFlavors(_hoverText.GetBackground(), StylePart::HoverTextBackground);
+    useSubPartFlavors(_hoverText.GetText(), StylePart::HoverTextText);
     _indicator.SetSize(glm::vec2(10.0f), ElementSizing::Pixels);
     _indicator.SetType(IndicatorType::Circle);
-    _indicator.GetBorder().SetWidth(2.0f);
+    _indicator.GetBorder().SetBuiltInWidth(styleKey(), 2.0f);
 }
 
 void RetroFuturaGUI::LineDiagram::Draw()

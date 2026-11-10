@@ -51,6 +51,24 @@ void RetroFuturaGUI::WidgetText::SetFontFamily(std::string_view fontFamily, cons
     setLayout();
 }
 
+void RetroFuturaGUI::WidgetText::SetFontSize(const f32 fontSize, const FontSizeUnit sizeUnit)
+{
+    _fontSize.Set(FontManager::ToPixels(fontSize, sizeUnit));
+    setLayout();
+}
+
+void RetroFuturaGUI::WidgetText::SetFontSlant(const PlatformBridge::Fonts::Slant slant)
+{
+    _fontSlant.Set(slant);
+    setLayout();
+}
+
+void RetroFuturaGUI::WidgetText::SetFontWeight(const PlatformBridge::Fonts::Weight fontWeight)
+{
+    _fontWeight.Set(fontWeight);
+    setLayout();
+}
+
 f32 RetroFuturaGUI::WidgetText::GetFontSize(const FontSizeUnit sizeUnit) const
 {
     return _text.GetFontSize(sizeUnit);
@@ -103,7 +121,7 @@ const std::vector<glm::vec4>& RetroFuturaGUI::WidgetText::GetShownColors(const C
         return own;
 
     //A text without a widget's flavors goes from its own colors straight to its built-in ones
-    const std::vector<glm::vec4>* styled { _flavors ? StylingManager::FindColors(*_flavors, StylePart::Text, state) : nullptr };
+    const std::vector<glm::vec4>* styled { _flavors ? StylingManager::FindColors(*_flavors, _stylePart, state) : nullptr };
 
     if(styled)
         return *styled;
@@ -365,9 +383,10 @@ const std::vector<glm::vec4>& RetroFuturaGUI::WidgetText::colorsOf(const StateCo
     }
 }
 
-void RetroFuturaGUI::WidgetText::setStyleSource(const std::vector<u32>* flavors)
+void RetroFuturaGUI::WidgetText::setStyleSource(const std::vector<u32>* flavors, const StylePart part)
 {
     _flavors = flavors;
+    _stylePart = part;
     _styleGeneration = StylingManager::GetGeneration();
     setLayout();
     setColors();
@@ -452,9 +471,9 @@ void RetroFuturaGUI::WidgetText::setShader()
     const std::span<const u32> flavors { getFlavors() };
     const bool isStyled { nullptr != _flavors };
 
-    _shader.Apply(_text, flavors, isStyled, StylePart::Text);
+    _shader.Apply(_text, flavors, isStyled, _stylePart);
 
-    if(const u32* textureID { _imageTextureID.Resolve(flavors, isStyled, StylePart::Text, 0u, &WidgetText::imageTextureOf) })
+    if(const u32* textureID { _imageTextureID.Resolve(flavors, isStyled, _stylePart, 0u, &WidgetText::imageTextureOf) })
         _text.SetBackgroundImageTextureID(*textureID);
 }
 
@@ -467,13 +486,13 @@ void RetroFuturaGUI::WidgetText::setLayout()
     layoutAlignment();
     layoutPadding();
 
-    if(const TextFlow* flow { _flow.Resolve(flavors, isStyled, StylePart::Text, TextFlow::Horizontal, [](const FlavorPart& part) -> const std::optional<TextFlow>& { return part.GetFlow(); }) })
+    if(const TextFlow* flow { _flow.Resolve(flavors, isStyled, _stylePart, TextFlow::Horizontal, [](const FlavorPart& part) -> const std::optional<TextFlow>& { return part.GetFlow(); }) })
         _text.SetTextFlow(*flow);
 
-    if(const f32* tint { _colorGlyphTint.Resolve(flavors, isStyled, StylePart::Text, 0.0f, [](const FlavorPart& part) -> const std::optional<f32>& { return part.GetColorGlyphTint(); }) })
+    if(const f32* tint { _colorGlyphTint.Resolve(flavors, isStyled, _stylePart, 0.0f, [](const FlavorPart& part) -> const std::optional<f32>& { return part.GetColorGlyphTint(); }) })
         _text.SetColorGlyphTint(*tint);
 
-    if(const MaskSpan* maskSpan { _maskSpan.Resolve(flavors, isStyled, StylePart::Text, MaskSpan::WholeText, [](const FlavorPart& part) -> const std::optional<MaskSpan>& { return part.GetMaskSpan(); }) })
+    if(const MaskSpan* maskSpan { _maskSpan.Resolve(flavors, isStyled, _stylePart, MaskSpan::WholeText, [](const FlavorPart& part) -> const std::optional<MaskSpan>& { return part.GetMaskSpan(); }) })
         _text.SetMaskSpan(*maskSpan);
 }
 
@@ -483,10 +502,10 @@ void RetroFuturaGUI::WidgetText::layoutFont()
     const bool isStyled { nullptr != _flavors };
 
     //Each goes through the layers, so all four keep up even while the text has no family yet.
-    const bool isFamilyChanged { nullptr != _fontFamily.Resolve(flavors, isStyled, StylePart::Text, std::string {}, [](const FlavorPart& part) -> const std::optional<std::string>& { return part.GetFontFamily(); }) };
-    const bool isSizeChanged { nullptr != _fontSize.Resolve(flavors, isStyled, StylePart::Text, _defaultFontSize, [](const FlavorPart& part) -> const std::optional<f32>& { return part.GetFontSize(); }) };
-    const bool isSlantChanged { nullptr != _fontSlant.Resolve(flavors, isStyled, StylePart::Text, PlatformBridge::Fonts::Slant::Roman, [](const FlavorPart& part) -> const std::optional<PlatformBridge::Fonts::Slant>& { return part.GetFontSlant(); }) };
-    const bool isWeightChanged { nullptr != _fontWeight.Resolve(flavors, isStyled, StylePart::Text, PlatformBridge::Fonts::Weight::Normal, [](const FlavorPart& part) -> const std::optional<PlatformBridge::Fonts::Weight>& { return part.GetFontWeight(); }) };
+    const bool isFamilyChanged { nullptr != _fontFamily.Resolve(flavors, isStyled, _stylePart, std::string {}, [](const FlavorPart& part) -> const std::optional<std::string>& { return part.GetFontFamily(); }) };
+    const bool isSizeChanged { nullptr != _fontSize.Resolve(flavors, isStyled, _stylePart, _defaultFontSize, [](const FlavorPart& part) -> const std::optional<f32>& { return part.GetFontSize(); }) };
+    const bool isSlantChanged { nullptr != _fontSlant.Resolve(flavors, isStyled, _stylePart, PlatformBridge::Fonts::Slant::Roman, [](const FlavorPart& part) -> const std::optional<PlatformBridge::Fonts::Slant>& { return part.GetFontSlant(); }) };
+    const bool isWeightChanged { nullptr != _fontWeight.Resolve(flavors, isStyled, _stylePart, PlatformBridge::Fonts::Weight::Normal, [](const FlavorPart& part) -> const std::optional<PlatformBridge::Fonts::Weight>& { return part.GetFontWeight(); }) };
 
     if(!isFamilyChanged && !isSizeChanged && !isSlantChanged && !isWeightChanged)
         return;
@@ -511,7 +530,7 @@ void RetroFuturaGUI::WidgetText::layoutFont()
 
 void RetroFuturaGUI::WidgetText::layoutAlignment()
 {
-    const TextAlignment* alignment { _alignment.Resolve(getFlavors(), nullptr != _flavors, StylePart::Text, TextAlignment::Left, [](const FlavorPart& part) -> const std::optional<TextAlignment>& { return part.GetAlignment(); }) };
+    const TextAlignment* alignment { _alignment.Resolve(getFlavors(), nullptr != _flavors, _stylePart, TextAlignment::Left, [](const FlavorPart& part) -> const std::optional<TextAlignment>& { return part.GetAlignment(); }) };
 
     if(!alignment)
         return;
@@ -526,7 +545,7 @@ void RetroFuturaGUI::WidgetText::layoutAlignment()
 
 void RetroFuturaGUI::WidgetText::layoutPadding()
 {
-    const f32* padding { _padding.Resolve(getFlavors(), nullptr != _flavors, StylePart::Text, 0.0f, [](const FlavorPart& part) -> const std::optional<f32>& { return part.GetPadding(); }) };
+    const f32* padding { _padding.Resolve(getFlavors(), nullptr != _flavors, _stylePart, 0.0f, [](const FlavorPart& part) -> const std::optional<f32>& { return part.GetPadding(); }) };
 
     if(!padding)
         return;
@@ -611,8 +630,8 @@ void RetroFuturaGUI::WidgetText::ResetSetting(const StyleSetting setting)
 
 void RetroFuturaGUI::WidgetText::restyleEffects()
 {
-    _outline.followFlavors(_flavors);
-    _text.GetDropShadow().followFlavors(_flavors, StylePart::Text);
-    _text.GetGlow().followFlavors(_flavors, StylePart::Text);
-    _text.GetInnerGlow().followFlavors(_flavors, StylePart::Text);
+    _outline.followFlavors(_flavors, _stylePart);
+    _text.GetDropShadow().followFlavors(_flavors, _stylePart);
+    _text.GetGlow().followFlavors(_flavors, _stylePart);
+    _text.GetInnerGlow().followFlavors(_flavors, _stylePart);
 }

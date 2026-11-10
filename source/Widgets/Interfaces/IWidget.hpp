@@ -23,6 +23,7 @@ namespace RetroFuturaGUI
     class Border;
     class IWidgetDecoration;
     class WidgetText;
+    class IStyledPart;
     template<typename> class WidgetReference;
 
     //An interface with properties that all Widgets must implement.
@@ -154,22 +155,26 @@ namespace RetroFuturaGUI
         ContextMenu* GetContextMenu() const;
 
         /// @brief Sets how this widget's colors or corner radii move to new values, its hover and pressed colors included, in
-        ///        place of the global default (Transitions::SetDefault): SetTransition(Colors | CornerRadii, { 200ms, EaseInOut })
+        ///        place of its flavors' and the global default (Transitions::SetDefault): SetTransition(Colors | CornerRadii, { 200ms, EaseInOut })
         void SetTransition(const TransitionProperty properties, const Transition& transition);
 
-        /// @brief Has these properties follow the global default again
+        /// @brief Has these properties follow the widget's flavors, .default and the global default again
         void ResetTransition(const TransitionProperty properties);
 
-        /// @brief Returns the transition one property follows: the widget's own, or else the global default
+        /// @brief Returns the transition one property follows: the widget's own, else its flavors' or .default's, else the global default
         Transition GetTransition(const TransitionProperty property) const;
 
         /// @brief Sets the gap between the border's inner edge and the background, per side: top, right, bottom, left, in pixels. The
         ///        background is then drawn at the widget's size less the border's width and the gap on each side, moving there over the
         ///        widget's border gap transition (SetTransition(TransitionProperty::BorderGap, ...)). Until it is set the background
-        ///        spans the whole widget, under the border. Only widgets with a background and a border have one
+        ///        spans the whole widget, under the border. Only widgets with a background and a border have one.
+        ///        The gap set wins over the widget's flavors' (Flavor::SetBorderGap)
         void SetBorderGap(const glm::vec4& gap);
 
-        /// @brief Returns the gap set between the border and the background, per side: top, right, bottom, left
+        /// @brief Leaves the border gap to the widget's flavors and .default; without one the background spans the whole widget again
+        void ResetBorderGap();
+
+        /// @brief Returns the gap shown between the border and the background, per side: top, right, bottom, left
         const glm::vec4& GetBorderGap() const;
 
     protected:
@@ -182,6 +187,9 @@ namespace RetroFuturaGUI
             *_styledBackground { nullptr },
             *_styledBorder { nullptr };
         WidgetText* _styledText { nullptr };
+        std::vector<IWidgetDecoration*> _styledSubParts {}; //the parts inside the widget its flavors style, given by useSubPartFlavors.
+        std::vector<WidgetText*> _styledSubTexts {};
+        std::vector<IStyledPart*> _styledOtherParts {}; //icons, the caret, the selection, item texts.
         GLFWwindow* _parentWindow { nullptr };
         IHierarchyNode* _parentWidget { nullptr };
         WidgetTypeID 
@@ -210,7 +218,7 @@ namespace RetroFuturaGUI
 
         bool _enableTooltip { false };
 
-        TransitionSettings _transitionSettings {}; //the elements registered by useTransitions read them, the tooltip and context menu too
+        TransitionSettings _transitionSettings {}; //the elements registered by useTransitions read them, the tooltip and context menu too. The widget's own, its flavors' or .default's
 
         bool isPointInside(const glm::vec2& point) const;
 
@@ -256,6 +264,12 @@ namespace RetroFuturaGUI
         ///        Called once in the constructor. Parts not handed over take their own values and their built-in look only
         void useFlavors(IWidgetDecoration* background, IWidgetDecoration* border, WidgetText* text);
 
+        /// @brief Has the widget's flavors style a part inside it too, as the flavors' part at stylePart: an indicator's background
+        ///        (StylePart::IndicatorBackground), a list's highlight. Called once per part by the widget's constructor.
+        void useSubPartFlavors(IWidgetDecoration& part, const StylePart stylePart);
+        void useSubPartFlavors(WidgetText& text, const StylePart stylePart);
+        void useSubPartFlavors(IStyledPart& part, const StylePart stylePart);
+
         /// @brief Takes the size: stores it and fits whatever the widget draws to it. so what the widget resizes along with itself follows at once.
         virtual void applySize(const glm::vec3& size);
 
@@ -279,6 +293,15 @@ namespace RetroFuturaGUI
 
         /// @brief Has the styled parts take their values again: the widget's flavors changed
         void restyleParts();
+
+        /// @brief Takes the transitions and the border gap through the flavors again when they changed since it last did
+        void followFlavors();
+
+        /// @brief Shows per property the widget's own transition, else its flavors' or .default's
+        void resolveTransitions();
+
+        /// @brief Shows the widget's own border gap, else its flavors' or .default's, else none; moves there when it changed
+        void resolveBorderGap();
 
         /// @brief Applies the shown size, position, rotation and opacity while their transitions run, the targets once they arrive.
         void updateGeometry();
@@ -322,7 +345,12 @@ namespace RetroFuturaGUI
         TransitionValue<f32> _opacityTransition;
         bool _isFading { false };
 
-    //Border gap: _borderGap is what was set, the background is drawn inside _backgroundInset (the border's width and the gap)
+    //Flavors: what the widget sets on itself, the shown values are _transitionSettings and _borderGap
+        TransitionSettings _ownTransitions {};
+        std::optional<glm::vec4> _ownBorderGap {};
+        u32 _styleGeneration { 0 }; //the StylingManager's generation the flavors were last taken at
+
+    //Border gap: _borderGap is what shows, the background is drawn inside _backgroundInset (the border's width and the gap)
         Background* _gapBackground { nullptr };
         Border* _gapBorder { nullptr };
         glm::vec4 _borderGap { 0.0f };

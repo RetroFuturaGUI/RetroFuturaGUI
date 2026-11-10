@@ -14,6 +14,7 @@ RetroFuturaGUI::ExtendedComboBox::ExtendedComboBox(std::string_view name, Projec
 {
     _widgetTypeID = WidgetTypeID::ExtendedComboBox;
     _preview.SetTransitionSettings(&_transitionSettings);
+    useSubPartFlavors(_preview, StylePart::Preview);
 
     setColors(ColorState::Enabled);
 }

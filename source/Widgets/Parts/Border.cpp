@@ -35,7 +35,7 @@ void RetroFuturaGUI::Border::setCornerShape()
     if(!_borderFrame)
         return;
 
-    _borderFrame->SetCornerRadii(_cornerRadii);
+    _borderFrame->SetCornerRadii(getDrawnCornerRadii());
     _borderFrame->SetCutCorners(_cutCorners);
 }
 

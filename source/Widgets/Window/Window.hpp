@@ -178,14 +178,28 @@ namespace RetroFuturaGUI
         ///        squared. A widget lining the window's edge, such as a window bar, can match its own corners to them
         glm::vec4 GetDrawnCornerRadii() const;
 
-        /// @brief Sets how the background's and the border's colors or corner radii move to new values, squaring when docked included, in place of the global default (Transitions::SetDefault).
+        /// @brief Sets how the background's and the border's colors or corner radii move to new values, squaring when docked included, in place of the window's flavors' and the global default (Transitions::SetDefault)
         void SetTransition(const TransitionProperty properties, const Transition& transition);
 
-        /// @brief Has these properties follow the global default again.
+        /// @brief Has these properties follow the window's flavors, .default and the global default again
         void ResetTransition(const TransitionProperty properties);
 
-        /// @brief Returns the transition one property follows: the window's own, or else the global default.
+        /// @brief Returns the transition one property follows: the window's own, else its flavors' or .default's, else the global default
         Transition GetTransition(const TransitionProperty property) const;
+
+        /// @brief Adds a flavor (StylingManager) after the ones the window has. What the window's background and border and its
+        ///        transitions don't set themselves comes from the first of its flavors that sets it, then from .default, then from
+        ///        the window's built-in look, as with a widget (IWidget::AddFlavor). A flavor it has already keeps its place
+        void AddFlavor(std::string_view name);
+
+        /// @brief Removes a flavor
+        void RemoveFlavor(std::string_view name);
+
+        /// @brief Whether the window has the flavor
+        bool HasFlavor(std::string_view name) const;
+
+        /// @brief Returns the window's flavors, in order, as they were given
+        const std::vector<std::string>& GetFlavors() const;
 
     //Docking
         /// @brief Docks a window to one of this window's edges, after the ones already docked there. The windows on one edge
@@ -373,11 +387,17 @@ namespace RetroFuturaGUI
         /// @brief Hands the corner radii to the background and border, with the corners where docked windows meet squared.
         void applyCornerRadii();
 
-        /// @brief Keeps the radii a part was given as the ones asked for, unless the window is applying its drawn radii
+        /// @brief Keeps the radii a part shows through its style layers as the ones asked for
         void takeCornerRadii(glm::vec4& asked, const IWidgetDecoration& part);
 
         /// @brief The radii with the corners where docked windows meet squared, or the tab's while the window is in a tab
         glm::vec4 drawnCornerRadii(const glm::vec4& radii) const;
+
+        /// @brief Has the background, the border and the transitions take their values again. The flavors changed
+        void restyleParts();
+
+        /// @brief Takes the transitions through the flavors again when they changed since the window last did
+        void followFlavors();
 
         /// @brief Whether the scene draws and takes its space: it is active, and not hidden while this window is in a tab.
         bool isSceneShown(const Scene* scene) const;
@@ -641,8 +661,12 @@ namespace RetroFuturaGUI
             _borderCornerRadii { 0.0f },
             _appliedBackgroundCornerRadii { -1.0f }, //what the background and border last got, so they are only set again on a change
             _appliedBorderCornerRadii { -1.0f };
-        bool _isApplyingCornerRadii { false }; //the parts' radii change because the window squares them, not because they were asked for
-        TransitionSettings _transitionSettings {}; //read by the background and the border
+        TransitionSettings
+            _transitionSettings {}, //read by the background and border
+            _ownTransitions {};
+        std::vector<std::string> _flavorNames {};
+        std::vector<u32> _flavorHashes {}; //the same flavors, as the StylingManager keeps them. The background and border read these
+        u32 _styleGeneration { 0 }; //the StylingManager's generation the transitions were last taken at
 
     //Docking
         std::list<Window*>

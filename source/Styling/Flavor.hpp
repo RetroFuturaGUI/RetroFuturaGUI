@@ -7,7 +7,9 @@
 #include "Noise.hpp"
 #include "FontManager.hpp"
 #include "TextLayout.hpp"
+#include "Transition.hpp"
 #include <array>
+#include <memory>
 #include <optional>
 #include <span>
 #include <string>
@@ -16,12 +18,49 @@
 
 namespace RetroFuturaGUI
 {
-    /// @brief The part of a widget a flavor's part style applies to.
+    /// @brief The part of a widget a flavor's part style applies to: the widget's own background, border and text, then the
+    ///        parts inside it, named after the flavor's getters that reach them (IndicatorBackground: GetIndicator().GetBackground())
     RFG_EXPORT enum class StylePart : u32
     {
         Background,
         Border,
-        Text
+        Text,
+        IndicatorBackground,
+        IndicatorBorder,
+        Graph,
+        ListBackground,
+        ListBorder,
+        ListHighlight,
+        ItemStyleBackground,
+        ItemStyleBorder,
+        SeparatorLine,
+        FieldStyleBackground,
+        FieldStyleBorder,
+        CloseButtonBackground,
+        SelectionBandBackground,
+        SelectionBandBorder,
+        HoverTextBackground,
+        HoverTextText,
+        Placeholder,
+        Preview,
+        Checkmark,
+        Arrow,
+        CloseButtonIcon,
+        Caret,
+        SelectedArea,
+        ItemText,
+        CellStyleBackground,
+        CellStyleInnerBorder,
+        CellStyleText,
+        CellStyleIcon,
+        CellStyleDropTarget,
+        HeaderStyleBackground,
+        HeaderStyleInnerBorder,
+        HeaderStyleOuterBorder,
+        HeaderStyleText,
+        CellCheckBoxBackground,
+        CellCheckBoxBorder,
+        CellCheckBoxCheckmark
     };
 
     /// @brief One setting a part or a flavor can leave unset (ResetSetting, FlavorPart::Reset), so it comes from further
@@ -426,8 +465,293 @@ namespace RetroFuturaGUI
         FlavorEffect _outline {};
     };
 
+    /// @brief What a flavor sets for a part made of a background and a border: a ranged value's or a color
+    ///        picker's indicator (the color picker's has only the border), a menu bar's items, a window tab's fields, a table's
+    ///        selection band.
+    RFG_EXPORT class FlavorBox final
+    {
+    public:
+        FlavorBox() = default;
+        FlavorBox(const FlavorBox&) = delete;
+        FlavorBox(FlavorBox&&) = delete;
+        auto operator =(const FlavorBox&) = delete;
+        auto operator =(FlavorBox&&) = delete;
+
+        FlavorPart& GetBackground();
+        const FlavorPart& GetBackground() const;
+
+        FlavorPart& GetBorder();
+        const FlavorPart& GetBorder() const;
+
+    private:
+        FlavorPart
+            _background {},
+            _border {};
+    };
+
+    /// @brief What a flavor sets for a drop-down's open list: its background, its border and the highlight
+    ///        over the hovered row.
+    RFG_EXPORT class FlavorList final
+    {
+    public:
+        FlavorList() = default;
+        FlavorList(const FlavorList&) = delete;
+        FlavorList(FlavorList&&) = delete;
+        auto operator =(const FlavorList&) = delete;
+        auto operator =(FlavorList&&) = delete;
+
+        FlavorPart& GetBackground();
+        const FlavorPart& GetBackground() const;
+
+        FlavorPart& GetBorder();
+        const FlavorPart& GetBorder() const;
+
+        FlavorPart& GetHighlight();
+        const FlavorPart& GetHighlight() const;
+
+    private:
+        FlavorPart
+            _background {},
+            _border {},
+            _highlight {};
+    };
+
+    /// @brief What a flavor sets for a window tab's close button: its background and its icon's colors per state and fill.
+    RFG_EXPORT class FlavorCloseButton final
+    {
+    public:
+        FlavorCloseButton() = default;
+        FlavorCloseButton(const FlavorCloseButton&) = delete;
+        FlavorCloseButton(FlavorCloseButton&&) = delete;
+        auto operator =(const FlavorCloseButton&) = delete;
+        auto operator =(FlavorCloseButton&&) = delete;
+
+        FlavorPart& GetBackground();
+        const FlavorPart& GetBackground() const;
+
+        FlavorPart& GetIcon();
+        const FlavorPart& GetIcon() const;
+
+    private:
+        FlavorPart
+            _background {},
+            _icon {};
+    };
+
+    /// @brief What a flavor sets for a line diagram's hover text: the box behind it and the text.
+    RFG_EXPORT class FlavorHoverText final
+    {
+    public:
+        FlavorHoverText() = default;
+        FlavorHoverText(const FlavorHoverText&) = delete;
+        FlavorHoverText(FlavorHoverText&&) = delete;
+        auto operator =(const FlavorHoverText&) = delete;
+        auto operator =(FlavorHoverText&&) = delete;
+
+        FlavorPart& GetBackground();
+        const FlavorPart& GetBackground() const;
+
+        FlavorPart& GetText();
+        const FlavorPart& GetText() const;
+
+    private:
+        FlavorPart
+            _background {},
+            _text {};
+    };
+
+    /// @brief The font, alignment and padding of a table's cell or header texts, each unset until set.
+    RFG_EXPORT struct TableTextLayer
+    {
+        std::optional<std::string> _FontFamily {};
+        std::optional<f32> _FontSize {}; //in pixels.
+        std::optional<PlatformBridge::Fonts::Slant> _Slant {};
+        std::optional<PlatformBridge::Fonts::Weight> _Weight {};
+        std::optional<TextAlignment> _Alignment {};
+        std::optional<f32> _Padding {};
+    };
+
+    /// @brief What a flavor sets for one track variant of its tables: the colors its cells show while enabled. A table's nth
+    ///        variant takes the flavor's nth; how many variants alternate stays the table's (SetTrackAlternatingColorCount).
+    ///        Reached by flavor.GetTrackStyle(n)
+    RFG_EXPORT class FlavorTrackStyle final
+    {
+    public:
+        FlavorTrackStyle() = default;
+        FlavorTrackStyle(const FlavorTrackStyle&) = delete;
+        FlavorTrackStyle(FlavorTrackStyle&&) = delete;
+        auto operator =(const FlavorTrackStyle&) = delete;
+        auto operator =(FlavorTrackStyle&&) = delete;
+
+        /// @brief Sets the cells' background colors. No colors leave them unset
+        void SetBackgroundColors(std::span<const glm::vec4> colors);
+        const std::vector<glm::vec4>& GetBackgroundColors() const;
+
+        /// @brief Sets the colors of the border around each cell
+        void SetInnerBorderColors(std::span<const glm::vec4> colors);
+        const std::vector<glm::vec4>& GetInnerBorderColors() const;
+
+        /// @brief Sets the text colors
+        void SetTextColors(std::span<const glm::vec4> colors);
+        const std::vector<glm::vec4>& GetTextColors() const;
+
+        /// @brief Sets the icon colors: the checkmark of the track's checkbox cells
+        void SetIconColors(std::span<const glm::vec4> colors);
+        const std::vector<glm::vec4>& GetIconColors() const;
+
+    private:
+        std::vector<glm::vec4>
+            _background {},
+            _innerBorder {},
+            _text {},
+            _icon {};
+    };
+
+    /// @brief What a flavor sets for its tables' cells: their colors in the states every track shares (Disabled, Hover, Clicked,
+    ///        Selected), the drop target's colors, the inner border's width and the texts' font, alignment and padding.
+    ///        Reached by flavor.GetCellStyle()
+    RFG_EXPORT class FlavorCellStyle final
+    {
+    public:
+        FlavorCellStyle() = default;
+        FlavorCellStyle(const FlavorCellStyle&) = delete;
+        FlavorCellStyle(FlavorCellStyle&&) = delete;
+        auto operator =(const FlavorCellStyle&) = delete;
+        auto operator =(FlavorCellStyle&&) = delete;
+
+        /// @brief Sets the cells' background colors for a shared state. Enabled is each track's own, so it is ignored here
+        void SetBackgroundColors(std::span<const glm::vec4> colors, const ColorState state);
+        const std::vector<glm::vec4>& GetBackgroundColors(const ColorState state) const;
+
+        /// @brief Sets the colors of the border around each cell for a shared state
+        void SetInnerBorderColors(std::span<const glm::vec4> colors, const ColorState state);
+        const std::vector<glm::vec4>& GetInnerBorderColors(const ColorState state) const;
+
+        /// @brief Sets the text colors for a shared state
+        void SetTextColors(std::span<const glm::vec4> colors, const ColorState state);
+        const std::vector<glm::vec4>& GetTextColors(const ColorState state) const;
+
+        /// @brief Sets the icon colors (the checkbox cells' checkmark) for a shared state
+        void SetIconColors(std::span<const glm::vec4> colors, const ColorState state);
+        const std::vector<glm::vec4>& GetIconColors(const ColorState state) const;
+
+        /// @brief Sets the background colors of the track a drag would drop on
+        void SetDropTargetColors(std::span<const glm::vec4> colors);
+        const std::vector<glm::vec4>& GetDropTargetColors() const;
+
+        /// @brief Sets the width of the border around each cell
+        void SetInnerBorderWidth(const f32 width);
+        const std::optional<f32>& GetInnerBorderWidth() const;
+
+        /// @brief Set the texts' font family, size (kept in pixels), slant and weight, alignment and padding, each on its own
+        void SetFontFamily(std::string_view fontFamily);
+        void SetFontSize(const f32 fontSize, const FontSizeUnit sizeUnit);
+        void SetFontSlant(const PlatformBridge::Fonts::Slant slant);
+        void SetFontWeight(const PlatformBridge::Fonts::Weight fontWeight);
+        void SetTextAlignment(const TextAlignment alignment);
+        void SetTextPadding(const f32 padding);
+        const TableTextLayer& GetTextSettings() const;
+
+    private:
+        friend class Flavor; //reaches its parts by StylePart.
+
+        static bool isShared(const ColorState state);
+
+        FlavorPart
+            _background {},
+            _innerBorder {},
+            _text {},
+            _icon {},
+            _dropTarget {};
+        TableTextLayer _textSettings {};
+    };
+
+    /// @brief What a flavor sets for its tables' headers: their colors, Enabled and Disabled, the borders' widths and the texts'
+    ///        font, alignment and padding. Reached by flavor.GetHeaderStyle()
+    RFG_EXPORT class FlavorHeaderStyle final
+    {
+    public:
+        FlavorHeaderStyle() = default;
+        FlavorHeaderStyle(const FlavorHeaderStyle&) = delete;
+        FlavorHeaderStyle(FlavorHeaderStyle&&) = delete;
+        auto operator =(const FlavorHeaderStyle&) = delete;
+        auto operator =(FlavorHeaderStyle&&) = delete;
+
+        /// @brief Sets the header cells' background colors for Enabled or Disabled. Any other state sets the Enabled ones
+        void SetBackgroundColors(std::span<const glm::vec4> colors, const ColorState state);
+        const std::vector<glm::vec4>& GetBackgroundColors(const ColorState state) const;
+
+        /// @brief Sets the colors of the border around each header cell for Enabled or Disabled
+        void SetInnerBorderColors(std::span<const glm::vec4> colors, const ColorState state);
+        const std::vector<glm::vec4>& GetInnerBorderColors(const ColorState state) const;
+
+        /// @brief Sets the colors of the border around the header band for Enabled or Disabled
+        void SetOuterBorderColors(std::span<const glm::vec4> colors, const ColorState state);
+        const std::vector<glm::vec4>& GetOuterBorderColors(const ColorState state) const;
+
+        /// @brief Sets the header text colors for Enabled or Disabled
+        void SetTextColors(std::span<const glm::vec4> colors, const ColorState state);
+        const std::vector<glm::vec4>& GetTextColors(const ColorState state) const;
+
+        /// @brief Sets the width of the border around each header cell
+        void SetInnerBorderWidth(const f32 width);
+        const std::optional<f32>& GetInnerBorderWidth() const;
+
+        /// @brief Sets the width of the border around the header band
+        void SetOuterBorderWidth(const f32 width);
+        const std::optional<f32>& GetOuterBorderWidth() const;
+
+        /// @brief Set the texts' font family, size (kept in pixels), slant and weight, alignment and padding, each on its own
+        void SetFontFamily(std::string_view fontFamily);
+        void SetFontSize(const f32 fontSize, const FontSizeUnit sizeUnit);
+        void SetFontSlant(const PlatformBridge::Fonts::Slant slant);
+        void SetFontWeight(const PlatformBridge::Fonts::Weight fontWeight);
+        void SetTextAlignment(const TextAlignment alignment);
+        void SetTextPadding(const f32 padding);
+        const TableTextLayer& GetTextSettings() const;
+
+    private:
+        friend class Flavor; //reaches its parts by StylePart.
+
+        static ColorState headerState(const ColorState state);
+
+        FlavorPart
+            _background {},
+            _innerBorder {},
+            _outerBorder {},
+            _text {};
+        TableTextLayer _textSettings {};
+    };
+
+    /// @brief What a flavor sets for its tables' cell checkbox: its background, its border and its checkmark's fill (the
+    ///        checkmark's colors are the tracks' icon colors). Reached by flavor.GetCellCheckBox()
+    RFG_EXPORT class FlavorCellCheckBox final
+    {
+    public:
+        FlavorCellCheckBox() = default;
+        FlavorCellCheckBox(const FlavorCellCheckBox&) = delete;
+        FlavorCellCheckBox(FlavorCellCheckBox&&) = delete;
+        auto operator =(const FlavorCellCheckBox&) = delete;
+        auto operator =(FlavorCellCheckBox&&) = delete;
+
+        FlavorPart& GetBackground();
+        const FlavorPart& GetBackground() const;
+
+        FlavorPart& GetBorder();
+        const FlavorPart& GetBorder() const;
+
+        FlavorPart& GetCheckmark();
+        const FlavorPart& GetCheckmark() const;
+
+    private:
+        FlavorPart
+            _background {},
+            _border {},
+            _checkmark {};
+    };
+
     /// @brief A named style rule, like a CSS class: what it sets for the background, the border and the text of every
-    ///        widget that has it (IWidget::AddFlavor). Kept by the StylingManager
+    ///        widget that has it, and for the widget itself (its transitions and border gap) (IWidget::AddFlavor). Kept by the StylingManager
     RFG_EXPORT class Flavor final
     {
     public:
@@ -449,13 +773,175 @@ namespace RetroFuturaGUI
         FlavorPart& GetText();
         const FlavorPart& GetText() const;
 
-        /// @brief Returns what the flavor sets for one of its widgets' parts
-        const FlavorPart& GetPart(const StylePart part) const;
+
+        /// @brief Returns what the flavor sets for its widgets' indicator (a ranged value's handle, a color picker's ring), made the first time
+        FlavorBox& GetIndicator();
+
+        /// @brief Returns what the flavor sets for its widgets' indicator (a ranged value's handle, a color picker's ring), nullptr when it sets none
+        const FlavorBox* FindIndicator() const;
+
+        /// @brief Returns what the flavor sets for its ranged values' graph, made the first time
+        FlavorPart& GetGraph();
+
+        /// @brief Returns what the flavor sets for its ranged values' graph, nullptr when it sets none
+        const FlavorPart* FindGraph() const;
+
+        /// @brief Returns what the flavor sets for its drop-downs' open list, made the first time
+        FlavorList& GetList();
+
+        /// @brief Returns what the flavor sets for its drop-downs' open list, nullptr when it sets none
+        const FlavorList* FindList() const;
+
+        /// @brief Returns what the flavor sets for its menu bars' items, made the first time
+        FlavorBox& GetItemStyle();
+
+        /// @brief Returns what the flavor sets for its menu bars' items, nullptr when it sets none
+        const FlavorBox* FindItemStyle() const;
+
+        /// @brief Returns what the flavor sets for its menu bars' separator lines, made the first time
+        FlavorPart& GetSeparatorLine();
+
+        /// @brief Returns what the flavor sets for its menu bars' separator lines, nullptr when it sets none
+        const FlavorPart* FindSeparatorLine() const;
+
+        /// @brief Returns what the flavor sets for its window tabs' fields, the selected one in its Selected state, made the first time
+        FlavorBox& GetFieldStyle();
+
+        /// @brief Returns what the flavor sets for its window tabs' fields, the selected one in its Selected state, nullptr when it sets none
+        const FlavorBox* FindFieldStyle() const;
+
+        /// @brief Returns what the flavor sets for its window tabs' close buttons, made the first time
+        FlavorCloseButton& GetCloseButton();
+
+        /// @brief Returns what the flavor sets for its window tabs' close buttons, nullptr when it sets none
+        const FlavorCloseButton* FindCloseButton() const;
+
+        /// @brief Returns what the flavor sets for its tables' selection band, made the first time
+        FlavorBox& GetSelectionBand();
+
+        /// @brief Returns what the flavor sets for its tables' selection band, nullptr when it sets none
+        const FlavorBox* FindSelectionBand() const;
+
+        /// @brief Returns what the flavor sets for its line diagrams' hover text, made the first time
+        FlavorHoverText& GetHoverText();
+
+        /// @brief Returns what the flavor sets for its line diagrams' hover text, nullptr when it sets none
+        const FlavorHoverText* FindHoverText() const;
+
+        /// @brief Returns what the flavor sets for its text boxes' placeholder text, made the first time
+        FlavorPart& GetPlaceholder();
+
+        /// @brief Returns what the flavor sets for its text boxes' placeholder text, nullptr when it sets none
+        const FlavorPart* FindPlaceholder() const;
+
+        /// @brief Returns what the flavor sets for its extended combo boxes' preview text, made the first time
+        FlavorPart& GetPreview();
+
+        /// @brief Returns what the flavor sets for its extended combo boxes' preview text, nullptr when it sets none
+        const FlavorPart* FindPreview() const;
+
+
+        /// @brief Returns what the flavor sets for its check boxes' checkmark: colors per state and fill, made the first time
+        FlavorPart& GetCheckmark();
+
+        /// @brief Returns what the flavor sets for its check boxes' checkmark: colors per state and fill, nullptr when it sets none
+        const FlavorPart* FindCheckmark() const;
+
+        /// @brief Returns what the flavor sets for its drop-downs' arrow: colors per state and fill, made the first time
+        FlavorPart& GetArrow();
+
+        /// @brief Returns what the flavor sets for its drop-downs' arrow: colors per state and fill, nullptr when it sets none
+        const FlavorPart* FindArrow() const;
+
+        /// @brief Returns what the flavor sets for its editable texts' caret: its colors (the Enabled ones) and fill, made the first time
+        FlavorPart& GetCaret();
+
+        /// @brief Returns what the flavor sets for its editable texts' caret: its colors (the Enabled ones) and fill, nullptr when it sets none
+        const FlavorPart* FindCaret() const;
+
+        /// @brief Returns what the flavor sets for its editable texts' selection highlight: its colors (the Enabled ones), fill and corner radii, made the first time
+        FlavorPart& GetSelectedArea();
+
+        /// @brief Returns what the flavor sets for its editable texts' selection highlight: its colors (the Enabled ones), fill and corner radii, nullptr when it sets none
+        const FlavorPart* FindSelectedArea() const;
+
+        /// @brief Returns what the flavor sets for its combo boxes' item texts: colors per state, made the first time
+        FlavorPart& GetItemText();
+
+        /// @brief Returns what the flavor sets for its combo boxes' item texts: colors per state, nullptr when it sets none
+        const FlavorPart* FindItemText() const;
+
+
+        /// @brief Returns what the flavor sets for its tables' nth track variant, made the first time
+        FlavorTrackStyle& GetTrackStyle(const uSize nthIndex);
+
+        /// @brief Returns what the flavor sets for its tables' nth track variant, nullptr when it sets none
+        const FlavorTrackStyle* FindTrackStyle(const uSize nthIndex) const;
+
+        /// @brief Returns what the flavor sets for its tables' cells in the shared states, their drop target, inner border width and texts, made the first time
+        FlavorCellStyle& GetCellStyle();
+
+        /// @brief Returns what the flavor sets for its tables' cells in the shared states, their drop target, inner border width and texts, nullptr when it sets none
+        const FlavorCellStyle* FindCellStyle() const;
+
+        /// @brief Returns what the flavor sets for its tables' headers, made the first time
+        FlavorHeaderStyle& GetHeaderStyle();
+
+        /// @brief Returns what the flavor sets for its tables' headers, nullptr when it sets none
+        const FlavorHeaderStyle* FindHeaderStyle() const;
+
+        /// @brief Returns what the flavor sets for its tables' cell checkbox, made the first time
+        FlavorCellCheckBox& GetCellCheckBox();
+
+        /// @brief Returns what the flavor sets for its tables' cell checkbox, nullptr when it sets none
+        const FlavorCellCheckBox* FindCellCheckBox() const;
+
+        /// @brief Returns what the flavor sets for one of its widgets' parts, nullptr for a part inside the widget it sets nothing for
+        const FlavorPart* FindPart(const StylePart part) const;
+
+        /// @brief Sets the transition of one or more properties for every widget with the flavor, in place of the global default
+        void SetTransition(const TransitionProperty properties, const Transition& transition);
+
+        /// @brief Leaves the transition of one or more properties unset, so it comes from further down
+        void ResetTransition(const TransitionProperty properties);
+
+        /// @brief Returns the transitions the flavor sets
+        const TransitionSettings& GetTransitions() const;
+
+        /// @brief Sets the gap between the border and the background (top, right, bottom, left, in pixels) of every widget with
+        ///        the flavor. See IWidget::SetBorderGap
+        void SetBorderGap(const glm::vec4& gap);
+
+        /// @brief Leaves the border gap unset, so it comes from further down
+        void ResetBorderGap();
+        const std::optional<glm::vec4>& GetBorderGap() const;
 
     private:
         FlavorPart
             _background {},
             _border {},
             _text {};
+        TransitionSettings _transitions {};
+        std::optional<glm::vec4> _borderGap {};
+        std::unique_ptr<FlavorBox> _indicator {};
+        std::unique_ptr<FlavorPart> _graph {};
+        std::unique_ptr<FlavorList> _list {};
+        std::unique_ptr<FlavorBox> _itemStyle {};
+        std::unique_ptr<FlavorPart> _separatorLine {};
+        std::unique_ptr<FlavorBox> _fieldStyle {};
+        std::unique_ptr<FlavorCloseButton> _closeButton {};
+        std::unique_ptr<FlavorBox> _selectionBand {};
+        std::unique_ptr<FlavorHoverText> _hoverText {};
+        std::unique_ptr<FlavorPart> _placeholder {};
+        std::unique_ptr<FlavorPart> _preview {};
+        std::unique_ptr<FlavorPart> _checkmark {};
+        std::unique_ptr<FlavorPart> _arrow {};
+        std::unique_ptr<FlavorPart> _caret {};
+        std::unique_ptr<FlavorPart> _selectedArea {};
+        std::unique_ptr<FlavorPart> _itemText {};
+        std::vector<std::unique_ptr<FlavorTrackStyle>> _trackStyles {}; //by variant; nullptr for one it doesn't set.
+        std::unique_ptr<FlavorCellStyle> _cellStyle {};
+        std::unique_ptr<FlavorHeaderStyle> _headerStyle {};
+        std::unique_ptr<FlavorCellCheckBox> _cellCheckBox {};
     };
 }

@@ -59,6 +59,15 @@ namespace RetroFuturaGUI
         ///        leaves any of them to the flavors again
         void SetFontFamily(std::string_view fontFamily, const f32 fontSize, const FontSizeUnit sizeUnit, const PlatformBridge::Fonts::Slant slant, const PlatformBridge::Fonts::Weight fontWeight);
 
+        /// @brief Sets the font size alone, over every flavor, so the family, slant and weight can still come from a flavor
+        void SetFontSize(const f32 fontSize, const FontSizeUnit sizeUnit);
+
+        /// @brief Sets the slant alone, over every flavor
+        void SetFontSlant(const PlatformBridge::Fonts::Slant slant);
+
+        /// @brief Sets the weight alone, over every flavor
+        void SetFontWeight(const PlatformBridge::Fonts::Weight fontWeight);
+
         /// @brief Returns the font size in the given unit
         f32 GetFontSize(const FontSizeUnit sizeUnit) const;
 
@@ -249,7 +258,7 @@ namespace RetroFuturaGUI
         friend class IWidget; //makes it one of its styled parts
 
         /// @brief Has the text take unset values from the widget's flavors
-        void setStyleSource(const std::vector<u32>* flavors);
+        void setStyleSource(const std::vector<u32>* flavors, const StylePart part);
 
         /// @brief Takes the colors again when the flavors changed since it last did. Called first in Draw
         void followStyles();
@@ -289,6 +298,7 @@ namespace RetroFuturaGUI
             _colors {}, //its own
             _builtInColors { ._Enabled = { glm::vec4(1.0f) }, ._Disabled = { glm::vec4(0.5f, 0.5f, 0.5f, 1.0f) }, ._Clicked = { glm::vec4(1.0f) }, ._Selected = {}, ._Hover = { glm::vec4(1.0f) } };
         const std::vector<u32>* _flavors { nullptr }; //the widget's flavors; nullptr for a text no flavor styles
+        StylePart _stylePart { StylePart::Text }; //which of a flavor's parts it takes its values from: Text, Placeholder, Preview, HoverTextText
         u32 _styleGeneration { 0 }; //the StylingManager's generation the colors were last taken at
         ShaderLayers _shader {};
         Outline _outline; //goes around _text, so it is declared after it

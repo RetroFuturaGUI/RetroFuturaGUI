@@ -2,60 +2,79 @@
 #include <utility>
 
 RetroFuturaGUI::Icon::Icon(std::unique_ptr<SvgTexture> svg, std::string_view pathName, const SvgPathFill& style, IconColors colors)
-    : _svg(std::move(svg)), _pathName(pathName), _fill(style), _colors(std::move(colors))
+    : _svg(std::move(svg)), _pathName(pathName), _fill(style), _builtInFill(style)
 {
+    _colors.SetBuiltIn(colors._Enabled, ColorState::Enabled);
+    _colors.SetBuiltIn(colors._Disabled, ColorState::Disabled);
+    _colors.SetBuiltIn(colors._Clicked, ColorState::Clicked);
+    _colors.SetBuiltIn(colors._Hover, ColorState::Hover);
+    _colors.SetBuiltIn(colors._Selected, ColorState::Selected);
 }
 
 void RetroFuturaGUI::Icon::SetColors(std::span<const glm::vec4> colors, const ColorState state)
 {
-    colorsOf(state).assign(colors.begin(), colors.end());
+    _colors.SetOwn(colors, state);
     applyFill();
 }
 
 const std::vector<glm::vec4>& RetroFuturaGUI::Icon::GetColors(const ColorState state) const
 {
-    switch(state)
-    {
-        case ColorState::Clicked:
-            return _colors._Clicked;
-        case ColorState::Disabled:
-            return _colors._Disabled;
-        case ColorState::Hover:
-            return _colors._Hover;
-        case ColorState::Selected:
-            return _colors._Selected;
-        default: // Enabled
-            return _colors._Enabled;
-    }
+    return _colors.GetOwn(state);
 }
 
 void RetroFuturaGUI::Icon::SetFillType(const FillType fillType)
 {
-    _fill._FillType = fillType;
+    _fillTypeLayer.Set(fillType);
     applyFill();
 }
 
 void RetroFuturaGUI::Icon::SetGradientDegree(const f32 degree)
 {
-    _fill._GradientDegree = degree;
+    _gradientDegreeLayer.Set(degree);
     applyFill();
 }
 
 void RetroFuturaGUI::Icon::SetGradientOffset(const f32 gradientOffset)
 {
-    _fill._GradientOffset = gradientOffset;
+    _gradientOffsetLayer.Set(gradientOffset);
     applyFill();
 }
 
 void RetroFuturaGUI::Icon::SetGradientAnimationSpeed(const f32 animationSpeed)
 {
-    _fill._GradientAnimationSpeed = animationSpeed;
+    _gradientAnimationSpeedLayer.Set(animationSpeed);
     applyFill();
 }
 
 void RetroFuturaGUI::Icon::SetGradientRotationSpeed(const f32 rotationSpeed)
 {
-    _fill._GradientRotationSpeed = rotationSpeed;
+    _gradientRotationSpeedLayer.Set(rotationSpeed);
+    applyFill();
+}
+
+void RetroFuturaGUI::Icon::ResetSetting(const StyleSetting setting)
+{
+    switch(setting)
+    {
+        case StyleSetting::FillType:
+            _fillTypeLayer.Reset();
+        break;
+        case StyleSetting::GradientDegree:
+            _gradientDegreeLayer.Reset();
+        break;
+        case StyleSetting::GradientOffset:
+            _gradientOffsetLayer.Reset();
+        break;
+        case StyleSetting::GradientAnimationSpeed:
+            _gradientAnimationSpeedLayer.Reset();
+        break;
+        case StyleSetting::GradientRotationSpeed:
+            _gradientRotationSpeedLayer.Reset();
+        break;
+        default: //a setting the icon doesn't have.
+            return;
+    }
+
     applyFill();
 }
 
@@ -64,6 +83,7 @@ void RetroFuturaGUI::Icon::Draw()
     if(!_svg)
         return;
 
+    followFlavors();
     _svg->Draw();
 }
 
@@ -116,21 +136,12 @@ void RetroFuturaGUI::Icon::SetColorState(const ColorState state)
     applyFill();
 }
 
-std::vector<glm::vec4>& RetroFuturaGUI::Icon::colorsOf(const ColorState state)
+void RetroFuturaGUI::Icon::restyle()
 {
-    switch(state)
-    {
-        case ColorState::Clicked:
-            return _colors._Clicked;
-        case ColorState::Disabled:
-            return _colors._Disabled;
-        case ColorState::Hover:
-            return _colors._Hover;
-        case ColorState::Selected:
-            return _colors._Selected;
-        default: // Enabled
-            return _colors._Enabled;
-    }
+    if(!_isFilled)
+        return; //until the widget shows a state, the SVG keeps its own colors.
+
+    applyFill();
 }
 
 void RetroFuturaGUI::Icon::applyFill()
@@ -138,8 +149,25 @@ void RetroFuturaGUI::Icon::applyFill()
     if(!_svg)
         return;
 
-    const bool showsEnabled { ColorState::Selected == _colorState && _colors._Selected.empty() };
-    _fill._Colors = showsEnabled ? _colors._Enabled : GetColors(_colorState);
+    const std::span<const u32> flavors { getFlavors() };
+    const StylePart part { getStylePart() };
+
+    if(const FillType* fillType { _fillTypeLayer.Resolve(flavors, isStyled(), part, _builtInFill._FillType, [](const FlavorPart& style) -> const std::optional<FillType>& { return style.GetFillType(); }) })
+        _fill._FillType = *fillType;
+
+    if(const f32* degree { _gradientDegreeLayer.Resolve(flavors, isStyled(), part, _builtInFill._GradientDegree, [](const FlavorPart& style) -> const std::optional<f32>& { return style.GetGradientDegree(); }) })
+        _fill._GradientDegree = *degree;
+
+    if(const f32* offset { _gradientOffsetLayer.Resolve(flavors, isStyled(), part, _builtInFill._GradientOffset, [](const FlavorPart& style) -> const std::optional<f32>& { return style.GetGradientOffset(); }) })
+        _fill._GradientOffset = *offset;
+
+    if(const f32* speed { _gradientAnimationSpeedLayer.Resolve(flavors, isStyled(), part, _builtInFill._GradientAnimationSpeed, [](const FlavorPart& style) -> const std::optional<f32>& { return style.GetGradientAnimationSpeed(); }) })
+        _fill._GradientAnimationSpeed = *speed;
+
+    if(const f32* speed { _gradientRotationSpeedLayer.Resolve(flavors, isStyled(), part, _builtInFill._GradientRotationSpeed, [](const FlavorPart& style) -> const std::optional<f32>& { return style.GetGradientRotationSpeed(); }) })
+        _fill._GradientRotationSpeed = *speed;
+
+    _fill._Colors = _colors.GetShown(_colorState, flavors, isStyled(), part);
     _svg->SetPathFill(_pathName, _fill);
     _isFilled = true;
 }

@@ -131,6 +131,7 @@ list(APPEND RetroFuturaGuiSources
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/Mechanisms/WidgetRegistry.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Styling/Flavor.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Styling/StylingManager.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/source/Styling/StyledPart.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/Interfaces/ITypedText.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/Interfaces/IWidget.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/Interfaces/IClickable.cpp"

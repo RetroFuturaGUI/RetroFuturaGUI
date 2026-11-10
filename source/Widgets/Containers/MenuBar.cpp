@@ -18,12 +18,15 @@ RetroFuturaGUI::MenuBar::MenuBar(std::string_view name, Projection* projection, 
     _border.SetTransitionSettings(&_transitionSettings);
     useBorderGap(&_background, &_border);
     useFlavors(&_background, &_border, nullptr);
+    useSubPartFlavors(_itemStyle.GetBackground(), StylePart::ItemStyleBackground);
+    useSubPartFlavors(_itemStyle.GetBorder(), StylePart::ItemStyleBorder);
+    useSubPartFlavors(_separatorLine, StylePart::SeparatorLine);
 
     //Items show nothing behind their widgets until the app gives them colors.
     for(const ColorState state : { ColorState::Enabled, ColorState::Disabled, ColorState::Hover, ColorState::Clicked })
     {
-        _itemStyle.GetBackground().SetColors(std::array { glm::vec4(0.0f) }, state);
-        _itemStyle.GetBorder().SetColors(std::array { glm::vec4(0.0f) }, state);
+        _itemStyle.GetBackground().SetBuiltInColors(styleKey(), std::array { glm::vec4(0.0f) }, state);
+        _itemStyle.GetBorder().SetBuiltInColors(styleKey(), std::array { glm::vec4(0.0f) }, state);
     }
 }
 

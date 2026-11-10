@@ -41,7 +41,7 @@ void RetroFuturaGUI::Background::setCornerShape()
     if(!_backgroundPlane)
         return;
 
-    _backgroundPlane->SetCornerRadii(_cornerRadii);
+    _backgroundPlane->SetCornerRadii(getDrawnCornerRadii());
     _backgroundPlane->SetCutCorners(_cutCorners);
 }
 

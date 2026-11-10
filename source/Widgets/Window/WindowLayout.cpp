@@ -121,12 +121,14 @@ const RetroFuturaGUI::ScreenRect& RetroFuturaGUI::Window::GetClientRect() const
 
 void RetroFuturaGUI::Window::SetTransition(const TransitionProperty properties, const Transition& transition)
 {
-    Transitions::Override(_transitionSettings, properties, transition);
+    Transitions::Override(_ownTransitions, properties, transition);
+    StylingManager::ResolveTransitions(_ownTransitions, _flavorHashes, _transitionSettings);
 }
 
 void RetroFuturaGUI::Window::ResetTransition(const TransitionProperty properties)
 {
-    Transitions::Reset(_transitionSettings, properties);
+    Transitions::Reset(_ownTransitions, properties);
+    StylingManager::ResolveTransitions(_ownTransitions, _flavorHashes, _transitionSettings);
 }
 
 RetroFuturaGUI::Transition RetroFuturaGUI::Window::GetTransition(const TransitionProperty property) const
@@ -298,22 +300,16 @@ void RetroFuturaGUI::Window::applyCornerRadii()
 
     _appliedBackgroundCornerRadii = backgroundRadii;
     _appliedBorderCornerRadii = borderRadii;
-    _isApplyingCornerRadii = true;
 
     if(_background)
-        _background->SetCornerRadii(backgroundRadii);
+        _background->setDrawnCornerRadii(backgroundRadii);
 
     if(_border)
-       _border->SetCornerRadii(borderRadii);
-
-    _isApplyingCornerRadii = false;
+       _border->setDrawnCornerRadii(borderRadii);
 }
 
 void RetroFuturaGUI::Window::takeCornerRadii(glm::vec4& asked, const IWidgetDecoration& part)
 {
-    if(_isApplyingCornerRadii)
-        return;
-
     asked = part.GetCornerRadii();
     _appliedBackgroundCornerRadii = glm::vec4(-1.0f); //the drawn radii are handed over again at the next draw
 }
@@ -340,4 +336,57 @@ RetroFuturaGUI::Border& RetroFuturaGUI::Window::GetBorder()
 const RetroFuturaGUI::Border& RetroFuturaGUI::Window::GetBorder() const
 {
     return *_border;
+}
+
+void RetroFuturaGUI::Window::AddFlavor(std::string_view name)
+{
+    if(HasFlavor(name))
+        return;
+
+    _flavorNames.emplace_back(name);
+    _flavorHashes.push_back(StylingManager::GetFlavorHash(name));
+    restyleParts();
+}
+
+void RetroFuturaGUI::Window::RemoveFlavor(std::string_view name)
+{
+    const auto found { std::ranges::find(_flavorHashes, StylingManager::GetFlavorHash(name)) };
+
+    if(_flavorHashes.end() == found)
+        return;
+
+    _flavorNames.erase(_flavorNames.begin() + (found - _flavorHashes.begin()));
+    _flavorHashes.erase(found);
+    restyleParts();
+}
+
+bool RetroFuturaGUI::Window::HasFlavor(std::string_view name) const
+{
+    return std::ranges::contains(_flavorHashes, StylingManager::GetFlavorHash(name));
+}
+
+const std::vector<std::string>& RetroFuturaGUI::Window::GetFlavors() const
+{
+    return _flavorNames;
+}
+
+void RetroFuturaGUI::Window::restyleParts()
+{
+    _styleGeneration = StylingManager::GetGeneration();
+    StylingManager::ResolveTransitions(_ownTransitions, _flavorHashes, _transitionSettings);
+
+    if(_background)
+        static_cast<IWidgetDecoration&>(*_background).restyle(); //through the base, which lets the window in.
+
+    if(_border)
+        static_cast<IWidgetDecoration&>(*_border).restyle();
+}
+
+void RetroFuturaGUI::Window::followFlavors()
+{
+    if(StylingManager::GetGeneration() == _styleGeneration)
+        return;
+
+    _styleGeneration = StylingManager::GetGeneration();
+    StylingManager::ResolveTransitions(_ownTransitions, _flavorHashes, _transitionSettings);
 }

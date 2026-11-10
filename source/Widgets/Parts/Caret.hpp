@@ -1,6 +1,8 @@
 #pragma once
 #include "IncludeHelper.hpp"
 #include "Plane.hpp"
+#include "StyledPart.hpp"
+#include "ShaderLayers.hpp"
 #include <chrono>
 #include <span>
 #include <vector>
@@ -9,7 +11,7 @@ namespace RetroFuturaGUI
 {
     /// @brief The caret of an editable text. The widget owns it and hands it out through GetCaret(), so it is styled as
     ///        textBox.GetCaret().SetColors(...)
-    class Caret final
+    class Caret final : public IStyledPart
     {
     public:
         explicit Caret(Projection* projection);
@@ -20,7 +22,7 @@ namespace RetroFuturaGUI
         auto operator =(const Caret&) = delete;
         auto operator =(Caret&&) = delete;
 
-        /// @brief Sets the caret color(s)
+        /// @brief Sets the caret color(s), over every flavor. None leave them to the widget's flavors and the built-in ones
         void SetColors(std::span<const glm::vec4> colors);
 
         /// @brief Sets the fill type (solid, linear/radial/huestar gradient)
@@ -45,6 +47,9 @@ namespace RetroFuturaGUI
         void SetMoveTransition(const Transition& transition);
         const Transition& GetMoveTransition() const;
 
+        /// @brief Leaves a fill setting to the widget's flavors and the built-in look (colors: set none instead)
+        void ResetSetting(const StyleSetting setting);
+
     //Called by the owning widget
         /// @brief Draws the caret
         void Draw();
@@ -62,8 +67,16 @@ namespace RetroFuturaGUI
         void SetTransitionSettings(const TransitionSettings* settings);
 
     private:
+        void restyle() override;
+
+        /// @brief Hands the plane the colors and the fill settings that changed through the layers
+        void applyStyle();
+
         Plane _plane;
-        std::vector<glm::vec4> _colors { glm::vec4(1.0f) };
+        LayeredColors _colors {}; //its colors are its Enabled ones
+        LayeredSetting<FillType> _fillTypeLayer {};
+        LayeredSetting<f32>
+            _gradientAnimationSpeedLayer {};
         f64 _blinkTime { 650.0 };
         bool _neverBlinks { false };
 

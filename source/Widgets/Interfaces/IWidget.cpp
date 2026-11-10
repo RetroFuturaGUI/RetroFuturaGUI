@@ -6,6 +6,7 @@
 #include "WidgetRegistry.hpp"
 #include "IWidgetDecoration.hpp"
 #include "WidgetText.hpp"
+#include "StyledPart.hpp"
 #include <algorithm>
 #include "FillStyle.hpp"
 #include "Background.hpp"
@@ -423,6 +424,7 @@ void RetroFuturaGUI::IWidget::Interact()
 
 void RetroFuturaGUI::IWidget::Update()
 {
+    followFlavors(); //before the first frame counts, so flavors taken at the start show at once.
     _hasUpdated = true;
     updateGeometry();
     updateBorderGap();
@@ -461,12 +463,14 @@ void RetroFuturaGUI::IWidget::AddContextMenuNode(std::string_view newNodeName, s
 
 void RetroFuturaGUI::IWidget::SetTransition(const TransitionProperty properties, const Transition& transition)
 {
-    Transitions::Override(_transitionSettings, properties, transition);
+    Transitions::Override(_ownTransitions, properties, transition);
+    resolveTransitions();
 }
 
 void RetroFuturaGUI::IWidget::ResetTransition(const TransitionProperty properties)
 {
-    Transitions::Reset(_transitionSettings, properties);
+    Transitions::Reset(_ownTransitions, properties);
+    resolveTransitions();
 }
 
 RetroFuturaGUI::Transition RetroFuturaGUI::IWidget::GetTransition(const TransitionProperty property) const
@@ -500,10 +504,17 @@ void RetroFuturaGUI::IWidget::updateContextMenu()
 
 void RetroFuturaGUI::IWidget::SetBorderGap(const glm::vec4& gap)
 {
+    _ownBorderGap = gap;
     _borderGap = gap;
     _hasBorderGap = true;
     setBackgroundInset(true);
     updateBorderInwardGlow();
+}
+
+void RetroFuturaGUI::IWidget::ResetBorderGap()
+{
+    _ownBorderGap.reset();
+    resolveBorderGap();
 }
 
 const glm::vec4& RetroFuturaGUI::IWidget::GetBorderGap() const
@@ -529,7 +540,25 @@ void RetroFuturaGUI::IWidget::useFlavors(IWidgetDecoration* background, IWidgetD
         _styledBorder->setStyleSource(&_flavorHashes, StylePart::Border);
 
     if(_styledText)
-        _styledText->setStyleSource(&_flavorHashes);
+        _styledText->setStyleSource(&_flavorHashes, StylePart::Text);
+}
+
+void RetroFuturaGUI::IWidget::useSubPartFlavors(IWidgetDecoration& part, const StylePart stylePart)
+{
+    _styledSubParts.push_back(&part);
+    part.setStyleSource(&_flavorHashes, stylePart);
+}
+
+void RetroFuturaGUI::IWidget::useSubPartFlavors(WidgetText& text, const StylePart stylePart)
+{
+    _styledSubTexts.push_back(&text);
+    text.setStyleSource(&_flavorHashes, stylePart);
+}
+
+void RetroFuturaGUI::IWidget::useSubPartFlavors(IStyledPart& part, const StylePart stylePart)
+{
+    _styledOtherParts.push_back(&part);
+    part.setStyleSource(&_flavorHashes, stylePart);
 }
 
 void RetroFuturaGUI::IWidget::AddFlavor(std::string_view name)
@@ -566,6 +595,19 @@ const std::vector<std::string>& RetroFuturaGUI::IWidget::GetFlavors() const
 
 void RetroFuturaGUI::IWidget::restyleParts()
 {
+    _styleGeneration = StylingManager::GetGeneration();
+    resolveTransitions();
+    resolveBorderGap();
+
+    for(IWidgetDecoration* part : _styledSubParts)
+        part->restyle();
+
+    for(WidgetText* text : _styledSubTexts)
+        text->setStyleSource(&_flavorHashes, text->_stylePart);
+
+    for(IStyledPart* part : _styledOtherParts)
+        part->setStyleSource(&_flavorHashes, part->getStylePart());
+
     if(_styledBackground)
         _styledBackground->restyle();
 
@@ -573,7 +615,7 @@ void RetroFuturaGUI::IWidget::restyleParts()
         _styledBorder->restyle();
 
     if(_styledText)
-        _styledText->setStyleSource(&_flavorHashes);
+        _styledText->setStyleSource(&_flavorHashes, StylePart::Text);
 }
 
 void RetroFuturaGUI::IWidget::useBorderGap(Background* background, Border* border)
@@ -595,10 +637,7 @@ void RetroFuturaGUI::IWidget::updateBorderGap()
     if(!_gapBackground)
         return;
 
-    if(!_hasBorderGap)
-        return;
-
-    if(getGapBorderWidth() != _gapBorderWidth)
+    if(_hasBorderGap && getGapBorderWidth() != _gapBorderWidth)
         setBackgroundInset(false); //border widths change at once, so the gap follows them at once.
 
     if(!_isInsetMoving)
@@ -615,7 +654,7 @@ void RetroFuturaGUI::IWidget::setBackgroundInset(const bool animate)
         return;
 
     _gapBorderWidth = getGapBorderWidth();
-    const glm::vec4 target { glm::vec4(_gapBorderWidth) + _borderGap };
+    const glm::vec4 target { _hasBorderGap ? glm::vec4(_gapBorderWidth) + _borderGap : glm::vec4(0.0f) }; //without a gap it spans the whole widget.
     const Transition transition { Transitions::Resolve(_transitionSettings, TransitionProperty::BorderGap) };
 
     //Before the first frame, without a transition or inside an InstantScope it applies at once, as a plain setter would
@@ -648,4 +687,31 @@ void RetroFuturaGUI::IWidget::updateBorderInwardGlow()
         return;
 
     _gapBorder->_hasBackgroundGap = _hasBorderGap && glm::any(glm::greaterThan(_borderGap, glm::vec4(0.0f)));
+}
+void RetroFuturaGUI::IWidget::followFlavors()
+{
+    if(StylingManager::GetGeneration() == _styleGeneration)
+        return;
+
+    _styleGeneration = StylingManager::GetGeneration();
+    resolveTransitions();
+    resolveBorderGap();
+}
+
+void RetroFuturaGUI::IWidget::resolveTransitions()
+{
+    StylingManager::ResolveTransitions(_ownTransitions, _flavorHashes, _transitionSettings);
+}
+
+void RetroFuturaGUI::IWidget::resolveBorderGap()
+{
+    const std::optional<glm::vec4> gap { _ownBorderGap ? _ownBorderGap : StylingManager::FindFirst<std::optional<glm::vec4>>(_flavorHashes, [](const Flavor& flavor) -> const std::optional<glm::vec4>& { return flavor.GetBorderGap(); }) };
+
+    if(gap.has_value() == _hasBorderGap && (!gap || *gap == _borderGap))
+        return;
+
+    _borderGap = gap.value_or(glm::vec4(0.0f));
+    _hasBorderGap = gap.has_value();
+    setBackgroundInset(true);
+    updateBorderInwardGlow();
 }

@@ -594,6 +594,9 @@ namespace RetroFuturaGUI
 
         void resizeTrackReadOnlyFlags();
 
+        /// @brief Has each track variant take unset colors from the table's flavors' variant of the same index
+        void followTrackFlavors();
+
         /// @brief Returns how many rows can be selected: the rows, or the columns in Column orientation.
         uSize getSelectableRowCount() const;
 

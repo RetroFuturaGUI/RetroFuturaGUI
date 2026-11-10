@@ -113,13 +113,24 @@ namespace RetroFuturaGUI
         ShaderLayers _shader {};
         ColorState _colorState { ColorState::Enabled };
 
+        /// @brief The radii handed to the element. The shown ones, or the ones its window draws in their place (a docked window
+        ///        squares its corners)
+        glm::vec4 getDrawnCornerRadii() const;
+
     private:
         friend class IWidget; //makes it one of its styled parts
+        friend class Window; //styles its parts like a widget, and squares their corners while docked
 
         /// @brief Has the part take unset values from the widget's flavors, as the given part of them
         void setStyleSource(const std::vector<u32>* flavors, const StylePart part);
 
         /// @brief Takes the corner radii and cut corners through their layers; hands them on and tells the owner if they changed
         void resolveCornerShape();
+
+        /// @brief Draws the corners with these radii in place of the shown ones, nothing to draw the shown ones again. Called by a
+        ///        window, whose asked-for radii stay what the layers show
+        void setDrawnCornerRadii(const std::optional<glm::vec4>& radii);
+
+        std::optional<glm::vec4> _drawnCornerRadii {};
     };
 }

@@ -10,6 +10,7 @@ RetroFuturaGUI::ColorPicker::ColorPicker(std::string_view name, Projection* proj
 {
     _widgetTypeID = WidgetTypeID::ColorPicker;
     useFlavors(nullptr, &_border, nullptr);
+    useSubPartFlavors(_indicator.GetBorder(), StylePart::IndicatorBorder);
     _colorPickerBackground = std::make_unique<ColorField>(projection);
     useTransitions({ _colorPickerBackground.get() });
     _border.SetTransitionSettings(&_transitionSettings);

@@ -222,7 +222,7 @@ void RetroFuturaGUI::Graph::setColors()
 
 void RetroFuturaGUI::Graph::setCornerShape()
 {
-    _wavePlane.SetCornerRadii(_cornerRadii);
+    _wavePlane.SetCornerRadii(getDrawnCornerRadii());
     _wavePlane.SetCutCorners(_cutCorners);
 }
 
