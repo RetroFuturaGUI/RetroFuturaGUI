@@ -32,9 +32,6 @@ The framework is designed for cross-platform use, and its logic can be compiled 
 
 ### WIP in detail
 - Table
-  - More cell types (TableProgressBar)
-  - A double-click on a header line to fit the track to its content, once Auto sizing exists (Auto tracks still resolve like Fixed ones)
-  - Keyboard traversal between cells (Tab); the arrow keys move the caret within a cell
 - Slider / ProgressBar
   - The graph doesn't account for the track's border width, so an enabled graph paints over the frame; the indicator does account for it
   - A Circle indicator takes its corner radius from the indicator's x size alone, so it draws as a rounded rectangle whenever the two axes differ
@@ -179,8 +176,8 @@ The framework is designed for cross-platform use, and its logic can be compiled 
     - Cells are typed by what is assigned to them, and editable text cells work like a TextBox, per cell; read-only tracks
     - Row selection (single or multiple, Alt and Shift, a drag band), dragging the selection, keyboard navigation (arrows, Home, End, PageUp, PageDown, Ctrl+A), the mouse wheel and scrolling from outside (a Slider)
     - Rename-style editing from code (EditCell, EndEdit), Enter keeps and Escape cancels (OnCellEditEnded)
+    - Tab and Shift+Tab keep the edit and open the next or previous editable text cell in reading order, wrapping around, skipping read-only tracks and other cell kinds; the new cell's text is selected, it scrolls into view and its row becomes the selected one. Without an edit, Tab opens the selected row's first editable cell and Shift+Tab its last. The arrow keys move the caret within a cell
     - Star and Fixed track sizes, headers on any side, alternating track colors, double-click and slow double-click (OnRowDoubleClicked, OnRowSlowDoubleClicked)
-    - Resizing tracks by dragging the line after them in a header (columns in the column header, rows in the row header; SetResizableTracks, SetMinimumTrackSize): the track becomes Fixed and the Star tracks share what is left; OnColumnResized and OnRowResized on release. From code, one track at a time: SetColumnDefinition, SetRowDefinition, GetColumnWidth, GetRowHeight
     - Track states: the track under the pointer shows its Hover colors and the pressed one its Clicked colors, over Selected; checkbox cells' checkmarks take the tracks' icon colors; the header bands get an outer border
     - Costs the same however many rows it holds: only what is in view is drawn, through a pool of shared elements
   - Image: shows a picture file (stb_image formats and SVG) or a decoded picture, its aspect ratio kept; pictures can be decoded on another thread

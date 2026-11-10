@@ -715,6 +715,26 @@ namespace RetroFuturaGUI
         /// @brief Takes the press counts as seen, so keys pressed before the table had the keyboard do nothing.
         void syncKeyCounts();
 
+        /// @brief Moves the edit with Tab and Shift+Tab: keeps the edited cell and opens the next or the previous editable text
+        ///        cell in reading order, wrapping around. Without an edit, opens the cursor row's first or last editable cell
+        void followTabKey();
+
+        /// @brief Whether a press or Tab may edit the cell: a text cell, outside the read-only tracks of a selecting table
+        bool isEditableTextCell(const uSize row, const uSize column) const;
+
+        /// @brief The next or previous editable text cell after the given one in reading order, wrapping around. The given one
+        ///        itself when no other is
+        bool findTabTarget(const uSize fromRow, const uSize fromColumn, const bool backward, uSize& outRow, uSize& outColumn) const;
+
+        /// @brief The first or last editable text cell of a selectable track: a row, or a column in Column orientation
+        bool findEditableCellInTrack(const uSize track, const bool backward, uSize& outRow, uSize& outColumn) const;
+
+        /// @brief Keeps the edit and opens the given cell with its whole text selected, selecting its row in a selecting table
+        void tabToCell(const uSize row, const uSize column);
+
+        /// @brief Scrolls so the cell shows along both axes, as far as it fits
+        void scrollCellIntoView(const uSize row, const uSize column);
+
         /// @brief Grabs the line under the pointer for resizing on a press, follows it while the button is held, and lets go on
         ///        the release. Shows the resize cursor over a line. True while a resize takes the pointer, so nothing else does
         bool followTrackResize(const MouseState& mouse);
@@ -883,7 +903,8 @@ namespace RetroFuturaGUI
         std::string _editStartText {}; // what Escape puts back
         KeyRepeat
             _editKeepKey { ._Key = PB_KEY_RETURN, ._PressCountSeen = 0 },
-            _editCancelKey { ._Key = PB_KEY_ESCAPE, ._PressCountSeen = 0 };
+            _editCancelKey { ._Key = PB_KEY_ESCAPE, ._PressCountSeen = 0 },
+            _tabKey { ._Key = PB_KEY_TAB, ._PressCountSeen = 0 };
         Signal<TrackIndex, EditEnd, std::string>
             _onCellEditEnded,
             _onCellEditEndedAsync;

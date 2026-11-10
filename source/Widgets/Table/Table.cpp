@@ -1447,6 +1447,7 @@ void RetroFuturaGUI::Table::interact()
     }
 
     scrollByWheel(pointer, mouse);
+    followTabKey();
     navigateByKeys();
 
     if(wasReleasedThisFrame) // a release belongs to the table, not to whichever cell kind happens to run last
@@ -1593,11 +1594,7 @@ bool RetroFuturaGUI::Table::GetValue(const TrackIndex& index) const
 
 bool RetroFuturaGUI::Table::pressEditsTextCell(const uSize row, const uSize column) const
 {
-    const bool isSelecting { RowSelection::None != _rowSelection && _isEnabledFlag };
-
-    //resizeTrackReadOnlyFlags() sizes the flags across the axis the orientation doesn't band along
-    const uSize track { _tableOrientation == TableOrientation::Row ? column : row };
-    return !isSelecting || !IsTrackReadOnly(track) || isEditCell(row, column); //a press into a cell EditCell opened places the caret
+    return isEditableTextCell(row, column) || isEditCell(row, column); //a press into a cell EditCell opened places the caret
 }
 
 bool RetroFuturaGUI::Table::isOverEditableText(const MouseState& mouse) const
@@ -2402,6 +2399,7 @@ void RetroFuturaGUI::Table::syncKeyCounts()
 
     _selectAllKey._PressCountSeen = PlatformBridge::Input::GetKeyPressCount(_selectAllKey._Key);
     _escapeKey._PressCountSeen = PlatformBridge::Input::GetKeyPressCount(_escapeKey._Key);
+    _tabKey._PressCountSeen = PlatformBridge::Input::GetKeyPressCount(_tabKey._Key);
 }
 
 void RetroFuturaGUI::Table::TakeKeyboardFocus()
@@ -2916,4 +2914,153 @@ void RetroFuturaGUI::Table::endTrackResize()
         &resizedAsync { _isResizingColumn ? _onColumnResizedAsync : _onRowResizedAsync };
     resizedAsync.EmitAsync(_resizedTrack, size);
     resized.Emit(_resizedTrack, size); //last, since a slot may redefine the tracks
+}
+
+void RetroFuturaGUI::Table::followTabKey()
+{
+    if(!_isEnabledFlag || !_editor.HasKeyboardFocus())
+    {
+        _tabKey._PressCountSeen = PlatformBridge::Input::GetKeyPressCount(_tabKey._Key); //pressed while another widget had the keys
+        return;
+    }
+
+    if(!isKeyTriggered(_tabKey, true))
+        return;
+
+    const bool backward { isShiftHeld() };
+    uSize
+        row { 0 },
+        column { 0 };
+
+    if(_hasEditCell)
+    {
+        if(!findTabTarget(_editRow, _editColumn, backward, row, column))
+            return;
+    }
+    else if(!(_hasCursorRow && findEditableCellInTrack(_cursorRow, backward, row, column)))
+    {
+        //From past the last cell forward, or before the first one backward, so the search starts at the table's first or last cell
+        const uSize
+            lastRow { _rowDefinition.empty() ? 0 : _rowDefinition.size() - 1 },
+            lastColumn { _columnDefinition.empty() ? 0 : _columnDefinition.size() - 1 };
+
+        if(!findTabTarget(backward ? 0 : lastRow, backward ? 0 : lastColumn, backward, row, column))
+            return;
+    }
+
+    tabToCell(row, column);
+}
+
+bool RetroFuturaGUI::Table::isEditableTextCell(const uSize row, const uSize column) const
+{
+    const BodyCell* cell { cellAt(row, column) };
+
+    if(!cell)
+        return false;
+
+    if(cell->_Type != ITableWidget::TableWidgetTypeID::TableText)
+        return false;
+
+    const bool isSelecting { RowSelection::None != _rowSelection && _isEnabledFlag };
+    const uSize track { _tableOrientation == TableOrientation::Row ? column : row };
+    return !isSelecting || !IsTrackReadOnly(track);
+}
+
+bool RetroFuturaGUI::Table::findTabTarget(const uSize fromRow, const uSize fromColumn, const bool backward, uSize& outRow, uSize& outColumn) const
+{
+    const uSize
+        columnCount { _columnDefinition.size() },
+        cellCount { _rowDefinition.size() * columnCount };
+
+    if(0 == cellCount)
+        return false;
+
+    const uSize start { fromRow * columnCount + fromColumn };
+
+    //Row after row, every cell once, the start itself last
+    for(uSize step = 1; step <= cellCount; ++step)
+    {
+        const uSize index { backward ? (start + cellCount - step % cellCount) % cellCount : (start + step) % cellCount };
+
+        if(!isEditableTextCell(index / columnCount, index % columnCount))
+            continue;
+
+        outRow = index / columnCount;
+        outColumn = index % columnCount;
+        return true;
+    }
+
+    return false;
+}
+
+bool RetroFuturaGUI::Table::findEditableCellInTrack(const uSize track, const bool backward, uSize& outRow, uSize& outColumn) const
+{
+    const bool isRowOrientation { _tableOrientation == TableOrientation::Row };
+    const uSize cellCount { isRowOrientation ? _columnDefinition.size() : _rowDefinition.size() };
+
+    for(uSize step = 0; step < cellCount; ++step)
+    {
+        const uSize
+            along { backward ? cellCount - 1 - step : step },
+            row { isRowOrientation ? track : along },
+            column { isRowOrientation ? along : track };
+
+        if(!isEditableTextCell(row, column))
+            continue;
+
+        outRow = row;
+        outColumn = column;
+        return true;
+    }
+
+    return false;
+}
+
+void RetroFuturaGUI::Table::tabToCell(const uSize row, const uSize column)
+{
+    endEdit(EditEnd::Kept);
+
+    if(!isEditableTextCell(row, column))
+        return;
+
+    if(RowSelection::None != _rowSelection)
+        moveCursorTo(_tableOrientation == TableOrientation::Row ? row : column, false);
+
+    if(!isEditableTextCell(row, column))
+        return;
+
+    scrollCellIntoView(row, column);
+    openEdit(row, column);
+    Text* text { getActiveText() };
+
+    if(!text)
+        return;
+
+    _editor.SelectFromStart(text->GetGlyphCount()); //typing replaces the whole text, as in a form
+}
+
+void RetroFuturaGUI::Table::scrollCellIntoView(const uSize row, const uSize column)
+{
+    if(_rowOffsets.size() <= row + 1 || _columnOffsets.size() <= column + 1)
+        return;
+
+    glm::vec2 target { _scrollPosition };
+
+    //Along each axis. The cell's start when it lies before the view, else its end at the view's end when it lies past it
+    if(_columnOffsets[column] < target.x)
+        target.x = _columnOffsets[column];
+    else if(_columnOffsets[column + 1] > target.x + _innerSize.x)
+        target.x = std::min(_columnOffsets[column], _columnOffsets[column + 1] - _innerSize.x);
+
+    if(_rowOffsets[row] < target.y)
+        target.y = _rowOffsets[row];
+    else if(_rowOffsets[row + 1] > target.y + _innerSize.y)
+        target.y = std::min(_rowOffsets[row], _rowOffsets[row + 1] - _innerSize.y);
+
+    if(target == _scrollPosition)
+        return;
+
+    SetScrollPosition(target);
+    _onScrolledAsync.EmitAsync();
+    _onScrolled.Emit();
 }
