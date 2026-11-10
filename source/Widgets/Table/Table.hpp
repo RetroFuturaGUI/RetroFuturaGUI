@@ -77,6 +77,24 @@ namespace RetroFuturaGUI
             Cancelled // Escape, or the table took the rows away
         };
 
+        enum class ResizableTracks : u32
+        {
+            None = 0,
+            Columns = 1,
+            Rows = 1 << 1
+        };
+
+        friend constexpr ResizableTracks operator |(const ResizableTracks left, const ResizableTracks right)
+        {
+            return static_cast<ResizableTracks>(static_cast<u32>(left) | static_cast<u32>(right));
+        }
+
+        /// @brief Whether the mask holds the given tracks
+        static constexpr bool HasResizableTracks(const ResizableTracks tracks, const ResizableTracks part)
+        {
+            return 0 != (static_cast<u32>(tracks) & static_cast<u32>(part));
+        }
+
         /// @brief Sizing policy for one row or column.
         struct TrackDefinition
         {
@@ -175,6 +193,38 @@ namespace RetroFuturaGUI
 
         /// @brief Sets the row/column tracks with explicit sizing policies. Fixed/Auto tracks are what let the content outgrow the table and become scrollable.
         void SetTrackDefinitions(const std::vector<TrackDefinition>& rowDefinition, const std::vector<TrackDefinition>& columnDefinition);
+
+        /// @brief Sets one column's sizing policy, keeping the cells. Does nothing for a column the table doesn't have
+        void SetColumnDefinition(const uSize column, const TrackDefinition& definition);
+
+        /// @brief Sets one row's sizing policy, keeping the cells. Does nothing for a row the table doesn't have
+        void SetRowDefinition(const uSize row, const TrackDefinition& definition);
+
+        /// @brief Returns one column's sizing policy, the default one for a column the table doesn't have
+        TrackDefinition GetColumnDefinition(const uSize column) const;
+
+        /// @brief Returns one row's sizing policy, the default one for a row the table doesn't have
+        TrackDefinition GetRowDefinition(const uSize row) const;
+
+        /// @brief Returns the width a column is drawn at, in pixels; 0 for a column the table doesn't have
+        f32 GetColumnWidth(const uSize column) const;
+
+        /// @brief Returns the height a row is drawn at, in pixels; 0 for a row the table doesn't have
+        f32 GetRowHeight(const uSize row) const;
+
+        /// @brief Sets which tracks the user may resize: dragging the line after a column in the column header sets its width,
+        ///        the line after a row in the row header its height. Both by default. A dragged track becomes Fixed at its new size,
+        ///        and the Star tracks share what is left, so the content can grow past the table and scroll
+        void SetResizableTracks(const ResizableTracks tracks);
+
+        /// @brief Returns which tracks the user may resize
+        ResizableTracks GetResizableTracks() const;
+
+        /// @brief Sets how small the user may drag a track, in pixels (12 by default). Code may still set smaller ones
+        void SetMinimumTrackSize(const f32 size);
+
+        /// @brief Returns how small the user may drag a track
+        f32 GetMinimumTrackSize() const;
 
         /// @brief Scrolls the content, in pixels from its top-left, clamped to the scrollable extent.
         void SetScrollPosition(const glm::vec2& scrollPosition);
@@ -386,6 +436,15 @@ namespace RetroFuturaGUI
         void Connect_OnHorizontalHeaderClicked(const typename Signal<uSize>::Slot& slot, const bool async);
 
         void Disconnect_OnHorizontalHeaderClicked(const typename Signal<uSize>::Slot& slot);
+
+        /// @brief Connects a slot called when the user lets go of a column they resized, with the column and its new width in
+        ///        pixels, so an app can keep the widths. Code setting a definition doesn't call it
+        void Connect_OnColumnResized(const typename Signal<uSize, f32>::Slot& slot, const bool async);
+        void Disconnect_OnColumnResized(const typename Signal<uSize, f32>::Slot& slot);
+
+        /// @brief Connects a slot called when the user lets go of a row they resized, with the row and its new height in pixels
+        void Connect_OnRowResized(const typename Signal<uSize, f32>::Slot& slot, const bool async);
+        void Disconnect_OnRowResized(const typename Signal<uSize, f32>::Slot& slot);
 
         /// @brief Connects a slot to the table scrolling itself: to keep the row the keys moved to in view, or while a band or a
         ///        drag reaches past the rows. SetScrollPosition doesn't fire it.
@@ -656,6 +715,17 @@ namespace RetroFuturaGUI
         /// @brief Takes the press counts as seen, so keys pressed before the table had the keyboard do nothing.
         void syncKeyCounts();
 
+        /// @brief Grabs the line under the pointer for resizing on a press, follows it while the button is held, and lets go on
+        ///        the release. Shows the resize cursor over a line. True while a resize takes the pointer, so nothing else does
+        bool followTrackResize(const MouseState& mouse);
+
+        /// @brief Finds the line after a track in a header under a window space point, among the tracks in view: a column's in
+        ///        the column header, a row's in the row header, where they may be resized
+        bool findResizeLineAt(const glm::vec2& point, bool& outIsColumn, uSize& outTrack) const;
+
+        /// @brief Ends a resize, telling the slots when the track's size changed.
+        void endTrackResize();
+
         /// @brief Finds the column header under a window space point, among the columns in view.
         bool findHorizontalHeaderAt(const glm::vec2& point, uSize& outColumn) const;
 
@@ -758,6 +828,18 @@ namespace RetroFuturaGUI
         std::vector<TrackDefinition>
             _rowDefinition {},
             _columnDefinition {};
+
+    //Resizing tracks by their header lines
+        ResizableTracks _resizableTracks { ResizableTracks::Columns | ResizableTracks::Rows };
+        f32
+            _minimumTrackSize { 12.0f },
+            _resizeStartPointer { 0.0f }, //where along the axis the press began
+            _resizeStartSize { 0.0f }; //the track's size when it was grabbed
+        uSize _resizedTrack { 0 };
+        bool
+            _isResizingTrack { false },
+            _isResizingColumn { false };
+        static constexpr f32 _resizeGrabDistance { 4.0f }; //how far from a line, on either side, the pointer grabs it
         bool
             _displayHorizontalHeader { false },
             _displayVerticalHeader { false };
@@ -876,6 +958,11 @@ namespace RetroFuturaGUI
         Signal<uSize>
             _onHorizontalHeaderClicked,
             _onHorizontalHeaderClickedAsync;
+        Signal<uSize, f32>
+            _onColumnResized,
+            _onColumnResizedAsync,
+            _onRowResized,
+            _onRowResizedAsync;
         Signal<>
             _onScrolled,
             _onScrolledAsync;

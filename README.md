@@ -33,8 +33,7 @@ The framework is designed for cross-platform use, and its logic can be compiled 
 ### WIP in detail
 - Table
   - More cell types (TableProgressBar)
-  - Connect_/Disconnect_OnColorChange and OnCheckBoxChange: both signals are emitted when a cell's value changes but have no public connector yet
-  - Changing column widths and row heights by hand: dragging the line between two header cells resizes that track, down to a minimum, and a double-click on it fits the track to its content once Auto sizing exists.
+  - A double-click on a header line to fit the track to its content, once Auto sizing exists (Auto tracks still resolve like Fixed ones)
   - Keyboard traversal between cells (Tab); the arrow keys move the caret within a cell
 - Slider / ProgressBar
   - The graph doesn't account for the track's border width, so an enabled graph paints over the frame; the indicator does account for it
@@ -181,6 +180,7 @@ The framework is designed for cross-platform use, and its logic can be compiled 
     - Row selection (single or multiple, Alt and Shift, a drag band), dragging the selection, keyboard navigation (arrows, Home, End, PageUp, PageDown, Ctrl+A), the mouse wheel and scrolling from outside (a Slider)
     - Rename-style editing from code (EditCell, EndEdit), Enter keeps and Escape cancels (OnCellEditEnded)
     - Star and Fixed track sizes, headers on any side, alternating track colors, double-click and slow double-click (OnRowDoubleClicked, OnRowSlowDoubleClicked)
+    - Resizing tracks by dragging the line after them in a header (columns in the column header, rows in the row header; SetResizableTracks, SetMinimumTrackSize): the track becomes Fixed and the Star tracks share what is left; OnColumnResized and OnRowResized on release. From code, one track at a time: SetColumnDefinition, SetRowDefinition, GetColumnWidth, GetRowHeight
     - Track states: the track under the pointer shows its Hover colors and the pressed one its Clicked colors, over Selected; checkbox cells' checkmarks take the tracks' icon colors; the header bands get an outer border
     - Costs the same however many rows it holds: only what is in view is drawn, through a pool of shared elements
   - Image: shows a picture file (stb_image formats and SVG) or a decoded picture, its aspect ratio kept; pictures can be decoded on another thread

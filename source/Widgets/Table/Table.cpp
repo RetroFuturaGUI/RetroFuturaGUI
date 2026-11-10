@@ -1437,10 +1437,15 @@ void RetroFuturaGUI::Table::interact()
         _onMouseLeave.Emit();
     }
 
-    followHoveredTrack(mouse);
-    interactTableText(mouse);
-    interactTableCheckBox(mouse);
-    followPress(mouse);
+    
+    if(!followTrackResize(mouse))
+    {
+        followHoveredTrack(mouse);
+        interactTableText(mouse);
+        interactTableCheckBox(mouse);
+        followPress(mouse);
+    }
+
     scrollByWheel(pointer, mouse);
     navigateByKeys();
 
@@ -2139,6 +2144,7 @@ void RetroFuturaGUI::Table::followPress(const MouseState& mouse)
 
 void RetroFuturaGUI::Table::cancelPress()
 {
+    endTrackResize();
     const PressGesture gesture { _pressGesture };
     _pressGesture = PressGesture::None;
     _collapseOnRelease = false;
@@ -2694,4 +2700,220 @@ void RetroFuturaGUI::Table::Disconnect_OnCopy(const typename Signal<>::Slot& slo
 void RetroFuturaGUI::Table::Disconnect_OnPaste(const typename Signal<>::Slot& slot)
 {
     _editor.Disconnect_OnPaste(slot);
+}
+
+void RetroFuturaGUI::Table::SetColumnDefinition(const uSize column, const TrackDefinition& definition)
+{
+    if(column >= _columnDefinition.size())
+        return;
+
+    _columnDefinition[column] = definition;
+    layoutCells();
+}
+
+void RetroFuturaGUI::Table::SetRowDefinition(const uSize row, const TrackDefinition& definition)
+{
+    if(row >= _rowDefinition.size())
+        return;
+
+    _rowDefinition[row] = definition;
+    layoutCells();
+}
+
+RetroFuturaGUI::Table::TrackDefinition RetroFuturaGUI::Table::GetColumnDefinition(const uSize column) const
+{
+    if(column >= _columnDefinition.size())
+        return TrackDefinition {};
+
+    return _columnDefinition[column];
+}
+
+RetroFuturaGUI::Table::TrackDefinition RetroFuturaGUI::Table::GetRowDefinition(const uSize row) const
+{
+    if(row >= _rowDefinition.size())
+        return TrackDefinition {};
+
+    return _rowDefinition[row];
+}
+
+f32 RetroFuturaGUI::Table::GetColumnWidth(const uSize column) const
+{
+    if(column >= _resolvedColumnSizes.size())
+        return 0.0f;
+
+    return _resolvedColumnSizes[column];
+}
+
+f32 RetroFuturaGUI::Table::GetRowHeight(const uSize row) const
+{
+    if(row >= _resolvedRowSizes.size())
+        return 0.0f;
+
+    return _resolvedRowSizes[row];
+}
+
+void RetroFuturaGUI::Table::SetResizableTracks(const ResizableTracks tracks)
+{
+    _resizableTracks = tracks;
+}
+
+RetroFuturaGUI::Table::ResizableTracks RetroFuturaGUI::Table::GetResizableTracks() const
+{
+    return _resizableTracks;
+}
+
+void RetroFuturaGUI::Table::SetMinimumTrackSize(const f32 size)
+{
+    _minimumTrackSize = std::max(size, 1.0f);
+}
+
+f32 RetroFuturaGUI::Table::GetMinimumTrackSize() const
+{
+    return _minimumTrackSize;
+}
+
+void RetroFuturaGUI::Table::Connect_OnColumnResized(const typename Signal<uSize, f32>::Slot& slot, const bool async)
+{
+    if(async)
+        _onColumnResizedAsync.Connect(slot);
+    else
+        _onColumnResized.Connect(slot);
+}
+
+void RetroFuturaGUI::Table::Disconnect_OnColumnResized(const typename Signal<uSize, f32>::Slot& slot)
+{
+    _onColumnResized.Disconnect(slot);
+    _onColumnResizedAsync.Disconnect(slot);
+}
+
+void RetroFuturaGUI::Table::Connect_OnRowResized(const typename Signal<uSize, f32>::Slot& slot, const bool async)
+{
+    if(async)
+        _onRowResizedAsync.Connect(slot);
+    else
+        _onRowResized.Connect(slot);
+}
+
+void RetroFuturaGUI::Table::Disconnect_OnRowResized(const typename Signal<uSize, f32>::Slot& slot)
+{
+    _onRowResized.Disconnect(slot);
+    _onRowResizedAsync.Disconnect(slot);
+}
+
+bool RetroFuturaGUI::Table::followTrackResize(const MouseState& mouse)
+{
+    if(_isResizingTrack)
+    {
+        if(!mouse._IsPressed)
+        {
+            endTrackResize();
+            return true; //the release belongs to the resize
+        }
+
+        requestCursorIcon(_isResizingColumn ? PlatformBridge::CursorIcon::ResizeHorizontal : PlatformBridge::CursorIcon::ResizeVertical);
+        std::vector<TrackDefinition>& tracks { _isResizingColumn ? _columnDefinition : _rowDefinition };
+
+        if(!mouse._HasPosition || _resizedTrack >= tracks.size())
+            return true; //the tracks were redefined meanwhile.
+
+        //Columns grow rightward with the pointer, rows downward, while y runs upward
+        const f32
+            travel { _isResizingColumn ? mouse._Position.x - _resizeStartPointer : _resizeStartPointer - mouse._Position.y },
+            size { std::max(_resizeStartSize + travel, _minimumTrackSize) };
+        TrackDefinition& track { tracks[_resizedTrack] };
+
+        if(TrackSizing::Fixed == track._Sizing ? size == track._Value : size == _resizeStartSize)
+            return true; //a press that hasn't moved leaves a Star track Star.
+
+        track = TrackDefinition { ._Sizing = TrackSizing::Fixed, ._Value = size };
+        layoutCells();
+        return true;
+    }
+
+    if(!_isEnabledFlag || !mouse._IsInside)
+        return false;
+
+    bool isColumn { false };
+    uSize track { 0 };
+
+    if(!findResizeLineAt(mouse._Position, isColumn, track))
+        return false;
+
+    requestCursorIcon(isColumn ? PlatformBridge::CursorIcon::ResizeHorizontal : PlatformBridge::CursorIcon::ResizeVertical);
+
+    if(!mouse._PressedThisFrame)
+        return false;
+
+    EndEdit();
+    _isResizingTrack = true;
+    _isResizingColumn = isColumn;
+    _resizedTrack = track;
+    _resizeStartPointer = isColumn ? mouse._Position.x : mouse._Position.y;
+    _resizeStartSize = isColumn ? _resolvedColumnSizes[track] : _resolvedRowSizes[track];
+    return true;
+}
+
+bool RetroFuturaGUI::Table::findResizeLineAt(const glm::vec2& point, bool& outIsColumn, uSize& outTrack) const
+{
+    const glm::vec2
+        headers { getHeaderExtents() },
+        contentOrigin { getContentTopLeft() };
+    const f32
+        tableLeft { _position.x - _size.x * 0.5f },
+        tableBottom { _position.y - _size.y * 0.5f },
+        columnBandBottom { HeaderPosition::Bottom == _horizontalHeaderPosition ? tableBottom : tableBottom + _size.y - headers.y },
+        rowBandLeft { HeaderPosition::Right == _verticalHeaderPosition ? tableLeft + _size.x - headers.x : tableLeft };
+    const bool
+        isInColumnHeader { _displayHorizontalHeader && HasResizableTracks(_resizableTracks, ResizableTracks::Columns)
+            && point.y >= columnBandBottom && point.y <= columnBandBottom + headers.y
+            && point.x >= contentOrigin.x - _resizeGrabDistance && point.x <= contentOrigin.x + _innerSize.x + _resizeGrabDistance },
+        isInRowHeader { _displayVerticalHeader && HasResizableTracks(_resizableTracks, ResizableTracks::Rows)
+            && point.x >= rowBandLeft && point.x <= rowBandLeft + headers.x
+            && point.y <= contentOrigin.y + _resizeGrabDistance && point.y >= contentOrigin.y - _innerSize.y - _resizeGrabDistance };
+
+    //The line after each track in view, which the track's far edge is
+    for(uSize column = _displayedColumns[0]; isInColumnHeader && column < _displayedColumns[1] && column + 1 < _columnOffsets.size(); ++column)
+    {
+        if(_resizeGrabDistance < std::abs(point.x - (contentOrigin.x - _scrollPosition.x + _columnOffsets[column + 1])))
+            continue;
+
+        outIsColumn = true;
+        outTrack = column;
+        return true;
+    }
+
+    for(uSize row = _displayedRows[0]; isInRowHeader && row < _displayedRows[1] && row + 1 < _rowOffsets.size(); ++row)
+    {
+        if(_resizeGrabDistance < std::abs(point.y - (contentOrigin.y + _scrollPosition.y - _rowOffsets[row + 1])))
+            continue;
+
+        outIsColumn = false;
+        outTrack = row;
+        return true;
+    }
+
+    return false;
+}
+
+void RetroFuturaGUI::Table::endTrackResize()
+{
+    if(!_isResizingTrack)
+        return;
+
+    _isResizingTrack = false;
+    const std::vector<f32>& sizes { _isResizingColumn ? _resolvedColumnSizes : _resolvedRowSizes };
+
+    if(_resizedTrack >= sizes.size())
+        return;
+
+    const f32 size { sizes[_resizedTrack] };
+
+    if(size == _resizeStartSize)
+        return;
+
+    Signal<uSize, f32>
+        &resized { _isResizingColumn ? _onColumnResized : _onRowResized },
+        &resizedAsync { _isResizingColumn ? _onColumnResizedAsync : _onRowResizedAsync };
+    resizedAsync.EmitAsync(_resizedTrack, size);
+    resized.Emit(_resizedTrack, size); //last, since a slot may redefine the tracks
 }
