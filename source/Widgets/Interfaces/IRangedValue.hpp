@@ -237,6 +237,7 @@ namespace RetroFuturaGUI
 
         // Settings
         Orientation _orientation { Orientation::Horizontal };
+        f32 _laidOutBorderWidth { -1.0f }; //the border width the indicator and the graph were last fitted inside
         TrackDirection _trackDirection { TrackDirection::Normal };
         glm::i32vec2 _previousIndicatorPosition { glm::i32vec2(0) };
 
@@ -251,5 +252,9 @@ namespace RetroFuturaGUI
 
     private:
         void setIndicatorSize();
+
+        /// @brief Lays the indicator and the graph out again when the border's width changed since they last were, so they stay
+        ///        inside it. Called before either draws, since the width may come from a flavor at any time
+        void followBorderWidth();
     };
 }

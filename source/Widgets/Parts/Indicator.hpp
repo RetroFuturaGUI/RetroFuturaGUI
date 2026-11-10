@@ -11,7 +11,8 @@ namespace RetroFuturaGUI
     {
         None,
         Stroke,
-        Circle
+        Circle,
+        Pill
     };
 
     /// @brief How a size is read: in pixels, or in percent of the space it sits in
@@ -46,8 +47,8 @@ namespace RetroFuturaGUI
         /// @brief Returns whether the indicator is shown
         bool IsShown() const;
 
-        /// @brief Sets the shape. A Circle rounds the corners fully and a Stroke squares them; None keeps the radii set on the
-        ///        background and the border
+        /// @brief Sets the shape. A Circle is round, its diameter the smaller of the two sizes. A Pill keeps the size and rounds its
+        ///        shorter sides fully; a Stroke squares the corners; None keeps the radii set on the background and the border
         void SetType(const IndicatorType type);
 
         /// @brief Returns the shape

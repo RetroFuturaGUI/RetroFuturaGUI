@@ -29,6 +29,7 @@ void RetroFuturaGUI::Indicator::SetType(const IndicatorType type)
 {
     _type = type;
     applyType();
+    notifyLayoutChange(); //a Circle sizes itself from the space it fits in
 }
 
 RetroFuturaGUI::IndicatorType RetroFuturaGUI::Indicator::GetType() const
@@ -74,7 +75,8 @@ void RetroFuturaGUI::Indicator::Draw()
 
 void RetroFuturaGUI::Indicator::Fit(const glm::vec2& space)
 {
-    const glm::vec2 size { ElementSizing::Percent == _sizingMode ? space * _size * 0.01f : glm::min(_size, space) };
+    const glm::vec2 asked { ElementSizing::Percent == _sizingMode ? space * _size * 0.01f : glm::min(_size, space) };
+    const glm::vec2 size { IndicatorType::Circle == _type ? glm::vec2(glm::min(asked.x, asked.y)) : asked }; //a circle fits the smaller side
     _background.SetSize(size);
     _border.SetSize(size);
     applyType();
@@ -120,7 +122,8 @@ void RetroFuturaGUI::Indicator::applyType()
     if(IndicatorType::None == _type)
         return;
 
-    const glm::vec4 radii { IndicatorType::Circle == _type ? _background.GetSize().x * 0.5f : 0.0f };
+    const glm::vec2 size { _background.GetSize() };
+    const glm::vec4 radii { IndicatorType::Stroke == _type ? 0.0f : glm::min(size.x, size.y) * 0.5f }; //a Circle is square, so both round fully
     _background.SetBuiltInCornerRadii(StyleKey {}, radii);
     _border.SetBuiltInCornerRadii(StyleKey {}, radii);
 }

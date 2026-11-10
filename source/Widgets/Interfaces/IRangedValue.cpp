@@ -243,9 +243,11 @@ void RetroFuturaGUI::IRangedValue::setGraphSize(const f32 trackFraction)
     if(!track)
         return;
 
+    //Inside the border, as the indicator: the frame is drawn inward from the track's edges
     const f32
-        trackWidth { track->GetSize().x },
-        trackHeight { track->GetSize().y },
+        borderInset { _border.GetWidth() * 2.0f },
+        trackWidth { glm::max(track->GetSize().x - borderInset, 0.0f) },
+        trackHeight { glm::max(track->GetSize().y - borderInset, 0.0f) },
         graphWidth { trackWidth * trackFraction },
         thickness { _graph.GetWidth() },
         graphHeight { 0.0f < thickness ? (thickness < trackHeight ? thickness : trackHeight) : trackHeight };
@@ -263,10 +265,10 @@ void RetroFuturaGUI::IRangedValue::setGraphPosition(const f32 trackFraction)
     setGraphSize(trackFraction);
 
     const f32
-        trackWidth { track->GetSize().x },
+        trackWidth { glm::max(track->GetSize().x - _border.GetWidth() * 2.0f, 0.0f) },
         graphWidth { _graph.GetSize().x };
 
-    // The graph always grows along the track's local x-axis, anchored to its left edge.
+    // The graph always grows along the track's local x-axis, anchored to its left edge inside the border.
     const glm::vec2 localOffset(graphWidth * 0.5f - trackWidth * 0.5f, 0.0f);
     const f32 radians = glm::radians(track->GetRotation().z);
     const glm::vec2 rotatedOffset
@@ -298,11 +300,13 @@ void RetroFuturaGUI::IRangedValue::setGraphColors(const ColorState state)
 
 void RetroFuturaGUI::IRangedValue::drawIndicator()
 {
+    followBorderWidth();
     _indicator.Draw();
 }
 
 void RetroFuturaGUI::IRangedValue::drawGraph()
 {
+    followBorderWidth();
     _graph.Draw();
 }
 
@@ -311,9 +315,18 @@ void RetroFuturaGUI::IRangedValue::setIndicatorSize()
     // The border shader insets the frame uBorderWidth inward from every edge, inside the track's own bounds,
     // so the area the indicator can occupy without painting over it is the track shrunk by that much per side.
     const glm::vec2 trackSize { _background.GetSize() };
+    _laidOutBorderWidth = _border.GetWidth();
     const f32 borderInset { _border.GetWidth() * 2.0f };
     const glm::vec2 innerSize { glm::max(trackSize.x - borderInset, 0.0f), glm::max(trackSize.y - borderInset, 0.0f) };
 
     //Both axes are the track's own - x along its length, y across its thickness - and the indicator carries the track's rotation.
     _indicator.Fit(innerSize);
+}
+void RetroFuturaGUI::IRangedValue::followBorderWidth()
+{
+    if(_border.GetWidth() == _laidOutBorderWidth)
+        return;
+
+    setIndicatorSize();
+    alignElementsToTrack();
 }

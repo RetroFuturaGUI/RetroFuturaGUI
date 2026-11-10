@@ -31,10 +31,6 @@ The framework is designed for cross-platform use, and its logic can be compiled 
 |    | Environment Lights, Node | | |
 
 ### WIP in detail
-- Table
-- Slider / ProgressBar
-  - The graph doesn't account for the track's border width, so an enabled graph paints over the frame; the indicator does account for it
-  - A Circle indicator takes its corner radius from the indicator's x size alone, so it draws as a rounded rectangle whenever the two axes differ
 - LineDiagram
   - The lines are only spaced by index across the longest set. Sets that cover the same span at different resolutions (32 and 64 frequency bands, say) want a mode that stretches every line across the full width
   - Labels and the hover text take the track's rotation, so with Orientation::Vertical they turn with the lines and read sideways
@@ -168,6 +164,7 @@ The framework is designed for cross-platform use, and its logic can be compiled 
     - The caret can glide to its new place (GetCaret().SetMoveTransition): every move takes the same time however far it goes, and moves coming faster than that, as with a held arrow key or fast typing, take only the time between them, so the caret keeps pace
   - Slider: a value of any numeric type between a min and a max, set by dragging the indicator, clicking the track or stepping, horizontal or vertical, either direction (OnValueChanged, OnValueSet)
   - ProgressBar: a Slider's value and display without the dragging
+  - Their indicator is a Stroke (square corners), a Circle (round, its diameter the smaller of its two sizes) or a Pill (its size kept, rounded fully at the shorter sides); the indicator and the graph stay inside the track's border, following its width when it changes
   - Histogram: one bar per value of a bound array, read every frame, so data updated in place shows live (SetData)
   - LineDiagram: one line per bound data set, live like the Histogram; the hovered line is highlighted with its nearest value, labels and hexadecimal values on request
   - ColorPicker: picks a color from a field of every hue, with brightness and optional alpha (SetColor, SetBrightness, SetAlpha, OnColorChanged)
