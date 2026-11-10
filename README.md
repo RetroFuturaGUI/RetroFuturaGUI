@@ -31,13 +31,6 @@ The framework is designed for cross-platform use, and its logic can be compiled 
 |    | Environment Lights, Node | | |
 
 ### WIP in detail
-- ComboBox
-  - Scrolling past the visible row cap; the list shows the first rows only, up to the cap
-  - SetIndex neither clamps to the item count nor emits OnIndexChanged - only picking a row does
-  - No SetEnabled override, so the disabled colors it carries never reach the elements
-  - RemoveItem doesn't range-check its index and leaves the selected index pointing at whatever moved into that slot
-  - The visible row cap is fixed at 8 with no setter
-  - In the closed box the selected item's text can run under the arrow icon; only the border width is kept clear of it
 - Prefab
   - The Lasagna is fixed at construction; a prefab keeps whatever AxisDefinition it was built with
 - Scene
@@ -148,8 +141,8 @@ The framework is designed for cross-platform use, and its logic can be compiled 
   - Button: click, release, hover, mouse enter and leave actions (OnClick, OnRelease, WhileHover, OnMouseEnter, OnMouseLeave) and a text
   - CheckBox: a boolean value toggled by clicking, the Button's actions, optionally mirroring a bool owned elsewhere (EnableInheritedValue)
   - RadioButton and RadioButtonGroup: options of which only one is picked; the group builds and owns its buttons and their labels in a grid (AddRadioButton, GetRadioButton, RemoveRadioButton)
-  - ComboBox: picks one text item from a drop-down list (AddItem, RemoveItem, SetIndex, OnIndexChanged, OnItemClicked). With a caption it is a menu, items can be disabled, and the open list covers the widgets around it
-  - ExtendedComboBox: a drop-down whose rows are whole widgets (AddItem&lt;T&gt;, RemoveItem)
+  - ComboBox: picks one text item from a drop-down list (AddItem, RemoveItem, SetIndex, OnIndexChanged, OnItemClicked). With a caption it is a menu, items can be disabled, and the open list covers the widgets around it. SetIndex clamps to the last item and says whether OnIndexChanged fires; removing items keeps the selection on its item, and removing the selected one hands it to the item moving into its place. The list shows up to SetMaxVisibleItemCount rows (8 by default), scrolls by the wheel and opens with the selected item in view; the closed box cuts its text off before the arrow, and a disabled box shows its text disabled and closes its list
+  - ExtendedComboBox: a drop-down whose rows are whole widgets (AddItem&lt;T&gt;, RemoveItem), with the same row cap and wheel scrolling
   - TextBox and MultilineTextBox: typing with the system's key repeat, Backspace deleting a whole emoji sequence or flag (a diacritic goes on its own), the caret placed by clicks and arrow keys, mouse-drag selection, select all, copy, cut and paste, read-only mode and a placeholder (OnTextChange, OnEnterPressed, OnEnterReleased, OnCopy, OnPaste). The keys go to the text box clicked last, in any window. A TextBox can hold a typed value
     - Insert mode (the Insert key): typing overwrites the characters after the caret, up to the line's end, and the caret becomes a block behind the character it replaces, reaching halfway into the gaps beside it, in columns too (a bar under it in Table cells)
     - The caret can glide to its new place (GetCaret().SetMoveTransition): every move takes the same time however far it goes, and moves coming faster than that, as with a held arrow key or fast typing, take only the time between them, so the caret keeps pace

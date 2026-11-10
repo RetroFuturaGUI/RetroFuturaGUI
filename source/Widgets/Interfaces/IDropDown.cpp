@@ -1,6 +1,9 @@
 #include "IDropDown.hpp"
 #include "ResourceManager.hpp"
+#include "PlatformBridge.hpp"
+#include "Window.hpp"
 #include <algorithm>
+#include <cmath>
 #include <utility>
 
 RetroFuturaGUI::IDropDown::IDropDown(std::string_view name, Projection* projection, IHierarchyNode* parentWidget, const WidgetTypeID parentWidgetTypeID, GLFWwindow* parentWindow)
@@ -230,6 +233,7 @@ void RetroFuturaGUI::IDropDown::updateDropDownArrowGeometry()
         drawnHeight { isQuarterTurned ? width : height },
         rightMargin { (_size.y - drawnHeight) * 0.5f };
     const glm::vec2 offset { glm::vec2(_size.x * 0.5f - rightMargin - drawnWidth * 0.5f, 0.0f) };
+    _arrowSpace = rightMargin + drawnWidth;
 
     _arrow.SetSize(glm::vec2(width, height));
     _arrow.SetPosition(glm::vec3(_position.x + offset.x, _position.y + offset.y, _position.z + _zStep * 2.0f));
@@ -252,14 +256,28 @@ void RetroFuturaGUI::IDropDown::updateDropDownArrowGeometry()
 
 uSize RetroFuturaGUI::IDropDown::getVisibleItemCount() const
 {
-    return _itemCount < _maxItemsToDraw ? _itemCount : _maxItemsToDraw;
+    return _itemCount < _maxVisibleItemCount ? _itemCount : _maxVisibleItemCount;
 }
 
-glm::vec3 RetroFuturaGUI::IDropDown::itemRowCenter(const uSize visibleIndex) const
+uSize RetroFuturaGUI::IDropDown::getFirstVisibleItemIndex() const
+{
+    return _firstVisibleItemIndex;
+}
+
+bool RetroFuturaGUI::IDropDown::getItemRow(const uSize itemIndex, uSize& outRow) const
+{
+    if(itemIndex < _firstVisibleItemIndex || _firstVisibleItemIndex + getVisibleItemCount() <= itemIndex)
+        return false;
+
+    outRow = itemIndex - _firstVisibleItemIndex;
+    return true;
+}
+
+glm::vec3 RetroFuturaGUI::IDropDown::itemRowCenter(const uSize row) const
 {
     const glm::vec3 panelCenter { getDropDownCenter() };
     const f32 panelHeight { _size.y * static_cast<f32>(getVisibleItemCount()) };
-    const glm::vec2 offset { glm::vec2(0.0f, panelHeight * 0.5f - _size.y * (static_cast<f32>(visibleIndex) + 0.5f)) };
+    const glm::vec2 offset { glm::vec2(0.0f, panelHeight * 0.5f - _size.y * (static_cast<f32>(row) + 0.5f)) };
 
     return glm::vec3(panelCenter.x + offset.x, panelCenter.y + offset.y, panelCenter.z + _zStep * 2.0f);
 }
@@ -313,15 +331,92 @@ uSize RetroFuturaGUI::IDropDown::GetSelectedIndex() const
     return _currentIndex;
 }
 
-void RetroFuturaGUI::IDropDown::SetIndex(const uSize index)
+void RetroFuturaGUI::IDropDown::SetIndex(const uSize index, const bool emitSignal)
 {
-    _currentIndex = index;
+    if(0 == _itemCount)
+        return;
+
+    const uSize clampedIndex { index < _itemCount ? index : _itemCount - 1 };
+
+    if(clampedIndex == _currentIndex)
+        return;
+
+    _currentIndex = clampedIndex;
+
+    if(!emitSignal)
+        return;
+
+    _onIndexChangedAsync.EmitAsync();
+    _onIndexChanged.Emit();
 }
 
 void RetroFuturaGUI::IDropDown::SetDropDownOpen(const bool open)
 {
-    _showDropDown = open;
+    setListOpen(open);
     updateDropDownGeometry();
+}
+
+void RetroFuturaGUI::IDropDown::SetMaxVisibleItemCount(const uSize count)
+{
+    _maxVisibleItemCount = 0 < count ? count : 1;
+    clampListScroll();
+    updateDropDownGeometry();
+}
+
+uSize RetroFuturaGUI::IDropDown::GetMaxVisibleItemCount() const
+{
+    return _maxVisibleItemCount;
+}
+
+void RetroFuturaGUI::IDropDown::setListOpen(const bool open)
+{
+    if(open && !_showDropDown)
+        scrollItemIntoView(_currentIndex);
+
+    _showDropDown = open;
+}
+
+void RetroFuturaGUI::IDropDown::scrollListByWheel(const PointerState& pointer, const bool isOverList)
+{
+    if(!_showDropDown || !isOverList || 0.0f == pointer._Wheel.y)
+        return;
+
+    const uSize visibleCount { getVisibleItemCount() };
+
+    if(_itemCount <= visibleCount)
+        return;
+
+    Window::TakeWheel(_parentWindow, WheelParts::Vertical); //even at either end, so nothing under the list scrolls instead
+    const u32 linesPerNotch { PlatformBridge::Input::GetWheelScrollLines() };
+    const f32 rowsPerNotch { static_cast<f32>(0 == linesPerNotch ? visibleCount : linesPerNotch) };
+    _wheelRowRemainder -= pointer._Wheel.y * rowsPerNotch; //away from the user scrolls up, toward the first item
+    const f32 wholeRows { std::trunc(_wheelRowRemainder) };
+    _wheelRowRemainder -= wholeRows;
+
+    const i64
+        lastFirstIndex { static_cast<i64>(_itemCount - visibleCount) },
+        firstIndex { static_cast<i64>(_firstVisibleItemIndex) + static_cast<i64>(wholeRows) };
+    _firstVisibleItemIndex = static_cast<uSize>(std::clamp<i64>(firstIndex, 0, lastFirstIndex));
+}
+
+void RetroFuturaGUI::IDropDown::scrollItemIntoView(const uSize itemIndex)
+{
+    const uSize visibleCount { getVisibleItemCount() };
+
+    if(itemIndex < _firstVisibleItemIndex)
+        _firstVisibleItemIndex = itemIndex;
+    else if(0 < visibleCount && _firstVisibleItemIndex + visibleCount <= itemIndex)
+        _firstVisibleItemIndex = itemIndex + 1 - visibleCount;
+
+    clampListScroll();
+}
+
+void RetroFuturaGUI::IDropDown::clampListScroll()
+{
+    const uSize lastFirstIndex { _itemCount - getVisibleItemCount() };
+
+    if(lastFirstIndex < _firstVisibleItemIndex)
+        _firstVisibleItemIndex = lastFirstIndex;
 }
 
 void RetroFuturaGUI::IDropDown::SetLabelHiddenWhenOpen(const bool hide)
@@ -337,6 +432,16 @@ bool RetroFuturaGUI::IDropDown::IsPointInsideOpenDropDown(const glm::vec2& point
     return isPointInsideDropDown(point);
 }
 
+f32 RetroFuturaGUI::IDropDown::getLabelWidth() const
+{
+    return 0.0f < _size.x - _arrowSpace ? _size.x - _arrowSpace : 0.0f;
+}
+
+glm::vec3 RetroFuturaGUI::IDropDown::getLabelCenter() const
+{
+    return _position + glm::vec3(-_arrowSpace * 0.5f, 0.0f, _zStep * 2.0f);
+}
+
 bool RetroFuturaGUI::IDropDown::isPointInsideDropDown(const glm::vec2& point) const
 {
     return isPointInsideRect(point, glm::vec3(_list.GetBackground().GetSize(), 0.0f), _list.GetBackground().GetPosition(), glm::vec3(0.0f));
@@ -346,12 +451,12 @@ bool RetroFuturaGUI::IDropDown::hoveredItemIndex(const glm::vec2& point, uSize& 
 {
     const glm::vec3 rowSize { getDropDownWidth(), _size.y, 0.0f };
 
-    for(uSize index { 0 }; index < getVisibleItemCount(); ++index)
+    for(uSize row { 0 }; row < getVisibleItemCount(); ++row)
     {
-        if(!isPointInsideRect(point, rowSize, itemRowCenter(index), glm::vec3(0.0f)))
+        if(!isPointInsideRect(point, rowSize, itemRowCenter(row), glm::vec3(0.0f)))
             continue;
 
-        outIndex = index;
+        outIndex = _firstVisibleItemIndex + row;
         return true;
     }
 

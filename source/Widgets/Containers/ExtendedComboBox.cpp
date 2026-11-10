@@ -52,17 +52,14 @@ void RetroFuturaGUI::ExtendedComboBox::drawDropDown()
     if(_dropDownItemHovered)
         _list.GetHighlight().Draw();
 
-    uSize visibleIndex { 0 };
+    uSize
+        itemIndex { 0 },
+        row { 0 };
 
     for(const auto& item : _itemWidgets)
     {
-        if(visibleIndex >= getVisibleItemCount())
-            return;
-
-        if(item)
+        if(getItemRow(itemIndex++, row) && item)
             item->DrawAtOpacity();
-
-        ++visibleIndex;
     }
 }
 
@@ -196,14 +193,14 @@ bool RetroFuturaGUI::ExtendedComboBox::IsPointInsideOpenDropDown(const glm::vec2
 
 bool RetroFuturaGUI::ExtendedComboBox::isPointInsideItemDropDown(const glm::vec2& point) const
 {
-    uSize visibleIndex { 0 };
+    uSize
+        itemIndex { 0 },
+        row { 0 };
 
     for(const auto& item : _itemWidgets)
     {
-        if(visibleIndex >= getVisibleItemCount())
-            return false;
-
-        ++visibleIndex;
+        if(!getItemRow(itemIndex++, row))
+            continue;
 
         //only a row that is a drop down itself can have a list of its own standing outside this panel
         const IDropDown* dropDownItem { dynamic_cast<const IDropDown*>(item.get()) };
@@ -218,8 +215,8 @@ bool RetroFuturaGUI::ExtendedComboBox::isPointInsideItemDropDown(const glm::vec2
 void RetroFuturaGUI::ExtendedComboBox::updatePreviewTextGeometry()
 {
     //the same inset the rows get, so the closed box and the open list line their text up the same way
-    _preview.SetSize(contentSize(_size.x));
-    _preview.SetPosition(_position + glm::vec3(0.0f, 0.0f, _zStep * 2.0f));
+    _preview.SetSize(contentSize(getLabelWidth())); //left of the arrow, where a long text is cut off
+    _preview.SetPosition(getLabelCenter());
     _preview.SetAlignment(_textAlignment);
     _preview.SetPadding(_textPadding);
 }
@@ -253,17 +250,28 @@ void RetroFuturaGUI::ExtendedComboBox::interact()
         return;
 
     updateItemGeometry(); //the rows are placed in the open list before they test the pointer
-    uSize visibleIndex { 0 };
+    uSize
+        itemIndex { 0 },
+        row { 0 };
 
     for(const auto& item : _itemWidgets)
     {
-        if(visibleIndex >= getVisibleItemCount())
-            return;
+        if(!item)
+        {
+            ++itemIndex;
+            continue;
+        }
 
-        if(item)
+        if(getItemRow(itemIndex++, row))
+        {
             item->Interact();
+            continue;
+        }
 
-        ++visibleIndex;
+        IDropDown* dropDownItem { dynamic_cast<IDropDown*>(item.get()) };
+
+        if(dropDownItem)
+            dropDownItem->SetDropDownOpen(false);
     }
 }
 
@@ -295,6 +303,7 @@ void RetroFuturaGUI::ExtendedComboBox::followPointer()
         //a row can be a drop down itself, and the list it opens stands outside this panel
         isInsideItemDropDown { pointer._HasPosition && _showDropDown && isPointInsideItemDropDown(mousePos) };
     _wasClicked = isMousePressed;
+    scrollListByWheel(pointer, isInsideDropDown && !isInsideItemDropDown); //a row's own list takes its own wheel
 
     //the open dropDown belongs to the widget, so hovering a row, or a list that row opened, still counts as hovering the ComboBox
     const bool isHovering { _isEnabledFlag && (isInsideBox || isInsideDropDown || isInsideItemDropDown) };
@@ -368,7 +377,7 @@ void RetroFuturaGUI::ExtendedComboBox::followPointer()
         return;
     }
 
-    _showDropDown = !_showDropDown;
+    setListOpen(!_showDropDown);
 }
 
 void RetroFuturaGUI::ExtendedComboBox::selectItem(const uSize index)
@@ -398,20 +407,17 @@ void RetroFuturaGUI::ExtendedComboBox::setColors(const ColorState state)
 
 void RetroFuturaGUI::ExtendedComboBox::updateItemGeometry()
 {
-    if(_nthItemHovered < getVisibleItemCount())
-        _list.GetHighlight().SetPosition(itemRowCenter(_nthItemHovered) - glm::vec3(0.0f, 0.0f, _zStep));
+    uSize row { 0 };
 
-    uSize visibleIndex { 0 };
+    if(getItemRow(_nthItemHovered, row))
+        _list.GetHighlight().SetPosition(itemRowCenter(row) - glm::vec3(0.0f, 0.0f, _zStep));
+
+    uSize itemIndex { 0 };
 
     for(const auto& item : _itemWidgets)
     {
-        if(visibleIndex >= getVisibleItemCount())
-            return;
-
-        if(item)
-            placeItemWidget(item.get(), itemRowCenter(visibleIndex));
-
-        ++visibleIndex;
+        if(getItemRow(itemIndex++, row) && item)
+            placeItemWidget(item.get(), itemRowCenter(row));
     }
 }
 
@@ -446,6 +452,7 @@ void RetroFuturaGUI::ExtendedComboBox::performPendingRemoval()
     _removedWidgets.clear();
     std::erase_if(_itemWidgets, [](const std::unique_ptr<IWidget>& item) { return !item; });
     _itemCount = _itemWidgets.size();
+    clampListScroll();
     updateDropDownGeometry();
 }
 

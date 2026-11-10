@@ -49,9 +49,18 @@ namespace RetroFuturaGUI
         void Disconnect_OnIndexChanged(const typename Signal<>::Slot& slot);
         uSize GetItemCount() const;
         uSize GetSelectedIndex() const;
-        void SetIndex(const uSize index);
-        /// @brief Opens or closes the list without simulating a pointer click.
+
+        /// @brief Selects an item by code. An index past the last item selects the last one, and with no items nothing changes.
+        ///        OnIndexChanged fires when the index changed and emitSignal is true; OnItemClicked is left to the pointer
+        void SetIndex(const uSize index, const bool emitSignal);
+
+        /// @brief Opens or closes the list without simulating a pointer click. It opens scrolled so the selected item shows
         void SetDropDownOpen(const bool open);
+
+        /// @brief Sets how many rows the open list shows at most (8 by default, at least 1). The wheel scrolls through the rest
+        void SetMaxVisibleItemCount(const uSize count);
+
+        uSize GetMaxVisibleItemCount() const;
         void SetLabelHiddenWhenOpen(const bool hide);
         virtual bool IsPointInsideOpenDropDown(const glm::vec2& point) const;
         /// @brief Returns the arrow at the box's end, turned toward where the list opens
@@ -91,15 +100,45 @@ namespace RetroFuturaGUI
 
         /// @brief Places the open list and the arrow for the box's size, place, rotation and list position.
         void updateDropDownGeometry();
+
+        /// @brief How many rows the open list shows: every item, up to the cap
         uSize getVisibleItemCount() const;
+
+        /// @brief The item shown in the open list's first row; the wheel moves it
+        uSize getFirstVisibleItemIndex() const;
+
+        /// @brief Finds the row of the open list an item shows in, when it is among the visible ones
+        bool getItemRow(const uSize itemIndex, uSize& outRow) const;
+
         void setColors(const ColorState state) override;
-        glm::vec3 itemRowCenter(const uSize visibleIndex) const;
+
+        /// @brief The center of a row of the open list, counted from its top
+        glm::vec3 itemRowCenter(const uSize row) const;
+
+        /// @brief The width the closed box leaves its text: the box without the arrow at its end
+        f32 getLabelWidth() const;
+
+        /// @brief The center of the closed box's text, left of the arrow, over the box
+        glm::vec3 getLabelCenter() const;
 
         /// @brief Returns whether a world space point falls on the open drop down panel.
         bool isPointInsideDropDown(const glm::vec2& point) const;
 
-        /// @brief Finds the visible drop down row under a world space point.
+        /// @brief Finds the item under a world space point among the open list's visible rows
         bool hoveredItemIndex(const glm::vec2& point, uSize& outIndex) const;
+
+        /// @brief Opens or closes the list. Opening scrolls it so the selected item shows
+        void setListOpen(const bool open);
+
+        /// @brief Scrolls the open list by the wheel while the pointer is over it. Per notch as many rows as the system scrolls
+        ///        lines, a list's worth for none. It takes the wheel, so nothing around the list scrolls too
+        void scrollListByWheel(const PointerState& pointer, const bool isOverList);
+
+        /// @brief Scrolls the open list so the item shows in one of its rows.
+        void scrollItemIntoView(const uSize itemIndex);
+
+        /// @brief Keeps the first visible row where no empty rows show below the last item. After a removal or a smaller cap
+        void clampListScroll();
 
         /// @brief Whether the dropdown's label should be hidden in its current state.
         bool isLabelHidden() const { return _hideLabelWhenOpen && _showDropDown; }
@@ -149,7 +188,7 @@ namespace RetroFuturaGUI
         uSize
             _currentIndex { 0 },
             _itemCount { 0 },
-            _nthItemHovered { 0 };
+            _nthItemHovered { 0 }; //item index
         Signal<>
             _onItemClicked,
             _onItemClickedAsync,
@@ -181,7 +220,12 @@ namespace RetroFuturaGUI
             _arrowPadding { 15.0f };
 
     //Logic
-        uSize _maxItemsToDraw { 8 };
+        uSize
+            _maxVisibleItemCount { 8 },
+            _firstVisibleItemIndex { 0 };
+        f32
+            _wheelRowRemainder { 0.0f },
+            _arrowSpace { 0.0f };
         inline static std::vector<IDropDown*> _shownDropDowns {}; //opened in the frame being drawn, drawn and cleared by DrawShown
         inline static std::vector<const IDropDown*> _dropDowns {}; //every drop-down, for the pointer check
         bool _hideLabelWhenOpen { false };

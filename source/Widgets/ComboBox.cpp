@@ -34,7 +34,7 @@ void RetroFuturaGUI::ComboBox::Draw()
 
         if(_hasCaption && _previewText)
         {
-            placeItemText(*_previewText, _position + glm::vec3(0.0f, 0.0f, _zStep * 2.0f), _size.x);
+            placeItemText(*_previewText, getLabelCenter(), getLabelWidth());
             _previewText->Draw();
         }
         else if(_currentIndex < _itemTexts.size())
@@ -44,7 +44,7 @@ void RetroFuturaGUI::ComboBox::Draw()
 
             if(*iterator)
             {
-                placeItemText(**iterator, _position + glm::vec3(0.0f, 0.0f, _zStep * 2.0f), _size.x);
+                placeItemText(**iterator, getLabelCenter(), getLabelWidth());
                 iterator->get()->Draw();
             }
         }
@@ -63,17 +63,14 @@ void RetroFuturaGUI::ComboBox::drawDropDown()
     if(_dropDownItemHovered)
         _list.GetHighlight().Draw();
 
-    uSize visibleIndex { 0 };
+    uSize
+        itemIndex { 0 },
+        row { 0 };
 
     for(const auto& item : _itemTexts)
     {
-        if(visibleIndex >= getVisibleItemCount())
-            return;
-
-        if(item)
+        if(getItemRow(itemIndex++, row) && item)
             item->Draw();
-
-        ++visibleIndex;
     }
 }
 
@@ -170,16 +167,16 @@ void RetroFuturaGUI::ComboBox::updateItemColors()
     if(!_previewText)
         return;
 
-    _previewText->SetColors(_itemText.GetShownColors(ColorState::Enabled)); //the caption
+    _previewText->SetColors(_itemText.GetShownColors(_isEnabledFlag ? ColorState::Enabled : ColorState::Disabled)); //the caption
 }
 
 RetroFuturaGUI::ColorState RetroFuturaGUI::ComboBox::itemState(const uSize index) const
 {
-    if(!IsItemEnabled(index))
+    if(!_isEnabledFlag || !IsItemEnabled(index))
         return ColorState::Disabled;
 
     if(!_showDropDown && _hasPickedItem && _pickedItemIndex == index)
-        return ColorState::Clicked; //while the list fades out after the pick
+        return ColorState::Clicked;
 
     if(_dropDownItemHovered && _nthItemHovered == index)
         return ColorState::Hover;
@@ -214,6 +211,9 @@ void RetroFuturaGUI::ComboBox::interact()
     if(!pointer._LeftButtonPressed)
         _holdsPickPress = false;
 
+    if(!_isEnabledFlag)
+        _showDropDown = false;
+
     if(pointer._IsCaptured)
         return; //ScrollView above has taken the pointer
 
@@ -225,6 +225,7 @@ void RetroFuturaGUI::ComboBox::interact()
         isInsideBox { pointer._HasPosition && isPointInside(mousePos) },
         isInsideDropDown { pointer._HasPosition && _showDropDown && isPointInsideDropDown(mousePos) };
     _wasClicked = isMousePressed;
+    scrollListByWheel(pointer, isInsideDropDown); //before the hovered row is found, so it is the one now under the pointer
 
     //the open dropDown belongs to the widget, so hovering a row still counts as hovering the ComboBox. A disabled row is
     //neither highlighted nor picked, and a press on it leaves the list open.
@@ -297,7 +298,7 @@ void RetroFuturaGUI::ComboBox::interact()
     }
 
     if(isInsideBox)
-        _showDropDown = !_showDropDown;
+        setListOpen(!_showDropDown);
 }
 
 void RetroFuturaGUI::ComboBox::selectItem(const uSize index)
@@ -326,20 +327,17 @@ void RetroFuturaGUI::ComboBox::setColors(const ColorState state)
 
 void RetroFuturaGUI::ComboBox::updateItemGeometry()
 {
-    if(_nthItemHovered < getVisibleItemCount())
-        _list.GetHighlight().SetPosition(itemRowCenter(_nthItemHovered) - glm::vec3(0.0f, 0.0f, _zStep));
+    uSize row { 0 };
 
-    uSize visibleIndex { 0 };
+    if(getItemRow(_nthItemHovered, row))
+        _list.GetHighlight().SetPosition(itemRowCenter(row) - glm::vec3(0.0f, 0.0f, _zStep));
+
+    uSize itemIndex { 0 };
 
     for(const auto& item : _itemTexts)
     {
-        if(visibleIndex >= getVisibleItemCount())
-            return;
-
-        if(item)
-            placeItemText(*item, itemRowCenter(visibleIndex), getDropDownWidth());
-
-        ++visibleIndex;
+        if(getItemRow(itemIndex++, row) && item)
+            placeItemText(*item, itemRowCenter(row), getDropDownWidth());
     }
 }
 
@@ -356,7 +354,31 @@ void RetroFuturaGUI::ComboBox::RemoveItem(const uSize index)
         _itemEnabledFlags.erase(_itemEnabledFlags.begin() + static_cast<std::ptrdiff_t>(index));
 
     _itemCount = _itemTexts.size();
+
+    //The items after it move up one
+    if(_hasPickedItem && index <= _pickedItemIndex)
+    {
+        _hasPickedItem = index < _pickedItemIndex;
+        _pickedItemIndex -= _hasPickedItem ? 1 : 0;
+    }
+
+    if(_dropDownItemHovered && index <= _nthItemHovered)
+    {
+        _dropDownItemHovered = index < _nthItemHovered;
+        _nthItemHovered -= _dropDownItemHovered ? 1 : 0;
+    }
+
+    clampListScroll();
     updateDropDownGeometry();
+
+    if(index > _currentIndex)
+        return;
+
+    if(index < _currentIndex || _currentIndex == _itemCount)
+        _currentIndex = 0 < _currentIndex ? _currentIndex - 1 : 0;
+
+    _onIndexChangedAsync.EmitAsync();
+    _onIndexChanged.Emit();
 }
 
 void RetroFuturaGUI::ComboBox::SetFontFamily(std::string_view fontFamily, const f32 fontSize, const FontSizeUnit sizeUnit, const PlatformBridge::Fonts::Slant slant, const PlatformBridge::Fonts::Weight fontWeight)
