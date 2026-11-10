@@ -39,7 +39,6 @@ The framework is designed for cross-platform use, and its logic can be compiled 
   - No lifecycle signals (OnActivate, OnDeactivate, OnLoad, OnUnload), so application code has nothing to hook a scene transition to
   - Overlay scenes don't block the scene underneath them. Widgets hit-test in their own Interact, so there is no central pass that could stop at the topmost hit the way a raycast would. Docking avoids it geometrically - a content scene is never given the strip, so it has nothing there to click - but a modal overlay needs the scene beneath it disabled, passing emitSignal = false to SetEnabled so the sweep doesn't fire every connected slot
   - The root container is one of a fixed set - Lasagna, Environment, ScrollView, WindowTab or Tab, through the RootContainer concept. An IContainer interface would open it to any container
-  - SetLasagnaAxis takes its AxisDefinition by value, copying three vectors per call
 - SeparatorLine
   - The caption's left padding isn't clamped to the line's width, so a long caption or a large padding runs the gap and its text off the right end
   - The gap always starts from the left edge, so centering or right-aligning a caption means working out the padding by hand. GetText().SetAlignment doesn't do it either: the caption is always centered inside its own gap, and the alignment passed in is overwritten the next time the layout runs
@@ -182,7 +181,7 @@ The framework is designed for cross-platform use, and its logic can be compiled 
   - A layout file like imgui.ini (RetroFuturaGUI.ini) restores positions, sizes, docking and tabs between runs
   - Holds Scenes, docked to an edge or as overlays
 - Scenes
-  - A named group of widgets under a window with its own root container (Lasagna, Environment, ScrollView or WindowTab): Window / Scene / Container / Widgets
+  - A named group of widgets under a window with its own root container (Lasagna, Environment, ScrollView or WindowTab): Window / Scene / Container / Widgets. SetLasagnaAxis builds a root Lasagna, or changes the tracks of the one already there, keeping its widgets
   - Active or inactive, docked to an edge of the window (a menu bar, a status bar) or covering it as an overlay
   - Per-frame and input signals (OnUpdate, OnInteract)
 - Popups

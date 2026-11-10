@@ -92,8 +92,11 @@ namespace RetroFuturaGUI
             return dynamic_cast<T*>(_rootContainer.get());
         }
 
-        /// @brief Builds the scene's root Lasagna. Replaces any previous one, discarding its cells.
-        void SetLasagnaAxis(const AxisDefinition axisDefinition, Projection* projection);
+        /// @brief Sets the rows, columns and layers of the scene's root Lasagna. A root Lasagna already there keeps its widgets
+        ///        in their cells, as by Lasagna::SetAxisDefinition. One reaching past the new last track is removed. Any other root
+        ///        container, or none, is replaced by a new Lasagna
+        /// @return The names of the widgets removed
+        std::vector<std::string> SetLasagnaAxis(const AxisDefinition& axisDefinition, Projection* projection);
 
     //Geometry
         void SetSize(const glm::vec3& size);
