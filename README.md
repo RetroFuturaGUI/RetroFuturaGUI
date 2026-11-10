@@ -32,7 +32,6 @@ The framework is designed for cross-platform use, and its logic can be compiled 
 
 ### WIP in detail
 - LineDiagram
-  - Labels and the hover text take the track's rotation, so with Orientation::Vertical they turn with the lines and read sideways
   - Where points sit closer together than the line is wide, the inner side of a mitered corner can fold back over the previous segment
   - A translucent line blends twice where a bevel overlaps its segments at a sharp turn - Polyline draws with GL_LEQUAL so the overlap isn't rejected by the depth test
   - No signal tells the application which line or data point is hovered

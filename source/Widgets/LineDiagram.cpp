@@ -272,18 +272,17 @@ void RetroFuturaGUI::LineDiagram::drawLineLabel(const uSize lineIndex, const Bac
 
     Text& label { *_labels[lineIndex] };
     const glm::vec2 start { _points[lineIndex].front() * _plotSize };
+    const glm::vec2 extents { getUprightExtents(glm::vec2(label.GetWidth() * 0.5f, label.GetGlyphSize() * 0.5f), track) };
     const f32
-        halfWidth { label.GetWidth() * 0.5f },
-        halfHeight { label.GetGlyphSize() * 0.5f },
         gap { _lineThickness * 0.5f + _labelGap },
-        aboveY { start.y + gap + halfHeight },
-        centerY { aboveY + halfHeight > track.GetSize().y * 0.5f ? start.y - gap - halfHeight : aboveY }; // below the line where above would leave the track
+        aboveY { start.y + gap + extents.y },
+        centerY { aboveY + extents.y > track.GetSize().y * 0.5f ? start.y - gap - extents.y : aboveY }; // below the line where above would leave the track
 
     // a label's left edge lines up with the line's first point and sits just above that point.
     // Text is centered and therefore offsetted by half of its width
     label.SetColors(getLineColors(lineIndex));
-    label.SetRotation(track.GetRotation());
-    label.SetPosition(toWorldSpace(glm::vec2(start.x + halfWidth, centerY), track, 0.025f));
+    label.SetRotation(glm::vec3(0.0f)); //upright whichever way the track runs; the widget's own turn is in its frame
+    label.SetPosition(toWorldSpace(glm::vec2(start.x + extents.x, centerY), track, 0.025f));
     label.Draw();
 }
 
@@ -333,26 +332,28 @@ void RetroFuturaGUI::LineDiagram::drawHoverText(const glm::vec2& pointerPosition
         boxSize { hoverText.GetWidth() + _hoverTextPadding * 2.0f, glyphSize * 1.1f + _hoverTextPadding * 2.0f },
         textOffset { 0.0f, glyphSize * 0.15f },
         pointerSize { _indicator.IsShown() ? _indicator.GetDrawnSize() : glm::vec2(0.0f) },
-        halfTrack { track.GetSize() * 0.5f };
+        halfTrack { track.GetSize() * 0.5f },
+        extents { getUprightExtents(boxSize * 0.5f, track) }; //the upright box's reach along the track
     const f32
         gap { (glm::max)((glm::max)(pointerSize.x, pointerSize.y), _lineThickness + _hoverThicknessIncrease) * 0.5f + _labelGap },
-        rightX { pointerPosition.x + gap + boxSize.x * 0.5f },
-        aboveY { pointerPosition.y + gap + boxSize.y * 0.5f },
-        centerX { rightX + boxSize.x * 0.5f > halfTrack.x ? pointerPosition.x - gap - boxSize.x * 0.5f : rightX }, // left of the pointer where right would leave the track
-        centerY { aboveY + boxSize.y * 0.5f > halfTrack.y ? pointerPosition.y - gap - boxSize.y * 0.5f : aboveY }; // below it where above would
+        rightX { pointerPosition.x + gap + extents.x },
+        aboveY { pointerPosition.y + gap + extents.y },
+        centerX { rightX + extents.x > halfTrack.x ? pointerPosition.x - gap - extents.x : rightX }, // left of the pointer where right would leave the track
+        centerY { aboveY + extents.y > halfTrack.y ? pointerPosition.y - gap - extents.y : aboveY }; // below it where above would
 
     const glm::vec2 boxCenter { centerX, centerY };
     Background& box { _hoverText.GetBackground() };
     box.SetSize(boxSize);
-    box.SetRotation(track.GetRotation());
-    box.SetPosition(toWorldSpace(boxCenter, track, 0.04f));
+    const glm::vec3 boxPosition { toWorldSpace(boxCenter, track, 0.04f) };
+    box.SetRotation(glm::vec3(0.0f)); //upright, as the labels
+    box.SetPosition(boxPosition);
     box.Draw();
 
     if(_hoverText.IsLineColorEnabled())
         hoverText.SetColors(getLineColors(_hoveredLineIndex));
 
-    hoverText.SetRotation(track.GetRotation());
-    hoverText.SetPosition(toWorldSpace(boxCenter + textOffset, track, 0.045f));
+    hoverText.SetRotation(glm::vec3(0.0f));
+    hoverText.SetPosition(boxPosition + glm::vec3(textOffset, 0.005f)); //the offset is upright too
     hoverText.Draw();
 }
 
@@ -553,4 +554,14 @@ void RetroFuturaGUI::LineDiagram::SetLineSpacing(const LineSpacing spacing)
 RetroFuturaGUI::LineSpacing RetroFuturaGUI::LineDiagram::GetLineSpacing() const
 {
     return _lineSpacing;
+}
+
+glm::vec2 RetroFuturaGUI::LineDiagram::getUprightExtents(const glm::vec2& halfSize, const Background& track)
+{
+    const f32
+        radians { glm::radians(track.GetRotation().z) },
+        cosine { std::abs(std::cos(radians)) },
+        sine { std::abs(std::sin(radians)) };
+
+    return glm::vec2(halfSize.x * cosine + halfSize.y * sine, halfSize.x * sine + halfSize.y * cosine);
 }

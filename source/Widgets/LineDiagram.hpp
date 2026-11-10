@@ -128,6 +128,10 @@ namespace RetroFuturaGUI
         /// @brief A point in the track's frame back into the world, zOffset above the track.
         static glm::vec3 toWorldSpace(const glm::vec2& trackPoint, const Background& track, const f32 zOffset);
 
+        /// @brief How far an upright box of the given half size reaches along the track's own axes. The labels and the hover
+        ///        text stay upright however the track turns, so on a vertical one their width runs across it
+        static glm::vec2 getUprightExtents(const glm::vec2& halfSize, const Background& track);
+
         static constexpr const f32
             _hoverThicknessIncrease = 2.0f,
             _labelGap = 4.0f,
