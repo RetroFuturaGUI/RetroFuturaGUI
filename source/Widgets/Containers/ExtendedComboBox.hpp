@@ -91,7 +91,9 @@ namespace RetroFuturaGUI
 
         bool IsPointInsideOpenDropDown(const glm::vec2& point) const override;
 
-        /// @brief Removes the item at the given index. The row goes, and the widget is destroyed, at the start of the next Interact, so the item's own slot may remove it
+        /// @brief Removes the item at the given index. The row goes, and the widget is destroyed, at the start of the next Interact, so the item's own slot may remove it.
+        ///        Then the selection stays on its row. A removed selected row hands it to the row moving into its place, or to the new
+        ///        last one, and OnIndexChanged fires whenever the selected index moved or its row went
         void RemoveItem(const uSize index) override;
         void SetFontFamily(std::string_view fontFamily, const f32 fontSize, const FontSizeUnit sizeUnit, const PlatformBridge::Fonts::Slant slant, const PlatformBridge::Fonts::Weight fontWeight) override;
         void SetTextAlignment(const TextAlignment alignment) override;

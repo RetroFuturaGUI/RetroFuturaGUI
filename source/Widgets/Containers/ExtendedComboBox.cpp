@@ -452,11 +452,38 @@ void RetroFuturaGUI::ExtendedComboBox::performPendingRemoval()
     if(_removedWidgets.empty())
         return;
 
+    uSize
+        removedBeforeCount { 0 },
+        index { 0 };
+    bool isSelectedRemoved { false };
+
+    for(const std::unique_ptr<IWidget>& item : _itemWidgets)
+    {
+        if(!item && index < _currentIndex)
+            ++removedBeforeCount;
+        else if(!item && index == _currentIndex)
+            isSelectedRemoved = true;
+
+        ++index;
+    }
+
     _removedWidgets.clear();
     std::erase_if(_itemWidgets, [](const std::unique_ptr<IWidget>& item) { return !item; });
     _itemCount = _itemWidgets.size();
+    _currentIndex -= removedBeforeCount;
+
+    if(_itemCount <= _currentIndex)
+        _currentIndex = 0 < _itemCount ? _itemCount - 1 : 0;
+
+    _dropDownItemHovered = false; //the rows moved, so the pointer finds its row again
     clampListScroll();
     updateDropDownGeometry();
+
+    if(0 == removedBeforeCount && !isSelectedRemoved)
+        return;
+
+    _onIndexChangedAsync.EmitAsync();
+    _onIndexChanged.Emit();
 }
 
 void RetroFuturaGUI::ExtendedComboBox::SetFontFamily(std::string_view fontFamily, const f32 fontSize, const FontSizeUnit sizeUnit, const PlatformBridge::Fonts::Slant slant, const PlatformBridge::Fonts::Weight fontWeight)
