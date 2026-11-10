@@ -1064,6 +1064,14 @@ void RetroFuturaGUI::Table::EndEdit()
     endEdit(EditEnd::Kept);
 }
 
+void RetroFuturaGUI::Table::enabledChanged()
+{
+    if(_isEnabledFlag)
+        return;
+
+    EndEdit();
+}
+
 void RetroFuturaGUI::Table::endEdit(const EditEnd end)
 {
     const bool wasEditing { _hasEditCell };

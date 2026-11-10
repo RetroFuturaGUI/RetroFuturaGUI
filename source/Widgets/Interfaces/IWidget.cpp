@@ -1,4 +1,5 @@
 #include "IWidget.hpp"
+#include "Scene.hpp"
 #include "PlatformBridge.hpp"
 #include "IDropDown.hpp"
 #include "Tooltip.hpp"
@@ -297,27 +298,64 @@ GLFWwindow* RetroFuturaGUI::IWidget::GetParentWindow() const
 
 void RetroFuturaGUI::IWidget::SetEnabled(const bool enable, const bool emitSignal)
 {
-    _isEnabledFlag = enable;
+    _isOwnEnabled = enable;
+    const Scene* scene { findScene() };
+    applyEnabled(enable && (!scene || scene->IsEnabled()), emitSignal);
+}
 
-    if(_isEnabledFlag)
-    {
-        if(emitSignal)
-        {
-            _onEnableAsync.EmitAsync();
-            _onEnable.Emit();
-        }
+void RetroFuturaGUI::IWidget::followSceneEnabled()
+{
+    const Scene* scene { findScene() };
 
-        setColors(ColorState::Enabled);
+    if(!scene)
         return;
-    }
 
-    if(emitSignal)
+    const bool enabled { _isOwnEnabled && scene->IsEnabled() };
+
+    if(enabled == _isEnabledFlag)
+        return;
+
+    applyEnabled(enabled, scene->IsEnabledSignalEmitted());
+}
+
+void RetroFuturaGUI::IWidget::applyEnabled(const bool enabled, const bool emitSignal)
+{
+    const bool changed { enabled != _isEnabledFlag };
+    _isEnabledFlag = enabled;
+
+    if(emitSignal && _isEnabledFlag)
+    {
+        _onEnableAsync.EmitAsync();
+        _onEnable.Emit();
+    }
+    else if(emitSignal)
     {
         _onDisableAsync.EmitAsync();
         _onDisable.Emit();
     }
 
-    setColors(ColorState::Disabled);
+    setColors(getRestingColorState());
+
+    if(changed)
+        enabledChanged();
+}
+
+const RetroFuturaGUI::Scene* RetroFuturaGUI::IWidget::findScene() const
+{
+    for(const IHierarchyNode* node { _parentWidget }; node; node = node->GetParent())
+    {
+        const Scene* scene { dynamic_cast<const Scene*>(node) };
+
+        if(scene)
+            return scene;
+    }
+
+    return nullptr;
+}
+
+RetroFuturaGUI::ColorState RetroFuturaGUI::IWidget::getRestingColorState() const
+{
+    return _isEnabledFlag ? ColorState::Enabled : ColorState::Disabled;
 }
 
 bool RetroFuturaGUI::IWidget::IsEnabled() const
@@ -416,6 +454,7 @@ RetroFuturaGUI::Tooltip* RetroFuturaGUI::IWidget::GetTooltip() const
 
 void RetroFuturaGUI::IWidget::Interact()
 {
+    followSceneEnabled(); //before the input, so a widget in a scene disabled this frame takes none
     const Shader::FrameScope frame { getTilt(), Shader::FrameComposition::Inside };
     _frame = Shader::GetDrawFrame();
     updateTooltip();
@@ -424,6 +463,7 @@ void RetroFuturaGUI::IWidget::Interact()
 
 void RetroFuturaGUI::IWidget::Update()
 {
+    followSceneEnabled(); //hidden widgets don't interact, so they follow here
     followFlavors(); //before the first frame counts, so flavors taken at the start show at once.
     _hasUpdated = true;
     updateGeometry();

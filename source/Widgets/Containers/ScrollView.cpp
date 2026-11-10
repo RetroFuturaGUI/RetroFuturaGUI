@@ -324,7 +324,7 @@ void RetroFuturaGUI::ScrollView::followPointer()
 
             // A press that left the view stays in its Clicked colors until the button is released.
             if(_pressPhase == PressPhase::None)
-                setColors(ColorState::Enabled);
+                setColors(getRestingColorState());
         }
 
         return;

@@ -2,6 +2,7 @@
 #include "Background.hpp"
 #include "IncludeHelper.hpp"
 #include "IWidget.hpp"
+#include "IContainer.hpp"
 #include "Border.hpp"
 #include "Box.hpp"
 #include "CloseButton.hpp"
@@ -22,7 +23,7 @@ namespace RetroFuturaGUI
 {
     /// @brief Carries a defined set of views that can be selected by clicking their corresponding names in the tab bar. Each
     ///        view is a page
-    class Tab final : public IWidget
+    class Tab final : public IWidget, public IContainer
     {
     public:
         /// @brief Constructs an empty Tab

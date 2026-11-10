@@ -57,7 +57,7 @@ void RetroFuturaGUI::Slider::interact()
             _mouseEnteredFlag = false;
             _onMouseLeaveAsync.EmitAsync();
             _onMouseLeave.Emit();
-            setColors(ColorState::Enabled);
+            setColors(getRestingColorState());
             setIndicatorColors(ColorState::Enabled);
         }
 
@@ -131,7 +131,7 @@ void RetroFuturaGUI::Slider::interact()
         }
         else
         {
-            setColors(ColorState::Enabled);
+            setColors(getRestingColorState());
 
             if(isMouseInsideIndicator)
                 setIndicatorColors(ColorState::Enabled);

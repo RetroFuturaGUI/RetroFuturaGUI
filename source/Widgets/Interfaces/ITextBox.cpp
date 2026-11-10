@@ -130,7 +130,7 @@ void RetroFuturaGUI::ITextBox::interact()
             _mouseEnteredFlag = false;
             _onMouseLeaveAsync.EmitAsync();
             _onMouseLeave.Emit();
-            setColors(ColorState::Enabled);
+            setColors(getRestingColorState());
         }
 
         if(!_editor.IsEditing())
@@ -171,7 +171,7 @@ void RetroFuturaGUI::ITextBox::interact()
         if(isHovering)
             setColors(ColorState::Hover);
         else
-            setColors(ColorState::Enabled);
+            setColors(getRestingColorState());
     }
 
     _wasClicked = isMouseTextBoxPressed;
@@ -341,4 +341,12 @@ void RetroFuturaGUI::ITextBox::textEdited()
         return;
 
     _text.EmitChange();
+}
+
+void RetroFuturaGUI::ITextBox::enabledChanged()
+{
+    if(_isEnabledFlag)
+        return;
+
+    _editor.EndEditing();
 }

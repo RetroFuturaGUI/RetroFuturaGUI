@@ -1,6 +1,7 @@
 #pragma once
 #include "IncludeHelper.hpp"
 #include "IWidget.hpp"
+#include "IContainer.hpp"
 #include <concepts>
 #include <memory>
 #include <optional>
@@ -79,7 +80,7 @@ namespace RetroFuturaGUI
     /// @brief One full-size cell on every axis - what a Prefab starts with when it's given no axis definition.
     inline const AxisDefinition SingleCellAxis { ._RowDefinition = { 1.0f }, ._ColumnDefinition = { 1.0f }, ._LayerDefinition = { 1.0f } };
 
-    class Lasagna final: public IWidget
+    class Lasagna final: public IWidget, public IContainer
     {
     public:
         using TrackIndex = RetroFuturaGUI::TrackIndex;

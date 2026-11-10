@@ -1,10 +1,7 @@
 #pragma once
 #include "IWidget.hpp"
 #include "Mesh.hpp"
-#include "Texture.hpp"
-#include <assimp/Importer.hpp>
-#include <assimp/scene.h>
-#include <assimp/postprocess.h>
+#include <vector>
 
 namespace RetroFuturaGUI
 {
@@ -19,7 +16,8 @@ namespace RetroFuturaGUI
             auto operator =(Model&&) = delete;
             ~Model() override = default;
 
-            /// @brief Loads a 3D model file via Assimp, replacing any previously loaded meshes.
+            /// @brief Shows the 3D model file at path, replacing any shown before. ResourceManager imports each file once, and
+            ///        every Model showing it borrows the same meshes, each with its own place, size and turn
             void LoadModel(std::string_view path);
 
             /// @brief Draws all meshes of the loaded model.
@@ -33,12 +31,7 @@ namespace RetroFuturaGUI
             void applyPosition(const glm::vec3& position) override;
 
         private:
-            void processNode(aiNode* node, const aiScene* scene);
-            Mesh processMesh(aiMesh* unprocessedMesh, const aiScene* scene);
-            std::vector<MeshTexture> loadMaterialTextures(aiMaterial* mat, aiTextureType type, std::string_view typeName);
-
-            std::vector<Mesh> _meshes;
-            std::string _directory;
+            std::vector<Mesh>* _meshes { nullptr };
             glm::mat4
                 _translationMatrix { 1.0f },
                 _scalingMatrix { 1.0f };

@@ -1,4 +1,5 @@
 #pragma once
+#include "IContainer.hpp"
 #include <concepts>
 #include <list>
 #include <memory>
@@ -31,7 +32,7 @@ namespace RetroFuturaGUI
         || std::same_as<T, Slider> || std::same_as<T, ProgressBar> || std::same_as<T, Prefab>
         || std::same_as<T, ComboBox> || std::same_as<T, ExtendedComboBox>;
 
-    class ExtendedComboBox final : public IDropDown
+    class ExtendedComboBox final : public IDropDown, public IContainer
     {
     public:
         ExtendedComboBox(std::string_view name, Projection* projection, IHierarchyNode* parentWidget, const WidgetTypeID parentWidgetTypeID, GLFWwindow* parentWindow);

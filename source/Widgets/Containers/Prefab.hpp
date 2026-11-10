@@ -1,5 +1,6 @@
 #pragma once
 #include "IWidget.hpp"
+#include "IContainer.hpp"
 #include <string_view>
 #include "IncludeHelper.hpp"
 #include "Lasagna.hpp"
@@ -10,7 +11,7 @@
 namespace RetroFuturaGUI
 {
     /// @brief A group of widgets laid out in a Lasagna of its own, which builds, owns and parents them.
-    class Prefab final : public IWidget
+    class Prefab final : public IWidget, public IContainer
     {
     public:
         /// @brief Constructs a prefab and the Lasagna its children sit in.

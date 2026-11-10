@@ -504,6 +504,9 @@ namespace RetroFuturaGUI
 
         void applyPosition(const glm::vec3& position) override;
 
+        /// @brief Ends a cell's edit once disabled, keeping what was typed, as EndEdit does
+        void enabledChanged() override;
+
     private:
         struct MouseState
         {

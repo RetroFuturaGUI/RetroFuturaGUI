@@ -24,6 +24,7 @@ namespace RetroFuturaGUI
     class IWidgetDecoration;
     class WidgetText;
     class IStyledPart;
+    class Scene;
     template<typename> class WidgetReference;
 
     //An interface with properties that all Widgets must implement.
@@ -130,10 +131,11 @@ namespace RetroFuturaGUI
         /// @brief Returns the GLFW window that owns this widget
         GLFWwindow* GetParentWindow() const;
 
-        /// @brief Enables or disables the widget, switching it to that state's colors, and emits OnEnable or OnDisable if emitSignal is set
+        /// @brief Enables or disables the widget, switching it to that state's colors, and emits OnEnable or OnDisable if emitSignal is set.
+        ///        In a scene disabled by Scene::SetEnabled the widget stays disabled, and takes this state once the scene is enabled
         void SetEnabled(const bool enable, const bool emitSignal);
 
-        /// @brief Returns whether the widget is currently enabled
+        /// @brief Returns whether the widget is currently enabled. By its own state and its scene's
         bool IsEnabled() const;
 
         /// @brief Returns the parent widget, cast to the given type
@@ -210,7 +212,9 @@ namespace RetroFuturaGUI
             _onEnableAsync,
             _onDisable,
             _onDisableAsync;
-        bool _isEnabledFlag { true };
+        bool
+            _isEnabledFlag { true },
+            _isOwnEnabled { true };
 
     // stuff
         std::unique_ptr<Tooltip> _tooltip; //no { nullptr }: with Tooltip only declared here, MSVC can't compile the initializer's cleanup
@@ -241,6 +245,12 @@ namespace RetroFuturaGUI
 
         /// @brief Switches the widget to the colors of the given state. Does nothing in a widget without colors per state.
         virtual void setColors([[maybe_unused]] const ColorState state) {}
+
+        /// @brief The state a widget shows with no pointer on it or pressing it. Enabled, or Disabled while it is
+        ColorState getRestingColorState() const;
+
+        /// @brief Called after the widget became enabled or disabled, by SetEnabled or its scene. A text box ends its edit here
+        virtual void enabledChanged() {}
 
         /// @brief The widget's own reaction to the frame's input, after its tooltip and context menu. A container calls its widgets' Interact here.
         virtual void interact() {}
@@ -290,6 +300,15 @@ namespace RetroFuturaGUI
     private:
         void updateTooltip();
         void updateContextMenu();
+
+        /// @brief Takes the state the widget's own and its scene's give it, when that changed since it last did
+        void followSceneEnabled();
+
+        /// @brief Shows a state: switches the colors, emits OnEnable or OnDisable if emitSignal, and calls enabledChanged on a change
+        void applyEnabled(const bool enabled, const bool emitSignal);
+
+        /// @brief The scene the widget is in, or nullptr outside one
+        const Scene* findScene() const;
 
         /// @brief Has the styled parts take their values again: the widget's flavors changed
         void restyleParts();

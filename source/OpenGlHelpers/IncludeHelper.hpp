@@ -95,6 +95,7 @@ namespace RetroFuturaGUI
         ColorPicker,
         WindowTab,
         Tab,
+        EnvironmentView,
         Unknown = -1
     };   
 

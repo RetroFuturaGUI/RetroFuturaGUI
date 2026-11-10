@@ -56,7 +56,7 @@ void RetroFuturaGUI::ProgressBar::interact()
             _mouseEnteredFlag = false;
             _onMouseLeaveAsync.EmitAsync();
             _onMouseLeave.Emit();
-            setColors(ColorState::Enabled);
+            setColors(getRestingColorState());
             setGraphColors(ColorState::Enabled);
         }
 
@@ -103,7 +103,7 @@ void RetroFuturaGUI::ProgressBar::interact()
         }
         else
         {
-            setColors(ColorState::Enabled);
+            setColors(getRestingColorState());
 
             if(isMouseInsideGraph)
                 setGraphColors(ColorState::Enabled);

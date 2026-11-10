@@ -8,16 +8,12 @@
 #include "ScrollView.hpp"
 #include "WindowTab.hpp"
 #include "DockEdge.hpp"
+#include "IContainer.hpp"
 #include "Signal.hpp"
 
 namespace RetroFuturaGUI
 {
     class Window;
-    class Tab;
-
-    template<typename T>
-    concept RootContainer =
-        std::same_as<T, Lasagna> || std::same_as<T, Environment> || std::same_as<T, ScrollView> || std::same_as<T, WindowTab> || std::same_as<T, Tab>;
 
     class Scene final : public IHierarchyNode
     {
@@ -54,9 +50,41 @@ namespace RetroFuturaGUI
 
         void Disconnect_OnUpdate(const typename Signal<>::Slot& slot);
 
-        /// @brief Enables or disables drawing
+        /// @brief Enables or disables drawing. Emits OnActivate or OnDeactivate when it changes
         void SetActive(const bool active);
         bool IsActive() const;
+
+        /// @brief Enables or disables every widget in the scene. A disabled scene still draws, its widgets in their disabled
+        ///        colors, and none of them takes input: the scene under a modal overlay, which itself stays click-through.
+        ///        Enabling it again gives each widget back the state it had of its own. The widgets take the change at the
+        ///        start of the next frame, and each emits OnEnable or OnDisable only if emitSignal is set
+        void SetEnabled(const bool enable, const bool emitSignal);
+
+        bool IsEnabled() const;
+
+        /// @brief Whether the widgets emit OnEnable or OnDisable when they take the last SetEnabled
+        bool IsEnabledSignalEmitted() const;
+
+        /// @brief Connects a slot called when the scene joins its window (Window::AddScene), ready to show
+        /// @param async If true, the slot is invoked asynchronously.
+        void Connect_OnLoad(const typename Signal<>::Slot& slot, const bool async);
+        void Disconnect_OnLoad(const typename Signal<>::Slot& slot);
+
+        /// @brief Connects a slot called when the scene leaves its window: closed by SceneLoader::CloseScene once the frame
+        ///        is drained, unregistered, or removed by Window::RemoveScene. Its widgets still exist while the slot runs
+        /// @param async If true, the slot is invoked asynchronously.
+        void Connect_OnUnload(const typename Signal<>::Slot& slot, const bool async);
+        void Disconnect_OnUnload(const typename Signal<>::Slot& slot);
+
+        /// @brief Connects a slot called when SetActive turns the scene on
+        /// @param async If true, the slot is invoked asynchronously.
+        void Connect_OnActivate(const typename Signal<>::Slot& slot, const bool async);
+        void Disconnect_OnActivate(const typename Signal<>::Slot& slot);
+
+        /// @brief Connects a slot called when SetActive turns the scene off
+        /// @param async If true, the slot is invoked asynchronously.
+        void Connect_OnDeactivate(const typename Signal<>::Slot& slot, const bool async);
+        void Disconnect_OnDeactivate(const typename Signal<>::Slot& slot);
 
         /// @brief Sets whether the scene shows while its window is docked into a WindowTab, which it does by default. A window's own bar turns it off: the tab's field shows the window's title and close button instead, and the strip the bar reserves goes back to the content.
         void ShowInTab(const bool show);
@@ -151,13 +179,31 @@ namespace RetroFuturaGUI
             _onInteract,
             _onInteractAsync,
             _onUpdate,
-            _onUpdateAsync;
+            _onUpdateAsync,
+            _onLoad,
+            _onLoadAsync,
+            _onUnload,
+            _onUnloadAsync,
+            _onActivate,
+            _onActivateAsync,
+            _onDeactivate,
+            _onDeactivateAsync;
 
     //Logic
         bool
             _hasReservedEdge { false },
             _active { true },
-            _shownInTab { true };
+            _shownInTab { true },
+            _isEnabled { true },
+            _isEnabledSignalEmitted { false };
+
+        friend class Window; //tells the scene when it joins and leaves
+
+        /// @brief Emits OnLoad. Window::AddScene calls it.
+        void emitLoad();
+
+        /// @brief Emits OnUnload. Window::RemoveScene calls it.
+        void emitUnload();
 
         /// @brief Asks the parent window to recompute its client area, because what this scene
         ///        reserves from it just changed.

@@ -106,6 +106,9 @@ namespace RetroFuturaGUI
         void interact() override;
         void setColors(const ColorState state) final override;
 
+        /// @brief Ends the edit once disabled, so the keys don't reach the box any more. The text stays as typed
+        void enabledChanged() override;
+
         /// @brief Called when the text's string, font or padding change, before OnTextChange fires
         virtual void textChanged(const WidgetTextChange change);
 

@@ -8,6 +8,7 @@
 #include "IClickable.hpp"
 #include "IPointerFilter.hpp"
 #include "IWidget.hpp"
+#include "IContainer.hpp"
 #include "LineDiagram.hpp"
 #include "MultilineTextBox.hpp"
 #include "SeparatorLine.hpp"
@@ -28,7 +29,7 @@ namespace RetroFuturaGUI
         || std::same_as<T, SeparatorLine> || std::same_as<T, ColorPreview> || std::same_as<T, Video> || std::same_as<T, Histogram>
         || std::same_as<T, MultilineTextBox> || std::same_as<T, LineDiagram> || std::same_as<T, ColorPicker>;
 
-    class ScrollView final : public IWidget, public IClickable, public IPointerFilter
+    class ScrollView final : public IWidget, public IClickable, public IPointerFilter, public IContainer
     {
     public:
         enum class ScrollEnable : u32

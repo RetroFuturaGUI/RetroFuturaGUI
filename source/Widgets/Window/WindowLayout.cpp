@@ -43,6 +43,7 @@ void RetroFuturaGUI::Window::AddScene(Scene* scene)
 
     _scenes.push_back(scene);
     UpdateLayout();
+    scene->emitLoad();
 }
 
 void RetroFuturaGUI::Window::RemoveScene(Scene* scene)
@@ -57,6 +58,7 @@ void RetroFuturaGUI::Window::RemoveScene(Scene* scene)
 
     _scenes.erase(found);
     UpdateLayout();
+    scene->emitUnload();
 }
 
 void RetroFuturaGUI::Window::UpdateLayout()

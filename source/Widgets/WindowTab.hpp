@@ -2,6 +2,7 @@
 #include "Background.hpp"
 #include "IncludeHelper.hpp"
 #include "IWidget.hpp"
+#include "IContainer.hpp"
 #include "Border.hpp"
 #include "Box.hpp"
 #include "CloseButton.hpp"
@@ -24,7 +25,7 @@ namespace RetroFuturaGUI
 
     /// @brief Docks windows as tabs. A strip of fields along the top, each showing a window's title and a close button. Only the selected window's content is visible below. Dragging
     ///        a field sideways reorders the fields, dragging it out of the strip pulls its window out again, and dragging a free window by its bar over the strip drops it in at the end
-    class WindowTab final : public IWidget
+    class WindowTab final : public IWidget, public IContainer
     {
     public:
         /// @brief Constructs an empty WindowTab

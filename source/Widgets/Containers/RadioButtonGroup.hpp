@@ -1,4 +1,5 @@
 #pragma once
+#include "IContainer.hpp"
 #include "WidgetText.hpp"
 #include "Lasagna.hpp"
 #include "RadioButton.hpp"
@@ -13,7 +14,7 @@ namespace RetroFuturaGUI
 {
     class RadioButton;
 
-    class RadioButtonGroup final : public IWidget
+    class RadioButtonGroup final : public IWidget, public IContainer
     {
     public:
         /// @brief Constructs a RadioButtonGroup under the given parent widget/window.

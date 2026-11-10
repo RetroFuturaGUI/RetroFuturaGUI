@@ -74,7 +74,7 @@ void RetroFuturaGUI::Button::interact()
             _mouseEnteredFlag = false;
             _onMouseLeaveAsync.EmitAsync();
             _onMouseLeave.Emit();
-        setColors(ColorState::Enabled);
+        setColors(getRestingColorState());
         }
 
         return;
@@ -112,7 +112,7 @@ void RetroFuturaGUI::Button::interact()
         if(isHovering)
             setColors(ColorState::Hover);
         else
-            setColors(ColorState::Enabled);
+            setColors(getRestingColorState());
     }
 }
 

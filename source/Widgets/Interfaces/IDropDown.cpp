@@ -2,6 +2,7 @@
 #include "ResourceManager.hpp"
 #include "PlatformBridge.hpp"
 #include "Window.hpp"
+#include "EnvironmentView.hpp"
 #include <algorithm>
 #include <cmath>
 #include <utility>
@@ -136,6 +137,9 @@ bool RetroFuturaGUI::IDropDown::isListOver(const IHierarchyNode* reader, GLFWwin
 
 void RetroFuturaGUI::IDropDown::showDropDownLater()
 {
+    if(EnvironmentView::IsDrawingWorld())
+        return; //drawn again through another window's view. The list stays with this box's own window
+
     //Fades in while open and out once closed, over the drop-down's Opacity transition, and draws until it has faded out
     const f32 target { _showDropDown ? 1.0f : 0.0f };
 

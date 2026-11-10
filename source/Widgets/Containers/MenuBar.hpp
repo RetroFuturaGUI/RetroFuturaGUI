@@ -1,6 +1,7 @@
 #pragma once
 #include "IncludeHelper.hpp"
 #include "IWidget.hpp"
+#include "IContainer.hpp"
 #include "Background.hpp"
 #include "Border.hpp"
 #include "Box.hpp"
@@ -34,7 +35,7 @@ namespace RetroFuturaGUI
     || std::same_as<T, Slider> || std::same_as<T, ProgressBar> || std::same_as<T, Prefab>
     || std::same_as<T, ComboBox> || std::same_as<T, ColorPreview>;
 
-    class MenuBar final : public IWidget, public IClickable
+    class MenuBar final : public IWidget, public IClickable, public IContainer
     {
     public:
         enum class DockingEdge : u32

@@ -1,6 +1,7 @@
 #pragma once
 #include "IncludeHelper.hpp"
 #include "IWidget.hpp"
+#include "IContainer.hpp"
 #include <glm/gtc/quaternion.hpp>
 #include <concepts>
 #include <memory>
@@ -40,7 +41,7 @@ namespace RetroFuturaGUI
 
     /// @brief An empty room in which models and widgets are placed freely in its own environment units (-1.0f ... 1.0f)
     ///        Moving, resizing or rotating the Environment moves, resizes and rotates everything inside it alike.
-    class Environment final : public IWidget
+    class Environment final : public IWidget, public IContainer
     {
     public:
         /// @brief Constructs an empty Environment that covers the whole projection until a parent places it
@@ -154,8 +155,16 @@ namespace RetroFuturaGUI
         void applyRotation(const glm::vec3& rotation) override;
 
     private:
+        friend class EnvironmentView; //draws the widgets through its camera
+
         /// @brief Sweeps the removed widgets, then passes the frame's input on to the shown ones in attachment order.
         void interact() override;
+
+        /// @brief Draws every shown widget in attachment order
+        void drawWidgets();
+
+        /// @brief Draws the widgets once more through a camera looking at them in environment units for an EnvironmentView
+        void drawThrough(const glm::mat4& camera);
 
         /// @brief Passes the frame's update on to every widget, hidden ones included.
         void update() override;

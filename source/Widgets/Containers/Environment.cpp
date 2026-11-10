@@ -1,6 +1,7 @@
 #include "Environment.hpp"
 #include "Shader.hpp"
 #include "Window.hpp"
+#include <glm/gtc/matrix_transform.hpp>
 #include <algorithm>
 #include <cmath>
 #include <optional>
@@ -150,6 +151,14 @@ void RetroFuturaGUI::Environment::Draw()
     if(_clippingOn)
         clip.emplace(glm::vec4(_position.x - _size.x * 0.5f, _position.y - _size.y * 0.5f, _size.x, _size.y), _position.z, _viewProjection); //its own box, tilted with it.
 
+    drawWidgets();
+
+    if(_drawDebugBox)
+        drawDebugBox();
+}
+
+void RetroFuturaGUI::Environment::drawWidgets()
+{
     //By index, since a slot that runs while a widget draws, like a Video's, may attach another one
     for(uSize index = 0; index < _entries.size(); ++index)
     {
@@ -160,9 +169,18 @@ void RetroFuturaGUI::Environment::Draw()
 
         widget->DrawAtOpacity();
     }
+}
 
-    if(_drawDebugBox)
-        drawDebugBox();
+void RetroFuturaGUI::Environment::drawThrough(const glm::mat4& camera)
+{
+    if(0.0f >= _scale)
+        return;
+
+    //Back from this window's pixels to the environment's own units, which the camera looks at
+    const glm::mat4 unitsFromLayout { glm::scale(glm::mat4(1.0f), glm::vec3(1.0f / _scale)) * glm::translate(glm::mat4(1.0f), -_position) };
+    _viewProjection._viewOverride = camera * unitsFromLayout;
+    drawWidgets();
+    _viewProjection._viewOverride.reset();
 }
 
 void RetroFuturaGUI::Environment::interact()

@@ -3,6 +3,7 @@
 #include "IncludeHelper.hpp"
 #include "Projection.hpp"
 #include "Window.hpp"
+#include "SceneLoader.hpp"
 #include <memory>
 #include <utility>
 
@@ -20,6 +21,7 @@ void RetroFuturaGUI::Scene::Interact()
     if(!_rootContainer)
         return;
 
+    const SceneLoader::AssetScope assets { *this }; //what loads while the scene runs counts as its own
     _onInteract.Emit();
     _onInteractAsync.EmitAsync();
 
@@ -34,6 +36,7 @@ void RetroFuturaGUI::Scene::Update()
     if(!_rootContainer)
         return;
 
+    const SceneLoader::AssetScope assets { *this };
     _onUpdate.Emit();
     _onUpdateAsync.EmitAsync();
 
@@ -48,6 +51,7 @@ void RetroFuturaGUI::Scene::Draw()
     if(!_rootContainer)
         return;
 
+    const SceneLoader::AssetScope assets { *this }; //a flavor's image loads while drawing
     _rootContainer->DrawAtOpacity();
 }
 
@@ -86,11 +90,105 @@ void RetroFuturaGUI::Scene::SetActive(const bool active)
 
     _active = active;
     requestWindowLayout();
+
+    if(_active)
+    {
+        _onActivateAsync.EmitAsync();
+        _onActivate.Emit();
+        return;
+    }
+
+    _onDeactivateAsync.EmitAsync();
+    _onDeactivate.Emit();
 }
 
 bool RetroFuturaGUI::Scene::IsActive() const
 {
     return _active;
+}
+
+void RetroFuturaGUI::Scene::SetEnabled(const bool enable, const bool emitSignal)
+{
+    _isEnabled = enable;
+    _isEnabledSignalEmitted = emitSignal;
+}
+
+bool RetroFuturaGUI::Scene::IsEnabled() const
+{
+    return _isEnabled;
+}
+
+bool RetroFuturaGUI::Scene::IsEnabledSignalEmitted() const
+{
+    return _isEnabledSignalEmitted;
+}
+
+void RetroFuturaGUI::Scene::Connect_OnLoad(const typename Signal<>::Slot& slot, const bool async)
+{
+    if(async)
+        _onLoadAsync.Connect(slot);
+    else
+        _onLoad.Connect(slot);
+}
+
+void RetroFuturaGUI::Scene::Disconnect_OnLoad(const typename Signal<>::Slot& slot)
+{
+    _onLoad.Disconnect(slot);
+    _onLoadAsync.Disconnect(slot);
+}
+
+void RetroFuturaGUI::Scene::Connect_OnUnload(const typename Signal<>::Slot& slot, const bool async)
+{
+    if(async)
+        _onUnloadAsync.Connect(slot);
+    else
+        _onUnload.Connect(slot);
+}
+
+void RetroFuturaGUI::Scene::Disconnect_OnUnload(const typename Signal<>::Slot& slot)
+{
+    _onUnload.Disconnect(slot);
+    _onUnloadAsync.Disconnect(slot);
+}
+
+void RetroFuturaGUI::Scene::Connect_OnActivate(const typename Signal<>::Slot& slot, const bool async)
+{
+    if(async)
+        _onActivateAsync.Connect(slot);
+    else
+        _onActivate.Connect(slot);
+}
+
+void RetroFuturaGUI::Scene::Disconnect_OnActivate(const typename Signal<>::Slot& slot)
+{
+    _onActivate.Disconnect(slot);
+    _onActivateAsync.Disconnect(slot);
+}
+
+void RetroFuturaGUI::Scene::Connect_OnDeactivate(const typename Signal<>::Slot& slot, const bool async)
+{
+    if(async)
+        _onDeactivateAsync.Connect(slot);
+    else
+        _onDeactivate.Connect(slot);
+}
+
+void RetroFuturaGUI::Scene::Disconnect_OnDeactivate(const typename Signal<>::Slot& slot)
+{
+    _onDeactivate.Disconnect(slot);
+    _onDeactivateAsync.Disconnect(slot);
+}
+
+void RetroFuturaGUI::Scene::emitLoad()
+{
+    _onLoadAsync.EmitAsync();
+    _onLoad.Emit();
+}
+
+void RetroFuturaGUI::Scene::emitUnload()
+{
+    _onUnloadAsync.EmitAsync();
+    _onUnload.Emit();
 }
 
 void RetroFuturaGUI::Scene::ShowInTab(const bool show)

@@ -222,7 +222,7 @@ void RetroFuturaGUI::CheckBox::interact()
             _mouseEnteredFlag = false;
             _onMouseLeaveAsync.EmitAsync();
             _onMouseLeave.Emit();
-        setColors(ColorState::Enabled);
+        setColors(getRestingColorState());
         }
 
         return;
@@ -262,7 +262,7 @@ void RetroFuturaGUI::CheckBox::interact()
         if(isHovering)
             setColors(ColorState::Hover);
         else
-            setColors(ColorState::Enabled);
+            setColors(getRestingColorState());
     }
 
     _wasClicked = isMouseButtonPressed;

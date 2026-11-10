@@ -12,7 +12,10 @@ Projection::Projection(const f32 width, const f32 height)
 
 const glm::mat4& Projection::GetProjectionMatrix() const
 {
-     return _projectionMatrix;
+    if(_viewOverride)
+        return *_viewOverride;
+
+    return _projectionMatrix;
 }
 
 void Projection::UpdateProjectionMatrix(const f32 width, const f32 height)

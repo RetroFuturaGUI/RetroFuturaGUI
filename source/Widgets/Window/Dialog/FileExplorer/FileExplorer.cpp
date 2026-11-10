@@ -146,6 +146,8 @@ RetroFuturaGUI::FileExplorer::ViewHost::ViewHost(std::string_view sceneName, Win
     if(!_scene)
         return;
 
+    const SceneLoader::AssetScope assets { *_scene }; //what the widgets below load counts as the explorer's
+
     _scene->SetLasagnaAxis(lasagnaAxis, projection);
 }
 

@@ -51,6 +51,8 @@ namespace RetroFuturaGUI
         std::optional<glm::vec3> GetEyePosition() const;
 
     private:
+        friend class Environment; //draws its widgets through an EnvironmentView's camera
+
         static constexpr f32
             _orthographicDepth { 1000.0f },
             _perspectiveDepth { 1.0f };
@@ -61,6 +63,7 @@ namespace RetroFuturaGUI
         ProjectionMode _mode { ProjectionMode::Orthographic };
         f32 _viewingDistance { 1000.0f };
         std::optional<glm::vec2> _vanishingPoint {}; //the middle of the resolution
+        std::optional<glm::mat4> _viewOverride {}; //an EnvironmentView's camera, while it draws a world through this projection
         void setProjectionMatrix();
     };
 }

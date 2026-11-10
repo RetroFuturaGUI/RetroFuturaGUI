@@ -334,7 +334,7 @@ void RetroFuturaGUI::ExtendedComboBox::followPointer()
         _mouseEnteredFlag = false;
         _onMouseLeaveAsync.EmitAsync();
         _onMouseLeave.Emit();
-        setColors(ColorState::Enabled);
+        setColors(getRestingColorState());
     }
 
     if(releasedThisFrame) //release, wherever the button came up, because the press belonged to this widget
@@ -345,7 +345,7 @@ void RetroFuturaGUI::ExtendedComboBox::followPointer()
         if(isHovering)
             setColors(ColorState::Hover);
         else
-            setColors(ColorState::Enabled);
+            setColors(getRestingColorState());
     }
 
     if(!isHovering)
