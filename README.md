@@ -31,8 +31,6 @@ The framework is designed for cross-platform use, and its logic can be compiled 
 |    | Environment Lights, Node | | |
 
 ### WIP in detail
-- IDropDown (shared base of ComboBox and ExtendedComboBox)
-  - _maxItemsToDraw is protected but only touched inside IDropDown.cpp, so it could be private
 - ComboBox
   - Scrolling past the visible row cap; the list shows the first rows only, up to the cap
   - SetIndex neither clamps to the item count nor emits OnIndexChanged - only picking a row does

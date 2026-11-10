@@ -149,7 +149,6 @@ namespace RetroFuturaGUI
         uSize
             _currentIndex { 0 },
             _itemCount { 0 },
-            _maxItemsToDraw { 8 },
             _nthItemHovered { 0 };
         Signal<>
             _onItemClicked,
@@ -182,6 +181,7 @@ namespace RetroFuturaGUI
             _arrowPadding { 15.0f };
 
     //Logic
+        uSize _maxItemsToDraw { 8 };
         inline static std::vector<IDropDown*> _shownDropDowns {}; //opened in the frame being drawn, drawn and cleared by DrawShown
         inline static std::vector<const IDropDown*> _dropDowns {}; //every drop-down, for the pointer check
         bool _hideLabelWhenOpen { false };
