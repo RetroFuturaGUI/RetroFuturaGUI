@@ -184,16 +184,19 @@ void RetroFuturaGUI::LineDiagram::updateLinePoints(const uSize lineIndex)
     if(0 == _dataCount[lineIndex])
         return;
 
-    // A shorter set either ends where its data does, or holds its last value up to the end of the track
+    // Stretched, every line spans the track by its own length. Spaced by the longest set, a shorter one either ends where its
+    // data does or holds its last value up to the end of the track
+    const bool isStretched { LineSpacing::Stretched == _lineSpacing };
     const uSize
         dataCount { _dataCount[lineIndex] },
-        pointCount { _clampToLastValue ? _maxDataCount : dataCount };
+        pointCount { !isStretched && _clampToLastValue ? _maxDataCount : dataCount },
+        spacingCount { isStretched ? dataCount : _maxDataCount };
 
     if(2 > pointCount)
         return;
 
     std::vector<glm::vec2>& points { _points[lineIndex] };
-    const f32 xStep { 1.0f / static_cast<f32>(_maxDataCount - 1) };
+    const f32 xStep { 1.0f / static_cast<f32>(spacingCount - 1) };
 
     for(uSize i = 0; i < pointCount; ++i)
     {
@@ -509,10 +512,12 @@ uSize RetroFuturaGUI::LineDiagram::nearestPointIndex(const glm::vec2& point, con
     if(0.0f == _plotSize.x)
         return 0;
 
-    // The points sit 1 / (_maxDataCount - 1) of the plot apart, from its left edge at -0.5 to its right at 0.5
+    // The points sit 1 / (spacing count - 1) of the plot apart, from its left edge at -0.5 to its right at 0.5: the longest set's
+    // count, or the line's own when stretched
+    const uSize spacingCount { LineSpacing::Stretched == _lineSpacing ? _points[lineIndex].size() : _maxDataCount };
     const f32
         plotFraction { toTrackSpace(point, *track).x / _plotSize.x + 0.5f },
-        nearest { std::round(plotFraction * static_cast<f32>(_maxDataCount - 1)) };
+        nearest { std::round(plotFraction * static_cast<f32>(spacingCount - 1)) };
 
     return std::min(static_cast<uSize>(std::max(nearest, 0.0f)), _points[lineIndex].size() - 1);
 }
@@ -539,4 +544,13 @@ glm::vec3 RetroFuturaGUI::LineDiagram::toWorldSpace(const glm::vec2& trackPoint,
     );
 
     return track.GetPosition() + glm::vec3(rotated, zOffset);
+}
+void RetroFuturaGUI::LineDiagram::SetLineSpacing(const LineSpacing spacing)
+{
+    _lineSpacing = spacing;
+}
+
+RetroFuturaGUI::LineSpacing RetroFuturaGUI::LineDiagram::GetLineSpacing() const
+{
+    return _lineSpacing;
 }

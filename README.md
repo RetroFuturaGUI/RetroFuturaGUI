@@ -32,7 +32,6 @@ The framework is designed for cross-platform use, and its logic can be compiled 
 
 ### WIP in detail
 - LineDiagram
-  - The lines are only spaced by index across the longest set. Sets that cover the same span at different resolutions (32 and 64 frequency bands, say) want a mode that stretches every line across the full width
   - Labels and the hover text take the track's rotation, so with Orientation::Vertical they turn with the lines and read sideways
   - Where points sit closer together than the line is wide, the inner side of a mitered corner can fold back over the previous segment
   - A translucent line blends twice where a bevel overlaps its segments at a sharp turn - Polyline draws with GL_LEQUAL so the overlap isn't rejected by the depth test
@@ -166,7 +165,7 @@ The framework is designed for cross-platform use, and its logic can be compiled 
   - ProgressBar: a Slider's value and display without the dragging
   - Their indicator is a Stroke (square corners), a Circle (round, its diameter the smaller of its two sizes) or a Pill (its size kept, rounded fully at the shorter sides); the indicator and the graph stay inside the track's border, following its width when it changes
   - Histogram: one bar per value of a bound array, read every frame, so data updated in place shows live (SetData)
-  - LineDiagram: one line per bound data set, live like the Histogram; the hovered line is highlighted with its nearest value, labels and hexadecimal values on request
+  - LineDiagram: one line per bound data set, live like the Histogram; the hovered line is highlighted with its nearest value, labels and hexadecimal values on request; lines of different lengths are spaced by the longest set or each stretched across the whole track (SetLineSpacing)
   - ColorPicker: picks a color from a field of every hue, with brightness and optional alpha (SetColor, SetBrightness, SetAlpha, OnColorChanged)
   - ColorPreview: a color over a checkerboard, so transparency reads as such, optionally split against white
   - Table: a grid of text, number, color, checkbox and image cells

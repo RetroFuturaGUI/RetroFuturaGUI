@@ -12,6 +12,13 @@
 
 namespace RetroFuturaGUI
 {
+    /// @brief How a LineDiagram lays lines of different lengths along its track
+    enum class LineSpacing : u32
+    {
+        ByIndex,
+        Stretched
+    };
+
     /// @brief Draws every bound set as a line
     class LineDiagram final : public IRangedMultiValue
     {
@@ -53,6 +60,14 @@ namespace RetroFuturaGUI
 
         /// @brief Returns the text next to the pointer and the box behind it. The text has its line's color by default, so without
         ///        the box it would vanish where it crosses its own line
+        /// @brief Sets how lines of different lengths are laid along the track: spaced by the longest set (ByIndex, the default),
+        ///        where a shorter line ends early or holds its last value (EnableClampToLastValue), or each stretched across the whole
+        ///        track (Stretched), for sets that cover the same span at different resolutions, such as 32 and 64 frequency bands
+        void SetLineSpacing(const LineSpacing spacing);
+
+        /// @brief Returns how lines of different lengths are laid along the track
+        LineSpacing GetLineSpacing() const;
+
         HoverText& GetHoverText();
 
         /// @brief Returns the text next to the pointer and the box behind it
@@ -72,7 +87,7 @@ namespace RetroFuturaGUI
         /// @brief Rebuilds every line's points from its set. The data isn't owned and may change in place, so this runs every frame.
         void updatePoints();
 
-        /// @brief Rebuilds the points of set lineIndex. Every line is spaced by the longest set, so the same index lines up across all of them.
+        /// @brief Rebuilds the points of set lineIndex, spaced by the longest set or stretched across the track (SetLineSpacing)
         void updateLinePoints(const uSize lineIndex);
 
         void drawLine(const uSize lineIndex, const f32 thickness);
@@ -84,7 +99,7 @@ namespace RetroFuturaGUI
         /// @return false when there is none, in which case lineIndex is left as it was.
         bool findHoveredLine(const glm::vec2& point, uSize& lineIndex) const;
 
-        /// @brief The index of the line's data point nearest point, in window pixels. Every line shares the x spacing, so the nearest by x is the one.
+        /// @brief The index of the line's data point nearest point, in window pixels: the nearest by x, in the line's own spacing
         uSize nearestPointIndex(const glm::vec2& point, const uSize lineIndex) const;
 
         void drawLineLabels();
@@ -119,6 +134,7 @@ namespace RetroFuturaGUI
             _hoverTextPadding = 3.0f;
         f32
             _lineThickness { 4.0f };
+        LineSpacing _lineSpacing { LineSpacing::ByIndex };
         std::vector<std::unique_ptr<Text>> _labels {};
         std::vector<std::unique_ptr<Polyline>> _lines {};
         std::vector<std::vector<glm::vec2>> _points {};
