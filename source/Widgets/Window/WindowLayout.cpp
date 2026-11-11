@@ -248,7 +248,7 @@ void RetroFuturaGUI::Window::drawContent()
             continue;
 
         //Each scene starts with a fresh depth buffer, so a scene added later always draws over the ones loaded before
-        glClear(GL_DEPTH_BUFFER_BIT);
+        Shader::ClearDepth();
         scene->Draw();
     }
 
@@ -271,7 +271,7 @@ void RetroFuturaGUI::Window::drawFrame()
         return;
 
     //A fresh depth buffer, so the frame lies over every scene
-    glClear(GL_DEPTH_BUFFER_BIT);
+    Shader::ClearDepth();
     _border->Draw();
 }
 

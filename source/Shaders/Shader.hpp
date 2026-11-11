@@ -119,6 +119,26 @@ namespace RetroFuturaGUI
             u32 _outerPlaneCount { 0 };
         };
 
+        /// @brief While one lives, ClearDepth resets the depth buffer through its function instead of clearing it. For a tabbed
+        ///        window's content drawn turned with its WindowTab, whose depth is reset across the turned content area only.
+        ///        An empty function clears the depth buffer again, for what draws in a space of its own inside one
+        class DepthClearScope
+        {
+        public:
+            DepthClearScope(std::function<void()> clear);
+            DepthClearScope(const DepthClearScope&) = delete;
+            DepthClearScope(DepthClearScope&&) = delete;
+            auto operator =(const DepthClearScope&) = delete;
+            auto operator =(DepthClearScope&&) = delete;
+            ~DepthClearScope();
+
+        private:
+            std::function<void()> _outerClear {};
+        };
+
+        /// @brief Gives what draws next a fresh depth buffer: clears it, or inside a DepthClearScope resets it the scope's way
+        static void ClearDepth();
+
         /// @brief Loads, compiles and links a shader program from the given shader source files. A source may pull in other files
         ///        with #include "file", and each define is set right after its #version line, so one source can build several
         ///        programs, such as one per fill.
@@ -230,5 +250,6 @@ namespace RetroFuturaGUI
             _clipBoxFrame { 1.0f },
             _clipBoxView { 1.0f }; //the projection it was seen through
         static inline f32 _clipBoxDepth { 0.0f };
+        static inline std::function<void()> _depthClear {}; //the innermost DepthClearScope's reset. Empty: glClear
     };
 }

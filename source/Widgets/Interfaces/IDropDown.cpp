@@ -82,7 +82,7 @@ void RetroFuturaGUI::IDropDown::DrawShown()
         if(!dropDown)
             continue;
 
-        glClear(GL_DEPTH_BUFFER_BIT); //over everything drawn before, a row's list over its panel too
+        Shader::ClearDepth(); //over everything drawn before, a row's list over its panel too
         const Shader::OpacityScope opacity { dropDown->_listOpacity.Get() };
         const Shader::FrameScope frame { EnvironmentView::IsDrawingWorld() ? dropDown->_viewListFrame : dropDown->_listFrame, Shader::FrameComposition::Instead }; //tilted with its widget
         dropDown->drawDropDown();

@@ -140,10 +140,33 @@ RetroFuturaGUI::Shader::UnclippedScope::~UnclippedScope()
     enableClipPlanes(_clipPlaneCount, 0);
 }
 
+RetroFuturaGUI::Shader::DepthClearScope::DepthClearScope(std::function<void()> clear)
+    : _outerClear(std::move(_depthClear))
+{
+    _depthClear = std::move(clear);
+}
+
+RetroFuturaGUI::Shader::DepthClearScope::~DepthClearScope()
+{
+    _depthClear = std::move(_outerClear);
+}
+
+void RetroFuturaGUI::Shader::ClearDepth()
+{
+    if(!_depthClear)
+    {
+        glClear(GL_DEPTH_BUFFER_BIT);
+        return;
+    }
+
+    _depthClear();
+}
+
 std::array<glm::vec4, 4> RetroFuturaGUI::Shader::clipPlanesOf(const glm::vec4& box, const f32 depth, const glm::mat4& frame, const Projection& projection)
 {
-    // The box's corners and middle where the frame places them. Counterclockwise from the bottom left
-    const auto place = [&frame, depth](const f32 x, const f32 y) { return glm::vec3(frame * glm::vec4(x, y, depth, 1.0f)); };
+    // The box's corners and middle where the frame places them. Counterclockwise from the bottom left. A frame that carries a
+    // turned tab's content has a perspective of its own, so the place is divided by its w
+    const auto place = [&frame, depth](const f32 x, const f32 y) { const glm::vec4 placed { frame * glm::vec4(x, y, depth, 1.0f) }; return glm::vec3(placed) / placed.w; };
     const std::array<glm::vec3, 4> corners { place(box.x, box.y), place(box.x + box.z, box.y), place(box.x + box.z, box.y + box.w), place(box.x, box.y + box.w) };
     const glm::vec3 middle { place(box.x + box.z * 0.5f, box.y + box.w * 0.5f) };
     std::array<glm::vec4, 4> planes {};

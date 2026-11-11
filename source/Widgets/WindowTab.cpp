@@ -3,6 +3,7 @@
 #include "PlatformBridge.hpp"
 #include <algorithm>
 #include <cmath>
+#include <limits>
 
 RetroFuturaGUI::WindowTab::WindowTab(std::string_view name, Projection* projection, IHierarchyNode* parentWidget, const WidgetTypeID parentWidgetTypeID, GLFWwindow* parentWindow)
     : ITab(name, projection, parentWidget, parentWidgetTypeID, parentWindow)
@@ -259,7 +260,17 @@ void RetroFuturaGUI::WindowTab::interactSelectedWindow()
         return;
 
     const glm::ivec4 screen { getContentScreenRect() };
-    selectedWindow->interactInHost(area, glm::ivec2(screen.x, screen.y), _contentCornerRadii); //nothing of this WindowTab is used after it: the window's widgets may take it out
+    const glm::mat4& frame { Shader::GetDrawFrame() };
+    const Window::TabPlacement placement
+    {
+        ._ContentArea = area,
+        ._ScreenPosition = glm::ivec2(screen.x, screen.y),
+        ._CornerRadii = _contentCornerRadii,
+        ._HostView = _projection.GetProjectionMatrix() * frame,
+        ._Depth = _position.z,
+        ._IsFlat = !isTurnedIn(frame)
+    };
+    selectedWindow->interactInHost(placement); //nothing of this WindowTab is used after it: the window's widgets may take it out
 }
 
 bool RetroFuturaGUI::WindowTab::isPullingOut(const uSize index, const glm::vec2& point) const
@@ -352,8 +363,35 @@ void RetroFuturaGUI::WindowTab::syncDropPreview()
     _previewShown.Set(target, transition);
 }
 
+bool RetroFuturaGUI::WindowTab::isTurnedIn(const glm::mat4& frame) const
+{
+    if(glm::mat4(1.0f) != frame)
+        return true;
+
+    const Window* host { GetHostWindow() };
+
+    if(!host)
+        return false;
+
+    if(!host->_projection)
+        return false;
+
+    return host->_projection->GetProjectionMatrix() != _projection.GetProjectionMatrix(); //an Environment's own view, say
+}
+
 glm::ivec2 RetroFuturaGUI::WindowTab::toScreen(const glm::vec2& point) const
 {
+    const Window* host { GetHostWindow() };
+
+    //Turned, the point shows where the view through the frame takes it
+    if(host && isTurnedIn(getFrame()))
+    {
+        const glm::vec4 clip { _projection.GetProjectionMatrix() * getFrame() * glm::vec4(point, _position.z, 1.0f) };
+
+        if(0.0f < clip.w)
+            return host->windowPointToScreen((glm::vec2(clip) / clip.w * 0.5f + 0.5f) * _projection.GetResolution());
+    }
+
     //consider OPenGL-style window coordinates (bottom-left is 0,0)
     const glm::ivec2 local { static_cast<i32>(std::lround(point.x)), static_cast<i32>(std::lround(_projection.GetResolution().y - point.y)) };
 
@@ -378,7 +416,17 @@ void RetroFuturaGUI::WindowTab::drawSelectedWindow()
         return;
 
     const glm::ivec4 screen { getContentScreenRect() };
-    selectedWindow->drawInHost(area, glm::ivec2(screen.x, screen.y), _contentCornerRadii); //nothing of this WindowTab is used after it: the window's widgets may take it out
+    const glm::mat4& frame { Shader::GetDrawFrame() };
+    const Window::TabPlacement placement
+    {
+        ._ContentArea = area,
+        ._ScreenPosition = glm::ivec2(screen.x, screen.y),
+        ._CornerRadii = _contentCornerRadii,
+        ._HostView = _projection.GetProjectionMatrix() * frame,
+        ._Depth = _position.z,
+        ._IsFlat = !isTurnedIn(frame)
+    };
+    selectedWindow->drawInHost(placement); //nothing of this WindowTab is used after it: the window's widgets may take it out
 }
 
 void RetroFuturaGUI::WindowTab::drawDropPreview()
@@ -512,6 +560,12 @@ bool RetroFuturaGUI::WindowTab::isStripUnder(const glm::ivec2& screenPoint) cons
 
 glm::vec2 RetroFuturaGUI::WindowTab::fromScreen(const glm::ivec2& screenPoint) const
 {
+    const Window* host { GetHostWindow() };
+
+    //Turned, where the view through the point meets the untilted strip. Far off when it is seen edge-on
+    if(host && isTurnedIn(getFrame()))
+        return toOwnLayoutPoint(host->screenToWindowPoint(screenPoint)).value_or(glm::vec2(std::numeric_limits<f32>::lowest()));
+
     glm::ivec2 windowPosition { 0 };
 
     if(_parentWindow)
@@ -538,6 +592,24 @@ uSize RetroFuturaGUI::WindowTab::dropSlotAt(const glm::ivec2& screenPoint) const
 glm::ivec4 RetroFuturaGUI::WindowTab::getContentScreenRect() const
 {
     const ScreenRect area { getContentArea() };
+
+    //Turned, the box around its corners as they show
+    if(isTurnedIn(getFrame()))
+    {
+        glm::ivec2
+            low { std::numeric_limits<i32>::max() },
+            high { std::numeric_limits<i32>::lowest() };
+
+        for(const glm::vec2 corner : { area._Origin, area._Origin + glm::vec2(area._Extent.x, 0.0f), area._Origin + area._Extent, area._Origin + glm::vec2(0.0f, area._Extent.y) })
+        {
+            const glm::ivec2 shown { toScreen(corner) };
+            low = glm::min(low, shown);
+            high = glm::max(high, shown);
+        }
+
+        return glm::ivec4(low, glm::max(high - low, glm::ivec2(1)));
+    }
+
     const glm::ivec2 topLeft { toScreen(glm::vec2(area._Origin.x, area._Origin.y + area._Extent.y)) };
     return glm::ivec4
     (

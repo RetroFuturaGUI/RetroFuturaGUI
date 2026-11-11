@@ -117,7 +117,7 @@ void RetroFuturaGUI::ContextMenu::DrawShown(GLFWwindow* window)
     if(!contextMenu)
         return;
 
-    glClear(GL_DEPTH_BUFFER_BIT);
+    Shader::ClearDepth();
     const Shader::OpacityScope opacity { contextMenu->_opacity.Get() };
     contextMenu->draw();
 }

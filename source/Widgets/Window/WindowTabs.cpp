@@ -5,6 +5,7 @@
 #include "IDropDown.hpp"
 #include <algorithm>
 #include <cmath>
+#include <limits>
 #include <utility>
 
 bool RetroFuturaGUI::Window::IsInTab() const
@@ -80,7 +81,7 @@ void RetroFuturaGUI::Window::leaveTab(const glm::ivec2& position)
     markLayoutChanged();
 }
 
-void RetroFuturaGUI::Window::interactInHost(const ScreenRect& contentArea, const glm::ivec2& screenPosition, const glm::vec4& cornerRadii)
+void RetroFuturaGUI::Window::interactInHost(const TabPlacement& placement)
 {
     if(!_window)
         return;
@@ -92,21 +93,29 @@ void RetroFuturaGUI::Window::interactInHost(const ScreenRect& contentArea, const
 
     //Its native window is hidden and never under the cursor, so the mouse reaches it whenever it reaches the window drawing it
     _hasPointer = host->_hasPointer;
-    placeInHost(contentArea, screenPosition, cornerRadii);
+    placeInHost(placement);
 
     //Once the button is up, a press held from before this window took the mouse is over
     if(!PlatformBridge::Input::IsMouseButtonDown(PlatformBridge::MouseButton::Left))
         _ignoreHeldPress = false;
 
+    //Its widgets take the frame they are drawn in, so the pointer meets them where they show.
+    const Shader::FrameScope frame { _isTurnedInTab ? _turnedContentFrame : glm::mat4(1.0f), Shader::FrameComposition::Instead };
     interactContent();
 }
 
-void RetroFuturaGUI::Window::drawInHost(const ScreenRect& contentArea, const glm::ivec2& screenPosition, const glm::vec4& cornerRadii)
+void RetroFuturaGUI::Window::drawInHost(const TabPlacement& placement)
 {
     if(!_window)
         return;
 
-    const glm::ivec4 area { placeInHost(contentArea, screenPosition, cornerRadii) }; //again, in case the WindowTab moved since it interacted
+    const glm::ivec4 area { placeInHost(placement) }; //again, in case the WindowTab moved since it interacted
+
+    if(_isTurnedInTab)
+    {
+        drawTurnedInHost();
+        return;
+    }
 
     //The drawing window's viewport, given back once this window is drawn
     GLint viewport[4] {};
@@ -122,6 +131,7 @@ void RetroFuturaGUI::Window::drawInHost(const ScreenRect& contentArea, const glm
         const Shader::FrameScope flat { glm::mat4(1.0f), Shader::FrameComposition::Instead }; //its content lies in its own space.
         const Shader::UnclippedScope unclipped {}; //likewise, so the host's clip planes don't reach into it.
         const Transitions::InstantScope instant { _isHidden }; //a tab just selected shows what changed meanwhile at once
+        const Shader::DepthClearScope depthClear { nullptr }; //its own, whole area
         glClear(GL_DEPTH_BUFFER_BIT);
         drawContent();
         glClear(GL_DEPTH_BUFFER_BIT); //the drawing window's widgets after the WindowTab aren't tested against this window's content
@@ -134,8 +144,71 @@ void RetroFuturaGUI::Window::drawInHost(const ScreenRect& contentArea, const glm
     glViewport(viewport[0], viewport[1], viewport[2], viewport[3]);
 }
 
-glm::ivec4 RetroFuturaGUI::Window::placeInHost(const ScreenRect& contentArea, const glm::ivec2& screenPosition, const glm::vec4& cornerRadii)
+void RetroFuturaGUI::Window::drawTurnedInHost()
 {
+    if(!_projection)
+        return;
+
+    //The drawing window's own open lists still draw last in its frame
+    std::vector<IDropDown*> hostDropDowns { IDropDown::takeShown() };
+
+    {
+        //Laid onto the turned area in the drawing window's viewport, cut to the area by planes, since no scissor box can turn
+        const glm::vec2 resolution { _projection->GetResolution() };
+        const Shader::FrameScope frame { _turnedContentFrame, Shader::FrameComposition::Instead };
+        const Shader::UnclippedScope unclipped {}; //the host's planes lie in another space.
+        const Shader::ClipScope clip { glm::vec4(0.0f, 0.0f, resolution.x, resolution.y), 0.0f, *_projection };
+        const Transitions::InstantScope instant { _isHidden }; //a tab just selected shows what changed meanwhile at once
+        const Shader::DepthClearScope depthClear { [this] { resetTurnedContentDepth(); } }; //a clear would reach past the turned area
+        resetTurnedContentDepth();
+        drawContent();
+        resetTurnedContentDepth(); //the drawing window's widgets after the WindowTab aren't tested against this window's content
+    }
+
+    _isDrawnSinceUpdate = true;
+    IDropDown::restoreShown(std::move(hostDropDowns));
+}
+
+void RetroFuturaGUI::Window::resetTurnedContentDepth()
+{
+    if(!_projection)
+        return;
+
+    if(!_turnedDepthReset)
+    {
+        _turnedDepthReset = std::make_unique<Plane>(_projection.get());
+        _turnedDepthReset->SetColors(std::array { glm::vec4(1.0f) }); //opaque, so no fragment of it is left out.
+    }
+
+    const glm::vec2 resolution { _projection->GetResolution() };
+    _turnedDepthReset->SetSize(resolution);
+    _turnedDepthReset->SetPosition(glm::vec3(resolution * 0.5f, 0.0f));
+
+    //Into the depth buffer only, at the far end whatever lies there, so the content draws over it
+    GLint depthFunction { GL_LESS };
+    GLfloat depthRange[2] { 0.0f, 1.0f };
+    GLboolean colorMask[4] { GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE };
+    glGetIntegerv(GL_DEPTH_FUNC, &depthFunction);
+    glGetFloatv(GL_DEPTH_RANGE, depthRange);
+    glGetBooleanv(GL_COLOR_WRITEMASK, colorMask);
+    glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
+    glDepthFunc(GL_ALWAYS);
+    glDepthRange(1.0, 1.0);
+
+    {
+        const Shader::OpacityScope opaque { 1.0f, Shader::FrameComposition::Instead };
+        _turnedDepthReset->Draw();
+    }
+
+    glDepthRange(depthRange[0], depthRange[1]);
+    glDepthFunc(static_cast<GLenum>(depthFunction));
+    glColorMask(colorMask[0], colorMask[1], colorMask[2], colorMask[3]);
+}
+
+glm::ivec4 RetroFuturaGUI::Window::placeInHost(const TabPlacement& placement)
+{
+    const ScreenRect& contentArea { placement._ContentArea };
+
     //A host in a tab itself is drawn into its own host's framebuffer, where its content area starts at its own origin
     const Window* host { getTabHostWindow() };
     const glm::ivec2 hostOrigin { host && host->IsInTab() ? host->_hostFramebufferOrigin : glm::ivec2(0) };
@@ -151,10 +224,118 @@ glm::ivec4 RetroFuturaGUI::Window::placeInHost(const ScreenRect& contentArea, co
     _hostFramebufferOrigin = glm::ivec2(area.x, area.y);
 
     //The hidden native window lies right under the content area, so its widgets read the cursor as they do on the window itself
-    setDockedGeometry(screenPosition, glm::ivec2(area.z, area.w));
-    _tabCornerRadii = cornerRadii;
+    setDockedGeometry(placement._ScreenPosition, glm::ivec2(area.z, area.w));
+    _tabCornerRadii = placement._CornerRadii;
     updateSize();
+
+    //Turned, its widgets read the cursor through the host instead, and draw through the frame laying them onto the area
+    _isTurnedInTab = !placement._IsFlat;
+
+    if(_isTurnedInTab)
+        _turnedContentFrame = getTurnedContentFrame(placement);
+
     return area;
+}
+
+glm::mat4 RetroFuturaGUI::Window::getTurnedContentFrame(const TabPlacement& placement) const
+{
+    if(!_projection)
+        return glm::mat4(1.0f);
+
+    const glm::mat4& contentProjection { _projection->GetProjectionMatrix() };
+    const glm::vec2
+        origin { placement._ContentArea._Origin },
+        extent { glm::max(placement._ContentArea._Extent, glm::vec2(1.0f)) };
+
+    //The content's clip space laid flat onto the area: -1 .. 1 across it, depth 0, its w kept for a content in perspective
+    glm::mat4 flatten { 0.0f };
+    flatten[0][0] = extent.x * 0.5f;
+    flatten[1][1] = extent.y * 0.5f;
+    flatten[3] = glm::vec4(extent * 0.5f, 0.0f, 1.0f);
+    const glm::mat4 areaView { placement._HostView * glm::translate(glm::mat4(1.0f), glm::vec3(origin, placement._Depth)) };
+    glm::mat4 laidOn { areaView * flatten * contentProjection };
+
+    //Lying flat, the content would lose its stacking. Its own depth goes in instead, scaled so it stays in the view's depth range
+    //at the area's nearest corner. One pixel's fragments share their place on the area, so their order is the content's own
+    f32 nearestW { std::numeric_limits<f32>::max() };
+
+    for(const glm::vec2 corner : { glm::vec2(0.0f), glm::vec2(extent.x, 0.0f), extent, glm::vec2(0.0f, extent.y) })
+        nearestW = std::min(nearestW, (areaView * glm::vec4(corner, 0.0f, 1.0f)).w);
+
+    const f32 depthScale { 0.999f * std::max(nearestW, 1e-4f) };
+
+    for(glm::length_t column = 0; 4 > column; ++column)
+        laidOn[column][2] = depthScale * contentProjection[column][2];
+
+    return glm::inverse(contentProjection) * laidOn;
+}
+
+glm::vec2 RetroFuturaGUI::Window::screenToWindowPoint(const glm::ivec2& screenPoint) const
+{
+    const glm::vec2 resolution { _projection ? _projection->GetResolution() : glm::vec2(1.0f) };
+    const Window* host { getTabHostWindow() };
+
+    //The host's point, in the host's pixels, is the same point of the view in this window's
+    if(_isTurnedInTab && host && host->_projection)
+        return host->screenToWindowPoint(screenPoint) / glm::max(host->_projection->GetResolution(), glm::vec2(1.0f)) * resolution;
+
+    glm::ivec2 windowPosition { 0 };
+
+    if(_window)
+        glfwGetWindowPos(_window, &windowPosition.x, &windowPosition.y);
+
+    const glm::ivec2 local { screenPoint - windowPosition };
+    return glm::vec2(static_cast<f32>(local.x), resolution.y - static_cast<f32>(local.y));
+}
+
+glm::ivec2 RetroFuturaGUI::Window::windowPointToScreen(const glm::vec2& windowPoint) const
+{
+    const glm::vec2 resolution { _projection ? _projection->GetResolution() : glm::vec2(1.0f) };
+    const Window* host { getTabHostWindow() };
+
+    if(_isTurnedInTab && host && host->_projection)
+        return host->windowPointToScreen(windowPoint / glm::max(resolution, glm::vec2(1.0f)) * host->_projection->GetResolution());
+
+    glm::ivec2 windowPosition { 0 };
+
+    if(_window)
+        glfwGetWindowPos(_window, &windowPosition.x, &windowPosition.y);
+
+    return windowPosition + glm::ivec2(static_cast<i32>(std::lround(windowPoint.x)), static_cast<i32>(std::lround(resolution.y - windowPoint.y)));
+}
+
+bool RetroFuturaGUI::Window::readTurnedTabPointer(GLFWwindow* glfwWindow, PointerState& pointer)
+{
+    const Window* window { FromGlfwWindow(glfwWindow) };
+
+    if(!window)
+        return false;
+
+    if(!window->_isTurnedInTab)
+        return false;
+
+    //Up to the first window that reads the cursor itself: one not in a tab, or flat in one, its native window under the area
+    const Window* reader { window };
+
+    while(reader && reader->_isTurnedInTab)
+        reader = reader->getTabHostWindow();
+
+    if(!reader)
+        return false;
+
+    i32
+        cursorX { 0 },
+        cursorY { 0 };
+
+    pointer._HasPosition = reader->getCursorPosition(cursorX, cursorY);
+
+    if(!reader->_window)
+        return true;
+
+    glm::ivec2 readerPosition { 0 };
+    glfwGetWindowPos(reader->_window, &readerPosition.x, &readerPosition.y);
+    pointer._WindowPosition = window->screenToWindowPoint(readerPosition + glm::ivec2(cursorX, cursorY));
+    return true;
 }
 
 void RetroFuturaGUI::Window::beginCursorDrag(const glm::ivec2& grabPoint)

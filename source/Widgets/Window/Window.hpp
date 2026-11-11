@@ -557,31 +557,64 @@ namespace RetroFuturaGUI
     //Tabs
         /// @brief Docks this window into the WindowTab: it leaves its docking group, its native window hides, and from then on the
         ///        WindowTab's window draws it.
-        /// @return false for popups' windows and docking previews, for the WindowTab's own window, for a window holding windows in
-        ///         its own WindowTabs, and when the WindowTab's window sits in a tab itself.
+        /// @return false for popups' windows and docking previews, for the WindowTab's own window, and for a window the WindowTab
+        ///         lies inside, in its own tabs or in tabs further in.
         bool enterTab(WindowTab* tab);
 
         /// @brief Takes this window out of its WindowTab. It gets back the size it had before, with its top-left corner at the given
         ///        place on the screen, and shows once it has drawn a frame of its own.
         void leaveTab(const glm::ivec2& position);
 
+        /// @brief Where a WindowTab's content area lies, as the WindowTab hands it to its selected window
+        struct TabPlacement
+        {
+            ScreenRect _ContentArea {}; //in the WindowTab's untilted layout, the host window's pixels, y running upward
+            glm::ivec2 _ScreenPosition { 0 }; //the content area's top-left corner on the screen, around it while it is turned
+            glm::vec4 _CornerRadii { 0.0f };
+            glm::mat4 _HostView { 1.0f }; //the WindowTab's projection times the frame it draws in
+            f32 _Depth { 0.0f }; //where the WindowTab lies in that layout
+            bool _IsFlat { true }; //drawn through a viewport. Otherwise turned. Placed through _HostView
+        };
+
         /// @brief Has this window's widgets react to the frame's input while it sits in a WindowTab's content area. The mouse reaches
         ///        it whenever it reaches the host window.
-        /// @param contentArea the content area in the host window's framebuffer pixels, y running upward
-        /// @param screenPosition the content area's top-left corner on the screen
-        void interactInHost(const ScreenRect& contentArea, const glm::ivec2& screenPosition, const glm::vec4& cornerRadii);
+        void interactInHost(const TabPlacement& placement);
 
-        /// @brief Draws this window into its WindowTab's content area, with the WindowTab's window's context current: viewport and
-        ///        scissor box set to the content area.
-        /// @param contentArea the content area in the drawing window's framebuffer pixels, y running upward
-        /// @param screenPosition the content area's top-left corner on the screen
-        void drawInHost(const ScreenRect& contentArea, const glm::ivec2& screenPosition, const glm::vec4& cornerRadii);
+        /// @brief Draws this window into its WindowTab's content area, with the WindowTab's window's context current. Flat, through
+        ///        a viewport and scissor box set to the content area; turned, through a frame that lays its content onto the
+        ///        turned area, cut by clip planes.
+        void drawInHost(const TabPlacement& placement);
+
+        /// @brief drawInHost for a turned WindowTab: through _turnedContentFrame, cut to the area by clip planes, its depth reset
+        ///        across the turned area only
+        void drawTurnedInHost();
 
         /// @brief Keeps the hidden native window right under the content area, so the cursor reads the same as on the window
-        ///        itself, and lays the window out at the area's size.
+        ///        itself, lays the window out at the area's size and, while it is turned, works out the frame its content is
+        ///        drawn and read through.
         /// @return the content area in whole framebuffer pixels: left, bottom, width and height. A host that is in a tab itself is
         ///         drawn into its own host's framebuffer, so the area is shifted by where the host lies there
-        glm::ivec4 placeInHost(const ScreenRect& contentArea, const glm::ivec2& screenPosition, const glm::vec4& cornerRadii);
+        glm::ivec4 placeInHost(const TabPlacement& placement);
+
+        /// @brief The frame that lays this window's content onto a turned content area: its projection times the frame is the
+        ///        host's view of the area, x, y and w taken from the content flattened onto it, depth from the content's own,
+        ///        so the content keeps its stacking while it lies flat on the area
+        glm::mat4 getTurnedContentFrame(const TabPlacement& placement) const;
+
+        /// @brief Gives the turned content area a fresh depth buffer: the far depth across the area, the host's depth left as it
+        ///        is around it. Shader::ClearDepth calls it while the content draws turned
+        void resetTurnedContentDepth();
+
+        /// @brief The point of this window, in its pixels with y running upward, that lies under the given point of the screen.
+        ///        Turned in a tab, through the host's point
+        glm::vec2 screenToWindowPoint(const glm::ivec2& screenPoint) const;
+
+        /// @brief The point of the screen that lies over the given point of this window. Turned in a tab, through the host's point
+        glm::ivec2 windowPointToScreen(const glm::vec2& windowPoint) const;
+
+        /// @brief For a widget in a window that is turned in a tab: the cursor, read through the host's, in the window's pixels
+        /// @return false for any other window, whose widgets read the cursor from its native window
+        static bool readTurnedTabPointer(GLFWwindow* glfwWindow, PointerState& pointer);
 
         /// @brief Moves the window with the cursor, held at the given point, until the left button is let go, then ends the drag,
         ///        which docks or tabs it where its preview showed. For a window just pulled out of a tab, since the press that
@@ -743,7 +776,11 @@ namespace RetroFuturaGUI
             _cursorGrabPoint { 0 }; //where the cursor holds the window while it follows the cursor after being pulled out of a tab
         glm::vec4 _tabCornerRadii { 0.0f }; //the content area's radii, which the window takes while it is in a tab
         glm::ivec2 _hostFramebufferOrigin { 0 }; //where its content area lies in the framebuffer it is drawn into while in a tab
-        bool _followsCursor { false }; //whether window should move when pulled out off a tab
+        glm::mat4 _turnedContentFrame { 1.0f }; //the frame its content is drawn and read through while it is turned in a tab.
+        std::unique_ptr<Plane> _turnedDepthReset { nullptr }; //the content area, drawn into the depth buffer only, made when first turned.
+        bool
+            _followsCursor { false }, //whether window should move when pulled out off a tab
+            _isTurnedInTab { false }; //whether its WindowTab is turned, so it is drawn through _turnedContentFrame
 
     //Layout file
         static inline std::string _layoutFile { "RetroFuturaGUI.ini" };
@@ -763,5 +800,6 @@ namespace RetroFuturaGUI
 
         friend class IPopup; //creates its window through the private constructor
         friend class WindowTab; //registers itself, docks windows into itself and draws the selected one
+        friend class IWidget; //reads the cursor through the host while its window is turned in a tab
     };
 }

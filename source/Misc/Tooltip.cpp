@@ -65,7 +65,7 @@ void RetroFuturaGUI::Tooltip::DrawShown(GLFWwindow* window)
     if(!tooltip)
         return;
 
-    glClear(GL_DEPTH_BUFFER_BIT);
+    Shader::ClearDepth();
     const Shader::OpacityScope opacity { tooltip->_opacity.Get() };
     tooltip->draw();
 }

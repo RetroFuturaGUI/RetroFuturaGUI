@@ -21,7 +21,8 @@ bool isPixelAligned(mat4 placement)
 {
     bool isUnturned = abs(placement[0][1]) < 1e-5 && abs(placement[1][0]) < 1e-5 && abs(placement[0][2]) < 1e-5 && abs(placement[1][2]) < 1e-5;
     bool isOrthographic = abs(uProjection[0][3]) + abs(uProjection[1][3]) + abs(uProjection[2][3]) < 1e-6;
-    return isUnturned && isOrthographic;
+    bool isAffine = abs(placement[0][3]) + abs(placement[1][3]) + abs(placement[2][3]) < 1e-6; // a turned tab's content carries a perspective in its frame.
+    return isUnturned && isOrthographic && isAffine;
 }
 
 void main()

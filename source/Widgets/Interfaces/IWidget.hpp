@@ -244,6 +244,9 @@ namespace RetroFuturaGUI
         ///        pointer or drew in the point readPointer gives as _Position
         std::optional<glm::vec2> toOwnLayoutPoint(const glm::vec2& windowPoint) const;
 
+        /// @brief The frame the widget last took the pointer or drew in, its own tilt included
+        const glm::mat4& getFrame() const { return _frame; }
+
         /// @brief change the cursor icon, such as the hand over a button. Call it every frame the mouse is over a widget to visualize an action can be performed. In a frame where no widget calls it, the cursor is the arrow.
         void requestCursorIcon(const PlatformBridge::CursorIcon icon) const;
 

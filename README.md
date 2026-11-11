@@ -32,15 +32,14 @@ The framework is designed for cross-platform use, and its logic can be compiled 
 
 ### WIP in detail
 - WindowTab
-  - The WindowTab's rotation is ignored, since the content is drawn through a viewport, which can't turn
-  - Not addressable through the C binding (DynamicLibWidgetManager) yet
+  - The clip planes around a WindowTab (a ScrollView or a clipping Environment it lies in) don't cut the tabbed window's content, which is drawn in a space of its own; a turned WindowTab's docking preview is the box around the turned content area
   - Linux is untested: a window in a tab keeps its native window, hidden, under the content area for its input, and whether X11 moves and reports an unmapped window the same way is unverified
 - Popups
   - A popup opens centered over the one below it, so a nested popup of the same size covers it completely
   - Linux is untested: the owner is set with XSetTransientForHint, and whether the popup stays off the taskbar is up to the window manager
 - Third dimension
   - Rectangles, text and textures keep a two-dimensional size: they are flat, and the frame tilts them, so a third size component would go unused
-  - Tooltips and context menus stay flat over a tilted widget, by design, and so does a tabbed window's content (see WindowTab)
+  - Tooltips and context menus stay flat over a tilted widget, by design
   - Nested clips in one frame and depth cut to their overlap, but only two differently tilted ones count at once: a third drops the outermost
   - Under perspective, layouts stack within 1 px (Projection::GetDepth), so a Lasagna with many layers gives each a slice close to the widgets' own stacking steps
   - A tilted widget is depth-tested against everything drawn, so a part tilting toward the eye draws over what lies in front of the widget's plane, the window bar included
@@ -157,7 +156,7 @@ The framework is designed for cross-platform use, and its logic can be compiled 
   - Moving fills run by the clock too: gradient animation (runs through all colors per second) and rotation (degrees per second), raster animation and fog drift (pixels per second), and SVG icon gradients; something drawn more than once a frame doesn't move faster
   - Fades: widget opacity (SetOpacity), tooltips, context menus and drop-down lists fade in and out, popups and the docking preview through the native window's opacity
 - Third dimension
-  - Every widget can be rotated around all three axes with everything in it; the pointer stays exact at any tilt
+  - Every widget can be rotated around all three axes with everything in it; the pointer stays exact at any tilt, a WindowTab with the window in its selected tab too: its content turns and tilts with it, keeps its own perspective and is cut to the content area
   - Perspective per window (Window::SetPerspective) and per Environment; clipping that follows the tilt
 - FileExplorer
   - A popup that browses the file system and closes with the chosen paths: Open(startPath, flags, ".cpp, .hpp")

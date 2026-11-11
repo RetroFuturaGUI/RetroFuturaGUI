@@ -113,6 +113,10 @@ namespace RetroFuturaGUI
         /// @brief Converts a point in this window's coordinates to the screen's, with y running downward.
         glm::ivec2 toScreen(const glm::vec2& point) const;
 
+        /// @brief Whether the WindowTab shows turned in the given frame: tilted, or through a projection its window's view
+        ///        doesn't share. Its selected window then draws through a frame instead of a viewport
+        bool isTurnedIn(const glm::mat4& frame) const;
+
     //Drawing
         void drawSelectedWindow();
         void drawDropPreview();

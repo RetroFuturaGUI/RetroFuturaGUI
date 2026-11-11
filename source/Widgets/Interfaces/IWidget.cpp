@@ -392,19 +392,25 @@ RetroFuturaGUI::PointerState RetroFuturaGUI::IWidget::readPointer() const
         return readPointerThroughView(viewPointer->_WindowPoint, viewPointer->_World);
 
     PointerState pointer {};
-    i32
-        mouseX { 0 },
-        mouseY { 0 };
+
+    //A window turned in a tab reads the cursor through its host, since its native window can't turn with the content
+    if(!Window::readTurnedTabPointer(_parentWindow, pointer))
+    {
+        i32
+            mouseX { 0 },
+            mouseY { 0 };
 
 #if defined(TARGET_PLATFORM_LINUX)
-    pointer._HasPosition = PlatformBridge::Input::GetMouseWindowPosition(glfwGetX11Window(_parentWindow), mouseX, mouseY);
+        pointer._HasPosition = PlatformBridge::Input::GetMouseWindowPosition(glfwGetX11Window(_parentWindow), mouseX, mouseY);
 #elif defined(TARGET_PLATFORM_WINDOWS)
-    pointer._HasPosition = PlatformBridge::Input::GetMouseWindowPosition(glfwGetWin32Window(_parentWindow), mouseX, mouseY);
+        pointer._HasPosition = PlatformBridge::Input::GetMouseWindowPosition(glfwGetWin32Window(_parentWindow), mouseX, mouseY);
 #endif
 
-    // PlatformBridge reports native, top-down window coordinates; the library's world space runs bottom-up. The widget sees
-    // the point where the pointer meets its untilted layout. For an untilted widget in an orthographic view, it's the same point
-    pointer._WindowPosition = glm::vec2(static_cast<f32>(mouseX), _projection.GetResolution().y - static_cast<f32>(mouseY));
+        // PlatformBridge reports native, top-down window coordinates; the library's world space runs bottom-up
+        pointer._WindowPosition = glm::vec2(static_cast<f32>(mouseX), _projection.GetResolution().y - static_cast<f32>(mouseY));
+    }
+
+    // The widget sees the point where the pointer meets its untilted layout. For an untilted widget in an orthographic view, it's the same point
     const std::optional<glm::vec2> layoutPoint { toOwnLayoutPoint(pointer._WindowPosition) };
     pointer._HasPosition = pointer._HasPosition && layoutPoint.has_value();
     pointer._Position = layoutPoint.value_or(pointer._WindowPosition);
