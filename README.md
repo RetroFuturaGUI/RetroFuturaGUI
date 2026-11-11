@@ -31,11 +31,6 @@ The framework is designed for cross-platform use, and its logic can be compiled 
 |    | Environment Lights, Node | | |
 
 ### WIP in detail
-- Tab (items: root containers it owns, one per field)
-  - Dragging a field only reorders the fields: an item can't be dragged out of the strip or into another Tab
-  - The strip runs along the top only
-  - A scroll arrow scrolls one field per press; holding it doesn't repeat
-  - Not addressable through the C binding (DynamicLibWidgetManager) yet
 - WindowTab
   - The strip runs along the top only. Its fields have no icons, and there is no "+" field, no closing by middle-click and no switching tabs by keyboard
   - A window dragged over a strip whose fields don't fit scrolls its preview field into view; untested by input
@@ -136,7 +131,7 @@ The framework is designed for cross-platform use, and its logic can be compiled 
   - MenuBar: a bar of flexible cells holding widgets; a cell can move or undock the window
   - Tab: pages (root containers it owns, AddPage&lt;T&gt;) in a strip of fields, selected, reordered by dragging and removed by their cross (ShowCloseButtons); SetContentCornerRadii rounds its bottom corners
   - WindowTab: windows as tabs in a strip, selected, reordered, closed, pulled out and dropped back in by dragging, drawn the way ImGui draws docked windows; SetContentCornerRadii rounds the docked window's corners
-  - Tab and WindowTab share their strip through ITab: the fields and their look (GetFieldStyle, GetCloseButton, title font and colors), their sizes, selecting, dragging to reorder and the close buttons. Fields that don't fit at their minimum width scroll: by the wheel over the strip, by arrows at its ends (GetScrollButton, an IconButton like the close buttons) shown while fields are hidden on their side, and to a field as it is selected, dragged past an end or dropped in as a window
+  - Tab and WindowTab share their strip through ITab: the fields and their look (GetFieldStyle, GetCloseButton, title font and colors), their sizes, selecting, dragging to reorder and the close buttons. Fields that don't fit at their minimum width scroll: by the wheel over the strip, by arrows at its ends (GetScrollButton, an IconButton like the close buttons) shown while fields are hidden on their side (held, they keep scrolling), and to a field as it is selected, dragged past an end or dropped in as a window
 - WidgetRegistry: every widget is found from anywhere by its path ("MainWindow/MainScene/RootContainer/OkButton") or the path's hash (GetPathHash, Fnv1aHash), also as its type (Find<Button>); renames are followed
 - Flavors (StylingManager), named style rules like CSS classes: a flavor sets colors per state, corner radii, cut corners, border widths, a background's or a text's image, every shader setting (fill, raster, glass, fog and their noise, masks, gaps, pixelation, CRT), the drop shadow, glow and inner glow (GetDropShadow() and so on, shown, colors per state, numbers, fill), and a text's font family, size, slant and weight, alignment, padding, flow, emoji tint, mask span and outline (GetText().GetOutline(): width, colors per state, fill), for its widgets' background, border and text; for the widget itself it sets the transitions (SetTransition, over the global default) and the border gap (SetBorderGap); the parts inside a widget have named getters, mirroring the widgets' own (GetIndicator().GetBackground(), GetGraph(), GetList().GetHighlight(), GetItemStyle(), GetSeparatorLine(), GetFieldStyle(), GetCloseButton(), GetScrollButton(), GetSelectionBand(), GetHoverText(), GetPlaceholder(), GetPreview(), GetCheckmark(), GetArrow(), GetCloseButton().GetIcon(), GetCaret(), GetSelectedArea(), GetItemText(), and a table's GetTrackStyle(n) for its nth track variant, GetCellStyle(), GetHeaderStyle(), GetCellCheckBox()); a window takes flavors as well (Window::AddFlavor: its background, border and transitions; a docked window still squares the corners where it meets others); a widget takes several in order (AddFlavor(".primary")), any time after it is made. Each value shows the widget's own setting if set, else the first of its flavors that sets it, else .default, else the widget type's built-in look; widgets don't own what they take from a flavor, so a change to the flavor shows on all of them at once
 - Window
@@ -273,6 +268,7 @@ The framework is designed for cross-platform use, and its logic can be compiled 
 <li>Switchable C++ modules (RETROFUTURAGUI_MODULES), needed once PS2 support is tackled: one CMake option builds the library as one module where the toolchain supports it, and as headers everywhere else (PS2, older toolchains). Proven on a slice (IncludeHelper, the transitions; RetroFuturaGUI.cppm, ModuleExternals.hpp, RFG_EXPORT); left: the RFG_EXPORT markers and .cpp preambles for the rest of the library, the CMake option, module builds in CI, the TestProject on import, and how VS Code's IntelliSense copes. One module rebuilds everything on any header change; partitions could narrow that. PlatformBridge stays plain headers</li>
 <li>SVGs on meshes, once they are needed: SvgTexture keeps only the SVG data - the picture, the masks of recolored paths and their colors - and the geometry that shows it binds to that data in one universal way, whether it is the quad inside SvgImage or a Mesh. Today SvgTexture owns the quad it draws on, so a Mesh can't show a recolored SVG</li>
 <li>Custom icons from images</li>
+<li>Tab: the strip runs along the top only; strips along the other edges</li>
 <li>Audio formats, once they're needed</li>
   <ul>
   <li>MIDI (needs a synthesizer such as TinySoundFont - and a SoundFont whose sample sources are clear for commercial use) and chiptune formats each need a new dependency</li>

@@ -317,7 +317,8 @@ namespace RetroFuturaGUI
             _zStep { 0.01f },
             _closeIconScale { 0.4f },
             _dragThreshold { 5.0f },
-            _dragScrollSpeed { 600.0f };
+            _dragScrollSpeed { 600.0f },
+            _scrollRepeatDelay { 0.4f }; //(seconds)
 
         /// @brief Which scroll arrow the pointer is over or pressed
         enum class ScrollSide : u32
@@ -340,11 +341,12 @@ namespace RetroFuturaGUI
         f32
             _dragLeft { 0.0f }, //the dragged field's left edge, which follows the cursor
             _sidewaysTravel { 0.0f }, //how far the drag went sideways at most
-            _stripScroll { 0.0f }; //how far the fields are scrolled to the left while they don't fit
+            _stripScroll { 0.0f }, //how far the fields are scrolled to the left while they don't fit
+            _scrollHoldSeconds { 0.0f }; //how long the pressed scroll arrow has been held
         ScrollSide
             _hoveredScrollButton { ScrollSide::None },
             _pressedScrollButton { ScrollSide::None };
-        StepClock _dragScrollClock {}; //the time between frames while a dragged field scrolls the strip
+        StepClock _dragScrollClock {}; //the time between frames while a dragged field or a held arrow scrolls the strip.
         bool
             _isDraggingField { false },
             _wasPressed { false };

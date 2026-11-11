@@ -331,11 +331,26 @@ void RetroFuturaGUI::ITab::followPointer()
 
     scrollByWheel(pointer);
 
-    //An arrow scrolls the strip by one field.
+    //An arrow scrolls the strip by one field, and held a moment, on until it is let go. It pauses while the pointer is off it
     if(pressedThisFrame && ScrollSide::None != _hoveredScrollButton)
     {
         _pressedScrollButton = _hoveredScrollButton;
+        _scrollHoldSeconds = 0.0f;
+        _dragScrollClock = StepClock {};
+        _dragScrollClock.TakeSeconds(); //starts the clock
         scrollStrip((ScrollSide::Right == _hoveredScrollButton ? 1.0f : -1.0f) * (getFieldWidth() + _fieldSpacing));
+        return;
+    }
+
+    if(isPressed && ScrollSide::None != _pressedScrollButton)
+    {
+        const f32 seconds { _dragScrollClock.TakeSeconds() };
+        _scrollHoldSeconds += seconds;
+
+        if(_hoveredScrollButton != _pressedScrollButton || _scrollRepeatDelay > _scrollHoldSeconds)
+            return;
+
+        scrollStrip((ScrollSide::Right == _pressedScrollButton ? 1.0f : -1.0f) * _dragScrollSpeed * seconds);
         return;
     }
 
