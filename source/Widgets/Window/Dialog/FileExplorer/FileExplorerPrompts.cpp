@@ -73,6 +73,11 @@ void RetroFuturaGUI::FileExplorer::NamePrompt::TakeKeys()
     _name->TakeKeyboardFocus();
 }
 
+bool RetroFuturaGUI::FileExplorer::NamePrompt::dismissesOnEscape() const
+{
+    return false;
+}
+
 void RetroFuturaGUI::FileExplorer::NamePrompt::handleKeys()
 {
     if(!wasPressed(_escapeKey))
@@ -155,6 +160,11 @@ void RetroFuturaGUI::FileExplorer::ConfirmPrompt::TakeKeys()
         return;
 
     window->TakeKeyboardInput();
+}
+
+bool RetroFuturaGUI::FileExplorer::ConfirmPrompt::dismissesOnEscape() const
+{
+    return false;
 }
 
 void RetroFuturaGUI::FileExplorer::ConfirmPrompt::handleKeys()
@@ -251,6 +261,11 @@ void RetroFuturaGUI::FileExplorer::ClashPrompt::TakeKeys()
         return;
 
     window->TakeKeyboardInput();
+}
+
+bool RetroFuturaGUI::FileExplorer::ClashPrompt::dismissesOnEscape() const
+{
+    return false;
 }
 
 void RetroFuturaGUI::FileExplorer::ClashPrompt::handleKeys()

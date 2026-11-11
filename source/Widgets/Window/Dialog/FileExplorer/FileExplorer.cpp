@@ -2724,6 +2724,11 @@ void RetroFuturaGUI::FileExplorer::closeAfterAsking(std::function<void()>&& clos
     pushPrompt(std::move(prompt));
 }
 
+bool RetroFuturaGUI::FileExplorer::dismissesOnEscape() const
+{
+    return false;
+}
+
 bool RetroFuturaGUI::FileExplorer::allowsSystemClose()
 {
     if(!_transfer.IsBusy())

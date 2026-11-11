@@ -26,6 +26,9 @@ namespace RetroFuturaGUI
     private:
         /// @brief Takes the prompt's keys, before its widgets take the input.
         void handleKeys();
+
+        /// @brief False: handleKeys takes Escape
+        bool dismissesOnEscape() const override;
         void confirm();
 
         TextBox* _name { nullptr };
@@ -61,6 +64,9 @@ namespace RetroFuturaGUI
         /// @brief Takes the prompt's keys, before its widgets take the input.
         void handleKeys();
 
+        /// @brief False: handleKeys takes Escape
+        bool dismissesOnEscape() const override;
+
         KeyPress
             _enterKey { ._Key = PB_KEY_RETURN, ._PressCountSeen = 0 },
             _escapeKey { ._Key = PB_KEY_ESCAPE, ._PressCountSeen = 0 };
@@ -95,6 +101,9 @@ namespace RetroFuturaGUI
     private:
         /// @brief Takes the prompt's keys, before its widgets take the input.
         void handleKeys();
+
+        /// @brief False: handleKeys takes Escape
+        bool dismissesOnEscape() const override;
         void answer(const ClashAnswer clashAnswer);
 
         CheckBox* _forRemaining { nullptr };

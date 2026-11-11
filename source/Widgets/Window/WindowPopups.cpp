@@ -60,6 +60,7 @@ bool RetroFuturaGUI::Window::PushPopup(std::unique_ptr<IPopup> popup)
     popup->_isOnStack = true;
     _popups.push_back(std::move(popup));
     _popups.back()->restoreOpenerContext();
+    _popups.back()->takeKeys();
     return true;
 }
 
@@ -92,6 +93,9 @@ bool RetroFuturaGUI::Window::IsBlockedByPopup() const
 
 void RetroFuturaGUI::Window::interactPopups()
 {
+    if(!_popups.empty() && _popups.back())
+        _popups.back()->followKeys(); //only the top popup takes Escape.
+
     //By index: a button in a popup may open another popup while this loop runs, and push_back would invalidate an iterator
     for(uSize index = 0; index < _popups.size(); ++index)
     {
@@ -178,6 +182,12 @@ void RetroFuturaGUI::Window::closeTopPopup()
     std::unique_ptr<IPopup> closing { std::move(_popups.back()) }; //Off the stack before its result goes out, so a slot that opens a follow-up popup puts it on top
     _popups.pop_back();
     getTopPopupWindow()->_ignoreHeldPress = true; //The window below takes the mouse again, but not the press on the button that closed the popup
+
+    //The keys go back to what is now on top before the result goes out, so a slot can still hand them on.
+    if(_popups.empty())
+        TakeKeyboardInput();
+    else if(_popups.back())
+        _popups.back()->takeKeys();
 
     if(!closing)
         return;

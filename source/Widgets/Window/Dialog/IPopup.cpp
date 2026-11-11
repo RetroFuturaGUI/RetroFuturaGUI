@@ -1,5 +1,6 @@
 #include "IPopup.hpp"
 #include "Window.hpp"
+#include "PlatformBridge.hpp"
 #include "Scene.hpp"
 
 RetroFuturaGUI::IPopup::IPopup(std::string_view name, const i32 width, const i32 height)
@@ -73,6 +74,36 @@ bool RetroFuturaGUI::IPopup::requestClose()
 bool RetroFuturaGUI::IPopup::allowsSystemClose()
 {
     return true;
+}
+
+bool RetroFuturaGUI::IPopup::dismissesOnEscape() const
+{
+    return true;
+}
+
+void RetroFuturaGUI::IPopup::takeKeys()
+{
+    _escapePressCountSeen = PlatformBridge::Input::GetKeyPressCount(PB_KEY_ESCAPE); //an Escape that closed the popup above is spent.
+
+    if(!_window)
+        return;
+
+    _window->TakeKeyboardInput();
+}
+
+void RetroFuturaGUI::IPopup::followKeys()
+{
+    const u32 escapePressCount { PlatformBridge::Input::GetKeyPressCount(PB_KEY_ESCAPE) };
+
+    if(escapePressCount == _escapePressCountSeen)
+        return;
+
+    _escapePressCountSeen = escapePressCount;
+
+    if(!dismissesOnEscape())
+        return;
+
+    Dismiss();
 }
 
 void RetroFuturaGUI::IPopup::restoreOpenerContext() const

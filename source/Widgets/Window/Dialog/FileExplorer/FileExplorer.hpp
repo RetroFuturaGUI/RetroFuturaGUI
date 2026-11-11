@@ -650,6 +650,9 @@ namespace RetroFuturaGUI
         /// @brief Alt+F4 and the taskbar close the explorer through closeAfterAsking too.
         bool allowsSystemClose() override;
 
+        /// @brief False: Escape ends an edit, stops a band or a drag, or cancels, which handleKeys decides
+        bool dismissesOnEscape() const override;
+
         /// @brief "Copying 3 of 12: Song.mp3".
         static std::string progressText(const FileTransfer::Progress& progress);
 
