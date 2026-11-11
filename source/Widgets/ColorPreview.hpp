@@ -34,9 +34,9 @@ namespace RetroFuturaGUI
 
         void Draw() override;
 
-        /// @brief Enables the dual preview: the checkerboard gives up half the widget to a white background,
-        /// so the same color reads against transparency on one half and against white on the other.
-        void EnableDualPreviewBackground(const bool enable);
+        /// @brief Enables the dual preview (off by default). One half shows the color over the checkerboard, the other the same
+        /// color fully opaque, so its transparency and its plain hue read side by side
+        void EnableDualPreview(const bool enable);
 
         /// @brief Sets which way the dual preview is split: Horizontal puts the halves side by side, Vertical stacks them.
         void SetDualPreviewAlignment(const DualPreviewAlignment alignment);
@@ -48,34 +48,32 @@ namespace RetroFuturaGUI
         const Border& GetBorder() const;
 
     protected:
-        /// @brief Sets the size of the whole widget. While the dual preview is on, the two backgrounds split it in half.
+        /// @brief Sets the size of the whole widget. While the dual preview is on, its two halves split it
         void applySize(const glm::vec3& size) override;
 
-        /// @brief Sets the world position, stacking the previewed color and the border in front of the backgrounds.
+        /// @brief Sets the world position, stacking the previewed colors and the border in front of the checkerboard
         void applyPosition(const glm::vec3& position) override;
 
     private:
-        /// @brief Sizes and places both backgrounds, the previewed color and the border for the current split.
+        /// @brief Sizes and places the checkerboard, both previewed colors and the border for the current split
         void alignColorPreview();
 
         inline static constexpr const glm::vec4
             _primaryCheckeredColor { 1.0f, 1.0f, 1.0f, 1.0f },
             _secondaryCheckeredColor { 0.8f, 0.8f, 0.8f, 1.0f };
         glm::vec4
-            _previewColor { 1.0f };
+            _previewColor { 1.0f },
+            _opaquePreviewColor { 1.0f };
         std::unique_ptr<Plane>
             _checkeredBackground { nullptr },
-            _whiteBackground { nullptr },
-            _colorRect { nullptr };
+            _colorRect { nullptr },
+            _opaqueColorRect { nullptr };
         Border _border { &_projection };
         DualPreviewAlignment _previewAlignment { DualPreviewAlignment::Horizontal };
-        bool _useWhiteBackgroundRect { true };
+        bool _isDualPreviewEnabled { false };
 
         /// @brief The fill the checkerboard's squares are drawn over. A Plane draws nothing at all until it holds a color.
         std::vector<glm::vec4> _checkeredFillColor { _primaryCheckeredColor };
-
-        /// @brief The white half's fill, kept here because a Plane holds a span over the colors it is given.
-        std::vector<glm::vec4> _whiteBackgroundColor { glm::vec4(1.0f) };
 
         /// @brief Side length of every checkerboard square, in pixels. A Plane keeps a span over this, so it has to outlive the call.
         std::vector<f32> _checkeredSquareWidth { 8.0f };

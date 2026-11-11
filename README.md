@@ -31,10 +31,6 @@ The framework is designed for cross-platform use, and its logic can be compiled 
 |    | Environment Lights, Node | | |
 
 ### WIP in detail
-- ColorPreview
-  - The checkerboard's two colors and its square size are fixed internals, so neither the board's contrast nor its scale can be set from outside
-  - The dual preview is on by default, so a preview that was never asked to be split is
-  - Against the light checkerboard the white half reads almost the same as the checkered one - compositing over white and over a white/light-grey board differ only inside the grey squares. Drawing the color at full opacity there instead would carry information the checkered half can't
 - Window
   - The docking preview is a window of its own, so it gets a taskbar button while it shows. Hiding it needs WS_EX_TOOLWINDOW on Windows (_NET_WM_STATE_SKIP_TASKBAR on X11), which belongs in PlatformBridge
   - A minimized or maximized window stays out of the docking layout until it is restored, and minimizing a group's root leaves the rest of the group on screen
@@ -122,7 +118,7 @@ The framework is designed for cross-platform use, and its logic can be compiled 
   - Histogram: one bar per value of a bound array, read every frame, so data updated in place shows live (SetData)
   - LineDiagram: one line per bound data set, live like the Histogram; the hovered line is highlighted with its nearest value, labels and hexadecimal values on request; signals tell which line and data point the pointer hovers or presses (OnHoverChanged, OnHoverEnded, OnPointClicked; GetHoveredPoint asks at any time); lines of different lengths are spaced by the longest set or each stretched across the whole track (SetLineSpacing); a glow all around the lines, their ends and turns included, in their own colors or the glow's (GetLineGlow, EnableGlowLineColor); translucent lines blend once where their pieces overlap at a turn
   - ColorPicker: picks a color from a field of every hue, with brightness and optional alpha (SetColor, SetBrightness, SetAlpha, OnColorChanged)
-  - ColorPreview: a color over a checkerboard, so transparency reads as such, optionally split against white
+  - ColorPreview: a color over a checkerboard, so transparency reads as such; the dual preview (EnableDualPreview, off by default) shows the same color fully opaque on its other half, side by side or stacked
   - Table: a grid of text, number, color, checkbox and image cells
     - Cells are typed by what is assigned to them, and editable text cells work like a TextBox, per cell; read-only tracks
     - Row selection (single or multiple, Alt and Shift, a drag band), dragging the selection, keyboard navigation (arrows, Home, End, PageUp, PageDown, Ctrl+A), the mouse wheel and scrolling from outside (a Slider)
