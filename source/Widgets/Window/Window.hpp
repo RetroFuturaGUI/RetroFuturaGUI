@@ -20,6 +20,7 @@
 
 namespace RetroFuturaGUI
 {
+    class MessagePopup;
     class Scene;
     class WindowTab;
 
@@ -237,6 +238,12 @@ namespace RetroFuturaGUI
         ///        popup's window goes on top of the same stack. Only the top popup is interactiable
         /// @return false when the popup is null or already open, or when this is the window of a popup that isn't open yet.
         bool PushPopup(std::unique_ptr<IPopup> popup);
+
+        /// @brief Opens one of the library's own popups over this window, as PushPopup does. Message, Warning and Error show the
+        ///        kind in the bar, an icon, the summary in bold on one line and the description wrapped below it. OK and Enter
+        ///        close it (Connect_OnResult), the bar's close button and Escape dismiss it (Connect_OnDismiss)
+        /// @return The popup, to connect its signals, until it closes; nullptr when it couldn't open. Value and File aren't built yet
+        MessagePopup* OpenPopup(const PopupTypes type, std::string_view summary, std::string_view description);
 
         /// @brief Returns whether popups are open over this window.
         bool HasPopups() const;

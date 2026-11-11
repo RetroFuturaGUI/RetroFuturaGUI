@@ -85,6 +85,13 @@ namespace RetroFuturaGUI
         /// @brief Returns how the lines run as it shows: its own flow, a flavor's, or Horizontal
         TextFlow GetFlow() const;
 
+        /// @brief Sets whether a line too wide for the widget breaks onto the next: after its last space that fits, or inside a
+        ///        word longer than the whole line. Off by default. Lines running across only
+        void EnableWordWrap(const bool enable);
+
+        /// @brief Returns whether lines too wide for the widget break onto the next
+        bool IsWordWrapEnabled() const;
+
         /// @brief Sets the padding applied around the text
         void SetPadding(const f32 padding);
 

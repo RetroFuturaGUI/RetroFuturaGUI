@@ -322,6 +322,10 @@ const RetroFuturaGUI::InnerGlow& RetroFuturaGUI::Text::GetInnerGlow() const
 void RetroFuturaGUI::Text::SetTextPadding(const f32 padding)
 {
     _textPadding = padding;
+
+    if(_isWordWrapEnabled)
+        calculateTextSpan(); //the lines wrap at the width the padding leaves.
+
     alignPosition();
     updateMesh();
 }
@@ -329,7 +333,12 @@ void RetroFuturaGUI::Text::SetTextPadding(const f32 padding)
 void RetroFuturaGUI::Text::SetParentSize(const glm::vec2 size)
 {
     const bool parentSizeChanged { _parentSize != size };
+    const bool wrapWidthChanged { _isWordWrapEnabled && _parentSize.x != size.x };
     _parentSize = size;
+
+    if(wrapWidthChanged)
+        calculateTextSpan();
+
     alignPosition();
 
     if(parentSizeChanged)
@@ -488,19 +497,16 @@ void RetroFuturaGUI::Text::updateMesh()
         innerGlowOffset { _innerGlow.GetOffset() / scale },
         fadingInnerGlowOffset { _innerGlowFade._Offset / scale };
     const f32 glyphOutlineWidth { 0.0f < _outlineWidth ? outlineWidth : 0.0f };
-    const std::u32string& text { _text.GetUtf32() };
-    uSize lineStart { 0 };
 
     _glyphPositions.clear();
     _glyphLines.clear();
     _characterSpans.clear();
     _isInsideCluster.clear();
 
-    for(uSize line = 0; line < _shapedLines.size(); ++line)
+    for(uSize line = 0; line < _shapedLines.size() && line < _lineRanges.size(); ++line)
     {
-        const uSize
-            lineEnd { std::min(text.find(U'\n', lineStart), text.size()) },
-            lineLength { lineEnd - lineStart };
+        const LineRange& range { _lineRanges[line] };
+        const uSize lineLength { range._Length };
         const f32 lineLeft { getLineStart(line) };
         f32 along { lineLeft }; //how far along its line the pen is: rightward on a horizontal line, downward in a column
         std::vector<glm::vec2> clusterSpans(lineLength, glm::vec2(-1.0f)); //per character starting a cluster, the stretch its glyphs cover
@@ -584,13 +590,16 @@ void RetroFuturaGUI::Text::updateMesh()
             _isInsideCluster.push_back(!isStart);
         }
 
+        //A wrapped line consumed no character, so the boundary after its last one is the next line's first.
+        if(range._IsWrapped)
+            continue;
+
         //The first boundary of a later line is the one after its '\n'
         const bool isLineRightToLeft { line < _isLineRightToLeft.size() && _isLineRightToLeft[line] };
         _glyphPositions.push_back(isLineRightToLeft ? lineLeft : along);
         _glyphLines.push_back(line);
         _characterSpans.push_back(glm::vec2(_glyphPositions.back()));
         _isInsideCluster.push_back(false);
-        lineStart = lineEnd + 1;
     }
 
     _mesh._IsChanged = true;
@@ -665,6 +674,10 @@ f32 RetroFuturaGUI::Text::getLineCenter(const uSize line) const
 
 uSize RetroFuturaGUI::Text::getLineCount() const
 {
+    //Wrapped lines count too once laid out; before the font is known, one per '\n'.
+    if(!_lineRanges.empty())
+        return _lineRanges.size();
+
     return 1 + static_cast<uSize>(std::ranges::count(_text.GetUtf32(), U'\n'));
 }
 
@@ -932,54 +945,161 @@ void RetroFuturaGUI::Text::calculateTextSpan()
 
     //Each line shaped once here, for updateMesh to place: across, in runs of one direction; down a column, as it is
     const std::u32string& text { _text.GetUtf32() };
+    const f32 wrapWidth { getWrapWidth() };
+    const bool isWrapping { _isWordWrapEnabled && TextFlow::Horizontal == _textFlow && 0.0f < wrapWidth };
     _shapedLines.clear();
     _isLineRightToLeft.clear();
+    _lineWidths.clear();
+    _lineRanges.clear();
 
     for(uSize lineStart = 0; lineStart <= text.size();)
     {
         const uSize lineEnd { std::min(text.find(U'\n', lineStart), text.size()) };
+
+        if(isWrapping)
+        {
+            wrapLine(lineStart, lineEnd - lineStart, wrapWidth, scale);
+            lineStart = lineEnd + 1;
+            continue;
+        }
+
         const std::u32string_view lineText { std::u32string_view(text).substr(lineStart, lineEnd - lineStart) };
+        std::vector<PlacedGlyph> glyphs {};
         bool isRightToLeft { false };
-        _shapedLines.emplace_back();
 
         if(TextFlow::Horizontal == _textFlow)
-            shapeLine(lineText, &_shapedLines.back(), &isRightToLeft);
+            shapeLine(lineText, &glyphs, &isRightToLeft);
         else
-            FontManager::ShapeText(*_fontInfo, _fontKey, lineText, ShapeDirection::TopToBottom, &_shapedLines.back());
+            FontManager::ShapeText(*_fontInfo, _fontKey, lineText, ShapeDirection::TopToBottom, &glyphs);
 
-        _isLineRightToLeft.push_back(isRightToLeft);
+        addLine(LineRange { ._Start = lineStart, ._Length = lineEnd - lineStart, ._IsWrapped = false }, std::move(glyphs), isRightToLeft, scale);
         lineStart = lineEnd + 1;
     }
 
-    _lineWidths.clear();
-
-    for(uSize line = 0; line < _shapedLines.size(); ++line)
-    {
-        f32
-            along { 0.0f },
-            lineLength { 0.0f };
-
-        //A horizontal line reaches to its last glyph's ink, or past a trailing space; a column is as long as its steps
-        for(const PlacedGlyph& placed : _shapedLines[line])
-        {
-            const Glyph* glyph { FontManager::FindPlacedGlyph(*_fontInfo, _fontKey, placed) };
-            const glm::vec2 pen { getPlacedPen(line, along, placed, glyph, scale) };
-            along += getPlacedAdvance(placed, glyph, scale);
-
-            if(TextFlow::Horizontal != _textFlow || U' ' == placed._CodePoint)
-                lineLength = std::max(lineLength, along);
-            else if(glyph)
-                lineLength = std::max(lineLength, pen.x + (glyph->_Bearing[0] + glyph->_Size[0]) * scale);
-        }
-
-        longestLine = std::max(longestLine, lineLength);
-        _lineWidths.push_back(lineLength);
-    }
+    for(const f32 lineWidth : _lineWidths)
+        longestLine = std::max(longestLine, lineWidth);
 
     //Columns side by side, each a line height wide, as long as the longest
     const f32 lineCount { static_cast<f32>(_shapedLines.size()) };
     _textSpan = TextFlow::Horizontal == _textFlow ? glm::vec2(longestLine, lineCount * _lineHeight) : glm::vec2(lineCount * _lineHeight, longestLine);
     FontManager::FlushGlyphUploads();
+}
+
+void RetroFuturaGUI::Text::wrapLine(const uSize start, const uSize length, const f32 width, const f32 scale)
+{
+    const std::u32string_view text { _text.GetUtf32() };
+    const uSize end { start + length };
+    uSize lineStart { start };
+    std::vector<PlacedGlyph> glyphs {};
+    bool isRightToLeft { false };
+
+    while(true)
+    {
+        //What is left fits, its trailing spaces aside: the last piece, ending at the '\n' or the text's end.
+        shapeLine(text.substr(lineStart, end - lineStart), &glyphs, &isRightToLeft);
+
+        if(lineStart >= end || measureLine(glyphs, scale, true) <= width)
+        {
+            addLine(LineRange { ._Start = lineStart, ._Length = end - lineStart, ._IsWrapped = false }, std::move(glyphs), isRightToLeft, scale);
+            return;
+        }
+
+        //The longest piece ending after a run of spaces that still fits; the spaces stay on the line.
+        uSize breakAt { lineStart };
+
+        for(uSize position = lineStart; position < end; ++position)
+        {
+            if(U' ' != text[position])
+                continue;
+
+            uSize pieceEnd { position + 1 };
+
+            while(end > pieceEnd && U' ' == text[pieceEnd])
+                ++pieceEnd;
+
+            shapeLine(text.substr(lineStart, pieceEnd - lineStart), &glyphs, &isRightToLeft);
+
+            if(measureLine(glyphs, scale, true) > width)
+                break;
+
+            breakAt = pieceEnd;
+            position = pieceEnd - 1;
+        }
+
+        //A word longer than the whole line breaks where it reaches the edge, after one character at least.
+        if(breakAt == lineStart)
+        {
+            breakAt = lineStart + 1;
+
+            for(uSize pieceEnd = lineStart + 2; pieceEnd < end; ++pieceEnd)
+            {
+                shapeLine(text.substr(lineStart, pieceEnd - lineStart), &glyphs, &isRightToLeft);
+
+                if(measureLine(glyphs, scale, true) > width)
+                    break;
+
+                breakAt = pieceEnd;
+            }
+        }
+
+        shapeLine(text.substr(lineStart, breakAt - lineStart), &glyphs, &isRightToLeft);
+        addLine(LineRange { ._Start = lineStart, ._Length = breakAt - lineStart, ._IsWrapped = true }, std::move(glyphs), isRightToLeft, scale);
+        glyphs = {};
+        lineStart = breakAt;
+    }
+}
+
+void RetroFuturaGUI::Text::addLine(const LineRange& range, std::vector<PlacedGlyph> glyphs, const bool isRightToLeft, const f32 scale)
+{
+    _lineWidths.push_back(measureLine(glyphs, scale, range._IsWrapped));
+    _shapedLines.push_back(std::move(glyphs));
+    _isLineRightToLeft.push_back(isRightToLeft);
+    _lineRanges.push_back(range);
+}
+
+f32 RetroFuturaGUI::Text::measureLine(const std::vector<PlacedGlyph>& glyphs, const f32 scale, const bool isWrapped) const
+{
+    f32
+        along { 0.0f },
+        lineLength { 0.0f };
+
+    //A horizontal line reaches to its last glyph's ink, or past a trailing space unless it wrapped there; a column is as long as its steps.
+    for(const PlacedGlyph& placed : glyphs)
+    {
+        const Glyph* glyph { FontManager::FindPlacedGlyph(*_fontInfo, _fontKey, placed) };
+        const glm::vec2 pen { getPlacedPen(0, along, placed, glyph, scale) };
+        along += getPlacedAdvance(placed, glyph, scale);
+
+        if(TextFlow::Horizontal != _textFlow)
+            lineLength = std::max(lineLength, along);
+        else if(U' ' == placed._CodePoint)
+            lineLength = isWrapped ? lineLength : std::max(lineLength, along);
+        else if(glyph)
+            lineLength = std::max(lineLength, pen.x + (glyph->_Bearing[0] + glyph->_Size[0]) * scale);
+    }
+
+    return lineLength;
+}
+
+f32 RetroFuturaGUI::Text::getWrapWidth() const
+{
+    return _parentSize.x - 2.0f * _textPadding;
+}
+
+void RetroFuturaGUI::Text::EnableWordWrap(const bool enable)
+{
+    if(_isWordWrapEnabled == enable)
+        return;
+
+    _isWordWrapEnabled = enable;
+    calculateTextSpan();
+    alignPosition();
+    updateMesh();
+}
+
+bool RetroFuturaGUI::Text::IsWordWrapEnabled() const
+{
+    return _isWordWrapEnabled;
 }
 
 void RetroFuturaGUI::Text::shapeLine(std::u32string_view line, std::vector<PlacedGlyph>* glyphs, bool* isRightToLeft) const

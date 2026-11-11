@@ -23,7 +23,7 @@ namespace RetroFuturaGUI
         friend class ColorPickerIndicator;
         friend class CellCheckBox;
         friend class Window;
-        friend class FileExplorer; //the library's own popup, whose widgets' look flavors override
+        friend class DialogKit; //the library's own popups, whose widgets' look flavors override
         StyleKey() = default;
     };
 

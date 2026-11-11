@@ -218,6 +218,13 @@ namespace RetroFuturaGUI
         /// @brief Returns how the lines run
         TextFlow GetTextFlow() const;
 
+        /// @brief Sets whether a line too wide for the parent breaks onto the next: after its last space that fits, or inside a
+        ///        word longer than the whole line. Off by default; lines running across only
+        void EnableWordWrap(const bool enable);
+
+        /// @brief Returns whether lines too wide for the parent break onto the next
+        bool IsWordWrapEnabled() const;
+
         /// @brief Sets how far color glyphs (emoji) take on the fill's color, from 0, their own colors (the default), to 1, the
         ///        fill's. The raster, fog, glass and mask apply to them either way; the text's image doesn't, as it would hide them
         void SetColorGlyphTint(const f32 tint);
@@ -254,6 +261,15 @@ namespace RetroFuturaGUI
             bool _IsShown { false };
         };
 
+        /// @brief Where a line sits in the text. A wrapped line ends without a '\n', so its end is the next line's first boundary.
+        struct LineRange
+        {
+            uSize
+                _Start { 0 },
+                _Length { 0 };
+            bool _IsWrapped { false };
+        };
+
         void updateMesh();
         void alignPosition();
         void calculateTextSpan();
@@ -262,6 +278,18 @@ namespace RetroFuturaGUI
         ///        shaped its way and laid out in the order they're drawn, the clusters counted from the line's start
         /// @param isRightToLeft Set to whether the line reads right to left, from its first strong character
         void shapeLine(std::u32string_view line, std::vector<PlacedGlyph>* glyphs, bool* isRightToLeft) const;
+
+        /// @brief Splits one line of the text (up to a '\n') into the lines it wraps into, appending each one's range.
+        void wrapLine(const uSize start, const uSize length, const f32 width, const f32 scale);
+
+        /// @brief Keeps one laid-out line: its range in the text, its glyphs, its direction and how far it reaches.
+        void addLine(const LineRange& range, std::vector<PlacedGlyph> glyphs, const bool isRightToLeft, const f32 scale);
+
+        /// @brief How far a line's glyphs reach across: to the last one's ink, past a trailing space unless the line wrapped.
+        f32 measureLine(const std::vector<PlacedGlyph>& glyphs, const f32 scale, const bool isWrapped) const;
+
+        /// @brief The width lines wrap at: the parent's, less the padding.
+        f32 getWrapWidth() const;
         static void initMesh(GlyphMesh* mesh);
 
         /// @brief Adds a glyph's quad at the pen (its baseline origin), clipped to the parent, starting a new batch when its page differs
@@ -327,6 +355,7 @@ namespace RetroFuturaGUI
         DoubleEncodedString _text;
         TextAlignment _textAlignment { TextAlignment::Left };
         TextFlow _textFlow { TextFlow::Horizontal };
+        bool _isWordWrapEnabled { false };
         f32 _colorGlyphTint { 0.0f };
         MaskSpan _maskSpan { MaskSpan::WholeText };
         f32 _textPadding { 0.0f };
@@ -346,6 +375,7 @@ namespace RetroFuturaGUI
         static inline constinit const f32 _1emFraction { 0.00390625f };
         static constexpr f32 _sameSpotDistance { 0.01f }; //boundaries closer than this along a line are at the same spot
         static inline const glm::vec4 _defaultColor { 1.0f }; //what a text shows before it is given colors
+        std::vector<LineRange> _lineRanges {}; //per line, laid out with the shaped lines.
         std::vector<std::vector<PlacedGlyph>> _shapedLines {}; //each line's glyphs, shaped when the text, the font or the flow changes
         std::vector<bool> _isLineRightToLeft {}; //per line, whether it reads right to left, which sets it against the text's right edge
         std::vector<f32> _lineWidths {}; //per line, how far it reaches across

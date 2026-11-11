@@ -1,4 +1,5 @@
 #include "Window.hpp"
+#include "MessagePopup.hpp"
 #include "PlatformBridge.hpp"
 #include <algorithm>
 #include <utility>
@@ -62,6 +63,20 @@ bool RetroFuturaGUI::Window::PushPopup(std::unique_ptr<IPopup> popup)
     _popups.back()->restoreOpenerContext();
     _popups.back()->takeKeys();
     return true;
+}
+
+RetroFuturaGUI::MessagePopup* RetroFuturaGUI::Window::OpenPopup(const PopupTypes type, std::string_view summary, std::string_view description)
+{
+    if(PopupTypes::Value == type || PopupTypes::File == type)
+        return nullptr;
+
+    std::unique_ptr<MessagePopup> popup { std::make_unique<MessagePopup>(type, summary, description) };
+    MessagePopup* opened { popup.get() };
+
+    if(!PushPopup(std::move(popup)))
+        return nullptr;
+
+    return opened;
 }
 
 bool RetroFuturaGUI::Window::HasPopups() const

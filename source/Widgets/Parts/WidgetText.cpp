@@ -102,6 +102,16 @@ RetroFuturaGUI::TextFlow RetroFuturaGUI::WidgetText::GetFlow() const
     return _text.GetTextFlow();
 }
 
+void RetroFuturaGUI::WidgetText::EnableWordWrap(const bool enable)
+{
+    _text.EnableWordWrap(enable);
+}
+
+bool RetroFuturaGUI::WidgetText::IsWordWrapEnabled() const
+{
+    return _text.IsWordWrapEnabled();
+}
+
 f32 RetroFuturaGUI::WidgetText::GetPadding() const
 {
     return _text.GetPadding();

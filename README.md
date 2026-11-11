@@ -50,7 +50,6 @@ The framework is designed for cross-platform use, and its logic can be compiled 
   - Linux is untested: a window in a tab keeps its native window, hidden, under the content area for its input, and whether X11 moves and reports an unmapped window the same way is unverified
 - Popups
   - A popup opens centered over the one below it, so a nested popup of the same size covers it completely
-  - Enter does nothing yet: it waits for the popup types, whose default action it will take (OK for messages, warnings and errors)
   - Linux is untested: the owner is set with XSetTransientForHint, and whether the popup stays off the taskbar is up to the window manager
 - Third dimension
   - Rectangles, text and textures keep a two-dimensional size: they are flat, and the frame tilts them, so a third size component would go unused
@@ -159,6 +158,7 @@ The framework is designed for cross-platform use, and its logic can be compiled 
 - Popups
   - Popup&lt;Ts...&gt;: a window of its own that closes with values of any types (Close, Connect_OnResult) or is dismissed (Dismiss, Connect_OnDismiss)
   - One popup stack per window; the windows below the top popup take no input, like under a native modal dialog. The top popup takes the keys, and Escape dismisses it (a popup that takes Escape itself, like the FileExplorer, overrides dismissesOnEscape)
+  - Window::OpenPopup(PopupTypes, summary, description): the library's own Message, Warning and Error popups. The kind in the bar ("Information", "Warning", "Error"), an icon, the summary in bold on one line and the description wrapped below it, the window as tall as the text; OK and Enter close it (OnResult), the bar's close button and Escape dismiss it (OnDismiss). Each kind's accent (window and bar border, title) and icon come from flavors the app can change or define first: popupInformation, popupWarning, popupError and the same with "Icon" (MessagePopup::GetFlavorName, GetIconFlavorName). Value and File follow
   - Styled like everything else: a popup's window takes flavors as every window does (Window::AddFlavor, or .default for all of them), and its bar is one of its scene's widgets. The FileExplorer and its prompts give their widgets a built-in look, so flavors and .default override it; their fonts, alignment and padding stay their own, since the explorer's layout is measured from them, and a toggle that is on keeps its accent color
 - Animation
   - Transitions for colors (the effects' too), corner radii, positions, sizes, rotations, opacity, border gaps and the effects' angle, distance, blur, width and scale (Effects; an angle turns the way the numbers run, so 0 to 360 is a full turn): a global default per property (Transitions::SetDefault), overridable per widget (SetTransition), with easing (Linear, EaseIn, EaseOut, EaseInOut). Off until set
@@ -198,7 +198,7 @@ The framework is designed for cross-platform use, and its logic can be compiled 
   - Anti-aliased lines with mitered joins (Polyline)
 - Text Renderer
   - All of Unicode, glyphs rendered when first shown; installed font families with their weights and slants, variable fonts, fallback fonts per character
-  - Shaping with HarfBuzz (kerning, ligatures, emoji sequences), right-to-left scripts (SheenBidi), color emoji including gradient emoji (COLR v1), vertical flow; text held at the middle, top or bottom of its box (Text::SetAnchor with a TextAnchor)
+  - Shaping with HarfBuzz (kerning, ligatures, emoji sequences), right-to-left scripts (SheenBidi), color emoji including gradient emoji (COLR v1), vertical flow; word wrapping (EnableWordWrap: after the last space that fits, inside a word longer than the line); text held at the middle, top or bottom of its box (Text::SetAnchor with a TextAnchor)
   - Every fill and effect inside the glyphs, outlines, images and masks (metal text)
   - Drop shadows, glows and inner glows: their glyphs are blurred on the CPU into the glyph pages, once per blur, width and offset
 - Signals: thread-safe Connect/Disconnect, synchronous (Emit) and threaded (EmitAsync) dispatch

@@ -10,6 +10,16 @@ namespace RetroFuturaGUI
     //Declared, not included, because Window.hpp includes this header
     class Window;
 
+    /// @brief The kinds of popups the library builds itself, opened through Window::OpenPopup.
+    enum class PopupTypes : u32
+    {
+        Message, // opens a Popup with a message. Can be closed via the OK button or Close button in the menu bar
+        Warning, // same as above
+        Error, // same as above
+        Value, // Variadic input parameters allow for value input to be returned
+        File // opens the FileExplorer
+    };
+
     /// @brief A window of its own that opens over another one through Window::PushPopup, and closes before every popup below
     ///        it. It  owns its own window and the scenes in it. Popup<Ts...> adds the values it closes with; this base is what a
     ///        window's popup stack holds, whatever those types are.
