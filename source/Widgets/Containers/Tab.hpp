@@ -1,16 +1,9 @@
 #pragma once
-#include "Background.hpp"
 #include "IncludeHelper.hpp"
-#include "IWidget.hpp"
-#include "IContainer.hpp"
-#include "Border.hpp"
-#include "Box.hpp"
-#include "CloseButton.hpp"
+#include "ITab.hpp"
 #include "Frame.hpp"
 #include "Plane.hpp"
-#include "ResourceManager.hpp"
 #include "Scene.hpp"
-#include "Text.hpp"
 #include "Signal.hpp"
 #include <memory>
 #include <print>
@@ -23,7 +16,7 @@ namespace RetroFuturaGUI
 {
     /// @brief Carries a defined set of views that can be selected by clicking their corresponding names in the tab bar. Each
     ///        view is a page
-    class Tab final : public IWidget, public IContainer
+    class Tab final : public ITab
     {
     public:
         /// @brief Constructs an empty Tab
@@ -56,7 +49,7 @@ namespace RetroFuturaGUI
 
             std::unique_ptr<T> page { std::make_unique<T>(name, &_projection, this, _widgetTypeID, _parentWindow, std::forward<Args>(args)...) };
             T* addedPage { page.get() };
-            addField(std::move(page), title);
+            addPage(std::move(page), title);
             return addedPage;
         }
 
@@ -73,7 +66,7 @@ namespace RetroFuturaGUI
             if(_kNoField == index)
                 return nullptr;
 
-            return dynamic_cast<T*>(_fields[index]._Page.get());
+            return dynamic_cast<T*>(pageOf(index));
         }
 
         /// @brief Returns how many pages the Tab carries
@@ -107,31 +100,6 @@ namespace RetroFuturaGUI
         void Connect_OnPageRemoved(const typename Signal<IWidget*>::Slot& slot, const bool async);
         void Disconnect_OnPageRemoved(const typename Signal<IWidget*>::Slot& slot);
 
-    //Strip
-        /// @brief Sets the height of the strip the fields sit in
-        void SetStripHeight(const f32 height);
-
-        /// @brief Sets how narrow and how wide a field may get. Fields share the strip evenly within that range, and the ones
-        ///        that no longer fit at the minimum width are left out
-        void SetFieldWidthRange(const f32 minimumWidth, const f32 maximumWidth);
-
-        /// @brief Sets the gap between fields, and above them
-        void SetFieldSpacing(const f32 spacing);
-
-    //Titles
-        /// @brief Sets the font of the titles. Without one they don't show
-        void SetTitleFontFamily(std::string_view fontFamily, const f32 fontSize, const FontSizeUnit sizeUnit, const PlatformBridge::Fonts::Slant slant, const PlatformBridge::Fonts::Weight weight);
-
-        /// @brief Returns the title font size in the given unit
-        f32 GetTitleFontSize(const FontSizeUnit sizeUnit) const;
-
-        /// @brief Sets a title's colors for Enabled, Disabled, Hover or Clicked. The selected page's title shows the same colors as
-        ///        the others, so Selected is ignored
-        void SetTitleColors(std::span<const glm::vec4> colors, const ColorState state);
-
-        /// @brief Sets the space between a field's left edge and its title
-        void SetTitlePadding(const f32 padding);
-
     //Close buttons
         /// @brief Shows or hides the cross on every field (shown by default). Without it, pages are only removed by RemovePage
         void ShowCloseButtons(const bool show);
@@ -139,77 +107,26 @@ namespace RetroFuturaGUI
         /// @brief Returns whether the fields show their cross
         bool AreCloseButtonsShown() const;
 
-        /// @brief Sets the width and height of the close buttons
-        void SetCloseButtonSize(const f32 size);
-
-        /// @brief Returns the close button every field draws: its background, transparent until hovered by default, and its
-        ///        cross. Each field's button shows that field's state. Its corners round with a quarter of SetCloseButtonSize
-        CloseButton& GetCloseButton();
-
-        /// @brief Returns the close button every field draws (see the other overload)
-        const CloseButton& GetCloseButton() const;
-
-        /// @brief Returns the look of the fields: Enabled, Hover, Clicked and Disabled, and Selected for the selected page's field,
-        ///        which usually matches the content so the two join. Rounded at the top, without a border by default
-        Box& GetFieldStyle();
-
-        /// @brief Returns the look of the fields; see the other overload
-        const Box& GetFieldStyle() const;
-
-    //Content
-        /// @brief Returns the Tab's background
-        Background& GetBackground();
-
-        /// @brief Returns the Tab's background
-        const Background& GetBackground() const;
-
-        /// @brief Returns the Tab's border
-        Border& GetBorder();
-
-        /// @brief Returns the Tab's border
-        const Border& GetBorder() const;
-
-    protected:
-        /// @brief Sets the center of the whole Tab, strip and content area together
-        void applyPosition(const glm::vec3& position) override;
-
-        /// @brief Sets the size of the whole Tab, strip and content area together
-        void applySize(const glm::vec3& size) override;
-
     private:
-        /// @brief One page and the title its field shows
-        struct Field
-        {
-            std::unique_ptr<IWidget> _Page { nullptr }; //a RootContainer.
-            std::string _Title {};
-            std::unique_ptr<Text> _TitleText { nullptr };
-            TransitionValue<glm::vec2> _Shown {}; //the field's left edge and width as drawn, on their way to its slot
-            bool _HasShown { false }; //a field not shown yet stands in its slot at once
-        };
-
-        /// @brief The colors for every state a field and its parts can be in
-        struct FieldColors
-        {
-            std::vector<glm::vec4>
-                _Enabled { glm::vec4(0.0f) },
-                _Hover { glm::vec4(0.0f) },
-                _Clicked { glm::vec4(0.0f) },
-                _Disabled { glm::vec4(0.0f) },
-                _Selected { glm::vec4(0.0f) };
-        };
-
     //Pages
         /// @brief Puts a built page on the strip, lays it out, selects it when it is the first, and tells the slots
-        void addField(std::unique_ptr<IWidget> page, std::string_view title);
+        void addPage(std::unique_ptr<IWidget> page, std::string_view title);
 
-        /// @brief Selects the field's page, telling the slots when it changed and emitSignal is set
-        void selectField(const uSize index, const bool emitSignal);
+        /// @brief Takes the page's field off the strip and keeps the page until the next Interact. When it was selected, the
+        ///        field now in its place is, or the one before it
+        void removePage(const uSize index);
 
         /// @brief Lays every page out over the content area. Layout moves at once
         void layoutPages();
 
         /// @brief Lays one page out over the content area
         void layoutPage(IWidget& page) const;
+
+        /// @brief The page of the field, or nullptr
+        IWidget* pageOf(const uSize index) const;
+
+        uSize indexOf(std::string_view name) const;
+        using ITab::indexOf;
 
     //Interaction
         /// @brief Frees the removed pages, follows the pointer on the strip, then passes the input on to the selected page
@@ -218,136 +135,25 @@ namespace RetroFuturaGUI
         /// @brief Updates every page, the hidden ones too
         void update() override;
 
-        /// @brief Selects or removes on a press, and drags the pressed field along the strip until the button is let go
-        void followPointer();
-
-        /// @brief Selects the field and remembers where it was grabbed, in case the press turns into a drag
-        void pressField(const uSize index, const glm::vec2& point);
-
-        /// @brief Moves the pressed field with the cursor along the strip, reordering the fields
-        void dragField(const glm::vec2& point);
-
-        /// @brief The field under the point, or _kNoField
-        uSize fieldAt(const glm::vec2& point) const;
-
-        /// @brief The state a field draws in, given what the pointer is doing
-        ColorState fieldState(const uSize index) const;
-
-    //Layout, in window coordinates with y running upward. A rectangle is (left, bottom, width, height)
-        glm::vec4 getStripRect() const;
-        glm::vec4 getContentRect() const;
-        f32 getFieldWidth() const;
-
-        /// @brief Where the field at the given place sits, ignoring a drag
-        glm::vec4 slotRect(const uSize slot) const;
-
-        /// @brief Where the field is drawn: on its way to its slot, or under the cursor while it is dragged
-        glm::vec4 fieldRect(const uSize index) const;
-
-        /// @brief Returns the left edge and width a field is moving toward: its slot's, or where the cursor drags it
-        glm::vec2 getFieldTarget(const uSize index) const;
-
-        /// @brief Moves every field toward its slot over the Position transition. The dragged field follows the cursor at once
-        void syncFieldRects();
-
-        /// @brief The place along the strip whose slot the given x lies over
-        uSize slotAt(const f32 x) const;
-
-        /// @brief Whether the field fits in the strip. The ones that don't are left out
-        bool fitsInStrip(const glm::vec4& field) const;
-
-        glm::vec4 closeButtonRect(const glm::vec4& field) const;
-        glm::vec4 titleRect(const glm::vec4& field) const;
-
-    //Drawing
-        void drawFields();
-        void drawField(const uSize index, const f32 z);
-        void drawFieldShape(const glm::vec4& rect, const f32 z, Box& style, const ColorState state);
-
-        /// @brief The state a field's look shows: Disabled, Selected for the selected page's field, or the field's own
-        static ColorState fieldStyleState(const ColorState state, const bool selected);
-
-        /// @brief Gives the field look its default colors, corners and border width
-        void setFieldStyleDefaults();
-        void drawCloseButton(const glm::vec4& field, const f32 z, const ColorState state);
-        void drawTitle(Text* title, const glm::vec4& field, const f32 z, const std::vector<glm::vec4>& colors);
         void drawSelectedPage();
 
-        void applyTitleFont(Text* title) const;
+    //ITab
+        void fieldSelected(IHierarchyNode* item, const bool emitSignal) override;
+        void selectionCleared() override;
 
-    //Bookkeeping
-        uSize indexOf(const IWidget* page) const;
-        uSize indexOf(std::string_view name) const;
+        /// @brief The cross removes the page
+        void closeField(const uSize index) override;
+        bool showsCloseButtons() const override;
+        void contentAreaChanged() override;
 
-        /// @brief Takes the field off the strip and keeps its page until the next Interact. When it was selected, the field now in
-        ///        its place is, or the one before it
-        void removeField(const uSize index);
-
-        /// @brief The colors to draw with. The selected ones for the selected field unless it is disabled, else the state's
-        static const std::vector<glm::vec4>& colorFor(const FieldColors& colors, const ColorState state, const bool selected);
-
-        /// @brief The colors stored for the state
-        static std::vector<glm::vec4>& colorOf(FieldColors& colors, const ColorState state);
-
-        /// @brief Whether any of the colors can be seen, so a fully transparent part isn't drawn at all
-        static bool isVisible(std::span<const glm::vec4> colors);
-
-        static bool contains(const glm::vec4& rect, const glm::vec2& point);
-        /// @brief The UTF-8 path of the close icon, in the Resources/img folder next to the executable
-        static std::string getCloseIconPath();
+        /// @brief The background and the border take the content radii at their bottom corners, as their built-in look.
+        void contentCornerRadiiChanged() override;
 
     //Elements
-        std::vector<Field> _fields {};
-        std::vector<std::unique_ptr<IWidget>> _removedPages {}; //destroyed at the start of the next Interact
-        Background _background { &_projection };
-        Border _border { &_projection };
-        Box _fieldStyle { &_projection }; //drawn once per field, in its colors, so it takes no transitions
-        CloseButton _closeButton { &_projection, ResourceManager::CreateSvgTexture(getCloseIconPath(), &_projection, glm::i32vec2(32)) }; //its own, so its colors and size are this tab's alone.
-
-    //Design
-        f32
-            _stripHeight { 36.0f },
-            _minimumFieldWidth { 80.0f },
-            _maximumFieldWidth { 240.0f },
-            _fieldSpacing { 4.0f },
-            _titlePadding { 12.0f },
-            _closeButtonSize { 24.0f };
-        FieldColors
-            _titleColors
-            {
-                ._Enabled = { glm::vec4(0.7f, 0.7f, 0.75f, 1.0f) },
-                ._Hover = { glm::vec4(0.9f, 0.9f, 0.95f, 1.0f) },
-                ._Clicked = { glm::vec4(1.0f) },
-                ._Disabled = { glm::vec4(0.4f, 0.4f, 0.45f, 1.0f) },
-                ._Selected = { glm::vec4(1.0f) }
-            };
-        std::string _titleFontFamily {};
-        f32 _titleFontSize { FontManager::ToPixels(18.0f, FontSizeUnit::Points) }; //in pixels, as every stored font size
-        PlatformBridge::Fonts::Slant _titleFontSlant { PlatformBridge::Fonts::Slant::Roman };
-        PlatformBridge::Fonts::Weight _titleFontWeight { PlatformBridge::Fonts::Weight::Normal };
+        std::vector<std::unique_ptr<IWidget>>
+            _pages {}, //the pages on the strip, in the order they were added; _fields keeps their order on it.
+            _removedPages {}; //destroyed at the start of the next Interact
         bool _areCloseButtonsShown { true };
-
-    //Logic
-        static constexpr uSize _kNoField { ~uSize(0) };
-        static constexpr f32
-            _zStep { 0.01f },
-            _closeIconScale { 0.4f },
-            _dragThreshold { 5.0f }; //how far a press may move before it drags the field
-
-        IWidget
-            *_selectedPage { nullptr },
-            *_pressedPage { nullptr }; //the page whose field the press went to, followed through reordering
-        uSize
-            _hoveredField { _kNoField },
-            _hoveredCloseButton { _kNoField },
-            _pressedCloseButton { _kNoField };
-        glm::vec2 _pressPoint { 0.0f }; //where the press began
-        f32
-            _grabOffset { 0.0f }, //where along the field the press holds it, from its left edge
-            _dragLeft { 0.0f }; //the dragged field's left edge, which follows the cursor
-        bool
-            _isDraggingField { false },
-            _wasPressed { false };
 
     //Signals
         Signal<IWidget*>
