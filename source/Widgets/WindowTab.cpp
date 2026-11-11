@@ -333,10 +333,10 @@ void RetroFuturaGUI::WindowTab::syncDropPreview()
         return;
     }
 
-    scrollSlotIntoView(_fields.size()); //the preview stands after the last field, kept in view while the fields don't fit.
+    scrollSlotIntoView(_previewSlot); //kept in view while the fields don't fit, so it also scrolls the strip toward its ends
 
     const Transition transition { Transitions::Resolve(_transitionSettings, TransitionProperty::Position) };
-    const glm::vec4 slot { slotRect(_fields.size()) };
+    const glm::vec4 slot { slotRect(_previewSlot) };
     const glm::vec2 target { slot.x, slot.z };
 
     //The preview field opens from nothing where it will stand, while the others narrow to make room
@@ -386,7 +386,7 @@ void RetroFuturaGUI::WindowTab::drawDropPreview()
     if(!_showsDropPreview)
         return;
 
-    glm::vec4 rect { slotRect(_fields.size()) };
+    glm::vec4 rect { slotRect(_previewSlot) };
 
     if(!isInFieldArea(rect))
         return;
@@ -486,6 +486,11 @@ uSize RetroFuturaGUI::WindowTab::getSlotCount() const
     return _showsDropPreview ? _fields.size() + 1 : _fields.size();
 }
 
+uSize RetroFuturaGUI::WindowTab::getFieldSlot(const uSize index) const
+{
+    return _showsDropPreview && index >= _previewSlot ? index + 1 : index;
+}
+
 void RetroFuturaGUI::WindowTab::titleFontChanged()
 {
     applyTitleFont(_previewTitle.get());
@@ -502,11 +507,32 @@ bool RetroFuturaGUI::WindowTab::isStripUnder(const glm::ivec2& screenPoint) cons
     if(!_parentWindow)
         return false;
 
+    return contains(getStripRect(), fromScreen(screenPoint));
+}
+
+glm::vec2 RetroFuturaGUI::WindowTab::fromScreen(const glm::ivec2& screenPoint) const
+{
     glm::ivec2 windowPosition { 0 };
-    glfwGetWindowPos(_parentWindow, &windowPosition.x, &windowPosition.y);
+
+    if(_parentWindow)
+        glfwGetWindowPos(_parentWindow, &windowPosition.x, &windowPosition.y);
+
     const glm::ivec2 local { screenPoint - windowPosition };
-    const glm::vec2 point { static_cast<f32>(local.x), _projection.GetResolution().y - static_cast<f32>(local.y) };
-    return contains(getStripRect(), point);
+    return glm::vec2(static_cast<f32>(local.x), _projection.GetResolution().y - static_cast<f32>(local.y));
+}
+
+uSize RetroFuturaGUI::WindowTab::dropSlotAt(const glm::ivec2& screenPoint) const
+{
+    //The slot whose stretch, with half the spacing on either side, the cursor lies over, as the strip is drawn now
+    const f32
+        x { fromScreen(screenPoint).x },
+        step { getFieldWidth() + _fieldSpacing },
+        first { slotRect(0).x - _fieldSpacing * 0.5f };
+
+    if(0.0f >= step || x <= first)
+        return 0;
+
+    return std::min(static_cast<uSize>((x - first) / step), _fields.size());
 }
 
 glm::ivec4 RetroFuturaGUI::WindowTab::getContentScreenRect() const
@@ -522,9 +548,10 @@ glm::ivec4 RetroFuturaGUI::WindowTab::getContentScreenRect() const
     );
 }
 
-void RetroFuturaGUI::WindowTab::showDropPreview(const std::string& title)
+void RetroFuturaGUI::WindowTab::showDropPreview(const std::string& title, const uSize slot)
 {
     _showsDropPreview = true;
+    _previewSlot = std::min(slot, _fields.size());
 
     if(!_previewTitle)
         return;

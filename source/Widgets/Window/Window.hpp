@@ -321,8 +321,8 @@ namespace RetroFuturaGUI
         {
             Window* _Target { nullptr };
             DockEdge _Edge { DockEdge::Top };
-            uSize _Index { 0 }; //its place among the windows already docked to that edge
-            WindowTab* _Tab { nullptr }; //set when it drops into one of the target's WindowTabs instead, at the end of its strip
+            uSize _Index { 0 }; //its place among the windows already docked to that edge, or among a WindowTab's fields
+            WindowTab* _Tab { nullptr }; //set when it drops into one of the target's WindowTabs instead, at _Index
         };
 
     //Native window

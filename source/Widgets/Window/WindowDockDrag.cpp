@@ -41,7 +41,7 @@ void RetroFuturaGUI::Window::EndDrag()
         return;
 
     snap._Tab->hideDropPreview();
-    snap._Tab->AddWindow(this);
+    snap._Tab->InsertWindow(this, snap._Index); //where its preview field stood.
 }
 
 void RetroFuturaGUI::Window::updateDockSnap()
@@ -63,9 +63,9 @@ void RetroFuturaGUI::Window::updateDockSnap()
 
     if(_dockSnap._Tab)
     {
-        //get the content area it would fill, and a field with its title at the end of the strip
+        //get the content area it would fill, and a field with its title where it would drop
         const glm::ivec4 content { _dockSnap._Tab->getContentScreenRect() };
-        _dockSnap._Tab->showDropPreview(_windowTitle);
+        _dockSnap._Tab->showDropPreview(_windowTitle, _dockSnap._Index);
         showDockPreview(DockRect 
                             { ._Position = glm::ivec2(content.x, content.y), ._Size = glm::ivec2(content.z, content.w) },
                                 _dockSnap._Tab->GetContentCornerRadii()
@@ -196,7 +196,7 @@ RetroFuturaGUI::Window::DockSnap RetroFuturaGUI::Window::findTabSnap() const
             if(!tab->isStripUnder(cursor))
                 continue;
 
-            return DockSnap { ._Target = target, ._Edge = DockEdge::Top, ._Index = tab->GetWindowCount(), ._Tab = tab };
+            return DockSnap { ._Target = target, ._Edge = DockEdge::Top, ._Index = tab->dropSlotAt(cursor), ._Tab = tab };
         }
     }
 

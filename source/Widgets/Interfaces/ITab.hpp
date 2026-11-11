@@ -154,6 +154,9 @@ namespace RetroFuturaGUI
         /// @brief How many slots the fields share the strip with. One per field, unless overridden (a drop preview takes one too)
         virtual uSize getSlotCount() const;
 
+        /// @brief The slot the field stands in. Its own index, unless overridden (fields after a drop preview stand one further)
+        virtual uSize getFieldSlot(const uSize index) const;
+
         /// @brief The strip or the content area changed size or place. Nothing unless overridden
         virtual void contentAreaChanged();
 

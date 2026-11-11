@@ -137,17 +137,28 @@ namespace RetroFuturaGUI
         /// @brief While a window is dragged over the strip, its preview field counts too, so the fields narrow to make room for it
         uSize getSlotCount() const override;
 
+        /// @brief The fields from the drop preview's slot on stand one slot further, making room for it
+        uSize getFieldSlot(const uSize index) const override;
+
         void titleFontChanged() override;
 
     //Called by Window
         /// @brief Whether the strip lies under the given point on the screen, and takes windows: drawn this frame and enabled.
         bool isStripUnder(const glm::ivec2& screenPoint) const;
 
+        /// @brief Converts a point on the screen, y running downward, to this window's coordinates
+        glm::vec2 fromScreen(const glm::ivec2& screenPoint) const;
+
         /// @brief The content area on the screen, with y running downward: left, top, width, height.
         glm::ivec4 getContentScreenRect() const;
 
-        /// @brief Draws a field with the given title at the end of the strip, where a dragged window would drop.
-        void showDropPreview(const std::string& title);
+        /// @brief The place among the fields a window dropped at the given point on the screen takes: the slot under it, as the
+        ///        strip is drawn now (with the preview), from 0 before the first field to the field count after the last
+        uSize dropSlotAt(const glm::ivec2& screenPoint) const;
+
+        /// @brief Draws a field with the given title in the given slot, where a dragged window would drop. The fields from it on
+        ///        make room.
+        void showDropPreview(const std::string& title, const uSize slot);
         void hideDropPreview();
 
     //Elements
@@ -164,6 +175,7 @@ namespace RetroFuturaGUI
             _showsDropPreview { false },
             _isShown { false }, //interacted since its window's frame began, so it shows and a dragged window may drop into it
             _hasKeyboard { false }; //its window took the keys when it was focused, so they arrive there
+        uSize _previewSlot { 0 };
 
     //Signals
         Signal<Window*>

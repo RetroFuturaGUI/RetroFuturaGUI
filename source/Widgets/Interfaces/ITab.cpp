@@ -186,6 +186,11 @@ uSize RetroFuturaGUI::ITab::getSlotCount() const
     return _fields.size();
 }
 
+uSize RetroFuturaGUI::ITab::getFieldSlot(const uSize index) const
+{
+    return index;
+}
+
 void RetroFuturaGUI::ITab::contentAreaChanged()
 {
 }
@@ -386,7 +391,7 @@ void RetroFuturaGUI::ITab::pressField(const uSize index, const glm::vec2& point)
     if(!item)
         return;
 
-    const glm::vec4 field { slotRect(index) };
+    const glm::vec4 field { slotRect(getFieldSlot(index)) };
     _pressedItem = item;
     _pressPoint = point;
     _grabOffset = glm::vec2(point.x - field.x, field.y + field.w - point.y); //from the top-left corner, y running downward
@@ -532,7 +537,7 @@ glm::vec4 RetroFuturaGUI::ITab::slotRect(const uSize slot) const
 
 glm::vec4 RetroFuturaGUI::ITab::fieldRect(const uSize index) const
 {
-    glm::vec4 field { slotRect(index) };
+    glm::vec4 field { slotRect(getFieldSlot(index)) };
 
     if(index >= _fields.size())
         return field;
@@ -545,7 +550,7 @@ glm::vec4 RetroFuturaGUI::ITab::fieldRect(const uSize index) const
 
 glm::vec2 RetroFuturaGUI::ITab::getFieldTarget(const uSize index) const
 {
-    const glm::vec4 slot { slotRect(index) };
+    const glm::vec4 slot { slotRect(getFieldSlot(index)) };
 
     if(!_isDraggingField)
         return glm::vec2(slot.x, slot.z);
