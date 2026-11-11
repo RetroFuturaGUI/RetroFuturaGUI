@@ -105,9 +105,10 @@ void RetroFuturaGUI::Window::FilterPointer(PointerState& pointer, [[maybe_unused
     if(_ignoreHeldPress)
         pointer._LeftButtonPressed = false;
 
-    //Only the capture, so a press stays visible and a text box below still ends its editing on a click elsewhere
+    //A popup lies over everything below it, so to their widgets the mouse is elsewhere and they let go of their hover. Not a
+    //capture, which would freeze them as they were. The press stays visible, so a text box below still ends its editing
     if(IsBlockedByPopup())
-        pointer._IsCaptured = true;
+        pointer._HasPosition = false;
 
     if(!_tabHost)
         return;

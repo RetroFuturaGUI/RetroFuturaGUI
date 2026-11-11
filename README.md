@@ -49,7 +49,6 @@ The framework is designed for cross-platform use, and its logic can be compiled 
   - Not addressable through the C binding (DynamicLibWidgetManager) yet
   - Linux is untested: a window in a tab keeps its native window, hidden, under the content area for its input, and whether X11 moves and reports an unmapped window the same way is unverified
 - Popups
-  - Widgets under a popup keep whatever hover color they had when it opened, since they stop reacting before they would reset it
   - A popup opens centered over the one below it, so a nested popup of the same size covers it completely
   - No key closes the top popup yet (Escape, Enter)
   - Styling is partly there: a popup's window takes flavors like every window (Window::AddFlavor, or .default for all of them) for its background, border and transitions. Its bar has no styling of its own yet, and the library's own popups (the FileExplorer and its prompts) set fixed colors as their own values, which flavors can't override
