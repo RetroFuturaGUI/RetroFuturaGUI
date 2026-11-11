@@ -89,6 +89,10 @@ namespace RetroFuturaGUI
         /// @brief Has the window in the selected tab take the frame's input in the content area.
         void interactSelectedWindow();
 
+        /// @brief Switches tabs by the keys browsers use. Ctrl+Tab and Ctrl+Page Down select the next one, Ctrl+Shift+Tab and
+        ///        Ctrl+Page Up the previous one, wrapping around, held keys repeating. While its window is focused it takes the keys
+        void followKeys();
+
         /// @brief Whether the cursor left the strip far enough to pull the dragged field out: 1.5 title font sizes above or
         ///        below it, a little more after a long sideways drag, or 2.2 past the first or the last field (ImGui's rule).
         bool isPullingOut(const uSize index, const glm::vec2& point) const;
@@ -158,7 +162,8 @@ namespace RetroFuturaGUI
             _pullOutPastEndDistance { 2.2f }; //how far past the first or last field it pulls one out, in title font sizes
         bool
             _showsDropPreview { false },
-            _isShown { false }; //interacted since its window's frame began, so it shows and a dragged window may drop into it
+            _isShown { false }, //interacted since its window's frame began, so it shows and a dragged window may drop into it
+            _hasKeyboard { false }; //its window took the keys when it was focused, so they arrive there
 
     //Signals
         Signal<Window*>

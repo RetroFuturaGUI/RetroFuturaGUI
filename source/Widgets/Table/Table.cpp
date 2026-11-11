@@ -2935,6 +2935,9 @@ void RetroFuturaGUI::Table::followTabKey()
     if(!isKeyTriggered(_tabKey, true))
         return;
 
+    if(isControlHeld())
+        return; //Ctrl+Tab switches a WindowTab's tabs
+
     const bool backward { isShiftHeld() };
     uSize
         row { 0 },

@@ -186,7 +186,64 @@ void RetroFuturaGUI::WindowTab::interact()
     syncFieldRects(); //the pointer meets the fields where they are drawn
     syncDropPreview();
     followPointer();
+    followKeys(); //before the selected window takes the input, so a switch shows at once.
     interactSelectedWindow();
+}
+
+void RetroFuturaGUI::WindowTab::followKeys()
+{
+    const Window* host { GetHostWindow() };
+
+    if(!host)
+        return;
+
+    GLFWwindow* glfwHost { host->GetGlfwWindow() };
+
+    if(!glfwHost)
+        return;
+
+    //Only the focused window's tabs switch; it takes the keys once it is focused, its text boxes' keys arrive there anyway
+    if(GLFW_FALSE == glfwGetWindowAttrib(glfwHost, GLFW_FOCUSED) || !_isEnabledFlag)
+    {
+        _hasKeyboard = false;
+        return;
+    }
+
+    if(!_hasKeyboard)
+    {
+        host->TakeKeyboardInput();
+        _hasKeyboard = true;
+    }
+
+    if(2 > _fields.size())
+        return;
+
+    const bool
+        isControlHeld { PlatformBridge::Input::IsKeyDown(PB_KEY_CONTROL_L) || PlatformBridge::Input::IsKeyDown(PB_KEY_CONTROL_R) },
+        isShiftHeld { PlatformBridge::Input::IsKeyDown(PB_KEY_SHIFT_L) || PlatformBridge::Input::IsKeyDown(PB_KEY_SHIFT_R) };
+
+    if(!isControlHeld)
+        return;
+
+    //This frame's strokes, the system's key repeat included, so a held combination keeps cycling
+    const i64
+        tabStrokes { static_cast<i64>(PlatformBridge::Input::GetKeyStrokeCount(PB_KEY_TAB)) },
+        steps { (isShiftHeld ? -tabStrokes : tabStrokes)
+            + static_cast<i64>(PlatformBridge::Input::GetKeyStrokeCount(PB_KEY_PAGE_DOWN))
+            - static_cast<i64>(PlatformBridge::Input::GetKeyStrokeCount(PB_KEY_PAGE_UP)) };
+
+    if(0 == steps)
+        return;
+
+    const uSize selected { indexOf(_selectedItem) };
+
+    if(_kNoField == selected)
+        return;
+
+    const i64
+        count { static_cast<i64>(_fields.size()) },
+        next { ((static_cast<i64>(selected) + steps) % count + count) % count }; //wrapping around both ways
+    selectField(static_cast<uSize>(next), true);
 }
 
 void RetroFuturaGUI::WindowTab::interactSelectedWindow()
