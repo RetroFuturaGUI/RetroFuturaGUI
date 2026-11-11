@@ -31,9 +31,6 @@ The framework is designed for cross-platform use, and its logic can be compiled 
 |    | Environment Lights, Node | | |
 
 ### WIP in detail
-- SeparatorLine
-  - The caption's left padding isn't clamped to the line's width, so a long caption or a large padding runs the gap and its text off the right end
-  - The gap always starts from the left edge, so centering or right-aligning a caption means working out the padding by hand. GetText().SetAlignment doesn't do it either: the caption is always centered inside its own gap, and the alignment passed in is overwritten the next time the layout runs
 - ColorPreview
   - The checkerboard's two colors and its square size are fixed internals, so neither the board's contrast nor its scale can be set from outside
   - The dual preview is on by default, so a preview that was never asked to be split is
@@ -92,23 +89,7 @@ The framework is designed for cross-platform use, and its logic can be compiled 
   - Its widgets are sized from the window size given to the constructor, so resizing the explorer's window doesn't refit them
   - From another language it opens over the main window only, and with an extensions string: the named filters stay C++-only. The Python binding's OpenFileExplorer hasn't been run, since no Python is installed here
   - Linux is untested: PlatformBridge::FileSystem's Linux side (listing, watching, the trash) and the in-app clipboard are written but have never been compiled
-- AudioPlayback / MediaSource / Decoder
-  - Packet owns an AVPacket's lifetime, but MediaSource::ReadPacket still takes a raw AVPacket* and leaves the unref to the caller. A Frame wrapper and a reader that runs the send / receive / drain / flush-after-seek protocol behind one call aren't built yet, so every caller currently repeats it by hand
-  - A reader built on FindBestStream drops the packets of every other stream. That's right for audio alone; audio and video from one file will need a packet queue per stream
-  - A WAV, FLAC or MP3 with loop points plays through FFmpeg instead of miniaudio: miniaudio's streamed sounds loop without a gap only over the whole file (a seek inside a stream is asynchronous, and its cursor wraps at the file's end, not the loop's). Loop points set on a file miniaudio plays reopen it through FFmpeg, which restarts its audio briefly
-  - HCA cipher type 1 (the fixed table) is built but untested, for want of a sample file
-  - Tracker modules seek to the nearest row, not the exact sample (libopenmpt seeks by pattern position), and their length is libopenmpt's estimate: a song played once runs a few hundredths of a second past it, to the end of its last row. SetLoopPoints refuses a module, which loops by its own patterns
-  - AudioMetadata doesn't read the Opus vendor string (it sits in OpusTags, which FFmpeg skips) or APE tags; WAV loops come from the first smpl loop only, and RF64/BW64/RIFX files aren't scanned for smpl at all
-  - The decoder helper restricts itself on Windows only (low integrity, no programs of its own, 1 GB at most, ending with the program); on Linux it runs as a separate process with the program's rights. The preview pane shows the picture the helper decoded, so the program never opens a video just to show it; playing one in the pane (still to come) will open it in the program, only once the helper decoded a frame of it without crashing
-  - StreamProbing::HeadersOnly reads what the container's headers say; the bit rate a full probe would estimate from the packets stays 0 for files whose headers don't carry one
-  - AHX and ADX encoding types other than 3 read but don't decode - FFmpeg has no AHX support at all, and its ADX decoder takes standard ADX only. Encrypted ADX decodes to noise without FFmpeg noticing, so AdxMetadata::_Decodable has to gate playback
-  - One sound at a time. AudioPlayback owns a single ma_sound so it can be sought and queried, which means opening a second file replaces the first. Layered UI sounds want a second, fire-and-forget path alongside it
-  - GetDuration costs differ by format: an MP3 (decoded by miniaudio) has to be decoded whole to answer, so cache it rather than poll it
-  - Playback speed shifts pitch with it, because it is resampling rather than time-stretching. miniaudio has no time-stretcher at all; pitch-preserving speed would mean routing through FFmpeg's `atempo` filter, which is already compiled into the build
-  - Negative speeds do nothing - miniaudio drops any pitch <= 0, silently, through a void function. Reverse playback isn't a rate at all: it needs the decoded audio reversed by frame (not by sample, or the channels swap) behind a custom data source, which also gives up streaming
-  - Levels are linear RMS with no dB helper, so a meter bound straight to them sits low and barely moves - music averages well under 0.3. A 20*log10 mapping belongs either in the meter widget or beside GetChannelVolume
-  - The meter's decay is a fixed constant per processed block, so its feel shifts with the device's buffer size instead of with wall-clock time
-  - No signals yet (OnPlaybackFinished, OnPositionChanged), so application code has nothing to hook a track ending to
+
 
 ### Implemented Features
 <details><summary>CLICK TO EXPAND</summary>
@@ -126,7 +107,7 @@ The framework is designed for cross-platform use, and its logic can be compiled 
   - Transitions carry colors, corner radii, positions, sizes, rotations, opacity, border gaps and the effects' geometry to new values over time (see Animation)
 - Widgets
   - Label: shows text
-  - SeparatorLine: a line dividing content, with an optional caption set into it
+  - SeparatorLine: a line dividing content, with an optional caption set into it: its alignment places the gap (Left or Right SetTextEdgePadding from that end, Center in the middle), the gap stays on the line, and a caption longer than the line is cut at its ends, showing its start, middle or end as aligned
   - Button: click, release, hover, mouse enter and leave actions (OnClick, OnRelease, WhileHover, OnMouseEnter, OnMouseLeave) and a text
   - CheckBox: a boolean value toggled by clicking, the Button's actions, optionally mirroring a bool owned elsewhere (EnableInheritedValue)
   - RadioButton and RadioButtonGroup: options of which only one is picked; the group builds and owns its buttons and their labels in a grid (AddRadioButton, GetRadioButton, RemoveRadioButton)
@@ -315,6 +296,23 @@ The framework is designed for cross-platform use, and its logic can be compiled 
   <li>Write "code-point" instead of "code point"</li>
   </ul>
 <li>Bitmap fonts for GameCube and Wii: an IGlyphSource that hands out fixed sizes (GetPixelSizes) and can't shape; FontManager, Text and the size conversions are ready for one</li>
+- AudioPlayback / MediaSource / Decoder
+  - Packet owns an AVPacket's lifetime, but MediaSource::ReadPacket still takes a raw AVPacket* and leaves the unref to the caller. A Frame wrapper and a reader that runs the send / receive / drain / flush-after-seek protocol behind one call aren't built yet, so every caller currently repeats it by hand
+  - A reader built on FindBestStream drops the packets of every other stream. That's right for audio alone; audio and video from one file will need a packet queue per stream
+  - A WAV, FLAC or MP3 with loop points plays through FFmpeg instead of miniaudio: miniaudio's streamed sounds loop without a gap only over the whole file (a seek inside a stream is asynchronous, and its cursor wraps at the file's end, not the loop's). Loop points set on a file miniaudio plays reopen it through FFmpeg, which restarts its audio briefly
+  - HCA cipher type 1 (the fixed table) is built but untested, for want of a sample file
+  - Tracker modules seek to the nearest row, not the exact sample (libopenmpt seeks by pattern position), and their length is libopenmpt's estimate: a song played once runs a few hundredths of a second past it, to the end of its last row. SetLoopPoints refuses a module, which loops by its own patterns
+  - AudioMetadata doesn't read the Opus vendor string (it sits in OpusTags, which FFmpeg skips) or APE tags; WAV loops come from the first smpl loop only, and RF64/BW64/RIFX files aren't scanned for smpl at all
+  - The decoder helper restricts itself on Windows only (low integrity, no programs of its own, 1 GB at most, ending with the program); on Linux it runs as a separate process with the program's rights. The preview pane shows the picture the helper decoded, so the program never opens a video just to show it; playing one in the pane (still to come) will open it in the program, only once the helper decoded a frame of it without crashing
+  - StreamProbing::HeadersOnly reads what the container's headers say; the bit rate a full probe would estimate from the packets stays 0 for files whose headers don't carry one
+  - AHX and ADX encoding types other than 3 read but don't decode - FFmpeg has no AHX support at all, and its ADX decoder takes standard ADX only. Encrypted ADX decodes to noise without FFmpeg noticing, so AdxMetadata::_Decodable has to gate playback
+  - One sound at a time. AudioPlayback owns a single ma_sound so it can be sought and queried, which means opening a second file replaces the first. Layered UI sounds want a second, fire-and-forget path alongside it
+  - GetDuration costs differ by format: an MP3 (decoded by miniaudio) has to be decoded whole to answer, so cache it rather than poll it
+  - Playback speed shifts pitch with it, because it is resampling rather than time-stretching. miniaudio has no time-stretcher at all; pitch-preserving speed would mean routing through FFmpeg's `atempo` filter, which is already compiled into the build
+  - Negative speeds do nothing - miniaudio drops any pitch <= 0, silently, through a void function. Reverse playback isn't a rate at all: it needs the decoded audio reversed by frame (not by sample, or the channels swap) behind a custom data source, which also gives up streaming
+  - Levels are linear RMS with no dB helper, so a meter bound straight to them sits low and barely moves - music averages well under 0.3. A 20*log10 mapping belongs either in the meter widget or beside GetChannelVolume
+  - The meter's decay is a fixed constant per processed block, so its feel shifts with the device's buffer size instead of with wall-clock time
+  - No signals yet (OnPlaybackFinished, OnPositionChanged), so application code has nothing to hook a track ending to
 </details>
 
 #### Nice-to-have's

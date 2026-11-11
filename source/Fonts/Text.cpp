@@ -378,6 +378,11 @@ void RetroFuturaGUI::Text::SetTextAlignment(TextAlignment textAlignment)
     updateMesh();
 }
 
+RetroFuturaGUI::TextAlignment RetroFuturaGUI::Text::GetTextAlignment() const
+{
+    return _textAlignment;
+}
+
 void RetroFuturaGUI::Text::SetSize(const glm::vec2& glyphSize)
 {
     _glyphSize = glyphSize;

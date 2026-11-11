@@ -38,9 +38,9 @@ void RetroFuturaGUI::SeparatorLine::applyPosition(const glm::vec3& position)
     updateLayout();
 }
 
-void RetroFuturaGUI::SeparatorLine::SetTextLeftPadding(const f32 padding)
+void RetroFuturaGUI::SeparatorLine::SetTextEdgePadding(const f32 padding)
 {
-    _textLeftPadding = padding;
+    _textEdgePadding = padding;
     updateLayout();
 }
 
@@ -52,32 +52,37 @@ void RetroFuturaGUI::SeparatorLine::ShowText(const bool enable)
 
 void RetroFuturaGUI::SeparatorLine::updateLayout()
 {
-    _text.SetSize(glm::vec2(_size.x, std::max<f32>(_size.y, _text.GetElement().GetSpanHeight())));
-
     if(!_showText || _text.GetString().empty()) //if no label, draw a solid line
     {
-        _background.SetGaps(BackgroundGap { ._Repeat = 0 });
+        _background.SetGaps(BackgroundGap { ._Offset = 0.0f, ._Length = 0.0f, ._Degree = 0.0f, ._Repeat = 0 });
         return;
     }
 
-    f32
-        textPadding { _text.GetPadding() },
-        textWidth { _text.GetWidth() };
+    //The text and its padding, but never more than the line, nor the edge padding more than the line leaves beside the gap
+    const f32
+        lineWidth { std::max(_size.x, 0.0f) },
+        gapLength { std::min(_text.GetWidth() + _text.GetPadding() * 2.0f, lineWidth) },
+        edgePadding { std::clamp(_textEdgePadding, 0.0f, lineWidth - gapLength) };
+    f32 gapStart { edgePadding }; //from the line's left end
 
-    BackgroundGap textGap {
-        ._Offset = _textLeftPadding,
-        ._Length = textWidth + textPadding * 2.0f,
-        ._Degree = 0.0f,
-        ._Repeat = 1
-    };
+    switch(_text.GetAlignment())
+    {
+        case TextAlignment::Right:
+            gapStart = lineWidth - gapLength - edgePadding;
+        break;
+        case TextAlignment::Center:
+            gapStart = (lineWidth - gapLength) * 0.5f;
+        break;
+        case TextAlignment::Left:
+        default:
+        break;
+    }
 
-    _background.SetGaps(textGap);
-    _text.SetAlignment(TextAlignment::Center);
-    _text.SetPosition(glm::vec3(
-        _position.x - _size.x * 0.5f + _textLeftPadding + textGap._Length * 0.5f,
-        _position.y,
-        _position.z + 0.01f)
-    );
+    _background.SetGaps(BackgroundGap { ._Offset = gapStart, ._Length = gapLength, ._Degree = 0.0f, ._Repeat = 1 });
+
+    //The gap is the text's box, so its own alignment places it there, and a caption longer than the line is cut at the line's ends
+    _text.SetSize(glm::vec2(gapLength, std::max<f32>(_size.y, _text.GetElement().GetSpanHeight())));
+    _text.SetPosition(glm::vec3(_position.x - lineWidth * 0.5f + gapStart + gapLength * 0.5f, _position.y, _position.z + 0.01f));
 }
 
 RetroFuturaGUI::Background& RetroFuturaGUI::SeparatorLine::GetBackground()

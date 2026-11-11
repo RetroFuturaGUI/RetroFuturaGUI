@@ -92,6 +92,11 @@ void RetroFuturaGUI::WidgetText::SetPadding(const f32 padding)
     setLayout();
 }
 
+RetroFuturaGUI::TextAlignment RetroFuturaGUI::WidgetText::GetAlignment() const
+{
+    return _text.GetTextAlignment();
+}
+
 f32 RetroFuturaGUI::WidgetText::GetPadding() const
 {
     return _text.GetPadding();
@@ -536,6 +541,7 @@ void RetroFuturaGUI::WidgetText::layoutAlignment()
         return;
 
     _text.SetTextAlignment(*alignment);
+    notifyChange(WidgetTextChange::Alignment);
 
     if(!_follower)
         return;

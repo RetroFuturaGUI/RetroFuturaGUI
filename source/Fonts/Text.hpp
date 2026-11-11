@@ -63,6 +63,9 @@ namespace RetroFuturaGUI
         /// @brief Sets the horizontal alignment of the text within its parent
         void SetTextAlignment(TextAlignment textAlignment);
 
+        /// @brief Returns the horizontal alignment of the text within its parent
+        TextAlignment GetTextAlignment() const;
+
         /// @brief Sets the glyph size
         void SetSize(const glm::vec2& glyphSize);
 
