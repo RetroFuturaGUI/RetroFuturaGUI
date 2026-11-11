@@ -366,8 +366,11 @@ namespace RetroFuturaGUI
         bool buildView(ViewHost& host, std::string_view title);
         static void styleButton(Button& button, std::string_view text, const glm::vec3& size, const ViewFont& font);
 
-        /// @brief Draws a toggle in the accent colors while it is on, so it needs no "on"/"off" text.
+        /// @brief Draws a toggle in the accent colors while it is on, so it needs no "on"/"off" text. Off, it looks like the other buttons
         static void styleToggle(Button& toggle, const bool isOn);
+
+        /// @brief The key that gives the explorer's widgets their built-in look, which flavors override. The preview and the prompts take it from here
+        static StyleKey styleKey();
 
         /// @brief Makes a ComboBox a menu: flat under its caption, one item per action, its list as wide as given.
         static void styleMenu(ComboBox& menu, std::string_view caption, std::span<const MenuAction> actions, const glm::vec3& size, const f32 listWidth, const ViewFont& font);

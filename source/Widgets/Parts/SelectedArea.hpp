@@ -63,6 +63,10 @@ namespace RetroFuturaGUI
         /// @brief Has the colors move to new values over the widget's transitions
         void SetTransitionSettings(const TransitionSettings* settings);
 
+    //Called by the widget that owns the part, which alone holds a StyleKey
+        /// @brief Sets the built-in highlight colors. The widget type's own look, which everything else overrides
+        void SetBuiltInColors(const StyleKey& key, std::span<const glm::vec4> colors);
+
     private:
         void restyle() override;
 

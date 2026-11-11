@@ -15,6 +15,12 @@ void RetroFuturaGUI::SelectedArea::SetColors(std::span<const glm::vec4> colors)
     applyStyle();
 }
 
+void RetroFuturaGUI::SelectedArea::SetBuiltInColors(const StyleKey&, std::span<const glm::vec4> colors)
+{
+    _colors.SetBuiltIn(colors, ColorState::Enabled);
+    applyStyle();
+}
+
 void RetroFuturaGUI::SelectedArea::SetFillType(const FillType fillType)
 {
     _fillTypeLayer.Set(fillType);

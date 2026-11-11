@@ -41,10 +41,10 @@ RetroFuturaGUI::FileExplorer::FileExplorer(std::string_view title, const i32 wid
 void RetroFuturaGUI::FileExplorer::styleWindow(Window& window, std::string_view title)
 {
     window.SetWindowTitle(title);
-    window.GetBackground().SetCornerRadii(glm::vec4(12.0f));
-    window.GetBorder().SetCornerRadii(glm::vec4(12.0f));
-    window.GetBorder().SetWidth(1.0f);
-    window.GetBorder().SetColors(std::array { glm::vec4(0.35f, 0.35f, 0.45f, 1.0f) }, ColorState::Enabled);
+    window.GetBackground().SetBuiltInCornerRadii(styleKey(), glm::vec4(12.0f));
+    window.GetBorder().SetBuiltInCornerRadii(styleKey(), glm::vec4(12.0f));
+    window.GetBorder().SetBuiltInWidth(styleKey(), 1.0f);
+    window.GetBorder().SetBuiltInColors(styleKey(), std::array { glm::vec4(0.35f, 0.35f, 0.45f, 1.0f) }, ColorState::Enabled);
 }
 
 RetroFuturaGUI::FileExplorer::~FileExplorer() = default;
@@ -329,8 +329,8 @@ bool RetroFuturaGUI::FileExplorer::buildView(ViewHost& host, std::string_view ti
     if(!built._Files)
         return false;
 
-    built._Files->GetBorder().SetWidth(1.0f);
-    built._Files->GetBorder().SetColors(std::array { glm::vec4(0.35f, 0.35f, 0.45f, 1.0f) }, ColorState::Enabled);
+    built._Files->GetBorder().SetBuiltInWidth(styleKey(), 1.0f);
+    built._Files->GetBorder().SetBuiltInColors(styleKey(), std::array { glm::vec4(0.35f, 0.35f, 0.45f, 1.0f) }, ColorState::Enabled);
 
     //Before the first cell is made: new cells take the font and the first track's colors
     built._Files->SetTrackAlternatingColorCount(2);
@@ -339,26 +339,26 @@ bool RetroFuturaGUI::FileExplorer::buildView(ViewHost& host, std::string_view ti
         oddRowColors {{ 0.13f, 0.13f, 0.17f, 1.0f }},
         innerBorderColors {{ 0.18f, 0.18f, 0.22f, 1.0f }},
         headerColors {{ 0.16f, 0.16f, 0.22f, 1.0f }};
-    built._Files->GetTrackStyle(0).SetBackgroundColors(evenRowColors);
-    built._Files->GetTrackStyle(1).SetBackgroundColors(oddRowColors);
-    built._Files->GetTrackStyle(0).SetInnerBorderColors(innerBorderColors);
-    built._Files->GetTrackStyle(1).SetInnerBorderColors(innerBorderColors);
-    built._Files->GetCellStyle().SetInnerBorderWidth(1.0f);
+    built._Files->GetTrackStyle(0).SetBuiltInBackgroundColors(styleKey(), evenRowColors);
+    built._Files->GetTrackStyle(1).SetBuiltInBackgroundColors(styleKey(), oddRowColors);
+    built._Files->GetTrackStyle(0).SetBuiltInInnerBorderColors(styleKey(), innerBorderColors);
+    built._Files->GetTrackStyle(1).SetBuiltInInnerBorderColors(styleKey(), innerBorderColors);
+    built._Files->GetCellStyle().SetBuiltInInnerBorderWidth(styleKey(), 1.0f);
     built._Files->GetCellStyle().SetFontFamily(_font._Family, _font._Size, FontSizeUnit::Pixels, _font._Slant, _font._Weight);
     built._Files->GetCellStyle().SetTextAlignment(TextAlignment::Left);
     built._Files->GetCellStyle().SetTextPadding(6.0f);
 
     //A name being renamed sits on a selected row, whose blue hides the default blue of selected text, so it is lightened instead
     std::vector<glm::vec4> renameSelectionColors {{ 0.95f, 0.95f, 1.0f, 0.35f }};
-    built._Files->GetSelectedArea().SetColors(renameSelectionColors);
+    built._Files->GetSelectedArea().SetBuiltInColors(styleKey(), renameSelectionColors);
 
     //The header cells come with the columns, so they are named once these exist
     built._Files->SetTrackDefinitions(std::vector<Table::TrackDefinition> {}, columnDefinition(_font, _showThumbnails));
     built._Files->GetHeaderStyle().SetFontFamily(_font._Family, _font._Size, FontSizeUnit::Pixels, _font._Slant, _font._Weight);
     built._Files->GetHeaderStyle().SetTextAlignment(TextAlignment::Left);
     built._Files->GetHeaderStyle().SetTextPadding(6.0f);
-    built._Files->GetHeaderStyle().SetBackgroundColors(headerColors, ColorState::Enabled);
-    built._Files->GetHeaderStyle().SetOuterBorderColors(innerBorderColors, ColorState::Enabled);
+    built._Files->GetHeaderStyle().SetBuiltInBackgroundColors(styleKey(), headerColors, ColorState::Enabled);
+    built._Files->GetHeaderStyle().SetBuiltInOuterBorderColors(styleKey(), innerBorderColors, ColorState::Enabled);
     built._Files->SetHorizontalHeaderSize(rowHeight(_font) + 4.0f);
     built._Files->ShowHorizontalHeader(true); //named by updateHeaderTexts, which marks the sort column; fillTable makes the columns read-only
 
@@ -389,12 +389,11 @@ bool RetroFuturaGUI::FileExplorer::buildView(ViewHost& host, std::string_view ti
         indicatorBorderColors {{ 0.6f, 0.6f, 0.8f, 1.0f }};
     built._Scroll->SetOrientation(IRangedValue::Orientation::Vertical);
     built._Scroll->SetTrackDirection(IRangedValue::TrackDirection::Inverted); //unscrolled at the top
-    built._Scroll->GetBackground().SetColors(std::array { glm::vec4(0.12f, 0.12f, 0.15f, 1.0f) }, ColorState::Enabled);
-    built._Scroll->GetBackground().SetFillType(FillType::Solid);
-    built._Scroll->GetBorder().SetColors(std::array { glm::vec4(0.35f, 0.35f, 0.45f, 1.0f) }, ColorState::Enabled);
-    built._Scroll->GetBorder().SetWidth(1.0f);
-    built._Scroll->GetIndicator().GetBackground().SetColors(indicatorColors, ColorState::Enabled);
-    built._Scroll->GetIndicator().GetBorder().SetColors(indicatorBorderColors, ColorState::Enabled);
+    built._Scroll->GetBackground().SetBuiltInColors(styleKey(), std::array { glm::vec4(0.12f, 0.12f, 0.15f, 1.0f) }, ColorState::Enabled);
+    built._Scroll->GetBorder().SetBuiltInColors(styleKey(), std::array { glm::vec4(0.35f, 0.35f, 0.45f, 1.0f) }, ColorState::Enabled);
+    built._Scroll->GetBorder().SetBuiltInWidth(styleKey(), 1.0f);
+    built._Scroll->GetIndicator().GetBackground().SetBuiltInColors(styleKey(), indicatorColors, ColorState::Enabled);
+    built._Scroll->GetIndicator().GetBorder().SetBuiltInColors(styleKey(), indicatorBorderColors, ColorState::Enabled);
     built._Scroll->GetIndicator().SetSize(glm::vec2(15.0f, 100.0f), RetroFuturaGUI::ElementSizing::Percent);
     built._Scroll->SetMinValue<f32>(0.0f);
     built._Scroll->SetMaxValue<f32>(1.0f);
@@ -436,7 +435,7 @@ bool RetroFuturaGUI::FileExplorer::buildView(ViewHost& host, std::string_view ti
 
     built._Filter->SetFontFamily(_font._Family, _font._Size, FontSizeUnit::Pixels, _font._Slant, _font._Weight);
     built._Filter->SetSize(cellSize(_viewAxis, windowSize, filterCell));
-    built._Filter->GetBackground().SetColors(std::array { glm::vec4(0.2f, 0.2f, 0.2f, 1.0f) }, ColorState::Enabled);
+    built._Filter->GetBackground().SetBuiltInColors(styleKey(), std::array { glm::vec4(0.2f, 0.2f, 0.2f, 1.0f) }, ColorState::Enabled);
     built._Filter->SetDropDownPosition(IDropDown::DropDownPosition::Top); //down would run out of the window
     built._Filter->Connect_OnIndexChanged([this]() { on_filterComboBox_indexChanged(); }, false);
 
@@ -473,7 +472,7 @@ bool RetroFuturaGUI::FileExplorer::buildView(ViewHost& host, std::string_view ti
 
     built._Status->GetText().SetFontFamily(_font._Family, _font._Size, FontSizeUnit::Pixels, _font._Slant, _font._Weight);
     built._Status->GetText().SetAlignment(TextAlignment::Left);
-    built._Status->GetText().SetColors(std::array { glm::vec4(0.9f, 0.8f, 0.55f, 1.0f) }, ColorState::Enabled);
+    built._Status->GetText().SetBuiltInColors(styleKey(), std::array { glm::vec4(0.9f, 0.8f, 0.55f, 1.0f) }, ColorState::Enabled);
     built._Status->GetText().SetPadding(8.0f);
     built._Status->SetSize(cellSize(_viewAxis, windowSize, statusCell));
     built._Ok = host.Attach<Button>("Ok", *lasagna, okCell);
@@ -504,17 +503,16 @@ RetroFuturaGUI::MenuBar* RetroFuturaGUI::FileExplorer::attachBar(ViewHost& host,
         return nullptr;
 
     bar->SetDockingEdge(MenuBar::DockingEdge::Top);
-    bar->GetBackground().SetColors(std::array { glm::vec4(0.08f, 0.08f, 0.12f, 0.9f) }, ColorState::Enabled);
-    bar->GetBackground().SetFillType(FillType::Solid);
-    bar->GetBorder().SetColors(std::array { glm::vec4(0.35f, 0.35f, 0.45f, 1.0f) }, ColorState::Enabled);
-    bar->GetBorder().SetWidth(1.0f);
-    bar->GetBackground().SetCornerRadii(glm::vec4(12.0f, 12.0f, 0.0f, 0.0f)); //the window's top corners, which a popup never squares
-    bar->GetBorder().SetCornerRadii(glm::vec4(12.0f, 12.0f, 0.0f, 0.0f));
-    bar->GetItemStyle().GetBackground().SetColors(std::array { glm::vec4(0.0f, 0.0f, 0.0f, 0.0f) }, ColorState::Enabled);
-    bar->GetItemStyle().GetBackground().SetColors(std::array { glm::vec4(0.25f, 0.25f, 0.35f, 0.9f) }, ColorState::Hover);
-    bar->GetItemStyle().GetBackground().SetColors(std::array { glm::vec4(0.35f, 0.35f, 0.5f, 0.95f) }, ColorState::Clicked);
-    bar->GetItemStyle().GetBorder().SetColors(std::array { glm::vec4(0.0f, 0.0f, 0.0f, 0.0f) }, ColorState::Enabled);
-    bar->GetItemStyle().GetBorder().SetWidth(0.0f);
+    bar->GetBackground().SetBuiltInColors(styleKey(), std::array { glm::vec4(0.08f, 0.08f, 0.12f, 0.9f) }, ColorState::Enabled);
+    bar->GetBorder().SetBuiltInColors(styleKey(), std::array { glm::vec4(0.35f, 0.35f, 0.45f, 1.0f) }, ColorState::Enabled);
+    bar->GetBorder().SetBuiltInWidth(styleKey(), 1.0f);
+    bar->GetBackground().SetBuiltInCornerRadii(styleKey(), glm::vec4(12.0f, 12.0f, 0.0f, 0.0f)); //the window's top corners, which a popup never squares
+    bar->GetBorder().SetBuiltInCornerRadii(styleKey(), glm::vec4(12.0f, 12.0f, 0.0f, 0.0f));
+    bar->GetItemStyle().GetBackground().SetBuiltInColors(styleKey(), std::array { glm::vec4(0.0f, 0.0f, 0.0f, 0.0f) }, ColorState::Enabled);
+    bar->GetItemStyle().GetBackground().SetBuiltInColors(styleKey(), std::array { glm::vec4(0.25f, 0.25f, 0.35f, 0.9f) }, ColorState::Hover);
+    bar->GetItemStyle().GetBackground().SetBuiltInColors(styleKey(), std::array { glm::vec4(0.35f, 0.35f, 0.5f, 0.95f) }, ColorState::Clicked);
+    bar->GetItemStyle().GetBorder().SetBuiltInColors(styleKey(), std::array { glm::vec4(0.0f, 0.0f, 0.0f, 0.0f) }, ColorState::Enabled);
+    bar->GetItemStyle().GetBorder().SetBuiltInWidth(styleKey(), 0.0f);
 
     std::vector<MenuBar::FlexDefinition> flexDefinition
     {
@@ -532,7 +530,7 @@ RetroFuturaGUI::MenuBar* RetroFuturaGUI::FileExplorer::attachBar(ViewHost& host,
     barTitle->GetText().SetFontFamily(font._Family, font._Size, FontSizeUnit::Pixels, font._Slant, font._Weight);
     barTitle->GetText().SetString(title, false);
     barTitle->GetText().SetAlignment(TextAlignment::Left);
-    barTitle->GetText().SetColors(std::array { glm::vec4(1.0f) }, ColorState::Enabled);
+    barTitle->GetText().SetBuiltInColors(styleKey(), std::array { glm::vec4(1.0f) }, ColorState::Enabled);
     barTitle->GetText().SetPadding(8.0f);
     barTitle->SetSize(glm::vec3(0.5f * windowSize.x, barHeight, 0.01f)); //as tall as the bar, since text is clipped to its label
 
@@ -544,25 +542,24 @@ RetroFuturaGUI::MenuBar* RetroFuturaGUI::FileExplorer::attachBar(ViewHost& host,
     closeButton->SetSize(glm::vec3(barHeight - 2.0f * _margin, barHeight - 2.0f * _margin, 0.01f));
     closeButton->GetBackground().SetImage(toUtf8(PlatformBridge::Paths::GetExecutablePathFSPath().parent_path() / "Resources" / "img" / "CloseIcon.svg")); //UTF-8, as Texture reads paths
     closeButton->GetBackground().SetImagePadding(4.0f);
-    closeButton->GetBackground().SetColors(std::array { glm::vec4(1.0f, 0.1f, 0.1f, 0.0f) }, ColorState::Enabled);
-    closeButton->GetBackground().SetColors(std::array { glm::vec4(1.0f, 0.2f, 0.2f, 0.45f) }, ColorState::Hover);
-    closeButton->GetBackground().SetColors(std::array { glm::vec4(1.0f, 0.3f, 0.3f, 0.6f) }, ColorState::Clicked);
-    closeButton->GetBorder().SetWidth(0.0f);
+    closeButton->GetBackground().SetBuiltInColors(styleKey(), std::array { glm::vec4(1.0f, 0.1f, 0.1f, 0.0f) }, ColorState::Enabled);
+    closeButton->GetBackground().SetBuiltInColors(styleKey(), std::array { glm::vec4(1.0f, 0.2f, 0.2f, 0.45f) }, ColorState::Hover);
+    closeButton->GetBackground().SetBuiltInColors(styleKey(), std::array { glm::vec4(1.0f, 0.3f, 0.3f, 0.6f) }, ColorState::Clicked);
+    closeButton->GetBorder().SetBuiltInWidth(styleKey(), 0.0f);
     return bar;
 }
 
 void RetroFuturaGUI::FileExplorer::styleButton(Button& button, std::string_view text, const glm::vec3& size, const ViewFont& font)
 {
     button.SetSize(size);
-    button.GetBackground().SetCornerRadii(glm::vec4(8.0f));
-    button.GetBorder().SetCornerRadii(glm::vec4(8.0f));
-    button.GetBackground().SetColors(std::array { glm::vec4(0.2f, 0.2f, 0.2f, 1.0f) }, ColorState::Enabled);
-    button.GetBackground().SetColors(std::array { glm::vec4(0.3f, 0.3f, 0.3f, 1.0f) }, ColorState::Hover);
-    button.GetBackground().SetColors(std::array { glm::vec4(0.4f, 0.4f, 0.4f, 1.0f) }, ColorState::Clicked);
-    button.GetBackground().SetColors(std::array { glm::vec4(0.12f, 0.12f, 0.12f, 1.0f) }, ColorState::Disabled);
-    button.GetBackground().SetFillType(FillType::Solid);
-    button.GetBorder().SetColors(std::array { glm::vec4(0.5f, 0.5f, 0.5f, 1.0f) }, ColorState::Enabled);
-    button.GetBorder().SetWidth(1.0f);
+    button.GetBackground().SetBuiltInCornerRadii(styleKey(), glm::vec4(8.0f));
+    button.GetBorder().SetBuiltInCornerRadii(styleKey(), glm::vec4(8.0f));
+    button.GetBackground().SetBuiltInColors(styleKey(), std::array { glm::vec4(0.2f, 0.2f, 0.2f, 1.0f) }, ColorState::Enabled);
+    button.GetBackground().SetBuiltInColors(styleKey(), std::array { glm::vec4(0.3f, 0.3f, 0.3f, 1.0f) }, ColorState::Hover);
+    button.GetBackground().SetBuiltInColors(styleKey(), std::array { glm::vec4(0.4f, 0.4f, 0.4f, 1.0f) }, ColorState::Clicked);
+    button.GetBackground().SetBuiltInColors(styleKey(), std::array { glm::vec4(0.12f, 0.12f, 0.12f, 1.0f) }, ColorState::Disabled);
+    button.GetBorder().SetBuiltInColors(styleKey(), std::array { glm::vec4(0.5f, 0.5f, 0.5f, 1.0f) }, ColorState::Enabled);
+    button.GetBorder().SetBuiltInWidth(styleKey(), 1.0f);
     button.GetText().SetFontFamily(font._Family, font._Size, FontSizeUnit::Pixels, font._Slant, font._Weight);
     button.GetText().SetString(text, false);
     button.GetText().SetAlignment(TextAlignment::Center);
@@ -572,10 +569,10 @@ void RetroFuturaGUI::FileExplorer::styleMenu(ComboBox& menu, std::string_view ca
 {
     menu.SetFontFamily(font._Family, font._Size, FontSizeUnit::Pixels, font._Slant, font._Weight);
     menu.SetSize(size);
-    menu.GetBackground().SetColors(std::array { glm::vec4(0.0f, 0.0f, 0.0f, 0.0f) }, ColorState::Enabled); //flat until hovered, as a menu title is
-    menu.GetBackground().SetColors(std::array { glm::vec4(0.25f, 0.25f, 0.35f, 0.9f) }, ColorState::Hover);
-    menu.GetBackground().SetColors(std::array { glm::vec4(0.35f, 0.35f, 0.5f, 0.95f) }, ColorState::Clicked);
-    menu.GetBorder().SetWidth(0.0f);
+    menu.GetBackground().SetBuiltInColors(styleKey(), std::array { glm::vec4(0.0f, 0.0f, 0.0f, 0.0f) }, ColorState::Enabled); //flat until hovered, as a menu title is
+    menu.GetBackground().SetBuiltInColors(styleKey(), std::array { glm::vec4(0.25f, 0.25f, 0.35f, 0.9f) }, ColorState::Hover);
+    menu.GetBackground().SetBuiltInColors(styleKey(), std::array { glm::vec4(0.35f, 0.35f, 0.5f, 0.95f) }, ColorState::Clicked);
+    menu.GetBorder().SetBuiltInWidth(styleKey(), 0.0f);
     menu.SetTextAlignment(TextAlignment::Left);
     menu.SetDropDownWidth(listWidth);
     menu.SetCaption(caption);
@@ -596,21 +593,21 @@ void RetroFuturaGUI::FileExplorer::styleCheckBox(CheckBox& checkBox, const f32 s
         borderColors {{ 0.5f, 0.5f, 0.5f, 1.0f }};
 
     checkBox.SetSize(glm::vec3(side, side, 0.01f));
-    checkBox.GetBackground().SetColors(backgroundColors, ColorState::Enabled);
-    checkBox.GetBackground().SetColors(backgroundHoverColors, ColorState::Hover);
-    checkBox.GetBackground().SetColors(backgroundColors, ColorState::Clicked);
+    checkBox.GetBackground().SetBuiltInColors(styleKey(), backgroundColors, ColorState::Enabled);
+    checkBox.GetBackground().SetBuiltInColors(styleKey(), backgroundHoverColors, ColorState::Hover);
+    checkBox.GetBackground().SetBuiltInColors(styleKey(), backgroundColors, ColorState::Clicked);
     checkBox.SetInheritColors(checkedColors, ColorState::Enabled);
     checkBox.SetInheritColors(checkedHoverColors, ColorState::Hover);
     checkBox.SetInheritColors(checkedClickedColors, ColorState::Clicked);
-    checkBox.GetCheckmark().SetColors(checkmarkColors, ColorState::Enabled);
-    checkBox.GetCheckmark().SetColors(checkmarkColors, ColorState::Hover);
-    checkBox.GetCheckmark().SetColors(checkmarkColors, ColorState::Clicked);
-    checkBox.GetBorder().SetColors(borderColors, ColorState::Enabled);
-    checkBox.GetBorder().SetColors(borderColors, ColorState::Hover);
-    checkBox.GetBorder().SetColors(borderColors, ColorState::Clicked);
-    checkBox.GetBorder().SetWidth(1.0f);
-    checkBox.GetBackground().SetCornerRadii(glm::vec4(6.0f));
-    checkBox.GetBorder().SetCornerRadii(glm::vec4(6.0f));
+    checkBox.GetCheckmark().SetBuiltInColors(styleKey(), checkmarkColors, ColorState::Enabled);
+    checkBox.GetCheckmark().SetBuiltInColors(styleKey(), checkmarkColors, ColorState::Hover);
+    checkBox.GetCheckmark().SetBuiltInColors(styleKey(), checkmarkColors, ColorState::Clicked);
+    checkBox.GetBorder().SetBuiltInColors(styleKey(), borderColors, ColorState::Enabled);
+    checkBox.GetBorder().SetBuiltInColors(styleKey(), borderColors, ColorState::Hover);
+    checkBox.GetBorder().SetBuiltInColors(styleKey(), borderColors, ColorState::Clicked);
+    checkBox.GetBorder().SetBuiltInWidth(styleKey(), 1.0f);
+    checkBox.GetBackground().SetBuiltInCornerRadii(styleKey(), glm::vec4(6.0f));
+    checkBox.GetBorder().SetBuiltInCornerRadii(styleKey(), glm::vec4(6.0f));
     checkBox.SetInnerPadding(4.0f);
 }
 
@@ -619,34 +616,43 @@ void RetroFuturaGUI::FileExplorer::styleLabel(Label& label, std::string_view tex
     label.GetText().SetFontFamily(font._Family, font._Size, FontSizeUnit::Pixels, font._Slant, font._Weight);
     label.GetText().SetString(text, false);
     label.GetText().SetAlignment(TextAlignment::Left);
-    label.GetText().SetColors(std::array { glm::vec4(1.0f) }, ColorState::Enabled);
+    label.GetText().SetBuiltInColors(styleKey(), std::array { glm::vec4(1.0f) }, ColorState::Enabled);
     label.GetText().SetPadding(8.0f);
     label.SetSize(size);
 }
 
 void RetroFuturaGUI::FileExplorer::styleToggle(Button& toggle, const bool isOn)
 {
-    toggle.GetBackground().SetColors(std::array { isOn ? _toggleOnColor : glm::vec4(0.2f, 0.2f, 0.2f, 1.0f) }, ColorState::Enabled);
-    toggle.GetBackground().SetColors(std::array { isOn ? _toggleOnHoverColor : glm::vec4(0.3f, 0.3f, 0.3f, 1.0f) }, ColorState::Hover);
-    toggle.GetBackground().SetColors(std::array { isOn ? _toggleOnClickedColor : glm::vec4(0.4f, 0.4f, 0.4f, 1.0f) }, ColorState::Clicked);
+    if(!isOn)
+    {
+        //Off, it looks like any of the explorer's buttons: built-in, or as a flavor styles them.
+        toggle.GetBackground().SetColors({}, ColorState::Enabled);
+        toggle.GetBackground().SetColors({}, ColorState::Hover);
+        toggle.GetBackground().SetColors({}, ColorState::Clicked);
+        return;
+    }
+
+    //On, the accent shows over every flavor, since it tells the state.
+    toggle.GetBackground().SetColors(std::array { _toggleOnColor }, ColorState::Enabled);
+    toggle.GetBackground().SetColors(std::array { _toggleOnHoverColor }, ColorState::Hover);
+    toggle.GetBackground().SetColors(std::array { _toggleOnClickedColor }, ColorState::Clicked);
 }
 
 void RetroFuturaGUI::FileExplorer::styleTextBox(TextBox& textBox, std::string_view placeholder, const glm::vec3& size, const ViewFont& font)
 {
     textBox.SetSize(size);
-    textBox.GetBackground().SetCornerRadii(glm::vec4(8.0f));
-    textBox.GetBorder().SetCornerRadii(glm::vec4(8.0f));
-    textBox.GetBackground().SetColors(std::array { glm::vec4(0.2f, 0.2f, 0.2f, 1.0f) }, ColorState::Enabled);
-    textBox.GetBackground().SetColors(std::array { glm::vec4(0.3f, 0.3f, 0.3f, 1.0f) }, ColorState::Hover);
-    textBox.GetBackground().SetColors(std::array { glm::vec4(0.2f, 0.2f, 0.2f, 1.0f) }, ColorState::Clicked);
-    textBox.GetBackground().SetFillType(FillType::Solid);
-    textBox.GetBorder().SetColors(std::array { glm::vec4(0.5f, 0.5f, 0.5f, 1.0f) }, ColorState::Enabled);
-    textBox.GetBorder().SetWidth(1.0f);
+    textBox.GetBackground().SetBuiltInCornerRadii(styleKey(), glm::vec4(8.0f));
+    textBox.GetBorder().SetBuiltInCornerRadii(styleKey(), glm::vec4(8.0f));
+    textBox.GetBackground().SetBuiltInColors(styleKey(), std::array { glm::vec4(0.2f, 0.2f, 0.2f, 1.0f) }, ColorState::Enabled);
+    textBox.GetBackground().SetBuiltInColors(styleKey(), std::array { glm::vec4(0.3f, 0.3f, 0.3f, 1.0f) }, ColorState::Hover);
+    textBox.GetBackground().SetBuiltInColors(styleKey(), std::array { glm::vec4(0.2f, 0.2f, 0.2f, 1.0f) }, ColorState::Clicked);
+    textBox.GetBorder().SetBuiltInColors(styleKey(), std::array { glm::vec4(0.5f, 0.5f, 0.5f, 1.0f) }, ColorState::Enabled);
+    textBox.GetBorder().SetBuiltInWidth(styleKey(), 1.0f);
     textBox.GetText().SetFontFamily(font._Family, font._Size, FontSizeUnit::Pixels, font._Slant, font._Weight);
     textBox.GetText().SetAlignment(TextAlignment::Left);
     textBox.GetText().SetPadding(6.0f);
     textBox.GetPlaceholder().SetString(placeholder, false);
-    textBox.GetPlaceholder().SetColors(std::array { glm::vec4(0.5f, 0.5f, 0.5f, 1.0f) }, RetroFuturaGUI::ColorState::Enabled);
+    textBox.GetPlaceholder().SetBuiltInColors(styleKey(), std::array { glm::vec4(0.5f, 0.5f, 0.5f, 1.0f) }, RetroFuturaGUI::ColorState::Enabled);
 }
 
 glm::vec3 RetroFuturaGUI::FileExplorer::placeButtonSize(const glm::vec2& windowSize, const ViewFont& font)
@@ -3548,4 +3554,9 @@ std::string RetroFuturaGUI::FileExplorer::describeError(const std::error_code& e
         return "the path is too long";
 
     return std::format("error {}", error.value());
+}
+
+RetroFuturaGUI::StyleKey RetroFuturaGUI::FileExplorer::styleKey()
+{
+    return StyleKey {};
 }

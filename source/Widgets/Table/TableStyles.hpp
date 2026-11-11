@@ -113,6 +113,13 @@ namespace RetroFuturaGUI
         const std::vector<glm::vec4>& ShownTextColors() const;
         const std::vector<glm::vec4>& ShownIconColors() const;
 
+    //Called by the owner of the table, which alone holds a StyleKey
+        /// @brief Sets the built-in background colors. The look everything else overrides
+        void SetBuiltInBackgroundColors(const StyleKey& key, std::span<const glm::vec4> colors);
+
+        /// @brief Sets the built-in colors of the border around each cell
+        void SetBuiltInInnerBorderColors(const StyleKey& key, std::span<const glm::vec4> colors);
+
     private:
         friend class Table; //hands it its flavors and its variant
 
@@ -218,6 +225,10 @@ namespace RetroFuturaGUI
         /// @brief The font, alignment and padding, for the texts the Table builds.
         const TableTextSettings& GetTextSettings() const;
 
+    //Called by the owner of the table, which alone holds a StyleKey
+        /// @brief Sets the built-in width of the border around each cell. The look everything else overrides
+        void SetBuiltInInnerBorderWidth(const StyleKey& key, const f32 width);
+
     private:
         void restyle() override;
 
@@ -240,6 +251,7 @@ namespace RetroFuturaGUI
             //_caret { ._Disabled = { glm::vec4(0.5f, 0.5f, 0.5f, 1.0f) }, ._Hover = {}, ._Clicked = {}, ._Selected = {} },
             //_graph { ._Disabled = { glm::vec4(0.5f, 0.5f, 0.5f, 1.0f) }, ._Hover = {}, ._Clicked = {}, ._Selected = {} };
         std::optional<f32> _innerBorderWidth {}; //set here
+        f32 _builtInInnerBorderWidth { 1.0f };
         TableTextLayers _textSettings;
         std::function<void()> _onTextChange {};
     };
@@ -315,6 +327,13 @@ namespace RetroFuturaGUI
 
         /// @brief The font, alignment and padding, for the texts the Table builds.
         const TableTextSettings& GetTextSettings() const;
+
+    //Called by the owner of the table, which alone holds a StyleKey
+        /// @brief Sets the built-in header background colors for Enabled or Disabled: the look everything else overrides
+        void SetBuiltInBackgroundColors(const StyleKey& key, std::span<const glm::vec4> colors, const ColorState state);
+
+        /// @brief Sets the built-in colors of the border around the header band for Enabled or Disabled
+        void SetBuiltInOuterBorderColors(const StyleKey& key, std::span<const glm::vec4> colors, const ColorState state);
 
     private:
         void restyle() override;

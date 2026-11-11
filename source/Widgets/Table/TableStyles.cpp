@@ -50,6 +50,16 @@ const std::vector<glm::vec4>& RetroFuturaGUI::TrackStyle::GetBackgroundColors() 
     return _background;
 }
 
+void RetroFuturaGUI::TrackStyle::SetBuiltInBackgroundColors(const StyleKey&, std::span<const glm::vec4> colors)
+{
+    _builtInBackground.assign(colors.begin(), colors.end());
+}
+
+void RetroFuturaGUI::TrackStyle::SetBuiltInInnerBorderColors(const StyleKey&, std::span<const glm::vec4> colors)
+{
+    _builtInInnerBorder.assign(colors.begin(), colors.end());
+}
+
 void RetroFuturaGUI::TrackStyle::SetInnerBorderColors(std::span<const glm::vec4> colors)
 {
     _innerBorder.assign(colors.begin(), colors.end());
@@ -279,12 +289,17 @@ void RetroFuturaGUI::CellStyle::SetInnerBorderWidth(const f32 width)
     _innerBorderWidth = width;
 }
 
+void RetroFuturaGUI::CellStyle::SetBuiltInInnerBorderWidth(const StyleKey&, const f32 width)
+{
+    _builtInInnerBorderWidth = width;
+}
+
 f32 RetroFuturaGUI::CellStyle::GetInnerBorderWidth() const
 {
     if(_innerBorderWidth)
         return *_innerBorderWidth;
 
-    return StylingManager::FindWidth(getFlavors(), StylePart::CellStyleInnerBorder).value_or(1.0f);
+    return StylingManager::FindWidth(getFlavors(), StylePart::CellStyleInnerBorder).value_or(_builtInInnerBorderWidth);
 }
 
 const std::vector<glm::vec4>& RetroFuturaGUI::CellStyle::ShownBackgroundColors(const TrackStyle& track, const ColorState state) const
@@ -414,6 +429,16 @@ void RetroFuturaGUI::HeaderStyle::SetBackgroundColors(std::span<const glm::vec4>
 const std::vector<glm::vec4>& RetroFuturaGUI::HeaderStyle::GetBackgroundColors(const ColorState state) const
 {
     return _background.GetOwn(headerState(state));
+}
+
+void RetroFuturaGUI::HeaderStyle::SetBuiltInBackgroundColors(const StyleKey&, std::span<const glm::vec4> colors, const ColorState state)
+{
+    _background.SetBuiltIn(colors, headerState(state));
+}
+
+void RetroFuturaGUI::HeaderStyle::SetBuiltInOuterBorderColors(const StyleKey&, std::span<const glm::vec4> colors, const ColorState state)
+{
+    _outerBorder.SetBuiltIn(colors, headerState(state));
 }
 
 void RetroFuturaGUI::HeaderStyle::SetInnerBorderColors(std::span<const glm::vec4> colors, const ColorState state)

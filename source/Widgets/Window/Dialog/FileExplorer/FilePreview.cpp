@@ -35,23 +35,23 @@ RetroFuturaGUI::FileExplorer::FilePreview::FilePreview(ViewHost& host, Lasagna& 
     _picture->SetSize(_mediaSize);
     styleLabel(*_message, "", _mediaSize, _font);
     _message->GetText().SetAlignment(TextAlignment::Center);
-    _message->GetText().SetColors(std::array { glm::vec4(0.7f, 0.7f, 0.75f, 1.0f) }, ColorState::Enabled);
+    _message->GetText().SetBuiltInColors(styleKey(), std::array { glm::vec4(0.7f, 0.7f, 0.75f, 1.0f) }, ColorState::Enabled);
 
     //Like the list, without its header
     const glm::vec3 detailsSize { cellSize(_axis, paneSize, detailsCell) };
     _details->SetSize(detailsSize);
-    _details->GetBorder().SetWidth(1.0f);
-    _details->GetBorder().SetColors(std::array { glm::vec4(0.35f, 0.35f, 0.45f, 1.0f) }, ColorState::Enabled);
+    _details->GetBorder().SetBuiltInWidth(styleKey(), 1.0f);
+    _details->GetBorder().SetBuiltInColors(styleKey(), std::array { glm::vec4(0.35f, 0.35f, 0.45f, 1.0f) }, ColorState::Enabled);
     _details->SetTrackAlternatingColorCount(2);
     std::vector<glm::vec4>
         evenRowColors {{ 0.1f, 0.1f, 0.13f, 1.0f }},
         oddRowColors {{ 0.13f, 0.13f, 0.17f, 1.0f }},
         innerBorderColors {{ 0.18f, 0.18f, 0.22f, 1.0f }};
-    _details->GetTrackStyle(0).SetBackgroundColors(evenRowColors);
-    _details->GetTrackStyle(1).SetBackgroundColors(oddRowColors);
-    _details->GetTrackStyle(0).SetInnerBorderColors(innerBorderColors);
-    _details->GetTrackStyle(1).SetInnerBorderColors(innerBorderColors);
-    _details->GetCellStyle().SetInnerBorderWidth(1.0f);
+    _details->GetTrackStyle(0).SetBuiltInBackgroundColors(styleKey(), evenRowColors);
+    _details->GetTrackStyle(1).SetBuiltInBackgroundColors(styleKey(), oddRowColors);
+    _details->GetTrackStyle(0).SetBuiltInInnerBorderColors(styleKey(), innerBorderColors);
+    _details->GetTrackStyle(1).SetBuiltInInnerBorderColors(styleKey(), innerBorderColors);
+    _details->GetCellStyle().SetBuiltInInnerBorderWidth(styleKey(), 1.0f);
     _details->GetCellStyle().SetFontFamily(_font._Family, _font._Size, FontSizeUnit::Pixels, _font._Slant, _font._Weight);
     _details->GetCellStyle().SetTextAlignment(TextAlignment::Left);
     _details->GetCellStyle().SetTextPadding(6.0f);

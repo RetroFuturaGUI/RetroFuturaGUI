@@ -51,7 +51,6 @@ The framework is designed for cross-platform use, and its logic can be compiled 
 - Popups
   - A popup opens centered over the one below it, so a nested popup of the same size covers it completely
   - Enter does nothing yet: it waits for the popup types, whose default action it will take (OK for messages, warnings and errors)
-  - Styling is partly there: a popup's window takes flavors like every window (Window::AddFlavor, or .default for all of them) for its background, border and transitions. Its bar has no styling of its own yet, and the library's own popups (the FileExplorer and its prompts) set fixed colors as their own values, which flavors can't override
   - Linux is untested: the owner is set with XSetTransientForHint, and whether the popup stays off the taskbar is up to the window manager
 - Third dimension
   - Rectangles, text and textures keep a two-dimensional size: they are flat, and the frame tilts them, so a third size component would go unused
@@ -160,6 +159,7 @@ The framework is designed for cross-platform use, and its logic can be compiled 
 - Popups
   - Popup&lt;Ts...&gt;: a window of its own that closes with values of any types (Close, Connect_OnResult) or is dismissed (Dismiss, Connect_OnDismiss)
   - One popup stack per window; the windows below the top popup take no input, like under a native modal dialog. The top popup takes the keys, and Escape dismisses it (a popup that takes Escape itself, like the FileExplorer, overrides dismissesOnEscape)
+  - Styled like everything else: a popup's window takes flavors as every window does (Window::AddFlavor, or .default for all of them), and its bar is one of its scene's widgets. The FileExplorer and its prompts give their widgets a built-in look, so flavors and .default override it; their fonts, alignment and padding stay their own, since the explorer's layout is measured from them, and a toggle that is on keeps its accent color
 - Animation
   - Transitions for colors (the effects' too), corner radii, positions, sizes, rotations, opacity, border gaps and the effects' angle, distance, blur, width and scale (Effects; an angle turns the way the numbers run, so 0 to 360 is a full turn): a global default per property (Transitions::SetDefault), overridable per widget (SetTransition), with easing (Linear, EaseIn, EaseOut, EaseInOut). Off until set
   - Worked out from the clock, so they run the same at any frame rate; layout changes stay instant

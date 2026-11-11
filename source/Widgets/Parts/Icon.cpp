@@ -17,6 +17,12 @@ void RetroFuturaGUI::Icon::SetColors(std::span<const glm::vec4> colors, const Co
     applyFill();
 }
 
+void RetroFuturaGUI::Icon::SetBuiltInColors(const StyleKey&, std::span<const glm::vec4> colors, const ColorState state)
+{
+    _colors.SetBuiltIn(colors, state);
+    applyFill();
+}
+
 const std::vector<glm::vec4>& RetroFuturaGUI::Icon::GetColors(const ColorState state) const
 {
     return _colors.GetOwn(state);

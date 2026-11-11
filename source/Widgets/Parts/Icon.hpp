@@ -86,6 +86,10 @@ namespace RetroFuturaGUI
         /// @brief Shows the colors of the given state
         void SetColorState(const ColorState state);
 
+    //Called by the widget that owns the part, which alone holds a StyleKey
+        /// @brief Sets the built-in colors for a state. The widget type's own look, which everything else overrides
+        void SetBuiltInColors(const StyleKey& key, std::span<const glm::vec4> colors, const ColorState state);
+
     private:
         void restyle() override;
 
