@@ -31,7 +31,8 @@ bool RetroFuturaGUI::Window::enterTab(WindowTab* tab)
     if(_tabHost == tab)
         return false;
 
-    if(holdsTabbedWindows() || host->IsInTab())
+    //Tabs nest, but a window can't go into a tab inside itself
+    if(host->isInTabsOf(this))
         return false;
 
     Undock(); //Leaves its docking group, or the tab it was in, and lets go of the windows docked to it
@@ -135,14 +136,19 @@ void RetroFuturaGUI::Window::drawInHost(const ScreenRect& contentArea, const glm
 
 glm::ivec4 RetroFuturaGUI::Window::placeInHost(const ScreenRect& contentArea, const glm::ivec2& screenPosition, const glm::vec4& cornerRadii)
 {
+    //A host in a tab itself is drawn into its own host's framebuffer, where its content area starts at its own origin
+    const Window* host { getTabHostWindow() };
+    const glm::ivec2 hostOrigin { host && host->IsInTab() ? host->_hostFramebufferOrigin : glm::ivec2(0) };
+
     //Left, bottom, width and height in the drawing window's framebuffer
     const glm::ivec4 area
     {
-        static_cast<i32>(std::lround(contentArea._Origin.x)),
-        static_cast<i32>(std::lround(contentArea._Origin.y)),
+        hostOrigin.x + static_cast<i32>(std::lround(contentArea._Origin.x)),
+        hostOrigin.y + static_cast<i32>(std::lround(contentArea._Origin.y)),
         std::max(static_cast<i32>(std::lround(contentArea._Extent.x)), 1),
         std::max(static_cast<i32>(std::lround(contentArea._Extent.y)), 1)
     };
+    _hostFramebufferOrigin = glm::ivec2(area.x, area.y);
 
     //The hidden native window lies right under the content area, so its widgets read the cursor as they do on the window itself
     setDockedGeometry(screenPosition, glm::ivec2(area.z, area.w));
@@ -197,26 +203,48 @@ void RetroFuturaGUI::Window::followCursor()
     glfwSetWindowPos(_window, windowX + slip.x, windowY + slip.y);
 }
 
-bool RetroFuturaGUI::Window::holdsTabbedWindows() const
-{
-    for(const WindowTab* tab : _windowTabs)
-    {
-        if(!tab)
-            continue;
-
-        if(0 < tab->GetWindowCount())
-            return true;
-    }
-
-    return false;
-}
-
 RetroFuturaGUI::Window* RetroFuturaGUI::Window::getTabHostWindow() const
 {
     if(!_tabHost)
         return nullptr;
 
     return _tabHost->GetHostWindow();
+}
+
+bool RetroFuturaGUI::Window::isInTabsOf(const Window* window) const
+{
+    if(!window)
+        return false;
+
+    for(const Window* host { getTabHostWindow() }; host; host = host->getTabHostWindow())
+    {
+        if(host == window)
+            return true;
+    }
+
+    return false;
+}
+
+void RetroFuturaGUI::Window::resetShownTabs()
+{
+    //Each WindowTab marks itself again when it interacts. One in an inactive scene or an unselected tab, which doesn't, takes no dropped windows
+    for(WindowTab* tab : _windowTabs)
+    {
+        if(!tab)
+            continue;
+
+        tab->_isShown = false;
+
+        for(uSize index = 0; index < tab->GetWindowCount(); ++index)
+        {
+            Window* window { tab->GetWindow(index) };
+
+            if(!window)
+                continue;
+
+            window->resetShownTabs();
+        }
+    }
 }
 
 bool RetroFuturaGUI::Window::isRegisteredWindowTab(const WindowTab* tab)

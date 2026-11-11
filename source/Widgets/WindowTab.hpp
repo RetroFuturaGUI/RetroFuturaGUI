@@ -38,8 +38,8 @@ namespace RetroFuturaGUI
     //Windows
         /// @brief Docks a window into a new tab at the end of the strip, and selects it. A window docked to another window's
         ///        edge leaves that group first, and one in another WindowTab leaves that.
-        /// @return false when the window is null or already here, is a popup's window, is the window this WindowTab lives in, or
-        ///         holds windows in tabs of its own.
+        /// @return false when the window is null or already here, is a popup's window, or is the window this WindowTab lives in or
+        ///         one holding it, directly or in tabs further in. A window holding tabs of its own takes them along: tabs nest
         bool AddWindow(Window* window);
 
         /// @brief Docks a window into a new tab at the given place among the fields, and selects it.

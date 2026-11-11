@@ -579,7 +579,8 @@ namespace RetroFuturaGUI
 
         /// @brief Keeps the hidden native window right under the content area, so the cursor reads the same as on the window
         ///        itself, and lays the window out at the area's size.
-        /// @return the content area in whole framebuffer pixels: left, bottom, width and height
+        /// @return the content area in whole framebuffer pixels: left, bottom, width and height. A host that is in a tab itself is
+        ///         drawn into its own host's framebuffer, so the area is shifted by where the host lies there
         glm::ivec4 placeInHost(const ScreenRect& contentArea, const glm::ivec2& screenPosition, const glm::vec4& cornerRadii);
 
         /// @brief Moves the window with the cursor, held at the given point, until the left button is let go, then ends the drag,
@@ -590,11 +591,15 @@ namespace RetroFuturaGUI
         /// @brief Called after each draw: keeps the cursor at the grab point while the window follows it.
         void followCursor();
 
-        /// @brief Whether any of this window's WindowTabs holds windows.
-        bool holdsTabbedWindows() const;
-
         /// @brief The window whose WindowTab this one is docked into, or nullptr.
         Window* getTabHostWindow() const;
+
+        /// @brief Whether this window lies in one of the given window's tabs, directly or in tabs further in.
+        bool isInTabsOf(const Window* window) const;
+
+        /// @brief Marks this window's WindowTabs not shown, and those of the windows in them, so only the ones that interact this
+        ///        frame count as shown. Called by a window that isn't in a tab, before its content interacts
+        void resetShownTabs();
 
         /// @brief Whether the WindowTab still lives in one of the windows, so a pointer kept from an earlier frame is safe to use.
         static bool isRegisteredWindowTab(const WindowTab* tab);
@@ -737,6 +742,7 @@ namespace RetroFuturaGUI
             _untabbedSize { 0 },
             _cursorGrabPoint { 0 }; //where the cursor holds the window while it follows the cursor after being pulled out of a tab
         glm::vec4 _tabCornerRadii { 0.0f }; //the content area's radii, which the window takes while it is in a tab
+        glm::ivec2 _hostFramebufferOrigin { 0 }; //where its content area lies in the framebuffer it is drawn into while in a tab
         bool _followsCursor { false }; //whether window should move when pulled out off a tab
 
     //Layout file

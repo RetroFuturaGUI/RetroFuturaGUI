@@ -156,8 +156,8 @@ RetroFuturaGUI::Window::DockSnap RetroFuturaGUI::Window::findTabSnap() const
     if(!_window)
         return {};
 
-    if(holdsTabbedWindows() || IsDocked())
-        return {}; //a window carrying docked windows along would have to leave them behind
+    if(IsDocked())
+        return {}; //a window carrying docked windows along would have to leave them behind. Its own tabs go along
 
     i32
         cursorX { 0 },
@@ -179,13 +179,14 @@ RetroFuturaGUI::Window::DockSnap RetroFuturaGUI::Window::findTabSnap() const
         if(!target->_window)
             continue;
 
-        if(target->IsInTab() || target->isDockedTo(this))
-            continue; //a window of this one's group moves along with it
+        if(target->isDockedTo(this) || target->isInTabsOf(this))
+            continue; //a window of this one's group or tabs moves along with it
 
         if(GLFW_TRUE == glfwGetWindowAttrib(target->_window, GLFW_ICONIFIED))
             continue;
 
-        if(GLFW_FALSE == glfwGetWindowAttrib(target->_window, GLFW_VISIBLE))
+        //A window in a tab is drawn by its host, its own native window hidden. Its strips count while they show (_isShown)
+        if(!target->IsInTab() && GLFW_FALSE == glfwGetWindowAttrib(target->_window, GLFW_VISIBLE))
             continue;
 
         for(WindowTab* tab : target->_windowTabs)

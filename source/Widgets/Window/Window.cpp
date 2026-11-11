@@ -142,14 +142,7 @@ void RetroFuturaGUI::Window::Interact()
     if(IsInTab())
         return;
 
-    //Each WindowTab marks itself again when it interacts. One in an inactive scene, which doesn't, takes no dropped windows.
-    for(WindowTab* tab : _windowTabs)
-    {
-        if(!tab)
-            continue;
-
-        tab->_isShown = false;
-    }
+    resetShownTabs(); //before the content, whose WindowTabs mark themselves shown again as they interact, nested ones too
 
     pollInput();
     emitDroppedFiles(); //before the scenes, so a slot's changes show in this frame
