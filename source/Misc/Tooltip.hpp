@@ -91,7 +91,7 @@ namespace RetroFuturaGUI
         inline static f32 _defaultFontSize { FontManager::ToPixels(16.0f, FontSizeUnit::Points) }; //in pixels, as every stored font size
         inline static PlatformBridge::Fonts::Slant _defaultFontSlant { PlatformBridge::Fonts::Slant::Roman };
         inline static PlatformBridge::Fonts::Weight _defaultFontWeight { PlatformBridge::Fonts::Weight::Normal };
-        inline static u32 _defaultFontVersion { 0 };
+        inline static u32 _defaultFontVersion { 1 }; //above a new tooltip's 0, so it takes a font even when no default was set
 
         static constexpr const f32
             _zStep { 0.01f },

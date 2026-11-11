@@ -327,6 +327,17 @@ const RetroFuturaGUI::FontInfo* RetroFuturaGUI::FontManager::GetFontInfo(std::st
     return nullptr;
 }
 
+std::string RetroFuturaGUI::FontManager::GetDefaultFontFamily()
+{
+    if(!_defaultFontFamily.empty())
+        return _defaultFontFamily;
+
+    if(!_fonts.empty())
+        return _fonts.front()._FontProperty._Name;
+
+    return std::string(_lastResortFamily);
+}
+
 void RetroFuturaGUI::FontManager::SetDefaultFont(std::string_view fontFamily, const f32 size, const FontSizeUnit sizeUnit, const PlatformBridge::Fonts::Slant slant, const PlatformBridge::Fonts::Weight weight, const u32 codePointFirst, const u32 codePointLast)
 {
     _defaultFontFamily = fontFamily;

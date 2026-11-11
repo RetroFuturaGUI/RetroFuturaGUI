@@ -145,13 +145,13 @@ void RetroFuturaGUI::ContextMenu::draw()
 
 void RetroFuturaGUI::ContextMenu::AddItem(std::string_view itemName, std::string_view node, std::string_view imagePath, std::string_view text, std::string_view note)
 {
-    _entries.push_back(MenuEntry { ._IsNode = false, ._Name = std::string(itemName), ._Node = std::string(node), ._ImagePath = std::string(imagePath), ._Text = std::string(text), ._Note = std::string(note) });
+    _entries.push_back(MenuEntry { ._Name = std::string(itemName), ._Node = std::string(node), ._ImagePath = std::string(imagePath), ._Text = std::string(text), ._Note = std::string(note), ._IsNode = false });
     addEntry(_entries.back());
 }
 
 void RetroFuturaGUI::ContextMenu::AddNode(std::string_view newNodeName, std::string_view node)
 {
-    _entries.push_back(MenuEntry { ._IsNode = true, ._Name = std::string(newNodeName), ._Node = std::string(node), ._ImagePath = {}, ._Text = {}, ._Note = {} });
+    _entries.push_back(MenuEntry { ._Name = std::string(newNodeName), ._Node = std::string(node), ._ImagePath = {}, ._Text = {}, ._Note = {}, ._IsNode = true });
     addEntry(_entries.back());
 }
 

@@ -116,7 +116,8 @@ void RetroFuturaGUI::Tooltip::applyDefaultFont()
     if(_defaultFontVersion == _appliedDefaultFontVersion)
         return;
 
-    _text.SetFontFamily(_defaultFontFamily, _defaultFontSize, FontSizeUnit::Pixels, _defaultFontSlant, _defaultFontWeight);
+     const std::string family { _defaultFontFamily.empty() ? FontManager::GetDefaultFontFamily() : _defaultFontFamily };
+    _text.SetFontFamily(family, _defaultFontSize, FontSizeUnit::Pixels, _defaultFontSlant, _defaultFontWeight);
     setSize();
     _appliedDefaultFontVersion = _defaultFontVersion;
 }

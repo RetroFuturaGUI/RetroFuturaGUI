@@ -136,6 +136,9 @@ namespace RetroFuturaGUI
         /// @return A pointer to the matching FontInfo, or nullptr if it couldn't be loaded.
         static const FontInfo* GetFontInfo(std::string_view fontFamily, const f32 size, const FontSizeUnit sizeUnit, const PlatformBridge::Fonts::Slant slant, const PlatformBridge::Fonts::Weight weight);
 
+        /// @brief Returns the family shown in place of one that isn't installed. The default font (SetDefaultFont), else the first font loaded, else Arial (DejaVu Sans on Linux)
+        static std::string GetDefaultFontFamily();
+
         /// @brief Sets the font shown in place of a family that isn't installed, loading it.
         static void SetDefaultFont(std::string_view fontFamily, const f32 size, const FontSizeUnit sizeUnit, const PlatformBridge::Fonts::Slant slant = PlatformBridge::Fonts::Slant::Roman, const PlatformBridge::Fonts::Weight weight = PlatformBridge::Fonts::Weight::Normal, const u32 codePointFirst = BasicLatinFirst, const u32 codePointLast = BasicLatinLast);
 

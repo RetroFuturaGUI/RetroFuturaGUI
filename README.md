@@ -31,8 +31,6 @@ The framework is designed for cross-platform use, and its logic can be compiled 
 |    | Environment Lights, Node | | |
 
 ### WIP in detail
-- Tooltip
-  - A tooltip given no font of its own while no default is set (Tooltip::SetDefaultFontFamily) shows an empty box; the ContextMenu falls back to the first installed font instead
 - EnvironmentView
   - The picture is drawn at the view's size as laid out, so a view brought much closer by its window's perspective shows it magnified
 - SeparatorLine
@@ -158,7 +156,7 @@ The framework is designed for cross-platform use, and its logic can be compiled 
   - Video: plays a video with its sound (Play, Pause, Stop, Seek) and hands out the sound's levels and frequency bands
   - SvgImage: shows an SVG at any size, its named paths recolorable
   - Model: loads 3D models with their textures (Assimp)
-  - Tooltip and ContextMenu: every widget can have a tooltip (SetTooltipText) and a context menu of items and submenus (AddContextMenuItem, AddContextMenuNode); a click on an item closes the menu and reports its index path from the root list down (Connect_OnItemClicked, GetClickedPath), a submenu's row only opens its list. Both open only in the window the cursor is in, at the cursor: for a widget seen through an EnvironmentView, in the view's window
+  - Tooltip and ContextMenu: every widget can have a tooltip (SetTooltipText), in its own font, the default tooltip font (Tooltip::SetDefaultFontFamily), or else FontManager's default font (FontManager::GetDefaultFontFamily) and a context menu of items and submenus (AddContextMenuItem, AddContextMenuNode); a click on an item closes the menu and reports its index path from the root list down (Connect_OnItemClicked, GetClickedPath), a submenu's row only opens its list. Both open only in the window the cursor is in, at the cursor: for a widget seen through an EnvironmentView, in the view's window
 - Containers
   - Every container builds and owns its widgets (AddWidget&lt;T&gt;(name, placement, arguments)), finds them by name (GetWidget&lt;T&gt;) and removes them safely, even from their own slots (RemoveWidget)
   - Lasagna (three-dimensional successor of Grid): lays widgets out in rows, columns and layers, with spans and sizing policies. SetAxisDefinition (or one axis at a time) changes the tracks, their number included, keeping each widget in its cell and span; a widget reaching past the new last track is removed, and its name returned
