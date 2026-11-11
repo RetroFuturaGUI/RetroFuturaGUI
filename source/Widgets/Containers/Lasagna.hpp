@@ -198,6 +198,7 @@ namespace RetroFuturaGUI
         CellArray _lasagna {};
         std::vector<CellArray> _retiredCells {};
         static constinit const u32 _maxCountPerAxis { MaxTracksPerAxis };
+        static constexpr f32 _minimumLayerDepth { 1.0f }; //a widget sits in the middle of its layer and stacks its parts up to 0.5 px in front (a text box's caret)
         AxisDefinition _axisDefinition {};
         std::unique_ptr<Frame> _debugBorder { nullptr };
         std::vector<glm::vec4> _debugBorderColor { glm::vec4(1.0f) };
@@ -225,6 +226,10 @@ namespace RetroFuturaGUI
 
         void drawDebugLines(const LasagnaCell& cell);
         void updateSpanSize(LasagnaCell& originCell, const uSize row, const uSize column, const uSize layer);
+        /// @brief How deep the layer is: its share of the Lasagna's depth, but never less than a widget needs for its own
+        ///        parts. Under perspective a window's depth is 1 px, so many or nested layers would otherwise get slices thinner
+        ///        than a widget's own stacking, and the parts of neighbouring layers would mix. A single layer keeps its share
+        f32 getLayerDepth(const uSize layer) const;
         void resizeCells();
         void resizeWidget(const LasagnaCell& cell);
         void resizeAllWidgets();

@@ -31,17 +31,9 @@ The framework is designed for cross-platform use, and its logic can be compiled 
 |    | Environment Lights, Node | | |
 
 ### WIP in detail
-- WindowTab
-  - The clip planes around a WindowTab (a ScrollView or a clipping Environment it lies in) don't cut the tabbed window's content, which is drawn in a space of its own; a turned WindowTab's docking preview is the box around the turned content area
-  - Linux is untested: a window in a tab keeps its native window, hidden, under the content area for its input, and whether X11 moves and reports an unmapped window the same way is unverified
 - Popups
-  - A popup opens centered over the one below it, so a nested popup of the same size covers it completely
   - Linux is untested: the owner is set with XSetTransientForHint, and whether the popup stays off the taskbar is up to the window manager
 - Third dimension
-  - Rectangles, text and textures keep a two-dimensional size: they are flat, and the frame tilts them, so a third size component would go unused
-  - Tooltips and context menus stay flat over a tilted widget, by design
-  - Nested clips in one frame and depth cut to their overlap, but only two differently tilted ones count at once: a third drops the outermost
-  - Under perspective, layouts stack within 1 px (Projection::GetDepth), so a Lasagna with many layers gives each a slice close to the widgets' own stacking steps
   - A tilted widget is depth-tested against everything drawn, so a part tilting toward the eye draws over what lies in front of the widget's plane, the window bar included
   - A widget seen exactly edge-on takes no pointer, and under perspective a part projected past the window's edge can't be reached there
 - SvgImage
@@ -117,7 +109,7 @@ The framework is designed for cross-platform use, and its logic can be compiled 
   - Tooltip and ContextMenu: every widget can have a tooltip (SetTooltipText), in its own font, the default tooltip font (Tooltip::SetDefaultFontFamily), or else FontManager's default font (FontManager::GetDefaultFontFamily) and a context menu of items and submenus (AddContextMenuItem, AddContextMenuNode); a click on an item closes the menu and reports its index path from the root list down (Connect_OnItemClicked, GetClickedPath), a submenu's row only opens its list. Both open only in the window the cursor is in, at the cursor: for a widget seen through an EnvironmentView, in the view's window
 - Containers
   - Every container builds and owns its widgets (AddWidget&lt;T&gt;(name, placement, arguments)), finds them by name (GetWidget&lt;T&gt;) and removes them safely, even from their own slots (RemoveWidget)
-  - Lasagna (three-dimensional successor of Grid): lays widgets out in rows, columns and layers, with spans and sizing policies. SetAxisDefinition (or one axis at a time) changes the tracks, their number included, keeping each widget in its cell and span; a widget reaching past the new last track is removed, and its name returned
+  - Lasagna (three-dimensional successor of Grid): lays widgets out in rows, columns and layers, with spans and sizing policies. SetAxisDefinition (or one axis at a time) changes the tracks, their number included, keeping each widget in its cell and span; a widget reaching past the new last track is removed, and its name returned; with two or more layers each is at least 1 px deep, so the widgets of neighbouring layers never mix, under perspective (1 px for the whole window) too
   - Prefab: a group of widgets in its own Lasagna, treated as one widget; its rows, columns and layers can be changed after construction, as a Lasagna's
   - Environment: a 3D room in which widgets and models sit freely, scaled into its rectangle, optionally clipped, with its own perspective if wanted
   - EnvironmentView: shows an Environment, usually one in another window, through a camera of its own (SetWorld, SetCamera(eye, target, up) in the world's units, SetPerspective(fieldOfView) or SetOrthographic(height)): one world, owned once, seen from several windows, so whatever changes in it shows in every view. The pointer over a view reaches the world's widgets through the camera: hover, clicks, drags, the wheel, typing and open drop-down lists work there as in their own window, once a frame wherever the pointer is, and a press keeps going where it began. The world is drawn into a picture the view shows like any widget, so it tilts, fades and is cut with what it sits in, at as many pixels as the view spans in its window, tilt and perspective included, so it stays sharp up close; a ScrollView or Table in the world cuts its content in a view too, while an Environment's own clipping keeps to its rectangle in its window
@@ -263,6 +255,12 @@ The framework is designed for cross-platform use, and its logic can be compiled 
 <li>SVGs on meshes, once they are needed: SvgTexture keeps only the SVG data - the picture, the masks of recolored paths and their colors - and the geometry that shows it binds to that data in one universal way, whether it is the quad inside SvgImage or a Mesh. Today SvgTexture owns the quad it draws on, so a Mesh can't show a recolored SVG</li>
 <li>Custom icons from images</li>
 <li>Tab: the strip runs along the top only; strips along the other edges</li>
+<li>WindowTab</li>
+  <ul>
+  <li>The clip planes around a WindowTab (a ScrollView or a clipping Environment it lies in) don't cut the tabbed window's content, which is drawn in a space of its own; a turned WindowTab's docking preview is the box around the turned content area</li>
+  <li>Linux is untested: a window in a tab keeps its native window, hidden, under the content area for its input, and whether X11 moves and reports an unmapped window the same way is unverified</li>
+  </ul>
+<li>Clipping: nested clips in one frame and depth cut to their overlap, but only two differently tilted ones count at once: a third drops the outermost, since the shaders measure the 8 clip planes GL guarantees. Cutting through the stencil buffer instead would lift the limit (8 bits of nesting) at a draw per clipping container; whether that complicates things later is open</li>
 <li>Audio formats, once they're needed</li>
   <ul>
   <li>MIDI (needs a synthesizer such as TinySoundFont - and a SoundFont whose sample sources are clear for commercial use) and chiptune formats each need a new dependency</li>

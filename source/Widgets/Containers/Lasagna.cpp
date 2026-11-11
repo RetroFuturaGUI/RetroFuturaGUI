@@ -1,4 +1,5 @@
 #include "Lasagna.hpp"
+#include <algorithm>
 #include <optional>
 #include <utility>
 
@@ -420,6 +421,20 @@ void RetroFuturaGUI::Lasagna::updateSpanSize(LasagnaCell& originCell, const uSiz
     originCell._SizeNormalized = sizeNormalized;
 }
 
+f32 RetroFuturaGUI::Lasagna::getLayerDepth(const uSize layer) const
+{
+    if(layer >= _axisDefinition._LayerDefinition.size())
+        return _minimumLayerDepth;
+
+    const f32 share { _axisDefinition._LayerDefinition[layer] * _size.z };
+
+    //A single layer has no neighbour to mix with, so it keeps its share, even none (a scene's root lies flat at depth 0)
+    if(2 > _axisDefinition._LayerDefinition.size())
+        return share;
+
+    return std::max(share, _minimumLayerDepth);
+}
+
 void RetroFuturaGUI::Lasagna::resizeCells()
 {
     for(uSize row = 0; row < _axisDefinition._RowDefinition.size(); ++row)
@@ -440,13 +455,13 @@ void RetroFuturaGUI::Lasagna::resizeCells()
                     posY += _axisDefinition._RowDefinition[i] * _size.y;
 
                 for(uSize i = 0; i < layer; ++i)
-                    posZ += _axisDefinition._LayerDefinition[i] * _size.z;
+                    posZ += getLayerDepth(i);
 
                 posZ = -posZ; // Higher layer indices sit further from the camera (behind lower layers),
 
                 _lasagna[row][column][layer]._PositionPixels = glm::vec3(posX, posY, posZ);
                 _lasagna[row][column][layer]._PositionNormalized = glm::vec3(posX / _size.x, posY / _size.y, posZ / _size.z);
-                _lasagna[row][column][layer]._SizePixels = glm::vec3(_axisDefinition._ColumnDefinition[column] * _size.x, _axisDefinition._RowDefinition[row] * _size.y, _axisDefinition._LayerDefinition[layer] * _size.z);
+                _lasagna[row][column][layer]._SizePixels = glm::vec3(_axisDefinition._ColumnDefinition[column] * _size.x, _axisDefinition._RowDefinition[row] * _size.y, getLayerDepth(layer));
                 _lasagna[row][column][layer]._SizeNormalized = glm::vec3(_axisDefinition._ColumnDefinition[column], _axisDefinition._RowDefinition[row], _axisDefinition._LayerDefinition[layer]);
             }
         }
