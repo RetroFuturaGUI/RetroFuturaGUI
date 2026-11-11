@@ -7,6 +7,8 @@
 #include "IncludeHelper.hpp"
 #include "Label.hpp"
 #include "PlatformBridge.hpp"
+#include "EnvironmentView.hpp"
+#include "Window.hpp"
 #include "Prefab.hpp"
 #include <algorithm>
 #include <memory>
@@ -14,7 +16,7 @@
 #include <string_view>
 
 RetroFuturaGUI::ContextMenu::ContextMenu(Projection* projection, IWidget* widget)
-    : _projection(*projection)
+    : _hostProjection(*projection)
 {
     if(!projection)
         return;
@@ -39,15 +41,8 @@ RetroFuturaGUI::ContextMenu::ContextMenu(Projection* projection, IWidget* widget
         }
     }
 
-    _items = std::make_unique<ExtendedComboBox>(_rootNodeName, &_projection, _widget, _widget->GetWidgetTypeID(), _widget->GetParentWindow());
-
-    if(_items)
-    {
-        _items->SetLabelHiddenWhenOpen(true);
-        _items->SetTransition(TransitionProperty::Opacity, Transition {}); //its list fades with the menu (not on its own as well)
-        followNode(*_items);
-    }
-
+    _hostWindow = _widget->GetParentWindow();
+    buildItems(_hostWindow);
     useWidgetTransitions();
 
     _border.SetWidth(_defaultBorderWidth);
@@ -92,13 +87,14 @@ void RetroFuturaGUI::ContextMenu::Update()
         return;
     }
 
-    _shownContextMenus[_widget->GetParentWindow()] = this;
+    _shownContextMenus[_hostWindow] = this; //only where it opened
 
     if(!_isShown)
         return; //fading out, it takes no more input
 
     //Placed before the items take the input, so they test it where they are drawn, and at once, whatever transitions they have
     const Transitions::InstantScope instant { true };
+    followHostWindow();
     applyDefaultFont();
     setPosition();
     _items->SetSize(glm::vec3(_background.GetSize(), 0.01f));
@@ -142,20 +138,50 @@ void RetroFuturaGUI::ContextMenu::draw()
     if(!_items)
         return;
 
+    followHostWindow();
     _items->Draw();
     IDropDown::DrawShown();
 }
 
 void RetroFuturaGUI::ContextMenu::AddItem(std::string_view itemName, std::string_view node, std::string_view imagePath, std::string_view text, std::string_view note)
 {
+    _entries.push_back(MenuEntry { ._IsNode = false, ._Name = std::string(itemName), ._Node = std::string(node), ._ImagePath = std::string(imagePath), ._Text = std::string(text), ._Note = std::string(note) });
+    addEntry(_entries.back());
+}
+
+void RetroFuturaGUI::ContextMenu::AddNode(std::string_view newNodeName, std::string_view node)
+{
+    _entries.push_back(MenuEntry { ._IsNode = true, ._Name = std::string(newNodeName), ._Node = std::string(node), ._ImagePath = {}, ._Text = {}, ._Note = {} });
+    addEntry(_entries.back());
+}
+
+void RetroFuturaGUI::ContextMenu::addEntry(const MenuEntry& entry)
+{
     if(!_items)
         return;
 
-    ExtendedComboBox* parentNode { iterateNode(_items.get(), node) };
+    ExtendedComboBox* parentNode { iterateNode(_items.get(), entry._Node) };
 
     if(!parentNode)
         return;
 
+    if(entry._IsNode)
+    {
+        ExtendedComboBox* node { parentNode->AddItem<ExtendedComboBox>(entry._Name) };
+
+        if(!node)
+            return;
+
+        node->GetPreview().SetString(entry._Name, false);
+        followNode(*node);
+        return;
+    }
+
+    const std::string_view
+        itemName { entry._Name },
+        imagePath { entry._ImagePath },
+        text { entry._Text },
+        note { entry._Note };
     const AxisDefinition itemLayout {
         ._RowDefinition = { 1.0f },
         ._ColumnDefinition = { 0.15f, 0.6f, 0.25f },
@@ -188,25 +214,6 @@ void RetroFuturaGUI::ContextMenu::AddItem(std::string_view itemName, std::string
         if(!_fontFamily.empty())
             noteLabel->GetText().SetFontFamily(_fontFamily, _fontSize, FontSizeUnit::Pixels, _fontSlant, _fontWeight);
     }
-}
-
-void RetroFuturaGUI::ContextMenu::AddNode(std::string_view newNodeName, std::string_view node)
-{
-    if(!_items)
-        return;
-
-    ExtendedComboBox* parentNode { iterateNode(_items.get(), node) };
-
-    if(!parentNode)
-        return;
-
-    ExtendedComboBox* item { parentNode->AddItem<ExtendedComboBox>(newNodeName) };
-
-    if(!item)
-        return;
-
-    item->GetPreview().SetString(newNodeName, false);
-    followNode(*item);
 }
 
 void RetroFuturaGUI::ContextMenu::Connect_OnItemClicked(const typename Signal<std::vector<uSize>>::Slot& slot, const bool async)
@@ -308,6 +315,80 @@ void RetroFuturaGUI::ContextMenu::closeLists(ExtendedComboBox& node)
 
         closeLists(*childNode);
     }
+}
+
+void RetroFuturaGUI::ContextMenu::open(const PointerState& pointer)
+{
+    //At the cursor in the window it is in: through a view, the view's window, not the world's
+    const std::optional<EnvironmentView::ViewPointer>& viewPointer { EnvironmentView::getViewPointer() };
+    const bool isThroughView { viewPointer && _widget->isInside(viewPointer->_World) };
+    _hostWindow = isThroughView ? viewPointer->_Window : _widget->GetParentWindow();
+    _pointerPosition = isThroughView ? viewPointer->_ViewWindowPoint : pointer._WindowPosition;
+    _depth = isThroughView ? 0.0f : _widget->GetPosition().z;
+
+    if(_hostWindow != _itemsWindow)
+        buildItems(_hostWindow); //its rows read the mouse of the window they belong to
+
+    followHostWindow();
+    _isShown = true;
+
+    if(!_items)
+        return;
+
+    _items->SetDropDownOpen(true);
+}
+
+void RetroFuturaGUI::ContextMenu::buildItems(GLFWwindow* window)
+{
+    //Under the window itself rather than the widget, so only that window's pointer filter applies: not those of the
+    //containers around the widget, nor a world's the widget is seen in through a view
+    Window* host { Window::FromGlfwWindow(window) };
+    _items = std::make_unique<ExtendedComboBox>(_rootNodeName, &_hostProjection, host, WidgetTypeID::Window, window);
+    _itemsWindow = window;
+
+    if(!_items)
+        return;
+
+    _items->SetLabelHiddenWhenOpen(true);
+    _items->SetTransition(TransitionProperty::Opacity, Transition {}); //its list fades with the menu (not on its own as well)
+    followNode(*_items);
+
+    for(const MenuEntry& entry : _entries)
+        addEntry(entry);
+
+    if(_fontFamily.empty())
+        return;
+
+    _items->SetFontFamily(_fontFamily, _fontSize, FontSizeUnit::Pixels, _fontSlant, _fontWeight);
+    setItemFont(_items.get());
+}
+
+void RetroFuturaGUI::ContextMenu::followHostWindow()
+{
+    const Window* host { Window::FromGlfwWindow(_hostWindow) };
+
+    if(!host)
+        return;
+
+    const Projection* projection { host->GetProjection() };
+
+    if(!projection)
+        return;
+
+    _hostProjection = *projection;
+}
+
+bool RetroFuturaGUI::ContextMenu::isPointerOverMenu() const
+{
+    if(!_items)
+        return false;
+
+    const PointerState menuPointer { _items->readPointer() }; //its rows' window's
+
+    if(!menuPointer._HasPosition)
+        return false;
+
+    return _items->isPointInside(menuPointer._WindowPosition) || _items->IsPointInsideOpenDropDown(menuPointer._WindowPosition);
 }
 
 void RetroFuturaGUI::ContextMenu::hide()
@@ -465,7 +546,7 @@ void RetroFuturaGUI::ContextMenu::setPosition()
 
     const glm::vec2
         halfSize { _background.GetSize() * 0.5f },
-        resolution { _projection.GetResolution() };
+        resolution { _hostProjection.GetResolution() };
 
     // Centered above the cursor's tip and kept inside the window: it slides sideways at the left and right edges
     // and down at the top one. World space runs bottom-up, so above is +Y
@@ -473,7 +554,7 @@ void RetroFuturaGUI::ContextMenu::setPosition()
     const glm::vec3 center {
         std::max(halfSize.x, std::min(_pointerPosition.x, resolution.x - halfSize.x)),
         std::max(halfSize.y, std::min(_pointerPosition.y + _cursorDistance + halfSize.y, resolution.y - halfSize.y)),
-        _widget->GetPosition().z };
+        _depth };
 
     _background.SetPosition(center);
     _border.SetPosition(center + glm::vec3(0.0f, 0.0f, _zStep));
@@ -485,34 +566,22 @@ void RetroFuturaGUI::ContextMenu::interact()
     if(!_widget)
         return;
 
-    const PointerState pointer { _widget->readPointer() };
+    const PointerState pointer { _widget->readPointer() }; //through a view the widget is seen in, if the cursor is over one
     const bool rightButtonPressedThisFrame { pointer._RightButtonPressed && !_wasRightButtonPressed };
     _wasRightButtonPressed = pointer._RightButtonPressed;
-
-    if(!pointer._HasPosition)
-        return;
-
-    const bool isOverWidget { !pointer._IsCaptured && _widget->isPointInside(pointer._Position) };
-    const bool isOverMenu {
-        _isShown && _items
-        && (_items->isPointInside(pointer._WindowPosition) || _items->IsPointInsideOpenDropDown(pointer._WindowPosition))
-    };
+    const bool
+        isOverWidget { pointer._HasPosition && !pointer._IsCaptured && _widget->isPointInside(pointer._Position) },
+        isOverMenu { _isShown && isPointerOverMenu() }; //in the menu's own window, which may be a view's
 
     if(rightButtonPressedThisFrame && isOverWidget)
     {
-        _pointerPosition = pointer._WindowPosition;
-
         if(_isShown)
         {
             hide(); //a right-click on the widget again puts it away.
             return;
         }
 
-        _isShown = true;
-
-        if(_items)
-            _items->SetDropDownOpen(true);
-
+        open(pointer);
         return;
     }
 

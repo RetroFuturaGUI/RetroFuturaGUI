@@ -65,18 +65,23 @@ namespace RetroFuturaGUI
         /// @brief Has the box and the text follow the widget's transitions.
         void useWidgetTransitions();
 
-        Projection& _projection;
+        /// @brief Copies the host window's projection, so the tooltip draws flat in whichever window it opened in
+        void followHostWindow();
+
+        Projection _hostProjection; //its host window's, copied when it draws. Declared before what draws through it
+        GLFWwindow* _hostWindow { nullptr }; //where the cursor is over the widget: the widget's window, or an EnvironmentView's seeing it
         IWidget* _widget { nullptr };
-        Background _background { &_projection };
-        Border _border { &_projection, { ._OnWidthChange = [this]() { setSize(); }, ._OnCornerRadiiChange = {} } };
-        WidgetText _text { &_projection, [this](const WidgetTextChange) { setSize(); } };
+        Background _background { &_hostProjection };
+        Border _border { &_hostProjection, { ._OnWidthChange = [this]() { setSize(); }, ._OnCornerRadiiChange = {} } };
+        WidgetText _text { &_hostProjection, [this](const WidgetTextChange) { setSize(); } };
         bool
             _isHovering { false },
             _isShown { false },
             _isDismissed { false },
             _hasOwnFont { false };
         std::chrono::steady_clock::time_point _hoverStart {};
-        glm::vec2 _pointerPosition { 0.0f };
+        glm::vec2 _pointerPosition { 0.0f }; //in the host window
+        f32 _depth { 0.0f }; //the widget's, or the window's front when it is seen through a view
         TransitionValue<f32> _opacity {};
         u32 _appliedDefaultFontVersion { 0 };
 

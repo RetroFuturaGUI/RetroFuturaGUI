@@ -234,7 +234,11 @@ namespace RetroFuturaGUI
         /// @brief Reads the mouse as this widget should see it. _Position is where the pointer meets the widget's untilted
         ///        layout, so a tilted widget's math stays that of an untilted one. _WindowPosition is the window point. Every
         ///        ancestor that is an IPointerFilter may hold the press back, replay it, or take the pointer away while it scrolls
+        ///        In a world an EnvironmentView passes the pointer to, it is the pointer over the view, cast through its camera
         PointerState readPointer() const;
+
+        /// @brief Whether node is one of the widget's ancestors
+        bool isInside(const IHierarchyNode* node) const;
 
         /// @brief Where a point of the window lies in this widget's own untilted layout. Through the frame it last took the
         ///        pointer or drew in the point readPointer gives as _Position
@@ -340,8 +344,12 @@ namespace RetroFuturaGUI
 
         /// @brief Applies the pointer filters from the outermost container down to the closest one. Each container then adjusts
         ///        what the containers above it already let through. An inner ScrollView only ever sees a press its outer one passed on.
-        ///        An outer one that scrolls keeps the pointer captured whatever the inner one does. Each learns which widget reads it
-        static void filterThroughAncestors(const IHierarchyNode* node, const IHierarchyNode* reader, PointerState& pointer);
+        ///        An outer one that scrolls keeps the pointer captured whatever the inner one does. Each learns which widget reads it.
+        ///        Those above top are left out, as for a world an EnvironmentView passes the pointer to: they are in another window
+        static void filterThroughAncestors(const IHierarchyNode* node, const IHierarchyNode* reader, PointerState& pointer, const IHierarchyNode* top);
+
+        /// @brief The pointer over an EnvironmentView, cast through its camera into the world this widget is in
+        PointerState readPointerThroughView(const glm::vec2& windowPoint, const IHierarchyNode* world) const;
 
         //Freed with the widget, which empties every WidgetReference to it
         std::shared_ptr<const bool> _lifetimeToken { std::make_shared<const bool>(true) };

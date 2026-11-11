@@ -270,7 +270,13 @@ void RetroFuturaGUI::FillStyle::uploadBackgroundImage(Shader& shader, const glm:
     glActiveTexture(GL_TEXTURE1);
     glBindTexture(GL_TEXTURE_2D, _backgroundImageTextureID);
     shader.SetUniformVec2("uImageCoverage", getCoverage(_backgroundImageFit, size - 2.0f * glm::vec2(_backgroundImagePadding))); //fitted inside the padding
+    shader.SetUniformInt("uImagePremultiplied", _isBackgroundImagePremultiplied ? 1 : 0);
     glActiveTexture(GL_TEXTURE0);
+}
+
+void RetroFuturaGUI::FillStyle::SetBackgroundImagePremultiplied(const bool premultiplied)
+{
+    _isBackgroundImagePremultiplied = premultiplied;
 }
 
 void RetroFuturaGUI::FillStyle::uploadMask(Shader& shader, const glm::vec2& size) const

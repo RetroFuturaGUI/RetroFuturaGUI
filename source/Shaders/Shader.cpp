@@ -55,6 +55,13 @@ RetroFuturaGUI::Shader::OpacityScope::OpacityScope(const f32 opacity)
     _drawOpacity = _outerOpacity * std::clamp(opacity, 0.0f, 1.0f);
 }
 
+RetroFuturaGUI::Shader::OpacityScope::OpacityScope(const f32 opacity, const FrameComposition composition)
+    : _outerOpacity(_drawOpacity)
+{
+    const f32 own { std::clamp(opacity, 0.0f, 1.0f) };
+    _drawOpacity = FrameComposition::Instead == composition ? own : _outerOpacity * own;
+}
+
 RetroFuturaGUI::Shader::OpacityScope::~OpacityScope()
 {
     _drawOpacity = _outerOpacity;
@@ -139,7 +146,6 @@ std::array<glm::vec4, 4> RetroFuturaGUI::Shader::clipPlanesOf(const glm::vec4& b
     const auto place = [&frame, depth](const f32 x, const f32 y) { return glm::vec3(frame * glm::vec4(x, y, depth, 1.0f)); };
     const std::array<glm::vec3, 4> corners { place(box.x, box.y), place(box.x + box.z, box.y), place(box.x + box.z, box.y + box.w), place(box.x, box.y + box.w) };
     const glm::vec3 middle { place(box.x + box.z * 0.5f, box.y + box.w * 0.5f) };
-    const std::optional<glm::vec3> eye { projection.GetEyePosition() };
     std::array<glm::vec4, 4> planes {};
 
     for(uSize edge = 0; 4 > edge; ++edge)
@@ -148,7 +154,7 @@ std::array<glm::vec4, 4> RetroFuturaGUI::Shader::clipPlanesOf(const glm::vec4& b
         const glm::vec3
             start { corners[edge] },
             end { corners[(edge + 1) % 4] },
-            towardEye { eye ? *eye - start : glm::vec3(0.0f, 0.0f, 1.0f) };
+            towardEye { projection.GetTowardEye(start) };
         glm::vec3 normal { glm::cross(end - start, towardEye) };
         const f32 normalLength { glm::length(normal) };
 

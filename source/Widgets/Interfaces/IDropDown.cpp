@@ -84,7 +84,7 @@ void RetroFuturaGUI::IDropDown::DrawShown()
 
         glClear(GL_DEPTH_BUFFER_BIT); //over everything drawn before, a row's list over its panel too
         const Shader::OpacityScope opacity { dropDown->_listOpacity.Get() };
-        const Shader::FrameScope frame { dropDown->_listFrame, Shader::FrameComposition::Instead }; //tilted with its widget.
+        const Shader::FrameScope frame { EnvironmentView::IsDrawingWorld() ? dropDown->_viewListFrame : dropDown->_listFrame, Shader::FrameComposition::Instead }; //tilted with its widget
         dropDown->drawDropDown();
     }
 
@@ -122,24 +122,45 @@ bool RetroFuturaGUI::IDropDown::isListOver(const IHierarchyNode* reader, GLFWwin
     if(!_showDropDown && !_holdsPickPress)
         return false;
 
-    if(readerWindow != _parentWindow)
-        return false;
+    bool isReaderThroughView { false };
+    const std::optional<EnvironmentView::ViewPointer>& viewPointer { EnvironmentView::getViewPointer() };
 
     for(const IHierarchyNode* node { reader }; node; node = node->GetParent())
     {
         if(node == this)
             return false; //the drop-down itself, or a row of an ExtendedComboBox
+
+        if(viewPointer && node == viewPointer->_World)
+            isReaderThroughView = true;
     }
 
-    const std::optional<glm::vec2> listPoint { toLayoutPoint(windowPoint, _listFrame) }; //the list lies in the frame its widget drew in.
+    //A reader in a world seen through a view is in two places: through the camera for the lists in that world, which lie in
+    //the frame they drew in in the view's picture, and at the cursor in the view's window for those lying there, a context
+    //menu over the view for one
+    if(isReaderThroughView && isInside(viewPointer->_World))
+    {
+        const std::optional<glm::vec2> listPoint { toLayoutPoint(windowPoint, _viewListFrame) };
+        return listPoint.has_value() && isPointInsideDropDown(*listPoint);
+    }
+
+    if(isReaderThroughView)
+    {
+        if(_parentWindow != viewPointer->_Window)
+            return false;
+
+        const std::optional<glm::vec2> listPoint { toLayoutPoint(viewPointer->_ViewWindowPoint, _listFrame) };
+        return listPoint.has_value() && isPointInsideDropDown(*listPoint);
+    }
+
+    if(readerWindow != _parentWindow)
+        return false;
+
+    const std::optional<glm::vec2> listPoint { toLayoutPoint(windowPoint, _listFrame) }; //the frame its widget drew in
     return listPoint.has_value() && isPointInsideDropDown(*listPoint);
 }
 
 void RetroFuturaGUI::IDropDown::showDropDownLater()
 {
-    if(EnvironmentView::IsDrawingWorld())
-        return; //drawn again through another window's view. The list stays with this box's own window
-
     //Fades in while open and out once closed, over the drop-down's Opacity transition, and draws until it has faded out
     const f32 target { _showDropDown ? 1.0f : 0.0f };
 
@@ -149,7 +170,11 @@ void RetroFuturaGUI::IDropDown::showDropDownLater()
     if(0.0f >= _listOpacity.Get())
         return;
 
-    _listFrame = Shader::GetDrawFrame(); //called while the widget draws, so the list draws in the same frame later
+    //Called while the widget draws, so the list draws in the same frame later: in its window, or in a view's picture
+    if(EnvironmentView::IsDrawingWorld())
+        _viewListFrame = Shader::GetDrawFrame();
+    else
+        _listFrame = Shader::GetDrawFrame();
 
     if(std::find(_shownDropDowns.begin(), _shownDropDowns.end(), this) != _shownDropDowns.end())
         return;

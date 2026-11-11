@@ -113,6 +113,10 @@ namespace RetroFuturaGUI
         ///       what is drawn alone. The two can be shown together: the image sits in front of the glass.
         void SetBackgroundImageTextureID(const u32 textureID);
 
+        /// @brief Sets whether the background image's colors are multiplied by their alpha, as in a texture GL drew into.
+        ///        Off by default, as for a loaded image
+        void SetBackgroundImagePremultiplied(const bool premultiplied);
+
         /// @brief Sets how far the background image stays clear of the edges, per side in pixels.
         void SetBackgroundImagePadding(const f32 padding);
 
@@ -185,6 +189,7 @@ namespace RetroFuturaGUI
 
     //Image (ShaderFeatures::BackgroundImage)
         u32 _backgroundImageTextureID { 0 };
+        bool _isBackgroundImagePremultiplied { false };
         f32 _backgroundImagePadding { 0.0f };
         ImageFit _backgroundImageFit { ImageFit::Stretch };
 

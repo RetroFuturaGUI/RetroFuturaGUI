@@ -5,14 +5,21 @@
 #include "IWidget.hpp"
 #include "IncludeHelper.hpp"
 #include "PlatformBridge.hpp"
+#include "EnvironmentView.hpp"
+#include "Window.hpp"
 #include <algorithm>
 #include <memory>
 #include <string_view>
 
 RetroFuturaGUI::Tooltip::Tooltip(Projection* projection, IWidget* widget)
-    : _projection(*projection)
+    : _hostProjection(*projection)
 {
     _widget = widget;
+
+    if(!_widget)
+        return;
+
+    _hostWindow = _widget->GetParentWindow();
     useWidgetTransitions();
 
     _border.SetWidth(_defaultBorderWidth);
@@ -42,7 +49,7 @@ void RetroFuturaGUI::Tooltip::Update()
     if(0.0f >= _opacity.Get())
         return;
 
-    _shownTooltips[_widget->GetParentWindow()] = this;
+    _shownTooltips[_hostWindow] = this; //only where the cursor is
 }
 
 void RetroFuturaGUI::Tooltip::DrawShown(GLFWwindow* window)
@@ -76,6 +83,7 @@ void RetroFuturaGUI::Tooltip::SetDefaultFontFamily(std::string_view fontFamily, 
 
 void RetroFuturaGUI::Tooltip::draw()
 {
+    followHostWindow();
     applyDefaultFont();
     setPosition();
     _background.Draw();
@@ -113,6 +121,21 @@ void RetroFuturaGUI::Tooltip::applyDefaultFont()
     _appliedDefaultFontVersion = _defaultFontVersion;
 }
 
+void RetroFuturaGUI::Tooltip::followHostWindow()
+{
+    const Window* host { Window::FromGlfwWindow(_hostWindow) };
+
+    if(!host)
+        return;
+
+    const Projection* projection { host->GetProjection() };
+
+    if(!projection)
+        return;
+
+    _hostProjection = *projection;
+}
+
 void RetroFuturaGUI::Tooltip::setSize()
 {
     const f32 padding { _text.GetPadding() };
@@ -131,7 +154,7 @@ void RetroFuturaGUI::Tooltip::setPosition()
 
     const glm::vec2
         halfSize { _background.GetSize() * 0.5f },
-        resolution { _projection.GetResolution() };
+        resolution { _hostProjection.GetResolution() };
 
     // Centered above the cursor's tip and kept inside the window. It slides sideways at the left and right edges
     // and down at the top one. World space runs bottom-up, so above is +Y
@@ -139,7 +162,7 @@ void RetroFuturaGUI::Tooltip::setPosition()
     const glm::vec3 center {
         std::max(halfSize.x, std::min(_pointerPosition.x, resolution.x - halfSize.x)),
         std::max(halfSize.y, std::min(_pointerPosition.y + _cursorDistance + halfSize.y, resolution.y - halfSize.y)),
-        _widget->GetPosition().z };
+        _depth };
 
     _background.SetPosition(center);
     _border.SetPosition(center + glm::vec3(0.0f, 0.0f, _zStep));
@@ -162,7 +185,12 @@ void RetroFuturaGUI::Tooltip::interact()
         return;
     }
 
-    _pointerPosition = pointer._WindowPosition; //stays always flat!
+    //At the cursor in the window it is in: through a view, the view's window, not the world's
+    const std::optional<EnvironmentView::ViewPointer>& viewPointer { EnvironmentView::getViewPointer() };
+    const bool isThroughView { viewPointer && _widget->isInside(viewPointer->_World) };
+    _hostWindow = isThroughView ? viewPointer->_Window : _widget->GetParentWindow();
+    _pointerPosition = isThroughView ? viewPointer->_ViewWindowPoint : pointer._WindowPosition; //stays always flat!
+    _depth = isThroughView ? 0.0f : _widget->GetPosition().z;
 
     if(!_isHovering) //mouse entered, the delay starts
     {

@@ -72,6 +72,7 @@ namespace RetroFuturaGUI
 
     //Image, from IRectangle
         using IRectangle::SetBackgroundImageTextureID;
+        using IRectangle::SetBackgroundImagePremultiplied;
         using IRectangle::SetBackgroundImagePadding;
         using IRectangle::SetBackgroundImageFit;
         using IRectangle::SetMaskTextureID;

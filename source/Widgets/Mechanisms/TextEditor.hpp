@@ -317,6 +317,7 @@ namespace RetroFuturaGUI
 
     //Owner
         GLFWwindow* _parentWindow { nullptr };
+        GLFWwindow* _keyboardWindow { nullptr }; //whose keys it takes. Its own window's, or an EnvironmentView's it was clicked through
         TextLines _lines { TextLines::Single };
         OverwriteCaret _overwriteCaret { OverwriteCaret::Underline };
         TextEditorHooks _hooks {};

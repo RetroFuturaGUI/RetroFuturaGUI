@@ -1,6 +1,9 @@
 #include "Environment.hpp"
 #include "Shader.hpp"
 #include "Window.hpp"
+#include "EnvironmentView.hpp"
+#include "IDropDown.hpp"
+#include "PlatformBridge.hpp"
 #include <glm/gtc/matrix_transform.hpp>
 #include <algorithm>
 #include <cmath>
@@ -176,11 +179,29 @@ void RetroFuturaGUI::Environment::drawThrough(const glm::mat4& camera)
     if(0.0f >= _scale)
         return;
 
-    //Back from this window's pixels to the environment's own units, which the camera looks at
-    const glm::mat4 unitsFromLayout { glm::scale(glm::mat4(1.0f), glm::vec3(1.0f / _scale)) * glm::translate(glm::mat4(1.0f), -_position) };
-    _viewProjection._viewOverride = camera * unitsFromLayout;
+    //The lists open in the world go into the view's picture too, apart from those the view's window waits to draw
+    std::vector<IDropDown*> windowLists { IDropDown::takeShown() };
+    _viewProjection._viewOverride = camera * getUnitsFromLayout();
     drawWidgets();
+    IDropDown::DrawShown();
     _viewProjection._viewOverride.reset();
+    IDropDown::restoreShown(std::move(windowLists));
+}
+
+void RetroFuturaGUI::Environment::interactThrough(const glm::mat4& camera)
+{
+    if(0.0f >= _scale)
+        return;
+
+    const Shader::FrameScope frame { glm::mat4(1.0f), Shader::FrameComposition::Instead }; //as the view draws them
+    _viewProjection._viewOverride = camera * getUnitsFromLayout();
+    interactWidgets();
+    _viewProjection._viewOverride.reset();
+}
+
+glm::mat4 RetroFuturaGUI::Environment::getUnitsFromLayout() const
+{
+    return glm::scale(glm::mat4(1.0f), glm::vec3(1.0f / _scale)) * glm::translate(glm::mat4(1.0f), -_position);
 }
 
 void RetroFuturaGUI::Environment::interact()
@@ -191,6 +212,44 @@ void RetroFuturaGUI::Environment::interact()
     _removedWidgets.clear();
     std::erase_if(_entries, [](const EnvironmentEntry& entry) { return !entry._Widget; });
 
+    //Once a frame only, so hover and presses don't flip between two pointers. A held press stays where it began: here, or on
+    //a view, which keeps it anywhere until it is let go. Otherwise through a view the pointer is over, if any
+    const bool isPressHeld { PlatformBridge::Input::IsMouseButtonDown(PlatformBridge::MouseButton::Left) || PlatformBridge::Input::IsMouseButtonDown(PlatformBridge::MouseButton::Right) };
+
+    if(!isPressHeld)
+    {
+        _heldView = nullptr;
+        _isPressHeldInWindow = false;
+    }
+
+    if(_isPressHeldInWindow)
+    {
+        interactWidgets();
+        return;
+    }
+
+    const bool isHeldViewHere { _heldView && _views.end() != std::find(_views.begin(), _views.end(), _heldView) };
+
+    if(isHeldViewHere && _heldView->interactWorld(true))
+        return;
+
+    _heldView = nullptr;
+
+    for(EnvironmentView* view : _views)
+    {
+        if(!view || !view->interactWorld(false))
+            continue;
+
+        _heldView = isPressHeld ? view : nullptr;
+        return;
+    }
+
+    _isPressHeldInWindow = isPressHeld;
+    interactWidgets();
+}
+
+void RetroFuturaGUI::Environment::interactWidgets()
+{
     //By index, since a widget's slot may attach another one, which can move the entries
     for(uSize index = 0; index < _entries.size(); ++index)
     {

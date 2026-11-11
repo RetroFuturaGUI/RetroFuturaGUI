@@ -31,10 +31,10 @@ The framework is designed for cross-platform use, and its logic can be compiled 
 |    | Environment Lights, Node | | |
 
 ### WIP in detail
+- Tooltip
+  - A tooltip given no font of its own while no default is set (Tooltip::SetDefaultFontFamily) shows an empty box; the ContextMenu falls back to the first installed font instead
 - EnvironmentView
-  - Input doesn't go through a view: hover and clicks reach the world only in the Environment's own window
-  - A view draws into its rectangle as laid out, so a tilted container around it doesn't turn it, and its window's perspective doesn't reach it
-  - The world's own clipping (a clipped Environment) isn't applied in a view; a ScrollView or Table inside the world is untested there, and glass, pixelation and CRT read the view's window behind them
+  - The picture is drawn at the view's size as laid out, so a view brought much closer by its window's perspective shows it magnified
 - SeparatorLine
   - The caption's left padding isn't clamped to the line's width, so a long caption or a large padding runs the gap and its text off the right end
   - The gap always starts from the left edge, so centering or right-aligning a caption means working out the padding by hand. GetText().SetAlignment doesn't do it either: the caption is always centered inside its own gap, and the alignment passed in is overwritten the next time the layout runs
@@ -158,13 +158,13 @@ The framework is designed for cross-platform use, and its logic can be compiled 
   - Video: plays a video with its sound (Play, Pause, Stop, Seek) and hands out the sound's levels and frequency bands
   - SvgImage: shows an SVG at any size, its named paths recolorable
   - Model: loads 3D models with their textures (Assimp)
-  - Tooltip and ContextMenu: every widget can have a tooltip (SetTooltipText) and a context menu of items and submenus (AddContextMenuItem, AddContextMenuNode); a click on an item closes the menu and reports its index path from the root list down (Connect_OnItemClicked, GetClickedPath), a submenu's row only opens its list
+  - Tooltip and ContextMenu: every widget can have a tooltip (SetTooltipText) and a context menu of items and submenus (AddContextMenuItem, AddContextMenuNode); a click on an item closes the menu and reports its index path from the root list down (Connect_OnItemClicked, GetClickedPath), a submenu's row only opens its list. Both open only in the window the cursor is in, at the cursor: for a widget seen through an EnvironmentView, in the view's window
 - Containers
   - Every container builds and owns its widgets (AddWidget&lt;T&gt;(name, placement, arguments)), finds them by name (GetWidget&lt;T&gt;) and removes them safely, even from their own slots (RemoveWidget)
   - Lasagna (three-dimensional successor of Grid): lays widgets out in rows, columns and layers, with spans and sizing policies. SetAxisDefinition (or one axis at a time) changes the tracks, their number included, keeping each widget in its cell and span; a widget reaching past the new last track is removed, and its name returned
   - Prefab: a group of widgets in its own Lasagna, treated as one widget; its rows, columns and layers can be changed after construction, as a Lasagna's
   - Environment: a 3D room in which widgets and models sit freely, scaled into its rectangle, optionally clipped, with its own perspective if wanted
-  - EnvironmentView: shows an Environment, usually one in another window, through a camera of its own (SetWorld, SetCamera(eye, target, up) in the world's units, SetPerspective(fieldOfView) or SetOrthographic(height)): one world, owned once, seen from several windows, so whatever changes in it shows in every view. Views only show the world: hover and clicks, and drop-down lists opened in it, stay with the Environment's own window
+  - EnvironmentView: shows an Environment, usually one in another window, through a camera of its own (SetWorld, SetCamera(eye, target, up) in the world's units, SetPerspective(fieldOfView) or SetOrthographic(height)): one world, owned once, seen from several windows, so whatever changes in it shows in every view. The pointer over a view reaches the world's widgets through the camera: hover, clicks, drags, the wheel, typing and open drop-down lists work there as in their own window, once a frame wherever the pointer is, and a press keeps going where it began. The world is drawn into a picture the view shows like any widget, so it tilts, fades and is cut with what it sits in; a ScrollView or Table in the world cuts its content in a view too, while an Environment's own clipping keeps to its rectangle in its window
   - ScrollView: scrolls its widgets by dragging, the mouse wheel, touchpad swipes and pinch, along X, Y or into the depth (Z); nested ScrollViews each take what they can scroll
   - MenuBar: a bar of flexible cells holding widgets; a cell can move or undock the window
   - WindowTab: windows as tabs in a strip, selected, reordered, closed, pulled out and dropped back in by dragging, drawn the way ImGui draws docked windows

@@ -50,6 +50,10 @@ namespace RetroFuturaGUI
         ///        orthographic. The eye then looks along -z from infinitely far away
         std::optional<glm::vec3> GetEyePosition() const;
 
+        /// @brief The direction from a point of the layout toward the eye: to the eye itself in perspective, the direction it
+        ///        looks from when orthographic. Read from the projection matrix, so it holds through an EnvironmentView's camera too
+        glm::vec3 GetTowardEye(const glm::vec3& point) const;
+
     private:
         friend class Environment; //draws its widgets through an EnvironmentView's camera
 
@@ -65,5 +69,9 @@ namespace RetroFuturaGUI
         std::optional<glm::vec2> _vanishingPoint {}; //the middle of the resolution
         std::optional<glm::mat4> _viewOverride {}; //an EnvironmentView's camera, while it draws a world through this projection
         void setProjectionMatrix();
+
+        /// @brief The 4D vector at right angles to all three. Of a projection's x, y and w rows, it is the eye: the one point
+        ///        the projection sends nowhere, at infinity (w 0) when it is orthographic
+        static glm::vec4 crossProduct(const glm::vec4& first, const glm::vec4& second, const glm::vec4& third);
     };
 }

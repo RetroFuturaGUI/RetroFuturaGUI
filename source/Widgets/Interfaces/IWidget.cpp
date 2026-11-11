@@ -1,5 +1,6 @@
 #include "IWidget.hpp"
 #include "Scene.hpp"
+#include "EnvironmentView.hpp"
 #include "PlatformBridge.hpp"
 #include "IDropDown.hpp"
 #include "Tooltip.hpp"
@@ -385,6 +386,11 @@ bool RetroFuturaGUI::IWidget::isPointInside(const glm::vec2& point) const
 
 RetroFuturaGUI::PointerState RetroFuturaGUI::IWidget::readPointer() const
 {
+    const std::optional<EnvironmentView::ViewPointer>& viewPointer { EnvironmentView::getViewPointer() };
+
+    if(viewPointer && isInside(viewPointer->_World))
+        return readPointerThroughView(viewPointer->_WindowPoint, viewPointer->_World);
+
     PointerState pointer {};
     i32
         mouseX { 0 },
@@ -406,7 +412,7 @@ RetroFuturaGUI::PointerState RetroFuturaGUI::IWidget::readPointer() const
     pointer._RightButtonPressed = PlatformBridge::Input::IsMouseButtonDown(PlatformBridge::MouseButton::Right);
     Window::ReadWheel(_parentWindow, pointer);
 
-    filterThroughAncestors(_parentWidget, this, pointer);
+    filterThroughAncestors(_parentWidget, this, pointer, nullptr);
     IDropDown::CaptureUnderOpenList(this, _parentWindow, pointer);
     return pointer;
 }
@@ -416,12 +422,40 @@ void RetroFuturaGUI::IWidget::requestCursorIcon(const PlatformBridge::CursorIcon
     Window::RequestCursorIcon(_parentWindow, icon);
 }
 
-void RetroFuturaGUI::IWidget::filterThroughAncestors(const IHierarchyNode* node, const IHierarchyNode* reader, PointerState& pointer)
+RetroFuturaGUI::PointerState RetroFuturaGUI::IWidget::readPointerThroughView(const glm::vec2& windowPoint, const IHierarchyNode* world) const
+{
+    PointerState pointer {};
+    pointer._WindowPosition = windowPoint;
+    const std::optional<glm::vec2> layoutPoint { toOwnLayoutPoint(windowPoint) }; //through the projection the camera stands in for
+    pointer._HasPosition = layoutPoint.has_value();
+    pointer._Position = layoutPoint.value_or(windowPoint);
+    pointer._LeftButtonPressed = PlatformBridge::Input::IsMouseButtonDown(PlatformBridge::MouseButton::Left);
+    pointer._RightButtonPressed = PlatformBridge::Input::IsMouseButtonDown(PlatformBridge::MouseButton::Right);
+    Window::ReadWheel(_parentWindow, pointer); //the view's window's wheel
+
+    filterThroughAncestors(_parentWidget, this, pointer, world);
+    IDropDown::CaptureUnderOpenList(this, _parentWindow, pointer);
+    return pointer;
+}
+
+bool RetroFuturaGUI::IWidget::isInside(const IHierarchyNode* node) const
+{
+    for(const IHierarchyNode* ancestor { _parentWidget }; ancestor; ancestor = ancestor->GetParent())
+    {
+        if(ancestor == node)
+            return true;
+    }
+
+    return false;
+}
+
+void RetroFuturaGUI::IWidget::filterThroughAncestors(const IHierarchyNode* node, const IHierarchyNode* reader, PointerState& pointer, const IHierarchyNode* top)
 {
     if(!node)
         return;
 
-    filterThroughAncestors(node->GetParent(), reader, pointer);
+    if(node != top)
+        filterThroughAncestors(node->GetParent(), reader, pointer, top);
 
     const IPointerFilter* filter { dynamic_cast<const IPointerFilter*>(node) };
 

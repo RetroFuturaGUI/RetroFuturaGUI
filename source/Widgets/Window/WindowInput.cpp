@@ -2,6 +2,7 @@
 #include "WindowTab.hpp"
 #include "Scene.hpp"
 #include "PlatformBridge.hpp"
+#include "EnvironmentView.hpp"
 #include <algorithm>
 #include <utility>
 
@@ -14,8 +15,8 @@
 
 void RetroFuturaGUI::Window::RequestCursorIcon(GLFWwindow* glfwWindow, const PlatformBridge::CursorIcon icon)
 {
-    //The window keys arrive at is the one on screen: the host's while this one sits in a WindowTab
-    Window* window { FromGlfwWindow(KeyboardWindowOf(glfwWindow)) };
+    //The window keys arrive at is the one on screen: the host's while this one sits in a WindowTab, the view's for a world seen through it
+    Window* window { FromGlfwWindow(KeyboardWindowOf(EnvironmentView::redirectWindow(glfwWindow))) };
 
     if(!window)
         return;
@@ -29,7 +30,7 @@ void RetroFuturaGUI::Window::ReadWheel(GLFWwindow* glfwWindow, PointerState& poi
     pointer._PinchScale = 1.0f;
 
     //The window on screen, which is the host's while this one sits in a tab. It reads the mouse each frame, so it keeps what was taken
-    const Window* window { FromGlfwWindow(KeyboardWindowOf(glfwWindow)) };
+    const Window* window { FromGlfwWindow(KeyboardWindowOf(EnvironmentView::redirectWindow(glfwWindow))) };
 
     if(!window)
         return;
@@ -51,7 +52,7 @@ void RetroFuturaGUI::Window::ReadWheel(GLFWwindow* glfwWindow, PointerState& poi
 
 void RetroFuturaGUI::Window::TakeWheel(GLFWwindow* glfwWindow, const WheelParts parts)
 {
-    Window* window { FromGlfwWindow(KeyboardWindowOf(glfwWindow)) };
+    Window* window { FromGlfwWindow(KeyboardWindowOf(EnvironmentView::redirectWindow(glfwWindow))) };
 
     if(!window)
         return;

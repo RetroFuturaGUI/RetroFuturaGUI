@@ -102,12 +102,43 @@ namespace RetroFuturaGUI
         /// @brief Hides the menu and closes its lists
         void hide();
 
-        Projection& _projection;
+        /// @brief An item or node added, kept so the rows can be built again for another window.
+        struct MenuEntry
+        {
+            std::string
+                _Name {},
+                _Node {}, //the node it goes beneath
+                _ImagePath {},
+                _Text {},
+                _Note {};
+            bool _IsNode { false };
+        };
+
+        /// @brief Builds the rows for a window: theirs is the window the menu shows in, and so is the mouse they read
+        void buildItems(GLFWwindow* window);
+
+        /// @brief Adds an item's or a node's row.
+        void addEntry(const MenuEntry& entry);
+
+        /// @brief Opens the menu at the cursor in the window it is in: through a view, the view's window, its rows built there
+        void open(const PointerState& pointer);
+
+        /// @brief Copies the host window's projection, so the menu lies flat in whichever window it opened in
+        void followHostWindow();
+
+        /// @brief Whether the cursor is over the menu or one of its open lists, in the menu's window
+        bool isPointerOverMenu() const;
+
+        Projection _hostProjection; //its host window's. Declared before what draws through it
+        GLFWwindow
+            * _hostWindow { nullptr }, //where it opened: the widget's window, or an EnvironmentView's seeing the widget
+            * _itemsWindow { nullptr }; //the window the rows were built for
         IWidget* _widget { nullptr };
         std::unique_ptr<ExtendedComboBox> _items { nullptr };
-        Background _background { &_projection };
-        Border _border { &_projection, { ._OnWidthChange = [this]() { setSize(); }, ._OnCornerRadiiChange = {} } };
-        WidgetText _text { &_projection, [this](const WidgetTextChange) { setSize(); } };
+        std::vector<MenuEntry> _entries {};
+        Background _background { &_hostProjection };
+        Border _border { &_hostProjection, { ._OnWidthChange = [this]() { setSize(); }, ._OnCornerRadiiChange = {} } };
+        WidgetText _text { &_hostProjection, [this](const WidgetTextChange) { setSize(); } };
         std::string _fontFamily {};
         f32 _fontSize { FontManager::ToPixels(16.0f, FontSizeUnit::Points) };
         PlatformBridge::Fonts::Slant _fontSlant { PlatformBridge::Fonts::Slant::Roman };
@@ -117,7 +148,8 @@ namespace RetroFuturaGUI
             _hasOwnFont { false },
             _wasRightButtonPressed { false },
             _hasPendingItemClose { false };
-        glm::vec2 _pointerPosition { 0.0f };
+        glm::vec2 _pointerPosition { 0.0f }; //in the host window
+        f32 _depth { 0.0f }; //the widget's, or the window's front when it is seen through a view
         std::vector<uSize> _clickedPath {};
         Signal<std::vector<uSize>>
             _onItemClicked,

@@ -14,6 +14,8 @@
 
 namespace RetroFuturaGUI
 {
+    class EnvironmentView;
+
     /// @brief How an Environment is scaled into the rectangle (Window/Scene) it is given
     enum class EnvironmentFit : u32
     {
@@ -155,16 +157,28 @@ namespace RetroFuturaGUI
         void applyRotation(const glm::vec3& rotation) override;
 
     private:
-        friend class EnvironmentView; //draws the widgets through its camera
+        friend class EnvironmentView; //draws the widgets through its camera, and passes them the pointer over it
 
-        /// @brief Sweeps the removed widgets, then passes the frame's input on to the shown ones in attachment order.
+        /// @brief Sweeps the removed widgets, then passes the frame's input on to the shown ones in attachment order. Through the
+        ///        view the pointer is over, if any, else in this window
         void interact() override;
+
+        /// @brief Passes the frame's input on to the shown widgets in attachment order
+        void interactWidgets();
+
+        /// @brief From this window's pixels back to the environment's own units, which a view's camera looks at
+        glm::mat4 getUnitsFromLayout() const;
 
         /// @brief Draws every shown widget in attachment order
         void drawWidgets();
 
-        /// @brief Draws the widgets once more through a camera looking at them in environment units for an EnvironmentView
+        /// @brief Draws the widgets once more through a camera looking at them in environment units, for an EnvironmentView, with
+        ///        their open lists over them.
         void drawThrough(const glm::mat4& camera);
+
+        /// @brief Passes the widgets the frame's input through a camera looking at them in environment units, for an
+        ///        EnvironmentView the pointer is over
+        void interactThrough(const glm::mat4& camera);
 
         /// @brief Passes the frame's update on to every widget, hidden ones included.
         void update() override;
@@ -185,6 +199,8 @@ namespace RetroFuturaGUI
         bool _hasOwnPerspective { false };
         std::vector<EnvironmentEntry> _entries {};
         std::vector<std::unique_ptr<IWidget>> _removedWidgets {}; //destroyed at the start of the next Interact
+        std::vector<EnvironmentView*> _views {}; //showing this Environment, each adding and removing itself
+        EnvironmentView* _heldView { nullptr }; //the view a press held now began on, which keeps the input until it is let go
         glm::vec3 _extent { 1.0f };
         EnvironmentFit _fit { EnvironmentFit::Contain };
         f32 _scale { 1.0f };
@@ -193,6 +209,7 @@ namespace RetroFuturaGUI
         std::vector<glm::vec4> _debugBoxColor { glm::vec4(0.35f, 0.9f, 1.0f, 1.0f) };
         bool
             _clippingOn { false },
-            _drawDebugBox { false };
+            _drawDebugBox { false },
+            _isPressHeldInWindow { false };
     };
 }

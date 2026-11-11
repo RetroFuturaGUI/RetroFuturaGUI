@@ -2,6 +2,7 @@
 #include "PlatformBridge.hpp"
 #include "DoubleEncodedString.hpp"
 #include "Window.hpp"
+#include "EnvironmentView.hpp"
 #include <algorithm>
 #include <utility>
 
@@ -167,12 +168,14 @@ void RetroFuturaGUI::TextEditor::TakeKeyboardFocus()
     _enterPressCountSeen = getEnterPressCount();
     _insertPressCountSeen = PlatformBridge::Input::GetKeyPressCount(PB_KEY_INSERT);
 
-    //Keys arrive at the window that has the focus, which is the host's while this window sits in a tab
+    //Keys arrive at the window that has the focus, which is the host's while this window sits in a tab, the view's for a box
+    //clicked through an EnvironmentView
+    _keyboardWindow = EnvironmentView::redirectWindow(_parentWindow);
 #if defined(TARGET_PLATFORM_LINUX)
     PlatformBridge::Input::SetActiveDisplay(glfwGetX11Display());
-    PlatformBridge::Input::SetActiveWindow(glfwGetX11Window(Window::KeyboardWindowOf(_parentWindow)));
+    PlatformBridge::Input::SetActiveWindow(glfwGetX11Window(Window::KeyboardWindowOf(_keyboardWindow)));
 #elif defined(TARGET_PLATFORM_WINDOWS)
-    PlatformBridge::Input::SetActiveWindow(glfwGetWin32Window(Window::KeyboardWindowOf(_parentWindow)));
+    PlatformBridge::Input::SetActiveWindow(glfwGetWin32Window(Window::KeyboardWindowOf(_keyboardWindow)));
 #endif
 }
 
@@ -195,9 +198,9 @@ bool RetroFuturaGUI::TextEditor::HasKeyboardFocus() const
 
     //The window keys arrive at, which is the host's while this window sits in a tab
 #if defined(TARGET_PLATFORM_LINUX)
-    return activeWindowId == static_cast<uint64_t>(glfwGetX11Window(Window::KeyboardWindowOf(_parentWindow)));
+    return activeWindowId == static_cast<uint64_t>(glfwGetX11Window(Window::KeyboardWindowOf(_keyboardWindow)));
 #elif defined(TARGET_PLATFORM_WINDOWS)
-    return activeWindowId == reinterpret_cast<uint64_t>(glfwGetWin32Window(Window::KeyboardWindowOf(_parentWindow)));
+    return activeWindowId == reinterpret_cast<uint64_t>(glfwGetWin32Window(Window::KeyboardWindowOf(_keyboardWindow)));
 #else
     return false;
 #endif

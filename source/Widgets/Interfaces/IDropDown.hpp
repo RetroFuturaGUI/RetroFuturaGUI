@@ -202,6 +202,7 @@ namespace RetroFuturaGUI
 
     private:
         friend class Window; //sets the waiting lists aside while it draws a window docked into one of its tabs
+        friend class Environment; //sets them aside while it draws its world into an EnvironmentView's picture
 
         /// @brief Takes the lists waiting for the end of the frame, so a window drawn in the middle of another one's frame draws only its own.
         static std::vector<IDropDown*> takeShown();
@@ -230,5 +231,6 @@ namespace RetroFuturaGUI
         inline static std::vector<const IDropDown*> _dropDowns {}; //every drop-down, for the pointer check
         bool _hideLabelWhenOpen { false };
         glm::mat4 _listFrame { 1.0f }; //the frame the widget drew in, which its open list draws in later
+        glm::mat4 _viewListFrame { 1.0f }; //the frame it drew in last in an EnvironmentView's picture, where its open list shows too.
     };
 }

@@ -30,12 +30,23 @@ namespace RetroFuturaGUI
     class Shader
     {
     public:
+        /// @brief How a FrameScope's matrix, or an OpacityScope's opacity, meets the one around it
+        enum class FrameComposition : u32
+        {
+            Inside, // multiplies the frame around it: A widget inside its container
+            Instead // replaces it: what draws later apart from its widget in the frame the widget had
+        };
+
         /// @brief While one lives, everything drawn is that much more see-through: its opacity multiplies the one around it, and
         ///        every shader program in use takes the product as uOpacity. A widget draws inside one at its opacity.
         class OpacityScope
         {
         public:
             OpacityScope(const f32 opacity);
+
+            /// @brief Instead replaces the opacity around it, as when an EnvironmentView draws its world into a picture at full
+            ///        opacity, the picture then showing at the view's
+            OpacityScope(const f32 opacity, const FrameComposition composition);
             OpacityScope(const OpacityScope&) = delete;
             OpacityScope(OpacityScope&&) = delete;
             auto operator =(const OpacityScope&) = delete;
@@ -44,13 +55,6 @@ namespace RetroFuturaGUI
 
         private:
             f32 _outerOpacity { 1.0f };
-        };
-
-        /// @brief How a FrameScope's matrix meets the frame around it
-        enum class FrameComposition : u32
-        {
-            Inside,     // multiplies the frame around it: A widget inside its container
-            Instead     // replaces it: what draws later apart from its widget in the frame the widget had
         };
 
         /// @brief While one lives, everything drawn is placed through its frame. The matrix that tilts an untilted layout into
