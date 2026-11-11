@@ -5,6 +5,6 @@ RetroFuturaGUI::MultilineTextBox::MultilineTextBox(std::string_view name, Projec
 {
     _widgetTypeID = WidgetTypeID::MultilineTextBox;
 
-    _text.GetElement().SetAnchorTop(true);
-    _placeholder.GetElement().SetAnchorTop(true);
+    _text.GetElement().SetAnchor(TextAnchor::Top);
+    _placeholder.GetElement().SetAnchor(TextAnchor::Top);
 }

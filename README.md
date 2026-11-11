@@ -107,7 +107,7 @@ The framework is designed for cross-platform use, and its logic can be compiled 
   - Transitions carry colors, corner radii, positions, sizes, rotations, opacity, border gaps and the effects' geometry to new values over time (see Animation)
 - Widgets
   - Label: shows text
-  - SeparatorLine: a line dividing content, with an optional caption set into it: its alignment places the gap (Left or Right SetTextEdgePadding from that end, Center in the middle), the gap stays on the line, and a caption longer than the line is cut at its ends, showing its start, middle or end as aligned
+  - SeparatorLine: a line dividing content, with an optional caption set into it: its alignment places the gap (Left or Right SetTextEdgePadding from that end, Center in the middle), the gap stays on the line, and a caption longer than the line is cut at its ends, showing its start, middle or end as aligned. A caption flowing in columns (GetText().SetFlow) makes the line vertical: Left keeps the gap SetTextEdgePadding from the top, Right from the bottom, and the columns are centered across the line
   - Button: click, release, hover, mouse enter and leave actions (OnClick, OnRelease, WhileHover, OnMouseEnter, OnMouseLeave) and a text
   - CheckBox: a boolean value toggled by clicking, the Button's actions, optionally mirroring a bool owned elsewhere (EnableInheritedValue)
   - RadioButton and RadioButtonGroup: options of which only one is picked; the group builds and owns its buttons and their labels in a grid (AddRadioButton, GetRadioButton, RemoveRadioButton)
@@ -203,7 +203,7 @@ The framework is designed for cross-platform use, and its logic can be compiled 
   - Anti-aliased lines with mitered joins (Polyline)
 - Text Renderer
   - All of Unicode, glyphs rendered when first shown; installed font families with their weights and slants, variable fonts, fallback fonts per character
-  - Shaping with HarfBuzz (kerning, ligatures, emoji sequences), right-to-left scripts (SheenBidi), color emoji including gradient emoji (COLR v1), vertical flow
+  - Shaping with HarfBuzz (kerning, ligatures, emoji sequences), right-to-left scripts (SheenBidi), color emoji including gradient emoji (COLR v1), vertical flow; text held at the middle, top or bottom of its box (Text::SetAnchor with a TextAnchor)
   - Every fill and effect inside the glyphs, outlines, images and masks (metal text)
   - Drop shadows, glows and inner glows: their glyphs are blurred on the CPU into the glyph pages, once per blur, width and offset
 - Signals: thread-safe Connect/Disconnect, synchronous (Emit) and threaded (EmitAsync) dispatch

@@ -165,8 +165,9 @@ namespace RetroFuturaGUI
         /// @return The UTF-8 byte position
         uSize GetUtf8Position(uSize const glyphPosition) const;
 
-        /// @brief Puts the first line just below the parent's top edge instead of centring it on the position for multiline text
-        void SetAnchorTop(const bool anchorTop);
+        /// @brief Sets where the text sits along its parent's height: centered on the position (default), its first line just below
+        ///        the parent's top edge, as for multiline text, or its last line just above the bottom edge
+        void SetAnchor(const TextAnchor anchor);
 
         /// @brief Returns the line the given glyph boundary sits on, 0 being the first
         uSize GetBoundaryLine(const uSize boundary) const;
@@ -211,7 +212,7 @@ namespace RetroFuturaGUI
         InnerGlow& GetInnerGlow();
         const InnerGlow& GetInnerGlow() const;
 
-        /// @brief Sets how the lines run: horizontally (default), or as columns. Each '\n' starts the next column. Columns are placed by their top edge: centered on the position, or at the parent's top with SetAnchorTop
+        /// @brief Sets how the lines run: horizontally (default), or as columns. Each '\n' starts the next column. Columns are placed by their top edge: centered on the position, or at the parent's top or bottom with SetAnchor.
         void SetTextFlow(const TextFlow textFlow);
 
         /// @brief Returns how the lines run
@@ -352,7 +353,7 @@ namespace RetroFuturaGUI
         std::vector<uSize> _glyphLines {};
         std::vector<glm::vec2> _characterSpans {}; //per boundary, the stretch along the line its character's glyphs cover
         std::vector<bool> _isInsideCluster {}; //per boundary, whether it sits between the characters of one cluster
-        bool _anchorTop { false };
+        TextAnchor _anchor { TextAnchor::Center };
 
     // mesh
         GlyphMesh

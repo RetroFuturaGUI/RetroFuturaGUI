@@ -20,7 +20,8 @@ namespace RetroFuturaGUI
         String,
         Font,
         Padding,
-        Alignment
+        Alignment,
+        Flow
     };
 
     /// @brief A widget's text: its string, font, colors per state and effects. The widget owns it and hands it out through
@@ -28,7 +29,7 @@ namespace RetroFuturaGUI
     class WidgetText final
     {
     public:
-        /// @param changeHook What the owning widget does when the string, font, padding or alignment change, before OnTextChange fires: lay itself out again, say, or keep its caret in place
+        /// @param changeHook What the owning widget does when the string, font, padding, alignment or flow change, before OnTextChange fires: lay itself out again, say, or keep its caret in place
         /// @param follower A second text taking the same font, alignment and padding: a text box's placeholder
         explicit WidgetText(Projection* projection, std::function<void(WidgetTextChange)> changeHook = {}, WidgetText* follower = nullptr);
         WidgetText() = delete;
@@ -80,6 +81,9 @@ namespace RetroFuturaGUI
 
         /// @brief Sets how the lines run: horizontally (default), or vertically, laid out left to right or right to left. Each line break starts the next column
         void SetFlow(const TextFlow textFlow);
+
+        /// @brief Returns how the lines run as it shows: its own flow, a flavor's, or Horizontal
+        TextFlow GetFlow() const;
 
         /// @brief Sets the padding applied around the text
         void SetPadding(const f32 padding);

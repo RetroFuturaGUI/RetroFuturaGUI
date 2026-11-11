@@ -854,11 +854,43 @@ bool RetroFuturaGUI::Text::isInsideCluster(const uSize boundary) const
 void RetroFuturaGUI::Text::alignPosition()
 {
     //A horizontal text is placed by its first baseline, a vertical one by its top edge
-    const f32 originY { TextFlow::Horizontal != _textFlow
-        ? (_anchorTop ? _position.y + _parentSize.y * 0.5f - _textPadding : _position.y + _textSpan.y * 0.5f)
-        : _anchorTop
-            ? _position.y + _parentSize.y * 0.5f - _textPadding - _ascender //the first line's highest glyphs touch the top edge
-            : _position.y - (_ascender - _descender) * 0.5f }; //the line from its lowest to its highest glyph centered
+    const f32
+        parentTop { _position.y + _parentSize.y * 0.5f - _textPadding },
+        parentBottom { _position.y - _parentSize.y * 0.5f + _textPadding };
+    f32 originY { 0.0f };
+
+    if(TextFlow::Horizontal != _textFlow)
+    {
+        switch(_anchor)
+        {
+            case TextAnchor::Top:
+                originY = parentTop;
+            break;
+            case TextAnchor::Bottom:
+                originY = parentBottom + _textSpan.y; //the longest column's end touches the bottom edge
+            break;
+            case TextAnchor::Center:
+            default:
+                originY = _position.y + _textSpan.y * 0.5f;
+            break;
+        }
+    }
+    else
+    {
+        switch(_anchor)
+        {
+            case TextAnchor::Top:
+                originY = parentTop - _ascender; //the first line's highest glyphs touch the top edge
+            break;
+            case TextAnchor::Bottom:
+                originY = parentBottom + _descender + static_cast<f32>(getLineCount() - 1) * _lineHeight; //the last line's lowest glyphs touch the bottom edge
+            break;
+            case TextAnchor::Center:
+            default:
+                originY = _position.y - (_ascender - _descender) * 0.5f; //the line from its lowest to its highest glyph centered
+            break;
+        }
+    }
 
     switch(_textAlignment)
     {
@@ -1154,9 +1186,9 @@ std::vector<RetroFuturaGUI::TextSelectionArea> RetroFuturaGUI::Text::GetSelectio
     return areas;
 }
 
-void RetroFuturaGUI::Text::SetAnchorTop(const bool anchorTop)
+void RetroFuturaGUI::Text::SetAnchor(const TextAnchor anchor)
 {
-    _anchorTop = anchorTop;
+    _anchor = anchor;
     alignPosition();
     updateMesh();
 }

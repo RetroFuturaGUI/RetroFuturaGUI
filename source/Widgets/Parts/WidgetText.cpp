@@ -97,6 +97,11 @@ RetroFuturaGUI::TextAlignment RetroFuturaGUI::WidgetText::GetAlignment() const
     return _text.GetTextAlignment();
 }
 
+RetroFuturaGUI::TextFlow RetroFuturaGUI::WidgetText::GetFlow() const
+{
+    return _text.GetTextFlow();
+}
+
 f32 RetroFuturaGUI::WidgetText::GetPadding() const
 {
     return _text.GetPadding();
@@ -492,7 +497,10 @@ void RetroFuturaGUI::WidgetText::setLayout()
     layoutPadding();
 
     if(const TextFlow* flow { _flow.Resolve(flavors, isStyled, _stylePart, TextFlow::Horizontal, [](const FlavorPart& part) -> const std::optional<TextFlow>& { return part.GetFlow(); }) })
+    {
         _text.SetTextFlow(*flow);
+        notifyChange(WidgetTextChange::Flow);
+    }
 
     if(const f32* tint { _colorGlyphTint.Resolve(flavors, isStyled, _stylePart, 0.0f, [](const FlavorPart& part) -> const std::optional<f32>& { return part.GetColorGlyphTint(); }) })
         _text.SetColorGlyphTint(*tint);

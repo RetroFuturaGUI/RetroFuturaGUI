@@ -19,6 +19,15 @@ namespace RetroFuturaGUI
         VerticalRightToLeft // the first column rightmost, as Japanese and Chinese vertical text runs
     };
 
+    /// @brief Where a text sits along its parent's height: centered on its position, or against the parent's top or bottom edge,
+    ///        inside its padding. Columns of a vertical flow sit the same way
+    enum class TextAnchor : u32
+    {
+        Center,
+        Top,
+        Bottom
+    };
+
     /// @brief What a text's mask is laid over
     enum class MaskSpan : u32
     {

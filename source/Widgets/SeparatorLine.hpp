@@ -22,7 +22,9 @@ namespace RetroFuturaGUI
         /// @brief Returns the widget's text: its string, font, colors and effects. The gap in the line holds the text and its
         ///        padding, and the text's alignment places it. Left the edge padding from the line's left end, Right as far from
         ///        its right end, Center in the middle. A caption longer than the line fills it and is cut at its ends, showing its
-        ///        start, middle or end as aligned
+        ///        start, middle or end as aligned. A caption flowing in columns (GetText().SetFlow) makes the line vertical. The gap
+        ///        runs down it, Left keeps it the edge padding from the top end, Right from the bottom end, and the columns are
+        ///        centered across the line
         WidgetText& GetText();
         const WidgetText& GetText() const;
 
