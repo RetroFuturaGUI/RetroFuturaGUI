@@ -18,7 +18,7 @@ namespace RetroFuturaGUI
         friend class IWidget;
         friend class Indicator; //the parts that give the parts inside them their built-in look
         friend class DropDownList;
-        friend class CloseButton;
+        friend class IconButton;
         friend class HoverText;
         friend class ColorPickerIndicator;
         friend class CellCheckBox;

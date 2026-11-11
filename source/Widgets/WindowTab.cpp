@@ -276,6 +276,8 @@ void RetroFuturaGUI::WindowTab::syncDropPreview()
         return;
     }
 
+    scrollSlotIntoView(_fields.size()); //the preview stands after the last field, kept in view while the fields don't fit.
+
     const Transition transition { Transitions::Resolve(_transitionSettings, TransitionProperty::Position) };
     const glm::vec4 slot { slotRect(_fields.size()) };
     const glm::vec2 target { slot.x, slot.z };
@@ -329,7 +331,7 @@ void RetroFuturaGUI::WindowTab::drawDropPreview()
 
     glm::vec4 rect { slotRect(_fields.size()) };
 
-    if(!fitsInStrip(rect))
+    if(!isInFieldArea(rect))
         return;
 
     const glm::vec2 shown { _previewShown.Get() };

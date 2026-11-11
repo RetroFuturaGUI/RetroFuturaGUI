@@ -1,8 +1,11 @@
 #include "ITab.hpp"
 #include "PlatformBridge.hpp"
+#include "Shader.hpp"
+#include "Window.hpp"
 #include <algorithm>
 #include <cmath>
 #include <filesystem>
+#include <optional>
 
 RetroFuturaGUI::ITab::ITab(std::string_view name, Projection* projection, IHierarchyNode* parentWidget, const WidgetTypeID parentWidgetTypeID, GLFWwindow* parentWindow)
     : IWidget(name, projection, parentWidget, parentWidgetTypeID, parentWindow)
@@ -16,11 +19,14 @@ RetroFuturaGUI::ITab::ITab(std::string_view name, Projection* projection, IHiera
     useSubPartFlavors(_fieldStyle.GetBorder(), StylePart::FieldStyleBorder);
     useSubPartFlavors(_closeButton.GetBackground(), StylePart::CloseButtonBackground);
     useSubPartFlavors(_closeButton.GetIcon(), StylePart::CloseButtonIcon);
+    useSubPartFlavors(_scrollButton.GetBackground(), StylePart::ScrollButtonBackground);
+    useSubPartFlavors(_scrollButton.GetIcon(), StylePart::ScrollButtonIcon);
 
     _border.SetBuiltInWidth(styleKey(), 0.0f); //no frame until one is asked for, since a Frame starts with a 5 px border
     _background.SetBuiltInColors(styleKey(), std::array { glm::vec4(0.055f, 0.055f, 0.075f, 1.0f) }, ColorState::Enabled);
     _background.SetBuiltInColors(styleKey(), std::array { glm::vec4(0.055f, 0.055f, 0.075f, 1.0f) }, ColorState::Disabled);
     _closeButton.GetBackground().SetBuiltInCornerRadii(styleKey(), glm::vec4(_closeButtonSize * 0.25f));
+    _scrollButton.GetBackground().SetBuiltInCornerRadii(styleKey(), glm::vec4(_closeButtonSize * 0.25f));
     setFieldStyleDefaults();
 }
 
@@ -96,16 +102,28 @@ void RetroFuturaGUI::ITab::SetCloseButtonSize(const f32 size)
     const i32 resolution { std::max(static_cast<i32>(std::lround(_closeButtonSize * _closeIconScale * 2.0f)), 8) };
     _closeButton.GetIcon().Rasterize(glm::i32vec2(resolution));
     _closeButton.GetBackground().SetBuiltInCornerRadii(styleKey(), glm::vec4(_closeButtonSize * 0.25f));
+    _scrollButton.GetIcon().Rasterize(glm::i32vec2(resolution)); //the arrows are as large as the close buttons.
+    _scrollButton.GetBackground().SetBuiltInCornerRadii(styleKey(), glm::vec4(_closeButtonSize * 0.25f));
 }
 
-RetroFuturaGUI::CloseButton& RetroFuturaGUI::ITab::GetCloseButton()
+RetroFuturaGUI::IconButton& RetroFuturaGUI::ITab::GetCloseButton()
 {
     return _closeButton;
 }
 
-const RetroFuturaGUI::CloseButton& RetroFuturaGUI::ITab::GetCloseButton() const
+const RetroFuturaGUI::IconButton& RetroFuturaGUI::ITab::GetCloseButton() const
 {
     return _closeButton;
+}
+
+RetroFuturaGUI::IconButton& RetroFuturaGUI::ITab::GetScrollButton()
+{
+    return _scrollButton;
+}
+
+const RetroFuturaGUI::IconButton& RetroFuturaGUI::ITab::GetScrollButton() const
+{
+    return _scrollButton;
 }
 
 RetroFuturaGUI::Box& RetroFuturaGUI::ITab::GetFieldStyle()
@@ -202,6 +220,7 @@ void RetroFuturaGUI::ITab::selectField(const uSize index, const bool emitSignal)
         return;
 
     _selectedItem = item;
+    scrollSlotIntoView(index);
     fieldSelected(item, emitSignal);
 }
 
@@ -286,21 +305,39 @@ void RetroFuturaGUI::ITab::followPointer()
         _pressedItem = nullptr;
         _isDraggingField = false;
         _pressedCloseButton = _kNoField;
+        _pressedScrollButton = ScrollSide::None;
     }
 
     if(pointer._IsCaptured || !pointer._HasPosition)
     {
         _hoveredField = _kNoField;
         _hoveredCloseButton = _kNoField;
+        _hoveredScrollButton = ScrollSide::None;
         return; //a ScrollView above has taken the pointer, or a popup lies over the window
     }
 
     const glm::vec2 point { pointer._Position };
     _hoveredField = fieldAt(point);
     _hoveredCloseButton = showsCloseButtons() && _kNoField != _hoveredField && contains(closeButtonRect(fieldRect(_hoveredField)), point) ? _hoveredField : _kNoField;
+    _hoveredScrollButton = ScrollSide::None;
+
+    if(hasHiddenFields(false) && contains(scrollButtonRect(false), point))
+        _hoveredScrollButton = ScrollSide::Left;
+    else if(hasHiddenFields(true) && contains(scrollButtonRect(true), point))
+        _hoveredScrollButton = ScrollSide::Right;
 
     if(!_isEnabledFlag)
         return;
+
+    scrollByWheel(pointer);
+
+    //An arrow scrolls the strip by one field.
+    if(pressedThisFrame && ScrollSide::None != _hoveredScrollButton)
+    {
+        _pressedScrollButton = _hoveredScrollButton;
+        scrollStrip((ScrollSide::Right == _hoveredScrollButton ? 1.0f : -1.0f) * (getFieldWidth() + _fieldSpacing));
+        return;
+    }
 
     if(pressedThisFrame)
     {
@@ -341,6 +378,7 @@ void RetroFuturaGUI::ITab::pressField(const uSize index, const glm::vec2& point)
     _dragLeft = field.x;
     _sidewaysTravel = 0.0f;
     _isDraggingField = false;
+    _dragScrollClock = StepClock {};
     selectField(index, true);
 }
 
@@ -372,6 +410,15 @@ void RetroFuturaGUI::ITab::dragField(const glm::vec2& point)
     if(dragsOutOfStrip(index, point))
         return;
 
+    //Held past an end of the field area, it scrolls the strip along.
+    const glm::vec4 area { getFieldArea() };
+    const f32 seconds { _dragScrollClock.TakeSeconds() };
+
+    if(point.x < area.x)
+        scrollStrip(-_dragScrollSpeed * seconds);
+    else if(point.x > area.x + area.z)
+        scrollStrip(_dragScrollSpeed * seconds);
+
     //The field follows the cursor along the strip and takes the slot its middle is nearest to
     const glm::vec4
         first { slotRect(0) },
@@ -393,7 +440,7 @@ void RetroFuturaGUI::ITab::dragField(const glm::vec2& point)
 
 uSize RetroFuturaGUI::ITab::fieldAt(const glm::vec2& point) const
 {
-    if(!contains(getStripRect(), point))
+    if(!contains(getFieldArea(), point))
         return _kNoField;
 
     //The dragged field lies over the others
@@ -406,7 +453,7 @@ uSize RetroFuturaGUI::ITab::fieldAt(const glm::vec2& point) const
     {
         const glm::vec4 field { fieldRect(index) };
 
-        if(!fitsInStrip(field))
+        if(!isInFieldArea(field))
             continue;
 
         if(contains(field, point))
@@ -460,11 +507,12 @@ f32 RetroFuturaGUI::ITab::getFieldWidth() const
 
 glm::vec4 RetroFuturaGUI::ITab::slotRect(const uSize slot) const
 {
-    const glm::vec4 strip { getStripRect() };
+    const glm::vec4 area { getFieldArea() };
     const f32 width { getFieldWidth() };
 
-    //The fields stand on the strip's bottom edge, where the content begins, with the spacing above them
-    return glm::vec4(strip.x + _fieldSpacing + static_cast<f32>(slot) * (width + _fieldSpacing), strip.y, width, std::max(strip.w - _fieldSpacing, 0.0f));
+    //The fields stand on the strip's bottom edge, where the content begins, with the spacing above them, and scrolled left
+    //by the strip's scroll while they don't fit.
+    return glm::vec4(area.x - _stripScroll + _fieldSpacing + static_cast<f32>(slot) * (width + _fieldSpacing), area.y, width, std::max(area.w - _fieldSpacing, 0.0f));
 }
 
 glm::vec4 RetroFuturaGUI::ITab::fieldRect(const uSize index) const
@@ -499,6 +547,7 @@ glm::vec2 RetroFuturaGUI::ITab::getFieldTarget(const uSize index) const
 void RetroFuturaGUI::ITab::syncFieldRects()
 {
     const Transition transition { Transitions::Resolve(_transitionSettings, TransitionProperty::Position) };
+    _stripScroll = std::clamp(_stripScroll, 0.0f, getMaxStripScroll()); //a removed field or a wider strip leaves less to scroll.
 
     for(uSize index = 0; index < _fields.size(); ++index)
     {
@@ -525,7 +574,7 @@ uSize RetroFuturaGUI::ITab::slotAt(const f32 x) const
     if(_fields.empty())
         return 0;
 
-    const glm::vec4 strip { getStripRect() };
+    const glm::vec4 first { slotRect(0) };
     const f32
         width { getFieldWidth() },
         step { width + _fieldSpacing };
@@ -533,14 +582,118 @@ uSize RetroFuturaGUI::ITab::slotAt(const f32 x) const
     if(0.0f >= step)
         return 0;
 
-    const f32 slot { std::round((x - strip.x - _fieldSpacing - width * 0.5f) / step) };
+    const f32 slot { std::round((x - first.x - width * 0.5f) / step) };
     return static_cast<uSize>(std::clamp(slot, 0.0f, static_cast<f32>(_fields.size() - 1)));
 }
 
-bool RetroFuturaGUI::ITab::fitsInStrip(const glm::vec4& field) const
+bool RetroFuturaGUI::ITab::isInFieldArea(const glm::vec4& field) const
+{
+    const glm::vec4 area { getFieldArea() };
+    return field.x + field.z > area.x + 0.5f && field.x < area.x + area.z - 0.5f; //half a pixel for rounding.
+}
+
+glm::vec4 RetroFuturaGUI::ITab::getFieldArea() const
 {
     const glm::vec4 strip { getStripRect() };
-    return field.x + field.z <= strip.x + strip.z + 0.5f; //half a pixel for rounding
+
+    if(!isOverflowing())
+        return strip;
+
+    //Between the arrows, a spacing from each.
+    const glm::vec4
+        left { scrollButtonRect(false) },
+        right { scrollButtonRect(true) };
+    const f32 areaLeft { left.x + left.z };
+    return glm::vec4(areaLeft, strip.y, std::max(right.x - areaLeft, 0.0f), strip.w);
+}
+
+bool RetroFuturaGUI::ITab::isOverflowing() const
+{
+    const uSize count { getSlotCount() };
+    const f32 fieldsWidth { _fieldSpacing + static_cast<f32>(count) * (getFieldWidth() + _fieldSpacing) };
+    return fieldsWidth > getStripRect().z + 0.5f; //half a pixel for rounding.
+}
+
+f32 RetroFuturaGUI::ITab::getMaxStripScroll() const
+{
+    if(!isOverflowing())
+        return 0.0f;
+
+    const f32 fieldsWidth { _fieldSpacing + static_cast<f32>(getSlotCount()) * (getFieldWidth() + _fieldSpacing) };
+    return std::max(fieldsWidth - getFieldArea().z, 0.0f);
+}
+
+void RetroFuturaGUI::ITab::scrollStrip(const f32 distance)
+{
+    _stripScroll = std::clamp(_stripScroll + distance, 0.0f, getMaxStripScroll());
+}
+
+void RetroFuturaGUI::ITab::scrollSlotIntoView(const uSize slot)
+{
+    if(!isOverflowing())
+        return;
+
+    //Measured along the fields from their start, as the scroll is
+    const f32
+        visibleWidth { getFieldArea().z },
+        width { getFieldWidth() },
+        left { static_cast<f32>(slot) * (width + _fieldSpacing) },
+        right { left + width + 2.0f * _fieldSpacing };
+
+    if(left < _stripScroll)
+        _stripScroll = left;
+    else if(right > _stripScroll + visibleWidth)
+        _stripScroll = right - visibleWidth;
+
+    scrollStrip(0.0f); //kept within its range
+}
+
+glm::vec4 RetroFuturaGUI::ITab::scrollButtonRect(const bool isRight) const
+{
+    const glm::vec4 strip { getStripRect() };
+    const f32
+        fieldHeight { std::max(strip.w - _fieldSpacing, 0.0f) },
+        size { std::min(_closeButtonSize, fieldHeight) },
+        bottom { strip.y + (fieldHeight - size) * 0.5f }; //centered on the fields, which stand on the strip's bottom edge
+
+    if(isRight)
+        return glm::vec4(strip.x + strip.z - _fieldSpacing - size, bottom, size, size);
+
+    return glm::vec4(strip.x + _fieldSpacing, bottom, size, size);
+}
+
+bool RetroFuturaGUI::ITab::hasHiddenFields(const bool isRight) const
+{
+    if(!isOverflowing())
+        return false;
+
+    return isRight ? _stripScroll < getMaxStripScroll() - 0.5f : 0.5f < _stripScroll;
+}
+
+void RetroFuturaGUI::ITab::scrollByWheel(const PointerState& pointer)
+{
+    if(!isOverflowing())
+        return;
+
+    if(!contains(getStripRect(), pointer._Position))
+        return;
+
+    //Toward the user or to the right shows the fields further on, a field per notch
+    const f32 notches { pointer._Wheel.x - pointer._Wheel.y };
+
+    if(0.0f == notches)
+        return;
+
+    scrollStrip(notches * (getFieldWidth() + _fieldSpacing));
+    WheelParts takenParts { WheelParts::None };
+
+    if(0.0f != pointer._Wheel.x)
+        takenParts = takenParts | WheelParts::Horizontal;
+
+    if(0.0f != pointer._Wheel.y)
+        takenParts = takenParts | WheelParts::Vertical;
+
+    Window::TakeWheel(_parentWindow, takenParts); //so nothing around the strip scrolls too
 }
 
 glm::vec4 RetroFuturaGUI::ITab::closeButtonRect(const glm::vec4& field) const
@@ -565,20 +718,78 @@ glm::vec4 RetroFuturaGUI::ITab::titleRect(const glm::vec4& field) const
 
 void RetroFuturaGUI::ITab::drawFields()
 {
-    const uSize dragged { _isDraggingField ? indexOf(_pressedItem) : _kNoField };
-
-    for(uSize index = 0; index < _fields.size(); ++index)
     {
-        if(index == dragged)
-            continue;
+        //While they don't fit, the fields at the area's ends are cut at its edges
+        std::optional<Shader::ClipScope> clip {};
 
-        drawField(index, _position.z + _zStep * 2.0f);
+        if(isOverflowing())
+            clip.emplace(getFieldArea(), _position.z, _projection);
+
+        const uSize dragged { _isDraggingField ? indexOf(_pressedItem) : _kNoField };
+
+        for(uSize index = 0; index < _fields.size(); ++index)
+        {
+            if(index == dragged)
+                continue;
+
+            drawField(index, _position.z + _zStep * 2.0f);
+        }
+
+        if(_kNoField != dragged)
+            drawField(dragged, _position.z + _zStep * 5.0f); //over the others
     }
 
-    if(_kNoField == dragged)
+    drawScrollButtons(_position.z + _zStep * 2.0f);
+}
+
+void RetroFuturaGUI::ITab::drawScrollButtons(const f32 z)
+{
+    if(!isOverflowing())
         return;
 
-    drawField(dragged, _position.z + _zStep * 5.0f); //over the others
+    for(const bool isRight : { false, true })
+    {
+        if(!hasHiddenFields(isRight))
+            continue;
+
+        drawScrollButton(isRight, z);
+    }
+}
+
+void RetroFuturaGUI::ITab::drawScrollButton(const bool isRight, const f32 z)
+{
+    const glm::vec4 button { scrollButtonRect(isRight) };
+
+    if(0.0f >= button.z)
+        return;
+
+    const ScrollSide side { isRight ? ScrollSide::Right : ScrollSide::Left };
+    ColorState state { _isEnabledFlag ? ColorState::Enabled : ColorState::Disabled };
+
+    if(side == _hoveredScrollButton)
+        state = ColorState::Hover;
+
+    if(side == _pressedScrollButton)
+        state = ColorState::Clicked;
+
+    const glm::vec3 center { button.x + button.z * 0.5f, button.y + button.w * 0.5f, z };
+    Background& background { _scrollButton.GetBackground() };
+
+    if(isVisible(background.GetShownColors(state)))
+    {
+        background.SetColorState(state);
+        background.SetSize(glm::vec2(button.z, button.w));
+        background.SetPosition(center);
+        background.Draw();
+    }
+
+    //The arrow points left; the right one is turned around.
+    Icon& icon { _scrollButton.GetIcon() };
+    icon.SetColorState(state);
+    icon.SetSize(glm::vec2(button.z * _closeIconScale));
+    icon.SetRotation(glm::vec3(0.0f, 0.0f, isRight ? 180.0f : 0.0f));
+    icon.SetPosition(center + glm::vec3(0.0f, 0.0f, _zStep));
+    icon.Draw();
 }
 
 void RetroFuturaGUI::ITab::drawField(const uSize index, const f32 z)
@@ -593,7 +804,7 @@ void RetroFuturaGUI::ITab::drawField(const uSize index, const f32 z)
 
     const glm::vec4 rect { fieldRect(index) };
 
-    if(!fitsInStrip(rect))
+    if(!isInFieldArea(rect))
         return;
 
     const bool selected { field._Item == _selectedItem };
@@ -746,12 +957,12 @@ bool RetroFuturaGUI::ITab::contains(const glm::vec4& rect, const glm::vec2& poin
     return point.x >= rect.x && point.x <= rect.x + rect.z && point.y >= rect.y && point.y <= rect.y + rect.w;
 }
 
-std::string RetroFuturaGUI::ITab::getCloseIconPath()
+std::string RetroFuturaGUI::ITab::getImagePath(std::string_view fileName)
 {
     std::filesystem::path path { PlatformBridge::Paths::GetExecutablePathFSPath().parent_path() };
     path /= "Resources";
     path /= "img";
-    path /= "CloseIcon.svg";
+    path /= std::u8string(fileName.begin(), fileName.end());
 
     //Not path.string(): on Windows that goes through the ANSI code page and turns names outside it into '?'
     const std::u8string text { path.u8string() };

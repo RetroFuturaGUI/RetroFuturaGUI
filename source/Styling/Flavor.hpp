@@ -60,7 +60,9 @@ namespace RetroFuturaGUI
         HeaderStyleText,
         CellCheckBoxBackground,
         CellCheckBoxBorder,
-        CellCheckBoxCheckmark
+        CellCheckBoxCheckmark,
+        ScrollButtonBackground,
+        ScrollButtonIcon
     };
 
     /// @brief One setting a part or a flavor can leave unset (ResetSetting, FlavorPart::Reset), so it comes from further
@@ -516,15 +518,16 @@ namespace RetroFuturaGUI
             _highlight {};
     };
 
-    /// @brief What a flavor sets for a window tab's close button: its background and its icon's colors per state and fill.
-    RFG_EXPORT class FlavorCloseButton final
+    /// @brief What a flavor sets for an IconButton (a tab field's close button, a tab strip's scroll arrows): its background and
+    ///        its icon's colors per state and fill.
+    RFG_EXPORT class FlavorIconButton final
     {
     public:
-        FlavorCloseButton() = default;
-        FlavorCloseButton(const FlavorCloseButton&) = delete;
-        FlavorCloseButton(FlavorCloseButton&&) = delete;
-        auto operator =(const FlavorCloseButton&) = delete;
-        auto operator =(FlavorCloseButton&&) = delete;
+        FlavorIconButton() = default;
+        FlavorIconButton(const FlavorIconButton&) = delete;
+        FlavorIconButton(FlavorIconButton&&) = delete;
+        auto operator =(const FlavorIconButton&) = delete;
+        auto operator =(FlavorIconButton&&) = delete;
 
         FlavorPart& GetBackground();
         const FlavorPart& GetBackground() const;
@@ -811,10 +814,16 @@ namespace RetroFuturaGUI
         const FlavorBox* FindFieldStyle() const;
 
         /// @brief Returns what the flavor sets for its window tabs' close buttons, made the first time
-        FlavorCloseButton& GetCloseButton();
+        FlavorIconButton& GetCloseButton();
 
         /// @brief Returns what the flavor sets for its window tabs' close buttons, nullptr when it sets none
-        const FlavorCloseButton* FindCloseButton() const;
+        const FlavorIconButton* FindCloseButton() const;
+
+        /// @brief Returns what the flavor sets for its tabs' scroll arrows, made the first time
+        FlavorIconButton& GetScrollButton();
+
+        /// @brief Returns what the flavor sets for its tabs' scroll arrows, nullptr when it sets none
+        const FlavorIconButton* FindScrollButton() const;
 
         /// @brief Returns what the flavor sets for its tables' selection band, made the first time
         FlavorBox& GetSelectionBand();
@@ -929,7 +938,8 @@ namespace RetroFuturaGUI
         std::unique_ptr<FlavorBox> _itemStyle {};
         std::unique_ptr<FlavorPart> _separatorLine {};
         std::unique_ptr<FlavorBox> _fieldStyle {};
-        std::unique_ptr<FlavorCloseButton> _closeButton {};
+        std::unique_ptr<FlavorIconButton> _closeButton {};
+        std::unique_ptr<FlavorIconButton> _scrollButton {};
         std::unique_ptr<FlavorBox> _selectionBand {};
         std::unique_ptr<FlavorHoverText> _hoverText {};
         std::unique_ptr<FlavorPart> _placeholder {};

@@ -915,6 +915,10 @@ const RetroFuturaGUI::FlavorPart* RetroFuturaGUI::Flavor::FindPart(const StylePa
             return _itemText.get();
         case StylePart::CloseButtonIcon:
             return _closeButton ? &_closeButton->GetIcon() : nullptr;
+        case StylePart::ScrollButtonBackground:
+            return _scrollButton ? &_scrollButton->GetBackground() : nullptr;
+        case StylePart::ScrollButtonIcon:
+            return _scrollButton ? &_scrollButton->GetIcon() : nullptr;
         case StylePart::CellStyleBackground:
             return _cellStyle ? &_cellStyle->_background : nullptr;
         case StylePart::CellStyleInnerBorder:
@@ -1126,17 +1130,30 @@ const RetroFuturaGUI::FlavorBox* RetroFuturaGUI::Flavor::FindFieldStyle() const
     return _fieldStyle.get();
 }
 
-RetroFuturaGUI::FlavorCloseButton& RetroFuturaGUI::Flavor::GetCloseButton()
+RetroFuturaGUI::FlavorIconButton& RetroFuturaGUI::Flavor::GetCloseButton()
 {
     if(!_closeButton)
-        _closeButton = std::make_unique<FlavorCloseButton>();
+        _closeButton = std::make_unique<FlavorIconButton>();
 
     return *_closeButton;
 }
 
-const RetroFuturaGUI::FlavorCloseButton* RetroFuturaGUI::Flavor::FindCloseButton() const
+const RetroFuturaGUI::FlavorIconButton* RetroFuturaGUI::Flavor::FindCloseButton() const
 {
     return _closeButton.get();
+}
+
+RetroFuturaGUI::FlavorIconButton& RetroFuturaGUI::Flavor::GetScrollButton()
+{
+    if(!_scrollButton)
+        _scrollButton = std::make_unique<FlavorIconButton>();
+
+    return *_scrollButton;
+}
+
+const RetroFuturaGUI::FlavorIconButton* RetroFuturaGUI::Flavor::FindScrollButton() const
+{
+    return _scrollButton.get();
 }
 
 RetroFuturaGUI::FlavorBox& RetroFuturaGUI::Flavor::GetSelectionBand()
@@ -1275,12 +1292,12 @@ const RetroFuturaGUI::FlavorPart& RetroFuturaGUI::FlavorList::GetHighlight() con
     return _highlight;
 }
 
-RetroFuturaGUI::FlavorPart& RetroFuturaGUI::FlavorCloseButton::GetBackground()
+RetroFuturaGUI::FlavorPart& RetroFuturaGUI::FlavorIconButton::GetBackground()
 {
     return _background;
 }
 
-const RetroFuturaGUI::FlavorPart& RetroFuturaGUI::FlavorCloseButton::GetBackground() const
+const RetroFuturaGUI::FlavorPart& RetroFuturaGUI::FlavorIconButton::GetBackground() const
 {
     return _background;
 }
@@ -1305,12 +1322,12 @@ const RetroFuturaGUI::FlavorPart& RetroFuturaGUI::FlavorHoverText::GetText() con
     return _text;
 }
 
-RetroFuturaGUI::FlavorPart& RetroFuturaGUI::FlavorCloseButton::GetIcon()
+RetroFuturaGUI::FlavorPart& RetroFuturaGUI::FlavorIconButton::GetIcon()
 {
     return _icon;
 }
 
-const RetroFuturaGUI::FlavorPart& RetroFuturaGUI::FlavorCloseButton::GetIcon() const
+const RetroFuturaGUI::FlavorPart& RetroFuturaGUI::FlavorIconButton::GetIcon() const
 {
     return _icon;
 }

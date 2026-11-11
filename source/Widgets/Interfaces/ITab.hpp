@@ -5,9 +5,10 @@
 #include "IContainer.hpp"
 #include "Border.hpp"
 #include "Box.hpp"
-#include "CloseButton.hpp"
+#include "IconButton.hpp"
 #include "ResourceManager.hpp"
 #include "Text.hpp"
+#include "Transition.hpp"
 #include <memory>
 #include <span>
 #include <string>
@@ -35,8 +36,9 @@ namespace RetroFuturaGUI
         /// @brief Sets the height of the strip the fields sit in
         void SetStripHeight(const f32 height);
 
-        /// @brief Sets how narrow and how wide a field may get. Fields share the strip evenly within that range, and the ones
-        ///        that no longer fit at the minimum width are left out
+        /// @brief Sets how narrow and how wide a field may get. Fields share the strip evenly within that range. Once they no
+        ///        longer fit at the minimum width, the strip scrolls. By the wheel over it, by the arrows at its ends, and to
+        ///        a field as it is selected or dragged past an end
         void SetFieldWidthRange(const f32 minimumWidth, const f32 maximumWidth);
 
         /// @brief Sets the gap between fields, and above them
@@ -62,10 +64,17 @@ namespace RetroFuturaGUI
 
         /// @brief Returns the close button every field draws. Its background, transparent until hovered by default, and its
         ///        cross. Each field's button shows that field's state. Its corners round with a quarter of SetCloseButtonSize
-        CloseButton& GetCloseButton();
+        IconButton& GetCloseButton();
 
         /// @brief Returns the close button every field draws (see the other overload)
-        const CloseButton& GetCloseButton() const;
+        const IconButton& GetCloseButton() const;
+
+        /// @brief Returns the scroll arrows at the strip's ends, which show while fields are hidden on their side. Their
+        ///        background and their arrow, as large as the close buttons. One button draws both, the right one turned
+        IconButton& GetScrollButton();
+
+        /// @brief Returns the scroll arrows (see the other overload).
+        const IconButton& GetScrollButton() const;
 
         /// @brief Returns the look of the fields. Enabled, Hover, Clicked and Disabled, and Selected for the selected field, which
         ///        usually matches the content so the two join. Rounded at the top, without a border by default
@@ -210,8 +219,32 @@ namespace RetroFuturaGUI
         /// @brief The place along the strip whose slot the given x lies over
         uSize slotAt(const f32 x) const;
 
-        /// @brief Whether the field fits in the strip. The ones that don't are left out
-        bool fitsInStrip(const glm::vec4& field) const;
+        /// @brief Whether any of the field lies in the field area. A field partly out of it is cut at its edge
+        bool isInFieldArea(const glm::vec4& field) const;
+
+        /// @brief Where the fields show. The whole strip, or between the scroll arrows while they don't fit
+        glm::vec4 getFieldArea() const;
+
+        /// @brief Whether the fields need more room than the strip has, at their minimum width
+        bool isOverflowing() const;
+
+        /// @brief How far the strip can scroll. How much wider the fields are than the field area
+        f32 getMaxStripScroll() const;
+
+        /// @brief Scrolls the strip by the given distance, kept within its range
+        void scrollStrip(const f32 distance);
+
+        /// @brief Scrolls the strip just enough to show the slot whole
+        void scrollSlotIntoView(const uSize slot);
+
+        /// @brief The scroll arrow on the given side, (left, bottom, width, height)
+        glm::vec4 scrollButtonRect(const bool isRight) const;
+
+        /// @brief Whether fields are hidden on the given side, so its arrow shows
+        bool hasHiddenFields(const bool isRight) const;
+
+        /// @brief Scrolls by the wheel over the strip, a field per notch, horizontally or vertically
+        void scrollByWheel(const PointerState& pointer);
 
         glm::vec4 closeButtonRect(const glm::vec4& field) const;
         glm::vec4 titleRect(const glm::vec4& field) const;
@@ -222,6 +255,10 @@ namespace RetroFuturaGUI
         void drawField(const uSize index, const f32 z);
         void drawFieldShape(const glm::vec4& rect, const f32 z, Box& style, const ColorState state);
         void drawCloseButton(const glm::vec4& field, const f32 z, const ColorState state);
+
+        /// @brief Draws the scroll arrows of the sides with hidden fields
+        void drawScrollButtons(const f32 z);
+        void drawScrollButton(const bool isRight, const f32 z);
         void drawTitle(Text* title, const glm::vec4& field, const f32 z, const std::vector<glm::vec4>& colors);
         void applyTitleFont(Text* title) const;
 
@@ -239,15 +276,17 @@ namespace RetroFuturaGUI
 
         static bool contains(const glm::vec4& rect, const glm::vec2& point);
 
-        /// @brief The UTF-8 path of the close icon, in the Resources/img folder next to the executable
-        static std::string getCloseIconPath();
+        /// @brief The UTF-8 path of an image in the Resources/img folder next to the executable.
+        static std::string getImagePath(std::string_view fileName);
 
     //Elements
         std::vector<Field> _fields {};
         Background _background { &_projection };
         Border _border { &_projection };
         Box _fieldStyle { &_projection };
-        CloseButton _closeButton { &_projection, ResourceManager::CreateSvgTexture(getCloseIconPath(), &_projection, glm::i32vec2(32)) }; //its own, so its colors and size are this tab's alone.
+        IconButton
+            _closeButton { &_projection, ResourceManager::CreateSvgTexture(getImagePath("CloseIcon.svg"), &_projection, glm::i32vec2(32)), "CloseIcon" }, //its own, so its colors and size are this tab's alone.
+            _scrollButton { &_projection, ResourceManager::CreateSvgTexture(getImagePath("ScrollArrow.svg"), &_projection, glm::i32vec2(32)), "ScrollArrow" };
 
     //Design
         f32
@@ -277,7 +316,16 @@ namespace RetroFuturaGUI
         static constexpr f32
             _zStep { 0.01f },
             _closeIconScale { 0.4f },
-            _dragThreshold { 5.0f };
+            _dragThreshold { 5.0f },
+            _dragScrollSpeed { 600.0f };
+
+        /// @brief Which scroll arrow the pointer is over or pressed
+        enum class ScrollSide : u32
+        {
+            None,
+            Left,
+            Right
+        };
 
         IHierarchyNode
             *_selectedItem { nullptr },
@@ -291,7 +339,12 @@ namespace RetroFuturaGUI
             _grabOffset { 0.0f };
         f32
             _dragLeft { 0.0f }, //the dragged field's left edge, which follows the cursor
-            _sidewaysTravel { 0.0f }; //how far the drag went sideways at most
+            _sidewaysTravel { 0.0f }, //how far the drag went sideways at most
+            _stripScroll { 0.0f }; //how far the fields are scrolled to the left while they don't fit
+        ScrollSide
+            _hoveredScrollButton { ScrollSide::None },
+            _pressedScrollButton { ScrollSide::None };
+        StepClock _dragScrollClock {}; //the time between frames while a dragged field scrolls the strip
         bool
             _isDraggingField { false },
             _wasPressed { false };
