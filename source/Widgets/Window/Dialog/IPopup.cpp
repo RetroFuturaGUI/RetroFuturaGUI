@@ -1,5 +1,6 @@
 #include "IPopup.hpp"
 #include "Window.hpp"
+#include "IDropDown.hpp"
 #include "PlatformBridge.hpp"
 #include "Scene.hpp"
 
@@ -101,6 +102,13 @@ void RetroFuturaGUI::IPopup::followKeys()
     _escapePressCountSeen = escapePressCount;
 
     if(!dismissesOnEscape())
+        return;
+
+    if(!_window)
+        return;
+
+    //An open list closes first, as it would on a click elsewhere; the next Escape dismisses the popup.
+    if(IDropDown::CloseOpenLists(_window->GetGlfwWindow()))
         return;
 
     Dismiss();

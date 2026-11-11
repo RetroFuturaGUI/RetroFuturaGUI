@@ -117,6 +117,25 @@ bool RetroFuturaGUI::IDropDown::IsOpenListAt(GLFWwindow* window, const glm::vec2
     });
 }
 
+bool RetroFuturaGUI::IDropDown::CloseOpenLists(GLFWwindow* window)
+{
+    bool wasOpen { false };
+
+    for(IDropDown* dropDown : _dropDowns)
+    {
+        if(!dropDown)
+            continue;
+
+        if(!dropDown->_showDropDown || window != dropDown->_parentWindow)
+            continue;
+
+        dropDown->SetDropDownOpen(false);
+        wasOpen = true;
+    }
+
+    return wasOpen;
+}
+
 bool RetroFuturaGUI::IDropDown::isListOver(const IHierarchyNode* reader, GLFWwindow* readerWindow, const glm::vec2& windowPoint) const
 {
     if(!_showDropDown && !_holdsPickPress)

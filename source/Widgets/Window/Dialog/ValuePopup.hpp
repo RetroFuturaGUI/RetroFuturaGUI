@@ -46,7 +46,8 @@ namespace RetroFuturaGUI
     public:
         /// @param kinds One per field, in order
         /// @param labels One per field, in order
-        ValueForm(Window* window, const uSize number, std::string_view title, std::string_view description, std::span<const ValueRowKind> kinds, std::span<const std::string_view> labels);
+        /// @param listItemCounts One per field, in order. A choice's item count, 0 for any other field
+        ValueForm(Window* window, const uSize number, std::string_view title, std::string_view description, std::span<const ValueRowKind> kinds, std::span<const std::string_view> labels, std::span<const uSize> listItemCounts);
         ValueForm() = delete;
         ValueForm(const ValueForm&) = delete;
         ValueForm(ValueForm&&) = delete;
@@ -75,6 +76,10 @@ namespace RetroFuturaGUI
 
         /// @brief Shows a row's field as invalid (the popupInvalid flavor on its border) or not
         void MarkInvalid(const uSize row, const bool isInvalid);
+
+        /// @brief Opens a choice row's list where its items fit: below the field, else above it, else on the roomier side
+        ///        showing as many as fit. Called once the items are added.
+        void FitChoiceList(const uSize row);
 
         /// @brief Lets OK confirm, or disables it while a field is invalid
         void EnableOk(const bool enable);
@@ -134,6 +139,16 @@ namespace RetroFuturaGUI
                 return std::format("{}", value);
         }
 
+        /// @brief How many items a field's list holds: a choice's, 0 for any other field
+        template<ValueFieldType T>
+        static uSize ListItemCountOf([[maybe_unused]] const T& value)
+        {
+            if constexpr (std::same_as<T, ValueChoice>)
+                return value._Items.size();
+            else
+                return 0;
+        }
+
         /// @brief The height the window opens with before it is measured
         static i32 FirstHeight();
 
@@ -156,6 +171,9 @@ namespace RetroFuturaGUI
             ColorPreview* _Preview { nullptr };
             Label* _RangeLabel { nullptr };
             ComboBox* _ComboBox { nullptr };
+            f32
+                _SpaceAbove { 0.0f }, //the room for a list above and below the field, the bar left out.
+                _SpaceBelow { 0.0f };
             bool _IsInvalid { false };
         };
 
@@ -193,6 +211,7 @@ namespace RetroFuturaGUI
             _colorHeight { 170.0f },
             _buttonRowHeight { 56.0f },
             _emptyDescription { 8.0f }; //no description still leaves a gap under the bar
+        static constexpr uSize _listRowCount { 8 }; //the rows a drop-down list shows by default.
     };
 
     /// @brief Asks for values of the given types, one field each, and closes with them. OK and Enter close it once every field
@@ -221,7 +240,7 @@ namespace RetroFuturaGUI
         template<ValueFieldType... Fs>
         ValuePopup(const uSize number, std::string_view title, std::string_view description, const ValueField<Fs>&... fields)
             : Popup<Ts...>(std::format("ValuePopup{}", number), static_cast<i32>(ValueForm::_width), ValueForm::FirstHeight()),
-              _form(this->GetWindow(), number, title, description, std::array<ValueRowKind, sizeof...(Fs)> { ValueForm::KindOf<Fs>()... }, std::array<std::string_view, sizeof...(Fs)> { fields._Label... })
+              _form(this->GetWindow(), number, title, description, std::array<ValueRowKind, sizeof...(Fs)> { ValueForm::KindOf<Fs>()... }, std::array<std::string_view, sizeof...(Fs)> { fields._Label... }, std::array<uSize, sizeof...(Fs)> { ValueForm::ListItemCountOf(fields._Value)... })
         {
             setFields(std::index_sequence_for<Fs...> {}, fields...);
 
@@ -315,6 +334,7 @@ namespace RetroFuturaGUI
                 comboBox->AddItem(item);
 
             comboBox->SetIndex(choice._Selected, false);
+            _form.FitChoiceList(row);
         }
 
         /// @brief Reads a row as the type it hands back: nothing while a number field holds no valid number.

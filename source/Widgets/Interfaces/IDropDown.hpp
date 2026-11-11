@@ -42,6 +42,10 @@ namespace RetroFuturaGUI
         ///        are drawn over everything, uncut, so a ScrollView lets the pointer through to one sticking out of it
         static bool IsOpenListAt(GLFWwindow* window, const glm::vec2& windowPoint);
 
+        /// @brief Closes every open list of the drop-downs in the window, as Escape does in a popup before it dismisses it.
+        /// @return Whether one was open.
+        static bool CloseOpenLists(GLFWwindow* window);
+
         virtual void RemoveItem(const uSize index) = 0;
         void Connect_OnItemClicked(const typename Signal<>::Slot& slot, const bool async);
         void Connect_OnIndexChanged(const typename Signal<>::Slot& slot, const bool async);
@@ -228,7 +232,7 @@ namespace RetroFuturaGUI
             _wheelRowRemainder { 0.0f },
             _arrowSpace { 0.0f };
         inline static std::vector<IDropDown*> _shownDropDowns {}; //opened in the frame being drawn, drawn and cleared by DrawShown
-        inline static std::vector<const IDropDown*> _dropDowns {}; //every drop-down, for the pointer check
+        inline static std::vector<IDropDown*> _dropDowns {}; //every drop-down, for the pointer check
         bool _hideLabelWhenOpen { false };
         glm::mat4 _listFrame { 1.0f }; //the frame the widget drew in, which its open list draws in later
         glm::mat4 _viewListFrame { 1.0f }; //the frame it drew in last in an EnvironmentView's picture, where its open list shows too.

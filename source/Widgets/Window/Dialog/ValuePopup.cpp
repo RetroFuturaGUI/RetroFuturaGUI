@@ -8,7 +8,7 @@
 #include <algorithm>
 #include <cmath>
 
-RetroFuturaGUI::ValueForm::ValueForm(Window* window, const uSize number, std::string_view title, std::string_view description, std::span<const ValueRowKind> kinds, std::span<const std::string_view> labels)
+RetroFuturaGUI::ValueForm::ValueForm(Window* window, const uSize number, std::string_view title, std::string_view description, std::span<const ValueRowKind> kinds, std::span<const std::string_view> labels, std::span<const uSize> listItemCounts)
     : _enterPressCountSeen(PlatformBridge::Input::GetKeyPressCount(PB_KEY_RETURN)) //the Enter that opened it, if one did, is spent.
 {
     addMissingFlavors();
@@ -19,11 +19,9 @@ RetroFuturaGUI::ValueForm::ValueForm(Window* window, const uSize number, std::st
     styleWindow(*window, title);
 
     //Laid out again once the description is measured. Bar, description, one row per field, buttons
-    const uSize
-        fieldCount { std::min(kinds.size(), labels.size()) },
-        buttonRow { 2 + fieldCount };
+    const uSize fieldCount { std::min(kinds.size(), labels.size()) };
     const std::vector<f32> columns(_columnCount, 1.0f / static_cast<f32>(_columnCount));
-    const AxisDefinition firstAxis { ._RowDefinition = std::vector<f32>(buttonRow + 1, 1.0f / static_cast<f32>(buttonRow + 1)), ._ColumnDefinition = columns, ._LayerDefinition = { 1.0f } };
+    const AxisDefinition firstAxis { ._RowDefinition = std::vector<f32>(fieldCount + 3, 1.0f / static_cast<f32>(fieldCount + 3)), ._ColumnDefinition = columns, ._LayerDefinition = { 1.0f } };
     _host = std::make_unique<ViewHost>(std::format("ValuePopupScene{}", number), window, firstAxis);
     Lasagna* lasagna { _host->GetLasagna() };
 
@@ -53,7 +51,37 @@ RetroFuturaGUI::ValueForm::ValueForm(Window* window, const uSize number, std::st
     for(uSize field = 0; field < fieldCount; ++field)
         rowHeights.push_back(rowHeightOf(kinds[field]));
 
+    //A choice's list opens on a side of its row where its items fit. What neither side has goes in above the buttons
+    const f32 listItemHeight { _fieldHeight - 2.0f * _margin }; //as tall as the box
+    f32 spacerHeight { 0.0f };
+
+    for(uSize field = 0; field < fieldCount && field < listItemCounts.size(); ++field)
+    {
+        if(0 == listItemCounts[field])
+            continue;
+
+        const f32 neededHeight { static_cast<f32>(std::min(listItemCounts[field], _listRowCount)) * listItemHeight };
+        f32
+            above { _margin },
+            below { _margin + _buttonRowHeight };
+
+        for(uSize track = 1; track < 2 + field; ++track)
+            above += rowHeights[track];
+
+        for(uSize track = 3 + field; track < rowHeights.size(); ++track)
+            below += rowHeights[track];
+
+        if(neededHeight <= above || neededHeight <= below)
+            continue;
+
+        spacerHeight = std::max(spacerHeight, neededHeight - below);
+    }
+
+    if(0.0f < spacerHeight)
+        rowHeights.push_back(std::ceil(spacerHeight));
+
     rowHeights.push_back(_buttonRowHeight);
+    const uSize buttonRow { rowHeights.size() - 1 };
     f32 height { 0.0f };
 
     for(const f32 rowHeight : rowHeights)
@@ -104,7 +132,7 @@ RetroFuturaGUI::ValueForm::ValueForm(Window* window, const uSize number, std::st
 void RetroFuturaGUI::ValueForm::attachRow(Lasagna& lasagna, const uSize lasagnaRow, const ValueRowKind kind, std::string_view label, const AxisDefinition& axis, const glm::vec2& windowSize)
 {
     const uSize row { _rows.size() };
-    _rows.push_back(Row { ._Kind = kind, ._TextBox = nullptr, ._CheckBox = nullptr, ._ColorPicker = nullptr, ._Slider = nullptr, ._Brightness = nullptr, ._Alpha = nullptr, ._Preview = nullptr, ._RangeLabel = nullptr, ._ComboBox = nullptr, ._IsInvalid = false });
+    _rows.push_back(Row { ._Kind = kind, ._TextBox = nullptr, ._CheckBox = nullptr, ._ColorPicker = nullptr, ._Slider = nullptr, ._Brightness = nullptr, ._Alpha = nullptr, ._Preview = nullptr, ._RangeLabel = nullptr, ._ComboBox = nullptr, ._SpaceAbove = 0.0f, ._SpaceBelow = 0.0f, ._IsInvalid = false });
     const ViewFont font { popupFont(PlatformBridge::Fonts::Weight::Normal) };
     const uSize inputColumnCount { _columnCount - _labelColumnCount };
     const ViewCell
@@ -156,8 +184,15 @@ void RetroFuturaGUI::ValueForm::attachRow(Lasagna& lasagna, const uSize lasagnaR
         } break;
         case ValueRowKind::Choice:
         {
-            //Its list opens upward from the lower half, so it stays inside the window.
-            const bool isInLowerHalf { lasagnaRow * 2 >= axis._RowDefinition.size() };
+            //The room for its list on either side, the bar left out. FitChoiceList picks the side once the items are known
+            for(uSize track = 1; track < lasagnaRow; ++track)
+                _rows[row]._SpaceAbove += axis._RowDefinition[track] * windowSize.y;
+
+            for(uSize track = lasagnaRow + 1; track < axis._RowDefinition.size(); ++track)
+                _rows[row]._SpaceBelow += axis._RowDefinition[track] * windowSize.y;
+
+            _rows[row]._SpaceAbove += _margin;
+            _rows[row]._SpaceBelow += _margin;
             _rows[row]._ComboBox = _host->Attach<ComboBox>(std::format("Field{}", row), lasagna, inputCell);
 
             if(!_rows[row]._ComboBox)
@@ -181,7 +216,6 @@ void RetroFuturaGUI::ValueForm::attachRow(Lasagna& lasagna, const uSize lasagnaR
                 comboBox.GetList().GetHighlight().SetBuiltInColors(styleKey(), std::array { _toggleOnColor }, state);
             }
 
-            comboBox.SetDropDownPosition(isInLowerHalf ? IDropDown::DropDownPosition::Top : IDropDown::DropDownPosition::Bottom);
         } break;
         case ValueRowKind::Color:
         {
@@ -236,6 +270,28 @@ void RetroFuturaGUI::ValueForm::attachRow(Lasagna& lasagna, const uSize lasagnaR
         default:
         break;
     }
+}
+
+void RetroFuturaGUI::ValueForm::FitChoiceList(const uSize row)
+{
+    if(_rows.size() <= row)
+        return;
+
+    const Row& choiceRow { _rows[row] };
+
+    if(!choiceRow._ComboBox)
+        return;
+
+    //Each item is a row as tall as the box: below when they fit there, else above, else on the roomier side, the rest scrolled
+    ComboBox& comboBox { *choiceRow._ComboBox };
+    const f32 itemHeight { std::max(comboBox.GetSize().y, 1.0f) };
+    const uSize
+        wantedCount { std::min(comboBox.GetItemCount(), comboBox.GetMaxVisibleItemCount()) },
+        belowCount { static_cast<uSize>(choiceRow._SpaceBelow / itemHeight) },
+        aboveCount { static_cast<uSize>(choiceRow._SpaceAbove / itemHeight) };
+    const bool opensBelow { belowCount >= wantedCount || belowCount >= aboveCount };
+    comboBox.SetDropDownPosition(opensBelow ? IDropDown::DropDownPosition::Bottom : IDropDown::DropDownPosition::Top);
+    comboBox.SetMaxVisibleItemCount(std::max<uSize>(std::min(wantedCount, opensBelow ? belowCount : aboveCount), 1));
 }
 
 void RetroFuturaGUI::ValueForm::followColor(const uSize row)

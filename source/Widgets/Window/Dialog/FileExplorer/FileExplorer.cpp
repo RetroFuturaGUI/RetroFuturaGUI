@@ -2878,6 +2878,10 @@ void RetroFuturaGUI::FileExplorer::handleKeys()
         isControlHeld { PlatformBridge::Input::IsKeyDown(PB_KEY_CONTROL_L) || PlatformBridge::Input::IsKeyDown(PB_KEY_CONTROL_R) },
         isShiftHeld { PlatformBridge::Input::IsKeyDown(PB_KEY_SHIFT_L) || PlatformBridge::Input::IsKeyDown(PB_KEY_SHIFT_R) };
 
+    //An open menu or filter list closes first, as it would on a click elsewhere. The next Escape cancels
+    if(isEscapePressed && GetWindow() && IDropDown::CloseOpenLists(GetWindow()->GetGlfwWindow()))
+        return;
+
     if(isRefreshPressed)
         relist();
     else if(isRenamePressed)
