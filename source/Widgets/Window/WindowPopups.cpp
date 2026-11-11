@@ -1,5 +1,6 @@
 #include "Window.hpp"
 #include "MessagePopup.hpp"
+#include "FileExplorer.hpp"
 #include "PlatformBridge.hpp"
 #include <algorithm>
 #include <utility>
@@ -74,6 +75,36 @@ RetroFuturaGUI::MessagePopup* RetroFuturaGUI::Window::OpenPopup(const PopupTypes
     MessagePopup* opened { popup.get() };
 
     if(!PushPopup(std::move(popup)))
+        return nullptr;
+
+    return opened;
+}
+
+RetroFuturaGUI::FileExplorer* RetroFuturaGUI::Window::OpenPopup(const PopupTypes type, const FileExplorerRequest& request)
+{
+    //The request describes a FileExplorer. Any other kind takes its own arguments
+    if(PopupTypes::File != type)
+        return nullptr;
+
+    std::unique_ptr<FileExplorer> explorer { std::make_unique<FileExplorer>(request._Title, request._Size.x, request._Size.y) };
+    explorer->SetFontFamily(request._FontFamily.empty() ? FontManager::GetDefaultFontFamily() : request._FontFamily, request._FontSize, request._FontSizeUnit, request._Slant, request._Weight);
+    std::string startPath { request._StartPath };
+
+    //UTF-8, as Open takes paths.
+    if(startPath.empty())
+    {
+        const std::u8string home { PlatformBridge::FileSystem::GetKnownFolder(PlatformBridge::FileSystem::KnownFolder::Home).u8string() };
+        startPath.assign(home.begin(), home.end());
+    }
+
+    const bool isOpen { request._Filters.empty() ? explorer->Open(startPath, request._Flags, request._Extensions) : explorer->Open(startPath, request._Flags, request._Filters) };
+
+    if(!isOpen)
+        return nullptr;
+
+    FileExplorer* opened { explorer.get() };
+
+    if(!PushPopup(std::move(explorer)))
         return nullptr;
 
     return opened;

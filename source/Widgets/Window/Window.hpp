@@ -8,6 +8,7 @@
 #include "IHierarchyNode.hpp"
 #include "IPointerFilter.hpp"
 #include "IPopup.hpp"
+#include "ValueField.hpp"
 #include "DockEdge.hpp"
 #include "Signal.hpp"
 #include "CursorIcon.hpp"
@@ -20,7 +21,10 @@
 
 namespace RetroFuturaGUI
 {
+    class FileExplorer;
+    struct FileExplorerRequest;
     class MessagePopup;
+    template<typename... Ts> class ValuePopup;
     class Scene;
     class WindowTab;
 
@@ -244,6 +248,19 @@ namespace RetroFuturaGUI
         ///        close it (Connect_OnResult), the bar's close button and Escape dismiss it (Connect_OnDismiss)
         /// @return The popup, to connect its signals, until it closes; nullptr when it couldn't open. Value and File aren't built yet
         MessagePopup* OpenPopup(const PopupTypes type, std::string_view summary, std::string_view description);
+
+        /// @brief Opens a popup asking for values, one field each (PopupTypes::Value. Any other kind opens nothing). OK and Enter
+        ///        close it once every field is valid, handing the values to Connect_OnResult in the fields' order; Cancel, the
+        ///        bar's close button and Escape dismiss it. Defined in ValuePopup.hpp, which a caller includes
+        /// @return The popup, to connect its signals, until it closes. nullptr when it couldn't open
+        template<ValueFieldType... Fs>
+        ValuePopup<ValueResultOf<Fs>...>* OpenPopup(const PopupTypes type, std::string_view title, std::string_view description, const ValueField<Fs>&... fields);
+
+        /// @brief Opens the FileExplorer (PopupTypes::File; any other kind opens nothing) as the request describes. Its title,
+        ///        size, start folder, flags, extensions or named filters and font. Its result is the chosen paths
+        ///        (Connect_OnResult). Cancel, the bar's close button and Escape dismiss it. FileExplorer.hpp defines the request.
+        /// @return The explorer, to connect its signals, until it closes; nullptr when it couldn't open
+        FileExplorer* OpenPopup(const PopupTypes type, const FileExplorerRequest& request);
 
         /// @brief Returns whether popups are open over this window.
         bool HasPopups() const;

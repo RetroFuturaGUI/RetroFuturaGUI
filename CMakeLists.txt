@@ -176,6 +176,7 @@ list(APPEND RetroFuturaGuiSources
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/Window/Dialog/IPopup.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/Window/Dialog/DialogKit.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/Window/Dialog/MessagePopup.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/Window/Dialog/ValuePopup.cpp"
 
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/Window/Dialog/FileExplorer/FileExplorer.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/Widgets/Window/Dialog/FileExplorer/FileExplorerPrompts.cpp"

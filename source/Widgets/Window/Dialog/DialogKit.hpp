@@ -13,9 +13,11 @@
 namespace RetroFuturaGUI
 {
     class Button;
+    class CheckBox;
     class Label;
     class MenuBar;
     class Scene;
+    class TextBox;
     class Window;
 
     /// @brief What the library's own popups share: the FileExplorer, its prompts and the message popups. Their scene, the cells
@@ -99,6 +101,14 @@ namespace RetroFuturaGUI
         /// @brief A line of text on the window's background, a prompt's message for instance.
         static void styleLabel(Label& label, std::string_view text, const glm::vec3& size, const ViewFont& font);
 
+        static void styleTextBox(TextBox& textBox, std::string_view placeholder, const glm::vec3& size, const ViewFont& font);
+
+        /// @brief A square box in the popups' colors, the accent's blue while checked
+        static void styleCheckBox(CheckBox& checkBox, const f32 side);
+
+        /// @brief The message and value popups' font. The default family at 16 points
+        static ViewFont popupFont(const PlatformBridge::Fonts::Weight weight);
+
         /// @brief The key that gives the popups' widgets their built-in look, which flavors override
         static StyleKey styleKey();
 
@@ -112,5 +122,9 @@ namespace RetroFuturaGUI
 
         static constexpr f32 _margin { 6.0f };
         static constexpr uSize _barCloseIndex { 2 }; //the bar's flex cell holding the close button
+        inline static const glm::vec4
+            _toggleOnColor { 0.22f, 0.32f, 0.55f, 1.0f },
+            _toggleOnHoverColor { 0.3f, 0.42f, 0.68f, 1.0f },
+            _toggleOnClickedColor { 0.38f, 0.5f, 0.78f, 1.0f };
     };
 }

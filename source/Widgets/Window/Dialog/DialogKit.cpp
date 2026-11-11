@@ -1,9 +1,11 @@
 #include "DialogKit.hpp"
 #include "Button.hpp"
+#include "CheckBox.hpp"
 #include "Label.hpp"
 #include "MenuBar.hpp"
 #include "PlatformBridge.hpp"
 #include "SceneLoader.hpp"
+#include "TextBox.hpp"
 #include "Window.hpp"
 #include <array>
 #include <cmath>
@@ -179,4 +181,56 @@ std::string RetroFuturaGUI::DialogKit::toUtf8(const std::filesystem::path& path)
 RetroFuturaGUI::StyleKey RetroFuturaGUI::DialogKit::styleKey()
 {
     return StyleKey {};
+}
+
+
+void RetroFuturaGUI::DialogKit::styleCheckBox(CheckBox& checkBox, const f32 side)
+{
+    std::vector<glm::vec4>
+        backgroundColors {{ 0.2f, 0.2f, 0.2f, 1.0f }},
+        backgroundHoverColors {{ 0.3f, 0.3f, 0.3f, 1.0f }},
+        checkedColors {{ _toggleOnColor }},
+        checkedHoverColors {{ _toggleOnHoverColor }},
+        checkedClickedColors {{ _toggleOnClickedColor }},
+        checkmarkColors {{ 1.0f, 1.0f, 1.0f, 1.0f }},
+        borderColors {{ 0.5f, 0.5f, 0.5f, 1.0f }};
+
+    checkBox.SetSize(glm::vec3(side, side, 0.01f));
+    checkBox.GetBackground().SetBuiltInColors(styleKey(), backgroundColors, ColorState::Enabled);
+    checkBox.GetBackground().SetBuiltInColors(styleKey(), backgroundHoverColors, ColorState::Hover);
+    checkBox.GetBackground().SetBuiltInColors(styleKey(), backgroundColors, ColorState::Clicked);
+    checkBox.SetInheritColors(checkedColors, ColorState::Enabled);
+    checkBox.SetInheritColors(checkedHoverColors, ColorState::Hover);
+    checkBox.SetInheritColors(checkedClickedColors, ColorState::Clicked);
+    checkBox.GetCheckmark().SetBuiltInColors(styleKey(), checkmarkColors, ColorState::Enabled);
+    checkBox.GetCheckmark().SetBuiltInColors(styleKey(), checkmarkColors, ColorState::Hover);
+    checkBox.GetCheckmark().SetBuiltInColors(styleKey(), checkmarkColors, ColorState::Clicked);
+    checkBox.GetBorder().SetBuiltInColors(styleKey(), borderColors, ColorState::Enabled);
+    checkBox.GetBorder().SetBuiltInColors(styleKey(), borderColors, ColorState::Hover);
+    checkBox.GetBorder().SetBuiltInColors(styleKey(), borderColors, ColorState::Clicked);
+    checkBox.GetBorder().SetBuiltInWidth(styleKey(), 1.0f);
+    checkBox.GetBackground().SetBuiltInCornerRadii(styleKey(), glm::vec4(6.0f));
+    checkBox.GetBorder().SetBuiltInCornerRadii(styleKey(), glm::vec4(6.0f));
+    checkBox.SetInnerPadding(4.0f);
+}
+void RetroFuturaGUI::DialogKit::styleTextBox(TextBox& textBox, std::string_view placeholder, const glm::vec3& size, const ViewFont& font)
+{
+    textBox.SetSize(size);
+    textBox.GetBackground().SetBuiltInCornerRadii(styleKey(), glm::vec4(8.0f));
+    textBox.GetBorder().SetBuiltInCornerRadii(styleKey(), glm::vec4(8.0f));
+    textBox.GetBackground().SetBuiltInColors(styleKey(), std::array { glm::vec4(0.2f, 0.2f, 0.2f, 1.0f) }, ColorState::Enabled);
+    textBox.GetBackground().SetBuiltInColors(styleKey(), std::array { glm::vec4(0.3f, 0.3f, 0.3f, 1.0f) }, ColorState::Hover);
+    textBox.GetBackground().SetBuiltInColors(styleKey(), std::array { glm::vec4(0.2f, 0.2f, 0.2f, 1.0f) }, ColorState::Clicked);
+    textBox.GetBorder().SetBuiltInColors(styleKey(), std::array { glm::vec4(0.5f, 0.5f, 0.5f, 1.0f) }, ColorState::Enabled);
+    textBox.GetBorder().SetBuiltInWidth(styleKey(), 1.0f);
+    textBox.GetText().SetFontFamily(font._Family, font._Size, FontSizeUnit::Pixels, font._Slant, font._Weight);
+    textBox.GetText().SetAlignment(TextAlignment::Left);
+    textBox.GetText().SetPadding(6.0f);
+    textBox.GetPlaceholder().SetString(placeholder, false);
+    textBox.GetPlaceholder().SetBuiltInColors(styleKey(), std::array { glm::vec4(0.5f, 0.5f, 0.5f, 1.0f) }, RetroFuturaGUI::ColorState::Enabled);
+}
+
+RetroFuturaGUI::DialogKit::ViewFont RetroFuturaGUI::DialogKit::popupFont(const PlatformBridge::Fonts::Weight weight)
+{
+    return ViewFont { ._Family = FontManager::GetDefaultFontFamily(), ._Size = FontManager::ToPixels(16.0f, FontSizeUnit::Points), ._Slant = PlatformBridge::Fonts::Slant::Roman, ._Weight = weight };
 }

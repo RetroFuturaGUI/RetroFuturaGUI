@@ -45,8 +45,8 @@ RetroFuturaGUI::MessagePopup::MessagePopup(const PopupTypes type, std::string_vi
         return;
 
     const ViewFont
-        font { ._Family = FontManager::GetDefaultFontFamily(), ._Size = FontManager::ToPixels(16.0f, FontSizeUnit::Points), ._Slant = PlatformBridge::Fonts::Slant::Roman, ._Weight = PlatformBridge::Fonts::Weight::Normal },
-        summaryFont { ._Family = font._Family, ._Size = font._Size, ._Slant = PlatformBridge::Fonts::Slant::Roman, ._Weight = PlatformBridge::Fonts::Weight::Bold };
+        font { popupFont(PlatformBridge::Fonts::Weight::Normal) },
+        summaryFont { popupFont(PlatformBridge::Fonts::Weight::Bold) };
     const ViewCell
         iconCell { ._Row = 1, ._Column = 0, ._ColumnSpan = 1, ._SizingMode = SizingMode::FIXED, ._Layer = 0 },
         summaryCell { ._Row = 1, ._Column = 1, ._ColumnSpan = _columnCount - 1, ._SizingMode = SizingMode::FIXED, ._Layer = 0 },

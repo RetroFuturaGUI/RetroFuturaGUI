@@ -61,7 +61,7 @@ The framework is designed for cross-platform use, and its logic can be compiled 
 - SvgImage
   - No disabled look of its own. Graying it out means recoloring its named paths, which would overwrite path colors set by the application, so whoever owns the image does it
 - FileExplorer
-  - No styling API: only the font can be set (SetFontFamily). Every color is fixed in FileExplorer.cpp - the bar, the buttons and menus, the list's row, header, selection and drop target colors, the toggles' accent, the scrollbar, the boxes - and the prompts (NamePrompt, ConfirmPrompt, ClashPrompt) copy them. A style set before Open, per widget kind and color state, which the prompts take over too, would let an app match its own look
+  - Styled through flavors only: its colors, corner radii and border widths are built-in, so .default overrides them, but a flavor meant for the explorer alone has no handle besides its widgets' paths (WidgetRegistry). The accent of a toggle that is on stays fixed, and fonts, alignment and padding stay its own, since its layout is measured from them
   - With thumbnails on, the Name column gets what the thumbnails (72 px), Size, Modified and Type leave: about 70 px in the default 1000 px window with the preview pane, a few characters
   - The Thumbnails toggle was tried only by opening with the Thumbnails flag; clicking it, which keeps the selection and the top row in view, hasn't been done yet
   - The preview shows as many detail rows as fit, the most telling first; the rest can't be scrolled to yet. The row for playback controls stays empty until playing is built
@@ -158,7 +158,9 @@ The framework is designed for cross-platform use, and its logic can be compiled 
 - Popups
   - Popup&lt;Ts...&gt;: a window of its own that closes with values of any types (Close, Connect_OnResult) or is dismissed (Dismiss, Connect_OnDismiss)
   - One popup stack per window; the windows below the top popup take no input, like under a native modal dialog. The top popup takes the keys, and Escape dismisses it (a popup that takes Escape itself, like the FileExplorer, overrides dismissesOnEscape)
-  - Window::OpenPopup(PopupTypes, summary, description): the library's own Message, Warning and Error popups. The kind in the bar ("Information", "Warning", "Error"), an icon, the summary in bold on one line and the description wrapped below it, the window as tall as the text; OK and Enter close it (OnResult), the bar's close button and Escape dismiss it (OnDismiss). Each kind's accent (window and bar border, title) and icon come from flavors the app can change or define first: popupInformation, popupWarning, popupError and the same with "Icon" (MessagePopup::GetFlavorName, GetIconFlavorName). Value and File follow
+  - Window::OpenPopup(PopupTypes, summary, description): the library's own Message, Warning and Error popups. The kind in the bar ("Information", "Warning", "Error"), an icon, the summary in bold on one line and the description wrapped below it, the window as tall as the text; OK and Enter close it (OnResult), the bar's close button and Escape dismiss it (OnDismiss). Each kind's accent (window and bar border, title) and icon come from flavors the app can change or define first: popupInformation, popupWarning, popupError and the same with "Icon" (MessagePopup::GetFlavorName, GetIconFlavorName)
+  - Window::OpenPopup(PopupTypes::Value, title, description, fields...) (include ValuePopup.hpp): asks for values, one ValueField { ._Label, ._Value } each, the types deduced from them: numbers (a text box that checks the number; OK stays disabled and the field's border shows the popupInvalid flavor while it isn't one of its type), std::string, bool (a check box), glm::vec4 (a color picker with brightness and alpha sliders and a preview), ValueRange<T> (a slider showing its number) and ValueChoice (a combo box of texts, handing back the index). OK and Enter close it with the values in the fields' order (Connect_OnResult); Cancel, the bar's close button and Escape dismiss it
+  - Window::OpenPopup(PopupTypes::File, FileExplorerRequest { ... }): opens the FileExplorer as the request describes, every field defaulted (title "File Explorer", 1000x680, the home folder, single file, all files, the app's default font at 18 pt); filters replace the extensions when given. Connect_OnResult hands over the chosen paths
   - Styled like everything else: a popup's window takes flavors as every window does (Window::AddFlavor, or .default for all of them), and its bar is one of its scene's widgets. The FileExplorer and its prompts give their widgets a built-in look, so flavors and .default override it; their fonts, alignment and padding stay their own, since the explorer's layout is measured from them, and a toggle that is on keeps its accent color
 - Animation
   - Transitions for colors (the effects' too), corner radii, positions, sizes, rotations, opacity, border gaps and the effects' angle, distance, blur, width and scale (Effects; an angle turns the way the numbers run, so 0 to 360 is a full turn): a global default per property (Transitions::SetDefault), overridable per widget (SetTransition), with easing (Linear, EaseIn, EaseOut, EaseInOut). Off until set
@@ -308,6 +310,14 @@ The framework is designed for cross-platform use, and its logic can be compiled 
   - Levels are linear RMS with no dB helper, so a meter bound straight to them sits low and barely moves - music averages well under 0.3. A 20*log10 mapping belongs either in the meter widget or beside GetChannelVolume
   - The meter's decay is a fixed constant per processed block, so its feel shifts with the device's buffer size instead of with wall-clock time
   - No signals yet (OnPlaybackFinished, OnPositionChanged), so application code has nothing to hook a track ending to
+- 3D Graphing
+  - Use Enfironments to display 3D graphs
+    - Models
+    - Lines
+    - Wave Surfaces
+    - Scatter
+  - Types of Graphs can be layed over another
+- Add grids and grid labels to LineDiagram and Histogram
 </details>
 
 #### Nice-to-have's

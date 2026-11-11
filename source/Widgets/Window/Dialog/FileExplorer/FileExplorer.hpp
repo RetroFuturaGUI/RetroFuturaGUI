@@ -301,10 +301,6 @@ namespace RetroFuturaGUI
 
         /// @brief Makes a ComboBox a menu: flat under its caption, one item per action, its list as wide as given.
         static void styleMenu(ComboBox& menu, std::string_view caption, std::span<const MenuAction> actions, const glm::vec3& size, const f32 listWidth, const ViewFont& font);
-        static void styleTextBox(TextBox& textBox, std::string_view placeholder, const glm::vec3& size, const ViewFont& font);
-
-        /// @brief A square box in the explorer's colors, the accent's blue while checked.
-        static void styleCheckBox(CheckBox& checkBox, const f32 side);
 
         /// @brief The size of one button in the places list, which the logic fills.
         static glm::vec3 placeButtonSize(const glm::vec2& windowSize, const ViewFont& font);
@@ -791,9 +787,22 @@ namespace RetroFuturaGUI
         static constexpr std::array<MenuAction, 5>
             _fileMenuChoices { MenuAction::NewFolder, MenuAction::Rename, MenuAction::Delete, MenuAction::DeletePermanently, MenuAction::Close },
             _editMenuChoices { MenuAction::Undo, MenuAction::Cut, MenuAction::Copy, MenuAction::Paste, MenuAction::SelectAll };
-        inline static const glm::vec4
-            _toggleOnColor { 0.22f, 0.32f, 0.55f, 1.0f },
-            _toggleOnHoverColor { 0.3f, 0.42f, 0.68f, 1.0f },
-            _toggleOnClickedColor { 0.38f, 0.5f, 0.78f, 1.0f };
+    };
+
+    /// @brief What Window::OpenPopup(PopupTypes::File, ...) opens a FileExplorer with. Every field has a default, so a request
+    ///        names only what it changes: FileExplorerRequest { ._Title = "Open image", ._Extensions = ".png, .jpg" }
+    struct FileExplorerRequest
+    {
+        std::string _Title { "File Explorer" };
+        glm::ivec2 _Size { 1000, 680 };
+        std::string _StartPath {}; //UTF-8. Where navigation should start
+        FileExplorer::FileExplorerFlags _Flags { FileExplorer::FileExplorerFlags::SingleFile };
+        std::string _Extensions { ".*" }; //written as Open's extensions, used while there are no filters
+        std::vector<FileExplorer::FileFilter> _Filters {}; //named file types, which replace the extensions when there are any
+        std::string _FontFamily {};
+        f32 _FontSize { 18.0f };
+        FontSizeUnit _FontSizeUnit { FontSizeUnit::Points };
+        PlatformBridge::Fonts::Slant _Slant { PlatformBridge::Fonts::Slant::Roman };
+        PlatformBridge::Fonts::Weight _Weight { PlatformBridge::Fonts::Weight::Normal };
     };
 }
