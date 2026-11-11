@@ -2,6 +2,7 @@
 #include "Shader.hpp"
 #include <glm/gtc/matrix_transform.hpp>
 #include <algorithm>
+#include <array>
 #include <cmath>
 
 RetroFuturaGUI::EnvironmentView::EnvironmentView(std::string_view name, Projection* projection, IHierarchyNode* parentWidget, const WidgetTypeID parentWidgetTypeID, GLFWwindow* parentWindow)
@@ -57,8 +58,43 @@ void RetroFuturaGUI::EnvironmentView::Draw()
     if(0.0f >= _size.x || 0.0f >= _size.y)
         return;
 
-    renderWorld(*world, glm::i32vec2(std::max(1L, std::lround(_size.x)), std::max(1L, std::lround(_size.y))));
+    renderWorld(*world, getPictureSize());
     _plane->Draw();
+}
+
+glm::i32vec2 RetroFuturaGUI::EnvironmentView::getPictureSize() const
+{
+    //The view's corners where they land in the window, through its tilt and the window's perspective. Counterclockwise from the bottom left
+    const glm::mat4 toClip { _projection.GetProjectionMatrix() * Shader::GetDrawFrame() };
+    const glm::vec2
+        halfSize { glm::vec2(_size) * 0.5f },
+        resolution { _projection.GetResolution() };
+    const glm::i32vec2 laidOutSize { std::max(1L, std::lround(_size.x)), std::max(1L, std::lround(_size.y)) };
+    std::array<glm::vec2, 4> corners {};
+    const std::array<glm::vec2, 4> offsets { glm::vec2(-1.0f, -1.0f), glm::vec2(1.0f, -1.0f), glm::vec2(1.0f, 1.0f), glm::vec2(-1.0f, 1.0f) };
+
+    for(uSize corner = 0; 4 > corner; ++corner)
+    {
+        const glm::vec4 clip { toClip * glm::vec4(glm::vec2(_position) + offsets[corner] * halfSize, _position.z, 1.0f) };
+
+        if(1e-6f >= clip.w)
+            return laidOutSize; //a corner behind the eye: the laid out size is as good a guess as any
+
+        corners[corner] = (glm::vec2(clip) / clip.w * 0.5f + 0.5f) * resolution;
+    }
+
+    //As many pixels along each side as it spans at its longer edge, so nothing that shows is magnified
+    const f32
+        width { std::max(glm::distance(corners[0], corners[1]), glm::distance(corners[3], corners[2])) },
+        height { std::max(glm::distance(corners[0], corners[3]), glm::distance(corners[1], corners[2])) };
+    const i32 maxSide { getMaxPictureSide() };
+    return glm::i32vec2(std::clamp(static_cast<i32>(std::lround(width)), 1, maxSide), std::clamp(static_cast<i32>(std::lround(height)), 1, maxSide));
+}
+
+i32 RetroFuturaGUI::EnvironmentView::getMaxPictureSide()
+{
+    static const i32 maxSide { []() { GLint size { 0 }; glGetIntegerv(GL_MAX_TEXTURE_SIZE, &size); return std::min(4096, std::max(1, static_cast<i32>(size))); }() };
+    return maxSide;
 }
 
 void RetroFuturaGUI::EnvironmentView::SetWorld(Environment* world)
@@ -208,7 +244,7 @@ void RetroFuturaGUI::EnvironmentView::renderWorld(Environment& world, const glm:
         const Shader::OpacityScope opacity { 1.0f, Shader::FrameComposition::Instead };
         const Shader::UnclippedScope unclipped {};
         _isDrawingWorld = true;
-        world.drawThrough(getCamera(static_cast<f32>(pixelSize.x) / static_cast<f32>(pixelSize.y), glm::length(world.GetExtent())));
+        world.drawThrough(getCamera(_size.x / _size.y, glm::length(world.GetExtent()))); //the view's own shape: the picture is stretched back onto it
         _isDrawingWorld = false;
     }
 

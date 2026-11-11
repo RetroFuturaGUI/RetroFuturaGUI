@@ -93,6 +93,13 @@ namespace RetroFuturaGUI
         /// @brief Draws the world into the picture, sized to the view in pixels.
         void renderWorld(Environment& world, const glm::i32vec2& pixelSize);
 
+        /// @brief The picture's size in pixels. As many along the view's width and height as it spans in the window, through its
+        ///        tilt and the window's perspective, so a view brought closer stays sharp and a far one takes fewer
+        glm::i32vec2 getPictureSize() const;
+
+        /// @brief The largest side a picture may have. What the GPU allows, at most 4096
+        static i32 getMaxPictureSide();
+
         /// @brief Gives the picture and its depth buffer that size, the first time or when the view's size changed.
         void sizePicture(const glm::i32vec2& pixelSize);
 
