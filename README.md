@@ -31,9 +31,6 @@ The framework is designed for cross-platform use, and its logic can be compiled 
 |    | Environment Lights, Node | | |
 
 ### WIP in detail
-- Window
-  - The docking preview is a window of its own, so it gets a taskbar button while it shows. Hiding it needs WS_EX_TOOLWINDOW on Windows (_NET_WM_STATE_SKIP_TASKBAR on X11), which belongs in PlatformBridge
-  - A minimized or maximized window stays out of the docking layout until it is restored, and minimizing a group's root leaves the rest of the group on screen
 - Tab (items: root containers it owns, one per field)
   - Dragging a field only reorders the fields: an item can't be dragged out of the strip or into another Tab
   - The strip runs along the top only, and fields that don't fit at their minimum width are left out; the strip doesn't scroll
@@ -142,7 +139,7 @@ The framework is designed for cross-platform use, and its logic can be compiled 
 - Flavors (StylingManager), named style rules like CSS classes: a flavor sets colors per state, corner radii, cut corners, border widths, a background's or a text's image, every shader setting (fill, raster, glass, fog and their noise, masks, gaps, pixelation, CRT), the drop shadow, glow and inner glow (GetDropShadow() and so on, shown, colors per state, numbers, fill), and a text's font family, size, slant and weight, alignment, padding, flow, emoji tint, mask span and outline (GetText().GetOutline(): width, colors per state, fill), for its widgets' background, border and text; for the widget itself it sets the transitions (SetTransition, over the global default) and the border gap (SetBorderGap); the parts inside a widget have named getters, mirroring the widgets' own (GetIndicator().GetBackground(), GetGraph(), GetList().GetHighlight(), GetItemStyle(), GetSeparatorLine(), GetFieldStyle(), GetCloseButton(), GetSelectionBand(), GetHoverText(), GetPlaceholder(), GetPreview(), GetCheckmark(), GetArrow(), GetCloseButton().GetIcon(), GetCaret(), GetSelectedArea(), GetItemText(), and a table's GetTrackStyle(n) for its nth track variant, GetCellStyle(), GetHeaderStyle(), GetCellCheckBox()); a window takes flavors as well (Window::AddFlavor: its background, border and transitions; a docked window still squares the corners where it meets others); a widget takes several in order (AddFlavor(".primary")), any time after it is made. Each value shows the widget's own setting if set, else the first of its flavors that sets it, else .default, else the widget type's built-in look; widgets don't own what they take from a flavor, so a change to the flavor shows on all of them at once
 - Window
   - Several windows sharing fonts, images and shaders; rounded corners and transparency to the desktop
-  - Moving, resizing and maximizing; docking windows to each other's edges (like the columns of Niri) or into tabs, by API or by dragging with a preview
+  - Moving, resizing and maximizing; docking windows to each other's edges (like the columns of Niri) or into tabs, by API or by dragging with a preview. A minimized window leaves its group (the windows beside it close the gap, those docked to it stay free where they are) and comes back free at its length from before docking; a maximized one fills the screen alone and goes back into its place when restored
   - Three passes per frame: Interact (input), Update (per-frame work) and Draw
   - Files dropped from other programs (OnFilesDropped)
   - A layout file like imgui.ini (RetroFuturaGUI.ini) restores positions, sizes, docking and tabs between runs
@@ -206,7 +203,7 @@ The framework is designed for cross-platform use, and its logic can be compiled 
 - Signals: thread-safe Connect/Disconnect, synchronous (Emit) and threaded (EmitAsync) dispatch
 - BackgroundWork: a worker thread whose results are handed back on the GUI thread
 - PlatformBridge (cross-platform system layer, Windows and Linux)
-  - Keyboard, mouse, wheel and pinch input; clipboard; recycle bin; dragging files out; system fonts; monitors; child processes
+  - Keyboard, mouse, wheel and pinch input; clipboard; recycle bin; dragging files out; system fonts; monitors; child processes; window owners and taskbar buttons
 - Cross Language Capabilities
   - dll/so/dylib compilation, widgets addressed by string ID (DynamicLibWidgetManager), signals through C callbacks, the FileExplorer
   - C#, Python and Rust bindings

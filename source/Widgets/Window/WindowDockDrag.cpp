@@ -236,6 +236,7 @@ void RetroFuturaGUI::Window::showDockPreview(const DockRect& slot, const glm::ve
         _dockPreview->GetBackground().SetColors(std::array { glm::vec4(0.3f, 0.55f, 1.0f, 0.25f) }, ColorState::Enabled);
         _dockPreview->GetBorder().SetWidth(2.0f);
         _dockPreview->GetBorder().SetColors(std::array { glm::vec4(0.45f, 0.7f, 1.0f, 0.85f) }, ColorState::Enabled);
+        _dockPreview->showInTaskbar(false); //an outline of where the window would go, not a window of its own to switch to
     }
 
     if(!_dockPreview->_window)

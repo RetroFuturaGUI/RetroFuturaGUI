@@ -334,6 +334,18 @@ void RetroFuturaGUI::Window::centerOver(const Window* window)
     glfwSetWindowPos(_window, position.x, position.y);
 }
 
+void RetroFuturaGUI::Window::showInTaskbar(const bool show)
+{
+    if(!_window)
+        return;
+
+#if defined(TARGET_PLATFORM_LINUX)
+    PlatformBridge::NativeWindow::ShowInTaskbar(glfwGetX11Display(), glfwGetX11Window(_window), show);
+#elif defined(TARGET_PLATFORM_WINDOWS)
+    PlatformBridge::NativeWindow::ShowInTaskbar(glfwGetWin32Window(_window), show);
+#endif
+}
+
 void RetroFuturaGUI::Window::setNativeOwner(const Window* owner)
 {
     if(!owner)

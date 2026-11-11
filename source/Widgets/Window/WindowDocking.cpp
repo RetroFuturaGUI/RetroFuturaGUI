@@ -156,16 +156,21 @@ void RetroFuturaGUI::Window::releaseDockedWindows()
 
 void RetroFuturaGUI::Window::restoreUndockedLength()
 {
-    const i32 length { _undockedLength };
-    _undockedLength = 0;
-
     if(!_window)
         return;
 
-    if(0 >= length)
+    //Minimized or maximized its size can't change now, so it gets the length once it is restored (followMinimize)
+    if(0 < _undockedLength && isMinimizedOrMaximized())
+    {
+        _isUndockedLengthPending = true;
         return;
+    }
 
-    if(isMinimizedOrMaximized())
+    const i32 length { _undockedLength };
+    _undockedLength = 0;
+    _isUndockedLengthPending = false;
+
+    if(0 >= length)
         return;
 
     glm::ivec2 size { 0 };
@@ -437,4 +442,30 @@ RetroFuturaGUI::DockEdge RetroFuturaGUI::Window::oppositeEdge(const DockEdge edg
         default:
             return DockEdge::Right;
     }
+}
+
+void RetroFuturaGUI::Window::followMinimize()
+{
+    if(!_window)
+        return;
+
+    if(WindowRole::Normal != _role)
+        return;
+
+    const bool
+        isMinimized { GLFW_TRUE == glfwGetWindowAttrib(_window, GLFW_ICONIFIED) },
+        wasMinimized { _wasMinimizedInGroup };
+    _wasMinimizedInGroup = isMinimized;
+
+    //Minimized, it leaves its group. The windows beside it close the gap, and the windows docked to it stay where they are
+    if(isMinimized && !wasMinimized && IsDocked() && !IsInTab())
+    {
+        Undock();
+        markLayoutChanged();
+        return;
+    }
+
+    //Back on screen as a free window, with the length it had before it was docked
+    if(_isUndockedLengthPending && !IsDocked() && !isMinimizedOrMaximized())
+        restoreUndockedLength();
 }

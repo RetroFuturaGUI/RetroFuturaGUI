@@ -170,6 +170,7 @@ void RetroFuturaGUI::Window::Update()
     followFlavors();
     _isHidden = !_isDrawnSinceUpdate || isHiddenOnScreen();
     _isDrawnSinceUpdate = false;
+    followMinimize(); //before the layout file notices the minimize, so it saves the window undocked
     watchLayout();
 
     //Once per frame, for every playback, those no widget holds too

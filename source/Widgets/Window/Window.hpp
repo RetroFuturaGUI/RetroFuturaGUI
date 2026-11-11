@@ -449,6 +449,10 @@ namespace RetroFuturaGUI
         /// @brief Gives the window back the length it had along its host's edge before docking.
         void restoreUndockedLength();
 
+        /// @brief Takes a window that was just minimized out of its docking group, and gives an undocked window its length back
+        ///        once it is on screen again. Called from Update.
+        void followMinimize();
+
         /// @brief Places and sizes the windows docked to this one, then the ones docked to those.
         void layoutDockedWindows();
 
@@ -546,6 +550,9 @@ namespace RetroFuturaGUI
 
         /// @brief Makes the given window this one's native owner, which keeps this one above it.
         void setNativeOwner(const Window* owner);
+
+        /// @brief Gives this window a taskbar button, or takes it away, as the docking preview has none
+        void showInTaskbar(const bool show);
 
     //Tabs
         /// @brief Docks this window into the WindowTab: it leaves its docking group, its native window hides, and from then on the
@@ -707,6 +714,9 @@ namespace RetroFuturaGUI
             _dockedPosition { 0 },
             _dockedSize { 0 };
         bool _dockingLayoutPending { false }; //The layout had to skip this window while it was minimized or maximized, so it lays out its group once it is restored
+        bool
+            _isUndockedLengthPending { false },
+            _wasMinimizedInGroup { false };
 
     //Dragging to dock
         bool _isDragged { false };
