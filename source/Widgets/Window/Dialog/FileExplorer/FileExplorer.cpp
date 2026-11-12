@@ -206,7 +206,7 @@ bool RetroFuturaGUI::FileExplorer::buildView(ViewHost& host, std::string_view ti
     styleTextBox(*built._Address, "Folder", cellSize(_viewAxis, windowSize, addressCell), _font);
     built._Address->Connect_OnEnterPressed([this]() { on_addressTextBox_enterPressed(); }, false);
 
-//Menu strip: the File and Edit menus with the operations that are on, then the View menu's switches.
+//Menu strip. The File and Edit menus with the operations that are on, then the View menu's switches, in Edit's place when there is no Edit menu
     _fileMenuActions = menuActionsOf(_fileMenuChoices);
     _editMenuActions = menuActionsOf(_editMenuChoices);
     _viewMenuActions = menuActionsOf(_viewMenuChoices);
@@ -214,7 +214,7 @@ bool RetroFuturaGUI::FileExplorer::buildView(ViewHost& host, std::string_view ti
     const ViewCell
         fileMenuCell { ._Row = 2, ._Column = 0, ._ColumnSpan = _menuColumnCount, ._SizingMode = SizingMode::FIXED, ._Layer = 0 },
         editMenuCell { ._Row = 2, ._Column = _menuColumnCount, ._ColumnSpan = _menuColumnCount, ._SizingMode = SizingMode::FIXED, ._Layer = 0 },
-        viewMenuCell { ._Row = 2, ._Column = 2 * _menuColumnCount, ._ColumnSpan = _menuColumnCount, ._SizingMode = SizingMode::FIXED, ._Layer = 0 };
+        viewMenuCell { ._Row = 2, ._Column = (_editMenuActions.empty() ? 1 : 2) * _menuColumnCount, ._ColumnSpan = _menuColumnCount, ._SizingMode = SizingMode::FIXED, ._Layer = 0 };
     const f32 menuListWidth { windowSize.x * static_cast<f32>(_menuListColumnCount) / static_cast<f32>(_viewColumnCount) };
 
     built._FileMenu = host.Attach<ComboBox>("FileMenu", *lasagna, fileMenuCell);

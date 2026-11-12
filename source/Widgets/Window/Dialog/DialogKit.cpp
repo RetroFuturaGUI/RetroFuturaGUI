@@ -110,7 +110,7 @@ RetroFuturaGUI::MenuBar* RetroFuturaGUI::DialogKit::attachBar(ViewHost& host, La
         return bar;
 
     closeButton->SetSize(glm::vec3(barHeight - 2.0f * _margin, barHeight - 2.0f * _margin, 0.01f));
-    closeButton->GetBackground().SetImage(toUtf8(PlatformBridge::Paths::GetExecutablePathFSPath().parent_path() / "Resources" / "img" / "CloseIcon.svg")); //UTF-8, as Texture reads paths
+    closeButton->GetBackground().SetImage(toUtf8(PlatformBridge::Paths::GetModuleFolder() / "Resources" / "img" / "CloseIcon.svg")); //UTF-8, as Texture reads paths
     closeButton->GetBackground().SetImagePadding(4.0f);
     closeButton->GetBackground().SetBuiltInColors(styleKey(), std::array { glm::vec4(1.0f, 0.1f, 0.1f, 0.0f) }, ColorState::Enabled);
     closeButton->GetBackground().SetBuiltInColors(styleKey(), std::array { glm::vec4(1.0f, 0.2f, 0.2f, 0.45f) }, ColorState::Hover);
@@ -271,7 +271,7 @@ void RetroFuturaGUI::DialogKit::addMissingEntries()
         KindLook { ._Scope = StyleScope::Warning, ._Accent = glm::vec4(1.0f, 0.75f, 0.2f, 1.0f), ._Icon = "WarningIcon.svg" },
         KindLook { ._Scope = StyleScope::Error, ._Accent = glm::vec4(1.0f, 0.35f, 0.35f, 1.0f), ._Icon = "ErrorIcon.svg" }
     };
-    const std::filesystem::path images { PlatformBridge::Paths::GetExecutablePathFSPath().parent_path() / "Resources" / "img" };
+    const std::filesystem::path images { PlatformBridge::Paths::GetModuleFolder() / "Resources" / "img" };
 
     for(const KindLook& look : looks)
     {

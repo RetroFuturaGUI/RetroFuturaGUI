@@ -162,7 +162,7 @@ void RetroFuturaGUI::FileExplorer::ThumbnailCache::drawIcons(const i32 side)
         return;
 
     constexpr std::array<std::string_view, 5> iconFiles { "FolderIcon.svg", "ImageIcon.svg", "AudioIcon.svg", "VideoIcon.svg", "FileIcon.svg" }; //in FileKind's order
-    const std::filesystem::path iconFolder { PlatformBridge::Paths::GetExecutablePathFSPath().parent_path() / "Resources" / "img" };
+    const std::filesystem::path iconFolder { PlatformBridge::Paths::GetModuleFolder() / "Resources" / "img" };
     _iconSide = side;
 
     for(uSize kind = 0; kind < iconFiles.size(); ++kind)

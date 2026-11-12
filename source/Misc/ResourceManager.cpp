@@ -76,7 +76,7 @@ uSize RetroFuturaGUI::ResourceManager::hashPath(std::string_view path)
 
 std::string RetroFuturaGUI::ResourceManager::getIconPath(std::string_view fileName)
 {
-    const std::filesystem::path iconPath { PlatformBridge::Paths::GetExecutablePathFSPath().parent_path() / "Resources" / "img" / fileName };
+    const std::filesystem::path iconPath { PlatformBridge::Paths::GetModuleFolder() / "Resources" / "img" / fileName };
     const std::u8string text { iconPath.u8string() };
     return std::string(text.begin(), text.end());
 }

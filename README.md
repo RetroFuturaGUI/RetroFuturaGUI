@@ -35,9 +35,8 @@ The framework is designed for cross-platform use, and its logic can be compiled 
 - FileExplorer
   - Linux takes dropped files only once let go, through GLFW: nothing shows where they would land while they hover, and they are always copied (Windows marks the folder under the pointer and moves or copies as Windows does). While rows are dragged out, the system runs the drag in a loop of its own, so the app's windows don't draw until the drop
   - Linux can't drag files out yet: a drag past the window's edge stays the explorer's own
-  - Names in other scripts need a font holding their glyphs, set with SetFontFamily; the explorer only adds Latin-1 to its font itself
-  - Its widgets are sized from the window size given to the constructor, so resizing the explorer's window doesn't refit them
-  - From another language it opens over the main window only, and with an extensions string: the named filters stay C++-only. The Python binding's OpenFileExplorer hasn't been run, since no Python is installed here
+  - From another language it opens over the main window only, and with an extensions string: the named filters stay C++-only. The Python binding (Python 3.14) opens it, gets UTF-8 paths back and can open a follow-up explorer from the result callback
+  - Once in five runs, a Cancel click on an explorer opened from another explorer's result callback did nothing (from Python, the first run after a build); not reproduced since
   - Linux is untested: PlatformBridge::FileSystem's Linux side (listing, watching, the trash) and the in-app clipboard are written but have never been compiled
 
 
@@ -240,6 +239,7 @@ The framework is designed for cross-platform use, and its logic can be compiled 
 <li>FileExplorer</li>
   <ul>
   <li>The preview's row for playback controls stays empty until playing is built</li>
+  <li>Its widgets are sized from the window size given to the constructor, so resizing the explorer's window doesn't refit them. Fine for now; once more design decisions are made, widgets that belong together (two buttons, say) can sit in a prefab that keeps its size, which fixes alignment while the widgets keep theirs</li>
   <li>A cloud file that isn't on this computer is previewed only when its provider downloads just the ranges read (PARTIAL or PROGRESSIVE in the Cloud Files API: the headers and one picture); one that downloads whole files (FULL, such as kDrive) shows "Not on this computer" with the file's details. The partial case hasn't been tried, for want of such a provider here</li>
   <li>Huge folders still take a while to list on the worker before they show: in a Debug build WinSxS (40048 entries) about 4.8 s (reading 0.33 s, filtering 0.11 s, sorting 2 s, writing the rows' texts 2 s, building the cells 0.27 s), System32 (4787) about 0.56 s. The frame that shows them is cheap already (about 45 ms and 30 ms). Two steps would cut the wait to an estimated 0.6-0.8 s for WinSxS:
     <ul>
@@ -266,6 +266,16 @@ The framework is designed for cross-platform use, and its logic can be compiled 
   <li>Say "font family" instead of "face" where a family is meant</li>
   <li>Write "code-point" instead of "code point"</li>
   </ul>
+<li>Character sets from the App Settings: today an app prepares every script it shows by hand, a LoadFont and an ExtendFontset per Unicode block, family and size (the TestProject's MainWindow_setup.cpp adds Japanese from Yu Mincho and emoji from Segoe UI Emoji to Arial 18 so the FileExplorer shows such names), and the FileExplorer adds only Latin-1 Supplement and Geometric Shapes (its sort arrows) from its own family. A name in a script nobody prepared, Cyrillic, Greek, Arabic or Hebrew say, shows gaps. Instead:
+  <ul>
+  <li>The global .bechaml settings (App Settings) list the supported character sets: the scripts or Unicode blocks, and for each the font that supplies it when a text's own family lacks it, per platform, since the fonts that ship differ (Yu Mincho on Windows, Noto Sans CJK on Linux). One font per block, as in the TestProject's test fonts</li>
+  <li>The blocks are added at run time, the first time a text needs one: a code point whose block isn't loaded yet for that family and size, but is among the supported sets, extends the fontset from the block's font before the glyph is placed. Only the blocks used get loaded, and within them only the glyphs shown are rendered (as the CJK ideographs already are), so a big block like CJK Unified Ideographs costs little until it is used</li>
+  <li>Every size in use needs the block, since atlasses are kept per family and size: the explorer's cells, its header and its buttons each have their own</li>
+  <li>Where the text is shaped, the per-character fallback (fontset, then the default font) is the place to look the block up. A widget whose texts come from a worker, like the FileExplorer's names, can collect the blocks its texts need on that thread and hand them over with the listing, so the main thread extends the fontsets before the cells first draw; glyph uploads already work without a current GL context, through the context a Window hands over</li>
+  <li>A code point in no supported set still shows a gap, or the font's missing-glyph box once one is drawn</li>
+  <li>This replaces the hand-written blocks in the TestProject's setup and the FileExplorer's ensureFontBlocks, which then only asks for its sort arrows</li>
+  </ul>
+</li>
 <li>Bitmap fonts for GameCube and Wii: an IGlyphSource that hands out fixed sizes (GetPixelSizes) and can't shape; FontManager, Text and the size conversions are ready for one</li>
 - AudioPlayback / MediaSource / Decoder
   - Packet owns an AVPacket's lifetime, but MediaSource::ReadPacket still takes a raw AVPacket* and leaves the unref to the caller. A Frame wrapper and a reader that runs the send / receive / drain / flush-after-seek protocol behind one call aren't built yet, so every caller currently repeats it by hand

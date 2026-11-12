@@ -979,7 +979,7 @@ bool RetroFuturaGUI::ITab::contains(const glm::vec4& rect, const glm::vec2& poin
 
 std::string RetroFuturaGUI::ITab::getImagePath(std::string_view fileName)
 {
-    std::filesystem::path path { PlatformBridge::Paths::GetExecutablePathFSPath().parent_path() };
+    std::filesystem::path path { PlatformBridge::Paths::GetModuleFolder() };
     path /= "Resources";
     path /= "img";
     path /= std::u8string(fileName.begin(), fileName.end());
