@@ -100,6 +100,40 @@ namespace RetroFuturaGUI
         {
             TrackSizing _Sizing { TrackSizing::Star };
             f32 _Value { 1.0f }; // Star: a relative weight. Fixed/Auto: pixels.
+
+            bool operator ==(const TrackDefinition&) const = default;
+        };
+
+    private:
+        struct BodyCell;
+        using RowFlags = std::vector<u8>; //a byte per row rather than std::vector<bool>'s bits, so finding the set ones is a byte search, fast in Debug too
+
+    public:
+        /// @brief A table's tracks and text cells built apart from it, on any thread, then handed over at once by SetContent, so a
+        ///        big table fills without its frame paying for every cell. It touches nothing of a table's and no GL state
+        class Content
+        {
+        public:
+            Content() = default;
+            Content(std::vector<TrackDefinition> rowDefinition, std::vector<TrackDefinition> columnDefinition);
+            Content(const Content&) = delete;
+            Content(Content&&) noexcept;
+            ~Content();
+            auto operator =(const Content&) = delete;
+            Content& operator =(Content&&) noexcept;
+
+            /// @brief Makes the cell a text cell holding text. Does nothing outside the tracks
+            void SetText(std::string text, const uSize row, const uSize column);
+
+            uSize GetRowCount() const;
+            uSize GetColumnCount() const;
+
+        private:
+            friend class Table;
+            std::vector<TrackDefinition>
+                _rowDefinition {},
+                _columnDefinition {};
+            std::vector<BodyCell> _cells {}; //row after row, as many per row as there are columns
         };
 
         Table(std::string_view name, Projection* projection, IWidget* parentWidget, const WidgetTypeID parentWidgetTypeID, GLFWwindow* parentWindow);
@@ -193,6 +227,11 @@ namespace RetroFuturaGUI
 
         /// @brief Sets the row/column tracks with explicit sizing policies. Fixed/Auto tracks are what let the content outgrow the table and become scrollable.
         void SetTrackDefinitions(const std::vector<TrackDefinition>& rowDefinition, const std::vector<TrackDefinition>& columnDefinition);
+
+        /// @brief Takes a Content's tracks and cells in place of its own, as SetTrackDefinitions followed by SetValue for each cell
+        ///        would, without signals. The selection goes, as with SetTrackDefinitions
+        /// @return The tracks and cells it held before, for the caller to free where it likes. A big table's take a while
+        Content SetContent(Content&& content);
 
         /// @brief Sets one column's sizing policy, keeping the cells. Does nothing for a column the table doesn't have
         void SetColumnDefinition(const uSize column, const TrackDefinition& definition);
@@ -769,7 +808,7 @@ namespace RetroFuturaGUI
         static bool isControlHeld();
 
         /// @brief Fires OnSelectionChanged only when the selection differs from the previous one.
-        void emitSelectionChange(const std::vector<bool>& previousFlags);
+        void emitSelectionChange(const RowFlags& previousFlags);
 
         /// @brief Returns the TableText of the cell currently being edited, or nullptr when no text cell is.
         TableText* getActiveTableText() const;
@@ -915,7 +954,7 @@ namespace RetroFuturaGUI
 
     // Row selection
         RowSelection _rowSelection { RowSelection::None };
-        std::vector<bool> _selectedRowFlags {}; // one per selectable row
+        RowFlags _selectedRowFlags {}; // one per selectable row
         uSize _dropTargetRow { 0 };
         bool _hasDropTargetRow { false };
         uSize
@@ -949,7 +988,7 @@ namespace RetroFuturaGUI
         Signal<uSize>
             _onRowSlowDoubleClicked,
             _onRowSlowDoubleClickedAsync;
-        std::vector<bool> _bandBaseFlags {}; // what the band adds to: the selection from before the press with Alt, nothing without
+        RowFlags _bandBaseFlags {}; // what the band adds to: the selection from before the press with Alt, nothing without
         Box _selectionBand { &_projection };
         std::chrono::steady_clock::time_point _lastAutoScrollTime {};
         f32 _wheelScrollStep { 20.0f }; //pixels per line of the wheel

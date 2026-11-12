@@ -79,7 +79,41 @@ bool RetroFuturaGUI::ModuleSource::IsModuleExtension(std::string_view extension)
     if(extension.empty())
         return false;
 
-    return 1 == openmpt_is_extension_supported(std::string(extension).c_str()); //compares ignoring case
+    static const std::set<std::string, std::less<>> extensions { readModuleExtensions() };
+    return extensions.contains(lowerCase(extension));
+}
+
+std::set<std::string, std::less<>> RetroFuturaGUI::ModuleSource::readModuleExtensions()
+{
+    //A semicolon between each, as libopenmpt hands them out
+    const std::string list { takeString(openmpt_get_supported_extensions()) };
+    std::set<std::string, std::less<>> extensions {};
+
+    for(uSize start = 0; start < list.size(); )
+    {
+        const uSize end { std::min(list.find(';', start), list.size()) };
+        std::string extension { lowerCase(std::string_view { list }.substr(start, end - start)) };
+
+        if(!extension.empty())
+            extensions.insert(std::move(extension));
+
+        start = end + 1;
+    }
+
+    return extensions;
+}
+
+std::string RetroFuturaGUI::ModuleSource::lowerCase(std::string_view text)
+{
+    std::string lowered { text };
+
+    for(char& character : lowered)
+    {
+        if('A' <= character && 'Z' >= character)
+            character = static_cast<char>(character - 'A' + 'a');
+    }
+
+    return lowered;
 }
 
 std::optional<RetroFuturaGUI::AudioMetadata> RetroFuturaGUI::ModuleSource::ReadMetadata(std::string_view path)

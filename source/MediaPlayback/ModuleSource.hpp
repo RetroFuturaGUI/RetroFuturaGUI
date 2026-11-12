@@ -3,6 +3,8 @@
 #include "config.hpp"
 #include <mutex>
 #include <optional>
+#include <set>
+#include <string>
 #include <string_view>
 #include <vector>
 #include <miniaudio.h>
@@ -77,6 +79,13 @@ namespace RetroFuturaGUI
 
         /// @brief A metadata item, a subsong, instrument or sample name, taken over from the string libopenmpt hands out.
         static std::string takeString(const char* text);
+
+        /// @brief libopenmpt's extensions in lowercase, without dots. libopenmpt builds its list anew on every question, which a folder
+        ///        of thousands of files feels, so IsModuleExtension reads it once
+        static std::set<std::string, std::less<>> readModuleExtensions();
+
+        /// @brief The ASCII letters in lowercase, every other character as it is. How libopenmpt compares extensions
+        static std::string lowerCase(std::string_view text);
 
         /// @brief Measures the selected subsong: its length, and the time of the order and row it repeats from (seeking
         ///        there once, then back to the start). Only with the lock held.

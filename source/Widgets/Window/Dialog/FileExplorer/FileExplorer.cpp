@@ -885,13 +885,14 @@ RetroFuturaGUI::FileExplorer::ListingRequest RetroFuturaGUI::FileExplorer::listi
         ._Mode = _mode,
         ._SortColumn = _sortColumn,
         ._ShowsHidden = _showHidden,
-        ._IsSortDescending = _isSortDescending
+        ._IsSortDescending = _isSortDescending,
+        ._Look = tableLook()
     };
 }
 
 RetroFuturaGUI::FileExplorer::Listing RetroFuturaGUI::FileExplorer::makeListing(ListingRequest&& request, std::stop_token stop)
 {
-    Listing listing { ._Generation = request._Generation, ._Directory = request._Directory, ._Error = {}, ._IsListed = false, ._Listed = {}, ._Shown = {}, ._Rows = {} };
+    Listing listing { ._Generation = request._Generation, ._Directory = request._Directory, ._Error = {}, ._IsListed = false, ._Listed = {}, ._Shown = {}, ._Rows = {}, ._Kinds = {}, ._Look = request._Look, ._Content = {} };
 
     if(request._Entries)
     {
@@ -924,6 +925,7 @@ RetroFuturaGUI::FileExplorer::Listing RetroFuturaGUI::FileExplorer::makeListing(
     //Every cell's text, which is most of a big folder's fill: both names, so the Extensions switch only picks one.
     LocalClock clock { ._Zone = getLocalZone(), ._Info = {}, ._HasInfo = false };
     listing._Rows.reserve(listing._Shown.size());
+    listing._Kinds.reserve(listing._Shown.size());
 
     for(const Entry& entry : listing._Shown)
     {
@@ -939,8 +941,10 @@ RetroFuturaGUI::FileExplorer::Listing RetroFuturaGUI::FileExplorer::makeListing(
             ._Modified = formatTime(entry._LastWriteTime, clock),
             ._Type = typeName(entry)
         });
+        listing._Kinds.push_back(fileKindOf(entry)); //by its extension, which takes long enough to keep off the main thread
     }
 
+    listing._Content = makeTableContent(listing._Rows, listing._Look);
     return listing;
 }
 
@@ -1016,6 +1020,7 @@ void RetroFuturaGUI::FileExplorer::showListing(Listing&& listing)
     _listedEntries = std::move(listing._Listed);
     _shownEntries = std::move(listing._Shown);
     _shownRows = std::move(listing._Rows);
+    _shownKinds = std::move(listing._Kinds);
 
     if(!isSameFolder)
         disarmReplace();
@@ -1031,7 +1036,12 @@ void RetroFuturaGUI::FileExplorer::showListing(Listing&& listing)
     if(_widgets._Address)
         _widgets._Address->SetValue<std::string_view>(toUtf8(_currentDirectory), false);
 
-    fillTable();
+    //Built on the worker for the look the list had then; one switched meanwhile builds it here
+    if(listing._Look == tableLook())
+        fillTable(std::move(listing._Content));
+    else
+        fillTable();
+
     updateNavigationButtons();
 
     if(keepsView && _widgets._Files)
@@ -1127,6 +1137,9 @@ void RetroFuturaGUI::FileExplorer::watchChanges()
 
 void RetroFuturaGUI::FileExplorer::drainListings()
 {
+    if(_disposalWork)
+        _disposalWork->Drain(); //its jobs return nothing to act on, only to be let go
+
     if(!_listingWork)
         return;
 
@@ -1228,41 +1241,65 @@ void RetroFuturaGUI::FileExplorer::selectPaths(const std::vector<std::filesystem
 
 void RetroFuturaGUI::FileExplorer::fillTable()
 {
+    fillTable(makeTableContent(_shownRows, tableLook()));
+}
+
+void RetroFuturaGUI::FileExplorer::fillTable(Table::Content&& content)
+{
     if(!_widgets._Files)
         return;
 
-    const std::vector<Table::TrackDefinition> rowDefinition(_shownRows.size(), Table::TrackDefinition { ._Sizing = Table::TrackSizing::Fixed, ._Value = getListRowHeight() });
-    _widgets._Files->SetTrackDefinitions(rowDefinition, columnDefinition(_cellFont, _showThumbnails, _widgets._Files->GetSize().x));
+    Table::Content previous { _widgets._Files->SetContent(std::move(content)) };
 
-    //The read-only flags follow the columns, which the thumbnails' adds to
+    //A big folder's cells take a while to free, so a worker of their own frees them
+    if(_disposalWork && 0 < previous.GetRowCount())
+        _disposalWork->Post([previous = std::move(previous)](std::stop_token) mutable { previous = {}; return true; }, [](bool) {});
+
+
+    //The read-only flags follow the columns.
     for(uSize column = 0; column < _nameColumn + _fileColumnCount; ++column)
         _widgets._Files->SetTrackReadOnly(column, true);
-
-    const uSize firstColumn { _nameColumn };
-
-    for(uSize row = 0; row < _shownRows.size(); ++row)
-    {
-        const RowTexts& texts { _shownRows[row] };
-        _widgets._Files->SetValue(displayName(texts), TrackIndex { ._Row = row, ._Column = firstColumn, ._Layer = 0 }, false);
-        _widgets._Files->SetValue(texts._Size, TrackIndex { ._Row = row, ._Column = firstColumn + 1, ._Layer = 0 }, false);
-        _widgets._Files->SetValue(texts._Modified, TrackIndex { ._Row = row, ._Column = firstColumn + 2, ._Layer = 0 }, false);
-        _widgets._Files->SetValue(texts._Type, TrackIndex { ._Row = row, ._Column = firstColumn + 3, ._Layer = 0 }, false);
-    }
 
     //Every row shows its type icon, which a thumbnail takes the place of once ready while thumbnails show
     if(!_thumbnails)
         _thumbnails = std::make_unique<ThumbnailCache>(_stills);
 
-    _thumbnails->ShowIcons(*_widgets._Files, _shownEntries, 0, getListIconSide());
+    _thumbnails->ShowIcons(*_widgets._Files, _shownKinds, 0, getListIconSide());
 
     _widgets._Files->SetScrollPosition(glm::vec2(0.0f));
     updateHeaderTexts(); //the header cells came anew with the columns
     updateScrollSlider();
 }
 
-const std::string& RetroFuturaGUI::FileExplorer::displayName(const RowTexts& texts) const
+RetroFuturaGUI::FileExplorer::TableLook RetroFuturaGUI::FileExplorer::tableLook() const
 {
-    return _showExtensions ? texts._Name : texts._ShortName;
+    return TableLook
+    {
+        ._Columns = _widgets._Files ? columnDefinition(_cellFont, _showThumbnails, _widgets._Files->GetSize().x) : std::vector<Table::TrackDefinition> {},
+        ._RowHeight = getListRowHeight(),
+        ._ShowsExtensions = _showExtensions
+    };
+}
+
+RetroFuturaGUI::Table::Content RetroFuturaGUI::FileExplorer::makeTableContent(const std::vector<RowTexts>& rows, const TableLook& look)
+{
+    Table::Content content { std::vector<Table::TrackDefinition>(rows.size(), Table::TrackDefinition { ._Sizing = Table::TrackSizing::Fixed, ._Value = look._RowHeight }), look._Columns };
+
+    for(uSize row = 0; row < rows.size(); ++row)
+    {
+        const RowTexts& texts { rows[row] };
+        content.SetText(displayName(texts, look._ShowsExtensions), row, _nameColumn);
+        content.SetText(texts._Size, row, _nameColumn + 1);
+        content.SetText(texts._Modified, row, _nameColumn + 2);
+        content.SetText(texts._Type, row, _nameColumn + 3);
+    }
+
+    return content;
+}
+
+const std::string& RetroFuturaGUI::FileExplorer::displayName(const RowTexts& texts, const bool showsExtensions)
+{
+    return showsExtensions ? texts._Name : texts._ShortName;
 }
 
 void RetroFuturaGUI::FileExplorer::updateNameColumn()
@@ -1271,7 +1308,7 @@ void RetroFuturaGUI::FileExplorer::updateNameColumn()
         return;
 
     for(uSize row = 0; row < _shownRows.size(); ++row)
-        _widgets._Files->SetValue(displayName(_shownRows[row]), TrackIndex { ._Row = row, ._Column = _nameColumn, ._Layer = 0 }, false);
+        _widgets._Files->SetValue(displayName(_shownRows[row], _showExtensions), TrackIndex { ._Row = row, ._Column = _nameColumn, ._Layer = 0 }, false);
 }
 
 i32 RetroFuturaGUI::FileExplorer::getListIconSide() const

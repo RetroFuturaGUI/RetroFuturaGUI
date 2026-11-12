@@ -35,7 +35,6 @@ The framework is designed for cross-platform use, and its logic can be compiled 
 - FileExplorer
   - Linux takes dropped files only once let go, through GLFW: nothing shows where they would land while they hover, and they are always copied (Windows marks the folder under the pointer and moves or copies as Windows does). While rows are dragged out, the system runs the drag in a loop of its own, so the app's windows don't draw until the drop
   - Linux can't drag files out yet: a drag past the window's edge stays the explorer's own
-  - Only filling the table is left on the main thread: storing the cells' strings and resolving the track sizes. In a Debug build the frame that shows WinSxS (35951 entries) takes about 140 ms, System32 (4781) under 40 ms
   - A folder still being listed when the app exits is cut off wherever its thread is, since a stuck listing is let go rather than waited for
   - Names in other scripts need a font holding their glyphs, set with SetFontFamily; the explorer only adds Latin-1 to its font itself
   - Its widgets are sized from the window size given to the constructor, so resizing the explorer's window doesn't refit them
@@ -75,7 +74,7 @@ The framework is designed for cross-platform use, and its logic can be compiled 
   - LineDiagram: one line per bound data set, live like the Histogram; the hovered line is highlighted with its nearest value, labels and hexadecimal values on request; signals tell which line and data point the pointer hovers or presses (OnHoverChanged, OnHoverEnded, OnPointClicked; GetHoveredPoint asks at any time); lines of different lengths are spaced by the longest set or each stretched across the whole track (SetLineSpacing); a glow all around the lines, their ends and turns included, in their own colors or the glow's (GetLineGlow, EnableGlowLineColor); translucent lines blend once where their pieces overlap at a turn
   - ColorPicker: picks a color from a field of every hue, with brightness and optional alpha (SetColor, SetBrightness, SetAlpha, OnColorChanged)
   - ColorPreview: a color over a checkerboard, so transparency reads as such; the dual preview (EnableDualPreview, off by default) shows the same color fully opaque on its other half, side by side or stacked
-  - Table: a grid of text, number, color, checkbox and image cells
+  - Table: a grid of text, number, color, checkbox and image cells. A big table's tracks and text cells can be built on another thread as a Table::Content and handed over at once (SetContent), which returns the old ones to free elsewhere
     - Cells are typed by what is assigned to them, and editable text cells work like a TextBox, per cell; read-only tracks
     - Row selection (single or multiple, Alt and Shift, a drag band), dragging the selection, keyboard navigation (arrows, Home, End, PageUp, PageDown, Ctrl+A), the mouse wheel and scrolling from outside (a Slider)
     - Rename-style editing from code (EditCell, EndEdit), Enter keeps and Escape cancels (OnCellEditEnded)
@@ -243,6 +242,12 @@ The framework is designed for cross-platform use, and its logic can be compiled 
   <ul>
   <li>The preview's row for playback controls stays empty until playing is built</li>
   <li>A cloud file that isn't on this computer is previewed only when its provider downloads just the ranges read (PARTIAL or PROGRESSIVE in the Cloud Files API: the headers and one picture); one that downloads whole files (FULL, such as kDrive) shows "Not on this computer" with the file's details. The partial case hasn't been tried, for want of such a provider here</li>
+  <li>Huge folders still take a while to list on the worker before they show: in a Debug build WinSxS (40048 entries) about 4.8 s (reading 0.33 s, filtering 0.11 s, sorting 2 s, writing the rows' texts 2 s, building the cells 0.27 s), System32 (4787) about 0.56 s. The frame that shows them is cheap already (about 45 ms and 30 ms). Two steps would cut the wait to an estimated 0.6-0.8 s for WinSxS:
+    <ul>
+    <li>Sort keys worked out once per entry (the name folded for case, its digit runs) instead of folding character by character in each of the sort's ~600 000 comparisons</li>
+    <li>Rows' texts and cells written only for the rows in view and a margin, filled as they scroll into view, the way thumbnails are. Every entry is still read, filtered and sorted, since the scrollbar, sorting by a column, jumping to a typed name, Select all, Shift ranges and the status line's count need them all; names stay cheap for the jump</li>
+    </ul>
+  </li>
   </ul>
 <li>Audio formats, once they're needed</li>
   <ul>

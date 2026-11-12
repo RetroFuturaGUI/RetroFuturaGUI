@@ -9,6 +9,7 @@
 #include <filesystem>
 #include <memory>
 #include <optional>
+#include <span>
 #include <unordered_map>
 #include <vector>
 
@@ -30,10 +31,10 @@ namespace RetroFuturaGUI
         auto operator =(ThumbnailCache&&) = delete;
         ~ThumbnailCache() = default;
 
-        /// @brief Gives every row of the column its type icon, after the list was filled. The icons are drawn again when the side
+        /// @brief Gives every row of the column its type icon, the row's kind from kinds, after the list was filled. The icons are drawn again when the side
         ///        changes (thumbnail rows are taller than plain ones), which needs a GL context current
         /// @param iconSide The icons' width and height in pixel. The row less the cell's padding, so they draw at the size they were drawn at
-        void ShowIcons(Table& table, const std::vector<Entry>& entries, const uSize column, const i32 iconSide);
+        void ShowIcons(Table& table, std::span<const FileKind> kinds, const uSize column, const i32 iconSide);
 
         /// @brief Runs each frame while thumbnails show: the rows in view get the thumbnails that are ready, the ones still missing
         ///        are asked for, and rows that left the view get their icons back.

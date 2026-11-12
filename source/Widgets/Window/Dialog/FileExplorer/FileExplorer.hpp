@@ -215,6 +215,16 @@ namespace RetroFuturaGUI
             HiddenFiles
         };
 
+        /// @brief How the list shows its rows, which the table's content is built for
+        struct TableLook
+        {
+            std::vector<Table::TrackDefinition> _Columns {};
+            f32 _RowHeight { 0.0f };
+            bool _ShowsExtensions { false };
+
+            bool operator ==(const TableLook&) const = default;
+        };
+
         /// @brief What the worker lists and how it shows it. All copies, so the job never touches the explorer.
         struct ListingRequest
         {
@@ -227,6 +237,7 @@ namespace RetroFuturaGUI
             bool
                 _ShowsHidden { false },
                 _IsSortDescending { false };
+            TableLook _Look {}; //what the table's content is built for
         };
 
         /// @brief One shown entry's cells, written by the worker. Both names, so the Extensions switch only picks one.
@@ -251,6 +262,9 @@ namespace RetroFuturaGUI
                 _Listed {},
                 _Shown {};
             std::vector<RowTexts> _Rows {}; //one per shown entry
+            std::vector<FileKind> _Kinds {}; //one per shown entry, which its icon shows
+            TableLook _Look {};
+            Table::Content _Content {}; //the table's cells for _Look, built on the worker
         };
 
         /// @brief What the explorer does with a listing once it arrives.
@@ -417,8 +431,18 @@ namespace RetroFuturaGUI
         /// @brief The folder the list shows, or the one on its way, which Up goes above.
         const std::filesystem::path& getTargetDirectory() const;
 
-        /// @brief Fills the list with the shown rows' texts, as the worker wrote them.
+        /// @brief Fills the list with the shown rows' texts, as the worker wrote them, building the table's content here
         void fillTable();
+
+        /// @brief Fills the list with content built for the current look, on the worker for a listing. The cells it replaces are
+        ///        freed on the worker too, since a big folder's take a while
+        void fillTable(Table::Content&& content);
+
+        /// @brief The look the list has now, which a listing's content is built for
+        TableLook tableLook() const;
+
+        /// @brief The table's tracks and texts for the rows, on any thread. The icons' column stays empty for the main thread
+        static Table::Content makeTableContent(const std::vector<RowTexts>& rows, const TableLook& look);
 
         /// @brief Sets the note the status line shows while no message is up: "Opening Music...", why the list is empty, or "3
         ///        selected" in MultiFile.
@@ -440,7 +464,7 @@ namespace RetroFuturaGUI
         void selectPaths(const std::vector<std::filesystem::path>& paths, const bool emitSignal);
 
         /// @brief The name the list shows. Without its extension while the Extensions switch is off. Folders keep theirs
-        const std::string& displayName(const RowTexts& texts) const;
+        static const std::string& displayName(const RowTexts& texts, const bool showsExtensions);
 
         /// @brief Writes the names again after the Extensions switch changed, leaving the selection and scroll position alone
         void updateNameColumn();
@@ -766,6 +790,7 @@ namespace RetroFuturaGUI
         std::unique_ptr<ThumbnailCache> _thumbnails; //made once thumbnails first show, since it runs a thread of its own
         std::shared_ptr<StillCache> _stills; //video stills the preview pane and the thumbnails share, with a preview pane only.
         std::unique_ptr<BackgroundWork> _listingWork { std::make_unique<BackgroundWork>(BackgroundWork::WhenDestroyed::LetJobFinish) }; //its jobs use only copies, so a stuck one is let go
+        std::unique_ptr<BackgroundWork> _disposalWork { std::make_unique<BackgroundWork>(BackgroundWork::WhenDestroyed::WaitForJob) }; //frees the cells a big folder left, off the main thread
         u64 _listingGeneration { 0 }; //of the latest listing asked for; an older one that arrives is dropped
         std::optional<PendingListing> _pending {};
         std::optional<std::filesystem::path> _renamingPath {}; //the file whose name is being edited in the list
@@ -821,6 +846,7 @@ namespace RetroFuturaGUI
             _listedEntries {}, //everything in the current folder
             _shownEntries {};  //what passes the Hidden files switch, mode and filter, sorted. Table row n shows _shownEntries[n]
         std::vector<RowTexts> _shownRows {}; //row n's texts, as the worker wrote them
+        std::vector<FileKind> _shownKinds {}; //row n's kind, which its icon shows, as the worker found it
         SortColumn _sortColumn { SortColumn::Name };
         bool
             _showHidden { false },

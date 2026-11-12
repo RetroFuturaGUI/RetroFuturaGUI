@@ -10,12 +10,12 @@ RetroFuturaGUI::FileExplorer::ThumbnailCache::ThumbnailCache(std::shared_ptr<Sti
 {
 }
 
-void RetroFuturaGUI::FileExplorer::ThumbnailCache::ShowIcons(Table& table, const std::vector<Entry>& entries, const uSize column, const i32 iconSide)
+void RetroFuturaGUI::FileExplorer::ThumbnailCache::ShowIcons(Table& table, std::span<const FileKind> kinds, const uSize column, const i32 iconSide)
 {
     drawIcons(iconSide);
 
-    for(uSize row = 0; row < entries.size(); ++row)
-        table.SetValue(iconOf(fileKindOf(entries[row])), TrackIndex { ._Row = row, ._Column = column, ._Layer = 0 });
+    for(uSize row = 0; row < kinds.size(); ++row)
+        table.SetValue(iconOf(kinds[row]), TrackIndex { ._Row = row, ._Column = column, ._Layer = 0 });
 
     //No row holds a thumbnail now, so none has to be given its icon back
     _shownFirstRow = 0;

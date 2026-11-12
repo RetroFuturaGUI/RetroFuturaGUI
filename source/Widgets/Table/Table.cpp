@@ -381,6 +381,55 @@ void RetroFuturaGUI::Table::SetTrackDefinitions(const std::vector<TrackDefinitio
     resetSelection(); //the row indices mean other rows now
 }
 
+RetroFuturaGUI::Table::Content::Content(std::vector<TrackDefinition> rowDefinition, std::vector<TrackDefinition> columnDefinition)
+    : _rowDefinition(std::move(rowDefinition)),
+      _columnDefinition(std::move(columnDefinition)),
+      _cells(_rowDefinition.size() * _columnDefinition.size())
+{
+}
+
+RetroFuturaGUI::Table::Content::Content(Content&&) noexcept = default;
+RetroFuturaGUI::Table::Content::~Content() = default;
+RetroFuturaGUI::Table::Content& RetroFuturaGUI::Table::Content::operator =(Content&&) noexcept = default;
+
+void RetroFuturaGUI::Table::Content::SetText(std::string text, const uSize row, const uSize column)
+{
+    if(_rowDefinition.size() <= row || _columnDefinition.size() <= column)
+        return;
+
+    BodyCell& cell { _cells[row * _columnDefinition.size() + column] };
+    cell._Text = std::move(text);
+    cell._Type = ITableWidget::TableWidgetTypeID::TableText;
+}
+
+uSize RetroFuturaGUI::Table::Content::GetRowCount() const
+{
+    return _rowDefinition.size();
+}
+
+uSize RetroFuturaGUI::Table::Content::GetColumnCount() const
+{
+    return _columnDefinition.size();
+}
+
+RetroFuturaGUI::Table::Content RetroFuturaGUI::Table::SetContent(Content&& content)
+{
+    if(_hasEditCell)
+        EndEdit();
+
+    releaseTexts(); //the texts drawing cells go back to the pool before their cells do
+
+    Content previous {};
+    previous._rowDefinition = std::exchange(_rowDefinition, std::move(content._rowDefinition));
+    previous._columnDefinition = std::exchange(_columnDefinition, std::move(content._columnDefinition));
+    previous._cells = std::exchange(_cells, std::move(content._cells));
+    resizeHeaders();
+    layoutCells();
+    resizeTrackReadOnlyFlags();
+    resetSelection(); //the row indices mean other rows now
+    return previous;
+}
+
 void RetroFuturaGUI::Table::resizeTrackReadOnlyFlags()
 {
     if(_tableOrientation == TableOrientation::Row)
@@ -1483,7 +1532,7 @@ RetroFuturaGUI::ColorState RetroFuturaGUI::Table::trackColorState(const uSize se
     if(_hasHoveredTrack && _hoveredTrack == selectableTrack)
         return _isHoveredTrackHeld ? ColorState::Clicked : ColorState::Hover;
 
-    const bool isSelected { selectableTrack < _selectedRowFlags.size() && _selectedRowFlags[selectableTrack] };
+    const bool isSelected { selectableTrack < _selectedRowFlags.size() && 0 != _selectedRowFlags[selectableTrack] };
     return isSelected ? ColorState::Selected : ColorState::Enabled;
 }
 
@@ -1811,11 +1860,9 @@ std::vector<uSize> RetroFuturaGUI::Table::GetSelectedRows() const
 {
     std::vector<uSize> rows {};
 
-    for(uSize row = 0; row < _selectedRowFlags.size(); ++row)
-    {
-        if(_selectedRowFlags[row])
-            rows.push_back(row);
-    }
+    //A byte search from one selected row to the next, rather than a look at every row
+    for(auto found { std::find(_selectedRowFlags.begin(), _selectedRowFlags.end(), u8 { 1 }) }; _selectedRowFlags.end() != found; found = std::find(found + 1, _selectedRowFlags.end(), u8 { 1 }))
+        rows.push_back(static_cast<uSize>(found - _selectedRowFlags.begin()));
 
     return rows;
 }
@@ -1825,7 +1872,7 @@ void RetroFuturaGUI::Table::SelectRows(std::span<const uSize> rows, const bool e
     if(RowSelection::None == _rowSelection)
         return;
 
-    const std::vector<bool> previousFlags { _selectedRowFlags };
+    const RowFlags previousFlags { _selectedRowFlags };
     std::fill(_selectedRowFlags.begin(), _selectedRowFlags.end(), false);
     _hasSelectionAnchor = false;
 
@@ -1852,7 +1899,7 @@ void RetroFuturaGUI::Table::SelectRows(std::span<const uSize> rows, const bool e
 
 void RetroFuturaGUI::Table::ClearSelection(const bool emitSignal)
 {
-    const std::vector<bool> previousFlags { _selectedRowFlags };
+    const RowFlags previousFlags { _selectedRowFlags };
     std::fill(_selectedRowFlags.begin(), _selectedRowFlags.end(), false);
     _hasSelectionAnchor = false;
 
@@ -1953,13 +2000,13 @@ void RetroFuturaGUI::Table::beginRowPress(const uSize row, const glm::vec2& poin
     if(_selectedRowFlags.size() <= row)
         return;
 
-    const std::vector<bool> previousFlags { _selectedRowFlags };
+    const RowFlags previousFlags { _selectedRowFlags };
     const bool
         isMultiple { RowSelection::Multiple == _rowSelection },
         isAlt { isAltHeld() },
         isShift { isShiftHeld() },
-        wasSelected { _selectedRowFlags[row] },
-        wasOnlySelected { wasSelected && 1 == std::count(previousFlags.begin(), previousFlags.end(), true) };
+        wasSelected { 0 != _selectedRowFlags[row] },
+        wasOnlySelected { wasSelected && 1 == std::count(previousFlags.begin(), previousFlags.end(), u8 { 1 }) };
 
     _pressGesture = armsGesture ? PressGesture::Pending : PressGesture::None;
     _pressPoint = point;
@@ -1968,7 +2015,7 @@ void RetroFuturaGUI::Table::beginRowPress(const uSize row, const glm::vec2& poin
     _pressedRow = row;
     _collapseOnRelease = false;
     _canDragSelection = false;
-    _bandBaseFlags = isAlt ? previousFlags : std::vector<bool>(previousFlags.size(), false);
+    _bandBaseFlags = isAlt ? previousFlags : RowFlags(previousFlags.size(), false);
     _escapeKey._PressCountSeen = PlatformBridge::Input::GetKeyPressCount(_escapeKey._Key);
 
     if(isMultiple && isShift && _hasSelectionAnchor)
@@ -1988,7 +2035,7 @@ void RetroFuturaGUI::Table::beginRowPress(const uSize row, const glm::vec2& poin
     }
     else if(isMultiple && isAlt)
     {
-        _selectedRowFlags[row] = !_selectedRowFlags[row];
+        _selectedRowFlags[row] = 0 == _selectedRowFlags[row] ? 1 : 0;
         _selectionAnchorRow = row;
         _hasSelectionAnchor = true;
     }
@@ -2037,7 +2084,7 @@ void RetroFuturaGUI::Table::beginRowPress(const uSize row, const glm::vec2& poin
 
 void RetroFuturaGUI::Table::beginEmptyPress(const glm::vec2& point)
 {
-    const std::vector<bool> previousFlags { _selectedRowFlags };
+    const RowFlags previousFlags { _selectedRowFlags };
     const bool isAlt { isAltHeld() };
 
     _pressGesture = RowSelection::Multiple == _rowSelection ? PressGesture::Pending : PressGesture::None;
@@ -2046,7 +2093,7 @@ void RetroFuturaGUI::Table::beginEmptyPress(const glm::vec2& point)
     _pressContentPoint = toContentPoint(point);
     _collapseOnRelease = false;
     _canDragSelection = false;
-    _bandBaseFlags = isAlt ? previousFlags : std::vector<bool>(previousFlags.size(), false);
+    _bandBaseFlags = isAlt ? previousFlags : RowFlags(previousFlags.size(), false);
     _escapeKey._PressCountSeen = PlatformBridge::Input::GetKeyPressCount(_escapeKey._Key);
     _hasPendingDoubleClick = false;
 
@@ -2085,7 +2132,7 @@ void RetroFuturaGUI::Table::followPress(const MouseState& mouse)
         if(_collapseOnRelease)
         {
             //A plain press on a selected row that didn't drag: now it selects that row alone
-            const std::vector<bool> previousFlags { _selectedRowFlags };
+            const RowFlags previousFlags { _selectedRowFlags };
             std::fill(_selectedRowFlags.begin(), _selectedRowFlags.end(), false);
             _selectedRowFlags[_pressedRow] = true;
             _collapseOnRelease = false;
@@ -2169,14 +2216,14 @@ void RetroFuturaGUI::Table::cancelPress()
 void RetroFuturaGUI::Table::selectBandRows(const glm::vec2& point)
 {
     const std::vector<f32>& offsets { getSelectableTrackOffsets() };
-    const std::vector<bool> previousFlags { _selectedRowFlags };
+    const RowFlags previousFlags { _selectedRowFlags };
     const f32
         start { selectableAxisOf(_pressContentPoint) },
         end { selectableAxisOf(toContentPoint(point)) },
         low { start < end ? start : end },
         high { start < end ? end : start };
 
-    _selectedRowFlags = _bandBaseFlags.size() == getSelectableRowCount() ? _bandBaseFlags : std::vector<bool>(getSelectableRowCount(), false);
+    _selectedRowFlags = _bandBaseFlags.size() == getSelectableRowCount() ? _bandBaseFlags : RowFlags(getSelectableRowCount(), false);
 
     if(2 > offsets.size())
     {
@@ -2289,7 +2336,7 @@ void RetroFuturaGUI::Table::navigateByKeys()
         if(RowSelection::Multiple != _rowSelection)
             return;
 
-        const std::vector<bool> previousFlags { _selectedRowFlags };
+        const RowFlags previousFlags { _selectedRowFlags };
         std::fill(_selectedRowFlags.begin(), _selectedRowFlags.end(), true);
         emitSelectionChange(previousFlags);
         return;
@@ -2329,7 +2376,7 @@ void RetroFuturaGUI::Table::moveCursorTo(const uSize row, const bool extend)
     if(_selectedRowFlags.size() <= row)
         return;
 
-    const std::vector<bool> previousFlags { _selectedRowFlags };
+    const RowFlags previousFlags { _selectedRowFlags };
     std::fill(_selectedRowFlags.begin(), _selectedRowFlags.end(), false);
 
     if(extend && _hasSelectionAnchor)
@@ -2542,7 +2589,7 @@ void RetroFuturaGUI::Table::Disconnect_OnScrolled(const typename Signal<>::Slot&
     _onScrolledAsync.Disconnect(slot);
 }
 
-void RetroFuturaGUI::Table::emitSelectionChange(const std::vector<bool>& previousFlags)
+void RetroFuturaGUI::Table::emitSelectionChange(const RowFlags& previousFlags)
 {
     if(previousFlags == _selectedRowFlags)
         return;
