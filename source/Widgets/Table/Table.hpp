@@ -902,7 +902,8 @@ namespace RetroFuturaGUI
             _editColumn { 0 };
         bool
             _hasEditCell { false },
-            _isEditFromCode { false }; // EditCell started it, so a read-only track takes the edits
+            _isEditFromCode { false }, // EditCell started it, so a read-only track takes the edits
+            _isEditOpenedDuringPress { false }; // EditCell ran while the button was down, by a button that clicks on press, so that press doesn't end the edit
         std::string _editStartText {}; // what Escape puts back
         KeyRepeat
             _editKeepKey { ._Key = PB_KEY_RETURN, ._PressCountSeen = 0 },

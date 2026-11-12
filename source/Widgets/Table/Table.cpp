@@ -1047,6 +1047,7 @@ void RetroFuturaGUI::Table::EditCell(const TrackIndex& index, const uSize select
     ScrollRowIntoView(_tableOrientation == TableOrientation::Row ? index._Row : index._Column, true); //before the text binds, at its place in view
     openEdit(index._Row, index._Column);
     _isEditFromCode = true;
+    _isEditOpenedDuringPress = PlatformBridge::Input::IsMouseButtonDown(PlatformBridge::MouseButton::Left);
     Text* text { getActiveText() };
 
     if(!text)
@@ -1622,6 +1623,9 @@ bool RetroFuturaGUI::Table::isOverEditableText(const MouseState& mouse) const
 
 void RetroFuturaGUI::Table::interactTableText(const MouseState& mouse)
 {
+    if(!mouse._IsPressed)
+        _isEditOpenedDuringPress = false; //the press that opened an edit from code is over.
+
     if(_editor.IsMarking() || isOverEditableText(mouse))
         requestCursorIcon(PlatformBridge::CursorIcon::Text); //also all through a drag that marks text
 
@@ -1687,7 +1691,7 @@ void RetroFuturaGUI::Table::interactTableText(const MouseState& mouse)
             else
                 beginEmptyPress(mouse._Position);
         }
-        else // clicking a gap, a checkbox or anything outside gives up focus
+        else if(!_isEditOpenedDuringPress) // clicking a gap, a checkbox or anything outside gives up focus; not the press that opened the edit from code, a Rename button's say.
         {
             EndEdit();
         }

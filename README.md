@@ -33,9 +33,7 @@ The framework is designed for cross-platform use, and its logic can be compiled 
 - Popups
   - Linux is untested: the owner is set with XSetTransientForHint, and whether the popup stays off the taskbar is up to the window manager
 - FileExplorer
-  - The preview's row for playback controls stays empty until playing is built
-  - A cloud file that isn't on this computer is previewed only when its provider downloads just the ranges read (PARTIAL or PROGRESSIVE in the Cloud Files API: the headers and one picture); one that downloads whole files (FULL, such as kDrive) shows "Not on this computer" with the file's details. The partial case hasn't been tried, for want of such a provider here
-  - The file operations were tried through their keys and prompts only, by posting key messages to the windows: the menu items, the Rename and Stop buttons, a slow double-click to rename and the clash prompt's Replace and Skip buttons haven't been clicked yet. Of drag and drop only a drop from another program was tried, called the way the system's drop calls it; dragging rows inside, the drop target marks and dragging out haven't been done with the mouse yet
+  - Dragging files out was tried by dropping them on the app's own window only; the tests never drive other programs, so a drop on the desktop or another explorer is untried
   - Files dragged in from another program show where they would go only once dropped: GLFW takes drops as WM_DROPFILES, which tells nothing while they hover. While rows are dragged out, the system runs the drag in a loop of its own, so the app's windows don't draw until the drop
   - Linux can't drag files out yet: a drag past the window's edge stays the explorer's own
   - A Replace can't be undone in full: Undo takes the copy away, but the item it replaced was deleted. Undo covers what explorers with the Undo flag did, and only while the app runs
@@ -249,6 +247,11 @@ The framework is designed for cross-platform use, and its logic can be compiled 
   <li>Linux is untested: a window in a tab keeps its native window, hidden, under the content area for its input, and whether X11 moves and reports an unmapped window the same way is unverified</li>
   </ul>
 <li>Clipping: nested clips in one frame and depth cut to their overlap, but only two differently tilted ones count at once: a third drops the outermost, since the shaders measure the 8 clip planes GL guarantees. Cutting through the stencil buffer instead would lift the limit (8 bits of nesting) at a draw per clipping container; whether that complicates things later is open</li>
+<li>FileExplorer</li>
+  <ul>
+  <li>The preview's row for playback controls stays empty until playing is built</li>
+  <li>A cloud file that isn't on this computer is previewed only when its provider downloads just the ranges read (PARTIAL or PROGRESSIVE in the Cloud Files API: the headers and one picture); one that downloads whole files (FULL, such as kDrive) shows "Not on this computer" with the file's details. The partial case hasn't been tried, for want of such a provider here</li>
+  </ul>
 <li>Audio formats, once they're needed</li>
   <ul>
   <li>MIDI (needs a synthesizer such as TinySoundFont - and a SoundFont whose sample sources are clear for commercial use) and chiptune formats each need a new dependency</li>
