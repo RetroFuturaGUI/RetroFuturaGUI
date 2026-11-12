@@ -207,7 +207,6 @@ bool RetroFuturaGUI::FileExplorer::buildView(ViewHost& host, std::string_view ti
     built._Address->Connect_OnEnterPressed([this]() { on_addressTextBox_enterPressed(); }, false);
 
 //Menu strip: the File and Edit menus with the operations that are on, then the View menu's switches.
-    const ViewFont smallFont { toolbarFont(_font) };
     _fileMenuActions = menuActionsOf(_fileMenuChoices);
     _editMenuActions = menuActionsOf(_editMenuChoices);
     _viewMenuActions = menuActionsOf(_viewMenuChoices);
@@ -223,7 +222,7 @@ bool RetroFuturaGUI::FileExplorer::buildView(ViewHost& host, std::string_view ti
     if(!built._FileMenu)
         return false;
 
-    styleMenu(*built._FileMenu, "File", _fileMenuActions, cellSize(_viewAxis, windowSize, fileMenuCell), menuListWidth, smallFont);
+    styleMenu(*built._FileMenu, "File", _fileMenuActions, cellSize(_viewAxis, windowSize, fileMenuCell), menuListWidth, _font);
     built._FileMenu->Connect_OnItemClicked([this]() { on_fileMenu_itemClicked(); }, false);
 
     //Edit has nothing in it when the operations are off and only one file can be picked
@@ -234,7 +233,7 @@ bool RetroFuturaGUI::FileExplorer::buildView(ViewHost& host, std::string_view ti
         if(!built._EditMenu)
             return false;
 
-        styleMenu(*built._EditMenu, "Edit", _editMenuActions, cellSize(_viewAxis, windowSize, editMenuCell), menuListWidth, smallFont);
+        styleMenu(*built._EditMenu, "Edit", _editMenuActions, cellSize(_viewAxis, windowSize, editMenuCell), menuListWidth, _font);
         built._EditMenu->Connect_OnItemClicked([this]() { on_editMenu_itemClicked(); }, false);
     }
 
@@ -243,7 +242,7 @@ bool RetroFuturaGUI::FileExplorer::buildView(ViewHost& host, std::string_view ti
     if(!built._ViewMenu)
         return false;
 
-    styleMenu(*built._ViewMenu, "View", _viewMenuActions, cellSize(_viewAxis, windowSize, viewMenuCell), menuListWidth, smallFont);
+    styleMenu(*built._ViewMenu, "View", _viewMenuActions, cellSize(_viewAxis, windowSize, viewMenuCell), menuListWidth, _font);
     built._ViewMenu->Connect_OnItemClicked([this]() { on_viewMenu_itemClicked(); }, false);
 
     //Places, files, the scrollbar, since the table has no drag scrolling of its own, and the preview pane with ImagePreview
@@ -463,11 +462,6 @@ void RetroFuturaGUI::FileExplorer::styleToggle(Button& toggle, const bool isOn)
 glm::vec3 RetroFuturaGUI::FileExplorer::placeButtonSize(const glm::vec2& windowSize, const ViewFont& font)
 {
     return glm::vec3(static_cast<f32>(_placesColumnCount) * windowSize.x / static_cast<f32>(_viewColumnCount) - 2.0f * _margin, rowHeight(font) + 4.0f, 0.01f);
-}
-
-RetroFuturaGUI::FileExplorer::ViewFont RetroFuturaGUI::FileExplorer::toolbarFont(const ViewFont& font)
-{
-    return ViewFont { ._Family = font._Family, ._Size = std::round(font._Size * 0.8f), ._Slant = font._Slant, ._Weight = font._Weight };
 }
 
 std::vector<RetroFuturaGUI::Table::TrackDefinition> RetroFuturaGUI::FileExplorer::columnDefinition(const ViewFont& font, const bool hasThumbnails, const f32 listWidth)

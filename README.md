@@ -35,7 +35,6 @@ The framework is designed for cross-platform use, and its logic can be compiled 
 - FileExplorer
   - Linux takes dropped files only once let go, through GLFW: nothing shows where they would land while they hover, and they are always copied (Windows marks the folder under the pointer and moves or copies as Windows does). While rows are dragged out, the system runs the drag in a loop of its own, so the app's windows don't draw until the drop
   - Linux can't drag files out yet: a drag past the window's edge stays the explorer's own
-  - The menu strip's titles and buttons use the font at 0.8 of its size so they fit; long drive labels still run past their place buttons (see Button)
   - Only filling the table is left on the main thread: storing the cells' strings and resolving the track sizes. In a Debug build the frame that shows WinSxS (35951 entries) takes about 140 ms, System32 (4781) under 40 ms
   - A folder still being listed when the app exits is cut off wherever its thread is, since a stuck listing is let go rather than waited for
   - Names in other scripts need a font holding their glyphs, set with SetFontFamily; the explorer only adds Latin-1 to its font itself

@@ -320,12 +320,8 @@ namespace RetroFuturaGUI
         /// @brief The size of one button in the places list, which the logic fills.
         static glm::vec3 placeButtonSize(const glm::vec2& windowSize, const ViewFont& font);
 
-        /// @brief The toolbar's font: the view's at 0.8 times the size, so ten labels fit one row. They are plain ASCII, so a font
-        ///        set prepared for other scripts loses nothing.
-        static ViewFont toolbarFont(const ViewFont& font);
-
         /// @brief Size, Modified and Type wide enough for "1023.9 KB", a date with minutes and a short type in the font, each with the sort arrow in its header; Name takes the rest.
-        ///        With thumbnails, their column comes first. Where the list, listWidth wide, would leave Name less than
+        ///        The icons' column comes first. Square for plain rows, as wide as a thumbnail with hasThumbnails. Where the list, listWidth wide, would leave Name less than
         ///        _nameMinimumFontSizes of the font, Type gives way first, then Size, then Modified. A column that gives way stays,
         ///        0 wide, so the columns keep their places
         static std::vector<Table::TrackDefinition> columnDefinition(const ViewFont& font, const bool hasThumbnails, const f32 listWidth);
@@ -880,7 +876,7 @@ namespace RetroFuturaGUI
             _placesColumnCount { 7 },   //of the 40: places 7, files 22, scrollbar 1, preview 10
             _filesColumnCount { 22 },
             _previewColumnCount { 10 }, //without a preview the files take its columns
-            _menuColumnCount { 4 },     //a menu title's columns in the menu strip: its caption and the arrow side by side
+            _menuColumnCount { 5 },     //a menu title's columns in the menu strip. Its caption and the arrow side by side, in the full font
             _menuListColumnCount { 9 }, //an open menu's width, enough for "Delete permanently"
             _statusColumnCount { 19 },  //the status line's columns beside the Stop button; it takes the Stop button's too without operations
             _stopColumnCount { 5 };
