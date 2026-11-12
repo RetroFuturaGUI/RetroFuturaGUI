@@ -300,6 +300,10 @@ namespace RetroFuturaGUI
         ///        without "on"/"off" text. Off, it looks like the other buttons.
         static void styleToggle(Button& toggle, const bool isOn);
 
+        /// @brief A vertical slider in the explorer's look that scrolls a table, unscrolled at the top: the list's and the
+        ///        preview details'. Its range is set once the table's content is known
+        static void styleScrollBar(Slider& slider, const f32 step);
+
         /// @brief Makes a ComboBox a menu: flat under its caption, one item per action, its list as wide as given.
         static void styleMenu(ComboBox& menu, std::string_view caption, std::span<const MenuAction> actions, const glm::vec3& size, const f32 listWidth, const ViewFont& font);
 

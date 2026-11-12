@@ -336,21 +336,7 @@ bool RetroFuturaGUI::FileExplorer::buildView(ViewHost& host, std::string_view ti
     if(!built._Scroll)
         return false;
 
-    std::vector<glm::vec4>
-        indicatorColors {{ 0.45f, 0.45f, 0.6f, 1.0f }},
-        indicatorBorderColors {{ 0.6f, 0.6f, 0.8f, 1.0f }};
-    built._Scroll->SetOrientation(IRangedValue::Orientation::Vertical);
-    built._Scroll->SetTrackDirection(IRangedValue::TrackDirection::Inverted); //unscrolled at the top
-    built._Scroll->GetBackground().SetBuiltInColors(styleKey(), std::array { glm::vec4(0.12f, 0.12f, 0.15f, 1.0f) }, ColorState::Enabled);
-    built._Scroll->GetBorder().SetBuiltInColors(styleKey(), std::array { glm::vec4(0.35f, 0.35f, 0.45f, 1.0f) }, ColorState::Enabled);
-    built._Scroll->GetBorder().SetBuiltInWidth(styleKey(), 1.0f);
-    built._Scroll->GetIndicator().GetBackground().SetBuiltInColors(styleKey(), indicatorColors, ColorState::Enabled);
-    built._Scroll->GetIndicator().GetBorder().SetBuiltInColors(styleKey(), indicatorBorderColors, ColorState::Enabled);
-    built._Scroll->GetIndicator().SetSize(glm::vec2(15.0f, 100.0f), RetroFuturaGUI::ElementSizing::Percent);
-    built._Scroll->SetMinValue<f32>(0.0f);
-    built._Scroll->SetMaxValue<f32>(1.0f);
-    built._Scroll->SetStepSize<f32>(rowHeight(_cellFont));
-    built._Scroll->SetValue<f32>(0.0f, false); //sets the value type too, so it comes after the range
+    styleScrollBar(*built._Scroll, rowHeight(_cellFont));
     built._Scroll->Connect_OnValueChanged([this]() { on_scrollSlider_valueChanged(); }, false);
 
     if(hasPreview())
@@ -462,6 +448,25 @@ void RetroFuturaGUI::FileExplorer::styleMenu(ComboBox& menu, std::string_view ca
 
     for(const MenuAction action : actions)
         menu.AddItem(menuText(action));
+}
+
+void RetroFuturaGUI::FileExplorer::styleScrollBar(Slider& slider, const f32 step)
+{
+    std::vector<glm::vec4>
+        indicatorColors {{ 0.45f, 0.45f, 0.6f, 1.0f }},
+        indicatorBorderColors {{ 0.6f, 0.6f, 0.8f, 1.0f }};
+    slider.SetOrientation(IRangedValue::Orientation::Vertical);
+    slider.SetTrackDirection(IRangedValue::TrackDirection::Inverted); //unscrolled at the top
+    slider.GetBackground().SetBuiltInColors(styleKey(), std::array { glm::vec4(0.12f, 0.12f, 0.15f, 1.0f) }, ColorState::Enabled);
+    slider.GetBorder().SetBuiltInColors(styleKey(), std::array { glm::vec4(0.35f, 0.35f, 0.45f, 1.0f) }, ColorState::Enabled);
+    slider.GetBorder().SetBuiltInWidth(styleKey(), 1.0f);
+    slider.GetIndicator().GetBackground().SetBuiltInColors(styleKey(), indicatorColors, ColorState::Enabled);
+    slider.GetIndicator().GetBorder().SetBuiltInColors(styleKey(), indicatorBorderColors, ColorState::Enabled);
+    slider.GetIndicator().SetSize(glm::vec2(15.0f, 100.0f), RetroFuturaGUI::ElementSizing::Percent);
+    slider.SetMinValue<f32>(0.0f);
+    slider.SetMaxValue<f32>(1.0f);
+    slider.SetStepSize<f32>(step);
+    slider.SetValue<f32>(0.0f, false); //sets the value type too, so it comes after the range
 }
 
 void RetroFuturaGUI::FileExplorer::styleToggle(Button& toggle, const bool isOn)

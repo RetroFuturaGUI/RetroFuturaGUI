@@ -15,6 +15,7 @@
 namespace RetroFuturaGUI
 {
     class Image;
+    class Slider;
     class Video;
 
     /// @brief The explorer's preview pane beside the list: a picture - an image, a song's cover art, or a video's frame from
@@ -121,6 +122,15 @@ namespace RetroFuturaGUI
         void showLayer(const std::optional<MediaLayer> layer);
         void setDetails(const std::vector<std::pair<std::string, std::string>>& details);
 
+        /// @brief Shows the details' scrollbar while their rows don't fit, taking its width from the table, and hides it again
+        ///        once they do, the table then as wide as the pane
+        void followDetailsOverflow();
+
+        /// @brief Moves the details' scrollbar to where the table is scrolled, by the wheel say
+        void syncDetailsScroll();
+
+        void on_detailsScroll_valueChanged();
+
         /// @brief Lets go of the open video, so nothing holds the file.
         void closeVideo();
 
@@ -142,7 +152,10 @@ namespace RetroFuturaGUI
         Image* _picture { nullptr };
         Video* _frame { nullptr };
         Label* _message { nullptr };
+        Lasagna* _detailsArea { nullptr };
         Table* _details { nullptr };
+        Slider* _detailsScroll { nullptr };
+        f32 _scrollBarShare { 0.0f };
         ViewFont
             _font {}, //built-in font which scopes and flavors override
             _shownFont {}; //what the details' cells show, measured from

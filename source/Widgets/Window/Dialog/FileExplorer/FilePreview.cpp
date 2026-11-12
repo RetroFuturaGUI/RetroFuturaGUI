@@ -1,6 +1,7 @@
 #include "FilePreview.hpp"
 #include "Image.hpp"
 #include "Label.hpp"
+#include "Slider.hpp"
 #include "Table.hpp"
 #include "Video.hpp"
 #include "Window.hpp"
@@ -27,9 +28,18 @@ RetroFuturaGUI::FileExplorer::FilePreview::FilePreview(ViewHost& host, Lasagna& 
     shareStillSide();
     _picture = host.Attach<Image>("PreviewPicture", *_pane, pictureCell);
     _message = host.Attach<Label>("PreviewMessage", *_pane, messageCell);
-    _details = host.Attach<Table>("PreviewDetails", *_pane, detailsCell);
+    _detailsArea = host.Attach<Lasagna>("PreviewDetailsArea", *_pane, detailsCell, AxisDefinition { ._RowDefinition = { 1.0f }, ._ColumnDefinition = { 1.0f, 0.0f }, ._LayerDefinition = { 1.0f } });
 
-    if(!_picture || !_message || !_details)
+    if(!_picture || !_message || !_detailsArea)
+        return;
+
+    const ViewCell
+        tableCell { ._Row = 0, ._Column = 0, ._ColumnSpan = 1, ._SizingMode = SizingMode::FILL, ._Layer = 0 },
+        scrollCell { ._Row = 0, ._Column = 1, ._ColumnSpan = 1, ._SizingMode = SizingMode::FILL, ._Layer = 0 };
+    _details = host.Attach<Table>("PreviewDetails", *_detailsArea, tableCell);
+    _detailsScroll = host.Attach<Slider>("PreviewDetailsScroll", *_detailsArea, scrollCell);
+
+    if(!_details || !_detailsScroll)
         return;
 
     _picture->SetSize(_mediaSize);
@@ -37,9 +47,15 @@ RetroFuturaGUI::FileExplorer::FilePreview::FilePreview(ViewHost& host, Lasagna& 
     _message->GetText().SetBuiltInAlignment(styleKey(), TextAlignment::Center);
     _message->GetText().SetBuiltInColors(styleKey(), std::array { glm::vec4(0.7f, 0.7f, 0.75f, 1.0f) }, ColorState::Enabled);
 
-    //Like the list, without its header
+    //Like the list, without its header. The area is the cell less its margins; the table fills it while the scrollbar is hidden.
     const glm::vec3 detailsSize { cellSize(_axis, paneSize, detailsCell) };
-    _details->SetSize(detailsSize);
+    _detailsArea->SetSize(detailsSize);
+    _scrollBarShare = std::min(windowSize.x / static_cast<f32>(_viewColumnCount) / std::max(detailsSize.x, 1.0f), 0.5f);
+    styleScrollBar(*_detailsScroll, rowHeight(_shownFont));
+    _detailsScroll->Connect_OnValueChanged([this]() { on_detailsScroll_valueChanged(); }, false);
+    _detailsArea->ShowWidget("PreviewDetailsScroll", false);
+    _details->Connect_OnScrolled([this]() { syncDetailsScroll(); }, false);
+
     _details->GetBorder().SetBuiltInWidth(styleKey(), 1.0f);
     _details->GetBorder().SetBuiltInColors(styleKey(), std::array { glm::vec4(0.35f, 0.35f, 0.45f, 1.0f) }, ColorState::Enabled);
     _details->SetTrackAlternatingColorCount(2);
@@ -61,7 +77,7 @@ RetroFuturaGUI::FileExplorer::FilePreview::FilePreview(ViewHost& host, Lasagna& 
 
 bool RetroFuturaGUI::FileExplorer::FilePreview::IsBuilt() const
 {
-    return _pane && _picture && _message && _details;
+    return _pane && _picture && _message && _detailsArea && _details && _detailsScroll;
 }
 
 void RetroFuturaGUI::FileExplorer::FilePreview::Show(const std::vector<Entry>& selection)
@@ -326,6 +342,58 @@ void RetroFuturaGUI::FileExplorer::FilePreview::setDetails(const std::vector<std
         _details->SetValue(details[row].first, TrackIndex { ._Row = row, ._Column = 0, ._Layer = 0 }, false);
         _details->SetValue(details[row].second, TrackIndex { ._Row = row, ._Column = 1, ._Layer = 0 }, false);
     }
+
+    _details->SetScrollPosition(glm::vec2(0.0f)); //a new file's details start at the top
+    followDetailsOverflow();
+}
+
+void RetroFuturaGUI::FileExplorer::FilePreview::followDetailsOverflow()
+{
+    if(!_detailsArea)
+        return;
+
+    if(!_details)
+        return;
+
+    if(!_detailsScroll)
+        return;
+
+    //The rows are as tall at any width, so the table's reach decides alone whether the scrollbar is needed
+    const bool isOverflowing { 0.0f < _details->GetMaxScroll().y };
+
+    if(isOverflowing != _detailsArea->IsWidgetShown("PreviewDetailsScroll"))
+    {
+        _detailsArea->SetColumnDefinition(isOverflowing ? std::vector<f32> { 1.0f - _scrollBarShare, _scrollBarShare } : std::vector<f32> { 1.0f, 0.0f });
+        _detailsArea->ShowWidget("PreviewDetailsScroll", isOverflowing);
+    }
+
+    //Back to the top first. A smaller range would clamp the value, and that clamp would scroll the table again
+    const f32 maxScroll { _details->GetMaxScroll().y };
+    _detailsScroll->SetValue<f32>(0.0f, false);
+    _detailsScroll->SetMaxValue<f32>(isOverflowing ? maxScroll : 1.0f);
+    _detailsScroll->SetStepSize<f32>(rowHeight(_shownFont));
+}
+
+void RetroFuturaGUI::FileExplorer::FilePreview::syncDetailsScroll()
+{
+    if(!_details)
+        return;
+
+    if(!_detailsScroll)
+        return;
+
+    _detailsScroll->SetValue<f32>(_details->GetVerticalScrollPosition(), false);
+}
+
+void RetroFuturaGUI::FileExplorer::FilePreview::on_detailsScroll_valueChanged()
+{
+    if(!_details)
+        return;
+
+    if(!_detailsScroll)
+        return;
+
+    _details->SetVerticalScrollPosition(_detailsScroll->GetValue<f32>());
 }
 
 void RetroFuturaGUI::FileExplorer::FilePreview::closeVideo()

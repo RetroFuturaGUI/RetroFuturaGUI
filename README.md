@@ -33,7 +33,7 @@ The framework is designed for cross-platform use, and its logic can be compiled 
 - Popups
   - Linux is untested: the owner is set with XSetTransientForHint, and whether the popup stays off the taskbar is up to the window manager
 - FileExplorer
-  - The preview shows as many detail rows as fit, the most telling first; the rest can't be scrolled to yet. The row for playback controls stays empty until playing is built
+  - The preview's row for playback controls stays empty until playing is built
   - A cloud file that isn't on this computer is previewed only when its provider downloads just the ranges read (PARTIAL or PROGRESSIVE in the Cloud Files API: the headers and one picture); one that downloads whole files (FULL, such as kDrive) shows "Not on this computer" with the file's details. The partial case hasn't been tried, for want of such a provider here
   - The file operations were tried through their keys and prompts only, by posting key messages to the windows: the menu items, the Rename and Stop buttons, a slow double-click to rename and the clash prompt's Replace and Skip buttons haven't been clicked yet. Of drag and drop only a drop from another program was tried, called the way the system's drop calls it; dragging rows inside, the drop target marks and dragging out haven't been done with the mouse yet
   - Files dragged in from another program show where they would go only once dropped: GLFW takes drops as WM_DROPFILES, which tells nothing while they hover. While rows are dragged out, the system runs the drag in a loop of its own, so the app's windows don't draw until the drop
@@ -146,7 +146,7 @@ The framework is designed for cross-platform use, and its logic can be compiled 
   - A popup that browses the file system and closes with the chosen paths: Open(startPath, flags, ".cpp, .hpp")
   - Single file, multiple files, folder or save mode; places, history, an address box, sorting, filters, hidden files and extensions toggles; where the list is too narrow (thumbnails, a large font), Type, then Size, then Modified give way so the names keep about ten characters
   - File operations: new folder, rename, delete to the recycle bin or permanently, cut, copy and paste through the system clipboard, drag and drop in and out, undo
-  - Previews and thumbnails of images, songs (cover art) and videos, decoded by a separate, restricted helper process. A video's still is decoded once, at the keyframe before 10% in and at the pane's size, for the pane and its thumbnail alike
+  - Previews and thumbnails of images, songs (cover art) and videos, decoded by a separate, restricted helper process. The details below a preview list the most telling first and scroll, with a scrollbar beside them while they don't fit. A video's still is decoded once, at the keyframe before 10% in and at the pane's size, for the pane and its thumbnail alike
   - Listing and file operations run off the GUI thread, and the folder shown is watched for changes
 - Media Playback
   - AudioPlayback: plays WAV, AIFF, FLAC and MP3 (miniaudio) and Opus, Vorbis and audio in Ogg, Matroska/WebM and MP4 (FFmpeg); HCA with keys and tracker modules (libopenmpt). Seeking in milliseconds, seamless loops between loop points, volume, speed, per-channel levels and frequency bands
