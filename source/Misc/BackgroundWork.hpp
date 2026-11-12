@@ -1,5 +1,6 @@
 #pragma once
 #include "config.hpp"
+#include <chrono>
 #include <condition_variable>
 #include <deque>
 #include <functional>
@@ -22,8 +23,10 @@ namespace RetroFuturaGUI
         enum class WhenDestroyed : u32
         {
             WaitForJob, //waits for it to return, so a job may use what its owner holds
-            LetJobFinish //lets it finish on its own and drops its result, so a job stuck on a slow drive holds nothing up. Its
-                         //work must use only what it was given; at program exit it is cut off wherever it is
+            LetJobFinish, //lets it finish on its own and drops its result, so a job stuck on a slow drive holds nothing up. Its
+                          //work must use only what it was given; at program exit it is cut off wherever it is, unless WaitForLetGoJobs waits for it.
+            CancelJob     //as LetJobFinish, and also ends the file system call the job may be blocked in (PlatformBridge::FileSystem::CancelThreadIo),
+                          //so a listing of a drive that stopped answering ends early. Only for jobs whose blocked call may fail without harm
         };
 
         explicit BackgroundWork(const WhenDestroyed whenDestroyed);
@@ -57,6 +60,13 @@ namespace RetroFuturaGUI
         /// @brief Returns whether a job is queued, running, or a result waits for Drain.
         bool IsBusy() const;
 
+        /// @brief Waits until the jobs let go to finish on their own have ended, or the limit passed. Call it at program exit, after
+        ///        the last BackgroundWork that lets its job go is destroyed and before main returns, so no job is still running while
+        ///        the program's static objects are destroyed. A job checking its stop token ends within moments; one blocked in the
+        ///        system for longer is cut off at exit as before
+        /// @return Whether all of them ended in time
+        static bool WaitForLetGoJobs(const std::chrono::milliseconds limit);
+
     private:
         using Finish = std::move_only_function<void()>; //a job's slot bound to its result, run by Drain
         using Job = std::move_only_function<Finish(std::stop_token)>;
@@ -68,8 +78,25 @@ namespace RetroFuturaGUI
             std::condition_variable_any _Wake {};
             std::deque<Job> _Jobs {};
             std::vector<Finish> _Finished {};
-            bool _IsRunningJob { false };
+            bool
+                _IsRunningJob { false },
+                _IsLetGo { false },   //its BackgroundWork is gone and LetGoJobs counts its thread
+                _HasEnded { false };  //its thread returned
         };
+
+        /// @brief The threads let go to finish on their own that haven't ended. Made once and never destroyed, so a thread ending
+        ///        while the program's static objects are destroyed can still reach it.
+        struct LetGoJobs
+        {
+            std::mutex _Mutex {};
+            std::condition_variable _Ended {};
+            uSize _RunningCount { 0 };
+        };
+
+        static LetGoJobs& letGoJobs();
+
+        /// @brief The worker thread's last act: marks its state ended and, when it was let go, takes it off LetGoJobs
+        static void endThread(State& state);
 
         void queue(Job&& job);
 

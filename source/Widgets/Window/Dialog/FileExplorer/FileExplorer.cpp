@@ -864,7 +864,7 @@ void RetroFuturaGUI::FileExplorer::postListing(ListingRequest&& request)
     //A listing still running, maybe stuck on a slow drive, would hold the new one up behind it. Its worker is let go to
     //finish on its own and drops what it made, and a new one takes this listing.
     if(!_listingWork || _listingWork->IsBusy())
-        _listingWork = std::make_unique<BackgroundWork>(BackgroundWork::WhenDestroyed::LetJobFinish);
+        _listingWork = std::make_unique<BackgroundWork>(BackgroundWork::WhenDestroyed::CancelJob);
 
     if(!_listingWork)
         return;
@@ -901,7 +901,7 @@ RetroFuturaGUI::FileExplorer::Listing RetroFuturaGUI::FileExplorer::makeListing(
     }
     else
     {
-        listing._IsListed = PlatformBridge::FileSystem::ListDirectory(request._Directory, listing._Listed, listing._Error);
+        listing._IsListed = PlatformBridge::FileSystem::ListDirectory(request._Directory, listing._Listed, listing._Error, stop);
     }
 
     if(!listing._IsListed || stop.stop_requested())
@@ -920,6 +920,10 @@ RetroFuturaGUI::FileExplorer::Listing RetroFuturaGUI::FileExplorer::makeListing(
         listing._Shown.push_back(entry);
     }
 
+    //A stopped listing is dropped, so it ends between its steps and rows. The sort can't stop partway.
+    if(stop.stop_requested())
+        return listing;
+
     sortEntries(listing._Shown, request._SortColumn, request._IsSortDescending);
 
     //Every cell's text, which is most of a big folder's fill: both names, so the Extensions switch only picks one.
@@ -929,6 +933,9 @@ RetroFuturaGUI::FileExplorer::Listing RetroFuturaGUI::FileExplorer::makeListing(
 
     for(const Entry& entry : listing._Shown)
     {
+        if(stop.stop_requested())
+            return listing;
+
         const bool isDirectory { PlatformBridge::FileSystem::EntryKind::Directory == entry._Kind };
         std::string name { toUtf8(entry._Path.filename()) };
         std::string shortName { isDirectory ? name : toUtf8(entry._Path.stem()) }; //".bashrc" keeps its name: a leading dot is no extension
@@ -944,7 +951,7 @@ RetroFuturaGUI::FileExplorer::Listing RetroFuturaGUI::FileExplorer::makeListing(
         listing._Kinds.push_back(fileKindOf(entry)); //by its extension, which takes long enough to keep off the main thread
     }
 
-    listing._Content = makeTableContent(listing._Rows, listing._Look);
+    listing._Content = makeTableContent(listing._Rows, listing._Look, stop);
     return listing;
 }
 
@@ -1241,7 +1248,7 @@ void RetroFuturaGUI::FileExplorer::selectPaths(const std::vector<std::filesystem
 
 void RetroFuturaGUI::FileExplorer::fillTable()
 {
-    fillTable(makeTableContent(_shownRows, tableLook()));
+    fillTable(makeTableContent(_shownRows, tableLook(), {}));
 }
 
 void RetroFuturaGUI::FileExplorer::fillTable(Table::Content&& content)
@@ -1281,11 +1288,11 @@ RetroFuturaGUI::FileExplorer::TableLook RetroFuturaGUI::FileExplorer::tableLook(
     };
 }
 
-RetroFuturaGUI::Table::Content RetroFuturaGUI::FileExplorer::makeTableContent(const std::vector<RowTexts>& rows, const TableLook& look)
+RetroFuturaGUI::Table::Content RetroFuturaGUI::FileExplorer::makeTableContent(const std::vector<RowTexts>& rows, const TableLook& look, std::stop_token stop)
 {
     Table::Content content { std::vector<Table::TrackDefinition>(rows.size(), Table::TrackDefinition { ._Sizing = Table::TrackSizing::Fixed, ._Value = look._RowHeight }), look._Columns };
 
-    for(uSize row = 0; row < rows.size(); ++row)
+    for(uSize row = 0; row < rows.size() && !stop.stop_requested(); ++row)
     {
         const RowTexts& texts { rows[row] };
         content.SetText(displayName(texts, look._ShowsExtensions), row, _nameColumn);

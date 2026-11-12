@@ -441,8 +441,9 @@ namespace RetroFuturaGUI
         /// @brief The look the list has now, which a listing's content is built for
         TableLook tableLook() const;
 
-        /// @brief The table's tracks and texts for the rows, on any thread. The icons' column stays empty for the main thread
-        static Table::Content makeTableContent(const std::vector<RowTexts>& rows, const TableLook& look);
+        /// @brief The table's tracks and texts for the rows, on any thread. The icons' column stays empty for the main thread. A
+        ///        stop leaves the rest of the rows empty, for a listing nobody waits for anymore
+        static Table::Content makeTableContent(const std::vector<RowTexts>& rows, const TableLook& look, std::stop_token stop);
 
         /// @brief Sets the note the status line shows while no message is up: "Opening Music...", why the list is empty, or "3
         ///        selected" in MultiFile.
@@ -789,7 +790,7 @@ namespace RetroFuturaGUI
         std::unique_ptr<FilePreview> _preview; //with ImagePreview or MediaPreview; its widgets are the view host's. No {}, which MSVC takes to need the whole type
         std::unique_ptr<ThumbnailCache> _thumbnails; //made once thumbnails first show, since it runs a thread of its own
         std::shared_ptr<StillCache> _stills; //video stills the preview pane and the thumbnails share, with a preview pane only.
-        std::unique_ptr<BackgroundWork> _listingWork { std::make_unique<BackgroundWork>(BackgroundWork::WhenDestroyed::LetJobFinish) }; //its jobs use only copies, so a stuck one is let go
+        std::unique_ptr<BackgroundWork> _listingWork { std::make_unique<BackgroundWork>(BackgroundWork::WhenDestroyed::CancelJob) }; //its jobs use only copies, so a stuck one is let go, its blocked listing call ended
         std::unique_ptr<BackgroundWork> _disposalWork { std::make_unique<BackgroundWork>(BackgroundWork::WhenDestroyed::WaitForJob) }; //frees the cells a big folder left, off the main thread
         u64 _listingGeneration { 0 }; //of the latest listing asked for; an older one that arrives is dropped
         std::optional<PendingListing> _pending {};

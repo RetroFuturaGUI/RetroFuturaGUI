@@ -35,7 +35,6 @@ The framework is designed for cross-platform use, and its logic can be compiled 
 - FileExplorer
   - Linux takes dropped files only once let go, through GLFW: nothing shows where they would land while they hover, and they are always copied (Windows marks the folder under the pointer and moves or copies as Windows does). While rows are dragged out, the system runs the drag in a loop of its own, so the app's windows don't draw until the drop
   - Linux can't drag files out yet: a drag past the window's edge stays the explorer's own
-  - A folder still being listed when the app exits is cut off wherever its thread is, since a stuck listing is let go rather than waited for
   - Names in other scripts need a font holding their glyphs, set with SetFontFamily; the explorer only adds Latin-1 to its font itself
   - Its widgets are sized from the window size given to the constructor, so resizing the explorer's window doesn't refit them
   - From another language it opens over the main window only, and with an extensions string: the named filters stay C++-only. The Python binding's OpenFileExplorer hasn't been run, since no Python is installed here
@@ -292,7 +291,8 @@ The framework is designed for cross-platform use, and its logic can be compiled 
     - Wave Surfaces
     - Scatter
   - Types of Graphs can be layed over another
-- Add grids and grid labels to LineDiagram and Histogram
+- Add grids and grid labels to LineDiagram and 
+- A listing let go (the explorer closed, or another folder asked for) stops at its next check, between entries and rows, and on Windows its blocked file system call is cancelled (CancelSynchronousIo, where the driver supports it). GlfwTerminate waits up to 300 ms for such jobs. The sort can't stop partway (about 2 s for WinSxS in Debug), and a call stuck in the system longer than the wait, or any blocked call on Linux, is still cut off at exit, which only reads, so it harms nothing
 </details>
 
 #### Nice-to-have's

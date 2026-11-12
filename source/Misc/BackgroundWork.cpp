@@ -1,8 +1,9 @@
 #include "BackgroundWork.hpp"
+#include "FileSystem.hpp"
 
 RetroFuturaGUI::BackgroundWork::BackgroundWork(const WhenDestroyed whenDestroyed)
     : _whenDestroyed(whenDestroyed),
-      _worker([state = _state](std::stop_token stop) { run(*state, stop); })
+      _worker([state = _state](std::stop_token stop) { run(*state, stop); endThread(*state); })
 {
 }
 
@@ -18,7 +19,18 @@ RetroFuturaGUI::BackgroundWork::~BackgroundWork()
         std::scoped_lock lock { _state->_Mutex };
         _state->_Jobs.clear();
         _state->_Finished.clear();
+
+        //Counted until it ends, for WaitForLetGoJobs. The lock keeps it from ending unseen in between
+        if(!_state->_HasEnded)
+        {
+            _state->_IsLetGo = true;
+            std::scoped_lock letGoLock { letGoJobs()._Mutex };
+            ++letGoJobs()._RunningCount;
+        }
     }
+
+    if(WhenDestroyed::CancelJob == _whenDestroyed)
+        PlatformBridge::FileSystem::CancelThreadIo(_worker.native_handle()); //after the stop, so a job leaving the blocked call sees it
 
     _worker.detach();
 }
@@ -91,4 +103,32 @@ bool RetroFuturaGUI::BackgroundWork::IsBusy() const
 {
     std::scoped_lock lock { _state->_Mutex };
     return _state->_IsRunningJob || !_state->_Jobs.empty() || !_state->_Finished.empty();
+}
+
+bool RetroFuturaGUI::BackgroundWork::WaitForLetGoJobs(const std::chrono::milliseconds limit)
+{
+    std::unique_lock lock { letGoJobs()._Mutex };
+    return letGoJobs()._Ended.wait_for(lock, limit, []() { return 0 == letGoJobs()._RunningCount; });
+}
+
+RetroFuturaGUI::BackgroundWork::LetGoJobs& RetroFuturaGUI::BackgroundWork::letGoJobs()
+{
+    static LetGoJobs* jobs { new LetGoJobs {} }; //never deleted: a thread may end after the static objects are gone
+    return *jobs;
+}
+
+void RetroFuturaGUI::BackgroundWork::endThread(State& state)
+{
+    std::scoped_lock lock { state._Mutex };
+    state._HasEnded = true;
+
+    if(!state._IsLetGo)
+        return;
+
+    {
+        std::scoped_lock letGoLock { letGoJobs()._Mutex };
+        --letGoJobs()._RunningCount;
+    }
+
+    letGoJobs()._Ended.notify_all();
 }

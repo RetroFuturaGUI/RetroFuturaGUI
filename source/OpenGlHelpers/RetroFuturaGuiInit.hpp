@@ -1,5 +1,6 @@
 #pragma once
 #include "IncludeHelper.hpp"
+#include "BackgroundWork.hpp"
 #include "ResourceManager.hpp"
 #include <print>
 
@@ -27,9 +28,12 @@ namespace RetroFuturaGUI
         return 0;
     }
 
-    /// @brief Terminates GLFW, releasing all windows and resources it owns, and the library's shared icons first.
+    /// @brief Terminates GLFW, releasing all windows and resources it owns, and the library's shared icons first. Background
+    ///        jobs let go to finish on their own, such as a folder listing still running, get a moment to end first, so none
+    ///        runs on while the program's static objects are destroyed
     static void GlfwTerminate()
     {
+        BackgroundWork::WaitForLetGoJobs(std::chrono::milliseconds { 300 }); //a stopped job ends within moments; one stuck in the system is cut off as before
         ResourceManager::Release();
         glfwTerminate();
     }
