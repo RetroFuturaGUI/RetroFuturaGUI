@@ -311,8 +311,10 @@ namespace RetroFuturaGUI
         static ViewFont toolbarFont(const ViewFont& font);
 
         /// @brief Size, Modified and Type wide enough for "1023.9 KB", a date with minutes and a short type in the font, each with the sort arrow in its header; Name takes the rest.
-        ///        With thumbnails, their column comes first.
-        static std::vector<Table::TrackDefinition> columnDefinition(const ViewFont& font, const bool hasThumbnails);
+        ///        With thumbnails, their column comes first. Where the list, listWidth wide, would leave Name less than
+        ///        _nameMinimumFontSizes of the font, Type gives way first, then Size, then Modified. A column that gives way stays,
+        ///        0 wide, so the columns keep their places
+        static std::vector<Table::TrackDefinition> columnDefinition(const ViewFont& font, const bool hasThumbnails, const f32 listWidth);
 
         bool hasPreview() const;
 
@@ -788,7 +790,8 @@ namespace RetroFuturaGUI
         static constexpr uSize _fileColumnCount { 4 }; //name, size, modified, type
         static constexpr f32
             _thumbnailColumnWidth { 72.0f },
-            _thumbnailRowHeight { 64.0f };
+            _thumbnailRowHeight { 64.0f },
+            _nameMinimumFontSizes { 5.0f }; //about ten characters, the narrowest Name gets before other columns give way
         static constexpr std::chrono::milliseconds
             _progressDelay { 150 },    //a listing that takes longer says "Opening" meanwhile
             _relistQuietTime { 300 },  //the folder is listed again once its changes pause this long,

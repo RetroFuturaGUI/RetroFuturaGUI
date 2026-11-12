@@ -305,7 +305,7 @@ bool RetroFuturaGUI::FileExplorer::buildView(ViewHost& host, std::string_view ti
     built._Files->GetSelectedArea().SetBuiltInColors(styleKey(), renameSelectionColors);
 
     //The header cells come with the columns, so they are named once these exist
-    built._Files->SetTrackDefinitions(std::vector<Table::TrackDefinition> {}, columnDefinition(_cellFont, _showThumbnails));
+    built._Files->SetTrackDefinitions(std::vector<Table::TrackDefinition> {}, columnDefinition(_cellFont, _showThumbnails, built._Files->GetSize().x));
     built._Files->GetHeaderStyle().SetBuiltInFontFamily(styleKey(), _font._Family, _font._Size, FontSizeUnit::Pixels, _font._Slant, _font._Weight);
     built._Files->GetHeaderStyle().SetBuiltInTextAlignment(styleKey(), TextAlignment::Left);
     built._Files->GetHeaderStyle().SetBuiltInTextPadding(styleKey(), 6.0f);
@@ -480,14 +480,29 @@ RetroFuturaGUI::FileExplorer::ViewFont RetroFuturaGUI::FileExplorer::toolbarFont
     return ViewFont { ._Family = font._Family, ._Size = std::round(font._Size * 0.8f), ._Slant = font._Slant, ._Weight = font._Weight };
 }
 
-std::vector<RetroFuturaGUI::Table::TrackDefinition> RetroFuturaGUI::FileExplorer::columnDefinition(const ViewFont& font, const bool hasThumbnails)
+std::vector<RetroFuturaGUI::Table::TrackDefinition> RetroFuturaGUI::FileExplorer::columnDefinition(const ViewFont& font, const bool hasThumbnails, const f32 listWidth)
 {
+    f32
+        sizeWidth { std::ceil(4.5f * font._Size) },
+        modifiedWidth { std::ceil(8.25f * font._Size) },
+        typeWidth { std::ceil(4.125f * font._Size) }; //and room for the sort arrow in its header
+    const f32 nameRoom { listWidth - (hasThumbnails ? _thumbnailColumnWidth : 0.0f) - std::ceil(_nameMinimumFontSizes * font._Size) };
+
+    //Least telling first, while the rest would leave Name too narrow. The preview pane still shows them
+    for(f32* width : { &typeWidth, &sizeWidth, &modifiedWidth })
+    {
+        if(sizeWidth + modifiedWidth + typeWidth <= nameRoom)
+            break;
+
+        *width = 0.0f;
+    }
+
     std::vector<Table::TrackDefinition> columns
     {
-        { ._Sizing = Table::TrackSizing::Star, ._Value = 1.0f },                               //name
-        { ._Sizing = Table::TrackSizing::Fixed, ._Value = std::ceil(4.5f * font._Size) },   //size
-        { ._Sizing = Table::TrackSizing::Fixed, ._Value = std::ceil(8.25f * font._Size) },  //modified
-        { ._Sizing = Table::TrackSizing::Fixed, ._Value = std::ceil(4.125f * font._Size) }  //type, and room for the sort arrow in its header
+        { ._Sizing = Table::TrackSizing::Star, ._Value = 1.0f },   //name
+        { ._Sizing = Table::TrackSizing::Fixed, ._Value = sizeWidth },
+        { ._Sizing = Table::TrackSizing::Fixed, ._Value = modifiedWidth },
+        { ._Sizing = Table::TrackSizing::Fixed, ._Value = typeWidth }
     };
 
     if(hasThumbnails)
@@ -1234,7 +1249,7 @@ void RetroFuturaGUI::FileExplorer::fillTable()
         return;
 
     const std::vector<Table::TrackDefinition> rowDefinition(_shownRows.size(), Table::TrackDefinition { ._Sizing = Table::TrackSizing::Fixed, ._Value = getListRowHeight() });
-    _widgets._Files->SetTrackDefinitions(rowDefinition, columnDefinition(_cellFont, _showThumbnails));
+    _widgets._Files->SetTrackDefinitions(rowDefinition, columnDefinition(_cellFont, _showThumbnails, _widgets._Files->GetSize().x));
 
     //The read-only flags follow the columns, which the thumbnails' adds to
     for(uSize column = 0; column < getNameColumn() + _fileColumnCount; ++column)
