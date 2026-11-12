@@ -25,11 +25,12 @@
 #include <tuple>
 
 RetroFuturaGUI::FileExplorer::FileExplorer(std::string_view title, const i32 width, const i32 height)
-    : Popup(std::format("FileExplorer{}", _createdCount), width, height),
+    : Popup(std::format("FileExplorer{}", _createdCount), width, height, StyleScope::File),
       _explorerNumber(_createdCount++),
       _width(width),
       _height(height)
 {
+    addMissingEntries();
     Window* window { GetWindow() };
 
     if(!window)
@@ -81,8 +82,9 @@ bool RetroFuturaGUI::FileExplorer::openWithFilters(std::string_view startPath, c
 
     //Numbered, because the loader's keys span every window and several explorers can be open
     std::unique_ptr<ViewHost> host { std::make_unique<ViewHost>(std::format("FileExplorerScene{}", _explorerNumber), window, _viewAxis) };
-    ensureFontBlock(Latin1SupplementFirst, Latin1SupplementLast);
-    ensureFontBlock(GeometricShapesFirst, GeometricShapesLast);
+    updateShownFonts(); //before the view, which is measured from them.
+    _fontGeneration = StylingManager::GetGeneration();
+    ensureFontBlocks();
 
     if(!buildView(*host, window->GetWindowTitle()))
         return false;
@@ -294,22 +296,22 @@ bool RetroFuturaGUI::FileExplorer::buildView(ViewHost& host, std::string_view ti
     built._Files->GetTrackStyle(0).SetBuiltInInnerBorderColors(styleKey(), innerBorderColors);
     built._Files->GetTrackStyle(1).SetBuiltInInnerBorderColors(styleKey(), innerBorderColors);
     built._Files->GetCellStyle().SetBuiltInInnerBorderWidth(styleKey(), 1.0f);
-    built._Files->GetCellStyle().SetFontFamily(_font._Family, _font._Size, FontSizeUnit::Pixels, _font._Slant, _font._Weight);
-    built._Files->GetCellStyle().SetTextAlignment(TextAlignment::Left);
-    built._Files->GetCellStyle().SetTextPadding(6.0f);
+    built._Files->GetCellStyle().SetBuiltInFontFamily(styleKey(), _font._Family, _font._Size, FontSizeUnit::Pixels, _font._Slant, _font._Weight);
+    built._Files->GetCellStyle().SetBuiltInTextAlignment(styleKey(), TextAlignment::Left);
+    built._Files->GetCellStyle().SetBuiltInTextPadding(styleKey(), 6.0f);
 
     //A name being renamed sits on a selected row, whose blue hides the default blue of selected text, so it is lightened instead
     std::vector<glm::vec4> renameSelectionColors {{ 0.95f, 0.95f, 1.0f, 0.35f }};
     built._Files->GetSelectedArea().SetBuiltInColors(styleKey(), renameSelectionColors);
 
     //The header cells come with the columns, so they are named once these exist
-    built._Files->SetTrackDefinitions(std::vector<Table::TrackDefinition> {}, columnDefinition(_font, _showThumbnails));
-    built._Files->GetHeaderStyle().SetFontFamily(_font._Family, _font._Size, FontSizeUnit::Pixels, _font._Slant, _font._Weight);
-    built._Files->GetHeaderStyle().SetTextAlignment(TextAlignment::Left);
-    built._Files->GetHeaderStyle().SetTextPadding(6.0f);
+    built._Files->SetTrackDefinitions(std::vector<Table::TrackDefinition> {}, columnDefinition(_cellFont, _showThumbnails));
+    built._Files->GetHeaderStyle().SetBuiltInFontFamily(styleKey(), _font._Family, _font._Size, FontSizeUnit::Pixels, _font._Slant, _font._Weight);
+    built._Files->GetHeaderStyle().SetBuiltInTextAlignment(styleKey(), TextAlignment::Left);
+    built._Files->GetHeaderStyle().SetBuiltInTextPadding(styleKey(), 6.0f);
     built._Files->GetHeaderStyle().SetBuiltInBackgroundColors(styleKey(), headerColors, ColorState::Enabled);
     built._Files->GetHeaderStyle().SetBuiltInOuterBorderColors(styleKey(), innerBorderColors, ColorState::Enabled);
-    built._Files->SetHorizontalHeaderSize(rowHeight(_font) + 4.0f);
+    built._Files->SetHorizontalHeaderSize(rowHeight(_headerFont) + 4.0f);
     built._Files->ShowHorizontalHeader(true); //named by updateHeaderTexts, which marks the sort column; fillTable makes the columns read-only
 
     built._Files->Connect_OnSelectionChanged([this]() { on_filesTable_selectionChanged(); }, false);
@@ -347,7 +349,7 @@ bool RetroFuturaGUI::FileExplorer::buildView(ViewHost& host, std::string_view ti
     built._Scroll->GetIndicator().SetSize(glm::vec2(15.0f, 100.0f), RetroFuturaGUI::ElementSizing::Percent);
     built._Scroll->SetMinValue<f32>(0.0f);
     built._Scroll->SetMaxValue<f32>(1.0f);
-    built._Scroll->SetStepSize<f32>(rowHeight(_font));
+    built._Scroll->SetStepSize<f32>(rowHeight(_cellFont));
     built._Scroll->SetValue<f32>(0.0f, false); //sets the value type too, so it comes after the range
     built._Scroll->Connect_OnValueChanged([this]() { on_scrollSlider_valueChanged(); }, false);
 
@@ -359,6 +361,8 @@ bool RetroFuturaGUI::FileExplorer::buildView(ViewHost& host, std::string_view ti
 
         if(!_preview->IsBuilt())
             return false;
+
+        _preview->SetShownFont(_cellFont); //its details are measured from what its cells show
     }
 
 //Options: the name box and the filter box
@@ -383,7 +387,7 @@ bool RetroFuturaGUI::FileExplorer::buildView(ViewHost& host, std::string_view ti
     if(!built._Filter)
         return false;
 
-    built._Filter->SetFontFamily(_font._Family, _font._Size, FontSizeUnit::Pixels, _font._Slant, _font._Weight);
+    built._Filter->GetItemText().SetBuiltInFontFamily(styleKey(), _font._Family, _font._Size, FontSizeUnit::Pixels, _font._Slant, _font._Weight);
     built._Filter->SetSize(cellSize(_viewAxis, windowSize, filterCell));
     built._Filter->GetBackground().SetBuiltInColors(styleKey(), std::array { glm::vec4(0.2f, 0.2f, 0.2f, 1.0f) }, ColorState::Enabled);
     built._Filter->SetDropDownPosition(IDropDown::DropDownPosition::Top); //down would run out of the window
@@ -420,10 +424,10 @@ bool RetroFuturaGUI::FileExplorer::buildView(ViewHost& host, std::string_view ti
     if(!built._Status)
         return false;
 
-    built._Status->GetText().SetFontFamily(_font._Family, _font._Size, FontSizeUnit::Pixels, _font._Slant, _font._Weight);
-    built._Status->GetText().SetAlignment(TextAlignment::Left);
+    built._Status->GetText().SetBuiltInFontFamily(styleKey(), _font._Family, _font._Size, FontSizeUnit::Pixels, _font._Slant, _font._Weight);
+    built._Status->GetText().SetBuiltInAlignment(styleKey(), TextAlignment::Left);
     built._Status->GetText().SetBuiltInColors(styleKey(), std::array { glm::vec4(0.9f, 0.8f, 0.55f, 1.0f) }, ColorState::Enabled);
-    built._Status->GetText().SetPadding(8.0f);
+    built._Status->GetText().SetBuiltInPadding(styleKey(), 8.0f);
     built._Status->SetSize(cellSize(_viewAxis, windowSize, statusCell));
     built._Ok = host.Attach<Button>("Ok", *lasagna, okCell);
 
@@ -446,13 +450,13 @@ bool RetroFuturaGUI::FileExplorer::buildView(ViewHost& host, std::string_view ti
 
 void RetroFuturaGUI::FileExplorer::styleMenu(ComboBox& menu, std::string_view caption, std::span<const MenuAction> actions, const glm::vec3& size, const f32 listWidth, const ViewFont& font)
 {
-    menu.SetFontFamily(font._Family, font._Size, FontSizeUnit::Pixels, font._Slant, font._Weight);
+    menu.GetItemText().SetBuiltInFontFamily(styleKey(), font._Family, font._Size, FontSizeUnit::Pixels, font._Slant, font._Weight);
     menu.SetSize(size);
     menu.GetBackground().SetBuiltInColors(styleKey(), std::array { glm::vec4(0.0f, 0.0f, 0.0f, 0.0f) }, ColorState::Enabled); //flat until hovered, as a menu title is
     menu.GetBackground().SetBuiltInColors(styleKey(), std::array { glm::vec4(0.25f, 0.25f, 0.35f, 0.9f) }, ColorState::Hover);
     menu.GetBackground().SetBuiltInColors(styleKey(), std::array { glm::vec4(0.35f, 0.35f, 0.5f, 0.95f) }, ColorState::Clicked);
     menu.GetBorder().SetBuiltInWidth(styleKey(), 0.0f);
-    menu.SetTextAlignment(TextAlignment::Left);
+    menu.GetItemText().SetBuiltInAlignment(styleKey(), TextAlignment::Left);
     menu.SetDropDownWidth(listWidth);
     menu.SetCaption(caption);
 
@@ -462,19 +466,8 @@ void RetroFuturaGUI::FileExplorer::styleMenu(ComboBox& menu, std::string_view ca
 
 void RetroFuturaGUI::FileExplorer::styleToggle(Button& toggle, const bool isOn)
 {
-    if(!isOn)
-    {
-        //Off, it looks like any of the explorer's buttons: built-in, or as a flavor styles them.
-        toggle.GetBackground().SetColors({}, ColorState::Enabled);
-        toggle.GetBackground().SetColors({}, ColorState::Hover);
-        toggle.GetBackground().SetColors({}, ColorState::Clicked);
-        return;
-    }
-
-    //On, the accent shows over every flavor, since it tells the state.
-    toggle.GetBackground().SetColors(std::array { _toggleOnColor }, ColorState::Enabled);
-    toggle.GetBackground().SetColors(std::array { _toggleOnHoverColor }, ColorState::Hover);
-    toggle.GetBackground().SetColors(std::array { _toggleOnClickedColor }, ColorState::Clicked);
+    //On, it takes its scope's Button:on entry (the accent, by default); off, it looks like any of the explorer's buttons.
+    toggle.SetStyleAccessors(isOn ? StyleAccessor::On : StyleAccessor::None);
 }
 
 glm::vec3 RetroFuturaGUI::FileExplorer::placeButtonSize(const glm::vec2& windowSize, const ViewFont& font)
@@ -640,14 +633,14 @@ std::vector<std::string> RetroFuturaGUI::FileExplorer::splitExtensions(std::stri
     return split;
 }
 
-void RetroFuturaGUI::FileExplorer::ensureFontBlock(const u32 first, const u32 last) const
+void RetroFuturaGUI::FileExplorer::ensureFontBlock(const ViewFont& font, const u32 first, const u32 last)
 {
-    const FontInfo* fontInfo { FontManager::GetFontInfo(_font._Family, _font._Size, FontSizeUnit::Pixels, _font._Slant, _font._Weight) };
+    const FontInfo* fontInfo { FontManager::GetFontInfo(font._Family, font._Size, FontSizeUnit::Pixels, font._Slant, font._Weight) };
 
     if(!fontInfo)
         return;
 
-    const auto atlas { fontInfo->_Atlasses.find(FontManager::FontSizeToKey(_font._Size)) };
+    const auto atlas { fontInfo->_Atlasses.find(FontManager::FontSizeToKey(font._Size)) };
 
     if(fontInfo->_Atlasses.end() == atlas)
         return;
@@ -655,7 +648,65 @@ void RetroFuturaGUI::FileExplorer::ensureFontBlock(const u32 first, const u32 la
     if(atlas->second._GlyphBlocks.contains(first))
         return;
 
-    FontManager::ExtendFontset(_font._Family, _font._Family, _font._Size, FontSizeUnit::Pixels, _font._Slant, _font._Weight, first, last);
+    FontManager::ExtendFontset(font._Family, font._Family, font._Size, FontSizeUnit::Pixels, font._Slant, font._Weight, first, last);
+}
+
+void RetroFuturaGUI::FileExplorer::ensureFontBlocks() const
+{
+    for(const ViewFont& font : { _cellFont, _headerFont })
+    {
+        ensureFontBlock(font, Latin1SupplementFirst, Latin1SupplementLast);
+        ensureFontBlock(font, GeometricShapesFirst, GeometricShapesLast);
+    }
+}
+
+bool RetroFuturaGUI::FileExplorer::updateShownFonts()
+{
+    const ViewFont
+        cellFont { shownTableFont(StyleScope::File, false, _font) },
+        headerFont { shownTableFont(StyleScope::File, true, _font) },
+        buttonFont { shownFont(StyleScope::File, WidgetTypeID::Button, StylePart::Text, _font) };
+
+    if(cellFont == _cellFont && headerFont == _headerFont && buttonFont == _buttonFont)
+        return false;
+
+    _cellFont = cellFont;
+    _headerFont = headerFont;
+    _buttonFont = buttonFont;
+    return true;
+}
+
+void RetroFuturaGUI::FileExplorer::relayoutForFonts()
+{
+    ensureFontBlocks();
+
+    if(_widgets._Files)
+    {
+        //The rows and columns come anew, so the selection is put back.
+        const std::vector<std::filesystem::path> selected { getSelectedPaths() };
+        _widgets._Files->SetHorizontalHeaderSize(rowHeight(_headerFont) + 4.0f);
+        fillTable();
+        selectPaths(selected, false);
+    }
+
+    if(_widgets._Scroll)
+        _widgets._Scroll->SetStepSize<f32>(rowHeight(_cellFont));
+
+    //The places list lays its buttons out again once they are resized.
+    const glm::vec3 placeSize { placeButtonSize(glm::vec2(static_cast<f32>(_width), static_cast<f32>(_height)), _buttonFont) };
+
+    for(const auto& [button, place] : _placeButtons)
+    {
+        if(!button)
+            continue;
+
+        button->SetSize(placeSize);
+    }
+
+    if(!_preview)
+        return;
+
+    _preview->SetShownFont(_cellFont);
 }
 
 void RetroFuturaGUI::FileExplorer::applyMode()
@@ -717,9 +768,9 @@ void RetroFuturaGUI::FileExplorer::addPlaceButton(std::string_view text, const s
     if(!button)
         return;
 
-    styleButton(*button, text, placeButtonSize(glm::vec2(static_cast<f32>(_width), static_cast<f32>(_height)), _font), _font);
-    button->GetText().SetAlignment(TextAlignment::Left);
-    button->GetText().SetPadding(8.0f);
+    styleButton(*button, text, placeButtonSize(glm::vec2(static_cast<f32>(_width), static_cast<f32>(_height)), _buttonFont), _font);
+    button->GetText().SetBuiltInAlignment(styleKey(), TextAlignment::Left);
+    button->GetText().SetBuiltInPadding(styleKey(), 8.0f);
     button->Connect_OnClick([this, place]() { on_placeButton_click(place); }, false);
     _placeButtons.emplace_back(button, place); //where a drag can drop
 }
@@ -1020,6 +1071,15 @@ void RetroFuturaGUI::FileExplorer::showListing(Listing&& listing)
 
 void RetroFuturaGUI::FileExplorer::update()
 {
+    //A scope or flavor that changed a font shown is measured from.
+    if(StylingManager::GetGeneration() != _fontGeneration)
+    {
+        _fontGeneration = StylingManager::GetGeneration();
+
+        if(updateShownFonts())
+            relayoutForFonts();
+    }
+
     if(_isDragOutPending)
         dragOut();
 
@@ -1174,7 +1234,7 @@ void RetroFuturaGUI::FileExplorer::fillTable()
         return;
 
     const std::vector<Table::TrackDefinition> rowDefinition(_shownRows.size(), Table::TrackDefinition { ._Sizing = Table::TrackSizing::Fixed, ._Value = getListRowHeight() });
-    _widgets._Files->SetTrackDefinitions(rowDefinition, columnDefinition(_font, _showThumbnails));
+    _widgets._Files->SetTrackDefinitions(rowDefinition, columnDefinition(_cellFont, _showThumbnails));
 
     //The read-only flags follow the columns, which the thumbnails' adds to
     for(uSize column = 0; column < getNameColumn() + _fileColumnCount; ++column)
@@ -1225,7 +1285,7 @@ uSize RetroFuturaGUI::FileExplorer::getNameColumn() const
 
 f32 RetroFuturaGUI::FileExplorer::getListRowHeight() const
 {
-    return _showThumbnails ? std::max(_thumbnailRowHeight, rowHeight(_font)) : rowHeight(_font);
+    return _showThumbnails ? std::max(_thumbnailRowHeight, rowHeight(_cellFont)) : rowHeight(_cellFont);
 }
 
 void RetroFuturaGUI::FileExplorer::showThumbnails()

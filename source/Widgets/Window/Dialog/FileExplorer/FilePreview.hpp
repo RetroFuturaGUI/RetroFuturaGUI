@@ -60,6 +60,9 @@ namespace RetroFuturaGUI
         /// @brief Runs each frame from the explorer's update: shows what finished loading.
         void Update();
 
+        /// @brief Sets the font the details table's cells show, which their rows and key column are measured from
+        void SetShownFont(const ViewFont& font);
+
         Kind GetKind() const;
 
     private:
@@ -140,7 +143,10 @@ namespace RetroFuturaGUI
         Video* _frame { nullptr };
         Label* _message { nullptr };
         Table* _details { nullptr };
-        ViewFont _font {};
+        ViewFont
+            _font {}, //built-in font which scopes and flavors override
+            _shownFont {}; //what the details' cells show, measured from
+        std::vector<std::pair<std::string, std::string>> _shownDetails {}; //what the details table shows, set again when the font changes
         glm::vec3 _mediaSize { 0.0f };
         FileExplorerFlags _flags { FileExplorerFlags::SingleFile };
         Kind _kind { Kind::None };

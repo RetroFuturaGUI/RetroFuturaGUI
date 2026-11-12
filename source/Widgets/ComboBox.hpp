@@ -40,8 +40,8 @@ namespace RetroFuturaGUI
 
         bool IsItemEnabled(const uSize index) const;
 
-        /// @brief Returns the item texts' colors: Enabled, Disabled for disabled items, Hover for the hovered row and Clicked for
-        ///        the picked one. The caption shows the Enabled colors.
+        /// @brief Returns the item texts' look. Colors (Enabled, Disabled for disabled items, Hover for the hovered row and
+        ///        Clicked for the picked one. The caption shows the Enabled colors), font, alignment and padding
         ItemTextStyle& GetItemText();
 
         /// @brief Returns the item texts' colors; see the other overload.
@@ -68,6 +68,9 @@ namespace RetroFuturaGUI
         void setColors(const ColorState state) override;
         void updateItemGeometry();
 
+        /// @brief Lays the item texts and the caption out in what the item text style shows: its font, alignment and padding
+        void applyItemLayout(const ItemTextLayout& layout);
+
         /// @brief Colors every item by its state: disabled, picked, hovered or enabled.
         void updateItemColors();
 
@@ -82,7 +85,7 @@ namespace RetroFuturaGUI
         inline static const std::string _invalidIndex { "" };
 
     //Design
-        ItemTextStyle _itemText {};
+        ItemTextStyle _itemText; //tells applyItemLayout what its font, alignment and padding show
 
     //Logic
         std::vector<bool> _itemEnabledFlags {}; //one per item

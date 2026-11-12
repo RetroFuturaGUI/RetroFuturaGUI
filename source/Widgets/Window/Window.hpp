@@ -420,6 +420,9 @@ namespace RetroFuturaGUI
         /// @brief Has the background, the border and the transitions take their values again. The flavors changed
         void restyleParts();
 
+        /// @brief Puts the scope a popup's window lies in, for itself and its widgets. Set by IPopup before the popup's widgets are made
+        void setStyleScope(const StyleScope scope);
+
         /// @brief Takes the transitions through the flavors again when they changed since the window last did
         void followFlavors();
 
@@ -734,7 +737,8 @@ namespace RetroFuturaGUI
             _transitionSettings {}, //read by the background and border
             _ownTransitions {};
         std::vector<std::string> _flavorNames {};
-        std::vector<u32> _flavorHashes {}; //the same flavors, as the StylingManager keeps them. The background and border read these
+        std::vector<u32> _flavorHashes {}; //its scope's entries for windows, then the same flavors, as the StylingManager keeps them. The background and border read these
+        StyleScope _styleScope { StyleScope::None }; //a popup's window lies in its popup type's scope, and so do the widgets in it
         u32 _styleGeneration { 0 }; //the StylingManager's generation the transitions were last taken at
 
     //Docking
@@ -798,7 +802,7 @@ namespace RetroFuturaGUI
             _wasMinimized { false },
             _wasCloseRequested { false }; //the layout is written once when the window is asked to close
 
-        friend class IPopup; //creates its window through the private constructor
+        friend class IPopup; //creates its window through the private constructor and puts its scope
         friend class WindowTab; //registers itself, docks windows into itself and draws the selected one
         friend class IWidget; //reads the cursor through the host while its window is turned in a tab
     };

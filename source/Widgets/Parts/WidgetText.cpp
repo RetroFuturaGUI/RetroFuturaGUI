@@ -160,6 +160,27 @@ void RetroFuturaGUI::WidgetText::SetBuiltInColors(const StyleKey&, std::span<con
     setColors();
 }
 
+void RetroFuturaGUI::WidgetText::SetBuiltInFontFamily(const StyleKey&, std::string_view fontFamily, const f32 fontSize, const FontSizeUnit sizeUnit, const PlatformBridge::Fonts::Slant slant, const PlatformBridge::Fonts::Weight fontWeight)
+{
+    _fontFamily.SetBuiltIn(std::string(fontFamily));
+    _fontSize.SetBuiltIn(FontManager::ToPixels(fontSize, sizeUnit));
+    _fontSlant.SetBuiltIn(slant);
+    _fontWeight.SetBuiltIn(fontWeight);
+    setLayout();
+}
+
+void RetroFuturaGUI::WidgetText::SetBuiltInAlignment(const StyleKey&, const TextAlignment alignment)
+{
+    _alignment.SetBuiltIn(alignment);
+    setLayout();
+}
+
+void RetroFuturaGUI::WidgetText::SetBuiltInPadding(const StyleKey&, const f32 padding)
+{
+    _padding.SetBuiltIn(padding);
+    setLayout();
+}
+
 void RetroFuturaGUI::WidgetText::SetFillType(const FillType fillType)
 {
     _shader._FillType.Set(fillType);

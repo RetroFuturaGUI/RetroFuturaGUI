@@ -296,7 +296,8 @@ namespace RetroFuturaGUI
         /// @return false when one of the widgets every mode needs couldn't be built
         bool buildView(ViewHost& host, std::string_view title);
 
-        /// @brief Draws a toggle in the accent colors while it is on, so it needs no "on"/"off" text. Off, it looks like the other buttons
+        /// @brief Gives a toggle the On accessor while it is on, so its scope's Button:on entry (the accent, by default) shows it
+        ///        without "on"/"off" text. Off, it looks like the other buttons.
         static void styleToggle(Button& toggle, const bool isOn);
 
         /// @brief Makes a ComboBox a menu: flat under its caption, one item per action, its list as wide as given.
@@ -337,7 +338,19 @@ namespace RetroFuturaGUI
 
         /// @brief Loads a Unicode block into the font unless it has it: Latin-1 for accented names, Geometric Shapes for the sort
         ///        arrows. Only once, since extending again would replace the block.
-        void ensureFontBlock(const u32 first, const u32 last) const;
+        static void ensureFontBlock(const ViewFont& font, const u32 first, const u32 last);
+
+        /// @brief Loads the Latin-1 and Geometric Shapes blocks into every font the list shows.
+        void ensureFontBlocks() const;
+
+        /// @brief Works out the fonts the list's cells and header and the buttons show through the File scope over the explorer's
+        ///        font, which the explorer measures its rows, columns and place buttons from.
+        /// @return true when one of them changed.
+        bool updateShownFonts();
+
+        /// @brief Measures again from the fonts shown: the rows, the columns, the header, the scroll step, the place buttons and
+        ///        the preview's details. Called when a scope or flavor changed them while the explorer is open.
+        void relayoutForFonts();
 
         /// @brief Picks the table's selection mode and names the OK button.
         void applyMode();
@@ -672,7 +685,12 @@ namespace RetroFuturaGUI
         static std::string describeError(const std::error_code& error);
 
     //Settings
-        ViewFont _font {};
+        ViewFont _font {}; //the built-in font of every text, which scopes and flavors override
+        ViewFont
+            _cellFont {}, //what the list's cells show, measured from
+            _headerFont {},
+            _buttonFont {};
+        u32 _fontGeneration { 0 }; //the StylingManager's generation the shown fonts were worked out at
         uSize _explorerNumber { 0 }; //part of its scene's name, which the scene loader keys across every window
         i32
             _width { 0 },

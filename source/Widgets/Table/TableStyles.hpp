@@ -43,6 +43,9 @@ namespace RetroFuturaGUI
         /// @brief Returns the settings set on the style itself, to set them
         TableTextLayer& GetOwn();
 
+        /// @brief Returns the built-in settings, which show where neither the style nor a flavor sets one
+        TableTextLayer& GetBuiltIn();
+
         /// @brief Returns the settings shown.
         const TableTextSettings& GetShown() const;
 
@@ -50,16 +53,16 @@ namespace RetroFuturaGUI
         bool Resolve(std::span<const u32> flavors, const bool isStyled);
 
     private:
-        /// @brief One setting: the own one, else the first flavor's that sets it
+        /// @brief One setting: the own one, else the first flavor's that sets it, else the built-in one
         template<typename T> std::optional<T> find(std::optional<T> TableTextLayer::* setting, std::span<const u32> flavors, const bool isStyled) const
         {
             if(_own.*setting)
                 return _own.*setting;
 
             if(!isStyled)
-                return std::nullopt;
+                return _builtIn.*setting;
 
-            return StylingManager::FindFirst<std::optional<T>>(flavors, [this, setting](const Flavor& flavor) -> std::optional<T>
+            const std::optional<T> fromFlavor { StylingManager::FindFirst<std::optional<T>>(flavors, [this, setting](const Flavor& flavor) -> std::optional<T>
             {
                 const TableTextLayer* layer { _pick(flavor) };
 
@@ -67,11 +70,15 @@ namespace RetroFuturaGUI
                     return std::nullopt;
 
                 return layer->*setting;
-            });
+            }) };
+
+            return fromFlavor ? fromFlavor : _builtIn.*setting;
         }
 
         FlavorPick _pick;
-        TableTextLayer _own {};
+        TableTextLayer
+            _own {},
+            _builtIn {};
         TableTextSettings _shown {};
     };
 
@@ -229,6 +236,11 @@ namespace RetroFuturaGUI
         /// @brief Sets the built-in width of the border around each cell. The look everything else overrides
         void SetBuiltInInnerBorderWidth(const StyleKey& key, const f32 width);
 
+        /// @brief Set the texts' built-in font, alignment and padding, which their own settings and the flavors override
+        void SetBuiltInFontFamily(const StyleKey& key, std::string_view fontFamily, const f32 fontSize, const FontSizeUnit sizeUnit, const PlatformBridge::Fonts::Slant slant, const PlatformBridge::Fonts::Weight fontWeight);
+        void SetBuiltInTextAlignment(const StyleKey& key, const TextAlignment alignment);
+        void SetBuiltInTextPadding(const StyleKey& key, const f32 padding);
+
     private:
         void restyle() override;
 
@@ -334,6 +346,11 @@ namespace RetroFuturaGUI
 
         /// @brief Sets the built-in colors of the border around the header band for Enabled or Disabled
         void SetBuiltInOuterBorderColors(const StyleKey& key, std::span<const glm::vec4> colors, const ColorState state);
+
+        /// @brief Set the texts' built-in font, alignment and padding, which their own settings and the flavors override
+        void SetBuiltInFontFamily(const StyleKey& key, std::string_view fontFamily, const f32 fontSize, const FontSizeUnit sizeUnit, const PlatformBridge::Fonts::Slant slant, const PlatformBridge::Fonts::Weight fontWeight);
+        void SetBuiltInTextAlignment(const StyleKey& key, const TextAlignment alignment);
+        void SetBuiltInTextPadding(const StyleKey& key, const f32 padding);
 
     private:
         void restyle() override;

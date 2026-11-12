@@ -120,6 +120,12 @@ namespace RetroFuturaGUI
         ///        the widget that owns the text, which alone holds a StyleKey
         void SetBuiltInColors(const StyleKey& key, std::span<const glm::vec4> colors, const ColorState state);
 
+        /// @brief Set the text's built-in font, alignment and padding, which its own settings, its widget's flavors and scopes
+        ///        override. For the widget's own look (IWidget::styleKey)
+        void SetBuiltInFontFamily(const StyleKey& key, std::string_view fontFamily, const f32 fontSize, const FontSizeUnit sizeUnit, const PlatformBridge::Fonts::Slant slant, const PlatformBridge::Fonts::Weight fontWeight);
+        void SetBuiltInAlignment(const StyleKey& key, const TextAlignment alignment);
+        void SetBuiltInPadding(const StyleKey& key, const f32 padding);
+
         /// @brief Sets the fill type (solid, linear shift, radial or hue star gradient). A gradient runs across the whole text
         void SetFillType(const FillType fillType);
 

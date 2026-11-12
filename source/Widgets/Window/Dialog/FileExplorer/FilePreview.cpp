@@ -9,7 +9,7 @@
 #include <format>
 
 RetroFuturaGUI::FileExplorer::FilePreview::FilePreview(ViewHost& host, Lasagna& lasagna, const ViewCell& cell, const glm::vec2& windowSize, const ViewFont& font, const FileExplorerFlags flags, std::shared_ptr<StillCache> stills)
-    : _host(host), _font(font), _flags(flags), _stills(std::move(stills))
+    : _host(host), _font(font), _shownFont(font), _flags(flags), _stills(std::move(stills))
 {
     //The pane fills its cell, and its own cells are measured from that
     const glm::vec3 fixedSize { cellSize(_viewAxis, windowSize, cell) };
@@ -34,7 +34,7 @@ RetroFuturaGUI::FileExplorer::FilePreview::FilePreview(ViewHost& host, Lasagna& 
 
     _picture->SetSize(_mediaSize);
     styleLabel(*_message, "", _mediaSize, _font);
-    _message->GetText().SetAlignment(TextAlignment::Center);
+    _message->GetText().SetBuiltInAlignment(styleKey(), TextAlignment::Center);
     _message->GetText().SetBuiltInColors(styleKey(), std::array { glm::vec4(0.7f, 0.7f, 0.75f, 1.0f) }, ColorState::Enabled);
 
     //Like the list, without its header
@@ -52,9 +52,9 @@ RetroFuturaGUI::FileExplorer::FilePreview::FilePreview(ViewHost& host, Lasagna& 
     _details->GetTrackStyle(0).SetBuiltInInnerBorderColors(styleKey(), innerBorderColors);
     _details->GetTrackStyle(1).SetBuiltInInnerBorderColors(styleKey(), innerBorderColors);
     _details->GetCellStyle().SetBuiltInInnerBorderWidth(styleKey(), 1.0f);
-    _details->GetCellStyle().SetFontFamily(_font._Family, _font._Size, FontSizeUnit::Pixels, _font._Slant, _font._Weight);
-    _details->GetCellStyle().SetTextAlignment(TextAlignment::Left);
-    _details->GetCellStyle().SetTextPadding(6.0f);
+    _details->GetCellStyle().SetBuiltInFontFamily(styleKey(), _font._Family, _font._Size, FontSizeUnit::Pixels, _font._Slant, _font._Weight);
+    _details->GetCellStyle().SetBuiltInTextAlignment(styleKey(), TextAlignment::Left);
+    _details->GetCellStyle().SetBuiltInTextPadding(styleKey(), 6.0f);
     setDetails({});
     showLayer(std::nullopt);
 }
@@ -147,6 +147,16 @@ void RetroFuturaGUI::FileExplorer::FilePreview::Update()
         return;
 
     _work->Drain();
+}
+
+void RetroFuturaGUI::FileExplorer::FilePreview::SetShownFont(const ViewFont& font)
+{
+    if(font == _shownFont)
+        return;
+
+    _shownFont = font;
+    const std::vector<std::pair<std::string, std::string>> details { _shownDetails };
+    setDetails(details); //measured again in the new font
 }
 
 RetroFuturaGUI::FileExplorer::FilePreview::Kind RetroFuturaGUI::FileExplorer::FilePreview::GetKind() const
@@ -298,11 +308,13 @@ void RetroFuturaGUI::FileExplorer::FilePreview::setDetails(const std::vector<std
     if(!_details)
         return;
 
+    _shownDetails = details;
+
     const std::vector<Table::TrackDefinition>
-        rowDefinition(details.size(), Table::TrackDefinition { ._Sizing = Table::TrackSizing::Fixed, ._Value = rowHeight(_font) }),
+        rowDefinition(details.size(), Table::TrackDefinition { ._Sizing = Table::TrackSizing::Fixed, ._Value = rowHeight(_shownFont) }),
         columnDefinition
         {
-            Table::TrackDefinition { ._Sizing = Table::TrackSizing::Fixed, ._Value = _font._Size * _keyColumnFontSizes },
+            Table::TrackDefinition { ._Sizing = Table::TrackSizing::Fixed, ._Value = _shownFont._Size * _keyColumnFontSizes },
             Table::TrackDefinition { ._Sizing = Table::TrackSizing::Star, ._Value = 1.0f }
         };
     _details->SetTrackDefinitions(rowDefinition, columnDefinition);

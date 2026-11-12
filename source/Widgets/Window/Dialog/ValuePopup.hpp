@@ -74,7 +74,7 @@ namespace RetroFuturaGUI
         /// @brief Sets a color row's color, its brightness and alpha sliders and its preview
         void SetColor(const uSize row, const glm::vec4& color);
 
-        /// @brief Shows a row's field as invalid (the popupInvalid flavor on its border) or not
+        /// @brief Shows a row's field as invalid (its scope's TextBox:invalid entry, a red border) or not
         void MarkInvalid(const uSize row, const bool isInvalid);
 
         /// @brief Opens a choice row's list where its items fit: below the field, else above it, else on the roomier side
@@ -86,6 +86,10 @@ namespace RetroFuturaGUI
 
         /// @brief Returns whether Enter was pressed since the last call
         bool WasEnterPressed();
+
+        /// @brief Measures the description's lines and, when their height changed since, makes its row, the window and the
+        ///        description that tall, the other rows keeping theirs. Each frame, so a font a scope or flavor changed lays it out again
+        void LayoutToDescription();
 
         /// @brief The widget a field type is asked for with
         template<ValueFieldType T>
@@ -189,8 +193,8 @@ namespace RetroFuturaGUI
         /// @brief How tall a row of the kind is
         static f32 rowHeightOf(const ValueRowKind kind);
 
-        /// @brief Adds the flavor marking an invalid field, with the library's look, when the app hasn't defined it
-        static void addMissingFlavors();
+        /// @brief How tall the description's row is for its lines, padded, or the gap under the bar without a description
+        f32 measureDescription() const;
 
         std::unique_ptr<ViewHost> _host { nullptr };
         std::vector<Row> _rows {};
@@ -199,9 +203,13 @@ namespace RetroFuturaGUI
             * _cancel { nullptr },
             * _close { nullptr };
         u32 _enterPressCountSeen { 0 };
+        Window* _window { nullptr };
+        Lasagna* _lasagna { nullptr };
+        Label* _description { nullptr };
+        bool _hasDescription { false };
+        std::vector<f32> _rowHeights {}; //bar, description, the fields, a spacer when a list needs one, buttons
 
         inline static uSize _popupCount { 0 };
-        static constexpr std::string_view _invalidFlavorName { "popupInvalid" };
         static constexpr uSize
             _columnCount { 12 },
             _labelColumnCount { 4 };
@@ -211,13 +219,15 @@ namespace RetroFuturaGUI
             _colorHeight { 170.0f },
             _buttonRowHeight { 56.0f },
             _emptyDescription { 8.0f }; //no description still leaves a gap under the bar
+        static constexpr ViewCell _descriptionCell { ._Row = 1, ._Column = 0, ._ColumnSpan = _columnCount, ._SizingMode = SizingMode::FIXED, ._Layer = 0 };
         static constexpr uSize _listRowCount { 8 }; //the rows a drop-down list shows by default.
     };
 
     /// @brief Asks for values of the given types, one field each, and closes with them. OK and Enter close it once every field
     ///        holds a valid value (Connect_OnResult hands them over in the fields' order). Cancel, the bar's close button and
     ///        Escape dismiss it (Connect_OnDismiss). A number field that doesn't hold a number of its type disables OK and
-    ///        shows its border in the popupInvalid flavor. Opened by Window::OpenPopup with PopupTypes::Value
+    ///        shows its scope's TextBox:invalid entry (a red border). Opened by Window::OpenPopup with PopupTypes::Value its widgets lie in
+    ///        StyleScope::Value
     template<typename... Ts>
     class ValuePopup final : public Popup<Ts...>
     {
@@ -239,7 +249,7 @@ namespace RetroFuturaGUI
     private:
         template<ValueFieldType... Fs>
         ValuePopup(const uSize number, std::string_view title, std::string_view description, const ValueField<Fs>&... fields)
-            : Popup<Ts...>(std::format("ValuePopup{}", number), static_cast<i32>(ValueForm::_width), ValueForm::FirstHeight()),
+            : Popup<Ts...>(std::format("ValuePopup{}", number), static_cast<i32>(ValueForm::_width), ValueForm::FirstHeight(), StyleScope::Value),
               _form(this->GetWindow(), number, title, description, std::array<ValueRowKind, sizeof...(Fs)> { ValueForm::KindOf<Fs>()... }, std::array<std::string_view, sizeof...(Fs)> { fields._Label... }, std::array<uSize, sizeof...(Fs)> { ValueForm::ListItemCountOf(fields._Value)... })
         {
             setFields(std::index_sequence_for<Fs...> {}, fields...);
@@ -399,6 +409,7 @@ namespace RetroFuturaGUI
             }
 
             _form.EnableOk(isEveryValid);
+            _form.LayoutToDescription();
 
             if(!_form.WasEnterPressed())
                 return;

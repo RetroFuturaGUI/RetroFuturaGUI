@@ -4,6 +4,7 @@
 #include <memory>
 #include <optional>
 #include <span>
+#include <string>
 #include <string_view>
 #include <unordered_map>
 #include <vector>
@@ -25,6 +26,65 @@ namespace RetroFuturaGUI
         friend class Window;
         friend class DialogKit; //the library's own popups, whose widgets' look flavors override
         StyleKey() = default;
+    };
+
+    /// @brief Where a widget lies, for the scopes styling the widgets inside the library's popups. A widget in a popup takes
+    ///        what its popup type's scope sets for its widget type, then what the shared Popup scope sets, before its own
+    ///        flavors: StylingManager::GetScope(StyleScope::File).GetEntry(WidgetTypeID::Button).GetBorder().SetColors(...)
+    RFG_EXPORT enum class StyleScope : u32
+    {
+        None, //outside every popup: the widget's flavors only.
+        Popup, //every popup, after the popup type's own scope. A popup the application builds (Popup<Ts...>) takes only this one
+        Message,
+        Warning,
+        Error,
+        Value,
+        File //the FileExplorer and its prompts.
+    };
+
+    /// @brief What a scope entry is for beyond the widget type, as a mask, like CSS pseudo-classes: <FileExplorer><Button:on>.
+    ///        A widget takes the entries of every accessor it has, in this order, before its type's plain entry. States: On (a
+    ///        toggle that is on), Invalid (a field holding no valid value). Roles: Icon, Title (a popup's icon and its bar's title)
+    RFG_EXPORT enum class StyleAccessor : u32
+    {
+        None = 0,
+        On = 1,
+        Invalid = 1 << 1,
+        Icon = 1 << 2,
+        Title = 1 << 3
+    };
+
+    RFG_EXPORT constexpr StyleAccessor operator |(const StyleAccessor left, const StyleAccessor right)
+    {
+        return static_cast<StyleAccessor>(static_cast<u32>(left) | static_cast<u32>(right));
+    }
+
+    RFG_EXPORT constexpr bool HasStyleAccessor(const StyleAccessor accessors, const StyleAccessor accessor)
+    {
+        return 0 != (static_cast<u32>(accessors) & static_cast<u32>(accessor));
+    }
+
+    /// @brief One scope's entries: a flavor per widget type and accessor, which the widgets of that type inside the scope take
+    ///        before their own flavors. StylingManager::GetScope hands one out.
+    RFG_EXPORT class FlavorScope final
+    {
+    public:
+        /// @brief The entry for the widget type with one accessor (or none), made the first time it is asked for. Everything a
+        ///        flavor sets works here: <FileExplorer><Button><Border colors:hover=...> is
+        ///        GetScope(StyleScope::File).GetEntry(WidgetTypeID::Button).GetBorder().SetColors(..., ColorState::Hover)
+        Flavor& GetEntry(const WidgetTypeID widgetType, const StyleAccessor accessor = StyleAccessor::None) const;
+
+        /// @brief Whether the entry exists.
+        bool HasEntry(const WidgetTypeID widgetType, const StyleAccessor accessor = StyleAccessor::None) const;
+
+        /// @brief Removes the entry, so the widgets go on to the next scope and their flavors
+        void RemoveEntry(const WidgetTypeID widgetType, const StyleAccessor accessor = StyleAccessor::None) const;
+
+    private:
+        friend class StylingManager;
+        FlavorScope(const StyleScope scope);
+
+        StyleScope _scope { StyleScope::None };
     };
 
     /// @brief Keeps the flavors, like a style sheet keeps CSS classes. A widget's part shows what the widget sets
@@ -53,6 +113,10 @@ namespace RetroFuturaGUI
 
         /// @brief Returns the hash a flavor is kept under. Fnv1aHash of its name without the leading dot
         static u32 GetFlavorHash(std::string_view name);
+
+        /// @brief Returns a scope's entries, which style the widgets inside the library's popups by widget type before their
+        ///        flavors (StyleScope)
+        static FlavorScope GetScope(const StyleScope scope);
 
         /// @brief Returns a number that changes whenever any flavor changes, so a widget's part knows to take its values again
         static u32 GetGeneration();
@@ -106,6 +170,10 @@ namespace RetroFuturaGUI
         }
 
     private:
+        friend class FlavorScope; //keeps its entries as flavors under reserved names
+        friend class IWidget; //composes its flavors with its scope's entries
+        friend class Window;
+        friend class DialogKit; //measures its popups from the fonts their scopes give
         friend class FlavorPart; //tells of its changes
         friend class Flavor;
         friend class FlavorTrackStyle;
@@ -118,6 +186,13 @@ namespace RetroFuturaGUI
 
         /// @brief The flavor kept under the hash, or nullptr.
         static const Flavor* findFlavor(const u32 flavorHash);
+
+        /// @brief The reserved name a scope entry is kept under. No flavor name an application gives looks like it
+        static std::string getScopeEntryName(const StyleScope scope, const WidgetTypeID widgetType, const StyleAccessor accessor);
+
+        /// @brief The flavors a widget or window reads: inside a popup, its popup type's entries for its type (one per accessor
+        ///        it has, then the plain one), then the shared Popup scope's likewise, then its own flavors in order
+        static void composeFlavorHashes(const StyleScope scope, const WidgetTypeID widgetType, const StyleAccessor accessors, std::span<const std::string> ownFlavors, std::vector<u32>& hashes);
 
         static inline std::unordered_map<u32, std::unique_ptr<Flavor>> _flavors {};
         static inline u32 _generation { 1 }; //parts start at 0, so they take their values on their first draw

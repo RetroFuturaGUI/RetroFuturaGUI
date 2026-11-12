@@ -4,7 +4,65 @@ module;
 module RetroFuturaGUI;
 #else
 #include "StylingManager.hpp"
+#include <format>
 #endif
+
+RetroFuturaGUI::FlavorScope::FlavorScope(const StyleScope scope)
+    : _scope(scope)
+{
+}
+
+RetroFuturaGUI::Flavor& RetroFuturaGUI::FlavorScope::GetEntry(const WidgetTypeID widgetType, const StyleAccessor accessor) const
+{
+    return StylingManager::GetFlavor(StylingManager::getScopeEntryName(_scope, widgetType, accessor));
+}
+
+bool RetroFuturaGUI::FlavorScope::HasEntry(const WidgetTypeID widgetType, const StyleAccessor accessor) const
+{
+    return StylingManager::HasFlavor(StylingManager::getScopeEntryName(_scope, widgetType, accessor));
+}
+
+void RetroFuturaGUI::FlavorScope::RemoveEntry(const WidgetTypeID widgetType, const StyleAccessor accessor) const
+{
+    StylingManager::RemoveFlavor(StylingManager::getScopeEntryName(_scope, widgetType, accessor));
+}
+
+RetroFuturaGUI::FlavorScope RetroFuturaGUI::StylingManager::GetScope(const StyleScope scope)
+{
+    return FlavorScope(scope);
+}
+
+std::string RetroFuturaGUI::StylingManager::getScopeEntryName(const StyleScope scope, const WidgetTypeID widgetType, const StyleAccessor accessor)
+{
+    //Angle brackets, as no flavor name an application gives has them.
+    return std::format("<{}>{}:{}", static_cast<u32>(scope), static_cast<i32>(widgetType), static_cast<u32>(accessor));
+}
+
+void RetroFuturaGUI::StylingManager::composeFlavorHashes(const StyleScope scope, const WidgetTypeID widgetType, const StyleAccessor accessors, std::span<const std::string> ownFlavors, std::vector<u32>& hashes)
+{
+    hashes.clear();
+
+    //Each scope's accessor entries come before its plain one, the popup type's scope before the shared one.
+    const auto addScope = [&hashes, widgetType, accessors](const StyleScope added)
+    {
+        for(const StyleAccessor accessor : { StyleAccessor::On, StyleAccessor::Invalid, StyleAccessor::Icon, StyleAccessor::Title })
+        {
+            if(HasStyleAccessor(accessors, accessor))
+                hashes.push_back(GetFlavorHash(getScopeEntryName(added, widgetType, accessor)));
+        }
+
+        hashes.push_back(GetFlavorHash(getScopeEntryName(added, widgetType, StyleAccessor::None)));
+    };
+
+    if(StyleScope::None != scope && StyleScope::Popup != scope)
+        addScope(scope);
+
+    if(StyleScope::None != scope)
+        addScope(StyleScope::Popup);
+
+    for(const std::string& name : ownFlavors)
+        hashes.push_back(GetFlavorHash(name));
+}
 
 RetroFuturaGUI::Flavor& RetroFuturaGUI::StylingManager::GetFlavor(std::string_view name)
 {

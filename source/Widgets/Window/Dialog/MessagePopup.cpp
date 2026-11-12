@@ -16,19 +16,18 @@
 #include <vector>
 
 RetroFuturaGUI::MessagePopup::MessagePopup(const PopupTypes type, std::string_view summary, std::string_view description)
-    : Popup(std::format("MessagePopup{}", _popupCount), static_cast<i32>(_width), static_cast<i32>(_barHeight + _summaryHeight + _shortestDescription + _buttonRowHeight)),
+    : Popup(std::format("MessagePopup{}", _popupCount), static_cast<i32>(_width), static_cast<i32>(_barHeight + _summaryHeight + _shortestDescription + _buttonRowHeight), scopeOf(type)),
       _type(shownType(type)),
-      _enterPressCountSeen(PlatformBridge::Input::GetKeyPressCount(PB_KEY_RETURN)) //the Enter that opened it, if one did, is spent.
+      _enterPressCountSeen(PlatformBridge::Input::GetKeyPressCount(PB_KEY_RETURN)) //the Enter that opened it, if one did, is spent
 {
     const uSize number { _popupCount++ };
-    addMissingFlavors();
+    addMissingEntries();
     Window* window { GetWindow() };
 
     if(!window)
         return;
 
     styleWindow(*window, titleOf(_type));
-    window->AddFlavor(GetFlavorName(_type));
 
     //Laid out again once the description is measured, so the window is as tall as its lines
     const std::vector<f32> columns(_columnCount, 1.0f / static_cast<f32>(_columnCount));
@@ -50,9 +49,8 @@ RetroFuturaGUI::MessagePopup::MessagePopup(const PopupTypes type, std::string_vi
     const ViewCell
         iconCell { ._Row = 1, ._Column = 0, ._ColumnSpan = 1, ._SizingMode = SizingMode::FIXED, ._Layer = 0 },
         summaryCell { ._Row = 1, ._Column = 1, ._ColumnSpan = _columnCount - 1, ._SizingMode = SizingMode::FIXED, ._Layer = 0 },
-        descriptionCell { ._Row = 2, ._Column = 0, ._ColumnSpan = _columnCount, ._SizingMode = SizingMode::FIXED, ._Layer = 0 },
         okCell { ._Row = 3, ._Column = _columnCount - 3, ._ColumnSpan = 3, ._SizingMode = SizingMode::FIXED, ._Layer = 0 };
-    Label* descriptionLabel { host->Attach<Label>("Description", *lasagna, descriptionCell) };
+    Label* descriptionLabel { host->Attach<Label>("Description", *lasagna, _descriptionCell) };
 
     if(!descriptionLabel)
         return;
@@ -62,22 +60,11 @@ RetroFuturaGUI::MessagePopup::MessagePopup(const PopupTypes type, std::string_vi
     descriptionLabel->GetText().EnableWordWrap(true);
     descriptionLabel->GetText().GetElement().SetAnchor(TextAnchor::Top);
     descriptionLabel->GetText().SetString(description, false);
-    const f32
-        linesHeight { descriptionLabel->GetText().GetElement().GetSpanHeight() + 2.0f * descriptionLabel->GetText().GetPadding() },
-        descriptionHeight { std::ceil(std::max(linesHeight, _shortestDescription) + 2.0f * _margin) },
-        height { _barHeight + _summaryHeight + descriptionHeight + _buttonRowHeight };
-    const glm::vec2 windowSize { _width, height };
-    const AxisDefinition axis
-    {
-        ._RowDefinition = { _barHeight / height, _summaryHeight / height, descriptionHeight / height, _buttonRowHeight / height },
-        ._ColumnDefinition = columns,
-        ._LayerDefinition = { 1.0f }
-    };
-
-    //Still hidden: the stack centers it at this size once it is pushed.
-    window->SetWindowSize(static_cast<i32>(_width), static_cast<i32>(height));
-    lasagna->SetAxisDefinition(axis);
-    descriptionLabel->SetSize(cellSize(axis, windowSize, descriptionCell));
+    _description = descriptionLabel;
+    _lasagna = lasagna;
+    layoutToDescription(); //still hidden. The stack centers it at this size once it is pushed
+    const glm::vec2 windowSize { _width, heightFor(_descriptionHeight) };
+    const AxisDefinition axis { axisFor(_descriptionHeight) };
 
     MenuBar* bar { attachBar(*host, *lasagna, titleOf(_type), _columnCount, _barHeight, windowSize, font) };
     Button* close { bar ? bar->GetWidget<Button>(_barCloseIndex) : nullptr };
@@ -90,55 +77,29 @@ RetroFuturaGUI::MessagePopup::MessagePopup(const PopupTypes type, std::string_vi
     if(!bar || !close || !barTitle || !icon || !ok || !summaryLabel)
         return;
 
-    bar->AddFlavor(GetFlavorName(_type));
-    barTitle->AddFlavor(GetFlavorName(_type));
+    barTitle->SetStyleAccessors(StyleAccessor::Title); //the kind's accent, from its scope
     close->Connect_OnClick([this]() { Dismiss(); }, false);
 
-    //A button that never takes the mouse, showing only its background: the icon flavor's image.
+    //A button that never takes the mouse, showing only its background: the image of its scope's Button:icon entry
     icon->SetSize(glm::vec3(_iconSide, _iconSide, 0.01f));
     icon->GetBackground().SetBuiltInColors(styleKey(), std::array { glm::vec4(0.0f) }, ColorState::Enabled);
     icon->GetBackground().SetBuiltInColors(styleKey(), std::array { glm::vec4(0.0f) }, ColorState::Disabled);
     icon->GetBorder().SetBuiltInWidth(styleKey(), 0.0f);
     icon->SetEnabled(false, false);
-    icon->AddFlavor(GetIconFlavorName(_type));
+    icon->SetStyleAccessors(StyleAccessor::Icon);
 
     styleLabel(*summaryLabel, summary, cellSize(axis, windowSize, summaryCell), summaryFont);
     styleButton(*ok, "OK", cellSize(axis, windowSize, okCell), font);
     ok->Connect_OnClick([this]() { Close(); }, false);
 
     scene->Connect_OnInteract([this]() { handleKeys(); }, false);
+    scene->Connect_OnUpdate([this]() { layoutToDescription(); }, false); //a font a scope or flavor changed since makes the lines taller or shorter
     AddScene(std::move(host));
 }
 
 RetroFuturaGUI::PopupTypes RetroFuturaGUI::MessagePopup::GetType() const
 {
     return _type;
-}
-
-std::string_view RetroFuturaGUI::MessagePopup::GetFlavorName(const PopupTypes type)
-{
-    switch(shownType(type))
-    {
-        case PopupTypes::Warning:
-            return "popupWarning";
-        case PopupTypes::Error:
-            return "popupError";
-        default:
-            return "popupInformation";
-    }
-}
-
-std::string_view RetroFuturaGUI::MessagePopup::GetIconFlavorName(const PopupTypes type)
-{
-    switch(shownType(type))
-    {
-        case PopupTypes::Warning:
-            return "popupWarningIcon";
-        case PopupTypes::Error:
-            return "popupErrorIcon";
-        default:
-            return "popupInformationIcon";
-    }
 }
 
 void RetroFuturaGUI::MessagePopup::handleKeys()
@@ -152,34 +113,60 @@ void RetroFuturaGUI::MessagePopup::handleKeys()
     Close();
 }
 
-void RetroFuturaGUI::MessagePopup::addMissingFlavors()
+void RetroFuturaGUI::MessagePopup::layoutToDescription()
 {
-    struct KindLook
+    if(!_description)
+        return;
+
+    if(!_lasagna)
+        return;
+
+    Window* window { GetWindow() };
+
+    if(!window)
+        return;
+
+    const f32
+        linesHeight { _description->GetText().GetElement().GetSpanHeight() + 2.0f * _description->GetText().GetPadding() },
+        descriptionHeight { std::ceil(std::max(linesHeight, _shortestDescription) + 2.0f * _margin) };
+
+    if(descriptionHeight == _descriptionHeight)
+        return;
+
+    _descriptionHeight = descriptionHeight;
+    const f32 height { heightFor(descriptionHeight) };
+    const AxisDefinition axis { axisFor(descriptionHeight) };
+    window->SetWindowSize(static_cast<i32>(_width), static_cast<i32>(height));
+    _lasagna->SetAxisDefinition(axis);
+    _description->SetSize(cellSize(axis, glm::vec2(_width, height), _descriptionCell));
+}
+
+f32 RetroFuturaGUI::MessagePopup::heightFor(const f32 descriptionHeight)
+{
+    return _barHeight + _summaryHeight + descriptionHeight + _buttonRowHeight;
+}
+
+RetroFuturaGUI::AxisDefinition RetroFuturaGUI::MessagePopup::axisFor(const f32 descriptionHeight)
+{
+    const f32 height { heightFor(descriptionHeight) };
+    return AxisDefinition
     {
-        PopupTypes _Type { PopupTypes::Message };
-        glm::vec4 _Accent { 1.0f };
-        std::string_view _Icon {};
+        ._RowDefinition = { _barHeight / height, _summaryHeight / height, descriptionHeight / height, _buttonRowHeight / height },
+        ._ColumnDefinition = std::vector<f32>(_columnCount, 1.0f / static_cast<f32>(_columnCount)),
+        ._LayerDefinition = { 1.0f }
     };
+}
 
-    const std::array looks
+RetroFuturaGUI::StyleScope RetroFuturaGUI::MessagePopup::scopeOf(const PopupTypes type)
+{
+    switch(shownType(type))
     {
-        KindLook { ._Type = PopupTypes::Message, ._Accent = glm::vec4(0.3f, 0.6f, 1.0f, 1.0f), ._Icon = "InformationIcon.svg" },
-        KindLook { ._Type = PopupTypes::Warning, ._Accent = glm::vec4(1.0f, 0.75f, 0.2f, 1.0f), ._Icon = "WarningIcon.svg" },
-        KindLook { ._Type = PopupTypes::Error, ._Accent = glm::vec4(1.0f, 0.35f, 0.35f, 1.0f), ._Icon = "ErrorIcon.svg" }
-    };
-    const std::filesystem::path images { PlatformBridge::Paths::GetExecutablePathFSPath().parent_path() / "Resources" / "img" };
-
-    for(const KindLook& look : looks)
-    {
-        if(!StylingManager::HasFlavor(GetFlavorName(look._Type)))
-        {
-            Flavor& accent { StylingManager::GetFlavor(GetFlavorName(look._Type)) };
-            accent.GetBorder().SetColors(std::array { look._Accent }, ColorState::Enabled);
-            accent.GetText().SetColors(std::array { look._Accent }, ColorState::Enabled);
-        }
-
-        if(!StylingManager::HasFlavor(GetIconFlavorName(look._Type)))
-            StylingManager::GetFlavor(GetIconFlavorName(look._Type)).GetBackground().SetImage(toUtf8(images / look._Icon)); //UTF-8, as Texture reads paths.
+        case PopupTypes::Warning:
+            return StyleScope::Warning;
+        case PopupTypes::Error:
+            return StyleScope::Error;
+        default:
+            return StyleScope::Message;
     }
 }
 

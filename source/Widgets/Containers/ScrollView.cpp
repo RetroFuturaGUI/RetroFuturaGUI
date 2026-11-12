@@ -142,6 +142,8 @@ void RetroFuturaGUI::ScrollView::SetAlignmentDirection(const ScrollAxis directio
 
 void RetroFuturaGUI::ScrollView::update()
 {
+    bool isResized { false };
+
     for(ScrollViewCell& cell : _items)
     {
         if(cell._PendingRemoval)
@@ -151,7 +153,12 @@ void RetroFuturaGUI::ScrollView::update()
             continue;
 
         cell._Widget->Update();
+        isResized = isResized || cell._Widget->GetSize() != cell._Size;
     }
+
+    //A widget resized since the cells were laid out moves the ones after it
+    if(isResized)
+        layoutCells();
 }
 
 void RetroFuturaGUI::ScrollView::SetWheelScrollStep(const f32 step)

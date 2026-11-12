@@ -125,6 +125,13 @@ namespace RetroFuturaGUI
         /// @brief Returns the widget's flavors, in order, as they were given
         const std::vector<std::string>& GetFlavors() const;
 
+        /// @brief Sets what the widget is for beyond its type, as a mask, for the scopes inside the library's popups. A toggle
+        ///        that is on takes its scope's Button:on entry (StyleAccessor). None by default
+        void SetStyleAccessors(const StyleAccessor accessors);
+
+        /// @brief Returns what the widget is for beyond its type, for the scopes
+        StyleAccessor GetStyleAccessors() const;
+
         /// @brief Returns the widget's type ID
         WidgetTypeID GetWidgetTypeID() const;
 
@@ -184,7 +191,7 @@ namespace RetroFuturaGUI
         std::string _name;
         u32 _pathHash { 0 }; //Fnv1aHash of the path, kept up to date by WidgetRegistry
         std::vector<std::string> _flavorNames {};
-        std::vector<u32> _flavorHashes {}; //the same flavors, as the StylingManager keeps them. The styled parts read these
+        std::vector<u32> _flavorHashes {}; //its scope's entries, then the same flavors, as the StylingManager keeps them. The styled parts read these
         IWidgetDecoration
             *_styledBackground { nullptr },
             *_styledBorder { nullptr };
@@ -317,6 +324,13 @@ namespace RetroFuturaGUI
         /// @brief The scene the widget is in, or nullptr outside one
         const Scene* findScene() const;
 
+        /// @brief Puts the flavors the parts read together again, when the widget's scope, type or accessors changed since:
+        ///        its scope's entries, then its own flavors (StylingManager::composeFlavorHashes).
+        void followStyleScope();
+
+        /// @brief Puts the flavors the parts read together again: _flavorHashes from the scope and _flavorNames
+        void composeFlavors();
+
         /// @brief Has the styled parts take their values again: the widget's flavors changed
         void restyleParts();
 
@@ -379,6 +393,11 @@ namespace RetroFuturaGUI
         TransitionSettings _ownTransitions {};
         std::optional<glm::vec4> _ownBorderGap {};
         u32 _styleGeneration { 0 }; //the StylingManager's generation the flavors were last taken at
+        StyleAccessor _styleAccessors { StyleAccessor::None };
+        StyleScope _composedScope { StyleScope::None }; //what _flavorHashes was last put together for
+        WidgetTypeID _composedType { WidgetTypeID::None };
+        StyleAccessor _composedAccessors { StyleAccessor::None };
+        bool _isFlavorComposed { false };
 
     //Border gap: _borderGap is what shows, the background is drawn inside _backgroundInset (the border's width and the gap)
         Background* _gapBackground { nullptr };

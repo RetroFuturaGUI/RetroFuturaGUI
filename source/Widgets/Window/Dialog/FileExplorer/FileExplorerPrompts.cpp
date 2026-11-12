@@ -9,7 +9,7 @@
 #include <format>
 
 RetroFuturaGUI::FileExplorer::NamePrompt::NamePrompt(std::string_view title, std::string_view message, std::string_view name, const ViewFont& font)
-    : Popup(std::format("FileExplorerPrompt{}", _promptCount), _width, _height)
+    : Popup(std::format("FileExplorerPrompt{}", _promptCount), _width, _height, StyleScope::File)
 {
     const uSize number { _promptCount++ };
     Window* window { GetWindow() };
@@ -95,7 +95,7 @@ void RetroFuturaGUI::FileExplorer::NamePrompt::confirm()
 }
 
 RetroFuturaGUI::FileExplorer::ConfirmPrompt::ConfirmPrompt(std::string_view title, std::string_view message, std::string_view detail, std::string_view confirmText, const ViewFont& font)
-    : Popup(std::format("FileExplorerPrompt{}", _promptCount), _width, _height)
+    : Popup(std::format("FileExplorerPrompt{}", _promptCount), _width, _height, StyleScope::File)
 {
     const uSize number { _promptCount++ };
     Window* window { GetWindow() };
@@ -187,7 +187,7 @@ void RetroFuturaGUI::FileExplorer::ConfirmPrompt::handleKeys()
 }
 
 RetroFuturaGUI::FileExplorer::ClashPrompt::ClashPrompt(std::string_view name, std::string_view folder, const ViewFont& font)
-    : Popup(std::format("FileExplorerPrompt{}", _promptCount), _width, _height)
+    : Popup(std::format("FileExplorerPrompt{}", _promptCount), _width, _height, StyleScope::File)
 {
     const uSize number { _promptCount++ };
     Window* window { GetWindow() };

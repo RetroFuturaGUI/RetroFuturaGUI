@@ -190,6 +190,7 @@ void RetroFuturaGUI::IWidget::DrawAtOpacity()
     if(0.0f >= _opacity)
         return; //nothing of it would show
 
+    followStyleScope(); //a widget made after this frame's Update draws with its scope from the start
     const Shader::OpacityScope opacity { _opacity };
     const Shader::FrameScope frame { getTilt(), Shader::FrameComposition::Inside };
     _frame = Shader::GetDrawFrame();
@@ -504,6 +505,7 @@ void RetroFuturaGUI::IWidget::Interact()
 void RetroFuturaGUI::IWidget::Update()
 {
     followSceneEnabled(); //hidden widgets don't interact, so they follow here
+    followStyleScope();
     followFlavors(); //before the first frame counts, so flavors taken at the start show at once.
     _hasUpdated = true;
     updateGeometry();
@@ -609,6 +611,7 @@ RetroFuturaGUI::StyleKey RetroFuturaGUI::IWidget::styleKey()
 
 void RetroFuturaGUI::IWidget::useFlavors(IWidgetDecoration* background, IWidgetDecoration* border, WidgetText* text)
 {
+    composeFlavors(); //the widget's constructor has set its type by now, so its parts start with its scope's entries.
     _styledBackground = background;
     _styledBorder = border;
     _styledText = text;
@@ -647,30 +650,69 @@ void RetroFuturaGUI::IWidget::AddFlavor(std::string_view name)
         return;
 
     _flavorNames.emplace_back(name);
-    _flavorHashes.push_back(StylingManager::GetFlavorHash(name));
+    composeFlavors();
     restyleParts();
 }
 
 void RetroFuturaGUI::IWidget::RemoveFlavor(std::string_view name)
 {
-    const auto found { std::ranges::find(_flavorHashes, StylingManager::GetFlavorHash(name)) };
+    const u32 removedHash { StylingManager::GetFlavorHash(name) };
+    const auto found { std::ranges::find_if(_flavorNames, [removedHash](const std::string& flavor) { return StylingManager::GetFlavorHash(flavor) == removedHash; }) };
 
-    if(_flavorHashes.end() == found)
+    if(_flavorNames.end() == found)
         return;
 
-    _flavorNames.erase(_flavorNames.begin() + (found - _flavorHashes.begin()));
-    _flavorHashes.erase(found);
+    _flavorNames.erase(found);
+    composeFlavors();
     restyleParts();
 }
 
 bool RetroFuturaGUI::IWidget::HasFlavor(std::string_view name) const
 {
-    return std::ranges::contains(_flavorHashes, StylingManager::GetFlavorHash(name));
+    const u32 hash { StylingManager::GetFlavorHash(name) };
+    return std::ranges::any_of(_flavorNames, [hash](const std::string& flavor) { return StylingManager::GetFlavorHash(flavor) == hash; });
 }
 
 const std::vector<std::string>& RetroFuturaGUI::IWidget::GetFlavors() const
 {
     return _flavorNames;
+}
+
+void RetroFuturaGUI::IWidget::SetStyleAccessors(const StyleAccessor accessors)
+{
+    if(accessors == _styleAccessors)
+        return;
+
+    _styleAccessors = accessors;
+    followStyleScope();
+}
+
+RetroFuturaGUI::StyleAccessor RetroFuturaGUI::IWidget::GetStyleAccessors() const
+{
+    return _styleAccessors;
+}
+
+void RetroFuturaGUI::IWidget::followStyleScope()
+{
+    //A widget lies in its window's scope. The type is known only once the widget's own constructor set it, so this runs again.
+    const Window* window { Window::FromGlfwWindow(_parentWindow) };
+    const StyleScope scope { window ? window->_styleScope : StyleScope::None };
+
+    if(_isFlavorComposed && scope == _composedScope && _widgetTypeID == _composedType && _styleAccessors == _composedAccessors)
+        return;
+
+    composeFlavors();
+    restyleParts();
+}
+
+void RetroFuturaGUI::IWidget::composeFlavors()
+{
+    const Window* window { Window::FromGlfwWindow(_parentWindow) };
+    _composedScope = window ? window->_styleScope : StyleScope::None;
+    _composedType = _widgetTypeID;
+    _composedAccessors = _styleAccessors;
+    _isFlavorComposed = true;
+    StylingManager::composeFlavorHashes(_composedScope, _composedType, _composedAccessors, _flavorNames, _flavorHashes);
 }
 
 void RetroFuturaGUI::IWidget::restyleParts()

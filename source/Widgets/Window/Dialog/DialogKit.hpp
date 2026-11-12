@@ -33,6 +33,8 @@ namespace RetroFuturaGUI
             f32 _Size { FontManager::ToPixels(18.0f, FontSizeUnit::Points) }; //in pixels, as every stored font size
             PlatformBridge::Fonts::Slant _Slant { PlatformBridge::Fonts::Slant::Roman };
             PlatformBridge::Fonts::Weight _Weight { PlatformBridge::Fonts::Weight::Normal };
+
+            bool operator==(const ViewFont&) const = default;
         };
 
         /// @brief Where a widget sits in the view's Lasagna: one row tall, a number of columns wide
@@ -112,8 +114,21 @@ namespace RetroFuturaGUI
         /// @brief The key that gives the popups' widgets their built-in look, which flavors override
         static StyleKey styleKey();
 
+        /// @brief Adds the scope entries giving the popups their library look, each only when the application hasn't defined it:
+        ///        a toggle that is on (Popup, Button:on), an invalid field (Popup, TextBox:invalid), and per message kind its
+        ///        accent on the window, the bar and the bar's title (Label:title) and its icon (Button:icon). The application
+        ///        changes them through StylingManager::GetScope.
+        static void addMissingEntries();
+
         /// @brief A table row's height, enough for the font's ascenders and descenders
         static f32 rowHeight(const ViewFont& font);
+
+        /// @brief The font a widget type's text shows inside a scope, for measuring: what its entries, the shared Popup scope's
+        ///        and .default set over the built-in font. part is Text, or ItemText for a drop-down's items.
+        static ViewFont shownFont(const StyleScope scope, const WidgetTypeID widgetType, const StylePart part, const ViewFont& builtIn);
+
+        /// @brief The font a table's cell texts show inside a scope, likewise; header picks the header's texts instead.
+        static ViewFont shownTableFont(const StyleScope scope, const bool header, const ViewFont& builtIn);
 
         /// @brief The size of a fixed-size widget in a cell of a Lasagna laid out by the axis, a margin smaller than the cell on every side
         static glm::vec3 cellSize(const AxisDefinition& axis, const glm::vec2& windowSize, const ViewCell& cell);

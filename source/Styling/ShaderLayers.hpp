@@ -27,16 +27,22 @@ namespace RetroFuturaGUI
             _own.reset();
         }
 
+        /// @brief Sets the part's built-in value, which shows when neither the part nor any flavor sets one
+        void SetBuiltIn(T value)
+        {
+            _builtIn = std::move(value);
+        }
+
         /// @brief Returns the value last handed to the element, or nothing while none was
         const std::optional<T>& GetShown() const
         {
             return _shown;
         }
 
-        /// @brief Takes the value through the layers and returns it when it should go to the element, nullptr when not:
-        ///        it didn't change, or nothing ever set it, so the element keeps its own default
+        /// @brief Takes the value through the layers (own, flavors, built-in) and returns it when it should go to the element,
+        ///        nullptr when not: it didn't change, or nothing ever set it, so the element keeps its own default.
         /// @param isStyled Whether the part takes its widget's flavors at all: a sub-part goes from its own straight to the default
-        template<typename Pick> T* Resolve(std::span<const u32> flavorHashes, const bool isStyled, const StylePart part, const T& builtIn, Pick pick)
+        template<typename Pick> T* Resolve(std::span<const u32> flavorHashes, const bool isStyled, const StylePart part, const T& elementDefault, Pick pick)
         {
             std::optional<T> chosen { _own };
 
@@ -44,11 +50,14 @@ namespace RetroFuturaGUI
                 chosen = StylingManager::FindFirst<std::optional<T>>(flavorHashes, part, pick);
 
             if(!chosen)
+                chosen = _builtIn;
+
+            if(!chosen)
             {
                 if(!_shown)
                     return nullptr;
 
-                chosen = builtIn; //it was set before: back to the element's default
+                chosen = elementDefault; //it was set before: back to the element's default
             }
 
             if(_shown && *_shown == *chosen && !_isOwnPending)
@@ -62,6 +71,7 @@ namespace RetroFuturaGUI
     private:
         std::optional<T>
             _own {},
+            _builtIn {},
             _shown {};
         bool _isOwnPending { false };
     };

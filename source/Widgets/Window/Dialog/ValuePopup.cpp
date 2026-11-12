@@ -11,7 +11,7 @@
 RetroFuturaGUI::ValueForm::ValueForm(Window* window, const uSize number, std::string_view title, std::string_view description, std::span<const ValueRowKind> kinds, std::span<const std::string_view> labels, std::span<const uSize> listItemCounts)
     : _enterPressCountSeen(PlatformBridge::Input::GetKeyPressCount(PB_KEY_RETURN)) //the Enter that opened it, if one did, is spent.
 {
-    addMissingFlavors();
+    addMissingEntries();
 
     if(!window)
         return;
@@ -29,8 +29,7 @@ RetroFuturaGUI::ValueForm::ValueForm(Window* window, const uSize number, std::st
         return;
 
     const ViewFont font { popupFont(PlatformBridge::Fonts::Weight::Normal) };
-    const ViewCell descriptionCell { ._Row = 1, ._Column = 0, ._ColumnSpan = _columnCount, ._SizingMode = SizingMode::FIXED, ._Layer = 0 };
-    Label* descriptionLabel { _host->Attach<Label>("Description", *lasagna, descriptionCell) };
+    Label* descriptionLabel { _host->Attach<Label>("Description", *lasagna, _descriptionCell) };
 
     if(!descriptionLabel)
         return;
@@ -40,13 +39,11 @@ RetroFuturaGUI::ValueForm::ValueForm(Window* window, const uSize number, std::st
     descriptionLabel->GetText().EnableWordWrap(true);
     descriptionLabel->GetText().GetElement().SetAnchor(TextAnchor::Top);
     descriptionLabel->GetText().SetString(description, false);
-    const f32 descriptionHeight
-    {
-        description.empty()
-            ? _emptyDescription
-            : std::ceil(descriptionLabel->GetText().GetElement().GetSpanHeight() + 2.0f * descriptionLabel->GetText().GetPadding() + 2.0f * _margin)
-    };
-    std::vector<f32> rowHeights { _barHeight, descriptionHeight };
+    _window = window;
+    _lasagna = lasagna;
+    _description = descriptionLabel;
+    _hasDescription = !description.empty();
+    std::vector<f32> rowHeights { _barHeight, measureDescription() };
 
     for(uSize field = 0; field < fieldCount; ++field)
         rowHeights.push_back(rowHeightOf(kinds[field]));
@@ -81,6 +78,7 @@ RetroFuturaGUI::ValueForm::ValueForm(Window* window, const uSize number, std::st
         rowHeights.push_back(std::ceil(spacerHeight));
 
     rowHeights.push_back(_buttonRowHeight);
+    _rowHeights = rowHeights;
     const uSize buttonRow { rowHeights.size() - 1 };
     f32 height { 0.0f };
 
@@ -98,7 +96,7 @@ RetroFuturaGUI::ValueForm::ValueForm(Window* window, const uSize number, std::st
     //Still hidden. The stack centers it at this size once it is pushed
     window->SetWindowSize(static_cast<i32>(_width), static_cast<i32>(height));
     lasagna->SetAxisDefinition(axis);
-    descriptionLabel->SetSize(cellSize(axis, windowSize, descriptionCell));
+    descriptionLabel->SetSize(cellSize(axis, windowSize, _descriptionCell));
 
     MenuBar* bar { attachBar(*_host, *lasagna, title, _columnCount, _barHeight, windowSize, font) };
     _close = bar ? bar->GetWidget<Button>(_barCloseIndex) : nullptr;
@@ -199,9 +197,9 @@ void RetroFuturaGUI::ValueForm::attachRow(Lasagna& lasagna, const uSize lasagnaR
                 return;
 
             ComboBox& comboBox { *_rows[row]._ComboBox };
-            comboBox.SetFontFamily(font._Family, font._Size, FontSizeUnit::Pixels, font._Slant, font._Weight);
+            comboBox.GetItemText().SetBuiltInFontFamily(styleKey(), font._Family, font._Size, FontSizeUnit::Pixels, font._Slant, font._Weight);
             comboBox.SetSize(cellSize(axis, windowSize, inputCell));
-            comboBox.SetTextAlignment(TextAlignment::Left);
+            comboBox.GetItemText().SetBuiltInAlignment(styleKey(), TextAlignment::Left);
             comboBox.GetBackground().SetBuiltInColors(styleKey(), std::array { glm::vec4(0.2f, 0.2f, 0.2f, 1.0f) }, ColorState::Enabled);
             comboBox.GetBackground().SetBuiltInColors(styleKey(), std::array { glm::vec4(0.3f, 0.3f, 0.3f, 1.0f) }, ColorState::Hover);
             comboBox.GetBackground().SetBuiltInCornerRadii(styleKey(), glm::vec4(8.0f));
@@ -398,10 +396,7 @@ void RetroFuturaGUI::ValueForm::MarkInvalid(const uSize row, const bool isInvali
     if(!marked._TextBox)
         return;
 
-    if(isInvalid)
-        marked._TextBox->AddFlavor(_invalidFlavorName);
-    else
-        marked._TextBox->RemoveFlavor(_invalidFlavorName);
+    marked._TextBox->SetStyleAccessors(isInvalid ? StyleAccessor::Invalid : StyleAccessor::None); //its scope's TextBox:invalid entry.
 }
 
 void RetroFuturaGUI::ValueForm::EnableOk(const bool enable)
@@ -454,19 +449,52 @@ void RetroFuturaGUI::ValueForm::styleSlider(Slider& slider)
         slider.GetIndicator().GetBorder().SetBuiltInColors(styleKey(), std::array { glm::vec4(0.6f, 0.6f, 0.8f, 1.0f) }, state);
 }
 
+void RetroFuturaGUI::ValueForm::LayoutToDescription()
+{
+    if(!_window)
+        return;
+
+    if(!_lasagna)
+        return;
+
+    if(!_description)
+        return;
+
+    if(2 > _rowHeights.size())
+        return;
+
+    const f32 descriptionHeight { measureDescription() };
+
+    if(descriptionHeight == _rowHeights[1])
+        return;
+
+    _rowHeights[1] = descriptionHeight;
+    f32 height { 0.0f };
+
+    for(const f32 rowHeight : _rowHeights)
+        height += rowHeight;
+
+    std::vector<f32> rowShares {};
+
+    for(const f32 rowHeight : _rowHeights)
+        rowShares.push_back(rowHeight / height);
+
+    //The other rows keep their pixels, so only the description is sized anew
+    const AxisDefinition axis { ._RowDefinition = rowShares, ._ColumnDefinition = std::vector<f32>(_columnCount, 1.0f / static_cast<f32>(_columnCount)), ._LayerDefinition = { 1.0f } };
+    _window->SetWindowSize(static_cast<i32>(_width), static_cast<i32>(height));
+    _lasagna->SetAxisDefinition(axis);
+    _description->SetSize(cellSize(axis, glm::vec2(_width, height), _descriptionCell));
+}
+
+f32 RetroFuturaGUI::ValueForm::measureDescription() const
+{
+    if(!_description || !_hasDescription)
+        return _emptyDescription;
+
+    return std::ceil(_description->GetText().GetElement().GetSpanHeight() + 2.0f * _description->GetText().GetPadding() + 2.0f * _margin);
+}
+
 f32 RetroFuturaGUI::ValueForm::rowHeightOf(const ValueRowKind kind)
 {
     return ValueRowKind::Color == kind ? _colorHeight : _fieldHeight;
-}
-
-void RetroFuturaGUI::ValueForm::addMissingFlavors()
-{
-    if(StylingManager::HasFlavor(_invalidFlavorName))
-        return;
-
-    //Hovered or clicked, an invalid field still shows it.
-    Flavor& invalid { StylingManager::GetFlavor(_invalidFlavorName) };
-
-    for(const ColorState state : { ColorState::Enabled, ColorState::Hover, ColorState::Clicked })
-        invalid.GetBorder().SetColors(std::array { glm::vec4(1.0f, 0.35f, 0.35f, 1.0f) }, state);
 }

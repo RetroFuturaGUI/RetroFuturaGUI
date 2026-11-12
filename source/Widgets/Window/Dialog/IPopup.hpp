@@ -1,6 +1,7 @@
 #pragma once
 #include "IncludeHelper.hpp"
 #include "ISceneHost.hpp"
+#include "StylingManager.hpp"
 #include <list>
 #include <memory>
 #include <string_view>
@@ -48,6 +49,10 @@ namespace RetroFuturaGUI
         virtual bool Dismiss() = 0;
 
     protected:
+        /// @brief As above, with the window and the widgets made in it in the given scope (StyleScope), for the library's own
+        ///        popups. A popup made through the public constructor lies in the shared Popup scope
+        IPopup(std::string_view name, const i32 width, const i32 height, const StyleScope scope);
+
         /// @brief Raises the window's close flag. The window holding the stack acts on it after drawing its popups, once none of this popup's widgets is still running.
         /// @return false while another popup lies over this one.
         bool requestClose();

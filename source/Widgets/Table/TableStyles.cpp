@@ -13,6 +13,11 @@ RetroFuturaGUI::TableTextLayer& RetroFuturaGUI::TableTextLayers::GetOwn()
     return _own;
 }
 
+RetroFuturaGUI::TableTextLayer& RetroFuturaGUI::TableTextLayers::GetBuiltIn()
+{
+    return _builtIn;
+}
+
 const RetroFuturaGUI::TableTextSettings& RetroFuturaGUI::TableTextLayers::GetShown() const
 {
     return _shown;
@@ -294,6 +299,28 @@ void RetroFuturaGUI::CellStyle::SetBuiltInInnerBorderWidth(const StyleKey&, cons
     _builtInInnerBorderWidth = width;
 }
 
+void RetroFuturaGUI::CellStyle::SetBuiltInFontFamily(const StyleKey&, std::string_view fontFamily, const f32 fontSize, const FontSizeUnit sizeUnit, const PlatformBridge::Fonts::Slant slant, const PlatformBridge::Fonts::Weight fontWeight)
+{
+    TableTextLayer& builtIn { _textSettings.GetBuiltIn() };
+    builtIn._FontFamily = std::string(fontFamily);
+    builtIn._FontSize = FontManager::ToPixels(fontSize, sizeUnit);
+    builtIn._Slant = slant;
+    builtIn._Weight = fontWeight;
+    resolveText();
+}
+
+void RetroFuturaGUI::CellStyle::SetBuiltInTextAlignment(const StyleKey&, const TextAlignment alignment)
+{
+    _textSettings.GetBuiltIn()._Alignment = alignment;
+    resolveText();
+}
+
+void RetroFuturaGUI::CellStyle::SetBuiltInTextPadding(const StyleKey&, const f32 padding)
+{
+    _textSettings.GetBuiltIn()._Padding = padding;
+    resolveText();
+}
+
 f32 RetroFuturaGUI::CellStyle::GetInnerBorderWidth() const
 {
     if(_innerBorderWidth)
@@ -439,6 +466,28 @@ void RetroFuturaGUI::HeaderStyle::SetBuiltInBackgroundColors(const StyleKey&, st
 void RetroFuturaGUI::HeaderStyle::SetBuiltInOuterBorderColors(const StyleKey&, std::span<const glm::vec4> colors, const ColorState state)
 {
     _outerBorder.SetBuiltIn(colors, headerState(state));
+}
+
+void RetroFuturaGUI::HeaderStyle::SetBuiltInFontFamily(const StyleKey&, std::string_view fontFamily, const f32 fontSize, const FontSizeUnit sizeUnit, const PlatformBridge::Fonts::Slant slant, const PlatformBridge::Fonts::Weight fontWeight)
+{
+    TableTextLayer& builtIn { _textSettings.GetBuiltIn() };
+    builtIn._FontFamily = std::string(fontFamily);
+    builtIn._FontSize = FontManager::ToPixels(fontSize, sizeUnit);
+    builtIn._Slant = slant;
+    builtIn._Weight = fontWeight;
+    resolveText();
+}
+
+void RetroFuturaGUI::HeaderStyle::SetBuiltInTextAlignment(const StyleKey&, const TextAlignment alignment)
+{
+    _textSettings.GetBuiltIn()._Alignment = alignment;
+    resolveText();
+}
+
+void RetroFuturaGUI::HeaderStyle::SetBuiltInTextPadding(const StyleKey&, const f32 padding)
+{
+    _textSettings.GetBuiltIn()._Padding = padding;
+    resolveText();
 }
 
 void RetroFuturaGUI::HeaderStyle::SetInnerBorderColors(std::span<const glm::vec4> colors, const ColorState state)

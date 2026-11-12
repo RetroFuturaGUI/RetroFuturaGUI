@@ -346,25 +346,37 @@ void RetroFuturaGUI::Window::AddFlavor(std::string_view name)
         return;
 
     _flavorNames.emplace_back(name);
-    _flavorHashes.push_back(StylingManager::GetFlavorHash(name));
+    StylingManager::composeFlavorHashes(_styleScope, WidgetTypeID::Window, StyleAccessor::None, _flavorNames, _flavorHashes);
     restyleParts();
 }
 
 void RetroFuturaGUI::Window::RemoveFlavor(std::string_view name)
 {
-    const auto found { std::ranges::find(_flavorHashes, StylingManager::GetFlavorHash(name)) };
+    const u32 removedHash { StylingManager::GetFlavorHash(name) };
+    const auto found { std::ranges::find_if(_flavorNames, [removedHash](const std::string& flavor) { return StylingManager::GetFlavorHash(flavor) == removedHash; }) };
 
-    if(_flavorHashes.end() == found)
+    if(_flavorNames.end() == found)
         return;
 
-    _flavorNames.erase(_flavorNames.begin() + (found - _flavorHashes.begin()));
-    _flavorHashes.erase(found);
+    _flavorNames.erase(found);
+    StylingManager::composeFlavorHashes(_styleScope, WidgetTypeID::Window, StyleAccessor::None, _flavorNames, _flavorHashes);
     restyleParts();
 }
 
 bool RetroFuturaGUI::Window::HasFlavor(std::string_view name) const
 {
-    return std::ranges::contains(_flavorHashes, StylingManager::GetFlavorHash(name));
+    const u32 hash { StylingManager::GetFlavorHash(name) };
+    return std::ranges::any_of(_flavorNames, [hash](const std::string& flavor) { return StylingManager::GetFlavorHash(flavor) == hash; });
+}
+
+void RetroFuturaGUI::Window::setStyleScope(const StyleScope scope)
+{
+    if(scope == _styleScope)
+        return;
+
+    _styleScope = scope;
+    StylingManager::composeFlavorHashes(_styleScope, WidgetTypeID::Window, StyleAccessor::None, _flavorNames, _flavorHashes);
+    restyleParts();
 }
 
 const std::vector<std::string>& RetroFuturaGUI::Window::GetFlavors() const

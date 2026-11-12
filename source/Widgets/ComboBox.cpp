@@ -15,7 +15,8 @@
 #include <GLFW/glfw3native.h>
 
 RetroFuturaGUI::ComboBox::ComboBox(std::string_view name, Projection* projection, IHierarchyNode* parentWidget, const WidgetTypeID parentWidgetTypeID, GLFWwindow* parentWindow)
-    : IDropDown(name, projection, parentWidget, parentWidgetTypeID, parentWindow)
+    : IDropDown(name, projection, parentWidget, parentWidgetTypeID, parentWindow),
+      _itemText([this](const ItemTextLayout& layout) { applyItemLayout(layout); })
 {
     _widgetTypeID = WidgetTypeID::ComboBox;
     useSubPartFlavors(_itemText, StylePart::ItemText);
@@ -24,6 +25,7 @@ RetroFuturaGUI::ComboBox::ComboBox(std::string_view name, Projection* projection
 
 void RetroFuturaGUI::ComboBox::Draw()
 {
+    _itemText.followFlavors(); //a font, alignment or padding a flavor changed lays the texts out again
     updateItemColors(); //read every draw, so a changed color or a new hover shows at once
 
     if(!isLabelHidden())
@@ -383,33 +385,45 @@ void RetroFuturaGUI::ComboBox::RemoveItem(const uSize index)
 
 void RetroFuturaGUI::ComboBox::SetFontFamily(std::string_view fontFamily, const f32 fontSize, const FontSizeUnit sizeUnit, const PlatformBridge::Fonts::Slant slant, const PlatformBridge::Fonts::Weight fontWeight)
 {
-    _fontFamily = fontFamily;
-    _fontSize = FontManager::ToPixels(fontSize, sizeUnit);
-    _slant = slant;
-    _fontWeight = fontWeight;
-
-    for(const auto& item : _itemTexts)
-    {
-        item->SetFontFamily(_fontFamily, _fontSize, FontSizeUnit::Pixels, _slant, _fontWeight);
-        item->SetTextUTF8(std::string(item->GetTextUTF8())); //a font swap leaves the glyph mesh behind, so the text is laid out again
-    }
-
-    if(!_previewText)
-        return;
-
-    _previewText->SetFontFamily(_fontFamily, _fontSize, FontSizeUnit::Pixels, _slant, _fontWeight);
-    _previewText->SetTextUTF8(std::string(_previewText->GetTextUTF8()));
+    _itemText.SetFontFamily(fontFamily, fontSize, sizeUnit, slant, fontWeight);
 }
 
 void RetroFuturaGUI::ComboBox::SetTextAlignment(const TextAlignment alignment)
 {
-    _textAlignment = alignment;
-    updateItemGeometry();
+    _itemText.SetAlignment(alignment);
 }
 
 void RetroFuturaGUI::ComboBox::SetTextPadding(const f32 padding)
 {
-    _textPadding = padding;
+    _itemText.SetPadding(padding);
+}
+
+void RetroFuturaGUI::ComboBox::applyItemLayout(const ItemTextLayout& layout)
+{
+    const bool isFontChanged { layout._FontFamily.value_or(_fontFamily) != _fontFamily || layout._FontSize.value_or(_fontSize) != _fontSize
+        || layout._Slant.value_or(_slant) != _slant || layout._Weight.value_or(_fontWeight) != _fontWeight };
+    _fontFamily = layout._FontFamily.value_or(_fontFamily);
+    _fontSize = layout._FontSize.value_or(_fontSize);
+    _slant = layout._Slant.value_or(_slant);
+    _fontWeight = layout._Weight.value_or(_fontWeight);
+    _textAlignment = layout._Alignment.value_or(_textAlignment);
+    _textPadding = layout._Padding.value_or(_textPadding);
+
+    if(isFontChanged && !_fontFamily.empty())
+    {
+        for(const auto& item : _itemTexts)
+        {
+            item->SetFontFamily(_fontFamily, _fontSize, FontSizeUnit::Pixels, _slant, _fontWeight);
+            item->SetTextUTF8(std::string(item->GetTextUTF8())); //a font swap leaves the glyph mesh behind, so the text is laid out again
+        }
+
+        if(_previewText)
+        {
+            _previewText->SetFontFamily(_fontFamily, _fontSize, FontSizeUnit::Pixels, _slant, _fontWeight);
+            _previewText->SetTextUTF8(std::string(_previewText->GetTextUTF8()));
+        }
+    }
+
     updateItemGeometry();
 }
 

@@ -5,9 +5,15 @@
 #include "Scene.hpp"
 
 RetroFuturaGUI::IPopup::IPopup(std::string_view name, const i32 width, const i32 height)
-: _openerContext(glfwGetCurrentContext())
+    : IPopup(name, width, height, StyleScope::Popup)
+{
+}
+
+RetroFuturaGUI::IPopup::IPopup(std::string_view name, const i32 width, const i32 height, const StyleScope scope)
+    : _openerContext(glfwGetCurrentContext())
 {
     _window = std::unique_ptr<Window>(new Window(name, width, height, Window::WindowRole::Popup));
+    _window->setStyleScope(scope); //before the popup makes its widgets, which take it from the window
 }
 
 RetroFuturaGUI::IPopup::~IPopup()

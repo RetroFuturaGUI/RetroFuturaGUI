@@ -10,6 +10,8 @@
 #include <array>
 #include <cmath>
 #include <system_error>
+#include <type_traits>
+#include <utility>
 #include <vector>
 
 RetroFuturaGUI::DialogKit::ViewHost::ViewHost(std::string_view sceneName, Window* window, const AxisDefinition& lasagnaAxis)
@@ -95,11 +97,11 @@ RetroFuturaGUI::MenuBar* RetroFuturaGUI::DialogKit::attachBar(ViewHost& host, La
     if(!barTitle)
         return bar;
 
-    barTitle->GetText().SetFontFamily(font._Family, font._Size, FontSizeUnit::Pixels, font._Slant, font._Weight);
+    barTitle->GetText().SetBuiltInFontFamily(styleKey(), font._Family, font._Size, FontSizeUnit::Pixels, font._Slant, font._Weight);
     barTitle->GetText().SetString(title, false);
-    barTitle->GetText().SetAlignment(TextAlignment::Left);
+    barTitle->GetText().SetBuiltInAlignment(styleKey(), TextAlignment::Left);
     barTitle->GetText().SetBuiltInColors(styleKey(), std::array { glm::vec4(1.0f) }, ColorState::Enabled);
-    barTitle->GetText().SetPadding(8.0f);
+    barTitle->GetText().SetBuiltInPadding(styleKey(), 8.0f);
     barTitle->SetSize(glm::vec3(0.5f * windowSize.x, barHeight, 0.01f)); //as tall as the bar, since text is clipped to its label
 
     Button* closeButton { bar->AddWidget<Button>("BarClose", _barCloseIndex) };
@@ -128,18 +130,18 @@ void RetroFuturaGUI::DialogKit::styleButton(Button& button, std::string_view tex
     button.GetBackground().SetBuiltInColors(styleKey(), std::array { glm::vec4(0.12f, 0.12f, 0.12f, 1.0f) }, ColorState::Disabled);
     button.GetBorder().SetBuiltInColors(styleKey(), std::array { glm::vec4(0.5f, 0.5f, 0.5f, 1.0f) }, ColorState::Enabled);
     button.GetBorder().SetBuiltInWidth(styleKey(), 1.0f);
-    button.GetText().SetFontFamily(font._Family, font._Size, FontSizeUnit::Pixels, font._Slant, font._Weight);
+    button.GetText().SetBuiltInFontFamily(styleKey(), font._Family, font._Size, FontSizeUnit::Pixels, font._Slant, font._Weight);
     button.GetText().SetString(text, false);
-    button.GetText().SetAlignment(TextAlignment::Center);
+    button.GetText().SetBuiltInAlignment(styleKey(), TextAlignment::Center);
 }
 
 void RetroFuturaGUI::DialogKit::styleLabel(Label& label, std::string_view text, const glm::vec3& size, const ViewFont& font)
 {
-    label.GetText().SetFontFamily(font._Family, font._Size, FontSizeUnit::Pixels, font._Slant, font._Weight);
+    label.GetText().SetBuiltInFontFamily(styleKey(), font._Family, font._Size, FontSizeUnit::Pixels, font._Slant, font._Weight);
     label.GetText().SetString(text, false);
-    label.GetText().SetAlignment(TextAlignment::Left);
+    label.GetText().SetBuiltInAlignment(styleKey(), TextAlignment::Left);
     label.GetText().SetBuiltInColors(styleKey(), std::array { glm::vec4(1.0f) }, ColorState::Enabled);
-    label.GetText().SetPadding(8.0f);
+    label.GetText().SetBuiltInPadding(styleKey(), 8.0f);
     label.SetSize(size);
 }
 
@@ -183,6 +185,112 @@ RetroFuturaGUI::StyleKey RetroFuturaGUI::DialogKit::styleKey()
     return StyleKey {};
 }
 
+RetroFuturaGUI::DialogKit::ViewFont RetroFuturaGUI::DialogKit::shownFont(const StyleScope scope, const WidgetTypeID widgetType, const StylePart part, const ViewFont& builtIn)
+{
+    std::vector<u32> flavors {};
+    StylingManager::composeFlavorHashes(scope, widgetType, StyleAccessor::None, {}, flavors);
+    const auto find = [&flavors, part](auto pick) { return StylingManager::FindFirst<std::remove_cvref_t<decltype(pick(std::declval<const FlavorPart&>()))>>(flavors, part, pick); };
+
+    return ViewFont
+    {
+        ._Family = find([](const FlavorPart& style) { return style.GetFontFamily(); }).value_or(builtIn._Family),
+        ._Size = find([](const FlavorPart& style) { return style.GetFontSize(); }).value_or(builtIn._Size),
+        ._Slant = find([](const FlavorPart& style) { return style.GetFontSlant(); }).value_or(builtIn._Slant),
+        ._Weight = find([](const FlavorPart& style) { return style.GetFontWeight(); }).value_or(builtIn._Weight)
+    };
+}
+
+RetroFuturaGUI::DialogKit::ViewFont RetroFuturaGUI::DialogKit::shownTableFont(const StyleScope scope, const bool header, const ViewFont& builtIn)
+{
+    std::vector<u32> flavors {};
+    StylingManager::composeFlavorHashes(scope, WidgetTypeID::Table, StyleAccessor::None, {}, flavors);
+
+    //The text settings of the flavor's cell or header style, nullptr where it sets none
+    const auto layerOf = [header](const Flavor& flavor) -> const TableTextLayer*
+    {
+        if(header)
+        {
+            const FlavorHeaderStyle* style { flavor.FindHeaderStyle() };
+            return style ? &style->GetTextSettings() : nullptr;
+        }
+
+        const FlavorCellStyle* style { flavor.FindCellStyle() };
+        return style ? &style->GetTextSettings() : nullptr;
+    };
+    const auto find = [&flavors, &layerOf](auto setting)
+    {
+        using Setting = std::remove_cvref_t<decltype(std::declval<const TableTextLayer&>().*setting)>;
+        return StylingManager::FindFirst<Setting>(flavors, [&layerOf, setting](const Flavor& flavor) -> Setting
+        {
+            const TableTextLayer* layer { layerOf(flavor) };
+            return layer ? layer->*setting : Setting {};
+        });
+    };
+
+    return ViewFont
+    {
+        ._Family = find(&TableTextLayer::_FontFamily).value_or(builtIn._Family),
+        ._Size = find(&TableTextLayer::_FontSize).value_or(builtIn._Size),
+        ._Slant = find(&TableTextLayer::_Slant).value_or(builtIn._Slant),
+        ._Weight = find(&TableTextLayer::_Weight).value_or(builtIn._Weight)
+    };
+}
+
+void RetroFuturaGUI::DialogKit::addMissingEntries()
+{
+    //In the shared scope, so a popup type's own entry still wins over them
+    const FlavorScope shared { StylingManager::GetScope(StyleScope::Popup) };
+
+    if(!shared.HasEntry(WidgetTypeID::Button, StyleAccessor::On))
+    {
+        Flavor& on { shared.GetEntry(WidgetTypeID::Button, StyleAccessor::On) };
+        on.GetBackground().SetColors(std::array { _toggleOnColor }, ColorState::Enabled);
+        on.GetBackground().SetColors(std::array { _toggleOnHoverColor }, ColorState::Hover);
+        on.GetBackground().SetColors(std::array { _toggleOnClickedColor }, ColorState::Clicked);
+    }
+
+    //Hovered or clicked, an invalid field still shows it
+    if(!shared.HasEntry(WidgetTypeID::TextBox, StyleAccessor::Invalid))
+    {
+        Flavor& invalid { shared.GetEntry(WidgetTypeID::TextBox, StyleAccessor::Invalid) };
+
+        for(const ColorState state : { ColorState::Enabled, ColorState::Hover, ColorState::Clicked })
+            invalid.GetBorder().SetColors(std::array { glm::vec4(1.0f, 0.35f, 0.35f, 1.0f) }, state);
+    }
+
+    struct KindLook
+    {
+        StyleScope _Scope { StyleScope::Message };
+        glm::vec4 _Accent { 1.0f };
+        std::string_view _Icon {};
+    };
+
+    const std::array looks
+    {
+        KindLook { ._Scope = StyleScope::Message, ._Accent = glm::vec4(0.3f, 0.6f, 1.0f, 1.0f), ._Icon = "InformationIcon.svg" },
+        KindLook { ._Scope = StyleScope::Warning, ._Accent = glm::vec4(1.0f, 0.75f, 0.2f, 1.0f), ._Icon = "WarningIcon.svg" },
+        KindLook { ._Scope = StyleScope::Error, ._Accent = glm::vec4(1.0f, 0.35f, 0.35f, 1.0f), ._Icon = "ErrorIcon.svg" }
+    };
+    const std::filesystem::path images { PlatformBridge::Paths::GetExecutablePathFSPath().parent_path() / "Resources" / "img" };
+
+    for(const KindLook& look : looks)
+    {
+        const FlavorScope kind { StylingManager::GetScope(look._Scope) };
+
+        if(!kind.HasEntry(WidgetTypeID::Window))
+            kind.GetEntry(WidgetTypeID::Window).GetBorder().SetColors(std::array { look._Accent }, ColorState::Enabled);
+
+        if(!kind.HasEntry(WidgetTypeID::MenuBar))
+            kind.GetEntry(WidgetTypeID::MenuBar).GetBorder().SetColors(std::array { look._Accent }, ColorState::Enabled);
+
+        if(!kind.HasEntry(WidgetTypeID::Label, StyleAccessor::Title))
+            kind.GetEntry(WidgetTypeID::Label, StyleAccessor::Title).GetText().SetColors(std::array { look._Accent }, ColorState::Enabled);
+
+        if(!kind.HasEntry(WidgetTypeID::Button, StyleAccessor::Icon))
+            kind.GetEntry(WidgetTypeID::Button, StyleAccessor::Icon).GetBackground().SetImage(toUtf8(images / look._Icon)); //UTF-8, as Texture reads paths.
+    }
+}
+
 
 void RetroFuturaGUI::DialogKit::styleCheckBox(CheckBox& checkBox, const f32 side)
 {
@@ -223,9 +331,9 @@ void RetroFuturaGUI::DialogKit::styleTextBox(TextBox& textBox, std::string_view 
     textBox.GetBackground().SetBuiltInColors(styleKey(), std::array { glm::vec4(0.2f, 0.2f, 0.2f, 1.0f) }, ColorState::Clicked);
     textBox.GetBorder().SetBuiltInColors(styleKey(), std::array { glm::vec4(0.5f, 0.5f, 0.5f, 1.0f) }, ColorState::Enabled);
     textBox.GetBorder().SetBuiltInWidth(styleKey(), 1.0f);
-    textBox.GetText().SetFontFamily(font._Family, font._Size, FontSizeUnit::Pixels, font._Slant, font._Weight);
-    textBox.GetText().SetAlignment(TextAlignment::Left);
-    textBox.GetText().SetPadding(6.0f);
+    textBox.GetText().SetBuiltInFontFamily(styleKey(), font._Family, font._Size, FontSizeUnit::Pixels, font._Slant, font._Weight);
+    textBox.GetText().SetBuiltInAlignment(styleKey(), TextAlignment::Left);
+    textBox.GetText().SetBuiltInPadding(styleKey(), 6.0f);
     textBox.GetPlaceholder().SetString(placeholder, false);
     textBox.GetPlaceholder().SetBuiltInColors(styleKey(), std::array { glm::vec4(0.5f, 0.5f, 0.5f, 1.0f) }, RetroFuturaGUI::ColorState::Enabled);
 }
