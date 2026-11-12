@@ -1,6 +1,7 @@
 #pragma once
 #include "BackgroundWork.hpp"
 #include "Clipboard.hpp"
+#include "DragDrop.hpp"
 #include "DialogKit.hpp"
 #include "FileSystem.hpp"
 #include "FileTransfer.hpp"
@@ -187,6 +188,14 @@ namespace RetroFuturaGUI
         using ClashAnswer = FileTransfer::ClashAnswer;
         using ClashScope = FileTransfer::ClashScope;
 
+        /// @brief What the running file operation is to the history: a new step, or an undo or redo of one.
+        enum class TransferRole : u32
+        {
+            NewStep,
+            Undo,
+            Redo
+        };
+
         /// @brief What a menu item does.
         enum class MenuAction : u32
         {
@@ -196,6 +205,7 @@ namespace RetroFuturaGUI
             DeletePermanently,
             Close,
             Undo,
+            Redo,
             Cut,
             Copy,
             Paste,
@@ -529,6 +539,25 @@ namespace RetroFuturaGUI
         ///        inside.
         void on_window_filesDropped(const std::vector<std::string>& texts, const glm::vec2& point);
 
+        /// @brief Has the explorer's window take files dragged onto it from any program while they hover. The folder row or place
+        ///        a drop would go into is marked, the cursor shows a move or a copy, and the drop moves them (the same drive, or
+        ///        Shift) or copies them (another drive, or Ctrl) as Windows does. Where the platform can't, drops arrive once let
+        ///        go, through on_window_filesDropped
+        void takeDropsWhileHovering();
+
+        /// @brief Stops taking drops while they hover, before the window goes.
+        void stopTakingDrops();
+
+        /// @brief Where files dragged over the window at the point (client pixels, y running downward) would go and what they
+        ///        would do. Marks it, and for the drop keeps it for update. None where nothing takes them
+        PlatformBridge::DragDrop::DropEffect followDropTarget(const std::vector<std::filesystem::path>& items, const int x, const int y, const PlatformBridge::DragDrop::DropKeys keys, const PlatformBridge::DragDrop::DropEffects allowed, const bool isDrop);
+
+        /// @brief Copies or moves what was dropped since the last update, out of the system's drag loop the drop came in
+        void takePendingDrop();
+
+        /// @brief Whether both lists hold the same items, in any order
+        static bool isSameItems(std::vector<std::filesystem::path> first, std::vector<std::filesystem::path> second);
+
         /// @brief The folder a drop at the point goes into: a folder row, or a place button, and with isOpenFolderTaken the open
         ///        folder anywhere else. Empty when there is none. A dragged item, and the open folder for rows dragged from it,
         ///        never are.
@@ -559,11 +588,19 @@ namespace RetroFuturaGUI
         void endDrag();
 
         /// @brief Undoes the newest step in the app's file history, whichever explorer did it: removes a new folder still empty,
-        ///        renames back, sends copies to the recycle bin, moves items back, or restores them from the bin.
+        ///        renames back, sends copies to the recycle bin, moves items back, or restores them from the bin. What a Replace
+        ///        put in the bin comes back once the item that replaced it is gone. The step then waits for Redo
         void undoLast();
 
-        /// @brief Adds a step to the app's file history while Undo is on; steps an undo does aren't added.
+        /// @brief Does the step undone last again: makes the folder, renames, copies or moves, replacing again what the step
+        ///        replaced, or sends the items to the recycle bin. It goes back into the history for Undo
+        void redoLast();
+
+        /// @brief Adds a new step to the app's file history while Undo is on, which ends what Redo could do
         void recordUndoStep(const FileUndoHistory::Kind kind, std::vector<FileUndoHistory::Item>&& items);
+
+        /// @brief Puts a step back into the history: one redone, or one an undo couldn't start
+        void recordStepAgain(FileUndoHistory::Step&& step);
 
         /// @brief Runs a file operation on the transfer's thread, unless one runs already, and shows its progress.
         void startTransfer(FileTransfer::Request&& request);
@@ -593,8 +630,8 @@ namespace RetroFuturaGUI
         /// @brief "Copying 3 of 12: Song.mp3".
         static std::string progressText(const FileTransfer::Progress& progress);
 
-        /// @brief "Moved 3 items to the recycle bin", "Can't copy Song.mp3: Access is denied." and so on.
-        static std::string outcomeText(const FileTransfer::Outcome& outcome);
+        /// @brief "Moved 3 items to the recycle bin", "Can't copy Song.mp3: Access is denied." and so on. An undo's move reads "Moved Song.mp3 back"
+        static std::string outcomeText(const FileTransfer::Outcome& outcome, const TransferRole role);
 
         /// @brief The row that takes the removed rows' place, so the keys go on from there: the first row after the first removed
         ///        one that is still there, or else the last one before it. Empty when none is left.
@@ -726,10 +763,19 @@ namespace RetroFuturaGUI
         bool
             _isDraggingRows { false },
             _isDragOutPending { false }, //the pointer left the window; the system's drag starts from the next update
-            _hasDraggedOut { false };    //the system ran the drag, so the release the table reports after it is no drop
-        bool
-            _hadFilesOnClipboard { false },
-            _isTransferUndoing { false }; //the operation running undoes a step, so its outcome isn't recorded
+            _hasDraggedOut { false },    //the system ran the drag, so the release the table reports after it is no drop
+            _isInDragOut { false },
+            _isTakingDrops { false };
+        struct PendingDrop
+        {
+            std::vector<std::filesystem::path> _Items {};
+            std::filesystem::path _Folder {};
+            bool _IsMove { false };
+        };
+        std::optional<PendingDrop> _pendingDrop {}; //dropped inside the system's drag loop, taken in the next update.
+        bool _hadFilesOnClipboard { false };
+        TransferRole _transferRole { TransferRole::NewStep };
+        std::optional<FileUndoHistory::Step> _stepBeingUndone {}; //waits for Redo once its undo ends without a failure.
         std::string
             _statusMessage {}, //an error, an outcome or a question; stays until the folder changes, the user selects, or the next one
             _statusNote {};    //shown while there is no message
@@ -777,7 +823,8 @@ namespace RetroFuturaGUI
             _copyKey { ._Key = PB_KEY_C, ._PressCountSeen = 0 },  //with Ctrl
             _cutKey { ._Key = PB_KEY_X, ._PressCountSeen = 0 },   //with Ctrl
             _pasteKey { ._Key = PB_KEY_V, ._PressCountSeen = 0 }, //with Ctrl
-            _undoKey { ._Key = PB_KEY_Z, ._PressCountSeen = 0 };  //with Ctrl
+            _undoKey { ._Key = PB_KEY_Z, ._PressCountSeen = 0 },  //with Ctrl
+            _redoKey { ._Key = PB_KEY_Y, ._PressCountSeen = 0 };  //with Ctrl
 
         inline static uSize
             _createdCount { 0 },
@@ -809,9 +856,8 @@ namespace RetroFuturaGUI
             _statusColumnCount { 19 },  //the status line's columns beside the Stop button; it takes the Stop button's too without operations
             _stopColumnCount { 5 };
         static constexpr std::chrono::milliseconds _ownDropWindow { 2000 }; //a drop of the rows dragged out this soon after is their own
-        static constexpr std::array<MenuAction, 5>
-            _fileMenuChoices { MenuAction::NewFolder, MenuAction::Rename, MenuAction::Delete, MenuAction::DeletePermanently, MenuAction::Close },
-            _editMenuChoices { MenuAction::Undo, MenuAction::Cut, MenuAction::Copy, MenuAction::Paste, MenuAction::SelectAll };
+        static constexpr std::array<MenuAction, 5> _fileMenuChoices { MenuAction::NewFolder, MenuAction::Rename, MenuAction::Delete, MenuAction::DeletePermanently, MenuAction::Close };
+        static constexpr std::array<MenuAction, 6> _editMenuChoices { MenuAction::Undo, MenuAction::Redo, MenuAction::Cut, MenuAction::Copy, MenuAction::Paste, MenuAction::SelectAll };
     };
 
     /// @brief What Window::OpenPopup(PopupTypes::File, ...) opens a FileExplorer with. Every field has a default, so a request

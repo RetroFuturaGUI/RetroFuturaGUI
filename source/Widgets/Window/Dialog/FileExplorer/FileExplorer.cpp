@@ -23,6 +23,12 @@
 #include <numeric>
 #include <stdexcept>
 #include <tuple>
+#if defined(TARGET_PLATFORM_LINUX)
+    #define GLFW_EXPOSE_NATIVE_X11
+#elif defined(TARGET_PLATFORM_WINDOWS)
+    #define GLFW_EXPOSE_NATIVE_WIN32
+#endif
+#include <GLFW/glfw3native.h>
 
 RetroFuturaGUI::FileExplorer::FileExplorer(std::string_view title, const i32 width, const i32 height)
     : Popup(std::format("FileExplorer{}", _createdCount), width, height, StyleScope::File),
@@ -39,7 +45,10 @@ RetroFuturaGUI::FileExplorer::FileExplorer(std::string_view title, const i32 wid
     styleWindow(*window, title);
 }
 
-RetroFuturaGUI::FileExplorer::~FileExplorer() = default;
+RetroFuturaGUI::FileExplorer::~FileExplorer()
+{
+    stopTakingDrops(); //while the window still lives.
+}
 
 bool RetroFuturaGUI::FileExplorer::Open(std::string_view startPath, const FileExplorerFlags flags, std::string_view extensions)
 {
@@ -323,6 +332,7 @@ bool RetroFuturaGUI::FileExplorer::buildView(ViewHost& host, std::string_view ti
     {
         built._Files->Connect_OnSelectionDrag([this](const Table::SelectionDragPhase phase, const glm::vec2 point) { on_filesTable_selectionDrag(phase, point); }, false);
         window->Connect_OnFilesDropped([this](const std::vector<std::string> paths, const glm::vec2 point) { on_window_filesDropped(paths, point); }, false);
+        takeDropsWhileHovering(); //where the platform can, the system then asks the explorer while files hover rather than handing GLFW the drop.
     }
 
     if(HasFlag(_flags, FileExplorerFlags::Rename))
@@ -1091,6 +1101,8 @@ void RetroFuturaGUI::FileExplorer::showListing(Listing&& listing)
 
 void RetroFuturaGUI::FileExplorer::update()
 {
+    takePendingDrop(); //dropped on the window during the last frame.
+
     //A scope or flavor that changed a font shown is measured from.
     if(StylingManager::GetGeneration() != _fontGeneration)
     {
@@ -1958,7 +1970,7 @@ void RetroFuturaGUI::FileExplorer::deleteSelected()
     if(!canDo(MenuAction::Delete))
         return;
 
-    startTransfer(FileTransfer::Request { ._Operation = FileTransfer::Operation::MoveToTrash, ._Sources = getSelectedPaths(), ._Targets = {}, ._Destination = {}, ._ClashRule = FileTransfer::ClashRule::KeepBoth });
+    startTransfer(FileTransfer::Request { ._Operation = FileTransfer::Operation::MoveToTrash, ._Sources = getSelectedPaths(), ._Targets = {}, ._Destination = {}, ._ClashRule = FileTransfer::ClashRule::KeepBoth, ._ClashAnswers = {}, ._ReplacedItems = {} });
 }
 
 void RetroFuturaGUI::FileExplorer::askDeletePermanently(std::vector<std::filesystem::path>&& paths)
@@ -1968,7 +1980,7 @@ void RetroFuturaGUI::FileExplorer::askDeletePermanently(std::vector<std::filesys
 
     if(HasFlag(_flags, FileExplorerFlags::SkipDeleteConfirmation))
     {
-        startTransfer(FileTransfer::Request { ._Operation = FileTransfer::Operation::DeletePermanently, ._Sources = std::move(paths), ._Targets = {}, ._Destination = {}, ._ClashRule = FileTransfer::ClashRule::KeepBoth });
+        startTransfer(FileTransfer::Request { ._Operation = FileTransfer::Operation::DeletePermanently, ._Sources = std::move(paths), ._Targets = {}, ._Destination = {}, ._ClashRule = FileTransfer::ClashRule::KeepBoth, ._ClashAnswers = {}, ._ReplacedItems = {} });
         return;
     }
 
@@ -1981,7 +1993,7 @@ void RetroFuturaGUI::FileExplorer::askDeletePermanently(std::vector<std::filesys
     prompt->Connect_OnResult([this, paths = std::move(paths)]() mutable
         {
             giveKeysToList();
-            startTransfer(FileTransfer::Request { ._Operation = FileTransfer::Operation::DeletePermanently, ._Sources = std::move(paths), ._Targets = {}, ._Destination = {}, ._ClashRule = FileTransfer::ClashRule::KeepBoth });
+            startTransfer(FileTransfer::Request { ._Operation = FileTransfer::Operation::DeletePermanently, ._Sources = std::move(paths), ._Targets = {}, ._Destination = {}, ._ClashRule = FileTransfer::ClashRule::KeepBoth, ._ClashAnswers = {}, ._ReplacedItems = {} });
         }, false);
     pushPrompt(std::move(prompt));
 }
@@ -2035,7 +2047,9 @@ void RetroFuturaGUI::FileExplorer::pasteFromClipboard()
         ._Sources = std::move(paths),
         ._Targets = {},
         ._Destination = _currentDirectory,
-        ._ClashRule = HasFlag(_flags, FileExplorerFlags::AskOnNameClash) ? FileTransfer::ClashRule::Ask : FileTransfer::ClashRule::KeepBoth
+        ._ClashRule = HasFlag(_flags, FileExplorerFlags::AskOnNameClash) ? FileTransfer::ClashRule::Ask : FileTransfer::ClashRule::KeepBoth,
+        ._ClashAnswers = {},
+        ._ReplacedItems = {}
     });
 }
 
@@ -2168,6 +2182,124 @@ void RetroFuturaGUI::FileExplorer::on_window_filesDropped(const std::vector<std:
     dropInto(std::move(items), folder, isMove);
 }
 
+void RetroFuturaGUI::FileExplorer::takeDropsWhileHovering()
+{
+    if(_isTakingDrops)
+        return;
+
+    if(!PlatformBridge::DragDrop::CanTakeDrops())
+        return;
+
+    Window* window { GetWindow() };
+
+    if(!window)
+        return;
+
+    GLFWwindow* glfwWindow { window->GetGlfwWindow() };
+
+    if(!glfwWindow)
+        return;
+
+    using DragDrop = PlatformBridge::DragDrop;
+    DragDrop::DropTargetEvents events
+    {
+        ._OnOver = [this](const std::vector<std::filesystem::path>& items, const int x, const int y, const DragDrop::DropKeys keys, const DragDrop::DropEffects allowed) { return followDropTarget(items, x, y, keys, allowed, false); },
+        ._OnLeave = [this]() { showDropTarget(std::nullopt, nullptr); },
+        ._OnDrop = [this](const std::vector<std::filesystem::path>& items, const int x, const int y, const DragDrop::DropKeys keys, const DragDrop::DropEffects allowed) { return followDropTarget(items, x, y, keys, allowed, true); }
+    };
+
+#if defined(TARGET_PLATFORM_WINDOWS)
+    _isTakingDrops = DragDrop::RegisterDropTarget(glfwGetWin32Window(glfwWindow), std::move(events));
+#elif defined(TARGET_PLATFORM_LINUX)
+    _isTakingDrops = DragDrop::RegisterDropTarget(reinterpret_cast<void*>(glfwGetX11Window(glfwWindow)), std::move(events));
+#endif
+}
+
+void RetroFuturaGUI::FileExplorer::stopTakingDrops()
+{
+    if(!_isTakingDrops)
+        return;
+
+    _isTakingDrops = false;
+    Window* window { GetWindow() };
+
+    if(!window)
+        return;
+
+    GLFWwindow* glfwWindow { window->GetGlfwWindow() };
+
+    if(!glfwWindow)
+        return;
+
+#if defined(TARGET_PLATFORM_WINDOWS)
+    PlatformBridge::DragDrop::RevokeDropTarget(glfwGetWin32Window(glfwWindow));
+#elif defined(TARGET_PLATFORM_LINUX)
+    PlatformBridge::DragDrop::RevokeDropTarget(reinterpret_cast<void*>(glfwGetX11Window(glfwWindow)));
+#endif
+}
+
+PlatformBridge::DragDrop::DropEffect RetroFuturaGUI::FileExplorer::followDropTarget(const std::vector<std::filesystem::path>& items, const int x, const int y, const PlatformBridge::DragDrop::DropKeys keys, const PlatformBridge::DragDrop::DropEffects allowed, const bool isDrop)
+{
+    using DragDrop = PlatformBridge::DragDrop;
+
+    //Rows dragged out and brought back drop as they would have inside: into a folder row or a place, never the open folder
+    const bool isOwnDrag { _isInDragOut && isSameItems(items, _draggedOutPaths) };
+    const glm::vec2 point { static_cast<f32>(x), getWindowSize().y - static_cast<f32>(y) };
+    std::optional<uSize> row {};
+    Button* place { nullptr };
+    const std::filesystem::path folder { dropFolderAt(point, isOwnDrag ? items : std::vector<std::filesystem::path> {}, !isOwnDrag, row, place) };
+
+    if(folder.empty() || isDrop)
+        showDropTarget(std::nullopt, nullptr);
+    else
+        showDropTarget(row, place);
+
+    if(folder.empty())
+        return DragDrop::DropEffect::None;
+
+    //As Windows does: Shift moves, Ctrl copies, otherwise a move within the drive and a copy onto another, as the source allows
+    bool isMove { isDropMove(items, folder, HasDropKey(keys, DragDrop::DropKeys::Shift), HasDropKey(keys, DragDrop::DropKeys::Control)) };
+
+    if(isMove && !HasDropEffect(allowed, DragDrop::DropEffects::Move))
+        isMove = false;
+
+    if(!isMove && !HasDropEffect(allowed, DragDrop::DropEffects::Copy))
+    {
+        if(!HasDropEffect(allowed, DragDrop::DropEffects::Move))
+            return DragDrop::DropEffect::None;
+
+        isMove = true;
+    }
+
+    if(isDrop)
+    {
+        //Taken in update: this runs inside the system's drag loop, the explorer's own drag of its rows among them
+        _pendingDrop = PendingDrop { ._Items = items, ._Folder = folder, ._IsMove = isMove };
+
+        if(isOwnDrag)
+            _draggedOutPaths.clear();
+    }
+
+    return isMove ? DragDrop::DropEffect::Move : DragDrop::DropEffect::Copy;
+}
+
+void RetroFuturaGUI::FileExplorer::takePendingDrop()
+{
+    if(!_pendingDrop)
+        return;
+
+    PendingDrop drop { std::move(*_pendingDrop) };
+    _pendingDrop.reset();
+    dropInto(std::move(drop._Items), drop._Folder, drop._IsMove);
+}
+
+bool RetroFuturaGUI::FileExplorer::isSameItems(std::vector<std::filesystem::path> first, std::vector<std::filesystem::path> second)
+{
+    std::sort(first.begin(), first.end());
+    std::sort(second.begin(), second.end());
+    return first == second;
+}
+
 std::filesystem::path RetroFuturaGUI::FileExplorer::dropFolderAt(const glm::vec2& point, const std::vector<std::filesystem::path>& dragged, const bool isOpenFolderTaken, std::optional<uSize>& rowOut, Button*& placeOut) const
 {
     rowOut.reset();
@@ -2277,7 +2409,9 @@ void RetroFuturaGUI::FileExplorer::dragOut()
     _hasDraggedOut = true;
     setStatus("");
     _draggedOutPaths = _draggedPaths;
+    _isInDragOut = true;
     PlatformBridge::DragDrop::DragFilesOut(_draggedPaths, true);
+    _isInDragOut = false;
     _draggedOutAt = std::chrono::steady_clock::now(); //a drop on the explorer itself arrives after this
 }
 
@@ -2299,7 +2433,9 @@ void RetroFuturaGUI::FileExplorer::dropInto(std::vector<std::filesystem::path>&&
         ._Sources = std::move(items),
         ._Targets = {},
         ._Destination = folder,
-        ._ClashRule = HasFlag(_flags, FileExplorerFlags::AskOnNameClash) ? FileTransfer::ClashRule::Ask : FileTransfer::ClashRule::KeepBoth
+        ._ClashRule = HasFlag(_flags, FileExplorerFlags::AskOnNameClash) ? FileTransfer::ClashRule::Ask : FileTransfer::ClashRule::KeepBoth,
+        ._ClashAnswers = {},
+        ._ReplacedItems = {}
     });
 }
 
@@ -2341,6 +2477,9 @@ void RetroFuturaGUI::FileExplorer::undoLast()
             std::filesystem::remove(first._To, error);
             setStatus(error ? std::format("Can't undo making {}: {}", name, describeError(error)) : std::format("Removed the new folder {}", name));
             requestListing(_currentDirectory, ListingIntent { ._Fallbacks = {}, ._HistoryIndex = {}, ._WriteTarget = {}, ._Select = rowAfterRemoved({ first._To }), ._AddsToHistory = false, ._KeepsView = true });
+
+            if(!error)
+                FileUndoHistory::KeepUndone(std::move(*step));
         }
         break;
         case FileUndoHistory::Kind::Rename:
@@ -2357,14 +2496,19 @@ void RetroFuturaGUI::FileExplorer::undoLast()
             std::filesystem::rename(first._To, first._From, error);
             setStatus(error ? std::format("Can't undo the rename: {}", describeError(error)) : std::format("Renamed {} back to {}", toUtf8(first._To.filename()), name));
             requestListing(_currentDirectory, ListingIntent { ._Fallbacks = {}, ._HistoryIndex = {}, ._WriteTarget = {}, ._Select = { first._From }, ._AddsToHistory = false, ._KeepsView = true });
+
+            if(!error)
+                FileUndoHistory::KeepUndone(std::move(*step));
         }
         break;
         default:
         {
-            //The rest are transfers: the copies go to the bin, moved items go back, recycled ones come out of it
+            //The rest are transfers: the copies go to the bin, moved items go back, recycled ones come out of it. What a copy or a
+            //move replaced comes out of the bin once the item in its place has gone
             std::vector<std::filesystem::path>
                 sources {},
-                targets {};
+                targets {},
+                replaced {};
             FileTransfer::Operation operation { FileTransfer::Operation::MoveToTrash };
 
             for(const FileUndoHistory::Item& item : step->_Items)
@@ -2372,11 +2516,13 @@ void RetroFuturaGUI::FileExplorer::undoLast()
                 if(FileUndoHistory::Kind::Copy == step->_Kind)
                 {
                     sources.push_back(item._To);
+                    replaced.push_back(item._Replaced);
                 }
                 else if(FileUndoHistory::Kind::Move == step->_Kind)
                 {
                     sources.push_back(item._To);
                     targets.push_back(item._From);
+                    replaced.push_back(item._Replaced);
                     operation = FileTransfer::Operation::Move;
                 }
                 else
@@ -2386,9 +2532,127 @@ void RetroFuturaGUI::FileExplorer::undoLast()
                 }
             }
 
-            _isTransferUndoing = true;
-            startTransfer(FileTransfer::Request { ._Operation = operation, ._Sources = std::move(sources), ._Targets = std::move(targets), ._Destination = {}, ._ClashRule = FileTransfer::ClashRule::KeepBoth });
-            _isTransferUndoing = _transfer.IsBusy(); //it didn't start
+            _transferRole = TransferRole::Undo;
+            _stepBeingUndone = std::move(step);
+            startTransfer(FileTransfer::Request
+            {
+                ._Operation = operation,
+                ._Sources = std::move(sources),
+                ._Targets = std::move(targets),
+                ._Destination = {},
+                ._ClashRule = FileTransfer::ClashRule::KeepBoth,
+                ._ClashAnswers = {},
+                ._ReplacedItems = std::move(replaced)
+            });
+
+            //It didn't start, so the step stays to be undone
+            if(_transfer.IsBusy())
+                break;
+
+            _transferRole = TransferRole::NewStep;
+            recordStepAgain(std::move(*_stepBeingUndone));
+            _stepBeingUndone.reset();
+        }
+        break;
+    }
+
+    updateMenus();
+}
+
+void RetroFuturaGUI::FileExplorer::redoLast()
+{
+    if(!canDo(MenuAction::Redo))
+        return;
+
+    std::optional<FileUndoHistory::Step> step { FileUndoHistory::TakeLastUndone() };
+
+    if(!step || step->_Items.empty())
+        return;
+
+    const FileUndoHistory::Item& first { step->_Items.front() };
+    std::error_code error {};
+
+    switch(step->_Kind)
+    {
+        case FileUndoHistory::Kind::NewFolder:
+        {
+            const std::string name { toUtf8(first._To.filename()) };
+
+            if(std::filesystem::exists(std::filesystem::symlink_status(first._To, error)))
+            {
+                setStatus(std::format("Can't make {} again: the name is taken", name));
+                return;
+            }
+
+            std::filesystem::create_directory(first._To, error);
+            setStatus(error ? std::format("Can't make {} again: {}", name, describeError(error)) : std::format("Made the folder {} again", name));
+            requestListing(_currentDirectory, ListingIntent { ._Fallbacks = {}, ._HistoryIndex = {}, ._WriteTarget = {}, ._Select = { first._To }, ._AddsToHistory = false, ._KeepsView = true });
+
+            if(!error)
+                recordStepAgain(std::move(*step));
+        }
+        break;
+        case FileUndoHistory::Kind::Rename:
+        {
+            const std::string name { toUtf8(first._To.filename()) };
+
+            //A change of case alone names the same file, so it may be redone
+            if(std::filesystem::exists(std::filesystem::symlink_status(first._To, error)) && !std::filesystem::equivalent(first._From, first._To, error))
+            {
+                setStatus(std::format("Can't redo the rename: {} is taken", name));
+                return;
+            }
+
+            std::filesystem::rename(first._From, first._To, error);
+            setStatus(error ? std::format("Can't redo the rename: {}", describeError(error)) : std::format("Renamed {} to {} again", toUtf8(first._From.filename()), name));
+            requestListing(_currentDirectory, ListingIntent { ._Fallbacks = {}, ._HistoryIndex = {}, ._WriteTarget = {}, ._Select = { first._To }, ._AddsToHistory = false, ._KeepsView = true });
+
+            if(!error)
+                recordStepAgain(std::move(*step));
+        }
+        break;
+        default:
+        {
+            //The rest are transfers, done again to the same names: what the step replaced, back since the undo, is replaced again
+            std::vector<std::filesystem::path>
+                sources {},
+                targets {};
+            std::vector<FileTransfer::ClashAnswer> answers {};
+            const FileTransfer::Operation operation
+            {
+                FileUndoHistory::Kind::Copy == step->_Kind ? FileTransfer::Operation::Copy :
+                FileUndoHistory::Kind::Move == step->_Kind ? FileTransfer::Operation::Move : FileTransfer::Operation::MoveToTrash
+            };
+
+            for(const FileUndoHistory::Item& item : step->_Items)
+            {
+                sources.push_back(item._From);
+
+                if(FileTransfer::Operation::MoveToTrash == operation)
+                    continue;
+
+                targets.push_back(item._To);
+                answers.push_back(item._Replaced.empty() ? FileTransfer::ClashAnswer::KeepBoth : FileTransfer::ClashAnswer::Replace);
+            }
+
+            _transferRole = TransferRole::Redo;
+            startTransfer(FileTransfer::Request
+            {
+                ._Operation = operation,
+                ._Sources = std::move(sources),
+                ._Targets = std::move(targets),
+                ._Destination = {},
+                ._ClashRule = FileTransfer::ClashRule::KeepBoth,
+                ._ClashAnswers = std::move(answers),
+                ._ReplacedItems = {}
+            });
+
+            //It didn't start, so the step stays to be redone
+            if(_transfer.IsBusy())
+                break;
+
+            _transferRole = TransferRole::NewStep;
+            FileUndoHistory::KeepUndone(std::move(*step));
         }
         break;
     }
@@ -2402,6 +2666,15 @@ void RetroFuturaGUI::FileExplorer::recordUndoStep(const FileUndoHistory::Kind ki
         return;
 
     FileUndoHistory::Record(FileUndoHistory::Step { ._Kind = kind, ._Items = std::move(items) });
+    updateMenus();
+}
+
+void RetroFuturaGUI::FileExplorer::recordStepAgain(FileUndoHistory::Step&& step)
+{
+    if(!HasFlag(_flags, FileExplorerFlags::Undo))
+        return;
+
+    FileUndoHistory::RecordAgain(std::move(step));
     updateMenus();
 }
 
@@ -2453,9 +2726,7 @@ void RetroFuturaGUI::FileExplorer::showTransferOutcome(FileTransfer::Outcome&& o
 {
     showStopButton(false);
 
-    //An undo's move puts things back where they were
-    const bool isMovedBack { _isTransferUndoing && FileTransfer::Operation::Move == outcome._Operation && 0 == outcome._FailedCount && !outcome._IsStopped && !outcome._Done.empty() };
-    setStatus(isMovedBack ? outcomeText(outcome) + " back" : outcomeText(outcome));
+    setStatus(outcomeText(outcome, _transferRole));
 
     //Moved, the cut files are no longer where the clipboard says; stopped, the rest can still be pasted
     if(FileTransfer::Operation::Move == outcome._Operation && !outcome._IsStopped && !_pastedCut.empty())
@@ -2463,7 +2734,7 @@ void RetroFuturaGUI::FileExplorer::showTransferOutcome(FileTransfer::Outcome&& o
 
     _pastedCut.clear();
 
-    //What was done goes into the history, even when stopped partway; an undo's own work doesn't
+    //What was done goes into the history, even when stopped partway, a redo's without ending Redo; an undo's own work doesn't
     std::optional<FileUndoHistory::Kind> undoKind {};
 
     if(FileTransfer::Operation::Copy == outcome._Operation)
@@ -2473,18 +2744,26 @@ void RetroFuturaGUI::FileExplorer::showTransferOutcome(FileTransfer::Outcome&& o
     else if(FileTransfer::Operation::MoveToTrash == outcome._Operation)
         undoKind = FileUndoHistory::Kind::MoveToTrash;
 
-    if(undoKind && !_isTransferUndoing)
+    if(undoKind && TransferRole::Undo != _transferRole)
     {
         std::vector<FileUndoHistory::Item> items {};
         items.reserve(outcome._Done.size());
 
         for(const FileTransfer::DoneItem& done : outcome._Done)
-            items.push_back(FileUndoHistory::Item { ._From = done._From, ._To = done._To });
+            items.push_back(FileUndoHistory::Item { ._From = done._From, ._To = done._To, ._Replaced = done._Replaced });
 
-        recordUndoStep(*undoKind, std::move(items));
+        if(TransferRole::Redo == _transferRole)
+            recordStepAgain(FileUndoHistory::Step { ._Kind = *undoKind, ._Items = std::move(items) });
+        else
+            recordUndoStep(*undoKind, std::move(items));
     }
 
-    _isTransferUndoing = false;
+    //An undo that put everything back can be redone; one that failed partway leaves too little to tell what Redo would do
+    if(TransferRole::Undo == _transferRole && _stepBeingUndone && 0 == outcome._FailedCount && !outcome._IsStopped && outcome._NotTrashed.empty())
+        FileUndoHistory::KeepUndone(std::move(*_stepBeingUndone));
+
+    _stepBeingUndone.reset();
+    _transferRole = TransferRole::NewStep;
 
     //A close confirmed while it ran comes first; nothing else is shown then
     if(_closeAfterTransfer)
@@ -2504,6 +2783,12 @@ void RetroFuturaGUI::FileExplorer::showTransferOutcome(FileTransfer::Outcome&& o
             continue;
 
         select.push_back(done._To);
+    }
+
+    for(const std::filesystem::path& putBack : outcome._PutBack)
+    {
+        if(putBack.parent_path() == _currentDirectory)
+            select.push_back(putBack);
     }
 
     if(select.empty())
@@ -2527,7 +2812,7 @@ void RetroFuturaGUI::FileExplorer::showTransferOutcome(FileTransfer::Outcome&& o
     prompt->Connect_OnResult([this, paths = std::move(outcome._NotTrashed)]() mutable
         {
             giveKeysToList();
-            startTransfer(FileTransfer::Request { ._Operation = FileTransfer::Operation::DeletePermanently, ._Sources = std::move(paths), ._Targets = {}, ._Destination = {}, ._ClashRule = FileTransfer::ClashRule::KeepBoth });
+            startTransfer(FileTransfer::Request { ._Operation = FileTransfer::Operation::DeletePermanently, ._Sources = std::move(paths), ._Targets = {}, ._Destination = {}, ._ClashRule = FileTransfer::ClashRule::KeepBoth, ._ClashAnswers = {}, ._ReplacedItems = {} });
         }, false);
     pushPrompt(std::move(prompt));
 }
@@ -2646,7 +2931,7 @@ std::string RetroFuturaGUI::FileExplorer::progressText(const FileTransfer::Progr
     }
 }
 
-std::string RetroFuturaGUI::FileExplorer::outcomeText(const FileTransfer::Outcome& outcome)
+std::string RetroFuturaGUI::FileExplorer::outcomeText(const FileTransfer::Outcome& outcome, const TransferRole role)
 {
     if(0 < outcome._FailedCount)
     {
@@ -2666,6 +2951,10 @@ std::string RetroFuturaGUI::FileExplorer::outcomeText(const FileTransfer::Outcom
     if(outcome._IsStopped)
         return std::format("Stopped after {} of {}", outcome._Done.size(), outcome._TotalCount);
 
+    //What a Replace put in the recycle bin coming back is what an undo of it is about
+    if(!outcome._PutBack.empty())
+        return std::format("Put back the replaced {}", itemsText(outcome._PutBack));
+
     if(outcome._Done.empty())
         return outcome._Skipped.empty() ? std::string {} : std::format("Skipped {}", itemsText(outcome._Skipped));
 
@@ -2682,7 +2971,7 @@ std::string RetroFuturaGUI::FileExplorer::outcomeText(const FileTransfer::Outcom
         case FileTransfer::Operation::Copy:
             return std::format("Copied {}{}", itemsText(done), skipped);
         case FileTransfer::Operation::Move:
-            return std::format("Moved {}{}", itemsText(done), skipped);
+            return std::format("Moved {}{}{}", itemsText(done), TransferRole::Undo == role ? " back" : "", skipped);
         case FileTransfer::Operation::MoveToTrash:
             return std::format("Moved {} to the recycle bin", itemsText(done));
         case FileTransfer::Operation::RestoreFromTrash:
@@ -2757,6 +3046,7 @@ bool RetroFuturaGUI::FileExplorer::isMenuActionOffered(const MenuAction action) 
         case MenuAction::DeletePermanently:
             return HasFlag(_flags, FileExplorerFlags::DeletePermanently);
         case MenuAction::Undo:
+        case MenuAction::Redo:
             return HasFlag(_flags, FileExplorerFlags::Undo);
         case MenuAction::Cut:
         case MenuAction::Copy:
@@ -2789,6 +3079,8 @@ bool RetroFuturaGUI::FileExplorer::isMenuActionAvailable(const MenuAction action
             return _hadFilesOnClipboard && !_currentDirectory.empty() && !_transfer.IsBusy();
         case MenuAction::Undo:
             return FileUndoHistory::HasSteps() && !_transfer.IsBusy();
+        case MenuAction::Redo:
+            return FileUndoHistory::HasUndoneSteps() && !_transfer.IsBusy();
         case MenuAction::SelectAll:
             return !_shownEntries.empty();
         default:
@@ -2845,6 +3137,9 @@ void RetroFuturaGUI::FileExplorer::runMenuAction(const MenuAction action)
         case MenuAction::Undo:
             undoLast();
         break;
+        case MenuAction::Redo:
+            redoLast();
+        break;
         case MenuAction::SelectAll:
             selectAllRows();
         break;
@@ -2877,6 +3172,8 @@ std::string_view RetroFuturaGUI::FileExplorer::menuText(const MenuAction action)
             return "Delete permanently";
         case MenuAction::Undo:
             return "Undo";
+        case MenuAction::Redo:
+            return "Redo";
         case MenuAction::Cut:
             return "Cut";
         case MenuAction::Copy:
@@ -2955,6 +3252,7 @@ void RetroFuturaGUI::FileExplorer::handleKeys()
         isCutPressed { wasPressed(_cutKey) },
         isPastePressed { wasPressed(_pasteKey) },
         isUndoPressed { wasPressed(_undoKey) },
+        isRedoPressed { wasPressed(_redoKey) },
         isControlHeld { PlatformBridge::Input::IsKeyDown(PB_KEY_CONTROL_L) || PlatformBridge::Input::IsKeyDown(PB_KEY_CONTROL_R) },
         isShiftHeld { PlatformBridge::Input::IsKeyDown(PB_KEY_SHIFT_L) || PlatformBridge::Input::IsKeyDown(PB_KEY_SHIFT_R) };
 
@@ -2980,6 +3278,8 @@ void RetroFuturaGUI::FileExplorer::handleKeys()
         pasteFromClipboard();
     else if(isControlHeld && isUndoPressed)
         undoLast();
+    else if(isControlHeld && isRedoPressed)
+        redoLast();
     else if(isBackspacePressed || (isControlHeld && isUpPressed))
         on_upButton_click();
     else if(isControlHeld && isLeftPressed)
@@ -3021,7 +3321,7 @@ bool RetroFuturaGUI::FileExplorer::wasPressed(KeyPress& key)
 
 void RetroFuturaGUI::FileExplorer::syncKeys()
 {
-    for(KeyPress* key : { &_enterKey, &_backspaceKey, &_escapeKey, &_upKey, &_leftKey, &_rightKey, &_refreshKey, &_renameKey, &_newFolderKey, &_deleteKey, &_copyKey, &_cutKey, &_pasteKey, &_undoKey })
+    for(KeyPress* key : { &_enterKey, &_backspaceKey, &_escapeKey, &_upKey, &_leftKey, &_rightKey, &_refreshKey, &_renameKey, &_newFolderKey, &_deleteKey, &_copyKey, &_cutKey, &_pasteKey, &_undoKey, &_redoKey })
         key->_PressCountSeen = PlatformBridge::Input::GetKeyPressCount(key->_Key);
 }
 

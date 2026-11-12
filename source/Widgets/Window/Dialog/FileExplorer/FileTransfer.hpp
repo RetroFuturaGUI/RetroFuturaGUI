@@ -57,6 +57,8 @@ namespace RetroFuturaGUI
                 _Targets {}; //Copy and Move: each source's own path to go to, moving items back where they were; empty uses _Destination
             std::filesystem::path _Destination {}; //the folder Copy and Move put the items in
             ClashRule _ClashRule { ClashRule::KeepBoth };
+            std::vector<ClashAnswer> _ClashAnswers {}; //Copy and Move. Each source's answer to a taken name, decided ahead (Redo replaces again); past its end the rule decides
+            std::vector<std::filesystem::path> _ReplacedItems {}; //Move and MoveToTrash. Each source's item it replaced, waiting in the recycle bin under this path, put back where the source was once it left (Undo). Empty for none
         };
 
         /// @brief How far the operation got: "Copying 3 of 12: Song.mp3".
@@ -82,7 +84,8 @@ namespace RetroFuturaGUI
         {
             std::filesystem::path
                 _From {},
-                _To {};
+                _To {},
+                _Replaced {}; //the item a Replace put in the recycle bin, by the path it was binned from. Empty when none was, or the bin couldn't take it and it was deleted
         };
 
         /// @brief How an operation ended.
@@ -93,7 +96,8 @@ namespace RetroFuturaGUI
             std::vector<DoneItem> _Done {};
             std::vector<std::filesystem::path>
                 _NotTrashed {}, //MoveToTrash: items the recycle bin can't take, left where they are
-                _Skipped {};    //clashes answered with Skip
+                _Skipped {},    //clashes answered with Skip
+                _PutBack {};    //replaced items an undo brought back from the recycle bin, where they are now
             std::filesystem::path _FailedPath {}; //the first item that failed; empty when none did
             std::error_code _Error {};            //why it failed
             uSize _FailedCount { 0 };
@@ -163,6 +167,14 @@ namespace RetroFuturaGUI
         /// @brief Moves a file or a folder to target, which must not exist: renamed on the same volume, otherwise copied and the
         ///        original deleted once the copy is whole.
         static bool moveTree(const std::filesystem::path& source, const std::filesystem::path& target, std::stop_token stop, std::error_code& errorOut);
+
+        /// @brief Puts the request's replaced item for index back from the recycle bin, at the source's place, once the source
+        ///        left it. Nothing when the source replaced nothing; a failure is counted against the replaced item
+        static void restoreReplaced(const Request& request, const uSize index, Outcome& outcome);
+
+        /// @brief The name a replaced item goes to the recycle bin under, "Song (replaced).mp3", free in its folder. Undoing a copy
+        ///        puts the copy into the bin by the replaced item's own name, so the bin tells the two apart by it
+        static std::filesystem::path replacedName(const std::filesystem::path& path, const bool isFolder);
 
         mutable std::mutex _mutex {};
         std::condition_variable_any _clashAnswered {};

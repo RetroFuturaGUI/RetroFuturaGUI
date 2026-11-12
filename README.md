@@ -33,11 +33,9 @@ The framework is designed for cross-platform use, and its logic can be compiled 
 - Popups
   - Linux is untested: the owner is set with XSetTransientForHint, and whether the popup stays off the taskbar is up to the window manager
 - FileExplorer
-  - Dragging files out was tried by dropping them on the app's own window only; the tests never drive other programs, so a drop on the desktop or another explorer is untried
-  - Files dragged in from another program show where they would go only once dropped: GLFW takes drops as WM_DROPFILES, which tells nothing while they hover. While rows are dragged out, the system runs the drag in a loop of its own, so the app's windows don't draw until the drop
+  - Linux takes dropped files only once let go, through GLFW: nothing shows where they would land while they hover, and they are always copied (Windows marks the folder under the pointer and moves or copies as Windows does). While rows are dragged out, the system runs the drag in a loop of its own, so the app's windows don't draw until the drop
   - Linux can't drag files out yet: a drag past the window's edge stays the explorer's own
-  - A Replace can't be undone in full: Undo takes the copy away, but the item it replaced was deleted. Undo covers what explorers with the Undo flag did, and only while the app runs
-  - Redo (Ctrl+Y, and a Redo item in the Edit menu) is still to come: an undone step should go onto a redo list that the next new operation clears
+  - Undo and Redo cover what explorers with the Undo flag did, and only while the app runs. An item a Replace couldn't put in the recycle bin (a drive without one, or too big for it) is deleted, and Undo can't bring it back
   - The Hidden files and Extensions toggles are buttons drawn in an accent color while on; they become labeled checkboxes once a LabeledCheckBox prefab exists (roadmap 7)
   - Renaming has its own button in the menu strip. Now that the ContextMenu reports clicks, Rename can move to a right-click menu on the rows and the button go; Delete, Cut, Copy and Paste join that menu too
   - Typing a name doesn't jump to it
@@ -143,7 +141,7 @@ The framework is designed for cross-platform use, and its logic can be compiled 
 - FileExplorer
   - A popup that browses the file system and closes with the chosen paths: Open(startPath, flags, ".cpp, .hpp")
   - Single file, multiple files, folder or save mode; places, history, an address box, sorting, filters, hidden files and extensions toggles; where the list is too narrow (thumbnails, a large font), Type, then Size, then Modified give way so the names keep about ten characters
-  - File operations: new folder, rename, delete to the recycle bin or permanently, cut, copy and paste through the system clipboard, drag and drop in and out, undo
+  - File operations: new folder, rename, delete to the recycle bin or permanently, cut, copy and paste through the system clipboard, drag and drop in and out (on Windows the folder under dragged files is marked, and they move or copy as Windows decides: Shift moves, Ctrl copies, otherwise a move within a drive), undo and redo (Ctrl+Z, Ctrl+Y); a Replace puts the replaced item in the recycle bin, so Undo brings it back
   - Previews and thumbnails of images, songs (cover art) and videos, decoded by a separate, restricted helper process. The details below a preview list the most telling first and scroll, with a scrollbar beside them while they don't fit. A video's still is decoded once, at the keyframe before 10% in and at the pane's size, for the pane and its thumbnail alike
   - Listing and file operations run off the GUI thread, and the folder shown is watched for changes
 - Media Playback

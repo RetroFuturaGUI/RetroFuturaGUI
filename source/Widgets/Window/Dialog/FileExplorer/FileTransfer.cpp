@@ -102,7 +102,7 @@ bool RetroFuturaGUI::FileTransfer::IsInside(const std::filesystem::path& path, c
 
 void RetroFuturaGUI::FileTransfer::run(Request&& request, std::stop_token stop)
 {
-    Outcome outcome { ._Operation = request._Operation, ._TotalCount = request._Sources.size(), ._Done = {}, ._NotTrashed = {}, ._Skipped = {}, ._FailedPath = {}, ._Error = {}, ._FailedCount = 0, ._IsStopped = false };
+    Outcome outcome { ._Operation = request._Operation, ._TotalCount = request._Sources.size(), ._Done = {}, ._NotTrashed = {}, ._Skipped = {}, ._PutBack = {}, ._FailedPath = {}, ._Error = {}, ._FailedCount = 0, ._IsStopped = false };
     std::optional<ClashAnswer> standingAnswer {}; //given for the remaining clashes
 
     for(uSize index = 0; index < request._Sources.size(); ++index)
@@ -124,7 +124,10 @@ void RetroFuturaGUI::FileTransfer::run(Request&& request, std::stop_token stop)
                 const PlatformBridge::FileSystem::TrashResult result { PlatformBridge::FileSystem::MoveToTrash(source, error) };
 
                 if(PlatformBridge::FileSystem::TrashResult::Moved == result)
-                    outcome._Done.push_back(DoneItem { ._From = source, ._To = {} });
+                {
+                    outcome._Done.push_back(DoneItem { ._From = source, ._To = {}, ._Replaced = {} });
+                    restoreReplaced(request, index, outcome);
+                }
                 else if(PlatformBridge::FileSystem::TrashResult::NotTrashable == result)
                     outcome._NotTrashed.push_back(source);
                 else
@@ -133,7 +136,7 @@ void RetroFuturaGUI::FileTransfer::run(Request&& request, std::stop_token stop)
             break;
             case Operation::DeletePermanently:
                 if(deleteTree(source, stop, error))
-                    outcome._Done.push_back(DoneItem { ._From = source, ._To = {} });
+                    outcome._Done.push_back(DoneItem { ._From = source, ._To = {}, ._Replaced = {} });
                 else if(stop.stop_requested())
                     outcome._IsStopped = true;
                 else
@@ -144,7 +147,7 @@ void RetroFuturaGUI::FileTransfer::run(Request&& request, std::stop_token stop)
                 std::filesystem::path restored {};
 
                 if(PlatformBridge::FileSystem::RestoreFromTrash(source, restored, error))
-                    outcome._Done.push_back(DoneItem { ._From = source, ._To = restored });
+                    outcome._Done.push_back(DoneItem { ._From = source, ._To = restored, ._Replaced = {} });
                 else
                     noteFailure(outcome, source, error);
             }
@@ -199,7 +202,11 @@ void RetroFuturaGUI::FileTransfer::transferItem(const Request& request, const uS
         ClashAnswer answer { ClashAnswer::KeepBoth };
 
         //A copy into its own folder is a second one, whatever the rule
-        if(!isSameFolder && ClashRule::Ask == request._ClashRule)
+        if(!isSameFolder && index < request._ClashAnswers.size())
+        {
+            answer = request._ClashAnswers[index];
+        }
+        else if(!isSameFolder && ClashRule::Ask == request._ClashRule)
         {
             if(standingAnswer)
             {
@@ -237,9 +244,7 @@ void RetroFuturaGUI::FileTransfer::transferItem(const Request& request, const uS
             if(std::filesystem::equivalent(source, target, error))
                 return; //replacing an item with itself leaves it
 
-            aside = target;
-            aside += ".replaced";
-            aside = PlatformBridge::FileSystem::FreeName(aside, true);
+            aside = replacedName(target, std::filesystem::is_directory(std::filesystem::symlink_status(target, error)));
             std::filesystem::rename(target, aside, error);
 
             if(error)
@@ -251,29 +256,90 @@ void RetroFuturaGUI::FileTransfer::transferItem(const Request& request, const uS
     }
 
     const bool isDone { isMove ? moveTree(source, target, stop, error) : copyTree(source, target, stop, error) };
+    std::filesystem::path replaced {};
 
-    //The replaced item goes once the new one is in, and comes back when it didn't make it
+    //The replaced item goes to the recycle bin once the new one is in, so Undo can bring it back, and is deleted only where the
+    //bin can't take it. It comes back when the new one didn't make it
     if(!aside.empty())
     {
         std::error_code asideError {};
 
-        if(isDone)
-        {
-            deleteTree(aside, {}, asideError);
-        }
-        else
+        if(!isDone)
         {
             deleteTree(target, {}, asideError);
             std::filesystem::rename(aside, target, asideError);
         }
+        else if(PlatformBridge::FileSystem::TrashResult::Moved == PlatformBridge::FileSystem::MoveToTrash(aside, asideError))
+        {
+            replaced = aside;
+        }
+        else
+        {
+            deleteTree(aside, {}, asideError);
+        }
     }
 
     if(isDone)
-        outcome._Done.push_back(DoneItem { ._From = source, ._To = target });
+    {
+        outcome._Done.push_back(DoneItem { ._From = source, ._To = target, ._Replaced = replaced });
+
+        if(isMove)
+            restoreReplaced(request, index, outcome); //an undo's move back, out of where it replaced something
+    }
     else if(stop.stop_requested())
+    {
         outcome._IsStopped = true;
+    }
     else
+    {
         noteFailure(outcome, source, error);
+    }
+}
+
+void RetroFuturaGUI::FileTransfer::restoreReplaced(const Request& request, const uSize index, Outcome& outcome)
+{
+    if(request._ReplacedItems.size() <= index || request._ReplacedItems[index].empty())
+        return;
+
+    //Back under the name it was binned by, then under its own, which the source just left
+    const std::filesystem::path
+        &replaced { request._ReplacedItems[index] },
+        &place { request._Sources[index] };
+    std::filesystem::path restored {};
+    std::error_code error {};
+
+    if(!PlatformBridge::FileSystem::RestoreFromTrash(replaced, restored, error))
+    {
+        noteFailure(outcome, replaced, error);
+        return;
+    }
+
+    if(std::filesystem::exists(std::filesystem::symlink_status(place, error)))
+    {
+        noteFailure(outcome, restored, std::make_error_code(std::errc::file_exists)); //taken meanwhile: it stays under the bin's name
+        return;
+    }
+
+    std::filesystem::rename(restored, place, error);
+
+    if(error)
+    {
+        noteFailure(outcome, restored, error);
+        return;
+    }
+
+    outcome._PutBack.push_back(place);
+}
+
+std::filesystem::path RetroFuturaGUI::FileTransfer::replacedName(const std::filesystem::path& path, const bool isFolder)
+{
+    std::filesystem::path name { isFolder ? path.filename() : path.stem() };
+    name += " (replaced)";
+
+    if(!isFolder)
+        name += path.extension();
+
+    return PlatformBridge::FileSystem::FreeName(path.parent_path() / name, isFolder);
 }
 
 std::optional<std::pair<RetroFuturaGUI::FileTransfer::ClashAnswer, RetroFuturaGUI::FileTransfer::ClashScope>> RetroFuturaGUI::FileTransfer::askAboutClash(const std::filesystem::path& source, const std::filesystem::path& target, std::stop_token stop)

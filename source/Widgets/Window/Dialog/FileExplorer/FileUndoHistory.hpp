@@ -6,8 +6,8 @@
 
 namespace RetroFuturaGUI
 {
-    /// @brief The file operations every explorer in the app did, newest last, for Undo. Explorers run on the main thread, and so
-    ///        does this
+    /// @brief The file operations every explorer in the app did, newest last, for Undo, and the steps undone since, for Redo.
+    ///        Explorers run on the main thread, and so does this
     class FileUndoHistory
     {
     public:
@@ -26,7 +26,8 @@ namespace RetroFuturaGUI
         {
             std::filesystem::path
                 _From {},
-                _To {};
+                _To {},
+                _Replaced {};
         };
 
         struct Step
@@ -37,7 +38,7 @@ namespace RetroFuturaGUI
 
         FileUndoHistory() = delete;
 
-        /// @brief Adds a step. past the limit the oldest one goes.
+        /// @brief Adds a new step, past the limit the oldest one goes. The undone steps go, since Redo would no longer fit
         static void Record(Step&& step);
 
         /// @brief Takes the newest step off to undo it.
@@ -45,8 +46,21 @@ namespace RetroFuturaGUI
 
         static bool HasSteps();
 
+        /// @brief Keeps a step that was undone, for Redo
+        static void KeepUndone(Step&& step);
+
+        /// @brief Takes the step undone last off to redo it
+        static std::optional<Step> TakeLastUndone();
+
+        static bool HasUndoneSteps();
+
+        /// @brief Adds a step that was redone, or one that couldn't be undone, back to the history, keeping the undone steps
+        static void RecordAgain(Step&& step);
+
     private:
         static constexpr uSize _stepLimit { 100 };
-        static inline std::vector<Step> _steps {};
+        static inline std::vector<Step>
+            _steps {},
+            _undoneSteps {};
     };
 }
