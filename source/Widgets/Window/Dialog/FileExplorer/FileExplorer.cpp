@@ -476,7 +476,9 @@ std::vector<RetroFuturaGUI::Table::TrackDefinition> RetroFuturaGUI::FileExplorer
         sizeWidth { std::ceil(4.5f * font._Size) },
         modifiedWidth { std::ceil(8.25f * font._Size) },
         typeWidth { std::ceil(4.125f * font._Size) }; //and room for the sort arrow in its header
-    const f32 nameRoom { listWidth - (hasThumbnails ? _thumbnailColumnWidth : 0.0f) - std::ceil(_nameMinimumFontSizes * font._Size) };
+    const f32
+        iconWidth { hasThumbnails ? _thumbnailColumnWidth : rowHeight(font) }, //square while it holds icons only
+        nameRoom { listWidth - iconWidth - std::ceil(_nameMinimumFontSizes * font._Size) };
 
     //Least telling first, while the rest would leave Name too narrow. The preview pane still shows them
     for(f32* width : { &typeWidth, &sizeWidth, &modifiedWidth })
@@ -487,18 +489,14 @@ std::vector<RetroFuturaGUI::Table::TrackDefinition> RetroFuturaGUI::FileExplorer
         *width = 0.0f;
     }
 
-    std::vector<Table::TrackDefinition> columns
+    return
     {
+        { ._Sizing = Table::TrackSizing::Fixed, ._Value = iconWidth },
         { ._Sizing = Table::TrackSizing::Star, ._Value = 1.0f },   //name
         { ._Sizing = Table::TrackSizing::Fixed, ._Value = sizeWidth },
         { ._Sizing = Table::TrackSizing::Fixed, ._Value = modifiedWidth },
         { ._Sizing = Table::TrackSizing::Fixed, ._Value = typeWidth }
     };
-
-    if(hasThumbnails)
-        columns.insert(columns.begin(), Table::TrackDefinition { ._Sizing = Table::TrackSizing::Fixed, ._Value = _thumbnailColumnWidth });
-
-    return columns;
 }
 
 bool RetroFuturaGUI::FileExplorer::hasPreview() const
@@ -1168,10 +1166,9 @@ void RetroFuturaGUI::FileExplorer::updateHeaderTexts()
 
     constexpr std::array<std::string_view, _fileColumnCount> names { "Name", "Size", "Modified", "Type" };
     constexpr std::array<SortColumn, _fileColumnCount> columns { SortColumn::Name, SortColumn::Size, SortColumn::Modified, SortColumn::Type };
-    const uSize firstColumn { getNameColumn() };
+    const uSize firstColumn { _nameColumn };
 
-    if(_showThumbnails)
-        _widgets._Files->SetHorizontalHeaderText("", 0); //the thumbnails' column has no name, and may hold the one Name had
+    _widgets._Files->SetHorizontalHeaderText("", 0); //the icons' column has no name
 
     for(uSize column = 0; column < _fileColumnCount; ++column)
     {
@@ -1244,10 +1241,10 @@ void RetroFuturaGUI::FileExplorer::fillTable()
     _widgets._Files->SetTrackDefinitions(rowDefinition, columnDefinition(_cellFont, _showThumbnails, _widgets._Files->GetSize().x));
 
     //The read-only flags follow the columns, which the thumbnails' adds to
-    for(uSize column = 0; column < getNameColumn() + _fileColumnCount; ++column)
+    for(uSize column = 0; column < _nameColumn + _fileColumnCount; ++column)
         _widgets._Files->SetTrackReadOnly(column, true);
 
-    const uSize firstColumn { getNameColumn() };
+    const uSize firstColumn { _nameColumn };
 
     for(uSize row = 0; row < _shownRows.size(); ++row)
     {
@@ -1258,13 +1255,11 @@ void RetroFuturaGUI::FileExplorer::fillTable()
         _widgets._Files->SetValue(texts._Type, TrackIndex { ._Row = row, ._Column = firstColumn + 3, ._Layer = 0 }, false);
     }
 
-    if(_showThumbnails)
-    {
-        if(!_thumbnails)
-            _thumbnails = std::make_unique<ThumbnailCache>(_stills);
+    //Every row shows its type icon, which a thumbnail takes the place of once ready while thumbnails show
+    if(!_thumbnails)
+        _thumbnails = std::make_unique<ThumbnailCache>(_stills);
 
-        _thumbnails->ShowIcons(*_widgets._Files, _shownEntries, 0);
-    }
+    _thumbnails->ShowIcons(*_widgets._Files, _shownEntries, 0, getListIconSide());
 
     _widgets._Files->SetScrollPosition(glm::vec2(0.0f));
     updateHeaderTexts(); //the header cells came anew with the columns
@@ -1282,12 +1277,12 @@ void RetroFuturaGUI::FileExplorer::updateNameColumn()
         return;
 
     for(uSize row = 0; row < _shownRows.size(); ++row)
-        _widgets._Files->SetValue(displayName(_shownRows[row]), TrackIndex { ._Row = row, ._Column = getNameColumn(), ._Layer = 0 }, false);
+        _widgets._Files->SetValue(displayName(_shownRows[row]), TrackIndex { ._Row = row, ._Column = _nameColumn, ._Layer = 0 }, false);
 }
 
-uSize RetroFuturaGUI::FileExplorer::getNameColumn() const
+i32 RetroFuturaGUI::FileExplorer::getListIconSide() const
 {
-    return _showThumbnails ? 1 : 0;
+    return static_cast<i32>(std::round(getListRowHeight() - 2.0f * _iconMargin));
 }
 
 f32 RetroFuturaGUI::FileExplorer::getListRowHeight() const
@@ -1715,10 +1710,10 @@ void RetroFuturaGUI::FileExplorer::on_filesTable_headerClicked(const uSize colum
 {
     constexpr std::array<SortColumn, _fileColumnCount> columns { SortColumn::Name, SortColumn::Size, SortColumn::Modified, SortColumn::Type };
 
-    if(getNameColumn() > column)
+    if(_nameColumn > column)
         return; //the thumbnails don't sort
 
-    const uSize fileColumn { column - getNameColumn() };
+    const uSize fileColumn { column - _nameColumn };
 
     if(columns.size() <= fileColumn)
         return;
@@ -1834,7 +1829,7 @@ void RetroFuturaGUI::FileExplorer::startRename()
     const uSize selectedLength { hasShownExtension ? codePointCount(toUtf8(entry._Path.stem())) : std::numeric_limits<uSize>::max() };
 
     _renamingPath = entry._Path;
-    _widgets._Files->EditCell(TrackIndex { ._Row = row, ._Column = getNameColumn(), ._Layer = 0 }, selectedLength);
+    _widgets._Files->EditCell(TrackIndex { ._Row = row, ._Column = _nameColumn, ._Layer = 0 }, selectedLength);
 }
 
 void RetroFuturaGUI::FileExplorer::finishRename(std::string_view text)

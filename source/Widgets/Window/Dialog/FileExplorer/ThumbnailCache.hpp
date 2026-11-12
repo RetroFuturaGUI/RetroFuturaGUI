@@ -22,7 +22,6 @@ namespace RetroFuturaGUI
     class FileExplorer::ThumbnailCache
     {
     public:
-        /// @brief Draws the type icons, which needs a GL context current.
         /// @param stills The video stills shared with the preview pane, nullptr for none
         explicit ThumbnailCache(std::shared_ptr<StillCache> stills);
         ThumbnailCache(const ThumbnailCache&) = delete;
@@ -31,8 +30,10 @@ namespace RetroFuturaGUI
         auto operator =(ThumbnailCache&&) = delete;
         ~ThumbnailCache() = default;
 
-        /// @brief Gives every row of the column its type icon, after the list was filled.
-        void ShowIcons(Table& table, const std::vector<Entry>& entries, const uSize column);
+        /// @brief Gives every row of the column its type icon, after the list was filled. The icons are drawn again when the side
+        ///        changes (thumbnail rows are taller than plain ones), which needs a GL context current
+        /// @param iconSide The icons' width and height in pixel. The row less the cell's padding, so they draw at the size they were drawn at
+        void ShowIcons(Table& table, const std::vector<Entry>& entries, const uSize column, const i32 iconSide);
 
         /// @brief Runs each frame while thumbnails show: the rows in view get the thumbnails that are ready, the ones still missing
         ///        are asked for, and rows that left the view get their icons back.
@@ -78,6 +79,9 @@ namespace RetroFuturaGUI
         const ITexture* pictureOf(const Entry& entry);
         const ITexture* iconOf(const FileKind kind) const;
 
+        /// @brief Draws the type icons at a side, unless they are already
+        void drawIcons(const i32 side);
+
         /// @brief Deletes the thumbnails shown longest ago while there are more than the limit. Rendered ones and the ones being made stay.
         void letGoOfOldest();
 
@@ -87,6 +91,7 @@ namespace RetroFuturaGUI
         std::unordered_map<std::filesystem::path::string_type, Thumbnail> _thumbnails {};
         std::deque<std::filesystem::path::string_type> _pendingKeys {}; //...in the order posted, which is the order they finish in
         std::array<std::unique_ptr<Texture>, 5> _icons {}; //by FileKind
+        i32 _iconSide { 0 }; //what the icons were drawn at
         std::unique_ptr<BackgroundWork> _work { std::make_unique<BackgroundWork>(BackgroundWork::WhenDestroyed::LetJobFinish) }; //its jobs use only copies
         std::shared_ptr<IsolatedDecoder> _decoder { std::make_shared<IsolatedDecoder>() }; //the worker's own. a stuck job keeps the one it has
         std::shared_ptr<StillCache> _stills { nullptr }; //shared with the preview pane; the jobs keep it alive
@@ -99,9 +104,7 @@ namespace RetroFuturaGUI
         static constexpr uSize
             _thumbnailLimit { 512 }, //64 x 64 pixels make 16 KB a thumbnail, so 8 MB at most
             _pendingLimit { 4 }; //few, so scrolling fast past rows doesn't leave a long queue of rows no longer in view
-        static constexpr i32
-            _pictureSide { 64 }, //the thumbnail column less the cell's padding
-            _iconSide { 56 }; //the row less the cell's padding, so icons draw at the size they were drawn at
+        static constexpr i32 _pictureSide { 64 }; //the thumbnail column less the cell's padding
         static constexpr std::chrono::milliseconds _jobPatience { 5000 };
     };
 }

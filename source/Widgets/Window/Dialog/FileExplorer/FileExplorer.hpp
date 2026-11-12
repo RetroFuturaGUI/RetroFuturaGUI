@@ -449,8 +449,8 @@ namespace RetroFuturaGUI
         /// @brief Writes the names again after the Extensions switch changed, leaving the selection and scroll position alone
         void updateNameColumn();
 
-        /// @brief The column showing the names, after the thumbnails' while they show.
-        uSize getNameColumn() const;
+        /// @brief The side of the icons in the first column: the row less the margins
+        i32 getListIconSide() const;
 
         /// @brief The rows' height: taller while thumbnails show.
         f32 getListRowHeight() const;
@@ -864,10 +864,13 @@ namespace RetroFuturaGUI
             ._ColumnDefinition = std::vector<f32>(_viewColumnCount, 1.0f / static_cast<f32>(_viewColumnCount)),
             ._LayerDefinition = { 1.0f }
         };
-        static constexpr uSize _fileColumnCount { 4 }; //name, size, modified, type
+        static constexpr uSize
+            _fileColumnCount { 4 }, //name, size, modified, type
+            _nameColumn { 1 };      //after the column of icons or thumbnails
         static constexpr f32
             _thumbnailColumnWidth { 72.0f },
             _thumbnailRowHeight { 64.0f },
+            _iconMargin { 4.0f }, //between a row's icon and its cell's edges
             _nameMinimumFontSizes { 5.0f }; //about ten characters, the narrowest Name gets before other columns give way
         static constexpr std::chrono::milliseconds
             _progressDelay { 150 },    //a listing that takes longer says "Opening" meanwhile

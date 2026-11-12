@@ -8,22 +8,12 @@
 RetroFuturaGUI::FileExplorer::ThumbnailCache::ThumbnailCache(std::shared_ptr<StillCache> stills)
     : _stills(std::move(stills))
 {
-    constexpr std::array<std::string_view, 5> iconFiles { "FolderIcon.svg", "ImageIcon.svg", "AudioIcon.svg", "VideoIcon.svg", "FileIcon.svg" }; //in FileKind's order
-    const std::filesystem::path iconFolder { PlatformBridge::Paths::GetExecutablePathFSPath().parent_path() / "Resources" / "img" };
-
-    for(uSize kind = 0; kind < iconFiles.size(); ++kind)
-    {
-        std::optional<DecodedImage> icon { Texture::DecodeFile(iconFolder / iconFiles[kind], true, _iconSide) };
-
-        if(!icon)
-            continue; //that kind shows nothing
-
-        _icons[kind] = std::make_unique<Texture>(std::move(*icon));
-    }
 }
 
-void RetroFuturaGUI::FileExplorer::ThumbnailCache::ShowIcons(Table& table, const std::vector<Entry>& entries, const uSize column)
+void RetroFuturaGUI::FileExplorer::ThumbnailCache::ShowIcons(Table& table, const std::vector<Entry>& entries, const uSize column, const i32 iconSide)
 {
+    drawIcons(iconSide);
+
     for(uSize row = 0; row < entries.size(); ++row)
         table.SetValue(iconOf(fileKindOf(entries[row])), TrackIndex { ._Row = row, ._Column = column, ._Layer = 0 });
 
@@ -164,6 +154,22 @@ const RetroFuturaGUI::ITexture* RetroFuturaGUI::FileExplorer::ThumbnailCache::ic
 {
     const uSize index { static_cast<uSize>(kind) };
     return index < _icons.size() ? _icons[index].get() : nullptr;
+}
+
+void RetroFuturaGUI::FileExplorer::ThumbnailCache::drawIcons(const i32 side)
+{
+    if(side == _iconSide)
+        return;
+
+    constexpr std::array<std::string_view, 5> iconFiles { "FolderIcon.svg", "ImageIcon.svg", "AudioIcon.svg", "VideoIcon.svg", "FileIcon.svg" }; //in FileKind's order
+    const std::filesystem::path iconFolder { PlatformBridge::Paths::GetExecutablePathFSPath().parent_path() / "Resources" / "img" };
+    _iconSide = side;
+
+    for(uSize kind = 0; kind < iconFiles.size(); ++kind)
+    {
+        std::optional<DecodedImage> icon { Texture::DecodeFile(iconFolder / iconFiles[kind], true, side) };
+        _icons[kind] = icon ? std::make_unique<Texture>(std::move(*icon)) : nullptr; //without one, that kind shows nothing
+    }
 }
 
 void RetroFuturaGUI::FileExplorer::ThumbnailCache::letGoOfOldest()
