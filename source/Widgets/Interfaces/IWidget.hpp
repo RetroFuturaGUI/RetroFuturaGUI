@@ -35,6 +35,7 @@ namespace RetroFuturaGUI
         friend class ScrollView; //finds the frontmost cell under the pointer with its widgets' own hit tests
         template<typename> friend class WidgetReference;
         friend class WidgetRegistry; //keeps the path hash up to date
+        friend class DynamicLibWidgetManager; //styles a in DYNLIB_MODE
 
     public:
         /// @brief Constructs a widget with the given name, under the given parent widget/window.

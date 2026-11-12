@@ -1,21 +1,20 @@
 #include "DynamicLibWidgetManager.hpp"
+#include "Background.hpp"
+#include "Border.hpp"
 #include "Button.hpp"
 #include "FileExplorer.hpp"
 #include "Label.hpp"
 #include "TextBox.hpp"
+#include "WidgetRegistry.hpp"
+#include "WidgetText.hpp"
 #include "Window.hpp"
 #include <memory>
 #include <string>
 #include <vector>
 
-void RetroFuturaGUI::DynamicLibWidgetManager::AddWidget(std::string_view id, IWidget *widgetRef)
-{
-    _metaWidgets.emplace(id, widgetRef);
-}
-
 void RetroFuturaGUI::DynamicLibWidgetManager::ConnectSlot(const char *id, CallbackType callback, const i32 action, const bool async)
 {
-    IWidget* widget { getWidgetPointer(id) };
+    IWidget* widget { findWidget(id) };
 
     if(!widget)
         return;
@@ -34,13 +33,13 @@ void RetroFuturaGUI::DynamicLibWidgetManager::ConnectSlot(const char *id, Callba
             connectSlotToTextBox(widget, callback, action, async);
         break;
         default:
-            [[unlikely]];
+            std::println("Warning: {0} has no signals other languages can connect to yet.", id);
     }
 }
 
 void RetroFuturaGUI::DynamicLibWidgetManager::DisconnectSlot(const char *id, CallbackType callback, const i32 action)
 {
-    IWidget* widget { getWidgetPointer(id) };
+    IWidget* widget { findWidget(id) };
 
     if(!widget)
         return;
@@ -63,360 +62,229 @@ void RetroFuturaGUI::DynamicLibWidgetManager::DisconnectSlot(const char *id, Cal
     }
 }
 
-//legacy. chage when updating bindings
-void RetroFuturaGUI::DynamicLibWidgetManager::SetRotation(const char *id, const f32 degree)
+void RetroFuturaGUI::DynamicLibWidgetManager::SetRotation(const char *id, const glm::vec3& rotation)
 {
-    IWidget* widget { getWidgetPointer(id) };
+    IWidget* widget { findWidget(id) };
 
     if(!widget)
         return;
 
-    widget->SetRotation(glm::vec3(0.0f, 0.0f, degree));
+    widget->SetRotation(rotation);
+}
+
+void RetroFuturaGUI::DynamicLibWidgetManager::SetPosition(const char *id, const glm::vec3& position)
+{
+    IWidget* widget { findWidget(id) };
+
+    if(!widget)
+        return;
+
+    widget->SetPosition(position);
 }
 
 void RetroFuturaGUI::DynamicLibWidgetManager::SetSize(const char *id, const f32 width, const f32 height)
 {
-    IWidget* widget { getWidgetPointer(id) };
+    IWidget* widget { findWidget(id) };
 
     if(!widget)
         return;
 
-    widget->SetSize(glm::vec3(width, height, 0.01f));
+    widget->SetSize(glm::vec3(width, height, widget->GetSize().z));
 }
 
 void RetroFuturaGUI::DynamicLibWidgetManager::SetEnabled(const char* id, const bool enable, const bool emitSignal)
 {
-    IWidget* widget { getWidgetPointer(id) };
+    IWidget* widget { findWidget(id) };
 
     if(!widget)
         return;
 
-    WidgetTypeID widgetTypeID = widget->GetWidgetTypeID();
-
-    switch(widgetTypeID)
-    {
-        case WidgetTypeID::Button:
-        {
-            Button* button = dynamic_cast<Button*>(widget);
-            button->SetEnabled(enable, emitSignal);
-        } break;
-        case WidgetTypeID::Label:
-        {
-            Label* label = dynamic_cast<Label*>(widget);
-            label->SetEnabled(enable, emitSignal);
-        } break;
-        default:
-            [[unlikely]];
-    }
+    widget->SetEnabled(enable, emitSignal);
 }
 
 void RetroFuturaGUI::DynamicLibWidgetManager::SetBackgroundColors(const char* id, std::span<const glm::vec4> colors, const ColorState colorState)
 {
-    IWidget* widget { getWidgetPointer(id) };
+    Background* background { findBackground(id) };
 
-    if(!widget)
+    if(!background)
         return;
 
-    WidgetTypeID widgetTypeID = widget->GetWidgetTypeID();
+    background->SetColors(colors, colorState);
+}
 
-    switch(widgetTypeID)
-    {
-        case WidgetTypeID::Button:
-        {
-            Button* button = dynamic_cast<Button*>(widget);
-            button->GetBackground().SetColors(colors, colorState);
-        } break;
-        default:
-            [[unlikely]];
-    }
+void RetroFuturaGUI::DynamicLibWidgetManager::SetBackgroundFillType(const char* id, const FillType fillType)
+{
+    Background* background { findBackground(id) };
+
+    if(!background)
+        return;
+
+    background->SetFillType(fillType);
 }
 
 void RetroFuturaGUI::DynamicLibWidgetManager::SetBackgroundGradientOffset(const char *id, const f32 gradientOffset)
 {
-    IWidget* widget { getWidgetPointer(id) };
+    Background* background { findBackground(id) };
 
-    if(!widget)
+    if(!background)
         return;
 
-    WidgetTypeID widgetTypeID = widget->GetWidgetTypeID();
-
-    switch(widgetTypeID)
-    {
-        case WidgetTypeID::Button:
-        {
-            Button* button = dynamic_cast<Button*>(widget);
-            button->GetBackground().SetGradientOffset(gradientOffset);
-        } break;
-        default:
-            [[unlikely]];
-    }
+    background->SetGradientOffset(gradientOffset);
 }
 
 void RetroFuturaGUI::DynamicLibWidgetManager::SetBackgroundGradientAnimationSpeed(const char *id, const f32 animationSpeed)
 {
-    IWidget* widget { getWidgetPointer(id) };
+    Background* background { findBackground(id) };
 
-    if(!widget)
+    if(!background)
         return;
 
-    WidgetTypeID widgetTypeID = widget->GetWidgetTypeID();
-
-    switch(widgetTypeID)
-    {
-        case WidgetTypeID::Button:
-        {
-            Button* button = dynamic_cast<Button*>(widget);
-            button->GetBackground().SetGradientAnimationSpeed(animationSpeed);
-        } break;
-        default:
-            [[unlikely]];
-    }
+    background->SetGradientAnimationSpeed(animationSpeed);
 }
 
 void RetroFuturaGUI::DynamicLibWidgetManager::SetBackgroundGradientDegree(const char *id, const f32 degree)
 {
-    IWidget* widget { getWidgetPointer(id) };
+    Background* background { findBackground(id) };
 
-    if(!widget)
+    if(!background)
         return;
 
-    WidgetTypeID widgetTypeID = widget->GetWidgetTypeID();
-
-    switch(widgetTypeID)
-    {
-        case WidgetTypeID::Button:
-        {
-            Button* button = dynamic_cast<Button*>(widget);
-            button->GetBackground().SetGradientDegree(degree);
-        } break;
-        default:
-            [[unlikely]];
-    }
+    background->SetGradientDegree(degree);
 }
 
 void RetroFuturaGUI::DynamicLibWidgetManager::SetBackgroundGradientRotationSpeed(const char *id, const f32 rotationSpeed)
 {
-    IWidget* widget { getWidgetPointer(id) };
+    Background* background { findBackground(id) };
 
-    if(!widget)
+    if(!background)
         return;
 
-    WidgetTypeID widgetTypeID = widget->GetWidgetTypeID();
-
-    switch(widgetTypeID)
-    {
-        case WidgetTypeID::Button:
-        {
-            Button* button = dynamic_cast<Button*>(widget);
-            button->GetBackground().SetGradientRotationSpeed(rotationSpeed);
-        } break;
-        default:
-            [[unlikely]];
-    }
+    background->SetGradientRotationSpeed(rotationSpeed);
 }
 
 void RetroFuturaGUI::DynamicLibWidgetManager::SetWindowBackgroundImageTextureID(const char *id, const u32 textureID)
 {
-    IWidget* widget { getWidgetPointer(id) };
+    Background* background { findBackground(id) };
 
-    if(!widget)
+    if(!background)
         return;
 
-    WidgetTypeID widgetTypeID = widget->GetWidgetTypeID();
-
-    switch(widgetTypeID)
-    {
-        case WidgetTypeID::Button:
-        {
-            Button* button = dynamic_cast<Button*>(widget);
-            button->GetBackground().SetWindowImageTextureID(textureID);
-        } break;
-        default:
-            [[unlikely]];
-    }
+    background->SetWindowImageTextureID(textureID);
 }
 
 void RetroFuturaGUI::DynamicLibWidgetManager::SetBorderColors(const char* id, std::span<const glm::vec4> colors, const ColorState colorState)
 {
-    IWidget* widget { getWidgetPointer(id) };
+    Border* border { findBorder(id) };
 
-    if(!widget)
+    if(!border)
         return;
 
-    WidgetTypeID widgetTypeID = widget->GetWidgetTypeID();
+    border->SetColors(colors, colorState);
+}
 
-    switch(widgetTypeID)
-    {
-        case WidgetTypeID::Button:
-        {
-            Button* button = dynamic_cast<Button*>(widget);
-            button->GetBorder().SetColors(colors, colorState);
-        } break;
-        default:
-            [[unlikely]];
-    }
+void RetroFuturaGUI::DynamicLibWidgetManager::SetBorderFillType(const char* id, const FillType fillType)
+{
+    Border* border { findBorder(id) };
+
+    if(!border)
+        return;
+
+    border->SetFillType(fillType);
 }
 
 void RetroFuturaGUI::DynamicLibWidgetManager::SetBorderGradientOffset(const char *id, const f32 gradientOffset)
 {
-    IWidget* widget { getWidgetPointer(id) };
+    Border* border { findBorder(id) };
 
-    if(!widget)
+    if(!border)
         return;
 
-    WidgetTypeID widgetTypeID = widget->GetWidgetTypeID();
-
-    switch(widgetTypeID)
-    {
-        case WidgetTypeID::Button:
-        {
-            Button* button = dynamic_cast<Button*>(widget);
-            button->GetBorder().SetGradientOffset(gradientOffset);
-        } break;
-        default:
-            [[unlikely]];
-    }
+    border->SetGradientOffset(gradientOffset);
 }
 
 void RetroFuturaGUI::DynamicLibWidgetManager::SetBorderGradientAnimationSpeed(const char *id, const f32 animationSpeed)
 {
-    IWidget* widget { getWidgetPointer(id) };
+    Border* border { findBorder(id) };
 
-    if(!widget)
+    if(!border)
         return;
 
-    WidgetTypeID widgetTypeID = widget->GetWidgetTypeID();
-
-    switch(widgetTypeID)
-    {
-        case WidgetTypeID::Button:
-        {
-            Button* button = dynamic_cast<Button*>(widget);
-            button->GetBorder().SetGradientAnimationSpeed(animationSpeed);
-        } break;
-        default:
-            [[unlikely]];
-    }
+    border->SetGradientAnimationSpeed(animationSpeed);
 }
 
 void RetroFuturaGUI::DynamicLibWidgetManager::SetBorderGradientDegree(const char *id, const f32 degree)
 {
-    IWidget* widget { getWidgetPointer(id) };
+    Border* border { findBorder(id) };
 
-    if(!widget)
+    if(!border)
         return;
 
-    WidgetTypeID widgetTypeID = widget->GetWidgetTypeID();
-
-    switch(widgetTypeID)
-    {
-        case WidgetTypeID::Button:
-        {
-            Button* button = dynamic_cast<Button*>(widget);
-            button->GetBorder().SetGradientDegree(degree);
-        } break;
-        default:
-            [[unlikely]];
-    }
+    border->SetGradientDegree(degree);
 }
 
 void RetroFuturaGUI::DynamicLibWidgetManager::SetBorderGradientRotationSpeed(const char *id, const f32 rotationSpeed)
 {
-    IWidget* widget { getWidgetPointer(id) };
+    Border* border { findBorder(id) };
 
-    if(!widget)
+    if(!border)
         return;
 
-    WidgetTypeID widgetTypeID = widget->GetWidgetTypeID();
-
-    switch(widgetTypeID)
-    {
-        case WidgetTypeID::Button:
-        {
-            Button* button = dynamic_cast<Button*>(widget);
-            button->GetBorder().SetGradientRotationSpeed(rotationSpeed);
-        } break;
-        default:
-            [[unlikely]];
-    }
+    border->SetGradientRotationSpeed(rotationSpeed);
 }
 
 void RetroFuturaGUI::DynamicLibWidgetManager::SetWindowBorderImageTextureID(const char *id, const u32 textureID)
 {
-    IWidget* widget { getWidgetPointer(id) };
+    Border* border { findBorder(id) };
 
-    if(!widget)
+    if(!border)
         return;
 
-    WidgetTypeID widgetTypeID = widget->GetWidgetTypeID();
-
-    switch(widgetTypeID)
-    {
-        case WidgetTypeID::Button:
-        {
-            Button* button = dynamic_cast<Button*>(widget);
-            button->GetBorder().SetWindowImageTextureID(textureID);
-        } break;
-        default:
-            [[unlikely]];
-    }
+    border->SetWindowImageTextureID(textureID);
 }
 
 void RetroFuturaGUI::DynamicLibWidgetManager::SetTextColors(const char *id, std::span<const glm::vec4> colors, const ColorState colorState)
 {
-    IWidget* widget { getWidgetPointer(id) };
+    WidgetText* text { findText(id) };
 
-    if(!widget)
+    if(!text)
         return;
 
-    WidgetTypeID widgetTypeID = widget->GetWidgetTypeID();
-
-    switch(widgetTypeID)
-    {
-        case WidgetTypeID::Button:
-        {
-            Button* button = dynamic_cast<Button*>(widget);
-            button->GetText().SetColors(colors, colorState);
-        } break;
-        case WidgetTypeID::Label:
-        {
-            Label* label = dynamic_cast<Label*>(widget);
-            label->GetText().SetColors(colors, colorState);
-        } break;
-        default:
-            [[unlikely]];
-    }
+    text->SetColors(colors, colorState);
 }
 
-void RetroFuturaGUI::DynamicLibWidgetManager::SetText(const char* id, const char* text)
+void RetroFuturaGUI::DynamicLibWidgetManager::SetTextFillType(const char* id, const FillType fillType)
 {
-    IWidget* widget { getWidgetPointer(id) };
+    WidgetText* text { findText(id) };
+
+    if(!text)
+        return;
+
+    text->SetFillType(fillType);
+}
+
+void RetroFuturaGUI::DynamicLibWidgetManager::SetText(const char* id, const char* text, const bool emitSignal)
+{
+    if(!text)
+        return;
+
+    IWidget* widget { findWidget(id) };
 
     if(!widget)
         return;
 
-    WidgetTypeID widgetTypeID = widget->GetWidgetTypeID();
+    TextBox* textBox { dynamic_cast<TextBox*>(widget) };
 
-    switch(widgetTypeID)
+    //Any other widget shows it as its main text
+    if(!textBox)
     {
-        case WidgetTypeID::Button:
-        {
-            Button* button = dynamic_cast<Button*>(widget);
-            button->GetText().SetString(text, false); //the app already set it
-        } break;
-        case WidgetTypeID::Label:
-        {
-            Label* label = dynamic_cast<Label*>(widget);
-            label->GetText().SetString(text, false);
-        } break;
-        case WidgetTypeID::TextBox:
-        {
-            TextBox* textBox = dynamic_cast<TextBox*>(widget);
-            textBox->SetValue(std::string_view(text), true);
-        } break;
-        default:
-            [[unlikely]];
+        if(!widget->_styledText)
+            return;
+
+        widget->_styledText->SetString(text, emitSignal);
+        return;
     }
+
+    textBox->SetValue(std::string_view { text }, emitSignal); //a TextBox's value is what its text shows, kept in its value store.
 }
 
 bool RetroFuturaGUI::DynamicLibWidgetManager::OpenFileExplorer(Window* window, std::string_view title, const i32 width, const i32 height, std::string_view startPath, const u32 flags, std::string_view extensions, PathsCallbackType onResult, CallbackType onDismiss)
@@ -463,17 +331,55 @@ RetroFuturaGUI::DynamicLibWidgetManager& RetroFuturaGUI::DynamicLibWidgetManager
     return Instance;
 }
 
-RetroFuturaGUI::IWidget *RetroFuturaGUI::DynamicLibWidgetManager::getWidgetPointer(const char *id)
+RetroFuturaGUI::IWidget* RetroFuturaGUI::DynamicLibWidgetManager::findWidget(const char* id)
 {
-    if(_metaWidgets.find(id) == _metaWidgets.end())
+    if(!id)
         return nullptr;
 
-    return _metaWidgets[id];
+    IWidget* widget { WidgetRegistry::Find(std::string_view { id }) };
+
+    if(!widget)
+        std::println("Warning: no widget at {0}. Widgets are named by their full path: \"MainWindow/MainScene/RootLasagna/TestButton\".", id);
+
+    return widget;
+}
+
+RetroFuturaGUI::Background* RetroFuturaGUI::DynamicLibWidgetManager::findBackground(const char* id)
+{
+    IWidget* widget { findWidget(id) };
+
+    if(!widget)
+        return nullptr;
+
+    return dynamic_cast<Background*>(widget->_styledBackground);
+}
+
+RetroFuturaGUI::Border* RetroFuturaGUI::DynamicLibWidgetManager::findBorder(const char* id)
+{
+    IWidget* widget { findWidget(id) };
+
+    if(!widget)
+        return nullptr;
+
+    return dynamic_cast<Border*>(widget->_styledBorder);
+}
+
+RetroFuturaGUI::WidgetText* RetroFuturaGUI::DynamicLibWidgetManager::findText(const char* id)
+{
+    IWidget* widget { findWidget(id) };
+
+    if(!widget)
+        return nullptr;
+
+    return widget->_styledText;
 }
 
 void RetroFuturaGUI::DynamicLibWidgetManager::connectSlotToButton(IWidget *widget, CallbackType callback, const i32 action, const bool async)
 {
-    Button* button = dynamic_cast<Button*>(widget);
+    Button* button { dynamic_cast<Button*>(widget) };
+
+    if(!button)
+        return;
 
     switch(action)
     {
@@ -499,7 +405,10 @@ void RetroFuturaGUI::DynamicLibWidgetManager::connectSlotToButton(IWidget *widge
 
 void RetroFuturaGUI::DynamicLibWidgetManager::disconnectSlotFromButton(IWidget *widget, CallbackType callback, const i32 action)
 {
-    Button* button = dynamic_cast<Button*>(widget);
+    Button* button { dynamic_cast<Button*>(widget) };
+
+    if(!button)
+        return;
 
     switch(action)
     {
@@ -525,12 +434,16 @@ void RetroFuturaGUI::DynamicLibWidgetManager::disconnectSlotFromButton(IWidget *
 
 void RetroFuturaGUI::DynamicLibWidgetManager::connectSlotToLabel(IWidget *widget, CallbackType callback, const i32 action, const bool async)
 {
-    Label* label = dynamic_cast<Label*>(widget);
+    Label* label { dynamic_cast<Label*>(widget) };
+
+    if(!label)
+        return;
 
     switch(action)
     {
         case WidgetAction::OnTextChange:
             label->GetText().Connect_OnTextChange(callback, async);
+        break;
         default:
             std::println("Warning: Action type of {0} is not compatible with Labels.", action);
     }
@@ -538,7 +451,10 @@ void RetroFuturaGUI::DynamicLibWidgetManager::connectSlotToLabel(IWidget *widget
 
 void RetroFuturaGUI::DynamicLibWidgetManager::disconnectSlotFromLabel(IWidget *widget, CallbackType callback, const i32 action)
 {
-    Label* label = dynamic_cast<Label*>(widget);
+    Label* label { dynamic_cast<Label*>(widget) };
+
+    if(!label)
+        return;
 
     switch(action)
     {
@@ -552,7 +468,10 @@ void RetroFuturaGUI::DynamicLibWidgetManager::disconnectSlotFromLabel(IWidget *w
 
 void RetroFuturaGUI::DynamicLibWidgetManager::connectSlotToTextBox(IWidget *widget, CallbackType callback, const i32 action, const bool async)
 {
-    TextBox* textBox = dynamic_cast<TextBox*>(widget);
+    TextBox* textBox { dynamic_cast<TextBox*>(widget) };
+
+    if(!textBox)
+        return;
 
     switch(action)
     {
@@ -587,7 +506,10 @@ void RetroFuturaGUI::DynamicLibWidgetManager::connectSlotToTextBox(IWidget *widg
 
 void RetroFuturaGUI::DynamicLibWidgetManager::disconnectSlotFromTextBox(IWidget *widget, CallbackType callback, const i32 action)
 {
-    TextBox* textBox = dynamic_cast<TextBox*>(widget);
+    TextBox* textBox { dynamic_cast<TextBox*>(widget) };
+
+    if(!textBox)
+        return;
 
     switch(action)
     {

@@ -23,7 +23,8 @@ namespace RetroFuturaGUI
             _slots.push_back(slot);
         }
 
-        /// @brief Removes a previously connected slot, matched by target function pointer.
+        /// @brief Removes a previously connected slot, matched by target function pointer. A lambda or functor can't be
+        ///        matched that way, so disconnecting one does nothing
         void Disconnect(const Slot& slot)
         {
             std::lock_guard<std::mutex> lock(_mutex);
@@ -33,10 +34,15 @@ namespace RetroFuturaGUI
                     _slots.end(),
                     [&slot](const Slot& s) // make this also work with lambdas and functors if needed
                     {
-                        if (!s || !slot)
+                        //Where each slot keeps its function pointer, null for anything else, so the pointers themselves are compared
+                        const auto
+                            * connected { s.template target<void(*)(Args...)>() },
+                            * asked { slot.template target<void(*)(Args...)>() };
+
+                        if (!connected || !asked)
                             return false;
 
-                        return s.template target<void(*)(Args...)>() == slot.template target<void(*)(Args...)>();
+                        return *connected == *asked;
                     }
                 ),
                 _slots.end()

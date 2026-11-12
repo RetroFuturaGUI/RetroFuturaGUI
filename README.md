@@ -167,7 +167,7 @@ The framework is designed for cross-platform use, and its logic can be compiled 
 - PlatformBridge (cross-platform system layer, Windows and Linux)
   - Keyboard, mouse, wheel and pinch input; clipboard; recycle bin; dragging files out; system fonts; monitors; child processes; window owners and taskbar buttons
 - Cross Language Capabilities
-  - dll/so/dylib compilation, widgets addressed by string ID (DynamicLibWidgetManager), signals through C callbacks, the FileExplorer
+  - dll/so/dylib compilation, widgets addressed by their full path ("MainWindow/MainScene/RootLasagna/TestButton", found through WidgetRegistry, so a freed widget is never reached and an unknown path warns), position, size and rotation in 3D, enabling, the main background's, border's and text's colors, fill types and gradients for every widget that has them, text with emitSignal, signals of Buttons, Labels and TextBoxes through C callbacks, the FileExplorer
   - C#, Python and Rust bindings
 
 </details>
@@ -182,20 +182,18 @@ The framework is designed for cross-platform use, and its logic can be compiled 
   <li>Flavors: C exports and bindings (the C++ side is complete)</li>
   <li>Add more widget interactions to the DynamicLibWidgetManager</li>
     <ul>
-    <li>SetRotation, SetPosition, SetSize</li>
-    <li>Set Color/Decoration parameters</li>
+    <li>The rest of the decoration settings: corner radii and cut corners, raster, glass, fog, masks, images by path, the effects (drop shadow, glow, inner glow), pixelate and CRT, fonts and alignment</li>
+    <li>Signals beyond Buttons, Labels and TextBoxes: CheckBox, ComboBox, Slider, Table and the others, with the values they carry</li>
+    <li>Values to read back (GetText, a CheckBox's state, a Slider's value)</li>
     </ul>
-  <li>Complete Python binding</li>
+  <li>The C# and Rust bindings are out of step with the exports, which the Python binding follows (2026-11-12): SetRotation takes x, y and z, SetPosition and the fill types (SetBackgroundFillType, SetBorderFillType, SetTextFillType) are new, SetEnabled and SetText take emitSignal, and widgets are named by their full path. The C# binding still calls the old signatures</li>
   <li>Goose binding, built the way Goose's documentation describes its interoperability</li>
   <li>Test Carbon compatibility</li>
   <li>Bring the interoperability binding (DYNLIB_MODE, DynamicLibWidgetManager, the C#, Python and Rust bindings) up to date with scenes and the window mechanisms. Last on the list, since it builds on the items above</li>
     <ul>
-    <li>Widgets are registered under their bare name (AddWidget(widget->GetName(), ...)), so of two widgets with the same name in different scenes or windows only the first one registered is reachable. Find them through WidgetRegistry instead, by path or path hash (MainWindow/MyScene/RootLasagna/TestButton)</li>
-    <li>Nothing is ever unregistered, so a closed scene (SceneLoader::CloseScene), a closed window or a destroyed prefab leaves the manager holding freed pointers. WidgetRegistry already drops every widget as it is destroyed, so the manager can rely on it instead of keeping its own list</li>
     <li>The exported functions reach single widgets and the one MainWindow only. Scenes (create, close, activate, reserve an edge), several windows, docking, WindowTabs and popups can't be used from another language yet</li>
     <li>Callbacks are void(*)() only, apart from the file explorer's paths (PathsCallbackType), so signals that carry values - WindowTab's OnSelectionChanged with its Window*, other popups' results - have no way out</li>
     <li>The Rust binding doesn't compile: new() moves the Library into the struct and then borrows it for its symbols, and the libloading::Symbol fields have no lifetime. Its file explorer parts were checked on their own</li>
-    <li>DynamicLibWidgetManager's setters take no emitSignal, so a binding can't choose whether a change fires the widget's signal: SetText passes false to Button::SetText and Label::SetText, and TextBox's SetValue goes without one. Add an emitSignal bool to the setters whose widgets have one, to the exports in main.cpp, and to the C#, Python and Rust bindings, with no default, as everywhere else</li>
     </ul>
   </ul>
 <li>Animation Engine: what transitions don't cover yet (colors, corner radii, positions, sizes, rotations, opacity, border gaps and the effects' geometry have them, see Animation)</li>
@@ -316,8 +314,6 @@ RetroFuturaGUI aims to break these barriers!
 ### Known Bugs
 - SvgTexture.cpp
   - Draw() switches the depth test off for its whole draw so that its coplanar mask passes can blend over the base layer. That also lets any SVG drawn later in the frame paint over whatever is already there, whatever the z - an SvgImage in a later Lasagna cell paints over a widget reaching into it, for instance. Keeping the test on and using GL_LEQUAL for the mask passes would keep the blending and respect depth
-- TextBox.cpp
-  - A TextBox reports WidgetTypeID::Button, so DynamicLibWidgetManager::SetText and ConnectSlot take the Button branch, dynamic_cast to Button* yields null and is then dereferenced. The WidgetTypeID::TextBox branches are unreachable as a result
 
 ### Is AI used in this project?
 AI is often used for repititive tasks like adding code comments to functions, classes, and structs and updating this readme's ToDo and feature list. Shaders are mostly written by AI and AI is sometimes used for finding bugs and to assist with complicated calculations. The architecture of font loading and Scene management was partially planned with AI. AudioMetadata.hpp/cpp are entirely written by AI. YUV to RGB conversion was done by AI. Multi-window support, transparent windows, window docking, window tabs and popups were written by AI, following a design of mine
