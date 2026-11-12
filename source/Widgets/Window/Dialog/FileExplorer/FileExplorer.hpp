@@ -682,6 +682,14 @@ namespace RetroFuturaGUI
         ///        Escape and F5. The list moves the selection itself. Runs each frame from the scene's OnInteract, before the list takes the keys.
         void handleKeys();
 
+        /// @brief Selects the first name, from the selected row on, starting with what was typed into the list. Letters typed
+        ///        within a pause of each other make one name to look for, and one letter typed again moves on to the next name
+        ///        starting with it, as in the system's file manager. Case is ignored for A to Z, as in the sort order
+        void jumpToTypedName(std::string_view typed);
+
+        /// @brief Selects the next name matching what was typed so far and brings it into view
+        void selectTypedName();
+
         /// @brief Enter: opens the one selected folder, otherwise does what OK does.
         void openFromKeyboard();
 
@@ -825,6 +833,8 @@ namespace RetroFuturaGUI
             _isReplaceArmed { false },
             _isSortDescending { false },
             _hadListFocus { false };
+        std::filesystem::path::string_type _typedName {};
+        std::chrono::steady_clock::time_point _typedAt {};
         KeyPress
             _enterKey { ._Key = PB_KEY_RETURN, ._PressCountSeen = 0 },
             _backspaceKey { ._Key = PB_KEY_BACKSPACE, ._PressCountSeen = 0 },
@@ -872,6 +882,7 @@ namespace RetroFuturaGUI
             _statusColumnCount { 19 },  //the status line's columns beside the Stop button; it takes the Stop button's too without operations
             _stopColumnCount { 5 };
         static constexpr std::chrono::milliseconds _ownDropWindow { 2000 }; //a drop of the rows dragged out this soon after is their own
+        static constexpr std::chrono::milliseconds _typingPause { 1000 }; //a letter typed later starts a new name to jump to
         static constexpr std::array<MenuAction, 5> _fileMenuChoices { MenuAction::NewFolder, MenuAction::Rename, MenuAction::Delete, MenuAction::DeletePermanently, MenuAction::Close };
         static constexpr std::array<MenuAction, 6> _editMenuChoices { MenuAction::Undo, MenuAction::Redo, MenuAction::Cut, MenuAction::Copy, MenuAction::Paste, MenuAction::SelectAll };
         static constexpr std::array<MenuAction, 3> _viewMenuChoices { MenuAction::Thumbnails, MenuAction::Extensions, MenuAction::HiddenFiles };

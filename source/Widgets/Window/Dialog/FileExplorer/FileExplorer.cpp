@@ -3252,6 +3252,79 @@ void RetroFuturaGUI::FileExplorer::on_viewMenu_itemClicked()
     runMenuAction(_viewMenuActions[index]);
 }
 
+void RetroFuturaGUI::FileExplorer::jumpToTypedName(std::string_view typed)
+{
+    if(!_widgets._Files)
+        return;
+
+    if(typed.empty())
+        return;
+
+    const std::chrono::steady_clock::time_point now { std::chrono::steady_clock::now() };
+
+    if(_typingPause < now - _typedAt)
+        _typedName.clear();
+
+    //Character by character, so two letters typed within one frame step as two keystrokes do
+    for(uSize start = 0, end = 0; start < typed.size(); start = end)
+    {
+        end = start + 1;
+
+        while(end < typed.size() && 0x80 == (static_cast<unsigned char>(typed[end]) & 0xC0))
+            ++end; //the UTF-8 sequence's continuation bytes.
+
+        const unsigned char lead { static_cast<unsigned char>(typed[start]) };
+
+        //Only what writes. Backspace, Enter and the Ctrl shortcuts arrive as control characters and are keys of their own
+        //A space goes only inside a name, never to start one
+        if(0x20 > lead || 0x7F == lead || (' ' == lead && _typedName.empty()))
+            continue;
+
+        _typedAt = now;
+        _typedName += fromUtf8(typed.substr(start, end - start)).native();
+        selectTypedName();
+    }
+}
+
+void RetroFuturaGUI::FileExplorer::selectTypedName()
+{
+    if(!_widgets._Files)
+        return;
+
+    if(_typedName.empty())
+        return;
+
+    //One letter, or the same one again and again, steps through the names starting with it. A longer name stays on the
+    //selected row while it still matches
+    const bool isOneLetter { std::all_of(_typedName.begin(), _typedName.end(), [this](const std::filesystem::path::value_type character) { return foldCase(character) == foldCase(_typedName.front()); }) };
+    const std::filesystem::path::string_type searched { isOneLetter ? _typedName.substr(0, 1) : _typedName };
+    const std::vector<uSize> selected { _widgets._Files->GetSelectedRows() };
+    const uSize
+        rowCount { _shownEntries.size() },
+        start { selected.empty() ? 0 : selected.front() + (isOneLetter ? 1 : 0) };
+
+    for(uSize step = 0; step < rowCount; ++step)
+    {
+        const uSize row { (start + step) % rowCount };
+        const std::filesystem::path::string_type name { _shownEntries[row]._Path.filename().native() };
+        const bool isMatch
+        {
+            searched.size() <= name.size() && std::equal(searched.begin(), searched.end(), name.begin(),
+                [](const std::filesystem::path::value_type left, const std::filesystem::path::value_type right) { return foldCase(left) == foldCase(right); })
+        };
+
+        if(!isMatch)
+            continue;
+
+        //The user's pick, so a message on the status line gives way as on a click
+        const std::array rows { row };
+        _widgets._Files->SelectRows(rows, true);
+        _widgets._Files->ScrollRowIntoView(row, false);
+        syncScrollSlider();
+        return;
+    }
+}
+
 void RetroFuturaGUI::FileExplorer::handleKeys()
 {
     if(!_widgets._Files)
@@ -3298,6 +3371,8 @@ void RetroFuturaGUI::FileExplorer::handleKeys()
     //An open menu or filter list closes first, as it would on a click elsewhere. The next Escape cancels
     if(isEscapePressed && GetWindow() && IDropDown::CloseOpenLists(GetWindow()->GetGlfwWindow()))
         return;
+
+    jumpToTypedName(PlatformBridge::Input::GetInputString());
 
     if(isRefreshPressed)
         relist();

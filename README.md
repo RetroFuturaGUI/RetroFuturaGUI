@@ -35,7 +35,6 @@ The framework is designed for cross-platform use, and its logic can be compiled 
 - FileExplorer
   - Linux takes dropped files only once let go, through GLFW: nothing shows where they would land while they hover, and they are always copied (Windows marks the folder under the pointer and moves or copies as Windows does). While rows are dragged out, the system runs the drag in a loop of its own, so the app's windows don't draw until the drop
   - Linux can't drag files out yet: a drag past the window's edge stays the explorer's own
-  - Typing a name doesn't jump to it
   - File icons show only with thumbnails on; the plain list has none
   - The menu strip's titles and buttons use the font at 0.8 of its size so they fit; long drive labels still run past their place buttons (see Button)
   - Only filling the table is left on the main thread: storing the cells' strings and resolving the track sizes. In a Debug build the frame that shows WinSxS (35951 entries) takes about 140 ms, System32 (4781) under 40 ms
@@ -137,7 +136,7 @@ The framework is designed for cross-platform use, and its logic can be compiled 
   - Perspective per window (Window::SetPerspective) and per Environment; clipping that follows the tilt
 - FileExplorer
   - A popup that browses the file system and closes with the chosen paths: Open(startPath, flags, ".cpp, .hpp")
-  - Single file, multiple files, folder or save mode; places, history, an address box, sorting, filters, a View menu switching thumbnails, extensions and hidden files ("Show thumbnails" while off, "Hide thumbnails" while on); where the list is too narrow (thumbnails, a large font), Type, then Size, then Modified give way so the names keep about ten characters
+  - Single file, multiple files, folder or save mode; places, history, an address box, sorting, filters, a View menu switching thumbnails, extensions and hidden files ("Show thumbnails" while off, "Hide thumbnails" while on); typing in the list jumps to the name as in the system's file manager (letters within a second make one name, one letter again steps to the next name starting with it); where the list is too narrow (thumbnails, a large font), Type, then Size, then Modified give way so the names keep about ten characters
   - File operations: new folder, rename, delete to the recycle bin or permanently, cut, copy and paste through the system clipboard, drag and drop in and out (on Windows the folder under dragged files is marked, and they move or copy as Windows decides: Shift moves, Ctrl copies, otherwise a move within a drive), undo and redo (Ctrl+Z, Ctrl+Y); a Replace puts the replaced item in the recycle bin, so Undo brings it back
   - Previews and thumbnails of images, songs (cover art) and videos, decoded by a separate, restricted helper process. The details below a preview list the most telling first and scroll, with a scrollbar beside them while they don't fit. A video's still is decoded once, at the keyframe before 10% in and at the pane's size, for the pane and its thumbnail alike
   - Listing and file operations run off the GUI thread, and the folder shown is watched for changes
