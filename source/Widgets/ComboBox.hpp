@@ -24,6 +24,10 @@ namespace RetroFuturaGUI
 
         void Draw() override;
         void AddItem(std::string_view name);
+
+        /// @brief Changes an item's text in place, keeping its index, state and the selection
+        void SetItemText(const uSize index, std::string_view text);
+
         const std::string& GetSelectedText() const;
         void RemoveItem(const uSize index) override;
         void SetFontFamily(std::string_view fontFamily, const f32 fontSize, const FontSizeUnit sizeUnit, const PlatformBridge::Fonts::Slant slant, const PlatformBridge::Fonts::Weight fontWeight) override;

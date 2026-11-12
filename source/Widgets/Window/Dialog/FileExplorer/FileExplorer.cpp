@@ -110,6 +110,7 @@ bool RetroFuturaGUI::FileExplorer::openWithFilters(std::string_view startPath, c
     addFilters();
     updateHeaderTexts();
     updateMenus();
+    updateViewMenu();
     PlatformBridge::FileSystem::Refresh(); //refresh if drives have ben attached or detached
     addPlaces();
     _viewHost = host.get();
@@ -205,15 +206,16 @@ bool RetroFuturaGUI::FileExplorer::buildView(ViewHost& host, std::string_view ti
     styleTextBox(*built._Address, "Folder", cellSize(_viewAxis, windowSize, addressCell), _font);
     built._Address->Connect_OnEnterPressed([this]() { on_addressTextBox_enterPressed(); }, false);
 
-//Menu strip: the File and Edit menus with the operations that are on, the Rename button, then the three toggles
+//Menu strip: the File and Edit menus with the operations that are on, then the View menu's switches.
     const ViewFont smallFont { toolbarFont(_font) };
     _fileMenuActions = menuActionsOf(_fileMenuChoices);
     _editMenuActions = menuActionsOf(_editMenuChoices);
+    _viewMenuActions = menuActionsOf(_viewMenuChoices);
 
     const ViewCell
         fileMenuCell { ._Row = 2, ._Column = 0, ._ColumnSpan = _menuColumnCount, ._SizingMode = SizingMode::FIXED, ._Layer = 0 },
         editMenuCell { ._Row = 2, ._Column = _menuColumnCount, ._ColumnSpan = _menuColumnCount, ._SizingMode = SizingMode::FIXED, ._Layer = 0 },
-        renameCell { ._Row = 2, ._Column = 2 * _menuColumnCount, ._ColumnSpan = 4, ._SizingMode = SizingMode::FIXED, ._Layer = 0 };
+        viewMenuCell { ._Row = 2, ._Column = 2 * _menuColumnCount, ._ColumnSpan = _menuColumnCount, ._SizingMode = SizingMode::FIXED, ._Layer = 0 };
     const f32 menuListWidth { windowSize.x * static_cast<f32>(_menuListColumnCount) / static_cast<f32>(_viewColumnCount) };
 
     built._FileMenu = host.Attach<ComboBox>("FileMenu", *lasagna, fileMenuCell);
@@ -236,40 +238,13 @@ bool RetroFuturaGUI::FileExplorer::buildView(ViewHost& host, std::string_view ti
         built._EditMenu->Connect_OnItemClicked([this]() { on_editMenu_itemClicked(); }, false);
     }
 
-    if(HasFlag(_flags, FileExplorerFlags::Rename))
-    {
-        built._Rename = host.Attach<Button>("Rename", *lasagna, renameCell);
+    built._ViewMenu = host.Attach<ComboBox>("ViewMenu", *lasagna, viewMenuCell);
 
-        if(!built._Rename)
-            return false;
+    if(!built._ViewMenu)
+        return false;
 
-        styleButton(*built._Rename, "Rename", cellSize(_viewAxis, windowSize, renameCell), smallFont);
-        built._Rename->Connect_OnClick([this]() { on_renameButton_click(); }, false); //enabled by updateMenus while one row is selected
-    }
-
-    const std::array<std::tuple<std::string_view, uSize, bool, Button**>, 3> toggles
-    {{
-        { "Thumbnails", 25, _showThumbnails, &built._Thumbnails },
-        { "Extensions", 30, _showExtensions, &built._Extensions },
-        { "Hidden files", 35, _showHidden, &built._Hidden }
-    }};
-
-    for(const auto& [text, column, isOn, slot] : toggles)
-    {
-        const ViewCell cell { ._Row = 2, ._Column = column, ._ColumnSpan = 5, ._SizingMode = SizingMode::FIXED, ._Layer = 0 };
-        Button* toggle { host.Attach<Button>(text, *lasagna, cell) };
-
-        if(!toggle)
-            return false;
-
-        styleButton(*toggle, text, cellSize(_viewAxis, windowSize, cell), smallFont);
-        styleToggle(*toggle, isOn);
-        *slot = toggle;
-    }
-
-    built._Thumbnails->Connect_OnClick([this]() { on_thumbnailsButton_click(); }, false);
-    built._Extensions->Connect_OnClick([this]() { on_extensionsButton_click(); }, false);
-    built._Hidden->Connect_OnClick([this]() { on_hiddenButton_click(); }, false);
+    styleMenu(*built._ViewMenu, "View", _viewMenuActions, cellSize(_viewAxis, windowSize, viewMenuCell), menuListWidth, smallFont);
+    built._ViewMenu->Connect_OnItemClicked([this]() { on_viewMenu_itemClicked(); }, false);
 
     //Places, files, the scrollbar, since the table has no drag scrolling of its own, and the preview pane with ImagePreview
     //or MediaPreview; without it the files take its columns.
@@ -954,7 +929,7 @@ RetroFuturaGUI::FileExplorer::Listing RetroFuturaGUI::FileExplorer::makeListing(
 
     sortEntries(listing._Shown, request._SortColumn, request._IsSortDescending);
 
-    //Every cell's text, which is most of a big folder's fill: both names, so the extensions toggle only picks one
+    //Every cell's text, which is most of a big folder's fill: both names, so the Extensions switch only picks one.
     LocalClock clock { ._Zone = getLocalZone(), ._Info = {}, ._HasInfo = false };
     listing._Rows.reserve(listing._Shown.size());
 
@@ -1939,11 +1914,6 @@ uSize RetroFuturaGUI::FileExplorer::codePointCount(std::string_view text)
 bool RetroFuturaGUI::FileExplorer::canDo(const MenuAction action) const
 {
     return isMenuActionOffered(action) && isMenuActionAvailable(action);
-}
-
-void RetroFuturaGUI::FileExplorer::on_renameButton_click()
-{
-    startRename();
 }
 
 void RetroFuturaGUI::FileExplorer::on_filesTable_rowSlowDoubleClicked(const uSize)
@@ -3054,7 +3024,7 @@ bool RetroFuturaGUI::FileExplorer::isMenuActionOffered(const MenuAction action) 
             return HasFlag(_flags, FileExplorerFlags::CopyAndMove);
         case MenuAction::SelectAll:
             return Mode::MultiFile == _mode;
-        default: //Close
+        default: //Close and the View menu's switches
             return true;
     }
 }
@@ -3083,6 +3053,10 @@ bool RetroFuturaGUI::FileExplorer::isMenuActionAvailable(const MenuAction action
             return FileUndoHistory::HasUndoneSteps() && !_transfer.IsBusy();
         case MenuAction::SelectAll:
             return !_shownEntries.empty();
+        case MenuAction::Thumbnails:
+        case MenuAction::Extensions:
+        case MenuAction::HiddenFiles:
+            return true;
         default:
             return false; //the file operations aren't built yet
     }
@@ -3090,7 +3064,7 @@ bool RetroFuturaGUI::FileExplorer::isMenuActionAvailable(const MenuAction action
 
 void RetroFuturaGUI::FileExplorer::updateMenus()
 {
-    for(const auto& [menu, actions] : { std::pair { _widgets._FileMenu, &_fileMenuActions }, std::pair { _widgets._EditMenu, &_editMenuActions } })
+    for(const auto& [menu, actions] : { std::pair { _widgets._FileMenu, &_fileMenuActions }, std::pair { _widgets._EditMenu, &_editMenuActions }, std::pair { _widgets._ViewMenu, &_viewMenuActions } })
     {
         if(!menu)
             continue;
@@ -3098,9 +3072,6 @@ void RetroFuturaGUI::FileExplorer::updateMenus()
         for(uSize index = 0; index < actions->size(); ++index)
             menu->SetItemEnabled(index, isMenuActionAvailable((*actions)[index]));
     }
-
-    if(_widgets._Rename)
-        _widgets._Rename->SetEnabled(isMenuActionAvailable(MenuAction::Rename), false);
 }
 
 void RetroFuturaGUI::FileExplorer::runMenuAction(const MenuAction action)
@@ -3143,6 +3114,15 @@ void RetroFuturaGUI::FileExplorer::runMenuAction(const MenuAction action)
         case MenuAction::SelectAll:
             selectAllRows();
         break;
+        case MenuAction::Thumbnails:
+            switchThumbnails();
+        break;
+        case MenuAction::Extensions:
+            switchExtensions();
+        break;
+        case MenuAction::HiddenFiles:
+            switchHiddenFiles();
+        break;
         default:
         break;
     }
@@ -3182,8 +3162,54 @@ std::string_view RetroFuturaGUI::FileExplorer::menuText(const MenuAction action)
             return "Paste";
         case MenuAction::SelectAll:
             return "Select all";
+        case MenuAction::Thumbnails:
+        case MenuAction::Extensions:
+        case MenuAction::HiddenFiles:
+            return switchText(action, false);
         default:
             return "Close";
+    }
+}
+
+void RetroFuturaGUI::FileExplorer::updateViewMenu()
+{
+    if(!_widgets._ViewMenu)
+        return;
+
+    for(uSize index = 0; index < _viewMenuActions.size(); ++index)
+    {
+        const MenuAction action { _viewMenuActions[index] };
+        _widgets._ViewMenu->SetItemText(index, switchText(action, isSwitchedOn(action)));
+    }
+}
+
+std::string_view RetroFuturaGUI::FileExplorer::switchText(const MenuAction action, const bool isOn)
+{
+    switch(action)
+    {
+        case MenuAction::Thumbnails:
+            return isOn ? "Hide thumbnails" : "Show thumbnails";
+        case MenuAction::Extensions:
+            return isOn ? "Hide extensions" : "Show extensions";
+        case MenuAction::HiddenFiles:
+            return isOn ? "Hide hidden files" : "Show hidden files";
+        default:
+            return {};
+    }
+}
+
+bool RetroFuturaGUI::FileExplorer::isSwitchedOn(const MenuAction action) const
+{
+    switch(action)
+    {
+        case MenuAction::Thumbnails:
+            return _showThumbnails;
+        case MenuAction::Extensions:
+            return _showExtensions;
+        case MenuAction::HiddenFiles:
+            return _showHidden;
+        default:
+            return false;
     }
 }
 
@@ -3211,6 +3237,19 @@ void RetroFuturaGUI::FileExplorer::on_editMenu_itemClicked()
         return;
 
     runMenuAction(_editMenuActions[index]);
+}
+
+void RetroFuturaGUI::FileExplorer::on_viewMenu_itemClicked()
+{
+    if(!_widgets._ViewMenu)
+        return;
+
+    const uSize index { _widgets._ViewMenu->GetSelectedIndex() };
+
+    if(_viewMenuActions.size() <= index)
+        return;
+
+    runMenuAction(_viewMenuActions[index]);
 }
 
 void RetroFuturaGUI::FileExplorer::handleKeys()
@@ -3342,31 +3381,22 @@ void RetroFuturaGUI::FileExplorer::on_filterComboBox_indexChanged()
     showEntries();
 }
 
-void RetroFuturaGUI::FileExplorer::on_hiddenButton_click()
+void RetroFuturaGUI::FileExplorer::switchHiddenFiles()
 {
-    if(!_widgets._Hidden)
-        return;
-
     _showHidden = !_showHidden;
-    styleToggle(*_widgets._Hidden, _showHidden);
+    updateViewMenu();
     showEntries();
 }
 
-void RetroFuturaGUI::FileExplorer::on_extensionsButton_click()
+void RetroFuturaGUI::FileExplorer::switchExtensions()
 {
-    if(!_widgets._Extensions)
-        return;
-
     _showExtensions = !_showExtensions;
-    styleToggle(*_widgets._Extensions, _showExtensions);
+    updateViewMenu();
     updateNameColumn(); //only the names change, so the selection and the scroll position stay
 }
 
-void RetroFuturaGUI::FileExplorer::on_thumbnailsButton_click()
+void RetroFuturaGUI::FileExplorer::switchThumbnails()
 {
-    if(!_widgets._Thumbnails)
-        return;
-
     if(!_widgets._Files)
         return;
 
@@ -3382,7 +3412,7 @@ void RetroFuturaGUI::FileExplorer::on_thumbnailsButton_click()
     _widgets._Files->GetDisplayedRows(firstRow, endRow);
 
     _showThumbnails = !_showThumbnails;
-    styleToggle(*_widgets._Thumbnails, _showThumbnails);
+    updateViewMenu();
     fillTable();
     _widgets._Files->SetVerticalScrollPosition(static_cast<f32>(firstRow) * getListRowHeight());
     syncScrollSlider();

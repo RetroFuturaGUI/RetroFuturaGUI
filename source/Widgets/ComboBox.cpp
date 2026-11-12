@@ -196,6 +196,21 @@ const RetroFuturaGUI::ItemTextStyle& RetroFuturaGUI::ComboBox::GetItemText() con
     return _itemText;
 }
 
+void RetroFuturaGUI::ComboBox::SetItemText(const uSize index, std::string_view text)
+{
+    if(_itemTexts.size() <= index)
+        return;
+
+    auto iterator { _itemTexts.begin() };
+    std::advance(iterator, index);
+
+    if(!*iterator)
+        return;
+
+    (*iterator)->SetTextUTF8(text);
+    updateDropDownGeometry(); //placed by its new width
+}
+
 const std::string& RetroFuturaGUI::ComboBox::GetSelectedText() const
 {
     if(_currentIndex >= _itemTexts.size())

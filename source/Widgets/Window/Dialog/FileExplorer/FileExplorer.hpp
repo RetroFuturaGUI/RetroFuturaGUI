@@ -209,7 +209,10 @@ namespace RetroFuturaGUI
             Cut,
             Copy,
             Paste,
-            SelectAll
+            SelectAll,
+            Thumbnails,
+            Extensions,
+            HiddenFiles
         };
 
         /// @brief What the worker lists and how it shows it. All copies, so the job never touches the explorer.
@@ -226,7 +229,7 @@ namespace RetroFuturaGUI
                 _IsSortDescending { false };
         };
 
-        /// @brief One shown entry's cells, written by the worker. Both names, so the extensions toggle only picks one.
+        /// @brief One shown entry's cells, written by the worker. Both names, so the Extensions switch only picks one.
         struct RowTexts
         {
             std::string
@@ -280,10 +283,6 @@ namespace RetroFuturaGUI
                 * _Back { nullptr },
                 * _Forward { nullptr },
                 * _Up { nullptr },
-                * _Rename { nullptr },
-                * _Thumbnails { nullptr },
-                * _Extensions { nullptr },
-                * _Hidden { nullptr },
                 * _Stop { nullptr }, //shown while a file operation runs
                 * _Ok { nullptr },
                 * _Cancel { nullptr };
@@ -296,6 +295,7 @@ namespace RetroFuturaGUI
             ComboBox
                 * _FileMenu { nullptr },
                 * _EditMenu { nullptr }, //null when it would hold nothing
+                * _ViewMenu { nullptr },
                 * _Filter { nullptr };
             Label* _Status { nullptr };
         };
@@ -385,7 +385,7 @@ namespace RetroFuturaGUI
         ///        on its way, since that one is newer.
         void relist();
 
-        /// @brief Shows the listed entries again with the current hidden toggle, filter and sort order, without asking the disk.
+        /// @brief Shows the listed entries again with the current Hidden files switch, filter and sort order, without asking the disk
         ///        While a listing is on its way, that one is asked for again with them instead.
         void showEntries();
 
@@ -443,10 +443,10 @@ namespace RetroFuturaGUI
         /// @brief Selects the rows showing the given paths, and scrolls the first into view.
         void selectPaths(const std::vector<std::filesystem::path>& paths, const bool emitSignal);
 
-        /// @brief The name the list shows: without its extension while the extensions toggle is off. Folders keep theirs.
+        /// @brief The name the list shows. Without its extension while the Extensions switch is off. Folders keep theirs
         const std::string& displayName(const RowTexts& texts) const;
 
-        /// @brief Writes the names again after the extensions toggle changed, leaving the selection and scroll position alone.
+        /// @brief Writes the names again after the Extensions switch changed, leaving the selection and scroll position alone
         void updateNameColumn();
 
         /// @brief The column showing the names, after the thumbnails' while they show.
@@ -659,6 +659,24 @@ namespace RetroFuturaGUI
         void selectAllRows();
         static std::string_view menuText(const MenuAction action);
 
+        /// @brief Writes the View menu's items as what they would do now. "Show thumbnails", or "Hide thumbnails" while they show
+        void updateViewMenu();
+
+        /// @brief A View menu switch's item text. Plain Latin rather than a check mark, which the font an app loads may not have
+        static std::string_view switchText(const MenuAction action, const bool isOn);
+
+        /// @brief Whether a View menu switch is on
+        bool isSwitchedOn(const MenuAction action) const;
+
+        /// @brief Switches the thumbnail column on or off, keeping the selection and the rows in view
+        void switchThumbnails();
+
+        /// @brief Shows or hides the names' extensions
+        void switchExtensions();
+
+        /// @brief Lists or leaves out hidden files
+        void switchHiddenFiles();
+
     //Keys
         /// @brief Takes the explorer's keys while the list has the keyboard: Enter, Backspace, Ctrl+Up, Ctrl+Left, Ctrl+Right,
         ///        Escape and F5. The list moves the selection itself. Runs each frame from the scene's OnInteract, before the list takes the keys.
@@ -684,14 +702,11 @@ namespace RetroFuturaGUI
         void on_filesTable_headerClicked(const uSize column);
         void on_fileMenu_itemClicked();
         void on_editMenu_itemClicked();
-        void on_renameButton_click();
+        void on_viewMenu_itemClicked();
         void on_filesTable_rowSlowDoubleClicked(const uSize row);
         void on_filesTable_cellEditEnded(const TrackIndex& index, const Table::EditEnd end, const std::string& text);
         void on_scrollSlider_valueChanged();
         void on_filterComboBox_indexChanged();
-        void on_hiddenButton_click();
-        void on_extensionsButton_click();
-        void on_thumbnailsButton_click();
         void on_nameTextBox_textChanged();
         void on_okButton_click();
         void on_cancelButton_click();
@@ -791,7 +806,8 @@ namespace RetroFuturaGUI
         std::vector<Filter> _filters {};
         std::vector<MenuAction>
             _fileMenuActions {}, //item n of the File menu does _fileMenuActions[n]
-            _editMenuActions {};
+            _editMenuActions {},
+            _viewMenuActions {};
         std::filesystem::path
             _currentDirectory {},
             _replaceTarget {}; //the existing file the next OK overwrites
@@ -799,7 +815,7 @@ namespace RetroFuturaGUI
         uSize _historyIndex { 0 };
         std::vector<Entry>
             _listedEntries {}, //everything in the current folder
-            _shownEntries {};  //what passes the toggle, mode and filter, sorted; table row n shows _shownEntries[n]
+            _shownEntries {};  //what passes the Hidden files switch, mode and filter, sorted. Table row n shows _shownEntries[n]
         std::vector<RowTexts> _shownRows {}; //row n's texts, as the worker wrote them
         SortColumn _sortColumn { SortColumn::Name };
         bool
@@ -858,6 +874,7 @@ namespace RetroFuturaGUI
         static constexpr std::chrono::milliseconds _ownDropWindow { 2000 }; //a drop of the rows dragged out this soon after is their own
         static constexpr std::array<MenuAction, 5> _fileMenuChoices { MenuAction::NewFolder, MenuAction::Rename, MenuAction::Delete, MenuAction::DeletePermanently, MenuAction::Close };
         static constexpr std::array<MenuAction, 6> _editMenuChoices { MenuAction::Undo, MenuAction::Redo, MenuAction::Cut, MenuAction::Copy, MenuAction::Paste, MenuAction::SelectAll };
+        static constexpr std::array<MenuAction, 3> _viewMenuChoices { MenuAction::Thumbnails, MenuAction::Extensions, MenuAction::HiddenFiles };
     };
 
     /// @brief What Window::OpenPopup(PopupTypes::File, ...) opens a FileExplorer with. Every field has a default, so a request
