@@ -36,17 +36,26 @@ namespace RetroFuturaGUI
             _EndY { 0 },
             _BearingX { 0 },
             _BearingY { 0 },
-            _TextureID { 0 }; // the page holding the glyph. A block's glyphs spread over several
+            _TextureID { 0 }; // the page holding the glyph
         bool _IsColor { false }; // on a color page, drawn in its own colors instead of the fill
     };
 
-    /// @brief One texture of a block, whose glyphs are rendered when they are first shown, filled row by row
+    /// @brief One row of glyphs of about the same height on a glyph page
+    struct GlyphShelf
+    {
+        u32 _Y { 0 }, // its top on the page
+            _Height { 0 },
+            _PenX { 0 }; // where its next glyph goes
+    };
+
+    /// @brief One texture of rendered glyphs, shared by every font and size, filled shelf by shelf. Gray glyphs (one byte per
+    ///        pixel) and color glyphs (four) have pages of their own.
     struct GlyphPage
     {
         u32 _TextureID { 0 },
-            _PenX { 0 }, // where the next glyph goes
-            _PenY { 0 },
-            _RowHeight { 0 }; // the tallest glyph in the row being filled
+            _Side { 0 }, // width and height
+            _NextShelfY { 0 }; // where its next shelf starts
+        std::vector<GlyphShelf> _Shelves {};
     };
 
     struct GlyphBlock
@@ -61,10 +70,6 @@ namespace RetroFuturaGUI
         std::unordered_map<u64, Glyph> _InnerGlowGlyphs; // lit inside for inner glows, keyed by innerGlowGlyphKey
         std::string _FontFile {}; // the font file and face the source draws from: neighboring blocks of one file are shaped together
         std::unique_ptr<IGlyphSource> _Source { nullptr }; // kept until the program ends, for glyphs rendered on first use and for outlines
-        std::vector<GlyphPage>
-            _Pages {}, // one byte per pixel
-            _ColorPages {}; // four bytes per pixel, for color glyphs
-        u32 _PageSide { 0 }; // width and height
         f32 _Scale { 1.0f }; // the font's size over the source's, for a source extending a font from a fixed size it offers
     };
 
@@ -313,21 +318,38 @@ namespace RetroFuturaGUI
         ///        variation selectors, combining marks, skin tones and the tags of subdivision flags.
         static bool isAttaching(const u32 codePoint);
 
-        /// @brief The page a glyph this big goes onto, starting the next row or a new page when the last one has no room.
-        /// @return nullptr for a glyph bigger than a page, which then draws nothing.
-        static GlyphPage* pageWithRoom(GlyphBlock& block, const u32 width, const u32 height, const GlyphPixelFormat format);
+        /// @brief Where a glyph goes: the page, its side and the glyph's top left corner on it.
+        struct GlyphSlot
+        {
+            u32 _TextureID { 0 },
+                _Side { 0 },
+                _X { 0 },
+                _Y { 0 };
+        };
 
-        /// @brief A page's side for the font's line height: 1024, or more until 16 rows of glyphs fit.
-        static u32 pageSideFor(const FontMetrics& metrics);
+        /// @brief Finds room for a glyph this big on the pages of its pixel format: on a shelf of about its height, else on a
+        ///        new shelf, else on a new page.
+        /// @return false for a glyph bigger than the biggest page, which then draws nothing.
+        static bool findGlyphSlot(const u32 width, const u32 height, const GlyphPixelFormat format, GlyphSlot* slot);
+
+        /// @brief Adds an empty page of the pixel format, side pixels wide and high.
+        static void addGlyphPage(const u32 side, const GlyphPixelFormat format);
 
         static inline std::list<FontInfo> _fonts {};
         static inline FT_Library _ft { nullptr };
         static inline std::string _defaultFontFamily;
         static inline GLFWwindow* _uploadContext { nullptr };
         static inline bool _hasUnflushedUploads { false };
+        static inline std::vector<GlyphPage>
+            _pages {}, // one byte per pixel
+            _colorPages {}; // four bytes per pixel, for color glyphs
         static constexpr u32
-            _pageSide { 1024 },
-            _maxPageSide { 8192 };
+            _firstPageSide { 1024 }, // 1 MB
+            _pageSide { 2048 }, // 4 MB, for the pages after the first
+            _firstColorPageSide { 512 }, // 1 MB
+            _colorPageSide { 1024 }, // 4 MB
+            _maxPageSide { 8192 }, // for a single glyph bigger than a page
+            _shelfHeightStep { 4 }; // shelf heights are multiples of it
         static constexpr f32
             _pixelsPerInch { 96.0f },
             _pointsPerInch { 72.0f };

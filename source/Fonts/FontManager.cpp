@@ -149,9 +149,6 @@ RetroFuturaGUI::FontManager::LoadFontResult RetroFuturaGUI::FontManager::LoadFon
         ._InnerGlowGlyphs = {},
         ._FontFile = fontProperty._Path + "#" + std::to_string(fontProperty._FaceIndex),
         ._Source = std::move(source),
-        ._Pages = {},
-        ._ColorPages = {},
-        ._PageSide = pageSideFor(atlas._Metrics),
         ._Scale = 1.0f
     };
 
@@ -428,60 +425,115 @@ void RetroFuturaGUI::FontManager::storeGlyph(GlyphBlock& block, const GlyphBitma
     glyph->_BearingY = static_cast<u32>(glyph->_Bearing[1]);
     glyph->_IsColor = GlyphPixelFormat::Color == bitmap._Format;
 
-    //A space has no picture, and a glyph bigger than a page draws nothing; both keep their advance
-    GlyphPage* page { 0 < bitmap._Width && 0 < bitmap._Height ? pageWithRoom(block, bitmap._Width, bitmap._Height, bitmap._Format) : nullptr };
+    //A space has no picture, and a glyph bigger than the biggest page draws nothing; both keep their advance
+    if(0 == bitmap._Width || 0 == bitmap._Height)
+        return;
 
-    if(!page)
+    GlyphSlot slot {};
+
+    if(!findGlyphSlot(bitmap._Width, bitmap._Height, bitmap._Format, &slot))
         return;
 
     const UploadState state { beginUpload() };
-    glBindTexture(GL_TEXTURE_2D, page->_TextureID);
-    glTexSubImage2D(GL_TEXTURE_2D, 0, static_cast<GLint>(page->_PenX), static_cast<GLint>(page->_PenY), static_cast<GLsizei>(bitmap._Width), static_cast<GLsizei>(bitmap._Height),
+    glBindTexture(GL_TEXTURE_2D, slot._TextureID);
+    glTexSubImage2D(GL_TEXTURE_2D, 0, static_cast<GLint>(slot._X), static_cast<GLint>(slot._Y), static_cast<GLsizei>(bitmap._Width), static_cast<GLsizei>(bitmap._Height),
         glyph->_IsColor ? GL_RGBA : GL_RED, GL_UNSIGNED_BYTE, bitmap._Pixels.data());
     endUpload(state);
     _hasUnflushedUploads = true;
 
-    const f32 side { static_cast<f32>(block._PageSide) };
+    const f32 side { static_cast<f32>(slot._Side) };
     glyph->_Size[0] = static_cast<i32>(std::lround(bitmap._Width * scale));
     glyph->_Size[1] = static_cast<i32>(std::lround(bitmap._Height * scale));
-    glyph->_OriginX = page->_PenX;
-    glyph->_OriginY = page->_PenY;
-    glyph->_EndX = page->_PenX + bitmap._Width;
-    glyph->_EndY = page->_PenY + bitmap._Height;
+    glyph->_OriginX = slot._X;
+    glyph->_OriginY = slot._Y;
+    glyph->_EndX = slot._X + bitmap._Width;
+    glyph->_EndY = slot._Y + bitmap._Height;
     glyph->_UV[0] = static_cast<f32>(glyph->_OriginX) / side;
     glyph->_UV[1] = static_cast<f32>(glyph->_OriginY) / side;
     glyph->_UV[2] = static_cast<f32>(glyph->_EndX) / side;
     glyph->_UV[3] = static_cast<f32>(glyph->_EndY) / side;
-    glyph->_TextureID = page->_TextureID;
-
-    page->_PenX += bitmap._Width + 1; //a pixel between glyphs, so filtering doesn't pick up the neighbor's edge!
-    page->_RowHeight = std::max(page->_RowHeight, bitmap._Height);
+    glyph->_TextureID = slot._TextureID;
 }
 
-RetroFuturaGUI::GlyphPage* RetroFuturaGUI::FontManager::pageWithRoom(GlyphBlock& block, const u32 width, const u32 height, const GlyphPixelFormat format)
+bool RetroFuturaGUI::FontManager::findGlyphSlot(const u32 width, const u32 height, const GlyphPixelFormat format, GlyphSlot* slot)
 {
-    const u32 side { block._PageSide };
+    if(!slot)
+        return false;
+
     const bool isColor { GlyphPixelFormat::Color == format };
-    std::vector<GlyphPage>& pages { isColor ? block._ColorPages : block._Pages };
+    std::vector<GlyphPage>& pages { isColor ? _colorPages : _pages };
+    GlyphPage* page { nullptr };
+    GlyphShelf* shelf { nullptr };
 
-    if(side < width + 1 || side < height + 1)
-        return nullptr;
+    //The shelf closest to the glyph's height, among those with room that it leaves at most a quarter empty: glyphs of one
+    //font and size then fill shelves together, whichever block they come from
+    const u32 toleratedWaste { std::max(height / 4, _shelfHeightStep) };
 
-    if(!pages.empty())
+    for(GlyphPage& eachPage : pages)
     {
-        GlyphPage& page { pages.back() };
-
-        //The next row once this one is full, a new page once the rows reach the bottom
-        if(side < page._PenX + width + 1)
+        for(GlyphShelf& eachShelf : eachPage._Shelves)
         {
-            page._PenX = 0;
-            page._PenY += page._RowHeight + 1;
-            page._RowHeight = 0;
+            if(eachShelf._Height < height || toleratedWaste < eachShelf._Height - height)
+                continue;
+
+            if(eachPage._Side < eachShelf._PenX + width + 1)
+                continue;
+
+            if(shelf && shelf->_Height <= eachShelf._Height)
+                continue;
+
+            page = &eachPage;
+            shelf = &eachShelf;
+        }
+    }
+
+    if(!shelf)
+    {
+        //A new shelf on the first page with room below its shelves.
+        for(GlyphPage& eachPage : pages)
+        {
+            if(eachPage._Side < width + 1 || eachPage._Side < eachPage._NextShelfY + height + 1)
+                continue;
+
+            page = &eachPage;
+            break;
         }
 
-        if(side >= page._PenY + height + 1)
-            return &page;
+        if(!page)
+        {
+            //The first page is small, for an app showing little text. The ones after it are bigger. A glyph bigger than
+            //that gets a page it fits on
+            u32 side { pages.empty() ? (isColor ? _firstColorPageSide : _firstPageSide) : (isColor ? _colorPageSide : _pageSide) };
+
+            while(side < width + 1 || side < height + 1)
+            {
+                if(_maxPageSide <= side)
+                    return false;
+
+                side <<= 1;
+            }
+
+            addGlyphPage(side, format);
+            page = &pages.back();
+        }
+
+        //A little taller than the glyph, so glyphs close to its height share the shelf
+        const u32
+            steppedHeight { (height + _shelfHeightStep - 1) / _shelfHeightStep * _shelfHeightStep },
+            room { page->_Side - page->_NextShelfY - 1 };
+        page->_Shelves.push_back(GlyphShelf { ._Y = page->_NextShelfY, ._Height = std::min(steppedHeight, room), ._PenX = 0 });
+        shelf = &page->_Shelves.back();
+        page->_NextShelfY += shelf->_Height + 1; //a pixel between shelves, as between glyphs.
     }
+
+    *slot = GlyphSlot { ._TextureID = page->_TextureID, ._Side = page->_Side, ._X = shelf->_PenX, ._Y = shelf->_Y };
+    shelf->_PenX += width + 1; //a pixel between glyphs, so filtering doesn't pick up the neighbor's edge
+    return true;
+}
+
+void RetroFuturaGUI::FontManager::addGlyphPage(const u32 side, const GlyphPixelFormat format)
+{
+    const bool isColor { GlyphPixelFormat::Color == format };
 
     //Cleared, so the pixel left between glyphs stays empty
     const std::vector<u8> cleared(static_cast<uSize>(side) * side * (isColor ? 4 : 1));
@@ -495,19 +547,7 @@ RetroFuturaGUI::GlyphPage* RetroFuturaGUI::FontManager::pageWithRoom(GlyphBlock&
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     endUpload(state);
-    pages.push_back(GlyphPage { ._TextureID = textureID, ._PenX = 0, ._PenY = 0, ._RowHeight = 0 });
-    return &pages.back();
-}
-
-u32 RetroFuturaGUI::FontManager::pageSideFor(const FontMetrics& metrics)
-{
-    const u32 rowHeight { static_cast<u32>(metrics._LineHeight) + 1 };
-    u32 side { _pageSide };
-
-    while(16 * rowHeight > side && _maxPageSide > side)
-        side <<= 1;
-
-    return side;
+    (isColor ? _colorPages : _pages).push_back(GlyphPage { ._TextureID = textureID, ._Side = side, ._NextShelfY = 0, ._Shelves = {} });
 }
 
 const std::list<RetroFuturaGUI::FontInfo>& RetroFuturaGUI::FontManager::GetFonts()
@@ -731,9 +771,6 @@ RetroFuturaGUI::GlyphBlock* RetroFuturaGUI::FontManager::getDefaultFontBlock(con
         ._InnerGlowGlyphs = {},
         ._FontFile = fontFile,
         ._Source = std::move(source),
-        ._Pages = {},
-        ._ColorPages = {},
-        ._PageSide = pageSideFor(atlas._Metrics),
         ._Scale = scale
     });
 
