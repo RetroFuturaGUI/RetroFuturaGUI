@@ -281,7 +281,6 @@ The framework is designed for cross-platform use, and its logic can be compiled 
 </li>
 <li>Fonts: less memory and faster text (found 2026-11-14 by reading the code, not measured yet)
   <ul>
-  <li>One FreeType face per font file, with a size object per size, instead of a face per Unicode block (the TestProject opens 69); the HarfBuzz face is shared this way already</li>
   <li>Glyph pages shared per font and size (or by pixel format) instead of one 1024 x 1024 page per block, starting small and growing; a text mixing blocks then draws in one call instead of one per page</li>
   <li>Text shapes and builds its mesh in every setter; once at the next draw, or when it is first measured, is enough. A cache of shaped runs would help tables and the FileExplorer, which repeat many strings</li>
   <li>Scrolling a text rebuilds its mesh, since glyphs are clipped on the CPU; clipped in the shader or by the clip planes, a scroll only changes a uniform</li>

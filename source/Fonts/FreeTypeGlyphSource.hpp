@@ -5,6 +5,7 @@
 #include FT_FREETYPE_H
 #include FT_GLYPH_H
 #include FT_STROKER_H
+#include FT_SIZES_H
 #include FT_MULTIPLE_MASTERS_H
 #include <hb.h>
 #include <hb-ft.h>
@@ -12,10 +13,13 @@
 #include <string>
 #include <string_view>
 #include <unordered_map>
+#include <unordered_set>
 
 namespace RetroFuturaGUI
 {
-    /// @brief Glyphs rendered by FreeType from a font file (.ttf, .otf, one face of a .ttc).
+    /// @brief Glyphs rendered by FreeType from a font file (.ttf, .otf, one face of a .ttc). Sources drawing from the same
+    ///        file share its FreeType face and each keep a size of their own on it, so a font extended by many Unicode blocks
+    ///        or shown at many sizes is opened once
     class FreeTypeGlyphSource final : public IGlyphSource
     {
     public:
@@ -41,7 +45,15 @@ namespace RetroFuturaGUI
         bool RenderGlyphIndexOutline(const u32 glyphIndex, const f32 width, GlyphBitmap* bitmap) override;
 
     private:
-        FreeTypeGlyphSource(FT_Face face, std::string_view path, const u32 faceIndex);
+        FreeTypeGlyphSource(FT_Face face, FT_Size size, std::string_view path, const u32 faceIndex);
+
+        /// @brief The FreeType face of a font file's face, opened on first use and shared by every source drawing from it. A
+        ///        variable font has one per weight, since its weight is set on the face
+        /// @return nullptr when FreeType can't open the file
+        static FT_Face getSharedFreeTypeFace(FT_Library library, std::string_view path, const u32 faceIndex, const PlatformBridge::Fonts::Weight weight);
+
+        /// @brief Makes this source's size the shared face's active one, which rendering, shaping and setting the size all go by
+        void activateSize() const;
 
         /// @brief The HarfBuzz face of a font file's face made on first use and shared by every source drawing from it, so
         ///        a big table (Segoe UI Emoji's COLR, megabytes) is read and checked once, not once per Unicode block.
@@ -65,7 +77,8 @@ namespace RetroFuturaGUI
         /// @return false for a pixel layout no font of ours renders.
         static bool copyBitmap(const FT_Bitmap& rendered, GlyphBitmap* bitmap);
 
-        FT_Face _face { nullptr };
+        FT_Face _face { nullptr }; //shared, kept until the program ends
+        FT_Size _size { nullptr }; //this source's own size on the face
         f32 _pixelSize { 0.0f };
         hb_font_t* _shapingFont { nullptr }; //HarfBuzz's view of the face, made on the first shaping
         hb_buffer_t* _shapingBuffer { nullptr }; //reused by every shaping
@@ -73,5 +86,7 @@ namespace RetroFuturaGUI
         std::string _path {}; //the font file and its face which the shared HarfBuzz face is found by
         u32 _faceIndex { 0 };
         static inline std::unordered_map<std::string, hb_face_t*> _sharedFaces {}; //by path and face index, kept until the program ends
+        static inline std::unordered_map<std::string, FT_Face> _sharedFreeTypeFaces {}; //by path and face index, a variable font's by its weight too
+        static inline std::unordered_set<std::string> _variableFontFiles {}; //path and face index of the variable fonts opened so far
     };
 }

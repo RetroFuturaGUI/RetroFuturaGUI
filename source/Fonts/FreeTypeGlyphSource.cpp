@@ -9,18 +9,64 @@ std::unique_ptr<RetroFuturaGUI::FreeTypeGlyphSource> RetroFuturaGUI::FreeTypeGly
     if(!library)
         return nullptr;
 
+    const FT_Face face { getSharedFreeTypeFace(library, path, faceIndex, weight) };
+
+    if(!face)
+        return nullptr;
+
+    //A size of its own on the shared face, so sources at different sizes don't change each other's
+    FT_Size size { nullptr };
+
+    if(FT_New_Size(face, &size))
+        return nullptr;
+
+    return std::unique_ptr<FreeTypeGlyphSource>(new FreeTypeGlyphSource(face, size, path, faceIndex));
+}
+
+RetroFuturaGUI::FreeTypeGlyphSource::FreeTypeGlyphSource(FT_Face face, FT_Size size, std::string_view path, const u32 faceIndex)
+    : _face(face), _size(size), _path(path), _faceIndex(faceIndex)
+{
+}
+
+FT_Face RetroFuturaGUI::FreeTypeGlyphSource::getSharedFreeTypeFace(FT_Library library, std::string_view path, const u32 faceIndex, const PlatformBridge::Fonts::Weight weight)
+{
+    //A variable font's weight is set on the face itself, so it has a face per weight; any other file has one.
+    const std::string
+        fileKey { std::string(path) + "#" + std::to_string(faceIndex) },
+        weightKey { fileKey + "@" + std::to_string(static_cast<i32>(weight)) };
+    const bool isKnownVariable { _variableFontFiles.contains(fileKey) };
+    const auto found { _sharedFreeTypeFaces.find(isKnownVariable ? weightKey : fileKey) };
+
+    if(_sharedFreeTypeFaces.end() != found)
+        return found->second;
+
     FT_Face face { nullptr };
 
     if(FT_New_Face(library, std::string(path).c_str(), static_cast<FT_Long>(faceIndex), &face))
         return nullptr;
 
+    if(!FT_HAS_MULTIPLE_MASTERS(face))
+    {
+        _sharedFreeTypeFaces.emplace(fileKey, face);
+        return face;
+    }
+
+    _variableFontFiles.insert(fileKey);
     setVariableWeight(library, face, weight);
-    return std::unique_ptr<FreeTypeGlyphSource>(new FreeTypeGlyphSource(face, path, faceIndex));
+    _sharedFreeTypeFaces.emplace(weightKey, face);
+    return face;
 }
 
-RetroFuturaGUI::FreeTypeGlyphSource::FreeTypeGlyphSource(FT_Face face, std::string_view path, const u32 faceIndex)
-    : _face(face), _path(path), _faceIndex(faceIndex)
+void RetroFuturaGUI::FreeTypeGlyphSource::activateSize() const
 {
+    if(!_face)
+        return;
+
+    if(!_size)
+        return;
+
+    if(_face->size != _size)
+        FT_Activate_Size(_size);
 }
 
 hb_face_t* RetroFuturaGUI::FreeTypeGlyphSource::getSharedFace(std::string_view path, const u32 faceIndex)
@@ -81,16 +127,19 @@ RetroFuturaGUI::FreeTypeGlyphSource::~FreeTypeGlyphSource()
     hb_font_destroy(_paintFont);
     hb_font_destroy(_shapingFont);
 
-    if(!_face)
+    //The face stays open for the other sources drawing from it. Only this source's size goes
+    if(!_size)
         return;
 
-    FT_Done_Face(_face);
+    FT_Done_Size(_size);
 }
 
 bool RetroFuturaGUI::FreeTypeGlyphSource::SetPixelSize(const f32 pixels)
 {
     if(!_face)
         return false;
+
+    activateSize();
 
     //A font with only fixed sizes (bitmap strikes) takes the closest one
     if(!FT_IS_SCALABLE(_face))
@@ -159,10 +208,10 @@ RetroFuturaGUI::FontMetrics RetroFuturaGUI::FreeTypeGlyphSource::GetMetrics() co
     if(!_face)
         return {};
 
-    if(!_face->size)
+    if(!_size)
         return {};
 
-    const FT_Size_Metrics& metrics { _face->size->metrics };
+    const FT_Size_Metrics& metrics { _size->metrics };
     return FontMetrics
     {
         ._Ascender = metrics.ascender / 64.0f,
@@ -208,6 +257,8 @@ bool RetroFuturaGUI::FreeTypeGlyphSource::RenderGlyphIndex(const u32 glyphIndex,
     if(!_face)
         return false;
 
+    activateSize();
+
     //COLR version 1 paint first the gradients the font was drawn with. the flat layers of version 0 are what's left when it fails!
     if(FT_HAS_COLOR(_face) && ColorGlyphPainter::HasPaint(_face, glyphIndex))
     {
@@ -248,6 +299,8 @@ bool RetroFuturaGUI::FreeTypeGlyphSource::RenderGlyphIndexOutline(const u32 glyp
 
     if(!_face)
         return false;
+
+    activateSize();
 
     //The glyph's shape, hinted as the glyph itself is, so the outline lines up with it.
     if(FT_Load_Glyph(_face, glyphIndex, FT_LOAD_NO_BITMAP | FT_LOAD_FORCE_AUTOHINT | FT_LOAD_TARGET_LIGHT))
@@ -315,6 +368,8 @@ bool RetroFuturaGUI::FreeTypeGlyphSource::Shape(std::u32string_view text, const 
     if(!hb_buffer_allocation_successful(_shapingBuffer))
         return false;
 
+    activateSize(); //HarfBuzz measures the glyphs through the face, at whatever size is active on it.
+
     //The script and language from the text itself, the direction as the text flows
     hb_buffer_clear_contents(_shapingBuffer);
     hb_buffer_add_utf32(_shapingBuffer, reinterpret_cast<const uint32_t*>(text.data()), static_cast<int>(text.size()), 0, static_cast<int>(text.size()));
@@ -357,6 +412,7 @@ hb_font_t* RetroFuturaGUI::FreeTypeGlyphSource::getShapingFont()
     //Its advances come from the same hinting the glyphs are rendered with
     if(!_shapingFont)
     {
+        activateSize(); //it takes its scale from the face's active size.
         _shapingFont = hb_ft_font_create_referenced(_face);
         hb_ft_font_set_load_flags(_shapingFont, getLoadFlags());
     }
