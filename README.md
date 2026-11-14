@@ -30,6 +30,11 @@ The framework is designed for cross-platform use, and its logic can be compiled 
 | 18 | PS2 (ps2gl), PS3 (RSXGL), PS4 (OpenOrbis/GNMX/GNM) support | 8 | | 
 
 ### WIP in detail
+- .bechaml (milestone 5). Seven file kinds, the root element naming the kind: Project (read by CMake), AppSettings, Dictionary, Flavors, Aesthetic (the look of the scenes that include it), Scene, Window. Rules address one widget (#OkButton), a flavor (.primary), a widget type (Button) or every widget (*): `#OkButton.Border:Hover = Dictionary.Colors.HoveredLook`. In a scene, a widget's own values come before its flavors, then the Aesthetic's type entries, then .default, then the built-in look. The files are never read at run time: Roux (the config tool, its own repository) turns them into C++ before the build, shaped so hot reload stays possible later. Planned in the .bechaml and Roux repositories (Plan.md); what the library needs:
+  - Schema.json: the widget types, parts, settings, setters and value types the generator may call, with a compile check calling every setter in it
+  - Character sets loaded at run time (see ToDos), filled by the generated App Settings
+  - Aesthetics: type entries per Aesthetic, read after a widget's own flavors; Scene::SetAesthetic
+  - Widgets built and styled from generated code, building kept apart from styling
 - Popups
   - Linux is untested: the owner is set with XSetTransientForHint, and whether the popup stays off the taskbar is up to the window manager
 - FileExplorer
@@ -272,6 +277,15 @@ The framework is designed for cross-platform use, and its logic can be compiled 
   <li>Where the text is shaped, the per-character fallback (fontset, then the default font) is the place to look the block up. A widget whose texts come from a worker, like the FileExplorer's names, can collect the blocks its texts need on that thread and hand them over with the listing, so the main thread extends the fontsets before the cells first draw; glyph uploads already work without a current GL context, through the context a Window hands over</li>
   <li>A code point in no supported set still shows a gap, or the font's missing-glyph box once one is drawn</li>
   <li>This replaces the hand-written blocks in the TestProject's setup and the FileExplorer's ensureFontBlocks, which then only asks for its sort arrows</li>
+  </ul>
+</li>
+<li>Fonts: less memory and faster text (found 2026-11-14 by reading the code, not measured yet)
+  <ul>
+  <li>One FreeType face per font file, with a size object per size, instead of a face per Unicode block (the TestProject opens 69); the HarfBuzz face is shared this way already</li>
+  <li>Glyph pages shared per font and size (or by pixel format) instead of one 1024 x 1024 page per block, starting small and growing; a text mixing blocks then draws in one call instead of one per page</li>
+  <li>Text shapes and builds its mesh in every setter; once at the next draw, or when it is first measured, is enough. A cache of shaped runs would help tables and the FileExplorer, which repeat many strings</li>
+  <li>Scrolling a text rebuilds its mesh, since glyphs are clipped on the CPU; clipped in the shader or by the clip planes, a scroll only changes a uniform</li>
+  <li>Smaller: indexed or instanced glyph quads, the depth function read back from GL for every mesh drawn, effect glyphs kept for every blur and width ever shown (no limit while one is animated), values kept twice in Glyph</li>
   </ul>
 </li>
 <li>Bitmap fonts for GameCube and Wii: an IGlyphSource that hands out fixed sizes (GetPixelSizes) and can't shape; FontManager, Text and the size conversions are ready for one</li>

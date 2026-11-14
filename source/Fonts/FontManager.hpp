@@ -36,11 +36,11 @@ namespace RetroFuturaGUI
             _EndY { 0 },
             _BearingX { 0 },
             _BearingY { 0 },
-            _TextureID { 0 }; // the atlas or page holding the glyph; a block loaded glyph by glyph spreads over several
+            _TextureID { 0 }; // the page holding the glyph. A block's glyphs spread over several
         bool _IsColor { false }; // on a color page, drawn in its own colors instead of the fill
     };
 
-    /// @brief One texture of a block whose glyphs are rendered when they are first shown, filled row by row.
+    /// @brief One texture of a block, whose glyphs are rendered when they are first shown, filled row by row
     struct GlyphPage
     {
         u32 _TextureID { 0 },
@@ -51,13 +51,9 @@ namespace RetroFuturaGUI
 
     struct GlyphBlock
     {
-        u32 _TextureID { 0 }, // a block made at once has one atlas; a block loaded glyph by glyph has pages instead
-            _Width { 0 },
-            _Height { 0 },
-            _CodePointFirst { 0 },
+        u32 _CodePointFirst { 0 },
             _CodePointLast { 0 };
-        bool _LoadIndividually { false }; // a range of more than 256 code points: each glyph is rendered when first shown
-        std::unordered_map<u32, Glyph> _Glyphs; // keyed by codepoint; a glyph keeps its address when others are added
+        std::unordered_map<u32, Glyph> _Glyphs; // of a source that can't shape, keyed by codepoint; a glyph keeps its address when others are added
         std::unordered_map<u64, Glyph> _OutlineGlyphs; // glyphs widened for text outlines, keyed by the width (FontSizeToKey) above the codepoint
         std::unordered_map<u32, Glyph> _IndexGlyphs; // glyphs found by shaping, keyed by their index in the source
         std::unordered_map<u64, Glyph> _IndexOutlineGlyphs; // those widened for text outlines, keyed by the width above the index
@@ -121,7 +117,8 @@ namespace RetroFuturaGUI
         /// @return 0 on success, or a non-zero FreeType error code.
         static i32 Init();
 
-        /// @brief Loads a font face for the given family, size and style, generating glyph atlasses for the given codepoint range.
+        /// @brief Loads a font face for the given family, size and style, for the given codepoint range. No glyph is rendered
+        ///        yet: each one is rendered when it's first shown
         ///        A family that isn't installed shows the default font instead, or else the first font loaded, kept under the
         ///        name asked for. A style the family lacks shows its closest one.
         /// @param extendMode If true, glyphs are added to an already-loaded font instead of failing with FontAlreadyLoaded.
@@ -165,8 +162,8 @@ namespace RetroFuturaGUI
         /// @return A pointer to the Glyph, or nullptr if the codepoint is not present in the atlas.
         static const Glyph* GetGlyph(const GlyphAtlas& atlas, const u32 codePoint);
 
-        /// @brief Finds the glyph drawing a codepoint in the font at a size (FontSizeToKey). In a block loaded glyph by glyph, a
-        ///        glyph not shown before is rendered now, through the upload context when no GL context is current; call
+        /// @brief Finds the glyph drawing a codepoint in the font at a size (FontSizeToKey). A glyph not shown before is
+        ///        rendered now, through the upload context when no GL context is current. Call
         ///        FlushGlyphUploads once the text is laid out.
         /// @return nullptr when no block of the font covers the code point, or no context is there to render it with.
         static const Glyph* FindGlyph(const FontInfo& font, const u32 sizeKey, const u32 codePoint);
@@ -216,13 +213,6 @@ namespace RetroFuturaGUI
         static void SetUploadContext(GLFWwindow* context);
 
     private:
-        struct AtlasDimension
-        {
-            u32 _Width { 0 },
-                _Height { 0 };
-            uSize _GlyphCount { 0 };
-        };
-
         /// @brief Makes the upload context current for its lifetime when no context is, so glyphs can be uploaded at any time.
         struct UploadContextScope
         {
@@ -261,8 +251,6 @@ namespace RetroFuturaGUI
         ///        first loaded font's, else a font every system of the platform has, else the first one installed.
         static PlatformBridge::Fonts::FontProperty resolveFontProperty(std::string_view fontFamily, const PlatformBridge::Fonts::Slant slant, const PlatformBridge::Fonts::Weight weight);
 
-        static u32 generateGlyphAtlas(IGlyphSource& source, const u32 codePointFirst, const u32 codePointLast, std::vector<Glyph>* glyphs, AtlasDimension* atlasDim);
-
         /// @brief GL's unpacking state and texture binding, as an upload found them.
         struct UploadState
         {
@@ -278,7 +266,7 @@ namespace RetroFuturaGUI
         /// @brief The first code point of the Unicode block holding the code point, which keys the font's glyph blocks; 0 when none holds it.
         static u32 blockKeyOf(const u32 codePoint);
 
-        /// @brief Renders one glyph of a block loaded glyph by glyph into its pages, and keeps it.
+        /// @brief Renders one glyph of a block into its pages, and keeps it
         static const Glyph* loadGlyph(GlyphBlock& block, const u32 codePoint);
 
         /// @brief Puts a rendered glyph onto a page of the block and fills in where it is and how big, scaled to the font's size.
@@ -338,7 +326,6 @@ namespace RetroFuturaGUI
         static inline GLFWwindow* _uploadContext { nullptr };
         static inline bool _hasUnflushedUploads { false };
         static constexpr u32
-            _individualLoadThreshold { 256 }, // a range with more code than 256 codepoints is loaded glyph by glyph
             _pageSide { 1024 },
             _maxPageSide { 8192 };
         static constexpr f32

@@ -134,49 +134,13 @@ RetroFuturaGUI::FontManager::LoadFontResult RetroFuturaGUI::FontManager::LoadFon
     GlyphAtlas& atlas { font._Atlasses[sizeKey] };
     atlas._FontSize = source->GetPixelSize(); //a font with fixed sizes renders its closest one, and Text scales it
     atlas._Metrics = source->GetMetrics();
-    const UploadContextScope context {};
 
-    //A big range (e.g. CJK's 20000 ideographs) isn't rendered now. Each glyph is rendered when it's first shown; without a
-    //context to make the atlas with, or with color glyphs, which the one-channel atlas can't hold, a small range is too
-    if(_individualLoadThreshold < codePointLast - codePointFirst + 1 || !context.HasContext() || source->HasColorGlyphs())
+    //No glyph is rendered now: each one is rendered into the block's pages when it's first shown, so a block costs
+    //nothing until its characters are used
+    atlas._GlyphBlocks[codePointFirst] =
     {
-        atlas._GlyphBlocks[codePointFirst] =
-        {
-            ._TextureID = 0,
-            ._Width = 0,
-            ._Height = 0,
-            ._CodePointFirst = codePointFirst,
-            ._CodePointLast = codePointLast,
-            ._LoadIndividually = true,
-            ._Glyphs = {},
-            ._OutlineGlyphs = {},
-            ._IndexGlyphs = {},
-            ._IndexOutlineGlyphs = {},
-            ._ShadowGlyphs = {},
-            ._InnerGlowGlyphs = {},
-            ._FontFile = fontProperty._Path + "#" + std::to_string(fontProperty._FaceIndex),
-            ._Source = std::move(source),
-            ._Pages = {},
-            ._ColorPages = {},
-            ._PageSide = pageSideFor(atlas._Metrics),
-            ._Scale = 1.0f
-        };
-
-        return LoadFontResult::Success;
-    }
-
-    std::vector<Glyph> glyphs {};
-    AtlasDimension atlasDim {};
-    const u32 textureID { generateGlyphAtlas(*source, codePointFirst, codePointLast, &glyphs, &atlasDim) };
-    GlyphBlock& block { atlas._GlyphBlocks[codePointFirst] };
-    block =
-    {
-        ._TextureID = textureID,
-        ._Width = atlasDim._Width,
-        ._Height = atlasDim._Height,
         ._CodePointFirst = codePointFirst,
         ._CodePointLast = codePointLast,
-        ._LoadIndividually = false,
         ._Glyphs = {},
         ._OutlineGlyphs = {},
         ._IndexGlyphs = {},
@@ -184,111 +148,14 @@ RetroFuturaGUI::FontManager::LoadFontResult RetroFuturaGUI::FontManager::LoadFon
         ._ShadowGlyphs = {},
         ._InnerGlowGlyphs = {},
         ._FontFile = fontProperty._Path + "#" + std::to_string(fontProperty._FaceIndex),
-        ._Source = std::move(source), //every glyph is made, but outlines are rendered from it later.
+        ._Source = std::move(source),
         ._Pages = {},
         ._ColorPages = {},
-        ._PageSide = pageSideFor(atlas._Metrics), //for the outlines.
+        ._PageSide = pageSideFor(atlas._Metrics),
         ._Scale = 1.0f
     };
 
-    for(uSize i = 0; i < atlasDim._GlyphCount; ++i)
-    {
-        Glyph glyph;
-        glyph._Size[0] = glyphs[i]._EndX - glyphs[i]._OriginX;
-        glyph._Size[1] = glyphs[i]._EndY - glyphs[i]._OriginY;
-        glyph._Bearing[0] = glyphs[i]._BearingX;
-        glyph._Bearing[1] = glyphs[i]._BearingY;
-        glyph._Advance = glyphs[i]._Advance;
-        glyph._UV[0] = static_cast<f32>(glyphs[i]._OriginX) / atlasDim._Width; // minU
-        glyph._UV[1] = static_cast<f32>(glyphs[i]._OriginY) / atlasDim._Height; // minV
-        glyph._UV[2] = static_cast<f32>(glyphs[i]._EndX) / atlasDim._Width; // maxU
-        glyph._UV[3] = static_cast<f32>(glyphs[i]._EndY) / atlasDim._Height; // maxV
-        glyph._TextureID = textureID;
-        block._Glyphs.insert({ glyphs[i]._CodePoint, glyph });
-    }
-
     return LoadFontResult::Success;
-}
-
-u32 RetroFuturaGUI::FontManager::generateGlyphAtlas(IGlyphSource& source, const u32 codePointFirst, const u32 codePointLast, std::vector<Glyph>* glyphs, AtlasDimension* atlasDim)
-{
-    std::vector<Glyph>& glyphsRef = *glyphs;
-    const uSize glyphCount { codePointLast - codePointFirst + 1 };
-    u32 maxGlyphDimension { (1 + static_cast<u32>(source.GetMetrics()._LineHeight)) * (u32)ceilf(sqrtf(static_cast<f32>(glyphCount))) },
-        atlasWidth { 1 };
-    glyphsRef.resize(glyphCount);
-
-    while(atlasWidth < maxGlyphDimension)
-        atlasWidth <<= 1;
-
-    u32 atlasHeight { atlasWidth };
-    std::vector<u8> pixels(atlasWidth * atlasHeight);
-    u32 penX { 0 },
-        penY { 0 },
-        rowHeight { 0 }; // tallest glyph in the row
-    GlyphBitmap bitmap {};
-
-    for(uSize codePoint = codePointFirst; codePoint <= codePointLast; ++codePoint)
-    {
-        source.RenderGlyph(static_cast<u32>(codePoint), &bitmap); //a failed glyph is empty, and keeps its slot
-        const bool fits { bitmap._Width < atlasWidth }; //a glyph wider than the atlas keeps its advance but draws nothing
-
-        if(fits && atlasWidth < penX + bitmap._Width + 1)
-        {
-            penX = 0;
-            penY += rowHeight + 1;
-            rowHeight = 0;
-        }
-
-        //The size is estimated from the line height. the atlas grows downward when the rows outrun it
-        while(fits && atlasHeight < penY + bitmap._Height)
-        {
-            atlasHeight *= 2;
-            pixels.resize(static_cast<uSize>(atlasWidth) * atlasHeight);
-        }
-
-        for(uSize row = 0; fits && row < bitmap._Height; ++row)
-            std::copy_n(bitmap._Pixels.data() + row * bitmap._Width, bitmap._Width, pixels.data() + (penY + row) * atlasWidth + penX);
-
-        glyphsRef[codePoint - codePointFirst]._CodePoint = static_cast<u32>(codePoint);
-        glyphsRef[codePoint - codePointFirst]._OriginX = penX;
-        glyphsRef[codePoint - codePointFirst]._OriginY = penY;
-        glyphsRef[codePoint - codePointFirst]._EndX = penX + (fits ? bitmap._Width : 0);
-        glyphsRef[codePoint - codePointFirst]._EndY = penY + (fits ? bitmap._Height : 0);
-        glyphsRef[codePoint - codePointFirst]._BearingX = static_cast<u32>(bitmap._BearingX);
-        glyphsRef[codePoint - codePointFirst]._BearingY = static_cast<u32>(bitmap._BearingY);
-        glyphsRef[codePoint - codePointFirst]._Advance = bitmap._Advance;
-
-        if(!fits)
-            continue;
-
-        penX += bitmap._Width + 1;
-        rowHeight = std::max(rowHeight, bitmap._Height);
-    }
-
-    //stbi_write_png((std::string("font_output_") + std::to_string(codePointFirst) + "-" + std::to_string(codePointLast) + ".png").c_str(), atlasWidth, atlasHeight, 1, pixels.data(), atlasWidth);
-
-    //One channel: the font shader reads red only, so RGBA would take four times the memory for the same picture
-    u32 textureID { 0 };
-    glGenTextures(1, &textureID);
-    const UploadState state { beginUpload() };
-    glBindTexture(GL_TEXTURE_2D, textureID);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_R8, atlasWidth, atlasHeight, 0, GL_RED, GL_UNSIGNED_BYTE, pixels.data());
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    endUpload(state);
-    _hasUnflushedUploads = true;
-
-    if(atlasDim)
-    {
-        atlasDim->_Width = atlasWidth;
-        atlasDim->_Height = atlasHeight;
-        atlasDim->_GlyphCount = glyphCount;
-    }
-
-    return textureID;
 }
 
 i32 RetroFuturaGUI::FontManager::initFreeTypeLibrary()
@@ -432,9 +299,6 @@ const RetroFuturaGUI::Glyph* RetroFuturaGUI::FontManager::FindGlyph(const FontIn
     if(block->second._Glyphs.end() != glyph)
         return &glyph->second;
 
-    if(!block->second._LoadIndividually)
-        return nullptr;
-
     return loadGlyph(const_cast<GlyphBlock&>(block->second), codePoint);
 }
 
@@ -502,8 +366,8 @@ const RetroFuturaGUI::Glyph* RetroFuturaGUI::FontManager::loadGlyph(GlyphBlock& 
     glyph._CodePoint = codePoint;
     GlyphBitmap bitmap {};
 
-    //A code point the font lacks renders its empty box, as in a block made at once. Kept like any other glyph, a failed one
-    //too, so neither is rendered again
+    //A code point the font lacks renders its empty box. Kept like any other glyph, a failed one too, so neither is rendered
+    //again
     if(block._Source->RenderGlyph(codePoint, &bitmap))
         storeGlyph(block, bitmap, &glyph);
 
@@ -671,18 +535,9 @@ void RetroFuturaGUI::FontManager::ExtendFontset(std::string_view fontFamily, std
             GlyphBlock& block { atlas._GlyphBlocks[codePointFirst] };
             block = std::move(extension._GlyphBlocks[codePointFirst]);
 
-            //An extension drawing at a fixed size of its own, like a bitmap emoji font, is scaled to the font's size: the
-            //glyphs made so far now, the others as they are made
+            //An extension drawing at a fixed size of its own, like a bitmap emoji font, is scaled to the font's size, each
+            //glyph as it is made
             block._Scale = atlas._FontSize / std::max(extension._FontSize, 1.0f);
-
-            for(auto& [glyphCodePoint, glyph] : block._Glyphs)
-            {
-                glyph._Size[0] = static_cast<i32>(std::lround(glyph._Size[0] * block._Scale));
-                glyph._Size[1] = static_cast<i32>(std::lround(glyph._Size[1] * block._Scale));
-                glyph._Bearing[0] = static_cast<i32>(std::lround(glyph._Bearing[0] * block._Scale));
-                glyph._Bearing[1] = static_cast<i32>(std::lround(glyph._Bearing[1] * block._Scale));
-                glyph._Advance = static_cast<u32>(std::lround(glyph._Advance * block._Scale));
-            }
 
             //The new font may have what another font was found to draw
             atlas._FallbackFor.clear();
@@ -866,12 +721,8 @@ RetroFuturaGUI::GlyphBlock* RetroFuturaGUI::FontManager::getDefaultFontBlock(con
     const f32 scale { atlas._FontSize / std::max(source->GetPixelSize(), 1.0f) };
     atlas._FallbackBlocks.push_back(GlyphBlock
     {
-        ._TextureID = 0,
-        ._Width = 0,
-        ._Height = 0,
         ._CodePointFirst = 0,
         ._CodePointLast = 0,
-        ._LoadIndividually = true,
         ._Glyphs = {},
         ._OutlineGlyphs = {},
         ._IndexGlyphs = {},
