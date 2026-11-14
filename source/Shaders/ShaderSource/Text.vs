@@ -16,12 +16,14 @@ uniform vec2 uSpanCenter; // the text span's center, in the text's own space
 uniform int uMaskPerLine = 0; // 1 lays the mask over each line (each column) instead of the whole text
 uniform int uIsVertical = 0;  // 1 when the lines are columns
 uniform float uLineExtent = 1.0; // a line's height from its lowest to its highest glyph, or a column's width
+uniform vec4 uTextClip; // the parent's edges in the text's own space: left, bottom, right, top
 
 out vec2 vGlyphUV;
 out vec2 vLocalPos;
 out vec2 vTexCoord;
 out vec2 vUV;
 out vec2 vMaskPos;
+out vec4 vTextClipEdges; // how far inside the parent's left, bottom, right and top edges; negative outside
 
 void main()
 {
@@ -29,6 +31,7 @@ void main()
     gl_Position = uProjection * placedPosition;
     clipToScopes(placedPosition);
     vGlyphUV = aTexCoord;
+    vTextClipEdges = vec4(Position - uTextClip.xy, uTextClip.zw - Position);
     vLocalPos = (Position - uSpanCenter) / uScale; // -0.5 .. 0.5 across the whole text, so a gradient, raster or fog runs across all of it
     vTexCoord = vLocalPos + 0.5;
     vUV = (gl_Position.xy / gl_Position.w * 0.5 + 0.5); // where the pixel sits in the window, 0 .. 1, for the glass

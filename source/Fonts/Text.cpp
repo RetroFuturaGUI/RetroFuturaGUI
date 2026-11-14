@@ -51,8 +51,10 @@ void RetroFuturaGUI::Text::Draw()
     if(areEffectMeshesStale())
     {
         beginEffectFades();
-        updateMesh();
+        _isMeshStale = true;
     }
+
+    layOut();
 
     drawShadow();
     drawGlow();
@@ -219,6 +221,11 @@ void RetroFuturaGUI::Text::uploadPlacement(Shader& shader, const glm::mat4& tran
     shader.SetUniformInt("uGlyphs", 0);
     shader.SetUniformFloat("uColorGlyphTint", _colorGlyphTint);
 
+    //Glyphs are cut at the parent's edges by the shader, in the text's own space, so moving or scrolling the text doesn't
+    //build its mesh again.
+    const glm::vec2 clipMin { glm::vec2(_position) - _parentSize * 0.5f - _positionAligned };
+    shader.SetUniformVec4("uTextClip", glm::vec4(clipMin, clipMin + _parentSize));
+
     //The fill, the raster and the fog run across the whole span, whose top is the font's ascender above the first baseline, or for columns the placed position itself
     shader.SetUniformVec2("uScale", glm::max(_textSpan, glm::vec2(1.0f)));
     shader.SetUniformVec2("uSpanCenter", glm::vec2(_textSpan.x * 0.5f, (TextFlow::Horizontal == _textFlow ? _ascender : 0.0f) - _textSpan.y * 0.5f));
@@ -276,7 +283,7 @@ void RetroFuturaGUI::Text::SetOutlineWidth(const f32 width)
         return;
 
     _outlineWidth = width;
-    updateMesh();
+    _isMeshStale = true;
 }
 
 f32 RetroFuturaGUI::Text::GetOutlineWidth() const
@@ -321,28 +328,26 @@ const RetroFuturaGUI::InnerGlow& RetroFuturaGUI::Text::GetInnerGlow() const
 
 void RetroFuturaGUI::Text::SetTextPadding(const f32 padding)
 {
+    if(_textPadding == padding)
+        return;
+
     _textPadding = padding;
+    _isPlacementStale = true;
 
     if(_isWordWrapEnabled)
-        calculateTextSpan(); //the lines wrap at the width the padding leaves.
-
-    alignPosition();
-    updateMesh();
+        _isSpanStale = true; //the lines wrap at the width the padding leaves.
 }
 
 void RetroFuturaGUI::Text::SetParentSize(const glm::vec2 size)
 {
-    const bool parentSizeChanged { _parentSize != size };
-    const bool wrapWidthChanged { _isWordWrapEnabled && _parentSize.x != size.x };
+    if(_parentSize == size)
+        return;
+
+    if(_isWordWrapEnabled && _parentSize.x != size.x)
+        _isSpanStale = true;
+
     _parentSize = size;
-
-    if(wrapWidthChanged)
-        calculateTextSpan();
-
-    alignPosition();
-
-    if(parentSizeChanged)
-        updateMesh();
+    _isPlacementStale = true;
 }
 
 void RetroFuturaGUI::Text::SetScrollOffset(const f32 offset)
@@ -351,8 +356,7 @@ void RetroFuturaGUI::Text::SetScrollOffset(const f32 offset)
         return;
 
     _scrollOffset = offset;
-    alignPosition();
-    updateMesh(); //glyph clipping is baked into vertex data at mesh-build time, so it must be redone for the new view
+    _isPlacementStale = true;
 }
 
 f32 RetroFuturaGUI::Text::GetScrollOffset() const
@@ -370,9 +374,7 @@ void RetroFuturaGUI::Text::SetFontFamily(std::string_view fontFamily, const f32 
     _fontInfo = FontManager::GetFontInfo(fontFamily, _fontSize, FontSizeUnit::Pixels, _fontSlant, _fontWeight);
 
     // Lays the text out again: text set before the font was never measured, and other glyphs measure differently
-    calculateTextSpan();
-    alignPosition();
-    updateMesh();
+    _isSpanStale = true;
 }
 
 f32 RetroFuturaGUI::Text::GetFontSize(const FontSizeUnit sizeUnit) const
@@ -382,9 +384,11 @@ f32 RetroFuturaGUI::Text::GetFontSize(const FontSizeUnit sizeUnit) const
 
 void RetroFuturaGUI::Text::SetTextAlignment(TextAlignment textAlignment)
 {
+    if(_textAlignment == textAlignment)
+        return;
+
     _textAlignment = textAlignment;
-    alignPosition();
-    updateMesh();
+    _isPlacementStale = true;
 }
 
 RetroFuturaGUI::TextAlignment RetroFuturaGUI::Text::GetTextAlignment() const
@@ -394,24 +398,37 @@ RetroFuturaGUI::TextAlignment RetroFuturaGUI::Text::GetTextAlignment() const
 
 void RetroFuturaGUI::Text::SetSize(const glm::vec2& glyphSize)
 {
+    if(_glyphSize == glyphSize)
+        return;
+
     _glyphSize = glyphSize;
-    calculateTextSpan();
-    alignPosition();
-    updateMesh();
+    _isSpanStale = true;
 }
 
 void RetroFuturaGUI::Text::SetPosition(const glm::vec3& position)
 {
+    if(_position == position)
+        return;
+
     _position = position;
-    alignPosition();
+    _isPlacementStale = true;
 }
 
 void RetroFuturaGUI::Text::SetRotation(const glm::vec3& rotation)
 {
+    if(_rotation == rotation)
+        return;
+
+    _rotation = rotation;
+    _isPlacementStale = true;
+}
+
+void RetroFuturaGUI::Text::updateRotationMatrix()
+{
+    //Turned around the middle of the span, so it follows the span when the text changes.
     f32 
         halfWidth { _textSpan.x * 0.5f },
         halfHeight { _textSpan.y * 0.5f };
-    _rotation = rotation;
     glm::vec3 radians = glm::radians(_rotation);
     glm::mat4 rotation3D =
         glm::rotate(glm::mat4(1.0f), radians.z, glm::vec3(0.0f, 0.0f, 1.0f)) *
@@ -425,18 +442,49 @@ void RetroFuturaGUI::Text::SetRotation(const glm::vec3& rotation)
 
 void RetroFuturaGUI::Text::SetTextUTF8(std::string_view text)
 {
+    if(_text.GetUtf8() == text)
+        return;
+
     _text = text;
-    calculateTextSpan();
-    alignPosition();
-    updateMesh();
+    _isSpanStale = true;
 }
 
 void RetroFuturaGUI::Text::SetTextUTF32(std::u32string_view text)
 {
+    if(_text.GetUtf32() == text)
+        return;
+
     _text = text;
-    calculateTextSpan();
+    _isSpanStale = true;
+}
+
+void RetroFuturaGUI::Text::layOut()
+{
+    if(!_isSpanStale && !_isMeshStale && !_isPlacementStale)
+        return;
+
+    //Cleared first, so nothing asked for while laying out starts it again.
+    const bool
+        isSpanStale { _isSpanStale },
+        isMeshStale { _isSpanStale || _isMeshStale };
+    _isSpanStale = false;
+    _isMeshStale = false;
+    _isPlacementStale = false;
+
+    if(isSpanStale)
+        calculateTextSpan();
+
     alignPosition();
-    updateMesh();
+    updateRotationMatrix();
+
+    if(isMeshStale)
+        updateMesh();
+}
+
+void RetroFuturaGUI::Text::ensureLayout() const
+{
+    //What is measured is worked out when it's first asked for, like a cache: the text itself stays as it was set.
+    const_cast<Text*>(this)->layOut();
 }
 
 void RetroFuturaGUI::Text::updateMesh()
@@ -687,9 +735,7 @@ void RetroFuturaGUI::Text::SetTextFlow(const TextFlow textFlow)
         return;
 
     _textFlow = textFlow;
-    calculateTextSpan();
-    alignPosition();
-    updateMesh();
+    _isSpanStale = true;
 }
 
 RetroFuturaGUI::TextFlow RetroFuturaGUI::Text::GetTextFlow() const
@@ -719,48 +765,25 @@ RetroFuturaGUI::MaskSpan RetroFuturaGUI::Text::GetMaskSpan() const
 
 void RetroFuturaGUI::Text::appendGlyphQuad(const Glyph& glyph, const glm::vec2& pen, const f32 scale, const f32 lineCenter, GlyphMesh* mesh) const
 {
+    //The whole glyph: the shader cuts it at the parent's edges (uTextClip)
     const f32
-        xPos { pen.x + glyph._Bearing[0] * scale },
-        yPos { pen.y - (glyph._Size[1] - glyph._Bearing[1]) * scale },
-        width { glyph._Size[0] * scale },
-        height { glyph._Size[1] * scale };
+        left { pen.x + glyph._Bearing[0] * scale },
+        bottom { pen.y - (glyph._Size[1] - glyph._Bearing[1]) * scale },
+        right { left + glyph._Size[0] * scale },
+        top { bottom + glyph._Size[1] * scale },
+        uMin { glyph._UV[0] },
+        uMax { glyph._UV[2] },
+        vMin { glyph._UV[1] },
+        vMax { glyph._UV[3] };
 
-    // Clipping calculations
-    const f32
-        widgetLeft { _position.x - _parentSize.x * 0.5f },
-        widgetRight { widgetLeft + _parentSize.x },
-        widgetBottom { _position.y - _parentSize.y * 0.5f },
-        widgetTop { widgetBottom + _parentSize.y },
-        glyphWorldLeft { _positionAligned.x + xPos },
-        glyphWorldBottom { _positionAligned.y + yPos },
-        clippedLocalLeft { std::max(0.0f, widgetLeft - glyphWorldLeft) },
-        clippedLocalRight { std::min(width, widgetRight - glyphWorldLeft) },
-        clippedLocalBottom { std::max(0.0f, widgetBottom - glyphWorldBottom) },
-        clippedLocalTop { std::min(height, widgetTop - glyphWorldBottom) };
-
-    if (clippedLocalRight <= clippedLocalLeft || clippedLocalTop <= clippedLocalBottom)
+    if(right <= left || top <= bottom)
         return;
-
-    const f32
-        clippedWidth { clippedLocalRight - clippedLocalLeft },
-        uSpan { glyph._UV[2] - glyph._UV[0] },
-        vSpan { glyph._UV[3] - glyph._UV[1] },
-        uMin { glyph._UV[0] + (clippedLocalLeft / width) * uSpan },
-        uMax { glyph._UV[0] + (clippedLocalRight / width) * uSpan },
-        vMin { glyph._UV[1] + (clippedLocalBottom / height) * vSpan },
-        vMax { glyph._UV[1] + (clippedLocalTop / height) * vSpan };
-    //clipping calculations done
 
     //A new batch whenever the page changes: a big block's glyphs spread over several, and a page holds either color glyphs or gray ones
     if(mesh->_Draws.empty() || mesh->_Draws.back()._TextureID != glyph._TextureID)
         mesh->_Draws.push_back(GlyphDraw { ._TextureID = glyph._TextureID, ._VertexStart = static_cast<i32>(mesh->_Vertices.size() / GlyphMesh::_FloatsPerVertex), ._VertexCount = 0, ._IsColor = glyph._IsColor });
 
     //Two triangles, each corner's position, glyph page coordinates and its line's middle
-    const f32
-        left { xPos + clippedLocalLeft },
-        right { left + clippedWidth },
-        bottom { yPos + height - clippedLocalTop },
-        top { yPos + height - clippedLocalBottom };
     const std::array<std::array<f32, GlyphMesh::_FloatsPerVertex>, 6> corners
     {{
         { left, bottom, uMin, vMax, lineCenter },
@@ -779,6 +802,7 @@ void RetroFuturaGUI::Text::appendGlyphQuad(const Glyph& glyph, const glm::vec2& 
 
 glm::vec3 RetroFuturaGUI::Text::GetBoundaryPosition(const uSize boundary, const f32 caretSize) const
 {
+    ensureLayout();
     f32
         x { 0.0f },
         y { 0.0f };
@@ -800,6 +824,8 @@ glm::vec3 RetroFuturaGUI::Text::GetBoundaryPosition(const uSize boundary, const 
 
 uSize RetroFuturaGUI::Text::GetBoundaryAtPosition(const glm::vec2& worldPosition) const
 {
+    ensureLayout();
+
     if(_glyphLines.empty())
         return 0;
 
@@ -827,6 +853,7 @@ uSize RetroFuturaGUI::Text::GetBoundaryAtPosition(const f32 worldX) const
 
 uSize RetroFuturaGUI::Text::GetBoundaryOnLine(const uSize line, const f32 worldX) const
 {
+    ensureLayout();
     return getClosestOnLine(line, worldX - _positionAligned.x);
 }
 
@@ -1092,9 +1119,7 @@ void RetroFuturaGUI::Text::EnableWordWrap(const bool enable)
         return;
 
     _isWordWrapEnabled = enable;
-    calculateTextSpan();
-    alignPosition();
-    updateMesh();
+    _isSpanStale = true;
 }
 
 bool RetroFuturaGUI::Text::IsWordWrapEnabled() const
@@ -1153,6 +1178,8 @@ void RetroFuturaGUI::Text::shapeLine(std::u32string_view line, std::vector<Place
 
 uSize RetroFuturaGUI::Text::GetBoundaryBeside(const uSize boundary, const CaretMove move) const
 {
+    ensureLayout();
+
     if(_glyphPositions.empty())
         return 0;
 
@@ -1238,6 +1265,7 @@ uSize RetroFuturaGUI::Text::GetBoundaryBeside(const uSize boundary, const CaretM
 std::vector<RetroFuturaGUI::TextSelectionArea> RetroFuturaGUI::Text::GetSelectionAreas(const uSize first, const uSize last, const f32 caretSize) const
 {
     std::vector<TextSelectionArea> areas {};
+    ensureLayout();
 
     if(_glyphPositions.empty())
         return areas;
@@ -1308,9 +1336,11 @@ std::vector<RetroFuturaGUI::TextSelectionArea> RetroFuturaGUI::Text::GetSelectio
 
 void RetroFuturaGUI::Text::SetAnchor(const TextAnchor anchor)
 {
+    if(_anchor == anchor)
+        return;
+
     _anchor = anchor;
-    alignPosition();
-    updateMesh();
+    _isPlacementStale = true;
 }
 
 const std::string& RetroFuturaGUI::Text::GetTextUTF8() const
@@ -1330,6 +1360,7 @@ f32 RetroFuturaGUI::Text::GetGlyphSize() const
 
 uSize RetroFuturaGUI::Text::GetGlyphCount() const
 {
+    ensureLayout();
     return _glyphPositions.empty() ? 0 : _glyphPositions.size() - 1;
 }
 
@@ -1340,16 +1371,19 @@ uSize RetroFuturaGUI::Text::GetUtf8Position(uSize const glyphPosition) const
 
 f32 RetroFuturaGUI::Text::GetHeight() const
 {
+    ensureLayout();
     return _ascender + _descender;
 }
 
 f32 RetroFuturaGUI::Text::GetWidth() const
 {
+    ensureLayout();
     return _textSpan.x;
 }
 
 f32 RetroFuturaGUI::Text::GetSpanHeight() const
 {
+    ensureLayout();
     return _textSpan.y;
 }
 
@@ -1360,6 +1394,8 @@ f32 RetroFuturaGUI::Text::GetPadding() const
 
 uSize RetroFuturaGUI::Text::GetBoundaryLine(const uSize boundary) const
 {
+    ensureLayout();
+
     if(_glyphLines.empty())
         return 0;
 
@@ -1368,6 +1404,8 @@ uSize RetroFuturaGUI::Text::GetBoundaryLine(const uSize boundary) const
 
 uSize RetroFuturaGUI::Text::GetLineLastBoundary(const uSize line) const
 {
+    ensureLayout();
+
     if(_glyphLines.empty())
         return 0;
 
@@ -1377,5 +1415,6 @@ uSize RetroFuturaGUI::Text::GetLineLastBoundary(const uSize line) const
 
 f32 RetroFuturaGUI::Text::GetLineHeight() const
 {
+    ensureLayout();
     return _lineHeight;
 }

@@ -43,6 +43,8 @@ namespace RetroFuturaGUI
         bool _IsColor { false }; // color glyphs, drawn in their own colors
     };
 
+    /// @brief Text shaped, laid out and drawn. The setters only note what changed. The text is shaped and its glyphs are laid
+    ///        out once, the next time it is drawn or measured, however many setters were called before
     class Text : public FillStyle, public FogStyle
     {
     public:
@@ -274,6 +276,16 @@ namespace RetroFuturaGUI
         void alignPosition();
         void calculateTextSpan();
 
+        /// @brief Brings the layout up to date with what the setters changed. Shapes the lines, places the text and builds
+        ///        the glyphs' mesh, each only if something it depends on changed
+        void layOut();
+
+        /// @brief layOut for the getters, which measure the text as it will be drawn
+        void ensureLayout() const;
+
+        /// @brief Turns the text around the middle of its span, by the rotation set
+        void updateRotationMatrix();
+
         /// @brief Shapes one line running across: split into runs of one direction by the bidirectional algorithm, each
         ///        shaped its way and laid out in the order they're drawn, the clusters counted from the line's start
         /// @param isRightToLeft Set to whether the line reads right to left, from its first strong character
@@ -292,7 +304,7 @@ namespace RetroFuturaGUI
         f32 getWrapWidth() const;
         static void initMesh(GlyphMesh* mesh);
 
-        /// @brief Adds a glyph's quad at the pen (its baseline origin), clipped to the parent, starting a new batch when its page differs
+        /// @brief Adds a glyph's quad at the pen (its baseline origin), starting a new batch when its page differs
         /// @param lineCenter The middle of the glyph's line across it (y for a line, x for a column), which a mask per line is laid by
         void appendGlyphQuad(const Glyph& glyph, const glm::vec2& pen, const f32 scale, const f32 lineCenter, GlyphMesh* mesh) const;
 
@@ -360,6 +372,9 @@ namespace RetroFuturaGUI
         MaskSpan _maskSpan { MaskSpan::WholeText };
         f32 _textPadding { 0.0f };
         f32 _scrollOffset { 0.0f };
+        bool _isSpanStale { false }, //the text, the font, the size, the flow or the wrapping changed: the lines are shaped again
+            _isMeshStale { false }, //the outline or an effect changed: the glyphs' quads are built again
+            _isPlacementStale { false }; //the position, the parent, the alignment, the scroll offset or the rotation changed
 
     // geometry
         glm::vec3 _position { 0.0f };

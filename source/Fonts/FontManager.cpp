@@ -492,7 +492,7 @@ bool RetroFuturaGUI::FontManager::findGlyphSlot(const u32 width, const u32 heigh
         //A new shelf on the first page with room below its shelves.
         for(GlyphPage& eachPage : pages)
         {
-            if(eachPage._Side < width + 1 || eachPage._Side < eachPage._NextShelfY + height + 1)
+            if(eachPage._Side < width + 2 || eachPage._Side < eachPage._NextShelfY + height + 1)
                 continue;
 
             page = &eachPage;
@@ -505,7 +505,7 @@ bool RetroFuturaGUI::FontManager::findGlyphSlot(const u32 width, const u32 heigh
             //that gets a page it fits on
             u32 side { pages.empty() ? (isColor ? _firstColorPageSide : _firstPageSide) : (isColor ? _colorPageSide : _pageSide) };
 
-            while(side < width + 1 || side < height + 1)
+            while(side < width + 2 || side < height + 2)
             {
                 if(_maxPageSide <= side)
                     return false;
@@ -521,7 +521,7 @@ bool RetroFuturaGUI::FontManager::findGlyphSlot(const u32 width, const u32 heigh
         const u32
             steppedHeight { (height + _shelfHeightStep - 1) / _shelfHeightStep * _shelfHeightStep },
             room { page->_Side - page->_NextShelfY - 1 };
-        page->_Shelves.push_back(GlyphShelf { ._Y = page->_NextShelfY, ._Height = std::min(steppedHeight, room), ._PenX = 0 });
+        page->_Shelves.push_back(GlyphShelf { ._Y = page->_NextShelfY, ._Height = std::min(steppedHeight, room), ._PenX = 1 });
         shelf = &page->_Shelves.back();
         page->_NextShelfY += shelf->_Height + 1; //a pixel between shelves, as between glyphs.
     }
@@ -535,7 +535,8 @@ void RetroFuturaGUI::FontManager::addGlyphPage(const u32 side, const GlyphPixelF
 {
     const bool isColor { GlyphPixelFormat::Color == format };
 
-    //Cleared, so the pixel left between glyphs stays empty
+    //Cleared, so the pixel left between glyphs stays empty. Shelves start a pixel in from the top and the left edge too:
+    //at the edge itself, filtering would repeat a glyph's own first row or column, and it would look different there.
     const std::vector<u8> cleared(static_cast<uSize>(side) * side * (isColor ? 4 : 1));
     u32 textureID { 0 };
     glGenTextures(1, &textureID);
@@ -547,7 +548,7 @@ void RetroFuturaGUI::FontManager::addGlyphPage(const u32 side, const GlyphPixelF
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     endUpload(state);
-    (isColor ? _colorPages : _pages).push_back(GlyphPage { ._TextureID = textureID, ._Side = side, ._NextShelfY = 0, ._Shelves = {} });
+    (isColor ? _colorPages : _pages).push_back(GlyphPage { ._TextureID = textureID, ._Side = side, ._NextShelfY = 1, ._Shelves = {} });
 }
 
 const std::list<RetroFuturaGUI::FontInfo>& RetroFuturaGUI::FontManager::GetFonts()

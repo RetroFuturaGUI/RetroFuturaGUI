@@ -282,8 +282,7 @@ The framework is designed for cross-platform use, and its logic can be compiled 
 <li>Fonts: less memory and faster text (found 2026-11-14 by reading the code, not measured yet)
   <ul>
   <li>Glyph pages grow by whole pages (the first 1 MB, the later ones 4 MB), and a full shelf row is never reused. Growing a page in place would start smaller still, but moves glyphs, so every text mesh would have to be built again, or the glyph coordinates kept in pixels and scaled in the shader</li>
-  <li>Text shapes and builds its mesh in every setter; once at the next draw, or when it is first measured, is enough. A cache of shaped runs would help tables and the FileExplorer, which repeat many strings</li>
-  <li>Scrolling a text rebuilds its mesh, since glyphs are clipped on the CPU; clipped in the shader or by the clip planes, a scroll only changes a uniform</li>
+  <li>A cache of shaped runs, by font, size and string, would help tables and the FileExplorer, which repeat many strings. A text is shaped once per change now, but every text still shapes its own</li>
   <li>Smaller: indexed or instanced glyph quads, the depth function read back from GL for every mesh drawn, effect glyphs kept for every blur and width ever shown (no limit while one is animated), values kept twice in Glyph</li>
   </ul>
 </li>

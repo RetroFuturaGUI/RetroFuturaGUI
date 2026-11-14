@@ -35,6 +35,7 @@ vec4 overBackground(vec4 color)
 #endif
 
 in vec2 vGlyphUV;
+in vec4 vTextClipEdges; //how far inside the parent's edges the pixel is
 out vec4 fragColor;
 
 uniform sampler2D uGlyphs;
@@ -61,6 +62,10 @@ vec4 colorGlyphColor(vec4 glyph)
 
 void main()
 {
+    //Cut at the parent's edges, so a text is scrolled or moved without building its glyphs' quads again.
+    if(any(lessThan(vTextClipEdges, vec4(0.0))))
+        discard;
+
     //The glyph's own colors or the fill, with the glyph's coverage as its alpha; the raster, fog and mask go over either
     vec4 glyph = texture(uGlyphs, vGlyphUV);
     float coverage = 0 != uColorGlyphs ? glyph.a : glyph.r;
