@@ -141,6 +141,7 @@ namespace RetroFuturaGUI
         ///       of the next Interact. Cells
         ///       added past the previous count start empty. Without a definition a cell is Star-weighted
         ///       at 1, so a flex that was only ever given a count divides the bar evenly.
+        /// @bechaml children
         void SetFlexDefinition(std::span<FlexDefinition> flexDefinitions);
 
         /// @brief Returns the sizing policy of the given cell, or the Star-weighted default when out of range.

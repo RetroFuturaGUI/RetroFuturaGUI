@@ -53,10 +53,12 @@ namespace RetroFuturaGUI
 
     struct AxisDefinition
     {
-        std::vector<f32>
-            _RowDefinition {},
-            _ColumnDefinition {},
-            _LayerDefinition {};
+        /// @bechaml name Rows
+        std::vector<f32> _RowDefinition {};
+        /// @bechaml name Columns
+        std::vector<f32> _ColumnDefinition {};
+        /// @bechaml name Layers
+        std::vector<f32> _LayerDefinition {};
 
         /// @brief True when every axis defines between one and MaxTracksPerAxis tracks, all of positive size
         bool IsValid() const

@@ -1,6 +1,6 @@
 {
-    "schemaVersion": 1,
-    "headersHash": "db423e7023c7cbaf90bb12ec3fa2081c0669319ea83fa96357e40b8c99537faa",
+    "schemaVersion": 2,
+    "headersHash": "42c9485ebd7d47ef9102ba92baea010d98accf9867fed90755ec8653ccac7bd5",
     "enums": {
         "AssetKind": {
             "cpp": "RetroFuturaGUI::AssetKind",
@@ -1290,6 +1290,34 @@
         }
     },
     "classes": {
+        "AxisDefinition": {
+            "cpp": "RetroFuturaGUI::AxisDefinition",
+            "header": "Widgets/Containers/Lasagna.hpp",
+            "role": "struct",
+            "bases": [],
+            "parts": {},
+            "setters": {},
+            "signals": {},
+            "slots": {},
+            "fields": {
+                "Rows": {
+                    "member": "_RowDefinition",
+                    "type": "std::vector<f32>",
+                    "default": "{ }"
+                },
+                "Columns": {
+                    "member": "_ColumnDefinition",
+                    "type": "std::vector<f32>",
+                    "default": "{ }"
+                },
+                "Layers": {
+                    "member": "_LayerDefinition",
+                    "type": "std::vector<f32>",
+                    "default": "{ }"
+                }
+            },
+            "constructorArgs": []
+        },
         "Background": {
             "cpp": "RetroFuturaGUI::Background",
             "header": "Widgets/Parts/Background.hpp",
@@ -1664,6 +1692,7 @@
                 ]
             },
             "signals": {},
+            "slots": {},
             "fields": {},
             "constructorArgs": []
         },
@@ -1905,6 +1934,7 @@
                 ]
             },
             "signals": {},
+            "slots": {},
             "fields": {},
             "constructorArgs": []
         },
@@ -1938,6 +1968,7 @@
                 ]
             },
             "signals": {},
+            "slots": {},
             "fields": {},
             "constructorArgs": []
         },
@@ -2098,6 +2129,7 @@
                     "slot": "typename Signal<>::Slot"
                 }
             },
+            "slots": {},
             "fields": {},
             "constructorArgs": []
         },
@@ -2200,6 +2232,7 @@
                 ]
             },
             "signals": {},
+            "slots": {},
             "fields": {},
             "constructorArgs": []
         },
@@ -2248,6 +2281,7 @@
                 ]
             },
             "signals": {},
+            "slots": {},
             "fields": {},
             "constructorArgs": []
         },
@@ -2259,14 +2293,43 @@
             "parts": {},
             "setters": {},
             "signals": {},
+            "slots": {},
             "fields": {
-                "Row": "u32",
-                "Column": "u32",
-                "Layer": "u32",
-                "SizingMode": "SizingMode",
-                "RowSpan": "u32",
-                "ColSpan": "u32",
-                "LayerSpan": "u32"
+                "Row": {
+                    "member": "_Row",
+                    "type": "u32",
+                    "default": "0"
+                },
+                "Column": {
+                    "member": "_Column",
+                    "type": "u32",
+                    "default": "0"
+                },
+                "Layer": {
+                    "member": "_Layer",
+                    "type": "u32",
+                    "default": "0"
+                },
+                "SizingMode": {
+                    "member": "_SizingMode",
+                    "type": "SizingMode",
+                    "default": "\"FILL\""
+                },
+                "RowSpan": {
+                    "member": "_RowSpan",
+                    "type": "u32",
+                    "default": "1"
+                },
+                "ColSpan": {
+                    "member": "_ColSpan",
+                    "type": "u32",
+                    "default": "1"
+                },
+                "LayerSpan": {
+                    "member": "_LayerSpan",
+                    "type": "u32",
+                    "default": "1"
+                }
             },
             "constructorArgs": []
         },
@@ -2416,6 +2479,7 @@
                 ]
             },
             "signals": {},
+            "slots": {},
             "fields": {},
             "constructorArgs": []
         },
@@ -2673,6 +2737,7 @@
                     "slot": "typename Signal<>::Slot"
                 }
             },
+            "slots": {},
             "fields": {},
             "constructorArgs": []
         },
@@ -2874,6 +2939,7 @@
                     "slot": "typename Signal<>::Slot"
                 }
             },
+            "slots": {},
             "fields": {},
             "constructorArgs": []
         },
@@ -2947,6 +3013,7 @@
                 ]
             },
             "signals": {},
+            "slots": {},
             "fields": {},
             "constructorArgs": []
         },
@@ -3104,6 +3171,7 @@
                     "slot": "typename Signal<>::Slot"
                 }
             },
+            "slots": {},
             "fields": {},
             "constructorArgs": []
         },
@@ -3439,6 +3507,7 @@
                     "slot": "typename Signal<>::Slot"
                 }
             },
+            "slots": {},
             "fields": {},
             "constructorArgs": []
         },
@@ -3487,6 +3556,7 @@
                 ]
             },
             "signals": {},
+            "slots": {},
             "fields": {},
             "constructorArgs": []
         },
@@ -3639,6 +3709,7 @@
                 ]
             },
             "signals": {},
+            "slots": {},
             "fields": {},
             "constructorArgs": []
         },
@@ -3818,6 +3889,7 @@
                     "slot": "typename Signal<>::Slot"
                 }
             },
+            "slots": {},
             "fields": {},
             "constructorArgs": [],
             "container": {
@@ -3833,10 +3905,23 @@
             "parts": {},
             "setters": {},
             "signals": {},
+            "slots": {},
             "fields": {
-                "Position": "glm::vec3",
-                "Size": "glm::vec3",
-                "Rotation": "glm::vec3"
+                "Position": {
+                    "member": "_Position",
+                    "type": "glm::vec3",
+                    "default": "0.0"
+                },
+                "Size": {
+                    "member": "_Size",
+                    "type": "glm::vec3",
+                    "default": "1.0"
+                },
+                "Rotation": {
+                    "member": "_Rotation",
+                    "type": "glm::vec3",
+                    "default": "0.0"
+                }
             },
             "constructorArgs": []
         },
@@ -4019,6 +4104,7 @@
                     "slot": "typename Signal<>::Slot"
                 }
             },
+            "slots": {},
             "fields": {},
             "constructorArgs": []
         },
@@ -4314,6 +4400,7 @@
                     "slot": "typename Signal<>::Slot"
                 }
             },
+            "slots": {},
             "fields": {},
             "constructorArgs": []
         },
@@ -4364,6 +4451,7 @@
                     "slot": "typename Signal<Ts...>::Slot"
                 }
             },
+            "slots": {},
             "fields": {},
             "constructorArgs": [],
             "popupScopes": [
@@ -4498,6 +4586,7 @@
                 ]
             },
             "signals": {},
+            "slots": {},
             "fields": {},
             "constructorArgs": []
         },
@@ -4518,6 +4607,7 @@
             },
             "setters": {},
             "signals": {},
+            "slots": {},
             "fields": {},
             "constructorArgs": []
         },
@@ -4542,6 +4632,7 @@
             },
             "setters": {},
             "signals": {},
+            "slots": {},
             "fields": {},
             "constructorArgs": []
         },
@@ -4710,6 +4801,7 @@
                 ]
             },
             "signals": {},
+            "slots": {},
             "fields": {},
             "constructorArgs": []
         },
@@ -4848,6 +4940,7 @@
                 ]
             },
             "signals": {},
+            "slots": {},
             "fields": {},
             "constructorArgs": []
         },
@@ -5016,6 +5109,7 @@
                 ]
             },
             "signals": {},
+            "slots": {},
             "fields": {},
             "constructorArgs": []
         },
@@ -5036,6 +5130,7 @@
             },
             "setters": {},
             "signals": {},
+            "slots": {},
             "fields": {},
             "constructorArgs": []
         },
@@ -5056,6 +5151,7 @@
             },
             "setters": {},
             "signals": {},
+            "slots": {},
             "fields": {},
             "constructorArgs": []
         },
@@ -5080,6 +5176,7 @@
             },
             "setters": {},
             "signals": {},
+            "slots": {},
             "fields": {},
             "constructorArgs": []
         },
@@ -5589,6 +5686,7 @@
                 ]
             },
             "signals": {},
+            "slots": {},
             "fields": {},
             "constructorArgs": []
         },
@@ -5708,6 +5806,7 @@
                 ]
             },
             "signals": {},
+            "slots": {},
             "fields": {},
             "constructorArgs": []
         },
@@ -6101,6 +6200,7 @@
                 ]
             },
             "signals": {},
+            "slots": {},
             "fields": {},
             "constructorArgs": []
         },
@@ -6250,6 +6350,7 @@
                 ]
             },
             "signals": {},
+            "slots": {},
             "fields": {},
             "constructorArgs": []
         },
@@ -6496,6 +6597,7 @@
                     "slot": "typename Signal<>::Slot"
                 }
             },
+            "slots": {},
             "fields": {},
             "constructorArgs": []
         },
@@ -6528,6 +6630,7 @@
                 ]
             },
             "signals": {},
+            "slots": {},
             "fields": {},
             "constructorArgs": []
         },
@@ -6658,6 +6761,7 @@
                 ]
             },
             "signals": {},
+            "slots": {},
             "fields": {},
             "constructorArgs": []
         },
@@ -6678,6 +6782,7 @@
             },
             "setters": {},
             "signals": {},
+            "slots": {},
             "fields": {},
             "constructorArgs": []
         },
@@ -6819,6 +6924,7 @@
                     "slot": "typename Signal<>::Slot"
                 }
             },
+            "slots": {},
             "fields": {},
             "constructorArgs": [
                 {
@@ -6894,6 +7000,7 @@
                 ]
             },
             "signals": {},
+            "slots": {},
             "fields": {},
             "constructorArgs": []
         },
@@ -7035,6 +7142,7 @@
                 ]
             },
             "signals": {},
+            "slots": {},
             "fields": {},
             "constructorArgs": []
         },
@@ -7114,6 +7222,7 @@
                 ]
             },
             "signals": {},
+            "slots": {},
             "fields": {},
             "constructorArgs": []
         },
@@ -7249,6 +7358,7 @@
                     "slot": "typename Signal<>::Slot"
                 }
             },
+            "slots": {},
             "fields": {},
             "constructorArgs": []
         },
@@ -7424,6 +7534,7 @@
                     "slot": "typename Signal<>::Slot"
                 }
             },
+            "slots": {},
             "fields": {},
             "constructorArgs": [
                 {
@@ -7771,6 +7882,7 @@
                     "slot": "typename Signal<>::Slot"
                 }
             },
+            "slots": {},
             "fields": {},
             "constructorArgs": []
         },
@@ -7857,17 +7969,6 @@
                             {
                                 "name": "count",
                                 "type": "uSize"
-                            }
-                        ]
-                    }
-                ],
-                "FlexDefinition": [
-                    {
-                        "call": "SetFlexDefinition",
-                        "params": [
-                            {
-                                "name": "flexDefinitions",
-                                "type": "std::span<FlexDefinition>"
                             }
                         ]
                     }
@@ -8002,12 +8103,50 @@
                     "slot": "typename Signal<>::Slot"
                 }
             },
+            "slots": {},
             "fields": {},
             "constructorArgs": [],
             "container": {
                 "add": "AddWidget",
-                "placement": "uSize"
+                "placement": "uSize",
+                "children": {
+                    "call": "SetFlexDefinition",
+                    "type": "MenuBar::FlexDefinition"
+                }
             }
+        },
+        "MenuBar::FlexDefinition": {
+            "cpp": "RetroFuturaGUI::MenuBar::FlexDefinition",
+            "header": "Widgets/Containers/MenuBar.hpp",
+            "role": "struct",
+            "bases": [],
+            "parts": {},
+            "setters": {},
+            "signals": {},
+            "slots": {},
+            "fields": {
+                "FlexSizing": {
+                    "member": "_FlexSizing",
+                    "type": "FlexSizing",
+                    "default": "\"Fixed\""
+                },
+                "Width": {
+                    "member": "_Width",
+                    "type": "f32",
+                    "default": "1.0"
+                },
+                "IsWindowDrag": {
+                    "member": "_IsWindowDrag",
+                    "type": "bool",
+                    "default": "False"
+                },
+                "IsWindowUndock": {
+                    "member": "_IsWindowUndock",
+                    "type": "bool",
+                    "default": "False"
+                }
+            },
+            "constructorArgs": []
         },
         "MessagePopup": {
             "cpp": "RetroFuturaGUI::MessagePopup",
@@ -8028,6 +8167,7 @@
                     "slot": "typename Signal<Ts...>::Slot"
                 }
             },
+            "slots": {},
             "fields": {},
             "constructorArgs": [],
             "popupScopes": [
@@ -8163,6 +8303,7 @@
                     "slot": "typename Signal<>::Slot"
                 }
             },
+            "slots": {},
             "fields": {},
             "constructorArgs": []
         },
@@ -8350,6 +8491,7 @@
                     "slot": "typename Signal<>::Slot"
                 }
             },
+            "slots": {},
             "fields": {},
             "constructorArgs": []
         },
@@ -8489,6 +8631,7 @@
                 ]
             },
             "signals": {},
+            "slots": {},
             "fields": {},
             "constructorArgs": []
         },
@@ -8664,6 +8807,7 @@
                     "slot": "typename Signal<>::Slot"
                 }
             },
+            "slots": {},
             "fields": {},
             "constructorArgs": [
                 {
@@ -8927,6 +9071,7 @@
                     "slot": "typename Signal<>::Slot"
                 }
             },
+            "slots": {},
             "fields": {},
             "constructorArgs": []
         },
@@ -9180,6 +9325,7 @@
                     "slot": "typename Signal<>::Slot"
                 }
             },
+            "slots": {},
             "fields": {},
             "constructorArgs": [
                 {
@@ -9392,6 +9538,7 @@
                     "slot": "typename Signal<>::Slot"
                 }
             },
+            "slots": {},
             "fields": {},
             "constructorArgs": []
         },
@@ -9509,6 +9656,7 @@
                     "slot": "typename Signal<>::Slot"
                 }
             },
+            "slots": {},
             "fields": {},
             "constructorArgs": []
         },
@@ -9716,6 +9864,7 @@
                     "slot": "typename Signal<>::Slot"
                 }
             },
+            "slots": {},
             "fields": {},
             "constructorArgs": [],
             "container": {
@@ -9833,6 +9982,7 @@
                 ]
             },
             "signals": {},
+            "slots": {},
             "fields": {},
             "constructorArgs": []
         },
@@ -9983,6 +10133,7 @@
                     "slot": "typename Signal<>::Slot"
                 }
             },
+            "slots": {},
             "fields": {},
             "constructorArgs": []
         },
@@ -10236,6 +10387,7 @@
                     "slot": "typename Signal<>::Slot"
                 }
             },
+            "slots": {},
             "fields": {},
             "constructorArgs": []
         },
@@ -10381,6 +10533,7 @@
                     "slot": "typename Signal<>::Slot"
                 }
             },
+            "slots": {},
             "fields": {},
             "constructorArgs": [
                 {
@@ -10677,6 +10830,7 @@
                     "slot": "typename Signal<IWidget *>::Slot"
                 }
             },
+            "slots": {},
             "fields": {},
             "constructorArgs": []
         },
@@ -11361,6 +11515,7 @@
                     "slot": "typename Signal<>::Slot"
                 }
             },
+            "slots": {},
             "fields": {},
             "constructorArgs": []
         },
@@ -11597,6 +11752,7 @@
                     "slot": "typename Signal<>::Slot"
                 }
             },
+            "slots": {},
             "fields": {},
             "constructorArgs": []
         },
@@ -11619,6 +11775,7 @@
                     "slot": "typename Signal<Ts...>::Slot"
                 }
             },
+            "slots": {},
             "fields": {},
             "constructorArgs": [],
             "popupScopes": [
@@ -11763,6 +11920,7 @@
                     "slot": "typename Signal<>::Slot"
                 }
             },
+            "slots": {},
             "fields": {},
             "constructorArgs": []
         },
@@ -12219,6 +12377,7 @@
                     "slot": "typename Signal<>::Slot"
                 }
             },
+            "slots": {},
             "fields": {},
             "constructorArgs": []
         },
@@ -12342,6 +12501,24 @@
                 "OnFilesDropped": {
                     "connect": "Connect_OnFilesDropped",
                     "slot": "typename Signal<std::vector<std::string>, glm::vec2>::Slot"
+                }
+            },
+            "slots": {
+                "CloseWindow": {
+                    "call": "CloseWindow",
+                    "params": []
+                },
+                "Maximize": {
+                    "call": "ToggleMaximize",
+                    "params": []
+                },
+                "Minimize": {
+                    "call": "Minimize",
+                    "params": []
+                },
+                "Undock": {
+                    "call": "Undock",
+                    "params": []
                 }
             },
             "fields": {},
@@ -12620,6 +12797,7 @@
                     "slot": "typename Signal<Window *>::Slot"
                 }
             },
+            "slots": {},
             "fields": {},
             "constructorArgs": []
         }

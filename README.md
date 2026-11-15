@@ -107,6 +107,7 @@ The framework is designed for cross-platform use, and its logic can be compiled 
   - Several windows sharing fonts, images and shaders; rounded corners and transparency to the desktop
   - Moving, resizing and maximizing; docking windows to each other's edges (like the columns of Niri) or into tabs, by API or by dragging with a preview. A minimized window leaves its group (the windows beside it close the gap, those docked to it stay free where they are) and comes back free at its length from before docking; a maximized one fills the screen alone and goes back into its place when restored
   - Three passes per frame: Interact (input), Update (per-frame work) and Draw
+  - The window's actions as slots any widget's signal can call: CloseWindow, Minimize, ToggleMaximize and Undock
   - Files dropped from other programs (OnFilesDropped)
   - A layout file like imgui.ini (RetroFuturaGUI.ini) restores positions, sizes, docking and tabs between runs
   - Holds Scenes, docked to an edge or as overlays

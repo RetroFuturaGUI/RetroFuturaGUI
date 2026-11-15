@@ -98,8 +98,18 @@ namespace RetroFuturaGUI
         /// @brief Returns nullptr: a window is always the root of its path.
         const IHierarchyNode* GetParent() const override;
 
-        /// @brief Maximizes the window, or restores it to its previous size and position if it is maximized already.
+        /// @brief Maximizes the window, or restores it to its previous size and position if it is maximized already
+        /// @bechaml slot
+        /// @bechaml name Maximize
         void ToggleMaximize();
+
+        /// @brief Minimizes the window to the taskbar
+        /// @bechaml slot
+        void Minimize();
+
+        /// @brief Asks the window to close, as its close button does: the main loop ends once it sees the request
+        /// @bechaml slot
+        void CloseWindow();
 
         /// @brief Returns whether the window is maximized. GLFW is asked each time rather than a flag being kept, so the answer cannot drift from the real window.
         bool IsMaximized() const;
@@ -226,6 +236,7 @@ namespace RetroFuturaGUI
         /// @brief Takes this window out of its docking group. It leaves the window it is docked to, whose other docked windows
         ///        grow to fill the gap, and lets go of the windows docked to it where they are. Every window that stops being
         ///        docked gets back the length it had before. A window docked into a WindowTab leaves the tab.
+        /// @bechaml slot
         void Undock();
 
         /// @brief Returns whether this window is docked to another window or has windows docked to it.

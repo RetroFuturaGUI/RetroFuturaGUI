@@ -311,6 +311,22 @@ void RetroFuturaGUI::Window::ToggleMaximize()
         glfwMaximizeWindow(_window);
 }
 
+void RetroFuturaGUI::Window::Minimize()
+{
+    if(!_window)
+        return;
+
+    glfwIconifyWindow(_window);
+}
+
+void RetroFuturaGUI::Window::CloseWindow()
+{
+    if(!_window)
+        return;
+
+    glfwSetWindowShouldClose(_window, GLFW_TRUE);
+}
+
 bool RetroFuturaGUI::Window::IsMaximized() const
 {
     if(!_window)
