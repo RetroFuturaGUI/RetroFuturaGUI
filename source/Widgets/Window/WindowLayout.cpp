@@ -346,7 +346,7 @@ void RetroFuturaGUI::Window::AddFlavor(std::string_view name)
         return;
 
     _flavorNames.emplace_back(name);
-    StylingManager::composeFlavorHashes(_styleScope, WidgetTypeID::Window, StyleAccessor::None, _flavorNames, _flavorHashes);
+    StylingManager::composeFlavorHashes(_styleScope, StylingManager::GetAestheticHash(_aesthetic), WidgetTypeID::Window, StyleAccessor::None, _flavorNames, _flavorHashes);
     restyleParts();
 }
 
@@ -359,7 +359,7 @@ void RetroFuturaGUI::Window::RemoveFlavor(std::string_view name)
         return;
 
     _flavorNames.erase(found);
-    StylingManager::composeFlavorHashes(_styleScope, WidgetTypeID::Window, StyleAccessor::None, _flavorNames, _flavorHashes);
+    StylingManager::composeFlavorHashes(_styleScope, StylingManager::GetAestheticHash(_aesthetic), WidgetTypeID::Window, StyleAccessor::None, _flavorNames, _flavorHashes);
     restyleParts();
 }
 
@@ -375,13 +375,28 @@ void RetroFuturaGUI::Window::setStyleScope(const StyleScope scope)
         return;
 
     _styleScope = scope;
-    StylingManager::composeFlavorHashes(_styleScope, WidgetTypeID::Window, StyleAccessor::None, _flavorNames, _flavorHashes);
+    StylingManager::composeFlavorHashes(_styleScope, StylingManager::GetAestheticHash(_aesthetic), WidgetTypeID::Window, StyleAccessor::None, _flavorNames, _flavorHashes);
     restyleParts();
 }
 
 const std::vector<std::string>& RetroFuturaGUI::Window::GetFlavors() const
 {
     return _flavorNames;
+}
+
+void RetroFuturaGUI::Window::SetAesthetic(std::string_view name)
+{
+    if(name == _aesthetic)
+        return;
+
+    _aesthetic = name;
+    StylingManager::composeFlavorHashes(_styleScope, StylingManager::GetAestheticHash(_aesthetic), WidgetTypeID::Window, StyleAccessor::None, _flavorNames, _flavorHashes);
+    restyleParts();
+}
+
+const std::string& RetroFuturaGUI::Window::GetAesthetic() const
+{
+    return _aesthetic;
 }
 
 void RetroFuturaGUI::Window::restyleParts()

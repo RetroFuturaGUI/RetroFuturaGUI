@@ -64,8 +64,10 @@ namespace RetroFuturaGUI
         return 0 != (static_cast<u32>(accessors) & static_cast<u32>(accessor));
     }
 
-    /// @brief One scope's entries: a flavor per widget type and accessor, which the widgets of that type inside the scope take
-    ///        before their own flavors. StylingManager::GetScope hands one out.
+    /// @brief One scope's entries: a flavor per widget type and accessor, which the widgets of that type inside the scope take.
+    ///        StylingManager::GetScope hands out the library's, for the widgets inside its popups, which come before their own
+    ///        flavors. StylingManager::GetAesthetic hands out an Aesthetic's, the same per popup type and once more for the
+    ///        widgets in the scenes using it.
     RFG_EXPORT class FlavorScope final
     {
     public:
@@ -90,9 +92,10 @@ namespace RetroFuturaGUI
 
     private:
         friend class StylingManager;
-        FlavorScope(const StyleScope scope);
+        FlavorScope(const StyleScope scope, const u32 aestheticHash);
 
         StyleScope _scope { StyleScope::None };
+        u32 _aestheticHash { 0 }; //the Aesthetic's (StylingManager::GetAestheticHash), 0 for the library's own scopes.
     };
 
     /// @brief Keeps the flavors, like a style sheet keeps CSS classes. A widget's part shows what the widget sets
@@ -125,6 +128,19 @@ namespace RetroFuturaGUI
         /// @brief Returns a scope's entries, which style the widgets inside the library's popups by widget type before their
         ///        flavors (StyleScope)
         static FlavorScope GetScope(const StyleScope scope);
+
+        /// @brief Returns an Aesthetic's entries, made empty the first time they are asked for. Without a scope, the entries by
+        ///        widget type for the widgets in the scenes using it (Scene::SetAesthetic, Window::SetAesthetic), which come after
+        ///        a widget's own flavors and before .default: <Aesthetic Name="ColorPop"><Button> is
+        ///        GetAesthetic("ColorPop").GetEntry(WidgetTypeID::Button). With a popup type, the entries for the widgets inside
+        ///        that kind of popup opened from those scenes, which come before the library's own scopes:
+        ///        <Aesthetic><FileExplorer><Button> is GetAesthetic("ColorPop", StyleScope::File).GetEntry(WidgetTypeID::Button).
+        ///        Inside a popup a widget takes the Aesthetic's popup type entries, the library's, the Aesthetic's Popup entries,
+        ///        the library's, its own flavors, the Aesthetic's entries by type, then .default
+        static FlavorScope GetAesthetic(std::string_view name, const StyleScope scope = StyleScope::None);
+
+        /// @brief Returns the hash an Aesthetic's entries are kept under: Fnv1aHash of its name. 0 for no name, meaning no Aesthetic
+        static u32 GetAestheticHash(std::string_view name);
 
         /// @brief Returns a number that changes whenever any flavor changes, so a widget's part knows to take its values again
         static u32 GetGeneration();
@@ -195,12 +211,14 @@ namespace RetroFuturaGUI
         /// @brief The flavor kept under the hash, or nullptr.
         static const Flavor* findFlavor(const u32 flavorHash);
 
-        /// @brief The reserved name a scope entry is kept under. No flavor name an application gives looks like it
-        static std::string getScopeEntryName(const StyleScope scope, const WidgetTypeID widgetType, const StyleAccessor accessor);
+        /// @brief The reserved name a scope entry is kept under, an Aesthetic's (aestheticHash) or the library's (0). No flavor name
+        ///        an application gives looks like it
+        static std::string getScopeEntryName(const StyleScope scope, const u32 aestheticHash, const WidgetTypeID widgetType, const StyleAccessor accessor);
 
-        /// @brief The flavors a widget or window reads: inside a popup, its popup type's entries for its type (one per accessor
-        ///        it has, then the plain one), then the shared Popup scope's likewise, then its own flavors in order
-        static void composeFlavorHashes(const StyleScope scope, const WidgetTypeID widgetType, const StyleAccessor accessors, std::span<const std::string> ownFlavors, std::vector<u32>& hashes);
+        /// @brief The flavors a widget or window reads (GetAesthetic tells the order): inside a popup, its popup type's entries for
+        ///        its type (one per accessor it has, then the plain one; the Aesthetic's before the library's), then the shared
+        ///        Popup scope's likewise, then its own flavors in order, then its Aesthetic's entries for its type
+        static void composeFlavorHashes(const StyleScope scope, const u32 aestheticHash, const WidgetTypeID widgetType, const StyleAccessor accessors, std::span<const std::string> ownFlavors, std::vector<u32>& hashes);
 
         static inline std::unordered_map<u32, std::unique_ptr<Flavor>> _flavors {};
         static inline u32 _generation { 1 }; //parts start at 0, so they take their values on their first draw

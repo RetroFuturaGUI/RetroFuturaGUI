@@ -124,11 +124,12 @@ namespace RetroFuturaGUI
         static f32 rowHeight(const ViewFont& font);
 
         /// @brief The font a widget type's text shows inside a scope, for measuring: what its entries, the shared Popup scope's
-        ///        and .default set over the built-in font. part is Text, or ItemText for a drop-down's items.
-        static ViewFont shownFont(const StyleScope scope, const WidgetTypeID widgetType, const StylePart part, const ViewFont& builtIn);
+        ///        (each with the Aesthetic's first), the Aesthetic's by type and .default set over the built-in font. part is
+        ///        Text, or ItemText for a drop-down's items
+        static ViewFont shownFont(const StyleScope scope, std::string_view aesthetic, const WidgetTypeID widgetType, const StylePart part, const ViewFont& builtIn);
 
         /// @brief The font a table's cell texts show inside a scope, likewise; header picks the header's texts instead.
-        static ViewFont shownTableFont(const StyleScope scope, const bool header, const ViewFont& builtIn);
+        static ViewFont shownTableFont(const StyleScope scope, std::string_view aesthetic, const bool header, const ViewFont& builtIn);
 
         /// @brief The size of a fixed-size widget in a cell of a Lasagna laid out by the axis, a margin smaller than the cell on every side
         static glm::vec3 cellSize(const AxisDefinition& axis, const glm::vec2& windowSize, const ViewCell& cell);

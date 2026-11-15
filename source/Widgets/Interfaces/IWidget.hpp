@@ -340,6 +340,9 @@ namespace RetroFuturaGUI
         /// @brief Puts the flavors the parts read together again: _flavorHashes from the scope and _flavorNames
         void composeFlavors();
 
+        /// @brief The hash of the Aesthetic the widget takes. Its scene's, else its window's. 0 for none
+        u32 findAestheticHash() const;
+
         /// @brief Has the styled parts take their values again: the widget's flavors changed
         void restyleParts();
 
@@ -404,6 +407,7 @@ namespace RetroFuturaGUI
         u32 _styleGeneration { 0 }; //the StylingManager's generation the flavors were last taken at
         StyleAccessor _styleAccessors { StyleAccessor::None };
         StyleScope _composedScope { StyleScope::None }; //what _flavorHashes was last put together for
+        u32 _composedAesthetic { 0 };
         WidgetTypeID _composedType { WidgetTypeID::None };
         StyleAccessor _composedAccessors { StyleAccessor::None };
         bool _isFlavorComposed { false };

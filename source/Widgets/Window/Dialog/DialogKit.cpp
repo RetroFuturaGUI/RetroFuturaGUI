@@ -185,10 +185,10 @@ RetroFuturaGUI::StyleKey RetroFuturaGUI::DialogKit::styleKey()
     return StyleKey {};
 }
 
-RetroFuturaGUI::DialogKit::ViewFont RetroFuturaGUI::DialogKit::shownFont(const StyleScope scope, const WidgetTypeID widgetType, const StylePart part, const ViewFont& builtIn)
+RetroFuturaGUI::DialogKit::ViewFont RetroFuturaGUI::DialogKit::shownFont(const StyleScope scope, std::string_view aesthetic, const WidgetTypeID widgetType, const StylePart part, const ViewFont& builtIn)
 {
     std::vector<u32> flavors {};
-    StylingManager::composeFlavorHashes(scope, widgetType, StyleAccessor::None, {}, flavors);
+    StylingManager::composeFlavorHashes(scope, StylingManager::GetAestheticHash(aesthetic), widgetType, StyleAccessor::None, {}, flavors);
     const auto find = [&flavors, part](auto pick) { return StylingManager::FindFirst<std::remove_cvref_t<decltype(pick(std::declval<const FlavorPart&>()))>>(flavors, part, pick); };
 
     return ViewFont
@@ -200,10 +200,10 @@ RetroFuturaGUI::DialogKit::ViewFont RetroFuturaGUI::DialogKit::shownFont(const S
     };
 }
 
-RetroFuturaGUI::DialogKit::ViewFont RetroFuturaGUI::DialogKit::shownTableFont(const StyleScope scope, const bool header, const ViewFont& builtIn)
+RetroFuturaGUI::DialogKit::ViewFont RetroFuturaGUI::DialogKit::shownTableFont(const StyleScope scope, std::string_view aesthetic, const bool header, const ViewFont& builtIn)
 {
     std::vector<u32> flavors {};
-    StylingManager::composeFlavorHashes(scope, WidgetTypeID::Table, StyleAccessor::None, {}, flavors);
+    StylingManager::composeFlavorHashes(scope, StylingManager::GetAestheticHash(aesthetic), WidgetTypeID::Table, StyleAccessor::None, {}, flavors);
 
     //The text settings of the flavor's cell or header style, nullptr where it sets none
     const auto layerOf = [header](const Flavor& flavor) -> const TableTextLayer*

@@ -14,6 +14,9 @@ RetroFuturaGUI::IPopup::IPopup(std::string_view name, const i32 width, const i32
 {
     _window = std::unique_ptr<Window>(new Window(name, width, height, Window::WindowRole::Popup));
     _window->setStyleScope(scope); //before the popup makes its widgets, which take it from the window
+
+    if(const Window* opener { Window::FromGlfwWindow(_openerContext) })
+        _window->SetAesthetic(opener->GetAesthetic());
 }
 
 RetroFuturaGUI::IPopup::~IPopup()

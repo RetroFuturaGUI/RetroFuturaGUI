@@ -727,7 +727,7 @@ void RetroFuturaGUI::IWidget::followStyleScope()
     const Window* window { Window::FromGlfwWindow(_parentWindow) };
     const StyleScope scope { window ? window->_styleScope : StyleScope::None };
 
-    if(_isFlavorComposed && scope == _composedScope && _widgetTypeID == _composedType && _styleAccessors == _composedAccessors)
+    if(_isFlavorComposed && scope == _composedScope && findAestheticHash() == _composedAesthetic && _widgetTypeID == _composedType && _styleAccessors == _composedAccessors)
         return;
 
     composeFlavors();
@@ -738,10 +738,22 @@ void RetroFuturaGUI::IWidget::composeFlavors()
 {
     const Window* window { Window::FromGlfwWindow(_parentWindow) };
     _composedScope = window ? window->_styleScope : StyleScope::None;
+    _composedAesthetic = findAestheticHash();
     _composedType = _widgetTypeID;
     _composedAccessors = _styleAccessors;
     _isFlavorComposed = true;
-    StylingManager::composeFlavorHashes(_composedScope, _composedType, _composedAccessors, _flavorNames, _flavorHashes);
+    StylingManager::composeFlavorHashes(_composedScope, _composedAesthetic, _composedType, _composedAccessors, _flavorNames, _flavorHashes);
+}
+
+u32 RetroFuturaGUI::IWidget::findAestheticHash() const
+{
+    const Scene* scene { findScene() };
+
+    if(scene && !scene->GetAesthetic().empty())
+        return StylingManager::GetAestheticHash(scene->GetAesthetic());
+
+    const Window* window { Window::FromGlfwWindow(_parentWindow) };
+    return window ? StylingManager::GetAestheticHash(window->GetAesthetic()) : 0;
 }
 
 void RetroFuturaGUI::IWidget::restyleParts()

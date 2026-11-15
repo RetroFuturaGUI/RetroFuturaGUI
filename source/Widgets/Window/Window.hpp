@@ -206,6 +206,14 @@ namespace RetroFuturaGUI
         /// @brief Returns the window's flavors, in order, as they were given
         const std::vector<std::string>& GetFlavors() const;
 
+        /// @brief Styles the window and the widgets of its scenes that name no Aesthetic of their own (Scene::SetAesthetic) with
+        ///        an Aesthetic's entries by type (StylingManager::GetAesthetic), after their own flavors. The popups it opens take
+        ///        it too. An empty name takes it away. None by default
+        void SetAesthetic(std::string_view name);
+
+        /// @brief Returns the name of the window's Aesthetic, empty for none
+        const std::string& GetAesthetic() const;
+
     //Docking
         /// @brief Docks a window to one of this window's edges, after the ones already docked there. The windows on one edge
         ///        share its whole length, minus the docking padding between them, and keep their own depth. From then on the
@@ -739,6 +747,7 @@ namespace RetroFuturaGUI
         std::vector<std::string> _flavorNames {};
         std::vector<u32> _flavorHashes {}; //its scope's entries for windows, then the same flavors, as the StylingManager keeps them. The background and border read these
         StyleScope _styleScope { StyleScope::None }; //a popup's window lies in its popup type's scope, and so do the widgets in it
+        std::string _aesthetic {};
         u32 _styleGeneration { 0 }; //the StylingManager's generation the transitions were last taken at
 
     //Docking

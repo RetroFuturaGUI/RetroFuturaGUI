@@ -659,10 +659,12 @@ void RetroFuturaGUI::FileExplorer::ensureFontBlocks() const
 
 bool RetroFuturaGUI::FileExplorer::updateShownFonts()
 {
+    const Window* window { GetWindow() };
+    const std::string_view aesthetic { window ? std::string_view(window->GetAesthetic()) : std::string_view() };
     const ViewFont
-        cellFont { shownTableFont(StyleScope::File, false, _font) },
-        headerFont { shownTableFont(StyleScope::File, true, _font) },
-        buttonFont { shownFont(StyleScope::File, WidgetTypeID::Button, StylePart::Text, _font) };
+        cellFont { shownTableFont(StyleScope::File, aesthetic, false, _font) },
+        headerFont { shownTableFont(StyleScope::File, aesthetic, true, _font) },
+        buttonFont { shownFont(StyleScope::File, aesthetic, WidgetTypeID::Button, StylePart::Text, _font) };
 
     if(cellFont == _cellFont && headerFont == _headerFont && buttonFont == _buttonFont)
         return false;

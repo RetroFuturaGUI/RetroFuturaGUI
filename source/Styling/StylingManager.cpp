@@ -7,24 +7,24 @@ module RetroFuturaGUI;
 #include <format>
 #endif
 
-RetroFuturaGUI::FlavorScope::FlavorScope(const StyleScope scope)
-    : _scope(scope)
+RetroFuturaGUI::FlavorScope::FlavorScope(const StyleScope scope, const u32 aestheticHash)
+    : _scope(scope), _aestheticHash(aestheticHash)
 {
 }
 
 RetroFuturaGUI::Flavor& RetroFuturaGUI::FlavorScope::GetEntry(const WidgetTypeID widgetType, const StyleAccessor accessor) const
 {
-    return StylingManager::GetFlavor(StylingManager::getScopeEntryName(_scope, widgetType, accessor));
+    return StylingManager::GetFlavor(StylingManager::getScopeEntryName(_scope, _aestheticHash, widgetType, accessor));
 }
 
 bool RetroFuturaGUI::FlavorScope::HasEntry(const WidgetTypeID widgetType, const StyleAccessor accessor) const
 {
-    return StylingManager::HasFlavor(StylingManager::getScopeEntryName(_scope, widgetType, accessor));
+    return StylingManager::HasFlavor(StylingManager::getScopeEntryName(_scope, _aestheticHash, widgetType, accessor));
 }
 
 void RetroFuturaGUI::FlavorScope::RemoveEntry(const WidgetTypeID widgetType, const StyleAccessor accessor) const
 {
-    StylingManager::RemoveFlavor(StylingManager::getScopeEntryName(_scope, widgetType, accessor));
+    StylingManager::RemoveFlavor(StylingManager::getScopeEntryName(_scope, _aestheticHash, widgetType, accessor));
 }
 
 RetroFuturaGUI::Flavor& RetroFuturaGUI::FlavorScope::GetTitle() const
@@ -39,39 +39,65 @@ RetroFuturaGUI::Flavor& RetroFuturaGUI::FlavorScope::GetIcon() const
 
 RetroFuturaGUI::FlavorScope RetroFuturaGUI::StylingManager::GetScope(const StyleScope scope)
 {
-    return FlavorScope(scope);
+    return FlavorScope(scope, 0);
 }
 
-std::string RetroFuturaGUI::StylingManager::getScopeEntryName(const StyleScope scope, const WidgetTypeID widgetType, const StyleAccessor accessor)
+RetroFuturaGUI::FlavorScope RetroFuturaGUI::StylingManager::GetAesthetic(std::string_view name, const StyleScope scope)
+{
+    return FlavorScope(scope, GetAestheticHash(name));
+}
+
+u32 RetroFuturaGUI::StylingManager::GetAestheticHash(std::string_view name)
+{
+    return name.empty() ? 0 : Fnv1aHash(name);
+}
+
+std::string RetroFuturaGUI::StylingManager::getScopeEntryName(const StyleScope scope, const u32 aestheticHash, const WidgetTypeID widgetType, const StyleAccessor accessor)
 {
     //Angle brackets, as no flavor name an application gives has them.
-    return std::format("<{}>{}:{}", static_cast<u32>(scope), static_cast<i32>(widgetType), static_cast<u32>(accessor));
+    if(0 == aestheticHash)
+        return std::format("<{}>{}:{}", static_cast<u32>(scope), static_cast<i32>(widgetType), static_cast<u32>(accessor));
+
+    return std::format("<{}:{}>{}:{}", aestheticHash, static_cast<u32>(scope), static_cast<i32>(widgetType), static_cast<u32>(accessor));
 }
 
-void RetroFuturaGUI::StylingManager::composeFlavorHashes(const StyleScope scope, const WidgetTypeID widgetType, const StyleAccessor accessors, std::span<const std::string> ownFlavors, std::vector<u32>& hashes)
+void RetroFuturaGUI::StylingManager::composeFlavorHashes(const StyleScope scope, const u32 aestheticHash, const WidgetTypeID widgetType, const StyleAccessor accessors, std::span<const std::string> ownFlavors, std::vector<u32>& hashes)
 {
     hashes.clear();
 
-    //Each scope's accessor entries come before its plain one, the popup type's scope before the shared one.
-    const auto addScope = [&hashes, widgetType, accessors](const StyleScope added)
+    //Each scope's accessor entries come before its plain one.
+    const auto addScope = [&hashes, widgetType, accessors](const StyleScope added, const u32 aesthetic)
     {
         for(const StyleAccessor accessor : { StyleAccessor::On, StyleAccessor::Icon, StyleAccessor::Title })
         {
             if(HasStyleAccessor(accessors, accessor))
-                hashes.push_back(GetFlavorHash(getScopeEntryName(added, widgetType, accessor)));
+                hashes.push_back(GetFlavorHash(getScopeEntryName(added, aesthetic, widgetType, accessor)));
         }
 
-        hashes.push_back(GetFlavorHash(getScopeEntryName(added, widgetType, StyleAccessor::None)));
+        hashes.push_back(GetFlavorHash(getScopeEntryName(added, aesthetic, widgetType, StyleAccessor::None)));
+    };
+
+    //Inside a popup: its type's scope before the shared one, the Aesthetic's entries before the library's each time
+    const auto addPopupScope = [&addScope, aestheticHash](const StyleScope added)
+    {
+        if(0 != aestheticHash)
+            addScope(added, aestheticHash);
+
+        addScope(added, 0);
     };
 
     if(StyleScope::None != scope && StyleScope::Popup != scope)
-        addScope(scope);
+        addPopupScope(scope);
 
     if(StyleScope::None != scope)
-        addScope(StyleScope::Popup);
+        addPopupScope(StyleScope::Popup);
 
     for(const std::string& name : ownFlavors)
         hashes.push_back(GetFlavorHash(name));
+
+    //The Aesthetic's entries by type come after the widget's own flavors, before .default
+    if(0 != aestheticHash)
+        addScope(StyleScope::None, aestheticHash);
 }
 
 RetroFuturaGUI::Flavor& RetroFuturaGUI::StylingManager::GetFlavor(std::string_view name)

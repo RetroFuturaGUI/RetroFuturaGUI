@@ -91,6 +91,14 @@ namespace RetroFuturaGUI
 
         /// @brief Whether the scene shows while its window is docked into a WindowTab.
         bool IsShownInTab() const;
+
+        /// @brief Styles the scene's widgets with an Aesthetic's entries by type (StylingManager::GetAesthetic), after their own
+        ///        flavors and before .default, in place of its window's (Window::SetAesthetic). An empty name goes back to the
+        ///        window's. None by default
+        void SetAesthetic(std::string_view name);
+
+        /// @brief Returns the name of the scene's own Aesthetic, empty when it takes its window's
+        const std::string& GetAesthetic() const;
         IWidget* GetRootContainer() const;
         const std::string& GetName() const override;
         const IHierarchyNode* GetParent() const override;
@@ -160,6 +168,7 @@ namespace RetroFuturaGUI
     //Identity
         std::string _name {};
         Window* _parentWindow { nullptr };
+        std::string _aesthetic {};
 
     //Geometry
         glm::vec3

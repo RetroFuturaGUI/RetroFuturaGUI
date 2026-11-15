@@ -205,6 +205,16 @@ bool RetroFuturaGUI::Scene::IsShownInTab() const
     return _shownInTab;
 }
 
+void RetroFuturaGUI::Scene::SetAesthetic(std::string_view name)
+{
+    _aesthetic = name; //the widgets follow on their next Update (IWidget::followStyleScope)
+}
+
+const std::string& RetroFuturaGUI::Scene::GetAesthetic() const
+{
+    return _aesthetic;
+}
+
 RetroFuturaGUI::IWidget* RetroFuturaGUI::Scene::GetRootContainer() const
 {
     return _rootContainer.get();
