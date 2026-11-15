@@ -4,6 +4,8 @@
 #include <ft2build.h>
 #include FT_FREETYPE_H
 #include <unordered_map>
+#include <unordered_set>
+#include <span>
 #include <map>
 #include <memory>
 #include <list>
@@ -80,6 +82,7 @@ namespace RetroFuturaGUI
         std::unordered_map<u32, GlyphBlock> _GlyphBlocks; // keyed by first codepoint
         std::list<GlyphBlock> _FallbackBlocks {}; // fonts outside the fontset drawing what it lacks: the default font, opened when first needed
         std::unordered_map<u32, GlyphBlock*> _FallbackFor {}; // the block drawing a character its own block's font lacks, nullptr for none; found once
+        std::unordered_set<u32> _CharsetBlocksTried {}; // the character sets' blocks it tried to add, by first code point, each tried once
         bool _IsDefaultFontLookedFor { false };
     };
 
@@ -213,6 +216,15 @@ namespace RetroFuturaGUI
         /// @brief Extends an already-loaded fontset by loading glyphs for the given codepoint range from a fallback font family.
         static void ExtendFontset(std::string_view fontFamily, std::string_view fontFamilyExtension, const f32 size, const FontSizeUnit sizeUnit, const PlatformBridge::Fonts::Slant slant, const PlatformBridge::Fonts::Weight weight, const u32 codePointFirst, const u32 codePointLast);
 
+        /// @brief Adds a character set. The Unicode blocks a script needs, each named by a code point inside it (HiraganaFirst).
+        ///        The first time a text shows one of its characters in a font and size whose fontset lacks that block, the block
+        ///        is added to the fontset from the character set's font (SetCharsetFont), else from the font itself. A name
+        ///        given again replaces its blocks
+        static void AddCharset(std::string_view name, std::span<const u32> blocks);
+
+        /// @brief Sets the font a character set's blocks are added from. Fontsets that added them already keep theirs
+        static void SetCharsetFont(std::string_view charset, std::string_view fontFamily);
+
         /// @brief Sets the context glyphs are uploaded with when none is current, which shares its textures with every window.
         ///        Window hands over the first window's context and passes it on when that window goes.
         static void SetUploadContext(GLFWwindow* context);
@@ -314,6 +326,23 @@ namespace RetroFuturaGUI
         ///        fontset's own fonts (asked already) or can't be opened.
         static GlyphBlock* getDefaultFontBlock(const FontInfo& font, GlyphAtlas& atlas);
 
+        /// @brief A character set (AddCharset). Its blocks by their first code points, and the family they come from, empty
+        ///        for the font being extended
+        struct Charset
+        {
+            std::string _Name {};
+            std::vector<u32> _BlockKeys {};
+            std::string _FontFamily {};
+        };
+
+        /// @brief Adds the block holding the character to the fontset from its character set's font, the first time a text in
+        ///        this font and size needs it. nullptr when no character set has the block, or it was tried already
+        static GlyphBlock* loadCharsetBlock(const FontInfo& font, GlyphAtlas& atlas, const u32 codePoint);
+
+        /// @brief Adds a block of another family to the atlas, at the given size: what ExtendFontset and the character sets do
+        /// @return false when the family couldn't be loaded.
+        static bool extendAtlas(GlyphAtlas& atlas, std::string_view fontFamilyExtension, const f32 pixels, const PlatformBridge::Fonts::Slant slant, const PlatformBridge::Fonts::Weight weight, const u32 codePointFirst, const u32 codePointLast);
+
         /// @brief Whether a character belongs to the character before it rather than starting a run of its own: joiners,
         ///        variation selectors, combining marks, skin tones and the tags of subdivision flags.
         static bool isAttaching(const u32 codePoint);
@@ -336,6 +365,7 @@ namespace RetroFuturaGUI
         static void addGlyphPage(const u32 side, const GlyphPixelFormat format);
 
         static inline std::list<FontInfo> _fonts {};
+        static inline std::vector<Charset> _charsets {};
         static inline FT_Library _ft { nullptr };
         static inline std::string _defaultFontFamily;
         static inline GLFWwindow* _uploadContext { nullptr };

@@ -650,11 +650,9 @@ void RetroFuturaGUI::FileExplorer::ensureFontBlock(const ViewFont& font, const u
 
 void RetroFuturaGUI::FileExplorer::ensureFontBlocks() const
 {
+    //Only the sort arrows. The scripts of the names are the app's character sets (FontManager::AddCharset)
     for(const ViewFont& font : { _cellFont, _headerFont })
-    {
-        ensureFontBlock(font, Latin1SupplementFirst, Latin1SupplementLast);
         ensureFontBlock(font, GeometricShapesFirst, GeometricShapesLast);
-    }
 }
 
 bool RetroFuturaGUI::FileExplorer::updateShownFonts()

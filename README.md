@@ -32,7 +32,6 @@ The framework is designed for cross-platform use, and its logic can be compiled 
 ### WIP in detail
 - .bechaml (milestone 5). Seven file kinds, the root element naming the kind: Project (read by CMake), AppSettings, Dictionary, Flavors, Aesthetic (the look of the scenes that include it), Scene, Window. Rules address one widget (#OkButton), a flavor (.primary), a widget type (Button) or every widget (*): `#OkButton.Border:Hover = Dictionary.Colors.HoveredLook`. In a scene, a widget's own values come before its flavors, then the Aesthetic's type entries, then .default, then the built-in look. The files are never read at run time: Roux (the config tool, its own repository) turns them into C++ before the build, shaped so hot reload stays possible later. Planned in the .bechaml and Roux repositories (Plan.md); what the library needs:
   - Schema.json: the widget types, parts, settings, setters and value types the generator may call, with a compile check calling every setter in it
-  - Character sets loaded at run time (see ToDos), filled by the generated App Settings
   - Widgets built and styled from generated code, building kept apart from styling
 - Popups
   - Linux is untested: the owner is set with XSetTransientForHint, and whether the popup stays off the taskbar is up to the window manager
@@ -164,6 +163,7 @@ The framework is designed for cross-platform use, and its logic can be compiled 
   - Anti-aliased lines with mitered joins (Polyline)
 - Text Renderer
   - All of Unicode, glyphs rendered when first shown; installed font families with their weights and slants, variable fonts, fallback fonts per character
+  - Character sets (FontManager::AddCharset, SetCharsetFont): the Unicode blocks an app's scripts need, each added to a font and size the first time a text there shows one of its characters, from the set's font or the font itself, so only the blocks used are loaded
   - Shaping with HarfBuzz (kerning, ligatures, emoji sequences), right-to-left scripts (SheenBidi), color emoji including gradient emoji (COLR v1), vertical flow; word wrapping (EnableWordWrap: after the last space that fits, inside a word longer than the line); text held at the middle, top or bottom of its box (Text::SetAnchor with a TextAnchor)
   - Every fill and effect inside the glyphs, outlines, images and masks (metal text)
   - Drop shadows, glows and inner glows: their glyphs are blurred on the CPU into the glyph pages, once per blur, width and offset
@@ -270,16 +270,6 @@ The framework is designed for cross-platform use, and its logic can be compiled 
   <li>Say "font family" instead of "face" where a family is meant</li>
   <li>Write "code-point" instead of "code point"</li>
   </ul>
-<li>Character sets from the App Settings: today an app prepares every script it shows by hand, a LoadFont and an ExtendFontset per Unicode block, family and size (the TestProject's MainWindow_setup.cpp adds Japanese from Yu Mincho and emoji from Segoe UI Emoji to Arial 18 so the FileExplorer shows such names), and the FileExplorer adds only Latin-1 Supplement and Geometric Shapes (its sort arrows) from its own family. A name in a script nobody prepared, Cyrillic, Greek, Arabic or Hebrew say, shows gaps. Instead:
-  <ul>
-  <li>The global .bechaml settings (App Settings) list the supported character sets: the scripts or Unicode blocks, and for each the font that supplies it when a text's own family lacks it, per platform, since the fonts that ship differ (Yu Mincho on Windows, Noto Sans CJK on Linux). One font per block, as in the TestProject's test fonts</li>
-  <li>The blocks are added at run time, the first time a text needs one: a code point whose block isn't loaded yet for that family and size, but is among the supported sets, extends the fontset from the block's font before the glyph is placed. Only the blocks used get loaded, and within them only the glyphs shown are rendered (as the CJK ideographs already are), so a big block like CJK Unified Ideographs costs little until it is used</li>
-  <li>Every size in use needs the block, since atlasses are kept per family and size: the explorer's cells, its header and its buttons each have their own</li>
-  <li>Where the text is shaped, the per-character fallback (fontset, then the default font) is the place to look the block up. A widget whose texts come from a worker, like the FileExplorer's names, can collect the blocks its texts need on that thread and hand them over with the listing, so the main thread extends the fontsets before the cells first draw; glyph uploads already work without a current GL context, through the context a Window hands over</li>
-  <li>A code point in no supported set still shows a gap, or the font's missing-glyph box once one is drawn</li>
-  <li>This replaces the hand-written blocks in the TestProject's setup and the FileExplorer's ensureFontBlocks, which then only asks for its sort arrows</li>
-  </ul>
-</li>
 <li>Fonts: less memory and faster text (found 2026-11-14 by reading the code, not measured yet)
   <ul>
   <li>Glyph pages grow by whole pages (the first 1 MB, the later ones 4 MB), and a full shelf row is never reused. Growing a page in place would start smaller still, but moves glyphs, so every text mesh would have to be built again, or the glyph coordinates kept in pixels and scaled in the shader</li>

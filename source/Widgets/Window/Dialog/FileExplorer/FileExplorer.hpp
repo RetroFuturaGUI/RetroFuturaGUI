@@ -366,7 +366,7 @@ namespace RetroFuturaGUI
         ///        arrows. Only once, since extending again would replace the block.
         static void ensureFontBlock(const ViewFont& font, const u32 first, const u32 last);
 
-        /// @brief Loads the Latin-1 and Geometric Shapes blocks into every font the list shows.
+        /// @brief Loads the Geometric Shapes block (the sort arrows) into every font the list shows. The names' scripts come from the app's character sets
         void ensureFontBlocks() const;
 
         /// @brief Works out the fonts the list's cells and header and the buttons show through the File scope over the explorer's

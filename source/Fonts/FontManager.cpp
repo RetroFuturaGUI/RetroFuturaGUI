@@ -558,7 +558,8 @@ const std::list<RetroFuturaGUI::FontInfo>& RetroFuturaGUI::FontManager::GetFonts
 
 void RetroFuturaGUI::FontManager::ExtendFontset(std::string_view fontFamily, std::string_view fontFamilyExtension, const f32 size, const FontSizeUnit sizeUnit, const PlatformBridge::Fonts::Slant slant, const PlatformBridge::Fonts::Weight weight, const u32 codePointFirst, const u32 codePointLast)
 {
-    const u32 sizeKey { FontSizeToKey(ToPixels(size, sizeUnit)) };
+    const f32 pixels { ToPixels(size, sizeUnit) };
+    const u32 sizeKey { FontSizeToKey(pixels) };
 
     for (auto& font : _fonts)
     {
@@ -567,25 +568,95 @@ void RetroFuturaGUI::FontManager::ExtendFontset(std::string_view fontFamily, std
             && font._Slant == slant
             && font._Weight == weight)
         {
-            if(LoadFont(fontFamilyExtension, size, sizeUnit, slant, weight, codePointFirst, codePointLast, true) != LoadFontResult::Success)
-                return;
-
-            GlyphAtlas
-                &atlas { font._Atlasses[sizeKey] },
-                &extension { _fonts.back()._Atlasses[sizeKey] };
-            GlyphBlock& block { atlas._GlyphBlocks[codePointFirst] };
-            block = std::move(extension._GlyphBlocks[codePointFirst]);
-
-            //An extension drawing at a fixed size of its own, like a bitmap emoji font, is scaled to the font's size, each
-            //glyph as it is made
-            block._Scale = atlas._FontSize / std::max(extension._FontSize, 1.0f);
-
-            //The new font may have what another font was found to draw
-            atlas._FallbackFor.clear();
-            _fonts.pop_back();
+            extendAtlas(font._Atlasses[sizeKey], fontFamilyExtension, pixels, slant, weight, codePointFirst, codePointLast);
             return;
         }
     }
+}
+
+bool RetroFuturaGUI::FontManager::extendAtlas(GlyphAtlas& atlas, std::string_view fontFamilyExtension, const f32 pixels, const PlatformBridge::Fonts::Slant slant, const PlatformBridge::Fonts::Weight weight, const u32 codePointFirst, const u32 codePointLast)
+{
+    if(LoadFont(fontFamilyExtension, pixels, FontSizeUnit::Pixels, slant, weight, codePointFirst, codePointLast, true) != LoadFontResult::Success)
+        return false;
+
+    GlyphAtlas& extension { _fonts.back()._Atlasses[FontSizeToKey(pixels)] };
+    GlyphBlock& block { atlas._GlyphBlocks[codePointFirst] };
+    block = std::move(extension._GlyphBlocks[codePointFirst]);
+
+    //An extension drawing at a fixed size of its own, like a bitmap emoji font, is scaled to the font's size, each
+    //glyph as it is made
+    block._Scale = atlas._FontSize / std::max(extension._FontSize, 1.0f);
+
+    //The new font may have what another font was found to draw
+    atlas._FallbackFor.clear();
+    _fonts.pop_back();
+    return true;
+}
+
+void RetroFuturaGUI::FontManager::AddCharset(std::string_view name, std::span<const u32> blocks)
+{
+    std::vector<u32> blockKeys {};
+
+    for(const u32 codePoint : blocks)
+    {
+        const u32 blockKey { blockKeyOf(codePoint) };
+
+        if(0 != blockKey && !std::ranges::contains(blockKeys, blockKey))
+            blockKeys.push_back(blockKey);
+    }
+
+    const auto found { std::ranges::find_if(_charsets, [name](const Charset& charset) { return name == charset._Name; }) };
+
+    if(_charsets.end() != found)
+    {
+        found->_BlockKeys = std::move(blockKeys);
+        return;
+    }
+
+    _charsets.push_back(Charset { ._Name = std::string(name), ._BlockKeys = std::move(blockKeys), ._FontFamily = {} });
+}
+
+void RetroFuturaGUI::FontManager::SetCharsetFont(std::string_view charset, std::string_view fontFamily)
+{
+    const auto found { std::ranges::find_if(_charsets, [charset](const Charset& set) { return charset == set._Name; }) };
+
+    if(_charsets.end() != found)
+    {
+        found->_FontFamily = fontFamily;
+        return;
+    }
+
+    //Named before its blocks: AddCharset fills them in later
+    _charsets.push_back(Charset { ._Name = std::string(charset), ._BlockKeys = {}, ._FontFamily = std::string(fontFamily) });
+}
+
+RetroFuturaGUI::GlyphBlock* RetroFuturaGUI::FontManager::loadCharsetBlock(const FontInfo& font, GlyphAtlas& atlas, const u32 codePoint)
+{
+    const u32 blockKey { blockKeyOf(codePoint) };
+
+    if(0 == blockKey)
+        return nullptr;
+
+    const auto charset { std::ranges::find_if(_charsets, [blockKey](const Charset& set) { return std::ranges::contains(set._BlockKeys, blockKey); }) };
+
+    if(_charsets.end() == charset)
+        return nullptr;
+
+    //Each block once per font and size, so a font lacking it isn't opened for every character.
+    if(!atlas._CharsetBlocksTried.insert(blockKey).second)
+        return nullptr;
+
+    const auto block { std::ranges::find_if(UnicodeBlocks, [blockKey](const std::pair<u32, u32>& range) { return blockKey == range.first; }) };
+
+    if(UnicodeBlocks.end() == block)
+        return nullptr;
+
+    const std::string_view family { charset->_FontFamily.empty() ? std::string_view(font._Family) : std::string_view(charset->_FontFamily) };
+
+    if(!extendAtlas(atlas, family, atlas._FontSize, font._Slant, font._Weight, block->first, block->second))
+        return nullptr;
+
+    return findBlock(atlas, codePoint);
 }
 
 void RetroFuturaGUI::FontManager::ShapeText(const FontInfo& font, const u32 sizeKey, std::u32string_view text, const ShapeDirection direction, std::vector<PlacedGlyph>* glyphs)
@@ -681,6 +752,10 @@ void RetroFuturaGUI::FontManager::ShapeText(const FontInfo& font, const u32 size
 RetroFuturaGUI::GlyphBlock* RetroFuturaGUI::FontManager::findDrawingBlock(const FontInfo& font, GlyphAtlas& atlas, const u32 codePoint)
 {
     GlyphBlock* own { findBlock(atlas, codePoint) };
+
+    //A block of a character set the fontset doesn't have yet comes in now, the first time a text needs it
+    if(!own)
+        own = loadCharsetBlock(font, atlas, codePoint);
 
     if(own && own->_Source && own->_Source->HasGlyph(codePoint))
         return own;
