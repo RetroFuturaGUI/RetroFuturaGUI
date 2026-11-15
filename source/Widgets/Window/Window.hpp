@@ -81,6 +81,7 @@ namespace RetroFuturaGUI
         void SetHeight(i32 height);
 
         /// @brief Sets the window's native title, the one the taskbar and the window switcher show. A title drawn inside the window belongs to whichever scene draws it.
+        /// @bechaml name Title
         void SetWindowTitle(std::string_view title);
 
         /// @brief Returns the window's native title
@@ -172,6 +173,10 @@ namespace RetroFuturaGUI
 
         /// @brief Adds a scene to the window's draw order, after the ones already added. Docked scenes reserve space in this order, so the first one to claim an edge also owns the corner where two claims meet.
         void AddScene(Scene* scene);
+
+        /// @brief Adds a scene at the given place in the draw order, as AddScene does at the end: a scene that replaces another
+        ///        takes its place, so the docked scenes keep their strips. An index past the end adds it last.
+        void InsertScene(Scene* scene, const uSize index);
 
         /// @brief Removes a scene from the window's draw order, leaving the order of the rest intact.
         void RemoveScene(Scene* scene);

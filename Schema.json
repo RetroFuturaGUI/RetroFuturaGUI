@@ -1,6 +1,6 @@
 {
     "schemaVersion": 2,
-    "headersHash": "42c9485ebd7d47ef9102ba92baea010d98accf9867fed90755ec8653ccac7bd5",
+    "headersHash": "1de8e5c552c580032455cd5194fdf135b12b36fe46ade62523362f44991b47de",
     "enums": {
         "AssetKind": {
             "cpp": "RetroFuturaGUI::AssetKind",
@@ -12444,6 +12444,17 @@
                         ]
                     }
                 ],
+                "Title": [
+                    {
+                        "call": "SetWindowTitle",
+                        "params": [
+                            {
+                                "name": "title",
+                                "type": "std::string_view"
+                            }
+                        ]
+                    }
+                ],
                 "Transition": [
                     {
                         "call": "SetTransition",
@@ -12481,17 +12492,6 @@
                             {
                                 "name": "height",
                                 "type": "i32"
-                            }
-                        ]
-                    }
-                ],
-                "WindowTitle": [
-                    {
-                        "call": "SetWindowTitle",
-                        "params": [
-                            {
-                                "name": "title",
-                                "type": "std::string_view"
                             }
                         ]
                     }

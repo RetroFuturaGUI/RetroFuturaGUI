@@ -110,7 +110,7 @@ The framework is designed for cross-platform use, and its logic can be compiled 
   - The window's actions as slots any widget's signal can call: CloseWindow, Minimize, ToggleMaximize and Undock
   - Files dropped from other programs (OnFilesDropped)
   - A layout file like imgui.ini (RetroFuturaGUI.ini) restores positions, sizes, docking and tabs between runs
-  - Holds Scenes, docked to an edge or as overlays
+  - Holds Scenes, docked to an edge or as overlays; a scene can take another's place in the draw order (InsertScene)
 - Scenes
   - A named group of widgets under a window with its own root container: Window / Scene / Container / Widgets. SetLasagnaAxis builds a root Lasagna, or changes the tracks of the one already there, keeping its widgets
   - Active or inactive, docked to an edge of the window (a menu bar, a status bar) or covering it as an overlay

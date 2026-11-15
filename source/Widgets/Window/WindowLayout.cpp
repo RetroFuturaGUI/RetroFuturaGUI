@@ -35,13 +35,18 @@ void RetroFuturaGUI::Window::SetLasagna(Lasagna* lasagna)
 
 void RetroFuturaGUI::Window::AddScene(Scene* scene)
 {
+    InsertScene(scene, _scenes.size());
+}
+
+void RetroFuturaGUI::Window::InsertScene(Scene* scene, const uSize index)
+{
     if(!scene)
         return;
 
     if(std::find(_scenes.begin(), _scenes.end(), scene) != _scenes.end())
         return;
 
-    _scenes.push_back(scene);
+    _scenes.insert(std::next(_scenes.begin(), static_cast<i64>(std::min(index, _scenes.size()))), scene);
     UpdateLayout();
     scene->emitLoad();
 }
