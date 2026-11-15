@@ -279,7 +279,7 @@ namespace RetroFuturaGUI
 
         static bool contains(const glm::vec4& rect, const glm::vec2& point);
 
-        /// @brief The UTF-8 path of an image in the Resources/img folder next to the executable.
+        /// @brief The UTF-8 path of an image in the Resources/Images folder next to the executable.
         static std::string getImagePath(std::string_view fileName);
 
     //Elements

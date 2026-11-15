@@ -981,7 +981,7 @@ std::string RetroFuturaGUI::ITab::getImagePath(std::string_view fileName)
 {
     std::filesystem::path path { PlatformBridge::Paths::GetModuleFolder() };
     path /= "Resources";
-    path /= "img";
+    path /= "Images";
     path /= std::u8string(fileName.begin(), fileName.end());
 
     //Not path.string(): on Windows that goes through the ANSI code page and turns names outside it into '?'

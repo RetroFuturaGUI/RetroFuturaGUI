@@ -6,6 +6,8 @@ Line.*
 LineBorder.*
 *.fs.txt
 *.vs.txt
-Resources/backpack
-Resources/cat
-Resources/img/cat.svg
+Resources/Models/backpack
+Resources/Models/cat
+Resources/Models/aero_lagoon
+Resources/Images/cat.svg
+metal.jpg

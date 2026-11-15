@@ -233,6 +233,7 @@ The framework is designed for cross-platform use, and its logic can be compiled 
 <li>SVGs on meshes, once they are needed: SvgTexture keeps only the SVG data - the picture, the masks of recolored paths and their colors - and the geometry that shows it binds to that data in one universal way, whether it is the quad inside SvgImage or a Mesh. Today SvgTexture owns the quad it draws on, so a Mesh can't show a recolored SVG</li>
 <li>Custom icons from images</li>
 <li>Tab: the strip runs along the top only; strips along the other edges</li>
+<li>Color states in their order, Disabled, Invalid, Clicked, Hover, Selected, Enabled: a selected item shows Hover while hovered and Clicked while pressed, and Selected again once the pointer leaves or the press ends. Today a selected Tab or WindowTab field and a selected Table row show Selected whatever the pointer does (ITab::fieldStyleState, Table's row state)</li>
 <li>WindowTab</li>
   <ul>
   <li>The clip planes around a WindowTab (a ScrollView or a clipping Environment it lies in) don't cut the tabbed window's content, which is drawn in a space of its own; a turned WindowTab's docking preview is the box around the turned content area</li>

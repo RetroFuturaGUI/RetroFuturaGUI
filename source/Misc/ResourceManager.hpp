@@ -83,7 +83,7 @@ namespace RetroFuturaGUI
         /// @brief The key a texture, an SVG text or a model is kept under.
         static uSize hashPath(std::string_view path);
 
-        /// @brief The UTF-8 path of an icon in the Resources/img folder next to the executable.
+        /// @brief The UTF-8 path of an icon in the Resources/Images folder next to the executable.
         static std::string getIconPath(std::string_view fileName);
 
         /// @brief The text of the SVG file at path, read once. nullptr when it can't be read.
