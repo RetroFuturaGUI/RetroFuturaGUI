@@ -51,6 +51,7 @@ namespace RetroFuturaGUI
         void Disconnect_OnUpdate(const typename Signal<>::Slot& slot);
 
         /// @brief Enables or disables drawing. Emits OnActivate or OnDeactivate when it changes
+        /// @bechaml internal
         void SetActive(const bool active);
         bool IsActive() const;
 
@@ -104,6 +105,7 @@ namespace RetroFuturaGUI
         const IHierarchyNode* GetParent() const override;
 
         /// @brief Builds the scene's root container
+        /// @bechaml internal
         template<RootContainer T, typename... Args>
         T* SetRootContainer(Projection* projection, Args&&... args)
         {
@@ -132,6 +134,7 @@ namespace RetroFuturaGUI
         ///        in their cells, as by Lasagna::SetAxisDefinition. One reaching past the new last track is removed. Any other root
         ///        container, or none, is replaced by a new Lasagna
         /// @return The names of the widgets removed
+        /// @bechaml internal
         std::vector<std::string> SetLasagnaAxis(const AxisDefinition& axisDefinition, Projection* projection);
 
     //Geometry
@@ -148,6 +151,7 @@ namespace RetroFuturaGUI
         ///        Lasagna, are fitted into what is left - so nothing lands underneath it, and
         ///        because widgets hit-test inside their own Draw, nothing underneath it can be
         ///        clicked either.
+        /// @bechaml group ReservedEdge ReservedEdgeThickness
         void SetReservedEdge(const DockEdge edge, const f32 thickness);
 
         /// @brief Turns the scene back into an overlay: it covers the whole client area, draws over

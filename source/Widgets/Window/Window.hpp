@@ -157,6 +157,7 @@ namespace RetroFuturaGUI
         i32 GetBackgroundImageId() const;
 
         /// @brief Sets the Lasagna used to lay out the window's content. It is fitted into the client area left over once every docked scene has reserved its strip.
+        /// @bechaml internal
         void SetLasagna(Lasagna* lasagna);
 
         /// @brief Adds a scene to the window's draw order, after the ones already added. Docked scenes reserve space in this order, so the first one to claim an edge also owns the corner where two claims meet.

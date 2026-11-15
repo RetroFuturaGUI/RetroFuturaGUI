@@ -59,9 +59,13 @@ namespace RetroFuturaGUI
     //Layout
         /// @brief Sets the font family, size and style, loading it if necessary. All four win over every flavor; ResetSetting
         ///        leaves any of them to the flavors again
+        /// @bechaml group FontFamily FontSize FontUnit FontSlant FontWeight
+        /// @bechaml default sizeUnit=Pixels slant=Roman fontWeight=Normal
         void SetFontFamily(std::string_view fontFamily, const f32 fontSize, const FontSizeUnit sizeUnit, const PlatformBridge::Fonts::Slant slant, const PlatformBridge::Fonts::Weight fontWeight);
 
         /// @brief Sets the font size alone, over every flavor, so the family, slant and weight can still come from a flavor
+        /// @bechaml group FontSize FontUnit
+        /// @bechaml default sizeUnit=Pixels
         void SetFontSize(const f32 fontSize, const FontSizeUnit sizeUnit);
 
         /// @brief Sets the slant alone, over every flavor
@@ -146,6 +150,7 @@ namespace RetroFuturaGUI
 
     //Glass and image
         /// @brief Sets the window-wide backdrop the glass shows, which turns the glass on. 0 turns it off
+        /// @bechaml internal
         void SetWindowBackgroundImageTextureID(const u32 textureID);
 
         /// @brief Sets the noise the glass is made of. How big its cells are, how far it shifts the window behind, its smoothing and seed
@@ -154,6 +159,7 @@ namespace RetroFuturaGUI
         /// @brief Sets an image shown inside the glyphs, stretched across the whole text behind its fill. The colors' alpha decides how much of it shows: 0 shows the image alone. 0 shows no image
         ///        It wins over a flavor's image (FlavorPart::SetImage, a picture's path; SVGs don't show on text)
         /// @note The text only borrows the texture. A video's texture changes only while its VideoPlayback is updated, and gets a new ID when its picture size changes, so pass its current ID again then
+        /// @bechaml internal
         void SetImageTextureID(const u32 textureID);
 
         /// @brief Sets how far the image stays clear of the text's edges, per side in pixels
@@ -164,6 +170,7 @@ namespace RetroFuturaGUI
 
     //Mask
         /// @brief Sets a grayscale mask laid across the text, its red channel, the gray as transparency or as shading (SetMaskMode). A shading mask of bright and dark bands over a metal image gives chrome text. 0 shows no mask
+        /// @bechaml internal
         void SetMaskTextureID(const u32 textureID);
 
         /// @brief Sets what the mask does. Make the text see-through (Alpha, the default) or shade it (Shade).
@@ -243,21 +250,26 @@ namespace RetroFuturaGUI
         void Draw();
 
         /// @brief Sets the area the text lays itself out in. Called by the widget as it is laid out
+        /// @bechaml internal
         void SetSize(const glm::vec2& size);
 
         /// @brief Places the text. Called by the widget as it is laid out
+        /// @bechaml internal
         void SetPosition(const glm::vec3& position);
 
         /// @brief Shows the colors of the given state. Called by the widget when it is hovered, pressed, selected, enabled or disabled.
+        /// @bechaml internal
         void SetColorState(const ColorState state);
 
         /// @brief Has the colors move to new values over the widget's transitions
+        /// @bechaml internal
         void SetTransitionSettings(const TransitionSettings* settings);
 
         /// @brief Emits OnTextChange for text the widget changed through GetElement
         void EmitChange();
 
         /// @brief Returns the drawn text, for the widget's layout and editing
+        /// @bechaml internal
         Text& GetElement();
         const Text& GetElement() const;
 

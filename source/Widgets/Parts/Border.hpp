@@ -43,12 +43,15 @@ namespace RetroFuturaGUI
         void Draw() override;
 
         /// @brief Sizes the border to the owning widget. Called by the widget as it is laid out
+        /// @bechaml internal
         void SetSize(const glm::vec2& size) override;
 
         /// @brief Places the border where the owning widget puts it. Called by the widget as it is laid out
+        /// @bechaml internal
         void SetPosition(const glm::vec3& position) override;
 
         /// @brief Turns the border within the owning widget's layout
+        /// @bechaml internal
         void SetRotation(const glm::vec3& rotation) override;
 
         /// @brief Returns the border's size
@@ -63,6 +66,7 @@ namespace RetroFuturaGUI
         f32 GetWidth() const;
 
         /// @brief Has the colors and corner radii move to new values over the owning widget's transitions.
+        /// @bechaml internal
         void SetTransitionSettings(const TransitionSettings* settings);
 
         /// @brief Returns the drop shadow of the border, cast by its outline: GetDropShadow().Show(true). Drawn just behind it
@@ -97,6 +101,7 @@ namespace RetroFuturaGUI
         void SetGradientRotationSpeed(const f32 rotationSpeed);
 
         /// @brief Sets the texture ID sampled for the border's glass-effect-with-image shader feature.
+        /// @bechaml internal
         void SetWindowImageTextureID(const u32 textureID);
 
         /// @brief Sets the noise the glass is made of. How big its cells are, how far it shifts the window behind, its smoothing and seed

@@ -228,6 +228,7 @@ namespace RetroFuturaGUI
     ///        Escape dismiss it (Connect_OnDismiss). A number field that doesn't hold a number of its type disables OK and
     ///        is marked invalid, showing its scope's red Invalid border. Opened by Window::OpenPopup with PopupTypes::Value its widgets lie in
     ///        StyleScope::Value
+    /// @bechaml popup Value
     template<typename... Ts>
     class ValuePopup final : public Popup<Ts...>
     {

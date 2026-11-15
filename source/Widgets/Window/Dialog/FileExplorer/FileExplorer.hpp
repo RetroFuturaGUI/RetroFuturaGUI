@@ -32,6 +32,7 @@ namespace RetroFuturaGUI
     /// @brief A popup that browses the file system and closes with the chosen paths, UTF-8 encoded. Connect to OnResult and
     ///        OnDismiss, call Open with the features it offers, then hand it to Window::PushPopup. WriteFile and Folder close
     ///        with one path.
+    /// @bechaml popup File
     class FileExplorer final : public Popup<std::vector<std::string>>, protected DialogKit
     {
     public:

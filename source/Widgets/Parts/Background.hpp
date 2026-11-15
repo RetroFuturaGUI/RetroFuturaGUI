@@ -42,12 +42,15 @@ namespace RetroFuturaGUI
         void Draw() override;
 
         /// @brief Sizes the background.
+        /// @bechaml internal
         void SetSize(const glm::vec2& size) override;
 
         /// @brief Places the background
+        /// @bechaml internal
         void SetPosition(const glm::vec3& position) override;
 
         /// @brief Turns the background
+        /// @bechaml internal
         void SetRotation(const glm::vec3& rotation) override;
 
         /// @brief Returns the background's size
@@ -60,6 +63,7 @@ namespace RetroFuturaGUI
         glm::vec3 GetRotation() const override;
 
         /// @brief Has the colors and corner radii move to new values over the owning widget's transitions.
+        /// @bechaml internal
         void SetTransitionSettings(const TransitionSettings* settings);
 
         /// @brief Returns the drop shadow of the background: GetDropShadow().Show(true). Drawn just behind it
@@ -94,6 +98,7 @@ namespace RetroFuturaGUI
         void SetGradientRotationSpeed(const f32 rotationSpeed);
 
         /// @brief Sets the texture ID sampled for the background's glass-effect-with-image shader feature. 0 turns the glass off.
+        /// @bechaml internal
         void SetWindowImageTextureID(const u32 textureID);
 
         /// @brief Sets the noise the glass is made of. How big its cells are, how far it shifts the window behind, its smoothing and seed
@@ -165,6 +170,7 @@ namespace RetroFuturaGUI
 
         /// @brief Sets a grayscale mask laid over the background, its red channel the gray: as transparency or as shading
         ///        (SetMaskMode). 0 shows no mask
+        /// @bechaml internal
         void SetMaskTextureID(const u32 textureID);
 
         /// @brief Sets what the background mask does: make the background transparent/Alpha (default) or shade it (Shade).

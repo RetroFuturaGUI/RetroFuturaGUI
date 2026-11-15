@@ -107,6 +107,7 @@ namespace RetroFuturaGUI
         const IHierarchyNode* GetParent() const final override;
 
         /// @brief Sets the widget's name.
+        /// @bechaml internal
         void SetName(std::string_view name);
 
         /// @brief Returns the hash of the widget's path (Fnv1aHash of GetPath()), which finds it through WidgetRegistry::Find
@@ -128,6 +129,7 @@ namespace RetroFuturaGUI
 
         /// @brief Sets what the widget is for beyond its type, as a mask, for the scopes inside the library's popups. A popup's
         ///        icon takes its scope's Button:icon entry (StyleAccessor). None by default
+        /// @bechaml internal
         void SetStyleAccessors(const StyleAccessor accessors);
 
         /// @brief Returns what the widget is for beyond its type, for the scopes

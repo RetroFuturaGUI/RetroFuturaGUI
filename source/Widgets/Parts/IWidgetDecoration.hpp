@@ -39,6 +39,7 @@ namespace RetroFuturaGUI
         const std::vector<glm::vec4>& GetShownColors(const ColorState state) const;
 
         /// @brief Shows the colors of the given state
+        /// @bechaml internal
         void SetColorState(const ColorState state);
 
         /// @brief Returns the corner radii shown: the part's own, else its flavors', .default's or the built-in ones

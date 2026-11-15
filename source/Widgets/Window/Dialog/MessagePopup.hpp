@@ -12,6 +12,7 @@ namespace RetroFuturaGUI
     ///        The kind's look comes from its scope (StyleScope::Message, Warning or Error), whose entries the app can change or
     ///        define first. The accent on the Window's and the MenuBar's border and the title's text (Label:title), and the icon
     ///        (Button:icon, its background image). The library adds them with its own look only when they don't exist yet
+    /// @bechaml popup Message Warning Error
     class MessagePopup final : public Popup<>, protected DialogKit
     {
     public:
