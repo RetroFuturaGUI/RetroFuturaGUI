@@ -80,6 +80,14 @@ namespace RetroFuturaGUI
         /// @brief Removes the entry, so the widgets go on to the next scope and their flavors
         void RemoveEntry(const WidgetTypeID widgetType, const StyleAccessor accessor = StyleAccessor::None) const;
 
+        /// @brief The entry for a popup's title in its bar, a Label. <MessagePopup><Title> is
+        ///        GetScope(StyleScope::Warning).GetTitle().GetText().SetColors(...). GetEntry(WidgetTypeID::Label, StyleAccessor::Title)
+        Flavor& GetTitle() const;
+
+        /// @brief The entry for a popup's icon, a Button showing the popup kind's image. <MessagePopup><Icon> is
+        ///        GetScope(StyleScope::Error).GetIcon().GetBackground()... GetEntry(WidgetTypeID::Button, StyleAccessor::Icon)
+        Flavor& GetIcon() const;
+
     private:
         friend class StylingManager;
         FlavorScope(const StyleScope scope);

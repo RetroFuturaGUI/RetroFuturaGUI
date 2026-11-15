@@ -27,6 +27,16 @@ void RetroFuturaGUI::FlavorScope::RemoveEntry(const WidgetTypeID widgetType, con
     StylingManager::RemoveFlavor(StylingManager::getScopeEntryName(_scope, widgetType, accessor));
 }
 
+RetroFuturaGUI::Flavor& RetroFuturaGUI::FlavorScope::GetTitle() const
+{
+    return GetEntry(WidgetTypeID::Label, StyleAccessor::Title);
+}
+
+RetroFuturaGUI::Flavor& RetroFuturaGUI::FlavorScope::GetIcon() const
+{
+    return GetEntry(WidgetTypeID::Button, StyleAccessor::Icon);
+}
+
 RetroFuturaGUI::FlavorScope RetroFuturaGUI::StylingManager::GetScope(const StyleScope scope)
 {
     return FlavorScope(scope);

@@ -281,10 +281,10 @@ void RetroFuturaGUI::DialogKit::addMissingEntries()
             kind.GetEntry(WidgetTypeID::MenuBar).GetBorder().SetColors(std::array { look._Accent }, ColorState::Enabled);
 
         if(!kind.HasEntry(WidgetTypeID::Label, StyleAccessor::Title))
-            kind.GetEntry(WidgetTypeID::Label, StyleAccessor::Title).GetText().SetColors(std::array { look._Accent }, ColorState::Enabled);
+            kind.GetTitle().GetText().SetColors(std::array { look._Accent }, ColorState::Enabled);
 
         if(!kind.HasEntry(WidgetTypeID::Button, StyleAccessor::Icon))
-            kind.GetEntry(WidgetTypeID::Button, StyleAccessor::Icon).GetBackground().SetImage(toUtf8(images / look._Icon)); //UTF-8, as Texture reads paths.
+            kind.GetIcon().GetBackground().SetImage(toUtf8(images / look._Icon)); //UTF-8, as Texture reads paths
     }
 }
 
