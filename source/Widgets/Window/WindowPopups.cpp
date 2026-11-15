@@ -1,6 +1,7 @@
 #include "Window.hpp"
 #include "MessagePopup.hpp"
 #include "FileExplorer.hpp"
+#include "Scene.hpp"
 #include "PlatformBridge.hpp"
 #include <algorithm>
 #include <utility>
@@ -362,4 +363,40 @@ void RetroFuturaGUI::Window::setNativeOwner(const Window* owner)
 #elif defined(TARGET_PLATFORM_WINDOWS)
     PlatformBridge::NativeWindow::SetOwner(glfwGetWin32Window(_window), glfwGetWin32Window(owner->_window));
 #endif
+}
+
+bool RetroFuturaGUI::Window::PushPopup(const Scene& opener, std::unique_ptr<IPopup> popup)
+{
+    takeOpenerAesthetic(popup.get(), opener);
+    return PushPopup(std::move(popup));
+}
+
+RetroFuturaGUI::MessagePopup* RetroFuturaGUI::Window::OpenPopup(const Scene& opener, const PopupTypes type, std::string_view summary, std::string_view description)
+{
+    MessagePopup* opened { OpenPopup(type, summary, description) };
+    takeOpenerAesthetic(opened, opener);
+    return opened;
+}
+
+RetroFuturaGUI::FileExplorer* RetroFuturaGUI::Window::OpenPopup(const Scene& opener, const PopupTypes type, const FileExplorerRequest& request)
+{
+    FileExplorer* opened { OpenPopup(type, request) };
+    takeOpenerAesthetic(opened, opener);
+    return opened;
+}
+
+void RetroFuturaGUI::Window::takeOpenerAesthetic(const IPopup* popup, const Scene& opener)
+{
+    if(!popup)
+        return;
+
+    if(opener.GetAesthetic().empty())
+        return;
+
+    Window* window { popup->GetWindow() };
+
+    if(!window)
+        return;
+
+    window->SetAesthetic(opener.GetAesthetic());
 }

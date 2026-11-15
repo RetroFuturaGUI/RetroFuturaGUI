@@ -270,6 +270,21 @@ namespace RetroFuturaGUI
         /// @return The explorer, to connect its signals, until it closes; nullptr when it couldn't open
         FileExplorer* OpenPopup(const PopupTypes type, const FileExplorerRequest& request);
 
+        /// @brief Pushes a popup as PushPopup does, styled with the Aesthetic of the scene that opens it (Scene::SetAesthetic). A
+        ///        scene without one leaves the popup this window's, as PushPopup does
+        bool PushPopup(const Scene& opener, std::unique_ptr<IPopup> popup);
+
+        /// @brief Opens a message popup as OpenPopup does, styled with the Aesthetic of the scene that opens it
+        MessagePopup* OpenPopup(const Scene& opener, const PopupTypes type, std::string_view summary, std::string_view description);
+
+        /// @brief Opens a value popup as OpenPopup does, styled with the Aesthetic of the scene that opens it. Defined in
+        ///        ValuePopup.hpp
+        template<ValueFieldType... Fs>
+        ValuePopup<ValueResultOf<Fs>...>* OpenPopup(const Scene& opener, const PopupTypes type, std::string_view title, std::string_view description, const ValueField<Fs>&... fields);
+
+        /// @brief Opens the FileExplorer as OpenPopup does, styled with the Aesthetic of the scene that opens it
+        FileExplorer* OpenPopup(const Scene& opener, const PopupTypes type, const FileExplorerRequest& request);
+
         /// @brief Returns whether popups are open over this window.
         bool HasPopups() const;
 
@@ -552,6 +567,9 @@ namespace RetroFuturaGUI
 
         /// @brief The window of the top popup, or this window when no popup is open.
         Window* getTopPopupWindow();
+
+        /// @brief Gives the popup's window the opening scene's Aesthetic, when the scene has one of its own
+        static void takeOpenerAesthetic(const IPopup* popup, const Scene& opener);
 
         /// @brief Drops a request to close while a popup lies over this window.
         void refuseCloseWhileBlocked();

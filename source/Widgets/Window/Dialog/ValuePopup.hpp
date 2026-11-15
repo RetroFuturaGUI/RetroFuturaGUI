@@ -447,4 +447,12 @@ namespace RetroFuturaGUI
 
         return opened;
     }
+
+    template<ValueFieldType... Fs>
+    ValuePopup<ValueResultOf<Fs>...>* Window::OpenPopup(const Scene& opener, const PopupTypes type, std::string_view title, std::string_view description, const ValueField<Fs>&... fields)
+    {
+        ValuePopup<ValueResultOf<Fs>...>* opened { OpenPopup(type, title, description, fields...) };
+        takeOpenerAesthetic(opened, opener);
+        return opened;
+    }
 }

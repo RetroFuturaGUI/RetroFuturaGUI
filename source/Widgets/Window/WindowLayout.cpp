@@ -392,6 +392,7 @@ void RetroFuturaGUI::Window::SetAesthetic(std::string_view name)
     _aesthetic = name;
     StylingManager::composeFlavorHashes(_styleScope, StylingManager::GetAestheticHash(_aesthetic), WidgetTypeID::Window, StyleAccessor::None, _flavorNames, _flavorHashes);
     restyleParts();
+    StylingManager::markChanged();
 }
 
 const std::string& RetroFuturaGUI::Window::GetAesthetic() const
