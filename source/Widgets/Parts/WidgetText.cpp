@@ -135,23 +135,45 @@ const std::vector<glm::vec4>& RetroFuturaGUI::WidgetText::GetColors(const ColorS
 
 const std::vector<glm::vec4>& RetroFuturaGUI::WidgetText::GetShownColors(const ColorState state) const
 {
+    if(const std::vector<glm::vec4>* colors { findColors(state) })
+        return *colors;
+
+    if(ColorState::Enabled == state)
+        return colorsOf(_builtInColors, ColorState::Enabled); //empty: nothing gives Enabled colors.
+
+    return GetShownColors(ColorState::Enabled); //a state nothing sets, such as Selected, looks like Enabled
+}
+
+const std::vector<glm::vec4>* RetroFuturaGUI::WidgetText::findColors(const ColorState state) const
+{
     const std::vector<glm::vec4>& own { colorsOf(_colors, state) };
 
     if(!own.empty())
-        return own;
+        return &own;
 
     //A text without a widget's flavors goes from its own colors straight to its built-in ones
-    const std::vector<glm::vec4>* styled { _flavors ? StylingManager::FindColors(*_flavors, _stylePart, state) : nullptr };
-
-    if(styled)
-        return *styled;
+    if(const std::vector<glm::vec4>* styled { _flavors ? StylingManager::FindColors(*_flavors, _stylePart, state) : nullptr })
+        return styled;
 
     const std::vector<glm::vec4>& builtIn { colorsOf(_builtInColors, state) };
+    return builtIn.empty() ? nullptr : &builtIn;
+}
 
-    if(!builtIn.empty() || ColorState::Enabled == state)
-        return builtIn;
+RetroFuturaGUI::ColorState RetroFuturaGUI::WidgetText::getShownState() const
+{
+    if(!_isInvalid || ColorState::Disabled == _colorState || !findColors(ColorState::Invalid))
+        return _colorState;
 
-    return GetShownColors(ColorState::Enabled); //a state nothing sets, such as Selected, looks like Enabled
+    return ColorState::Invalid;
+}
+
+void RetroFuturaGUI::WidgetText::setInvalid(const bool isInvalid)
+{
+    if(isInvalid == _isInvalid)
+        return;
+
+    _isInvalid = isInvalid;
+    setColors();
 }
 
 void RetroFuturaGUI::WidgetText::SetBuiltInColors(const StyleKey&, std::span<const glm::vec4> colors, const ColorState state)
@@ -402,6 +424,8 @@ std::vector<glm::vec4>& RetroFuturaGUI::WidgetText::colorsOf(StateColors& colors
             return colors._Hover;
         case ColorState::Selected:
             return colors._Selected;
+        case ColorState::Invalid:
+            return colors._Invalid;
         default: // Enabled
             return colors._Enabled;
     }
@@ -419,6 +443,8 @@ const std::vector<glm::vec4>& RetroFuturaGUI::WidgetText::colorsOf(const StateCo
             return colors._Hover;
         case ColorState::Selected:
             return colors._Selected;
+        case ColorState::Invalid:
+            return colors._Invalid;
         default: // Enabled
             return colors._Enabled;
     }
@@ -450,11 +476,12 @@ void RetroFuturaGUI::WidgetText::followStyles()
 
 void RetroFuturaGUI::WidgetText::setColors()
 {
-    _text.SetColors(GetShownColors(_colorState));
-    _outline.SetColorState(_colorState);
-    _text.GetDropShadow().SetColorState(_colorState);
-    _text.GetGlow().SetColorState(_colorState);
-    _text.GetInnerGlow().SetColorState(_colorState);
+    const ColorState shown { getShownState() };
+    _text.SetColors(GetShownColors(shown));
+    _outline.SetColorState(shown);
+    _text.GetDropShadow().SetColorState(shown);
+    _text.GetGlow().SetColorState(shown);
+    _text.GetInnerGlow().SetColorState(shown);
 }
 
 void RetroFuturaGUI::WidgetText::notifyChange(const WidgetTextChange change)

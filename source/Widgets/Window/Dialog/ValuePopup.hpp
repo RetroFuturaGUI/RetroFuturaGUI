@@ -74,7 +74,7 @@ namespace RetroFuturaGUI
         /// @brief Sets a color row's color, its brightness and alpha sliders and its preview
         void SetColor(const uSize row, const glm::vec4& color);
 
-        /// @brief Shows a row's field as invalid (its scope's TextBox:invalid entry, a red border) or not
+        /// @brief Shows a row's field as invalid (IWidget::SetInvalid: its scope's Invalid border) or not
         void MarkInvalid(const uSize row, const bool isInvalid);
 
         /// @brief Opens a choice row's list where its items fit: below the field, else above it, else on the roomier side
@@ -226,7 +226,7 @@ namespace RetroFuturaGUI
     /// @brief Asks for values of the given types, one field each, and closes with them. OK and Enter close it once every field
     ///        holds a valid value (Connect_OnResult hands them over in the fields' order). Cancel, the bar's close button and
     ///        Escape dismiss it (Connect_OnDismiss). A number field that doesn't hold a number of its type disables OK and
-    ///        shows its scope's TextBox:invalid entry (a red border). Opened by Window::OpenPopup with PopupTypes::Value its widgets lie in
+    ///        is marked invalid, showing its scope's red Invalid border. Opened by Window::OpenPopup with PopupTypes::Value its widgets lie in
     ///        StyleScope::Value
     template<typename... Ts>
     class ValuePopup final : public Popup<Ts...>

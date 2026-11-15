@@ -45,7 +45,7 @@ void RetroFuturaGUI::StylingManager::composeFlavorHashes(const StyleScope scope,
     //Each scope's accessor entries come before its plain one, the popup type's scope before the shared one.
     const auto addScope = [&hashes, widgetType, accessors](const StyleScope added)
     {
-        for(const StyleAccessor accessor : { StyleAccessor::On, StyleAccessor::Invalid, StyleAccessor::Icon, StyleAccessor::Title })
+        for(const StyleAccessor accessor : { StyleAccessor::On, StyleAccessor::Icon, StyleAccessor::Title })
         {
             if(HasStyleAccessor(accessors, accessor))
                 hashes.push_back(GetFlavorHash(getScopeEntryName(added, widgetType, accessor)));

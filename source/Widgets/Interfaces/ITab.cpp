@@ -83,8 +83,8 @@ f32 RetroFuturaGUI::ITab::GetTitleFontSize(const FontSizeUnit sizeUnit) const
 
 void RetroFuturaGUI::ITab::SetTitleColors(std::span<const glm::vec4> colors, const ColorState state)
 {
-    if(ColorState::Selected == state)
-        return; //the selected field's title shows the same colors as the others
+    if(ColorState::Selected == state || ColorState::Invalid == state)
+        return; //the selected field's title shows the same colors as the others, and a field is never invalid
 
     colorOf(_titleColors, state).assign(colors.begin(), colors.end());
 }

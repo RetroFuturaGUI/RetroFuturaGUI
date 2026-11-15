@@ -22,6 +22,7 @@ RetroFuturaGUI::CheckBox::CheckBox(std::string_view name, Projection* projection
     useBorderGap(&_background, &_border);
     useFlavors(&_background, &_border, nullptr);
     useSubPartFlavors(_checkmark, StylePart::Checkmark);
+    _border.SetBuiltInColors(styleKey(), std::array { glm::vec4(1.0f, 0.35f, 0.35f, 1.0f) }, ColorState::Invalid); //inheriting a value it has no reference to
 }
 
 void RetroFuturaGUI::CheckBox::Draw()
@@ -95,6 +96,7 @@ void RetroFuturaGUI::CheckBox::SetValue(const bool value, const bool emitSignal)
 void RetroFuturaGUI::CheckBox::SetInheritValueReference(bool* ref)
 {
     _inheritValue = ref;
+    SetInvalid(_useInheritValue && !_inheritValue);
 }
 
 bool RetroFuturaGUI::CheckBox::GetValue() const
@@ -121,6 +123,9 @@ void RetroFuturaGUI::CheckBox::updateInheritFillShape()
 
 void RetroFuturaGUI::CheckBox::SetInheritColors(std::span<const glm::vec4> colors, const ColorState state)
 {
+    if(ColorState::Selected == state || ColorState::Invalid == state)
+        return; //the inherit fill keeps colors for Enabled, Disabled, Clicked and Hover only
+
     _inheritFillColorState = state;
 
     switch(state)
@@ -271,6 +276,7 @@ void RetroFuturaGUI::CheckBox::interact()
 void RetroFuturaGUI::CheckBox::EnableInheritedValue(const bool enable)
 {
     _useInheritValue = enable;
+    SetInvalid(_useInheritValue && !_inheritValue); //there's no value to show until it has a reference
 }
 
 void RetroFuturaGUI::CheckBox::SetInnerPadding(const f32 pixels)

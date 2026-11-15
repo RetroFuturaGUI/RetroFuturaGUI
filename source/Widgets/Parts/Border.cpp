@@ -192,11 +192,11 @@ void RetroFuturaGUI::Border::setColors()
     if(!_borderFrame)
         return;
 
-    _borderFrame->SetColors(GetShownColors(_colorState));
+    _borderFrame->SetColors(GetShownColors(getShownState()));
 
-    _dropShadow.SetColorState(_colorState);
-    _glow.SetColorState(_colorState);
-    _innerGlow.SetColorState(_colorState);
+    _dropShadow.SetColorState(getShownState());
+    _glow.SetColorState(getShownState());
+    _innerGlow.SetColorState(getShownState());
 }
 
 void RetroFuturaGUI::Border::SetWidth(const f32 borderWidth)

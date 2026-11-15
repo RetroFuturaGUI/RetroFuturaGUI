@@ -88,9 +88,13 @@ namespace RetroFuturaGUI
         ///        styles (a sub-part, a window's), which goes from its own values straight to its built-in look
         std::span<const u32> getFlavors() const;
 
+        /// @brief The state whose colors the part shows. Invalid while its widget is invalid and the part has colors for it
+        ///        (Disabled still wins), else the state its widget handed it
+        ColorState getShownState() const;
+
         Projection* _projection { nullptr };
         std::function<void()> _onCornerRadiiChange {};
-        std::array<std::vector<glm::vec4>, 5>
+        std::array<std::vector<glm::vec4>, ColorStateCount>
             _ownColors {}, //per ColorState, in its order.
             _builtInColors
             {
@@ -98,7 +102,8 @@ namespace RetroFuturaGUI
                 std::vector<glm::vec4> { glm::vec4(0.25f, 0.25f, 0.25f, 1.0f) }, //Disabled
                 std::vector<glm::vec4> { glm::vec4(0.6f, 0.6f, 0.6f, 1.0f) }, //Clicked
                 std::vector<glm::vec4> { glm::vec4(0.55f, 0.55f, 0.55f, 1.0f) }, //Hover
-                std::vector<glm::vec4> {} //Selected
+                std::vector<glm::vec4> {}, //Selected
+                std::vector<glm::vec4> {} //Invalid
             };
         std::optional<glm::vec4> _ownCornerRadii {};
         std::optional<CutCorners> _ownCutCorners {};
@@ -112,6 +117,7 @@ namespace RetroFuturaGUI
 
         ShaderLayers _shader {};
         ColorState _colorState { ColorState::Enabled };
+        bool _isInvalid { false }; //its widget's, handed over by the widget
 
         /// @brief The radii handed to the element. The shown ones, or the ones its window draws in their place (a docked window
         ///        squares its corners)
@@ -123,6 +129,12 @@ namespace RetroFuturaGUI
 
         /// @brief Has the part take unset values from the widget's flavors, as the given part of them
         void setStyleSource(const std::vector<u32>* flavors, const StylePart part);
+
+        /// @brief Shows the Invalid colors, where the part has any, while its widget is invalid
+        void setInvalid(const bool isInvalid);
+
+        /// @brief The colors a state has through the layers, nullptr when none of them sets it (no Enabled fallback)
+        const std::vector<glm::vec4>* findColors(const ColorState state) const;
 
         /// @brief Takes the corner radii and cut corners through their layers; hands them on and tells the owner if they changed
         void resolveCornerShape();

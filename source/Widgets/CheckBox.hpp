@@ -48,6 +48,7 @@ namespace RetroFuturaGUI
         void SetInheritGradientRotationSpeed(const f32 rotationSpeed);
 
         /// @brief Sets whether the CheckBox mirrors the bool given to SetInheritValueReference instead of keeping a value of its own.
+        ///        Mirroring without a reference, it is invalid (IWidget::SetInvalid), with a red border by default
         void EnableInheritedValue(const bool enable);
 
         /// @brief Sets the distance between the border and checkmark in pixels

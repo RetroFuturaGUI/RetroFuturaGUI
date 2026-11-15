@@ -66,7 +66,7 @@ namespace RetroFuturaGUI
         const std::vector<glm::vec4>* Find(const ColorState state, std::span<const u32> flavors, const bool isStyled, const StylePart part) const;
 
     private:
-        std::array<std::vector<glm::vec4>, 5>
+        std::array<std::vector<glm::vec4>, ColorStateCount>
             _own {}, //per ColorState, in its order
             _builtIn {};
     };

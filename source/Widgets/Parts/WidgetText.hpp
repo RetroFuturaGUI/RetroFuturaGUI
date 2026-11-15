@@ -270,7 +270,8 @@ namespace RetroFuturaGUI
                 _Disabled {},
                 _Clicked {},
                 _Selected {},
-                _Hover {};
+                _Hover {},
+                _Invalid {};
         };
 
         static std::vector<glm::vec4>& colorsOf(StateColors& colors, const ColorState state);
@@ -280,6 +281,16 @@ namespace RetroFuturaGUI
 
         /// @brief Has the text take unset values from the widget's flavors
         void setStyleSource(const std::vector<u32>* flavors, const StylePart part);
+
+        /// @brief Shows the Invalid colors, where the text has any, while its widget is invalid
+        void setInvalid(const bool isInvalid);
+
+        /// @brief The colors a state has through the layers, nullptr when none of them sets it (no Enabled fallback)
+        const std::vector<glm::vec4>* findColors(const ColorState state) const;
+
+        /// @brief The state whose colors the text shows: Invalid while its widget is invalid and the text has colors for it
+        ///        (Disabled still wins), else the state its widget handed it
+        ColorState getShownState() const;
 
         /// @brief Takes the colors again when the flavors changed since it last did. Called first in Draw
         void followStyles();
@@ -317,13 +328,14 @@ namespace RetroFuturaGUI
         Text _text;
         StateColors
             _colors {}, //its own
-            _builtInColors { ._Enabled = { glm::vec4(1.0f) }, ._Disabled = { glm::vec4(0.5f, 0.5f, 0.5f, 1.0f) }, ._Clicked = { glm::vec4(1.0f) }, ._Selected = {}, ._Hover = { glm::vec4(1.0f) } };
+            _builtInColors { ._Enabled = { glm::vec4(1.0f) }, ._Disabled = { glm::vec4(0.5f, 0.5f, 0.5f, 1.0f) }, ._Clicked = { glm::vec4(1.0f) }, ._Selected = {}, ._Hover = { glm::vec4(1.0f) }, ._Invalid = {} };
         const std::vector<u32>* _flavors { nullptr }; //the widget's flavors; nullptr for a text no flavor styles
         StylePart _stylePart { StylePart::Text }; //which of a flavor's parts it takes its values from: Text, Placeholder, Preview, HoverTextText
         u32 _styleGeneration { 0 }; //the StylingManager's generation the colors were last taken at
         ShaderLayers _shader {};
         Outline _outline; //goes around _text, so it is declared after it
         ColorState _colorState { ColorState::Enabled };
+        bool _isInvalid { false }; //its widget's, handed over by the widget
         LayeredSetting<u32> _imageTextureID {};
         LayeredSetting<std::string> _fontFamily {};
         LayeredSetting<f32>

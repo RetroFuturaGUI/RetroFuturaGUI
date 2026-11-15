@@ -62,6 +62,13 @@ namespace RetroFuturaGUI
         /// @brief Returns the type the value is currently stored as.
         DataTypeID GetDataType() const { return _currentDataType; }
 
+        /// @brief Returns the type the value is meant to hold. The type of the last SetValue with a number or bool, or of the
+        ///        last ChangeType. Text, which any text fits, until one of them gives another
+        DataTypeID GetExpectedType() const { return _expectedDataType; }
+
+        /// @brief Whether the value reads as its expected type. Only typed or set text can fail to: "12a" in an Int32 value
+        bool FitsExpectedType() const;
+
         /// @brief Returns the stored value converted to T. Parses _valueText when the current type is Text.
         template<NumericValueType T>
         T GetValue() const
@@ -133,6 +140,10 @@ namespace RetroFuturaGUI
                 _value.Float64 = value;
             }
 
+            //Text is what an edit stores, so it keeps the type the value is meant to hold
+            if constexpr (!std::same_as<T, std::string_view>)
+                _expectedDataType = _currentDataType;
+
             refreshValueText();
         }
 
@@ -144,7 +155,9 @@ namespace RetroFuturaGUI
         void refreshValueText();
 
         u32 _numericBase { 10 };
-        DataTypeID _currentDataType { DataTypeID::Text };
+        DataTypeID
+            _currentDataType { DataTypeID::Text },
+            _expectedDataType { DataTypeID::Text };
         std::string _valueText {};
 
     private:

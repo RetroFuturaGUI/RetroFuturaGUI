@@ -23,6 +23,8 @@ pub enum ColorState {
     Disabled,
     Clicked,
     Hover,
+    Selected,
+    Invalid,
 }
 
 pub type Callback = extern "C" fn();

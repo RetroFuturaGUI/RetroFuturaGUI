@@ -7,6 +7,8 @@ void RetroFuturaGUI::ITypedText::SetNumericBase(const u32 base, const bool emitS
 
     if(_valueStore->GetDataType() != TextTypes::DataTypeID::Text) //text reads the same in every base
         renderValueText(_valueStore->GetValueText(), emitSignal);
+
+    reportValueFit(); //typed text that read as a number in one base may not in another
 }
 
 void RetroFuturaGUI::ITypedText::SetDecimalPrecision(const i32 precision, const bool emitSignal)
@@ -25,12 +27,14 @@ void RetroFuturaGUI::ITypedText::ChangeType(const TextTypes::DataTypeID id, cons
     ensureValueStore();
     _valueStore->ChangeType(id);
     renderValueText(_valueStore->GetValueText(), emitSignal);
+    reportValueFit();
 }
 
 void RetroFuturaGUI::ITypedText::syncValueFromText(std::string_view text)
 {
     ensureValueStore();
     _valueStore->SetValue(text);
+    reportValueFit();
 }
 
 void RetroFuturaGUI::ITypedText::updateValueStore(std::string_view text)
@@ -39,6 +43,15 @@ void RetroFuturaGUI::ITypedText::updateValueStore(std::string_view text)
         return;
 
     _valueStore->SetValue(text);
+    reportValueFit();
+}
+
+void RetroFuturaGUI::ITypedText::reportValueFit()
+{
+    if(!_valueStore)
+        return;
+
+    valueFitChanged(_valueStore->FitsExpectedType());
 }
 
 void RetroFuturaGUI::ITypedText::ensureValueStore()

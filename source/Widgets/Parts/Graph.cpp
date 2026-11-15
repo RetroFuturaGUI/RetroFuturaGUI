@@ -217,7 +217,7 @@ void RetroFuturaGUI::Graph::SetTransitionSettings(const TransitionSettings* sett
 
 void RetroFuturaGUI::Graph::setColors()
 {
-    _wavePlane.SetColors(GetShownColors(_colorState));
+    _wavePlane.SetColors(GetShownColors(getShownState()));
 }
 
 void RetroFuturaGUI::Graph::setCornerShape()

@@ -81,6 +81,9 @@ void RetroFuturaGUI::TableText::SetText(std::string_view text)
 
 void RetroFuturaGUI::TableText::SetTextColors(std::span<const glm::vec4> colors, const ColorState colorState)
 {
+    if(ColorState::Invalid == colorState)
+        return;
+
     switch(colorState)
     {
         case ColorState::Disabled:

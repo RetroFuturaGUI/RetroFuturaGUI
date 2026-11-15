@@ -42,14 +42,14 @@ namespace RetroFuturaGUI
         File //the FileExplorer and its prompts.
     };
 
-    /// @brief What a scope entry is for beyond the widget type, as a mask, like CSS pseudo-classes: <FileExplorer><Button:on>.
-    ///        A widget takes the entries of every accessor it has, in this order, before its type's plain entry. States: On (a
-    ///        toggle that is on), Invalid (a field holding no valid value). Roles: Icon, Title (a popup's icon and its bar's title)
+    /// @brief What a widget inside a popup is there for beyond its type, as a mask. A popup's icon and its bar's title, and On for
+    ///        a toggle that is on, which only the library uses (the FileExplorer's place a drag hovers). A widget takes the entries
+    ///        of every accessor it has, in this order, before its type's plain entry. A field holding no valid value uses the
+    ///        Invalid color state instead (IWidget::SetInvalid)
     RFG_EXPORT enum class StyleAccessor : u32
     {
         None = 0,
         On = 1,
-        Invalid = 1 << 1,
         Icon = 1 << 2,
         Title = 1 << 3
     };

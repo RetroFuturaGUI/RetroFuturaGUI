@@ -2,6 +2,8 @@
 
 void RetroFuturaGUI::TextTypes::ChangeType(const DataTypeID id)
 {
+    _expectedDataType = id;
+
     if(_currentDataType == id)
         return;
 
@@ -110,5 +112,40 @@ void RetroFuturaGUI::TextTypes::refreshValueText()
             return parseIntegral(_value.UInt32);
         default: //UInt64
             return parseIntegral(_value.UInt64);
+    }
+}
+
+bool RetroFuturaGUI::TextTypes::FitsExpectedType() const
+{
+    //Stored as a number or bool, the value is one. Only typed text can fail to read as the type
+    if(DataTypeID::Text == _expectedDataType || DataTypeID::Text != _currentDataType)
+        return true;
+
+    switch(_expectedDataType)
+    {
+        case DataTypeID::Bool:
+            return "true" == _valueText || "false" == _valueText || parseValueText<u64>().has_value(); //parseValueText<bool> reads anything else as false
+        case DataTypeID::Int8:
+            return parseValueText<i8>().has_value();
+        case DataTypeID::Int16:
+            return parseValueText<i16>().has_value();
+        case DataTypeID::Int32:
+            return parseValueText<i32>().has_value();
+        case DataTypeID::Int64:
+            return parseValueText<i64>().has_value();
+        case DataTypeID::UInt8:
+            return parseValueText<u8>().has_value();
+        case DataTypeID::UInt16:
+            return parseValueText<u16>().has_value();
+        case DataTypeID::UInt32:
+            return parseValueText<u32>().has_value();
+        case DataTypeID::UInt64:
+            return parseValueText<u64>().has_value();
+        case DataTypeID::Float32:
+            return parseValueText<f32>().has_value();
+        case DataTypeID::Float64:
+            return parseValueText<f64>().has_value();
+        default:
+            return true;
     }
 }

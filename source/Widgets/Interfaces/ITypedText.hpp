@@ -16,6 +16,7 @@ namespace RetroFuturaGUI
             ensureValueStore();
             _valueStore->SetValue(value);
             renderValueText(_valueStore->GetValueText(), emitSignal);
+            reportValueFit();
         }
 
         /// @brief Returns the value converted to T, or a value-initialized T while there is no value store.
@@ -43,6 +44,13 @@ namespace RetroFuturaGUI
     protected:
         /// @brief Shows the given text in the widget without going back through the value store.
         virtual void renderValueText(std::string_view text, const bool emitSignal) = 0;
+
+        /// @brief Called after every change of the value or its text with whether it reads as the type the value is meant to
+        ///        hold (TextTypes::FitsExpectedType). A text box marks itself invalid while it doesn't
+        virtual void valueFitChanged([[maybe_unused]] const bool fits) {}
+
+        /// @brief Tells valueFitChanged how the value fits now, when there is a value store
+        void reportValueFit();
 
         /// @brief Stores edited text as the value, so GetValue parses what was typed. Creates the store if needed.
         void syncValueFromText(std::string_view text);

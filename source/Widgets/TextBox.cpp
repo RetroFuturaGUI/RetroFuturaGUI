@@ -22,6 +22,11 @@ void RetroFuturaGUI::TextBox::textEdited()
     ITextBox::textEdited();
 }
 
+void RetroFuturaGUI::TextBox::valueFitChanged(const bool fits)
+{
+    SetInvalid(!fits);
+}
+
 void RetroFuturaGUI::TextBox::renderValueText(std::string_view text, const bool emitSignal)
 {
     _text.GetElement().SetTextUTF8(text);

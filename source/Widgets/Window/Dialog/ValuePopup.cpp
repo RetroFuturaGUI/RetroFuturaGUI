@@ -396,7 +396,7 @@ void RetroFuturaGUI::ValueForm::MarkInvalid(const uSize row, const bool isInvali
     if(!marked._TextBox)
         return;
 
-    marked._TextBox->SetStyleAccessors(isInvalid ? StyleAccessor::Invalid : StyleAccessor::None); //its scope's TextBox:invalid entry.
+    marked._TextBox->SetInvalid(isInvalid); //its scope gives a TextBox's border Invalid colors
 }
 
 void RetroFuturaGUI::ValueForm::EnableOk(const bool enable)

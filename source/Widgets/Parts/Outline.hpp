@@ -87,7 +87,7 @@ namespace RetroFuturaGUI
         std::span<const u32> getFlavors() const;
 
         Text& _text;
-        std::array<std::vector<glm::vec4>, 5>
+        std::array<std::vector<glm::vec4>, ColorStateCount>
             _ownColors {}, //per ColorState, in its order
             _builtInColors {};
         ColorState _colorState { ColorState::Enabled };

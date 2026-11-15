@@ -20,6 +20,10 @@ namespace RetroFuturaGUI
 
     private:
         void renderValueText(std::string_view text, const bool emitSignal) override;
+
+        /// @brief Marks the text box invalid while its text doesn't read as the type its value is meant to hold
+        void valueFitChanged(const bool fits) override;
+
         void textEdited() override;
         void textChanged(const WidgetTextChange change) override;
     };

@@ -249,14 +249,11 @@ void RetroFuturaGUI::DialogKit::addMissingEntries()
         on.GetBackground().SetColors(std::array { _toggleOnClickedColor }, ColorState::Clicked);
     }
 
-    //Hovered or clicked, an invalid field still shows it
-    if(!shared.HasEntry(WidgetTypeID::TextBox, StyleAccessor::Invalid))
-    {
-        Flavor& invalid { shared.GetEntry(WidgetTypeID::TextBox, StyleAccessor::Invalid) };
+    //Invalid wins over hover and clicks, so an invalid field shows it whatever the pointer does
+    FlavorPart& textBoxBorder { shared.GetEntry(WidgetTypeID::TextBox).GetBorder() };
 
-        for(const ColorState state : { ColorState::Enabled, ColorState::Hover, ColorState::Clicked })
-            invalid.GetBorder().SetColors(std::array { glm::vec4(1.0f, 0.35f, 0.35f, 1.0f) }, state);
-    }
+    if(textBoxBorder.GetColors(ColorState::Invalid).empty())
+        textBoxBorder.SetColors(std::array { glm::vec4(1.0f, 0.35f, 0.35f, 1.0f) }, ColorState::Invalid);
 
     struct KindLook
     {

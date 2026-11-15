@@ -365,6 +365,35 @@ bool RetroFuturaGUI::IWidget::IsEnabled() const
     return _isEnabledFlag;
 }
 
+void RetroFuturaGUI::IWidget::SetInvalid(const bool isInvalid)
+{
+    if(isInvalid == _isInvalidFlag)
+        return;
+
+    _isInvalidFlag = isInvalid;
+
+    //Each part decides for itself. Only a part with Invalid colors shows them
+    for(IWidgetDecoration* part : { _styledBackground, _styledBorder })
+    {
+        if(part)
+            part->setInvalid(isInvalid);
+    }
+
+    if(_styledText)
+        _styledText->setInvalid(isInvalid);
+
+    for(IWidgetDecoration* part : _styledSubParts)
+        part->setInvalid(isInvalid);
+
+    for(WidgetText* text : _styledSubTexts)
+        text->setInvalid(isInvalid);
+}
+
+bool RetroFuturaGUI::IWidget::IsInvalid() const
+{
+    return _isInvalidFlag;
+}
+
 bool RetroFuturaGUI::IWidget::isPointInsideRect(const glm::vec2& point, const glm::vec3& size, const glm::vec3& position, const glm::vec3& rotation) const
 {
     // The point is in the widget's untilted layout (readPointer), so only a part's own turn within it applies here

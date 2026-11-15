@@ -102,7 +102,7 @@ namespace RetroFuturaGUI
         /// @brief The part's flavors, empty for an effect no flavor styles.
         std::span<const u32> getFlavors() const;
 
-        std::array<std::vector<glm::vec4>, 5>
+        std::array<std::vector<glm::vec4>, ColorStateCount>
             _ownColors {}, //per ColorState, in its order.
             _builtInColors {};
         ColorState _colorState { ColorState::Enabled };

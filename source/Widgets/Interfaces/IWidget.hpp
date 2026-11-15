@@ -126,8 +126,8 @@ namespace RetroFuturaGUI
         /// @brief Returns the widget's flavors, in order, as they were given
         const std::vector<std::string>& GetFlavors() const;
 
-        /// @brief Sets what the widget is for beyond its type, as a mask, for the scopes inside the library's popups. A toggle
-        ///        that is on takes its scope's Button:on entry (StyleAccessor). None by default
+        /// @brief Sets what the widget is for beyond its type, as a mask, for the scopes inside the library's popups. A popup's
+        ///        icon takes its scope's Button:icon entry (StyleAccessor). None by default
         void SetStyleAccessors(const StyleAccessor accessors);
 
         /// @brief Returns what the widget is for beyond its type, for the scopes
@@ -145,6 +145,13 @@ namespace RetroFuturaGUI
 
         /// @brief Returns whether the widget is currently enabled. By its own state and its scene's
         bool IsEnabled() const;
+
+        /// @brief Marks the widget as holding no valid value: its parts that have Invalid colors show them, whatever the
+        ///        pointer does, until it is marked valid again. Disabled still wins. Not invalid by default
+        void SetInvalid(const bool isInvalid);
+
+        /// @brief Returns whether the widget is marked invalid
+        bool IsInvalid() const;
 
         /// @brief Returns the parent widget, cast to the given type
         template<typename T> T* GetParentWidget() const
@@ -222,7 +229,8 @@ namespace RetroFuturaGUI
             _onDisableAsync;
         bool
             _isEnabledFlag { true },
-            _isOwnEnabled { true };
+            _isOwnEnabled { true },
+            _isInvalidFlag { false };
 
     // stuff
         std::unique_ptr<Tooltip> _tooltip; //no { nullptr }: with Tooltip only declared here, MSVC can't compile the initializer's cleanup

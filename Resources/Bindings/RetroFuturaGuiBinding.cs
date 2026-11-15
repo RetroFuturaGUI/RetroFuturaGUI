@@ -22,7 +22,9 @@ public class RetroFuturaGuiBinding
         Enabled,
         Disabled,
         Clicked,
-        Hover
+        Hover,
+        Selected,
+        Invalid
     };
 
     [Flags]

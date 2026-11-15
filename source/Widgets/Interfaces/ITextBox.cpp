@@ -28,6 +28,7 @@ RetroFuturaGUI::ITextBox::ITextBox(std::string_view name, Projection* projection
      }
 {
     _placeholder.SetBuiltInColors(styleKey(), std::array { glm::vec4(0.5f, 0.5f, 0.5f, 1.0f) }, ColorState::Enabled);
+    _border.SetBuiltInColors(styleKey(), std::array { glm::vec4(1.0f, 0.35f, 0.35f, 1.0f) }, ColorState::Invalid); //a text that doesn't read as its value's type.
     _text.SetTransitionSettings(&_transitionSettings);
     _placeholder.SetTransitionSettings(&_transitionSettings);
     _editor.SetTransitionSettings(&_transitionSettings);

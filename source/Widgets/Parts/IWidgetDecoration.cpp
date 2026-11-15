@@ -15,28 +15,50 @@ void RetroFuturaGUI::IWidgetDecoration::SetColors(std::span<const glm::vec4> col
 
 const std::vector<glm::vec4>& RetroFuturaGUI::IWidgetDecoration::GetShownColors(const ColorState state) const
 {
+    if(const std::vector<glm::vec4>* colors { findColors(state) })
+        return *colors;
+
+    if(ColorState::Enabled == state)
+        return _builtInColors[static_cast<uSize>(ColorState::Enabled)]; //empty. Nothing gives Enabled colors
+
+    return GetShownColors(ColorState::Enabled); //a state nothing sets, such as Selected, looks like Enabled
+}
+
+const std::vector<glm::vec4>* RetroFuturaGUI::IWidgetDecoration::findColors(const ColorState state) const
+{
     const std::vector<glm::vec4>& own { _ownColors[static_cast<uSize>(state)] };
 
     if(!own.empty())
-        return own;
+        return &own;
 
-    //A part without a widget's flavors (a sub-part, a window's) goes from its own colors straight to its built-in ones.
-    const std::vector<glm::vec4>* styled { _flavors ? StylingManager::FindColors(getFlavors(), _stylePart, state) : nullptr };
-
-    if(styled)
-        return *styled;
+    //A part without a widget's flavors (a sub-part, a window's) goes from its own colors straight to its built-in ones
+    if(const std::vector<glm::vec4>* styled { _flavors ? StylingManager::FindColors(getFlavors(), _stylePart, state) : nullptr })
+        return styled;
 
     const std::vector<glm::vec4>& builtIn { _builtInColors[static_cast<uSize>(state)] };
-
-    if(!builtIn.empty() || ColorState::Enabled == state)
-        return builtIn;
-
-    return GetShownColors(ColorState::Enabled); //a state nothing sets, such as Selected, looks like Enabled
+    return builtIn.empty() ? nullptr : &builtIn;
 }
 
 void RetroFuturaGUI::IWidgetDecoration::SetColorState(const ColorState state)
 {
     _colorState = state;
+    setColors();
+}
+
+RetroFuturaGUI::ColorState RetroFuturaGUI::IWidgetDecoration::getShownState() const
+{
+    if(!_isInvalid || ColorState::Disabled == _colorState || !findColors(ColorState::Invalid))
+        return _colorState;
+
+    return ColorState::Invalid;
+}
+
+void RetroFuturaGUI::IWidgetDecoration::setInvalid(const bool isInvalid)
+{
+    if(isInvalid == _isInvalid)
+        return;
+
+    _isInvalid = isInvalid;
     setColors();
 }
 

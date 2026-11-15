@@ -112,12 +112,17 @@ namespace RetroFuturaGUI
         FILL_XYZ
     };
 
+    /// @brief Which colors a part shows. Color states follow the following hiearchy: Disabled, Invalid, Clicked, Hover,
+    ///        Selected, Enabled. A part that has no colors for Invalid shows the state below it
     RFG_EXPORT enum class ColorState : u32
     {
         Enabled,
         Disabled,
         Clicked,
         Hover,
-        Selected
+        Selected,
+        Invalid
     };
+
+    RFG_EXPORT inline constexpr uSize ColorStateCount { 6 };
 }

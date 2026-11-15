@@ -115,8 +115,8 @@ namespace RetroFuturaGUI
         static StyleKey styleKey();
 
         /// @brief Adds the scope entries giving the popups their library look, each only when the application hasn't defined it:
-        ///        a toggle that is on (Popup, Button:on), an invalid field (Popup, TextBox:invalid), and per message kind its
-        ///        accent on the window, the bar and the bar's title (Label:title) and its icon (Button:icon). The application
+        ///        a toggle that is on (Popup, Button:on), an invalid field (Popup, a TextBox's Invalid border), and per message
+        ///        kind its accent on the window, the bar and the bar's title (Label:title) and its icon (Button:icon). The application
         ///        changes them through StylingManager::GetScope.
         static void addMissingEntries();
 

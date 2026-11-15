@@ -30,6 +30,7 @@ class RetroFuturaGuiBinding:
         Clicked = 2
         Hover = 3
         Selected = 4
+        Invalid = 5
 
     # How a background, border or text spreads its colors. One color, or a gradient across them
     class FillType(Enum):

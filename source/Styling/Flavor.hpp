@@ -194,7 +194,7 @@ namespace RetroFuturaGUI
         const std::optional<f32>& GetGradientRotationSpeed() const;
 
     private:
-        std::array<std::vector<glm::vec4>, 5> _colors {}; //per ColorState, in its order
+        std::array<std::vector<glm::vec4>, ColorStateCount> _colors {}; //per ColorState, in its order
         std::optional<bool> _shown {};
         std::optional<f32> _degree {};
         std::optional<f32> _distance {};
@@ -417,7 +417,7 @@ namespace RetroFuturaGUI
         const FlavorEffect& GetOutline() const;
 
     private:
-        std::array<std::vector<glm::vec4>, 5> _colors {}; //per ColorState, in its order.
+        std::array<std::vector<glm::vec4>, ColorStateCount> _colors {}; //per ColorState, in its order.
         std::optional<glm::vec4> _cornerRadii {};
         std::optional<CutCorners> _cutCorners {};
         std::optional<f32> _width {};
