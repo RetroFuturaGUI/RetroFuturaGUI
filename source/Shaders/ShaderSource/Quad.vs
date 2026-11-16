@@ -7,6 +7,7 @@ uniform mat4 uFrame = mat4(1.0); // tilts the untilted layout into place: the Fr
 uniform mat4 uScaling;
 uniform mat4 uPosition;
 uniform mat4 uRotation;
+uniform float uSkew = 0.0; // the tangent of the angle the side edges lean by: the top moves right, the bottom left.
 uniform vec2 uScale; // the quad's size in pixels
 layout(location = 0) in vec4 Position;
 
@@ -29,7 +30,11 @@ void main()
 {
     vec2 grownPosition = Position.xy * (1.0 + 2.0 * EDGE_MARGIN / max(uScale, vec2(1.0)));
     vLocalPos = grownPosition; // -0.5 .. 0.5 across the shape, a little more on the margin.
-    mat4 placement = uFrame * uPosition * uRotation * uScaling;
+    // The skew shears the sized quad, so it leans by the same angle at any size, and everything the fragment shaders draw
+    // from vLocalPos (corners, borders, fills, raster) leans with it.
+    mat4 skew = mat4(1.0);
+    skew[1][0] = uSkew;
+    mat4 placement = uFrame * uPosition * uRotation * skew * uScaling;
     vec4 placedPosition = placement * vec4(grownPosition, Position.zw);
 
     // Edges that run along the pixels land on whole pixels, the pixels whose centers they hold, so a straight edge or a thin

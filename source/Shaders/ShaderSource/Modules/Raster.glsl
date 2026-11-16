@@ -16,9 +16,10 @@ uniform float uRasterAnimationOffset;
 uniform int uPrimaryRasterWidthTransferCount;
 uniform float uPrimaryRasterWidthTransfer[MAX_PRIMARY_RASTER_WIDTH_TRANSFER];
 
-/* Normalizes a position projected onto the transfer direction into the 0..1 coordinate the width
-   transfer is sampled with. fract (not clamp) so the curve repeats seamlessly as a pattern scrolls
-   forever, instead of freezing once a position passes the rectangle's original extent. */
+/* Normalizes a position on the shape, projected onto the transfer direction, into the 0..1 coordinate the width transfer
+   is sampled with. Pass a position on the shape, not on the moving pattern (rasterShapePos): the curve then stays put
+   across the shape while the pattern moves through it, each element growing and shrinking as it passes, so the motion has
+   no seam whatever the curve. Clamped, since only elements on the edges reach a little past the shape. */
 float rasterTransferCoord(vec2 samplePos, vec2 direction, vec2 halfSize)
 {
     float maxProjection = abs(direction.x) * halfSize.x + abs(direction.y) * halfSize.y;
@@ -26,7 +27,14 @@ float rasterTransferCoord(vec2 samplePos, vec2 direction, vec2 halfSize)
     if(maxProjection <= 0.0001)
         return 0.0;
 
-    return fract(dot(samplePos, direction) / (2.0 * maxProjection) + 0.5);
+    return clamp(dot(samplePos, direction) / (2.0 * maxProjection) + 0.5, 0.0, 1.0);
+}
+
+/* Where a point of the moving pattern lies on the shape now: the animation shifts the pattern along the direction, so it
+   shifts back. */
+vec2 rasterShapePos(vec2 patternPos, vec2 direction)
+{
+    return patternPos - direction * uRasterAnimationOffset;
 }
 
 /* Samples uPrimaryRasterWidthTransfer at t, interpolating between the two entries it falls between -
@@ -43,8 +51,8 @@ float sampleRasterWidth(float t)
 
 /* Blends a dot-grid pattern over baseColor. Dot centers sit on a uRasterCellSize grid (in px, local
    to the rectangle) that slides along the uRasterDegree direction over time via
-   uRasterAnimationOffset. Each dot's total width is sampled from uPrimaryRasterWidthTransfer, indexed by that same
-   dot's position projected onto the direction and normalized across the rectangle's extent -
+   uRasterAnimationOffset. Each dot's total width is sampled from uPrimaryRasterWidthTransfer, indexed by where that
+   dot's center lies on the shape now, projected onto the direction and normalized across the rectangle's extent -
    this is what lets dots grow/shrink smoothly from one side of the rectangle to the other.*/
 vec4 applyDottedPattern(vec4 baseColor, vec2 localPos)
 {
@@ -61,8 +69,8 @@ vec4 applyDottedPattern(vec4 baseColor, vec2 localPos)
     vec2 cellCenter = floor(animatedPos / cellSize + 0.5) * cellSize;
     vec2 localOffset = animatedPos - cellCenter;
 
-    // A dot's own center decides which part of the transfer curve sizes it.
-    float dotWidth = sampleRasterWidth(rasterTransferCoord(cellCenter, direction, halfSize));
+    // Where a dot's center lies on the shape now decides which part of the transfer curve sizes it.
+    float dotWidth = sampleRasterWidth(rasterTransferCoord(rasterShapePos(cellCenter, direction), direction, halfSize));
 
     // The transfer curve gives each dot's width across, so the circle drawn from its center is half of it. The cell is
     // at least as wide as the largest dot, so a circle never reaches past its cell
@@ -109,7 +117,7 @@ vec4 applyCheckeredPattern(vec4 baseColor, vec2 localPos)
 
     // A square's own center decides which part of the transfer curve sizes it, as a dot's does
     vec2 cellCenter = (direction * cellCenterBoard.x + crossDirection * cellCenterBoard.y) * cellSize;
-    float squareSide = sampleRasterWidth(rasterTransferCoord(cellCenter, direction, halfSize));
+    float squareSide = sampleRasterWidth(rasterTransferCoord(rasterShapePos(cellCenter, direction), direction, halfSize));
 
     // How far this pixel lies outside its square, in px: negative inside. Smoothed over about a pixel
     vec2 centerOffset = abs(board - cellCenterBoard) * cellSize;
@@ -171,7 +179,7 @@ vec4 applyStripedPattern(vec4 baseColor, vec2 localPos)
     float cellSize = max(uRasterCellSize, 0.0001);
     float along = dot(animatedPos, direction) / cellSize;
     vec2 stripeCenter = direction * (floor(along) + 0.5) * cellSize;
-    float stripeWidth = sampleRasterWidth(rasterTransferCoord(stripeCenter, direction, halfSize));
+    float stripeWidth = sampleRasterWidth(rasterTransferCoord(rasterShapePos(stripeCenter, direction), direction, halfSize));
     float coverage = rasterLineCoverage(along, cellSize, stripeWidth);
 
     // sin() is positive across one stripe's cell and negative across the next, so the colors alternate and blend
@@ -201,10 +209,10 @@ vec4 applyGridPattern(vec4 baseColor, vec2 localPos)
     vec2 board = vec2(dot(animatedPos, direction), dot(animatedPos, crossDirection)) / cellSize;
 
     vec2 acrossCenter = direction * (floor(board.x) + 0.5) * cellSize;
-    float acrossWidth = sampleRasterWidth(rasterTransferCoord(acrossCenter, direction, halfSize));
+    float acrossWidth = sampleRasterWidth(rasterTransferCoord(rasterShapePos(acrossCenter, direction), direction, halfSize));
     float acrossCoverage = rasterLineCoverage(board.x, cellSize, acrossWidth);
 
-    float alongWidth = sampleRasterWidth(rasterTransferCoord(animatedPos, direction, halfSize));
+    float alongWidth = sampleRasterWidth(rasterTransferCoord(pixelPos, direction, halfSize));
     float alongCoverage = rasterLineCoverage(board.y, cellSize, alongWidth);
 
     vec4 result = blendRasterColor(baseColor, uSecondaryRasterColor.rgb, uSecondaryRasterColor.a * alongCoverage);
