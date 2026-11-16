@@ -49,6 +49,10 @@ void RetroFuturaGUI::Window::InsertScene(Scene* scene, const uSize index)
     _scenes.insert(std::next(_scenes.begin(), static_cast<i64>(std::min(index, _scenes.size()))), scene);
     UpdateLayout();
     scene->emitLoad();
+
+    //A scene that changes nothing about the title still hears it once, so its title bar starts with it
+    if(!followSceneTitles())
+        scene->emitTitleChange(_shownTitle);
 }
 
 void RetroFuturaGUI::Window::RemoveScene(Scene* scene)
@@ -64,6 +68,7 @@ void RetroFuturaGUI::Window::RemoveScene(Scene* scene)
     _scenes.erase(found);
     UpdateLayout();
     scene->emitUnload();
+    followSceneTitles();
 }
 
 void RetroFuturaGUI::Window::UpdateLayout()
@@ -254,6 +259,12 @@ void RetroFuturaGUI::Window::drawContent()
 
         //Each scene starts with a fresh depth buffer, so a scene added later always draws over the ones loaded before
         Shader::ClearDepth();
+
+        //Cut to its area, so what reaches past it (a widget with a negative padding) never covers a neighbouring scene
+        const glm::vec3
+            position { scene->GetPosition() },
+            size { scene->GetSize() };
+        const Shader::ClipScope clip { glm::vec4(position.x - size.x * 0.5f, position.y - size.y * 0.5f, size.x, size.y), position.z, *_projection };
         scene->Draw();
     }
 
