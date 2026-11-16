@@ -272,12 +272,51 @@ void RetroFuturaGUI::Window::SetWindowTitle(std::string_view title)
         return;
 
     _windowTitle = title;
-    glfwSetWindowTitle(_window, _windowTitle.c_str());
+    followSceneTitles();
 }
 
 const std::string& RetroFuturaGUI::Window::GetWindowTitle() const
 {
     return _windowTitle;
+}
+
+const std::string& RetroFuturaGUI::Window::GetShownTitle() const
+{
+    return _shownTitle;
+}
+
+bool RetroFuturaGUI::Window::followSceneTitles()
+{
+    if(!_window)
+        return false;
+
+    //The last scene in the draw order that has a title gives the window's, so a scene swapped in for the content shows its own.
+    std::string_view title { _windowTitle };
+
+    for(const Scene* scene : _scenes)
+    {
+        if(!scene)
+            continue;
+
+        if(!scene->GetTitle().empty())
+            title = scene->GetTitle();
+    }
+
+    if(title == _shownTitle)
+        return false;
+
+    _shownTitle = title;
+    glfwSetWindowTitle(_window, _shownTitle.c_str());
+
+    for(Scene* scene : _scenes)
+    {
+        if(!scene)
+            continue;
+
+        scene->emitTitleChange(_shownTitle);
+    }
+
+    return true;
 }
 
 GLFWwindow* RetroFuturaGUI::Window::GetGlfwWindow() const
@@ -361,6 +400,7 @@ void RetroFuturaGUI::Window::createWindow()
 
     //Shares GL objects with the first window, so the shaders compiled once below and the fonts and images loaded there work in this one too.
     //VAOs are never shared, so a widget still has to be built, drawn and destroyed with its own window's context current.
+    _shownTitle = _windowTitle;
     _window = glfwCreateWindow(_width, _height, _windowTitle.c_str(), nullptr, _shareWindow);
     glfwSetWindowTitle(_window, _windowTitle.c_str());
 

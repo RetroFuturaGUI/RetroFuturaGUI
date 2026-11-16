@@ -84,8 +84,12 @@ namespace RetroFuturaGUI
         /// @bechaml name Title
         void SetWindowTitle(std::string_view title);
 
-        /// @brief Returns the window's native title
+        /// @brief Returns the window's own title, the one SetWindowTitle set
         const std::string& GetWindowTitle() const;
+
+        /// @brief Returns the title the window shows: that of the last of its scenes in the draw order that has one
+        ///        (Scene::SetTitle), else its own. The native title bar shows it, and each scene hears of it (Scene::OnTitleChange)
+        const std::string& GetShownTitle() const;
 
         /// @brief Returns the underlying GLFW window handle.
         GLFWwindow* GetGlfwWindow() const;
@@ -723,7 +727,8 @@ namespace RetroFuturaGUI
             _height { 720 };
         std::string
             _name,
-            _windowTitle { "RetroFuturaGUI Window" };
+            _windowTitle { "RetroFuturaGUI Window" },
+            _shownTitle { "RetroFuturaGUI Window" }; //the scenes' or its own: GetShownTitle.
         WindowRole _role { WindowRole::Normal };
         std::unique_ptr<Projection> _projection;
         std::optional<Background> _background {};
@@ -849,5 +854,10 @@ namespace RetroFuturaGUI
         friend class IPopup; //creates its window through the private constructor and puts its scope
         friend class WindowTab; //registers itself, docks windows into itself and draws the selected one
         friend class IWidget; //reads the cursor through the host while its window is turned in a tab
+        friend class Scene; //tells the window when its title changes
+
+        /// @brief Works out the title shown again, and when it changed, hands it to the native title bar and every scene.
+        /// @return Whether it changed.
+        bool followSceneTitles();
     };
 }

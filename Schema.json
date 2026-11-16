@@ -1,6 +1,6 @@
 {
     "schemaVersion": 2,
-    "headersHash": "1de8e5c552c580032455cd5194fdf135b12b36fe46ade62523362f44991b47de",
+    "headersHash": "f44721cdafaa17fe8e7ecb491e4b3efe44bf844cf372ce3d718a3788fa45da59",
     "enums": {
         "AssetKind": {
             "cpp": "RetroFuturaGUI::AssetKind",
@@ -1033,7 +1033,8 @@
                 "Padding",
                 "Flow",
                 "ColorGlyphTint",
-                "MaskSpan"
+                "MaskSpan",
+                "Skew"
             ]
         },
         "Table::EditEnd": {
@@ -1439,7 +1440,7 @@
                         "params": [
                             {
                                 "name": "density",
-                                "type": "std::span<f32>"
+                                "type": "std::span<const f32>"
                             }
                         ]
                     }
@@ -1630,7 +1631,7 @@
                         "params": [
                             {
                                 "name": "widthTransfer",
-                                "type": "std::span<f32>"
+                                "type": "std::span<const f32>"
                             }
                         ]
                     }
@@ -1642,6 +1643,20 @@
                             {
                                 "name": "animationSpeed",
                                 "type": "f32"
+                            }
+                        ]
+                    },
+                    {
+                        "call": "SetRasterAnimationSpeed",
+                        "params": [
+                            {
+                                "name": "animationSpeed",
+                                "type": "f32"
+                            },
+                            {
+                                "name": "state",
+                                "type": "ColorState",
+                                "isState": true
                             }
                         ]
                     }
@@ -1686,6 +1701,17 @@
                             {
                                 "name": "color",
                                 "type": "glm::vec4"
+                            }
+                        ]
+                    }
+                ],
+                "Skew": [
+                    {
+                        "call": "SetSkew",
+                        "params": [
+                            {
+                                "name": "degrees",
+                                "type": "f32"
                             }
                         ]
                     }
@@ -1861,7 +1887,7 @@
                         "params": [
                             {
                                 "name": "widthTransfer",
-                                "type": "std::span<f32>"
+                                "type": "std::span<const f32>"
                             }
                         ]
                     }
@@ -1873,6 +1899,20 @@
                             {
                                 "name": "animationSpeed",
                                 "type": "f32"
+                            }
+                        ]
+                    },
+                    {
+                        "call": "SetRasterAnimationSpeed",
+                        "params": [
+                            {
+                                "name": "animationSpeed",
+                                "type": "f32"
+                            },
+                            {
+                                "name": "state",
+                                "type": "ColorState",
+                                "isState": true
                             }
                         ]
                     }
@@ -1917,6 +1957,17 @@
                             {
                                 "name": "color",
                                 "type": "glm::vec4"
+                            }
+                        ]
+                    }
+                ],
+                "Skew": [
+                    {
+                        "call": "SetSkew",
+                        "params": [
+                            {
+                                "name": "degrees",
+                                "type": "f32"
                             }
                         ]
                     }
@@ -2329,6 +2380,11 @@
                     "member": "_LayerSpan",
                     "type": "u32",
                     "default": "1"
+                },
+                "Padding": {
+                    "member": "_Padding",
+                    "type": "f32",
+                    "default": "0.0"
                 }
             },
             "constructorArgs": []
@@ -3692,6 +3748,17 @@
                             {
                                 "name": "scale",
                                 "type": "f32"
+                            }
+                        ]
+                    }
+                ],
+                "Shown": [
+                    {
+                        "call": "Show",
+                        "params": [
+                            {
+                                "name": "show",
+                                "type": "bool"
                             }
                         ]
                     }
@@ -5616,6 +5683,20 @@
                                 "type": "f32"
                             }
                         ]
+                    },
+                    {
+                        "call": "SetRasterAnimationSpeed",
+                        "params": [
+                            {
+                                "name": "value",
+                                "type": "f32"
+                            },
+                            {
+                                "name": "state",
+                                "type": "ColorState",
+                                "isState": true
+                            }
+                        ]
                     }
                 ],
                 "RasterDegree": [
@@ -5658,6 +5739,17 @@
                             {
                                 "name": "value",
                                 "type": "glm::vec4"
+                            }
+                        ]
+                    }
+                ],
+                "Skew": [
+                    {
+                        "call": "SetSkew",
+                        "params": [
+                            {
+                                "name": "degrees",
+                                "type": "f32"
                             }
                         ]
                     }
@@ -5778,6 +5870,17 @@
                             {
                                 "name": "rotationSpeed",
                                 "type": "f32"
+                            }
+                        ]
+                    }
+                ],
+                "Shown": [
+                    {
+                        "call": "Show",
+                        "params": [
+                            {
+                                "name": "show",
+                                "type": "bool"
                             }
                         ]
                     }
@@ -5918,7 +6021,7 @@
                         "params": [
                             {
                                 "name": "density",
-                                "type": "std::span<f32>"
+                                "type": "std::span<const f32>"
                             }
                         ]
                     }
@@ -6050,7 +6153,7 @@
                         "params": [
                             {
                                 "name": "widthTransfer",
-                                "type": "std::span<f32>"
+                                "type": "std::span<const f32>"
                             }
                         ]
                     }
@@ -6062,6 +6165,20 @@
                             {
                                 "name": "animationSpeed",
                                 "type": "f32"
+                            }
+                        ]
+                    },
+                    {
+                        "call": "SetRasterAnimationSpeed",
+                        "params": [
+                            {
+                                "name": "animationSpeed",
+                                "type": "f32"
+                            },
+                            {
+                                "name": "state",
+                                "type": "ColorState",
+                                "isState": true
                             }
                         ]
                     }
@@ -6121,6 +6238,17 @@
                         ]
                     }
                 ],
+                "Shown": [
+                    {
+                        "call": "Show",
+                        "params": [
+                            {
+                                "name": "show",
+                                "type": "bool"
+                            }
+                        ]
+                    }
+                ],
                 "Size": [
                     {
                         "call": "SetSize",
@@ -6128,6 +6256,17 @@
                             {
                                 "name": "size",
                                 "type": "glm::vec2"
+                            }
+                        ]
+                    }
+                ],
+                "Skew": [
+                    {
+                        "call": "SetSkew",
+                        "params": [
+                            {
+                                "name": "degrees",
+                                "type": "f32"
                             }
                         ]
                     }
@@ -6961,6 +7100,17 @@
                         ]
                     }
                 ],
+                "Shown": [
+                    {
+                        "call": "Show",
+                        "params": [
+                            {
+                                "name": "show",
+                                "type": "bool"
+                            }
+                        ]
+                    }
+                ],
                 "Size": [
                     {
                         "call": "SetSize",
@@ -7114,6 +7264,17 @@
                             {
                                 "name": "rotationSpeed",
                                 "type": "f32"
+                            }
+                        ]
+                    }
+                ],
+                "Shown": [
+                    {
+                        "call": "Show",
+                        "params": [
+                            {
+                                "name": "show",
+                                "type": "bool"
                             }
                         ]
                     }
@@ -9628,6 +9789,17 @@
                             }
                         ]
                     }
+                ],
+                "Title": [
+                    {
+                        "call": "SetTitle",
+                        "params": [
+                            {
+                                "name": "title",
+                                "type": "std::string_view"
+                            }
+                        ]
+                    }
                 ]
             },
             "signals": {
@@ -9646,6 +9818,10 @@
                 "OnLoad": {
                     "connect": "Connect_OnLoad",
                     "slot": "typename Signal<>::Slot"
+                },
+                "OnTitleChange": {
+                    "connect": "Connect_OnTitleChange",
+                    "slot": "typename Signal<std::string>::Slot"
                 },
                 "OnUnload": {
                     "connect": "Connect_OnUnload",
@@ -10422,6 +10598,17 @@
                             {
                                 "name": "emitSignal",
                                 "type": "bool"
+                            }
+                        ]
+                    }
+                ],
+                "ImageFit": [
+                    {
+                        "call": "SetImageFit",
+                        "params": [
+                            {
+                                "name": "fit",
+                                "type": "ImageFit"
                             }
                         ]
                     }
