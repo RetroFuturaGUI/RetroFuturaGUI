@@ -168,6 +168,12 @@ std::optional<RetroFuturaGUI::CutCorners> RetroFuturaGUI::StylingManager::FindCu
     return FindFirst<std::optional<CutCorners>>(flavorHashes, part, [](const FlavorPart& style) { return style.GetCutCorners(); });
 }
 
+std::optional<f32> RetroFuturaGUI::StylingManager::FindSkew(std::span<const u32> flavorHashes, const StylePart part)
+{
+    return FindFirst<std::optional<f32>>(flavorHashes, part, [](const FlavorPart& style) { return style.GetSkew(); });
+}
+
+
 std::optional<f32> RetroFuturaGUI::StylingManager::FindWidth(std::span<const u32> flavorHashes, const StylePart part)
 {
     return FindFirst<std::optional<f32>>(flavorHashes, part, [](const FlavorPart& style) { return style.GetWidth(); });

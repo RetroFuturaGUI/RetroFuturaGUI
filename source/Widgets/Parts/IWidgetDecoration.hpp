@@ -108,6 +108,7 @@ namespace RetroFuturaGUI
             };
         std::optional<glm::vec4> _ownCornerRadii {};
         std::optional<CutCorners> _ownCutCorners {};
+        std::optional<f32> _ownSkew {};
         glm::vec4
             _builtInCornerRadii { 0.0f },
             _cornerRadii { 0.0f }; //shown.

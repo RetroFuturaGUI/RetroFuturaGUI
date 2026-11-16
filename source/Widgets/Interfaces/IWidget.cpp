@@ -16,6 +16,7 @@
 #include "Window.hpp"
 #include "Shader.hpp"
 #include <algorithm>
+#include <cmath>
 #include <memory>
 
 #if defined(TARGET_PLATFORM_LINUX)
@@ -411,7 +412,14 @@ bool RetroFuturaGUI::IWidget::isPointInsideRect(const glm::vec2& point, const gl
 
 bool RetroFuturaGUI::IWidget::isPointInside(const glm::vec2& point) const
 {
-    return isPointInsideRect(point, _size, _position, glm::vec3(0.0f)); //the widget's own rotation is in its frame
+    //A skewed shape leans its top to the right, so the point slides back along the lean, into the rectangle before the skew
+    const f32 lean { std::tan(glm::radians(getShapeSkew())) * (point.y - _position.y) };
+    return isPointInsideRect(glm::vec2(point.x - lean, point.y), _size, _position, glm::vec3(0.0f)); //the widget's own rotation is in its frame
+}
+
+f32 RetroFuturaGUI::IWidget::getShapeSkew() const
+{
+    return 0.0f;
 }
 
 RetroFuturaGUI::PointerState RetroFuturaGUI::IWidget::readPointer() const

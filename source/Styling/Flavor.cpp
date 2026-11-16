@@ -28,6 +28,9 @@ void RetroFuturaGUI::FlavorPart::Reset(const StyleSetting setting)
         case StyleSetting::CutCorners:
             _cutCorners.reset();
         break;
+        case StyleSetting::Skew:
+            _skew.reset();
+        break;
         case StyleSetting::Width:
             _width.reset();
         break;
@@ -171,6 +174,17 @@ void RetroFuturaGUI::FlavorPart::SetCutCorners(const CutCorners corners)
 const std::optional<RetroFuturaGUI::CutCorners>& RetroFuturaGUI::FlavorPart::GetCutCorners() const
 {
     return _cutCorners;
+}
+
+void RetroFuturaGUI::FlavorPart::SetSkew(const f32 degrees)
+{
+    _skew = degrees;
+    StylingManager::markChanged();
+}
+
+const std::optional<f32>& RetroFuturaGUI::FlavorPart::GetSkew() const
+{
+    return _skew;
 }
 
 void RetroFuturaGUI::FlavorPart::SetWidth(const f32 width)

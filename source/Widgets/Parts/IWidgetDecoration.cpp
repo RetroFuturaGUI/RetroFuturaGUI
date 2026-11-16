@@ -166,6 +166,10 @@ void RetroFuturaGUI::IWidgetDecoration::ResetSetting(const StyleSetting setting)
             _ownCutCorners.reset();
             resolveCornerShape();
         break;
+        case StyleSetting::Skew:
+            _ownSkew.reset();
+            resolveCornerShape();
+        break;
         default:
             _shader.Reset(setting);
             setShader();

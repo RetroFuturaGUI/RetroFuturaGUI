@@ -81,8 +81,14 @@ namespace RetroFuturaGUI
         void SetCutCorners(const CutCorners corners);
         CutCorners GetCutCorners() const;
 
-        /// @brief Uploads the projection, the three matrices, the size in pixels, and the corner radii shown now when the
-        ///        corners are rounded.
+        /// @brief Sets the angle in degrees the side edges lean by, which makes the rectangle a parallelogram: above 0 the top moves
+        ///        right and the bottom left, while the top and bottom edges stay level. Everything drawn in the rectangle leans
+        ///        with it. Public on Plane and Frame
+        void SetSkew(const f32 degrees);
+        f32 GetSkew() const;
+
+        /// @brief Uploads the projection, the three matrices, the skew, the size in pixels, and the corner radii shown now when
+        ///        the corners are rounded.
         void uploadTransform(Shader& shader);
 
         /// @brief Draws the shared quad with the shader in use.
@@ -99,7 +105,8 @@ namespace RetroFuturaGUI
             _position { 0.0f },
             _rotation { 0.0f };
         CutCorners _cutCorners { CutCorners::None };
-        glm::vec4 _cornerRadii { 0.0f }; //the radii given; _shownCornerRadii are drawn, on the way to them while a transition runs
+        f32 _skew { 0.0f };
+        glm::vec4 _cornerRadii { 0.0f };
 
     private:
     //Corner radii transition

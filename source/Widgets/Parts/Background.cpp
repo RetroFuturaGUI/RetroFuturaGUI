@@ -393,6 +393,7 @@ void RetroFuturaGUI::Background::drawShadow()
         ._Position = _backgroundPlane->GetPosition(),
         ._CornerRadii = _backgroundPlane->GetShownCornerRadii(),
         ._CutCorners = _backgroundPlane->GetCutCorners(),
+        ._Skew = _backgroundPlane->GetSkew(),
         ._RingWidth = 0.0f
     });
     _shadowRectangle->Draw();
@@ -436,6 +437,7 @@ void RetroFuturaGUI::Background::drawGlow(const f32 depth)
         ._Position = position,
         ._CornerRadii = _backgroundPlane->GetShownCornerRadii(),
         ._CutCorners = _backgroundPlane->GetCutCorners(),
+        ._Skew = _backgroundPlane->GetSkew(),
         ._RingWidth = 0.0f
     }, GlowEdge::Outer);
     _glowRectangle->Draw();
@@ -487,6 +489,7 @@ void RetroFuturaGUI::Background::drawInnerGlow()
         ._Position = _backgroundPlane->GetPosition() + glm::vec3(0.0f, 0.0f, _innerGlowDepthOffset),
         ._CornerRadii = _backgroundPlane->GetShownCornerRadii(),
         ._CutCorners = _backgroundPlane->GetCutCorners(),
+        ._Skew = _backgroundPlane->GetSkew(),
         ._RingWidth = 0.0f
     });
     _innerGlowRectangle->Draw();

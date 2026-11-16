@@ -290,6 +290,7 @@ void RetroFuturaGUI::Border::drawShadow()
         ._Position = _borderFrame->GetPosition(),
         ._CornerRadii = _borderFrame->GetShownCornerRadii(),
         ._CutCorners = _borderFrame->GetCutCorners(),
+        ._Skew = _borderFrame->GetSkew(),
         ._RingWidth = _borderFrame->GetBorderWidth()
     });
     _shadowRectangle->Draw();
@@ -333,6 +334,7 @@ void RetroFuturaGUI::Border::drawGlow()
         ._Position = position,
         ._CornerRadii = _borderFrame->GetShownCornerRadii(),
         ._CutCorners = _borderFrame->GetCutCorners(),
+        ._Skew = _borderFrame->GetSkew(),
         ._RingWidth = _borderFrame->GetBorderWidth()
     }, GlowEdge::Outer);
     _glowRectangle->Draw();
@@ -359,6 +361,7 @@ void RetroFuturaGUI::Border::drawInwardGlow(const f32 depth)
         ._Position = position,
         ._CornerRadii = _borderFrame->GetShownCornerRadii(),
         ._CutCorners = _borderFrame->GetCutCorners(),
+        ._Skew = _borderFrame->GetSkew(),
         ._RingWidth = _borderFrame->GetBorderWidth()
     }, GlowEdge::Inner);
     _glowRectangle->Draw();
@@ -405,6 +408,7 @@ void RetroFuturaGUI::Border::drawInnerGlow()
         ._Position = _borderFrame->GetPosition() + glm::vec3(0.0f, 0.0f, _innerGlowDepthOffset),
         ._CornerRadii = _borderFrame->GetShownCornerRadii(),
         ._CutCorners = _borderFrame->GetCutCorners(),
+        ._Skew = _borderFrame->GetSkew(),
         ._RingWidth = _borderFrame->GetBorderWidth()
     });
     _innerGlowRectangle->Draw();

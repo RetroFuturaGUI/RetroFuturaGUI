@@ -42,6 +42,9 @@ namespace RetroFuturaGUI
         /// @brief Sets the world position of the button.
         void applyPosition(const glm::vec3& position) override;
 
+        /// @brief The background's skew, so a slanted button takes presses where it's drawn.
+        f32 getShapeSkew() const override;
+
     private:
         void interact() override;
         void setColors(const ColorState state) override;

@@ -20,6 +20,7 @@ void RetroFuturaGUI::ShadowRectangle::SetCaster(const ShadowCaster& caster)
     SetPosition(caster._Position + glm::vec3(_shadow->getShownOffset(), -_depthOffset));
     SetCornerRadii(caster._CornerRadii * scale);
     SetCutCorners(caster._CutCorners);
+    SetSkew(caster._Skew);
 }
 
 void RetroFuturaGUI::ShadowRectangle::Draw()

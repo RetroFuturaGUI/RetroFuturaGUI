@@ -224,6 +224,7 @@ void RetroFuturaGUI::Graph::setCornerShape()
 {
     _wavePlane.SetCornerRadii(getDrawnCornerRadii());
     _wavePlane.SetCutCorners(_cutCorners);
+    _wavePlane.SetSkew(_skew);
 }
 
 void RetroFuturaGUI::Graph::notifyLayoutChange()

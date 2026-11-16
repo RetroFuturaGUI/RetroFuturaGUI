@@ -11,6 +11,7 @@ namespace RetroFuturaGUI
         glm::vec3 _Position { 0.0f };
         glm::vec4 _CornerRadii { 0.0f };
         CutCorners _CutCorners { CutCorners::None };
+        f32 _Skew { 0.0f };
         f32 _RingWidth { 0.0f }; //a border's width, casting the shadow of its outline only. 0 casts the whole shape
     };
 

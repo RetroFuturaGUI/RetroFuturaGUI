@@ -318,6 +318,10 @@ namespace RetroFuturaGUI
         /// @brief The matrix that tilts the widget's untilted layout by its rotation around its center. The identity remains unrotated
         glm::mat4 getTilt() const;
 
+        /// @brief The angle in degrees the widget's shape leans by (IWidgetDecoration::SetSkew), so presses land on the shape as
+        ///        drawn. 0 unless the widget gives its background's
+        virtual f32 getShapeSkew() const;
+
         /// @brief Where a point of the window (bottom-up pixels) lies in an untilted layout drawn through the given frame. The
         ///        view through the point meets the layout's plane at the widget's depth
         std::optional<glm::vec2> toLayoutPoint(const glm::vec2& windowPoint, const glm::mat4& frame) const;

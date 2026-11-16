@@ -45,6 +45,8 @@ namespace RetroFuturaGUI
         using IRectangle::SetCornerRadii;
         using IRectangle::SetCutCorners;
         using IRectangle::GetCutCorners;
+        using IRectangle::SetSkew;
+        using IRectangle::GetSkew;
         using IRectangle::GetShownCornerRadii;
         using IRectangle::SetGradientOffset;
         using IRectangle::SetGradientAnimationSpeed;
@@ -62,6 +64,7 @@ namespace RetroFuturaGUI
         using IRectangle::SetPrimaryRasterWidthTransfer;
         using IRectangle::SetDotTransparencyTransfer;
         using IRectangle::SetRasterAnimationSpeed;
+        using IRectangle::ResetRasterAnimation;
 
         /// @brief Sets the width of the outline, in pixels.
         void SetBorderWidth(const f32 width);

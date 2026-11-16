@@ -1,4 +1,5 @@
 #include "IRectangle.hpp"
+#include <cmath>
 
 RetroFuturaGUI::IRectangle::IRectangle(Projection* projection)
     : _projection(*projection)
@@ -100,6 +101,16 @@ RetroFuturaGUI::CutCorners RetroFuturaGUI::IRectangle::GetCutCorners() const
     return _cutCorners;
 }
 
+void RetroFuturaGUI::IRectangle::SetSkew(const f32 degrees)
+{
+    _skew = degrees;
+}
+
+f32 RetroFuturaGUI::IRectangle::GetSkew() const
+{
+    return _skew;
+}
+
 const glm::vec4& RetroFuturaGUI::IRectangle::GetShownCornerRadii() const
 {
     return _shownCornerRadii;
@@ -112,6 +123,7 @@ void RetroFuturaGUI::IRectangle::uploadTransform(Shader& shader)
     shader.SetUniformMat4("uPosition", _translationMatrix);
     shader.SetUniformMat4("uScaling", _scalingMatrix);
     shader.SetUniformMat4("uRotation", _rotationMatrix);
+    shader.SetUniformFloat("uSkew", std::tan(glm::radians(_skew)));
     shader.SetUniformVec2("uScale", _scale);
 
     if(_shaderFeatureDIP & ShaderFeatures::RoundedCorners)

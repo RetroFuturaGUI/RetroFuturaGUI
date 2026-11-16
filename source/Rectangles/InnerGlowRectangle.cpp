@@ -20,6 +20,7 @@ void RetroFuturaGUI::InnerGlowRectangle::SetCaster(const ShadowCaster& caster)
     SetPosition(caster._Position);
     SetCornerRadii(caster._CornerRadii);
     SetCutCorners(caster._CutCorners);
+    SetSkew(caster._Skew);
 }
 
 void RetroFuturaGUI::InnerGlowRectangle::Draw()

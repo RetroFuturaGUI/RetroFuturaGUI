@@ -47,6 +47,11 @@ void RetroFuturaGUI::Button::applyPosition(const glm::vec3& position)
     _text.SetPosition(position + glm::vec3(0.0f, 0.0f, 0.02f));
 }
 
+f32 RetroFuturaGUI::Button::getShapeSkew() const
+{
+    return _background.GetSkew();
+}
+
 void RetroFuturaGUI::Button::interact()
 {
     const PointerState pointer { readPointer() };

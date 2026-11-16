@@ -109,7 +109,8 @@ namespace RetroFuturaGUI
         Padding,
         Flow,
         ColorGlyphTint,
-        MaskSpan
+        MaskSpan,
+        Skew
     };
 
     /// @brief A setting of an effect (drop shadow, glow, inner glow) that a part's effect or a flavor can leave unset.
@@ -240,6 +241,10 @@ namespace RetroFuturaGUI
         /// @brief Sets which corners are cut off straight instead of rounded
         void SetCutCorners(const CutCorners corners);
         const std::optional<CutCorners>& GetCutCorners() const;
+
+        /// @brief Sets the angle in degrees the part's side edges lean by (IWidgetDecoration::SetSkew)
+        void SetSkew(const f32 degrees);
+        const std::optional<f32>& GetSkew() const;
 
         /// @brief Sets a border's width in pixels
         void SetWidth(const f32 width);
@@ -420,7 +425,9 @@ namespace RetroFuturaGUI
         std::array<std::vector<glm::vec4>, ColorStateCount> _colors {}; //per ColorState, in its order.
         std::optional<glm::vec4> _cornerRadii {};
         std::optional<CutCorners> _cutCorners {};
-        std::optional<f32> _width {};
+        std::optional<f32>
+            _skew {},
+            _width {};
         std::optional<std::string> _image {};
         FlavorEffect
             _dropShadow {},
