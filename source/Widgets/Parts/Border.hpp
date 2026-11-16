@@ -127,13 +127,17 @@ namespace RetroFuturaGUI
         void SetRasterDegree(const f32 degree);
 
         /// @brief Sets the per-position dot width curve, in pixels (each value is a dot's full width across), for the border's Dotted raster pattern. Enables the Raster shader feature when non-empty.
-        void SetPrimaryRasterWidthTransfer(std::span<f32> widthTransfer);
+        void SetPrimaryRasterWidthTransfer(std::span<const f32> widthTransfer);
 
         /// @brief Sets how far each border dot's opacity reaches from its center before fading to transparent.
         void SetDotTransparencyTransfer(const f32 transparencyTransfer);
 
         /// @brief Sets the speed at which the border's raster pattern animates.
         void SetRasterAnimationSpeed(const f32 animationSpeed);
+
+        /// @brief Sets the raster's speed in one color state, which wins over the speed for every state: SetRasterAnimationSpeed(-6.0f,
+        ///        ColorState::Hover) moves the dots only while the widget is hovered. When the state ends, they go back to where they started.
+        void SetRasterAnimationSpeed(const f32 animationSpeed, const ColorState state);
 
         /// @brief Returns the border colors configured for the given color state.
         const std::vector<glm::vec4>& GetColors(const ColorState state) const;
@@ -157,6 +161,8 @@ namespace RetroFuturaGUI
         void setColors() override;
         void setCornerShape() override;
         void setShader() override;
+        void setElementRasterAnimationSpeed(const f32 animationSpeed) override;
+        void resetElementRasterAnimation() override;
         bool resetPartSetting(const StyleSetting setting) override;
 
         /// @brief Takes the colors, the corner shape and the width through their layers again

@@ -173,6 +173,10 @@ std::optional<f32> RetroFuturaGUI::StylingManager::FindSkew(std::span<const u32>
     return FindFirst<std::optional<f32>>(flavorHashes, part, [](const FlavorPart& style) { return style.GetSkew(); });
 }
 
+std::optional<f32> RetroFuturaGUI::StylingManager::FindRasterAnimationSpeed(std::span<const u32> flavorHashes, const StylePart part, const ColorState state)
+{
+    return FindFirst<std::optional<f32>>(flavorHashes, part, [state](const FlavorPart& style) { return style.GetRasterAnimationSpeed(state); });
+}
 
 std::optional<f32> RetroFuturaGUI::StylingManager::FindWidth(std::span<const u32> flavorHashes, const StylePart part)
 {

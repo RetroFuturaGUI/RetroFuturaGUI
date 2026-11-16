@@ -149,6 +149,8 @@ namespace RetroFuturaGUI
         static const std::vector<glm::vec4>* FindColors(std::span<const u32> flavorHashes, const StylePart part, const ColorState state);
         static std::optional<glm::vec4> FindCornerRadii(std::span<const u32> flavorHashes, const StylePart part);
         static std::optional<CutCorners> FindCutCorners(std::span<const u32> flavorHashes, const StylePart part);
+        static std::optional<f32> FindSkew(std::span<const u32> flavorHashes, const StylePart part);
+        static std::optional<f32> FindRasterAnimationSpeed(std::span<const u32> flavorHashes, const StylePart part, const ColorState state);
         static std::optional<f32> FindWidth(std::span<const u32> flavorHashes, const StylePart part);
 
         /// @brief Works out the transitions shown per property: the own one, else the first of the flavors' (then .default's). A

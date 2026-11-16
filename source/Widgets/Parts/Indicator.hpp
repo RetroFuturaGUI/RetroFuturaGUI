@@ -41,7 +41,9 @@ namespace RetroFuturaGUI
         auto operator =(const Indicator&) = delete;
         auto operator =(Indicator&&) = delete;
 
-        /// @brief Shows or hides the indicator
+        /// @brief Shows or hides the indicator. Shown by default
+        /// @bechaml setter
+        /// @bechaml name Shown
         void Show(const bool show);
 
         /// @brief Returns whether the indicator is shown

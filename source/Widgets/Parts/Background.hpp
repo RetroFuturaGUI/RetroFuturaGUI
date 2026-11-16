@@ -132,13 +132,17 @@ namespace RetroFuturaGUI
         void SetRasterDegree(const f32 degree);
 
         /// @brief Sets the per-position dot width curve, in pixels (each value is a dot's full width across), for the background's Dotted raster pattern. Enables the Raster shader feature when non-empty.
-        void SetPrimaryRasterWidthTransfer(std::span<f32> widthTransfer);
+        void SetPrimaryRasterWidthTransfer(std::span<const f32> widthTransfer);
 
         /// @brief Sets how far each background dot's opacity reaches from its center before fading to transparent.
         void SetDotTransparencyTransfer(const f32 transparencyTransfer);
 
         /// @brief Sets the speed at which the background's raster pattern animates.
         void SetRasterAnimationSpeed(const f32 animationSpeed);
+
+        /// @brief Sets the raster's speed in one color state, which wins over the speed for every state: SetRasterAnimationSpeed(-6.0f,
+        ///        ColorState::Hover) moves the dots only while the widget is hovered. When the state ends, they go back to where they started.
+        void SetRasterAnimationSpeed(const f32 animationSpeed, const ColorState state);
 
         /// @brief Sets the overall opacity of the background's FogEffect shader feature.
         void SetFogAlpha(const f32 alpha);
@@ -147,7 +151,7 @@ namespace RetroFuturaGUI
         void SetFogSpeed(const f32 speed);
 
         /// @brief Sets the per-octave density/weight curve driving the background's fog. Enables the FogEffect shader feature when non-empty.
-        void SetFogDensity(std::span<f32> density);
+        void SetFogDensity(std::span<const f32> density);
 
         /// @brief Sets the coverage threshold above which the background's fog appears; higher values carve larger clear gaps out of the cloud.
         void SetFogClearing(const f32 clearing);
@@ -209,6 +213,8 @@ namespace RetroFuturaGUI
 
         void setCornerShape() override;
         void setShader() override;
+        void setElementRasterAnimationSpeed(const f32 animationSpeed) override;
+        void resetElementRasterAnimation() override;
 
         /// @brief Takes its values and its effects' through their layers again
         void restyle() override;

@@ -60,6 +60,7 @@ namespace RetroFuturaGUI
         using IRectangle::SetPrimaryRasterWidthTransfer;
         using IRectangle::SetDotTransparencyTransfer;
         using IRectangle::SetRasterAnimationSpeed;
+        using IRectangle::ResetRasterAnimation;
 
     //Background gaps
         /// @brief Sets sections of the fill to skip drawing.

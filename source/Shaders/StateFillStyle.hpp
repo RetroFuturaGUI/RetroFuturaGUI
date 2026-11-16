@@ -28,6 +28,8 @@ namespace RetroFuturaGUI
         const std::vector<glm::vec4>& GetColors(const ColorState state) const;
 
         /// @brief Shows or hides the effect, over every flavor. Hidden by default
+        /// @bechaml setter
+        /// @bechaml name Shown
         void Show(const bool show);
 
         /// @brief Returns whether the effect is shown

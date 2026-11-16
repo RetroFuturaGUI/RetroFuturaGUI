@@ -84,6 +84,55 @@ RetroFuturaGUI::CutCorners RetroFuturaGUI::IWidgetDecoration::GetCutCorners() co
     return _cutCorners;
 }
 
+void RetroFuturaGUI::IWidgetDecoration::setStateRasterAnimationSpeed(const f32 animationSpeed, const ColorState state)
+{
+    _ownRasterAnimationSpeeds[static_cast<uSize>(state)] = animationSpeed;
+    followStateRasterAnimationSpeed();
+}
+
+void RetroFuturaGUI::IWidgetDecoration::followStateRasterAnimationSpeed()
+{
+    const ColorState state { getShownState() };
+    std::optional<f32> speed { _ownRasterAnimationSpeeds[static_cast<uSize>(state)] };
+
+    if(!speed && _flavors)
+        speed = StylingManager::FindRasterAnimationSpeed(getFlavors(), _stylePart, state);
+
+    if(speed)
+    {
+        _isStateRasterAnimationSpeedShown = true;
+        setElementRasterAnimationSpeed(*speed);
+        return;
+    }
+
+    if(!_isStateRasterAnimationSpeedShown)
+        return;
+
+    //Back to the speed for every state, and the raster back to where it starts, so a hover that ends leaves it as it was.
+    _isStateRasterAnimationSpeedShown = false;
+    setElementRasterAnimationSpeed(_shader._RasterAnimationSpeed.GetShown().value_or(0.0f));
+    resetElementRasterAnimation();
+}
+
+void RetroFuturaGUI::IWidgetDecoration::setElementRasterAnimationSpeed(const f32)
+{
+}
+
+void RetroFuturaGUI::IWidgetDecoration::resetElementRasterAnimation()
+{
+}
+
+void RetroFuturaGUI::IWidgetDecoration::SetSkew(const f32 degrees)
+{
+    _ownSkew = degrees;
+    resolveCornerShape();
+}
+
+f32 RetroFuturaGUI::IWidgetDecoration::GetSkew() const
+{
+    return _skew;
+}
+
 void RetroFuturaGUI::IWidgetDecoration::SetBuiltInColors(const StyleKey&, std::span<const glm::vec4> colors, const ColorState state)
 {
     _builtInColors[static_cast<uSize>(state)].assign(colors.begin(), colors.end());
@@ -137,12 +186,14 @@ void RetroFuturaGUI::IWidgetDecoration::resolveCornerShape()
     //A part without a widget's flavors (a sub-part, a window's) goes from its own values straight to its built-in ones.
     const glm::vec4 radii { _ownCornerRadii.value_or(_flavors ? StylingManager::FindCornerRadii(getFlavors(), _stylePart).value_or(_builtInCornerRadii) : _builtInCornerRadii) };
     const CutCorners cutCorners { _ownCutCorners.value_or(_flavors ? StylingManager::FindCutCorners(getFlavors(), _stylePart).value_or(CutCorners::None) : CutCorners::None) };
+    const f32 skew { _ownSkew.value_or(_flavors ? StylingManager::FindSkew(getFlavors(), _stylePart).value_or(0.0f) : 0.0f) };
 
-    if(radii == _cornerRadii && cutCorners == _cutCorners)
+    if(radii == _cornerRadii && cutCorners == _cutCorners && skew == _skew)
         return;
 
     _cornerRadii = radii;
     _cutCorners = cutCorners;
+    _skew = skew;
     setCornerShape();
 
     if(!_onCornerRadiiChange)
@@ -169,6 +220,11 @@ void RetroFuturaGUI::IWidgetDecoration::ResetSetting(const StyleSetting setting)
         case StyleSetting::Skew:
             _ownSkew.reset();
             resolveCornerShape();
+        break;
+        case StyleSetting::RasterAnimationSpeed:
+            _ownRasterAnimationSpeeds.fill(std::nullopt);
+            _shader.Reset(setting);
+            setShader();
         break;
         default:
             _shader.Reset(setting);

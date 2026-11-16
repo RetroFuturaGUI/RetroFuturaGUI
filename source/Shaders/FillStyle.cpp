@@ -195,6 +195,11 @@ void RetroFuturaGUI::FillStyle::SetDotTransparencyTransfer(const f32 transparenc
     _dotTransparencyTransfer = transparencyTransfer;
 }
 
+void RetroFuturaGUI::FillStyle::ResetRasterAnimation()
+{
+    _rasterAnimationOffset = 0.0f;
+}
+
 void RetroFuturaGUI::FillStyle::SetRasterAnimationSpeed(const f32 animationSpeed)
 {
     _rasterAnimationSpeed = animationSpeed;

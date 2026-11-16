@@ -158,6 +158,9 @@ namespace RetroFuturaGUI
         /// @brief Sets how fast the raster pattern moves along the RasterDegree direction, in pixels per second.
         void SetRasterAnimationSpeed(const f32 animationSpeed);
 
+        /// @brief Moves the raster pattern back to where it starts, as it lies before any animation moved it
+        void ResetRasterAnimation();
+
         /// @brief Uploads the feature bits with extraFeatures added, the fill, and the raster and the glass when they are on. A
         ///        gradient moves on by one step. Needs at least one color.
         void uploadFill(Shader& shader, const u32 extraFeatures);

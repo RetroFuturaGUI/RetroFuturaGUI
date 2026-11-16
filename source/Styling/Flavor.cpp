@@ -75,6 +75,7 @@ void RetroFuturaGUI::FlavorPart::Reset(const StyleSetting setting)
         break;
         case StyleSetting::RasterAnimationSpeed:
             _rasterAnimationSpeed.reset();
+            _stateRasterAnimationSpeeds.fill(std::nullopt);
         break;
         case StyleSetting::WindowImageTextureID:
             _windowImageTextureID.reset();
@@ -350,6 +351,17 @@ void RetroFuturaGUI::FlavorPart::SetRasterAnimationSpeed(const f32 value)
 const std::optional<f32>& RetroFuturaGUI::FlavorPart::GetRasterAnimationSpeed() const
 {
     return _rasterAnimationSpeed;
+}
+
+void RetroFuturaGUI::FlavorPart::SetRasterAnimationSpeed(const f32 value, const ColorState state)
+{
+    _stateRasterAnimationSpeeds[static_cast<uSize>(state)] = value;
+    StylingManager::markChanged();
+}
+
+const std::optional<f32>& RetroFuturaGUI::FlavorPart::GetRasterAnimationSpeed(const ColorState state) const
+{
+    return _stateRasterAnimationSpeeds[static_cast<uSize>(state)];
 }
 
 void RetroFuturaGUI::FlavorPart::SetWindowImageTextureID(const u32 value)

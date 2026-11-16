@@ -130,7 +130,7 @@ void RetroFuturaGUI::Graph::SetRasterDegree(const f32 degree)
     setShader();
 }
 
-void RetroFuturaGUI::Graph::SetPrimaryRasterWidthTransfer(std::span<f32> widthTransfer)
+void RetroFuturaGUI::Graph::SetPrimaryRasterWidthTransfer(std::span<const f32> widthTransfer)
 {
     _shader._PrimaryRasterWidthTransfer.Set(std::vector(widthTransfer.begin(), widthTransfer.end()));
     setShader();
@@ -148,6 +148,21 @@ void RetroFuturaGUI::Graph::SetRasterAnimationSpeed(const f32 animationSpeed)
     setShader();
 }
 
+void RetroFuturaGUI::Graph::SetRasterAnimationSpeed(const f32 animationSpeed, const ColorState state)
+{
+    setStateRasterAnimationSpeed(animationSpeed, state);
+}
+
+void RetroFuturaGUI::Graph::setElementRasterAnimationSpeed(const f32 animationSpeed)
+{
+    _wavePlane.SetRasterAnimationSpeed(animationSpeed);
+}
+
+void RetroFuturaGUI::Graph::resetElementRasterAnimation()
+{
+    _wavePlane.ResetRasterAnimation();
+}
+
 void RetroFuturaGUI::Graph::SetFogAlpha(const f32 alpha)
 {
     _shader._FogAlpha.Set(alpha);
@@ -160,7 +175,7 @@ void RetroFuturaGUI::Graph::SetFogSpeed(const f32 speed)
     setShader();
 }
 
-void RetroFuturaGUI::Graph::SetFogDensity(std::span<f32> density)
+void RetroFuturaGUI::Graph::SetFogDensity(std::span<const f32> density)
 {
     _shader._FogDensity.Set(std::vector(density.begin(), density.end()));
     setShader();
@@ -218,6 +233,7 @@ void RetroFuturaGUI::Graph::SetTransitionSettings(const TransitionSettings* sett
 void RetroFuturaGUI::Graph::setColors()
 {
     _wavePlane.SetColors(GetShownColors(getShownState()));
+    followStateRasterAnimationSpeed();
 }
 
 void RetroFuturaGUI::Graph::setCornerShape()
@@ -262,4 +278,5 @@ void RetroFuturaGUI::Graph::SetCrtEffect(const CrtEffect& crtEffect)
 void RetroFuturaGUI::Graph::setShader()
 {
     _shader.Apply(_wavePlane, getFlavors(), nullptr != _flavors, _stylePart);
+    followStateRasterAnimationSpeed();
 }

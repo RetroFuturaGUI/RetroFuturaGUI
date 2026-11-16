@@ -43,6 +43,7 @@ void RetroFuturaGUI::Background::setCornerShape()
 
     _backgroundPlane->SetCornerRadii(getDrawnCornerRadii());
     _backgroundPlane->SetCutCorners(_cutCorners);
+    _backgroundPlane->SetSkew(_skew);
 }
 
 void RetroFuturaGUI::Background::SetTransitionSettings(const TransitionSettings* settings)
@@ -171,7 +172,7 @@ void RetroFuturaGUI::Background::SetRasterDegree(const f32 degree)
     setShader();
 }
 
-void RetroFuturaGUI::Background::SetPrimaryRasterWidthTransfer(std::span<f32> widthTransfer)
+void RetroFuturaGUI::Background::SetPrimaryRasterWidthTransfer(std::span<const f32> widthTransfer)
 {
     _shader._PrimaryRasterWidthTransfer.Set(std::vector(widthTransfer.begin(), widthTransfer.end()));
     setShader();
@@ -189,6 +190,27 @@ void RetroFuturaGUI::Background::SetRasterAnimationSpeed(const f32 animationSpee
     setShader();
 }
 
+void RetroFuturaGUI::Background::SetRasterAnimationSpeed(const f32 animationSpeed, const ColorState state)
+{
+    setStateRasterAnimationSpeed(animationSpeed, state);
+}
+
+void RetroFuturaGUI::Background::setElementRasterAnimationSpeed(const f32 animationSpeed)
+{
+    if(!_backgroundPlane)
+        return;
+
+    _backgroundPlane->SetRasterAnimationSpeed(animationSpeed);
+}
+
+void RetroFuturaGUI::Background::resetElementRasterAnimation()
+{
+    if(!_backgroundPlane)
+        return;
+
+    _backgroundPlane->ResetRasterAnimation();
+}
+
 void RetroFuturaGUI::Background::SetFogAlpha(const f32 alpha)
 {
     _shader._FogAlpha.Set(alpha);
@@ -201,7 +223,7 @@ void RetroFuturaGUI::Background::SetFogSpeed(const f32 speed)
     setShader();
 }
 
-void RetroFuturaGUI::Background::SetFogDensity(std::span<f32> density)
+void RetroFuturaGUI::Background::SetFogDensity(std::span<const f32> density)
 {
     _shader._FogDensity.Set(std::vector(density.begin(), density.end()));
     setShader();
@@ -313,6 +335,7 @@ void RetroFuturaGUI::Background::setColors()
     _dropShadow.SetColorState(getShownState());
     _glow.SetColorState(getShownState());
     _innerGlow.SetColorState(getShownState());
+    followStateRasterAnimationSpeed();
 }
 
 void RetroFuturaGUI::Background::drawSvg()
@@ -525,6 +548,7 @@ void RetroFuturaGUI::Background::setShader()
         return;
 
     _shader.Apply(*_backgroundPlane, getFlavors(), nullptr != _flavors, _stylePart);
+    followStateRasterAnimationSpeed();
 
     //The image goes by its path: loading it is the background's job, not its element's.
     if(std::string* path { _image.Resolve(getFlavors(), nullptr != _flavors, _stylePart, std::string {}, [](const FlavorPart& style) -> const std::optional<std::string>& { return style.GetImage(); }) })

@@ -314,6 +314,10 @@ namespace RetroFuturaGUI
         void SetRasterAnimationSpeed(const f32 value);
         const std::optional<f32>& GetRasterAnimationSpeed() const;
 
+        /// @brief Sets how fast the raster moves in one color state, which wins over the speed for every state
+        void SetRasterAnimationSpeed(const f32 value, const ColorState state);
+        const std::optional<f32>& GetRasterAnimationSpeed(const ColorState state) const;
+
         /// @brief Sets the backdrop the glass shows; 0 turns the glass off
         void SetWindowImageTextureID(const u32 value);
         const std::optional<u32>& GetWindowImageTextureID() const;
@@ -446,6 +450,7 @@ namespace RetroFuturaGUI
         std::optional<std::vector<f32>> _primaryRasterWidthTransfer {};
         std::optional<f32> _dotTransparencyTransfer {};
         std::optional<f32> _rasterAnimationSpeed {};
+        std::array<std::optional<f32>, ColorStateCount> _stateRasterAnimationSpeeds {}; //per ColorState, in its order.
         std::optional<u32> _windowImageTextureID {};
         std::optional<GlassNoise> _glassNoise {};
         std::optional<f32> _fogAlpha {};

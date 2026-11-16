@@ -55,6 +55,14 @@ namespace RetroFuturaGUI
         /// @brief Returns the cut corners shown
         CutCorners GetCutCorners() const;
 
+        /// @brief Sets the angle in degrees the part's side edges lean by, which win over every flavor: above 0 the top moves right
+        ///        and the bottom left, a parallelogram whose top and bottom stay level. Its shadow and glows lean with it. The
+        ///        widget's text doesn't
+        void SetSkew(const f32 degrees);
+
+        /// @brief Returns the skew shown, in degrees
+        f32 GetSkew() const;
+
         /// @brief Leaves a setting to the widget's flavors, .default and the built-in look (colors: set none instead)
         void ResetSetting(const StyleSetting setting);
 
@@ -72,6 +80,19 @@ namespace RetroFuturaGUI
 
         /// @brief Hands the element the shader settings whose value through the layers changed
         virtual void setShader() = 0;
+
+        /// @brief Sets the raster's speed in one color state, for the part's SetRasterAnimationSpeed(speed, state)
+        void setStateRasterAnimationSpeed(const f32 animationSpeed, const ColorState state);
+
+        /// @brief Hands the element the raster speed of the state shown: the part's own for that state, else its flavors', else
+        ///        the speed for every state. Called after the colors and the shader settings went to the element
+        void followStateRasterAnimationSpeed();
+
+        /// @brief Hands the raster speed to the element. Nothing for a part whose element has no raster
+        virtual void setElementRasterAnimationSpeed(const f32 animationSpeed);
+
+        /// @brief Moves the element's raster back to where it starts. Nothing for a part whose element has no raster
+        virtual void resetElementRasterAnimation();
 
         /// @brief Resets a setting only the derived part keeps (a border's width, a background's image). False for any other
         virtual bool resetPartSetting(const StyleSetting setting);
@@ -109,10 +130,13 @@ namespace RetroFuturaGUI
         std::optional<glm::vec4> _ownCornerRadii {};
         std::optional<CutCorners> _ownCutCorners {};
         std::optional<f32> _ownSkew {};
+        std::array<std::optional<f32>, ColorStateCount> _ownRasterAnimationSpeeds {}; //per ColorState, in its order.
+        bool _isStateRasterAnimationSpeedShown { false }; //whether the element moves its raster at a state's speed now
         glm::vec4
             _builtInCornerRadii { 0.0f },
             _cornerRadii { 0.0f }; //shown.
         CutCorners _cutCorners { CutCorners::None }; //shown.
+        f32 _skew { 0.0f };
         const std::vector<u32>* _flavors { nullptr };
         StylePart _stylePart { StylePart::Background };
         u32 _styleGeneration { 0 }; //the StylingManager's generation the values were last taken at

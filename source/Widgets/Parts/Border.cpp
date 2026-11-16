@@ -37,6 +37,7 @@ void RetroFuturaGUI::Border::setCornerShape()
 
     _borderFrame->SetCornerRadii(getDrawnCornerRadii());
     _borderFrame->SetCutCorners(_cutCorners);
+    _borderFrame->SetSkew(_skew);
 }
 
 void RetroFuturaGUI::Border::SetTransitionSettings(const TransitionSettings* settings)
@@ -169,7 +170,7 @@ void RetroFuturaGUI::Border::SetRasterDegree(const f32 degree)
     setShader();
 }
 
-void RetroFuturaGUI::Border::SetPrimaryRasterWidthTransfer(std::span<f32> widthTransfer)
+void RetroFuturaGUI::Border::SetPrimaryRasterWidthTransfer(std::span<const f32> widthTransfer)
 {
     _shader._PrimaryRasterWidthTransfer.Set(std::vector(widthTransfer.begin(), widthTransfer.end()));
     setShader();
@@ -187,6 +188,27 @@ void RetroFuturaGUI::Border::SetRasterAnimationSpeed(const f32 animationSpeed)
     setShader();
 }
 
+void RetroFuturaGUI::Border::SetRasterAnimationSpeed(const f32 animationSpeed, const ColorState state)
+{
+    setStateRasterAnimationSpeed(animationSpeed, state);
+}
+
+void RetroFuturaGUI::Border::setElementRasterAnimationSpeed(const f32 animationSpeed)
+{
+    if(!_borderFrame)
+        return;
+
+    _borderFrame->SetRasterAnimationSpeed(animationSpeed);
+}
+
+void RetroFuturaGUI::Border::resetElementRasterAnimation()
+{
+    if(!_borderFrame)
+        return;
+
+    _borderFrame->ResetRasterAnimation();
+}
+
 void RetroFuturaGUI::Border::setColors()
 {
     if(!_borderFrame)
@@ -197,6 +219,7 @@ void RetroFuturaGUI::Border::setColors()
     _dropShadow.SetColorState(getShownState());
     _glow.SetColorState(getShownState());
     _innerGlow.SetColorState(getShownState());
+    followStateRasterAnimationSpeed();
 }
 
 void RetroFuturaGUI::Border::SetWidth(const f32 borderWidth)
@@ -426,4 +449,5 @@ void RetroFuturaGUI::Border::setShader()
         return;
 
     _shader.Apply(*_borderFrame, getFlavors(), nullptr != _flavors, _stylePart);
+    followStateRasterAnimationSpeed();
 }
