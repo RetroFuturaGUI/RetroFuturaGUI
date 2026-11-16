@@ -146,6 +146,7 @@ void RetroFuturaGUI::Lasagna::placeWidget(std::unique_ptr<IWidget> widget, const
     origin._ColSpan = colSpan;
     origin._LayerSpan = layerSpan;
     origin._SizingMode = placement._SizingMode;
+    origin._PaddingPixels = glm::vec3(placement._Padding, placement._Padding, 0.0f);
     origin._Widget = std::move(widget);
 
     for(u32 r = row; r < row + rowSpan; ++r)
@@ -311,7 +312,8 @@ std::vector<std::string> RetroFuturaGUI::Lasagna::SetAxisDefinition(const AxisDe
                     ._SizingMode = cell._SizingMode,
                     ._RowSpan = cell._RowSpan,
                     ._ColSpan = cell._ColSpan,
-                    ._LayerSpan = cell._LayerSpan
+                    ._LayerSpan = cell._LayerSpan,
+                    ._Padding = cell._PaddingPixels.x
                 };
 
                 if(!isPlacementFree(placement)) //its cell or span reaches past the new last track
@@ -490,22 +492,24 @@ void RetroFuturaGUI::Lasagna::resizeWidget(const LasagnaCell& cell)
     if(!cell._Widget)
         return;
 
+    const glm::vec3 filledSize { glm::max(cell._SizePixels - cell._PaddingPixels * 2.0f, glm::vec3(0.0f)) };
+
     switch(cell._SizingMode)
     {
         case SizingMode::FILL:
-            cell._Widget->SetSize(cell._SizePixels);
+            cell._Widget->SetSize(filledSize);
         break;
         case SizingMode::FILL_X:
-            cell._Widget->SetSize(glm::vec3(cell._SizePixels.x, cell._Widget->GetSize().y, cell._Widget->GetSize().z));
+            cell._Widget->SetSize(glm::vec3(filledSize.x, cell._Widget->GetSize().y, cell._Widget->GetSize().z));
         break;
         case SizingMode::FILL_Y:
-            cell._Widget->SetSize(glm::vec3(cell._Widget->GetSize().x, cell._SizePixels.y, cell._Widget->GetSize().z));
+            cell._Widget->SetSize(glm::vec3(cell._Widget->GetSize().x, filledSize.y, cell._Widget->GetSize().z));
         break;
         case SizingMode::FILL_Z:
-            cell._Widget->SetSize(glm::vec3(cell._Widget->GetSize().x, cell._Widget->GetSize().y, cell._SizePixels.z));
+            cell._Widget->SetSize(glm::vec3(cell._Widget->GetSize().x, cell._Widget->GetSize().y, filledSize.z));
         break;
         case SizingMode::FILL_XY:
-            cell._Widget->SetSize(glm::vec3(cell._SizePixels.x, cell._SizePixels.y, cell._Widget->GetSize().z));
+            cell._Widget->SetSize(glm::vec3(filledSize.x, filledSize.y, cell._Widget->GetSize().z));
         break;
         case SizingMode::FIXED:
         default:

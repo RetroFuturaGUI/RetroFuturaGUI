@@ -47,6 +47,7 @@ namespace RetroFuturaGUI
             _RowSpan { 1 },
             _ColSpan { 1 },
             _LayerSpan { 1 };
+        f32 _Padding { 0.0f }; //pixels between the cell's edges and a filling widget on each side; negative reaches past the cell.
     };
 
     inline constexpr uSize MaxTracksPerAxis { 64 };
