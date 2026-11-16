@@ -448,10 +448,19 @@ void RetroFuturaGUI::MenuBar::placeItems()
     for(const std::unique_ptr<IWidget>& item : _itemFlex)
     {
         const glm::vec3 center { cellPosition(index) };
+        const bool fillsLength { FlexSizing::Star == GetFlexDefinition(index)._FlexSizing };
+        const f32 cellLength { _resolvedCellSizes[index] };
         ++index;
 
         if(!item)
             continue;
+
+        //A Star item takes the length its share leaves it, so a title's text can start at the cell's edge. Its thickness stays its own
+        if(fillsLength)
+        {
+            const glm::vec3 size { item->GetSize() };
+            item->SetSize(isHorizontal() ? glm::vec3(cellLength, size.y, size.z) : glm::vec3(size.x, cellLength, size.z));
+        }
 
         item->SetPosition(glm::vec3(center.x, center.y, center.z + 0.02f));
     }

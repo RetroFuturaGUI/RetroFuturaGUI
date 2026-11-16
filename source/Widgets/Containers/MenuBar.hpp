@@ -55,7 +55,7 @@ namespace RetroFuturaGUI
 
         enum class FlexSizing : u32
         {
-            Star,  // takes a share of whatever viewport space the Fixed/Auto tracks left over
+            Star,  // takes a share of whatever viewport space the Fixed/Auto tracks left over, and stretches its item along the bar to it
             Fixed, // absolute pixel size
             Auto,  // sized to the track's content
             Square // If horizontal alignment: Width equal height. If vertical alignment, height equals width

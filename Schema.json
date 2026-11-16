@@ -1,6 +1,6 @@
 {
     "schemaVersion": 2,
-    "headersHash": "c01f8572a5ecf19cd143b86d695add6f57c1601dbac1aff608ed00d76ba7994c",
+    "headersHash": "879f0c205866e917778bee50bf8cce35dda52592e039d121a7acf927b876843b",
     "enums": {
         "AssetKind": {
             "cpp": "RetroFuturaGUI::AssetKind",
