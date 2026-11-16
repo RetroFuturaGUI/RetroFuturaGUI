@@ -56,10 +56,26 @@ void RetroFuturaGUI::Text::Draw()
 
     layOut();
 
+    //The text's layers lie a hair apart, closer than the depth buffer tells apart once the text is tilted, so they draw in
+    //order without writing depth. The glyphs and the outline write it afterwards, so what is drawn later still meets them
+    GLboolean writesDepth { GL_TRUE };
+    glGetBooleanv(GL_DEPTH_WRITEMASK, &writesDepth);
+    glDepthMask(GL_FALSE);
+
     drawShadow();
     drawGlow();
     drawOutline();
+    drawGlyphs();
+    drawInnerGlow();
 
+    glDepthMask(writesDepth);
+
+    if(GL_TRUE == writesDepth)
+        writeDepth();
+}
+
+void RetroFuturaGUI::Text::drawGlyphs()
+{
     if(_mesh._Draws.empty())
         return;
 
@@ -72,7 +88,30 @@ void RetroFuturaGUI::Text::Draw()
 
     uploadImage(shader, glm::max(_textSpan, glm::vec2(1.0f)));
     drawMesh(shader, &_mesh);
-    drawInnerGlow();
+}
+
+void RetroFuturaGUI::Text::writeDepth()
+{
+    //The programs keep the fills just uploaded, so each discards where its glyphs don't cover
+    GLboolean colorMask[4] { GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE };
+    glGetBooleanv(GL_COLOR_WRITEMASK, colorMask);
+    glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
+
+    if(0.0f < _outlineWidth && !_outlineMesh._Draws.empty())
+    {
+        Shader& outlineShader { ShaderManager::GetTextShader(_outline._fillType) };
+        uploadPlacement(outlineShader, glm::translate(_translationMatrix, glm::vec3(0.0f, 0.0f, -_outlineDepthOffset)));
+        drawMesh(outlineShader, &_outlineMesh);
+    }
+
+    if(!_mesh._Draws.empty())
+    {
+        Shader& shader { ShaderManager::GetTextShader(_fillType) };
+        uploadPlacement(shader, _translationMatrix);
+        drawMesh(shader, &_mesh);
+    }
+
+    glColorMask(colorMask[0], colorMask[1], colorMask[2], colorMask[3]);
 }
 
 void RetroFuturaGUI::Text::drawOutline()
@@ -80,7 +119,7 @@ void RetroFuturaGUI::Text::drawOutline()
     if(0.0f >= _outlineWidth || _outlineMesh._Draws.empty())
         return;
 
-    //Follows the text's transitions, whichever the widget gave it; a little further back, so the glyphs drawn next pass the depth test
+    //Follows the text's transitions, whichever the widget gave it; a little further back than the glyphs.
     _outline.SetTransitionSettings(_transitionSettings);
     Shader& shader { ShaderManager::GetTextShader(_outline._fillType) };
     uploadPlacement(shader, glm::translate(_translationMatrix, glm::vec3(0.0f, 0.0f, -_outlineDepthOffset)));

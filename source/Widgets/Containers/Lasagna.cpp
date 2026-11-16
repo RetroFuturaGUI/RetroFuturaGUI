@@ -190,12 +190,23 @@ RetroFuturaGUI::TrackIndex RetroFuturaGUI::Lasagna::GetTrackCounts() const
 
 void RetroFuturaGUI::Lasagna::Draw()
 {
-    for(auto& row : _lasagna)
+    //Back to front, the last layer first, so what lies in front blends over what lies behind it, an SVG too, which draws
+    //without the depth test
+    const uSize layerCount { _axisDefinition._LayerDefinition.size() };
+
+    for(uSize fromBack { 0 }; layerCount > fromBack; ++fromBack)
     {
-        for(auto& column : row)
+        const uSize layer { layerCount - 1 - fromBack };
+
+        for(auto& row : _lasagna)
         {
-            for(auto& cell : column)
+            for(auto& column : row)
             {
+                if(layer >= column.size())
+                    continue;
+
+                LasagnaCell& cell { column[layer] };
+
                 if(_drawDebugLines)
                     drawDebugLines(cell);
 

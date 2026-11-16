@@ -318,6 +318,10 @@ namespace RetroFuturaGUI
         /// @brief Uses the shader and uploads where the text is and the span its fill runs across
         void uploadPlacement(Shader& shader, const glm::mat4& translation) const;
         static void drawMesh(Shader& shader, GlyphMesh* mesh);
+        void drawGlyphs();
+
+        /// @brief Writes the depth of the glyphs and the outline, which draw without writing it
+        void writeDepth();
         void drawOutline();
         void drawShadow();
         void drawGlow();
