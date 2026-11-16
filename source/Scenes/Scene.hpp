@@ -98,6 +98,19 @@ namespace RetroFuturaGUI
         ///        window's. None by default
         void SetAesthetic(std::string_view name);
 
+        /// @brief Sets the title the window shows while this scene is the last of its scenes in the draw order that has one, such
+        ///        as a scene the window swaps in for its content. An empty title gives it none, so the window shows its own
+        ///        (Window::SetWindowTitle)
+        void SetTitle(std::string_view title);
+
+        const std::string& GetTitle() const;
+
+        /// @brief Connects a slot called with the title the window shows (Window::GetShownTitle) when it changes, and once when
+        ///        the scene joins the window, so a title bar can show it
+        /// @param async If true, the slot is invoked asynchronously.
+        void Connect_OnTitleChange(const typename Signal<std::string>::Slot& slot, const bool async);
+        void Disconnect_OnTitleChange(const typename Signal<std::string>::Slot& slot);
+
         /// @brief Returns the name of the scene's own Aesthetic, empty when it takes its window's
         const std::string& GetAesthetic() const;
         IWidget* GetRootContainer() const;
@@ -172,7 +185,9 @@ namespace RetroFuturaGUI
     //Identity
         std::string _name {};
         Window* _parentWindow { nullptr };
-        std::string _aesthetic {};
+        std::string
+            _aesthetic {},
+            _title {};
 
     //Geometry
         glm::vec3
@@ -201,6 +216,9 @@ namespace RetroFuturaGUI
             _onActivateAsync,
             _onDeactivate,
             _onDeactivateAsync;
+        Signal<std::string>
+            _onTitleChange,
+            _onTitleChangeAsync;
 
     //Logic
         bool
@@ -217,6 +235,12 @@ namespace RetroFuturaGUI
 
         /// @brief Emits OnUnload. Window::RemoveScene calls it.
         void emitUnload();
+
+        /// @brief Emits OnTitleChange. The window calls it when the title it shows changes, and when the scene joins it.
+        void emitTitleChange(const std::string& title);
+
+        /// @brief Has the parent window work out the title it shows again, because this scene's just changed.
+        void requestWindowTitle() const;
 
         /// @brief Asks the parent window to recompute its client area, because what this scene
         ///        reserves from it just changed.

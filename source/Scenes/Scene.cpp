@@ -191,6 +191,40 @@ void RetroFuturaGUI::Scene::emitUnload()
     _onUnload.Emit();
 }
 
+void RetroFuturaGUI::Scene::SetTitle(std::string_view title)
+{
+    if(title == _title)
+        return;
+
+    _title = title;
+    requestWindowTitle();
+}
+
+const std::string& RetroFuturaGUI::Scene::GetTitle() const
+{
+    return _title;
+}
+
+void RetroFuturaGUI::Scene::Connect_OnTitleChange(const typename Signal<std::string>::Slot& slot, const bool async)
+{
+    if(async)
+        _onTitleChangeAsync.Connect(slot);
+    else
+        _onTitleChange.Connect(slot);
+}
+
+void RetroFuturaGUI::Scene::Disconnect_OnTitleChange(const typename Signal<std::string>::Slot& slot)
+{
+    _onTitleChange.Disconnect(slot);
+    _onTitleChangeAsync.Disconnect(slot);
+}
+
+void RetroFuturaGUI::Scene::emitTitleChange(const std::string& title)
+{
+    _onTitleChangeAsync.EmitAsync(title);
+    _onTitleChange.Emit(title);
+}
+
 void RetroFuturaGUI::Scene::ShowInTab(const bool show)
 {
     if(_shownInTab == show)
@@ -335,6 +369,14 @@ void RetroFuturaGUI::Scene::requestWindowLayout() const
         return;
 
     _parentWindow->UpdateLayout();
+}
+
+void RetroFuturaGUI::Scene::requestWindowTitle() const
+{
+    if(!_parentWindow)
+        return;
+
+    _parentWindow->followSceneTitles();
 }
 
 GLFWwindow* RetroFuturaGUI::Scene::getParentGlfwWindow() const
