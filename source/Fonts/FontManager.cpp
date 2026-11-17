@@ -576,19 +576,28 @@ void RetroFuturaGUI::FontManager::ExtendFontset(std::string_view fontFamily, std
 
 bool RetroFuturaGUI::FontManager::extendAtlas(GlyphAtlas& atlas, std::string_view fontFamilyExtension, const f32 pixels, const PlatformBridge::Fonts::Slant slant, const PlatformBridge::Fonts::Weight weight, const u32 codePointFirst, const u32 codePointLast)
 {
-    if(LoadFont(fontFamilyExtension, pixels, FontSizeUnit::Pixels, slant, weight, codePointFirst, codePointLast, true) != LoadFontResult::Success)
+    GlyphBlock block {};
+
+    if(!loadBlock(atlas, fontFamilyExtension, pixels, slant, weight, codePointFirst, codePointLast, block))
         return false;
 
-    GlyphAtlas& extension { _fonts.back()._Atlasses[FontSizeToKey(pixels)] };
-    GlyphBlock& block { atlas._GlyphBlocks[codePointFirst] };
-    block = std::move(extension._GlyphBlocks[codePointFirst]);
-
-    //An extension drawing at a fixed size of its own, like a bitmap emoji font, is scaled to the font's size, each
-    //glyph as it is made
-    block._Scale = atlas._FontSize / std::max(extension._FontSize, 1.0f);
+    atlas._GlyphBlocks[codePointFirst] = std::move(block);
 
     //The new font may have what another font was found to draw
     atlas._FallbackFor.clear();
+    return true;
+}
+
+bool RetroFuturaGUI::FontManager::loadBlock(const GlyphAtlas& atlas, std::string_view fontFamily, const f32 pixels, const PlatformBridge::Fonts::Slant slant, const PlatformBridge::Fonts::Weight weight, const u32 codePointFirst, const u32 codePointLast, GlyphBlock& block)
+{
+    if(LoadFont(fontFamily, pixels, FontSizeUnit::Pixels, slant, weight, codePointFirst, codePointLast, true) != LoadFontResult::Success)
+        return false;
+
+    GlyphAtlas& loaded { _fonts.back()._Atlasses[FontSizeToKey(pixels)] };
+    block = std::move(loaded._GlyphBlocks[codePointFirst]);
+
+    //A font drawing at a fixed size of its own, like a bitmap emoji font, is scaled to the atlas's size, each glyph as  is made
+    block._Scale = atlas._FontSize / std::max(loaded._FontSize, 1.0f);
     _fonts.pop_back();
     return true;
 }
@@ -630,6 +639,16 @@ void RetroFuturaGUI::FontManager::SetCharsetFont(std::string_view charset, std::
     _charsets.push_back(Charset { ._Name = std::string(charset), ._BlockKeys = {}, ._FontFamily = std::string(fontFamily) });
 }
 
+const RetroFuturaGUI::FontManager::Charset* RetroFuturaGUI::FontManager::findCharset(const u32 blockKey)
+{
+    const auto charset { std::ranges::find_if(_charsets, [blockKey](const Charset& set) { return std::ranges::contains(set._BlockKeys, blockKey); }) };
+
+    if(_charsets.end() == charset)
+        return nullptr;
+
+    return &*charset;
+}
+
 RetroFuturaGUI::GlyphBlock* RetroFuturaGUI::FontManager::loadCharsetBlock(const FontInfo& font, GlyphAtlas& atlas, const u32 codePoint)
 {
     const u32 blockKey { blockKeyOf(codePoint) };
@@ -637,9 +656,9 @@ RetroFuturaGUI::GlyphBlock* RetroFuturaGUI::FontManager::loadCharsetBlock(const 
     if(0 == blockKey)
         return nullptr;
 
-    const auto charset { std::ranges::find_if(_charsets, [blockKey](const Charset& set) { return std::ranges::contains(set._BlockKeys, blockKey); }) };
+    const Charset* charset { findCharset(blockKey) };
 
-    if(_charsets.end() == charset)
+    if(!charset)
         return nullptr;
 
     //Each block once per font and size, so a font lacking it isn't opened for every character.
@@ -651,12 +670,51 @@ RetroFuturaGUI::GlyphBlock* RetroFuturaGUI::FontManager::loadCharsetBlock(const 
     if(UnicodeBlocks.end() == block)
         return nullptr;
 
-    const std::string_view family { charset->_FontFamily.empty() ? std::string_view(font._Family) : std::string_view(charset->_FontFamily) };
+    //The font itself first, so a text keeps its look in every script its font has; the character set's font draws what it /lacks (getCharsetFallbackBlock)
+    const bool isAdded
+    {
+        extendAtlas(atlas, font._Family, atlas._FontSize, font._Slant, font._Weight, block->first, block->second)
+        || (!charset->_FontFamily.empty() && extendAtlas(atlas, charset->_FontFamily, atlas._FontSize, font._Slant, font._Weight, block->first, block->second))
+    };
 
-    if(!extendAtlas(atlas, family, atlas._FontSize, font._Slant, font._Weight, block->first, block->second))
+    if(!isAdded)
         return nullptr;
 
     return findBlock(atlas, codePoint);
+}
+
+RetroFuturaGUI::GlyphBlock* RetroFuturaGUI::FontManager::getCharsetFallbackBlock(const FontInfo& font, GlyphAtlas& atlas, const u32 codePoint)
+{
+    const u32 blockKey { blockKeyOf(codePoint) };
+
+    if(0 == blockKey)
+        return nullptr;
+
+    const Charset* charset { findCharset(blockKey) };
+
+    if(!charset)
+        return nullptr;
+
+    //Without a font of its own, or with the text's, the character set has nothing the font's own block lacks
+    if(charset->_FontFamily.empty() || charset->_FontFamily == font._Family)
+        return nullptr;
+
+    //Opened once per font and size; a font that couldn't be opened stays without a source, so it isn't tried again
+    const auto [entry, isNew] { atlas._CharsetFallbackBlocks.try_emplace(blockKey) };
+    GlyphBlock& fallback { entry->second };
+
+    if(!isNew)
+        return fallback._Source ? &fallback : nullptr;
+
+    const auto block { std::ranges::find_if(UnicodeBlocks, [blockKey](const std::pair<u32, u32>& range) { return blockKey == range.first; }) };
+
+    if(UnicodeBlocks.end() == block)
+        return nullptr;
+
+    if(!loadBlock(atlas, charset->_FontFamily, atlas._FontSize, font._Slant, font._Weight, block->first, block->second, fallback))
+        return nullptr;
+
+    return &fallback;
 }
 
 void RetroFuturaGUI::FontManager::ShapeText(const FontInfo& font, const u32 sizeKey, std::u32string_view text, const ShapeDirection direction, std::vector<PlacedGlyph>* glyphs)
@@ -764,6 +822,15 @@ RetroFuturaGUI::GlyphBlock* RetroFuturaGUI::FontManager::findDrawingBlock(const 
 
     if(atlas._FallbackFor.end() != known)
         return known->second ? known->second : own;
+
+    //The font the character's script is set to draw in, for what the font itself lacks
+    GlyphBlock* charsetFallback { getCharsetFallbackBlock(font, atlas, codePoint) };
+
+    if(charsetFallback && charsetFallback->_Source && charsetFallback->_Source->HasGlyph(codePoint))
+    {
+        atlas._FallbackFor[codePoint] = charsetFallback;
+        return charsetFallback;
+    }
 
     //The fontset's other fonts in the order of their blocks, each font file asked once, then the default font
     std::vector<u32> blockKeys {};

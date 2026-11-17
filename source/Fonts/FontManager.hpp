@@ -83,6 +83,7 @@ namespace RetroFuturaGUI
         std::list<GlyphBlock> _FallbackBlocks {}; // fonts outside the fontset drawing what it lacks: the default font, opened when first needed
         std::unordered_map<u32, GlyphBlock*> _FallbackFor {}; // the block drawing a character its own block's font lacks, nullptr for none; found once
         std::unordered_set<u32> _CharsetBlocksTried {}; // the character sets' blocks it tried to add, by first code point, each tried once
+        std::unordered_map<u32, GlyphBlock> _CharsetFallbackBlocks {}; // the character sets' fonts drawing what the font's own blocks lack, keyed by first codepoint. One without a source couldn't be opened
         bool _IsDefaultFontLookedFor { false };
     };
 
@@ -218,11 +219,13 @@ namespace RetroFuturaGUI
 
         /// @brief Adds a character set. The Unicode blocks a script needs, each named by a code point inside it (HiraganaFirst).
         ///        The first time a text shows one of its characters in a font and size whose fontset lacks that block, the block
-        ///        is added to the fontset from the character set's font (SetCharsetFont), else from the font itself. A name
-        ///        given again replaces its blocks
+        ///        is added to the fontset from the font itself, so a text keeps its look in every script its font has; the
+        ///        character set's font (SetCharsetFont) draws the characters the font lacks. A name given again replaces its
+        ///        blocks.
         static void AddCharset(std::string_view name, std::span<const u32> blocks);
 
-        /// @brief Sets the font a character set's blocks are added from. Fontsets that added them already keep theirs
+        /// @brief Sets the font drawing the characters of a character set's blocks that a text's own font lacks. Fontsets that
+        ///        opened it already keep theirs.
         static void SetCharsetFont(std::string_view charset, std::string_view fontFamily);
 
         /// @brief Sets the context glyphs are uploaded with when none is current, which shares its textures with every window.
@@ -317,17 +320,17 @@ namespace RetroFuturaGUI
         /// @brief The block of the font covering a character, nullptr when none does.
         static GlyphBlock* findBlock(const GlyphAtlas& atlas, const u32 codePoint);
 
-        /// @brief The block whose font draws a character: its own block's, if that font has it, else the first other font of
-        ///        the fontset that has it (in the order of their blocks), else the default font's. When none has it, its own
-        ///        block, which draws the font's "missing" glyph, or nullptr when no block covers it.
+        /// @brief The block whose font draws a character: its own block's, if that font has it, else its character set's font's,
+        ///        else the first other font of the fontset that has it (in the order of their blocks), else the default font's.
+        ///        When none has it, its own block, which draws the font's "missing" glyph, or nullptr when no block covers it.
         static GlyphBlock* findDrawingBlock(const FontInfo& font, GlyphAtlas& atlas, const u32 codePoint);
 
         /// @brief The default font opened at the atlas's size, kept among its fallback blocks; nullptr when it's one of the
         ///        fontset's own fonts (asked already) or can't be opened.
         static GlyphBlock* getDefaultFontBlock(const FontInfo& font, GlyphAtlas& atlas);
 
-        /// @brief A character set (AddCharset). Its blocks by their first code points, and the family they come from, empty
-        ///        for the font being extended
+        /// @brief A character set (AddCharset). Its blocks by their first code points, and the family drawing what a text's own
+        ///        font lacks of them, empty for none
         struct Charset
         {
             std::string _Name {};
@@ -335,13 +338,27 @@ namespace RetroFuturaGUI
             std::string _FontFamily {};
         };
 
-        /// @brief Adds the block holding the character to the fontset from its character set's font, the first time a text in
-        ///        this font and size needs it. nullptr when no character set has the block, or it was tried already
+        /// @brief The character set holding the block, or nullptr when none does
+        static const Charset* findCharset(const u32 blockKey);
+
+        /// @brief Adds the block holding the character to the fontset from the font itself, else, when the font can't be opened
+        ///        for it, from its character set's font, the first time a text in this font and size needs it. nullptr when no
+        ///        character set has the block, or it was tried already
         static GlyphBlock* loadCharsetBlock(const FontInfo& font, GlyphAtlas& atlas, const u32 codePoint);
+
+        /// @brief The character set's font for the block holding the character, opened at the atlas's size the first time it's
+        ///        asked for and kept in the atlas. nullptr when no character set has the block, its font is the text's own or
+        ///        none, or it can't be opened.
+        static GlyphBlock* getCharsetFallbackBlock(const FontInfo& font, GlyphAtlas& atlas, const u32 codePoint);
 
         /// @brief Adds a block of another family to the atlas, at the given size: what ExtendFontset and the character sets do
         /// @return false when the family couldn't be loaded.
         static bool extendAtlas(GlyphAtlas& atlas, std::string_view fontFamilyExtension, const f32 pixels, const PlatformBridge::Fonts::Slant slant, const PlatformBridge::Fonts::Weight weight, const u32 codePointFirst, const u32 codePointLast);
+
+        /// @brief Opens a block of a family at the given size into block, scaled to the atlas's size: what extendAtlas and the
+        ///        character sets' fonts load.
+        /// @return false when the family couldn't be loaded, leaving block as it was.
+        static bool loadBlock(const GlyphAtlas& atlas, std::string_view fontFamily, const f32 pixels, const PlatformBridge::Fonts::Slant slant, const PlatformBridge::Fonts::Weight weight, const u32 codePointFirst, const u32 codePointLast, GlyphBlock& block);
 
         /// @brief Whether a character belongs to the character before it rather than starting a run of its own: joiners,
         ///        variation selectors, combining marks, skin tones and the tags of subdivision flags.
