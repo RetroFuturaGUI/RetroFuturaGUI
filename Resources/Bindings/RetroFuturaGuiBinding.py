@@ -77,7 +77,7 @@ class RetroFuturaGuiBinding:
 
     def LoadDll(self):
         try:
-            self.RetroFuturaGuiDLL = CDLL("./TestProjectNative.dll")
+            self.RetroFuturaGuiDLL = CDLL("./DemoAppNative.dll")
             #print("DLL loaded successfully.")
         except Exception as e:
             print(f"Error loading DLL: {e}")

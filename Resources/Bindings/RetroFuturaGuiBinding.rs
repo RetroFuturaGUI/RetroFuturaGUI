@@ -107,7 +107,7 @@ impl RetroFuturaGuiBinding {
     pub fn new() -> Result<Self, libloading::Error> {
         // On Windows, you might need ".dll" extension explicitly depending on the system config
         // On Linux/macOS, this would be ".so" or ".dylib" respectively.
-        let lib = Library::new("TestProjectNative.dll")?;
+        let lib = Library::new("DemoAppNative.dll")?;
 
         unsafe {
             Ok(RetroFuturaGuiBinding {

@@ -58,7 +58,7 @@ public class RetroFuturaGuiBinding
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
     public delegate void PathsCallback(IntPtr paths, UInt32 pathCount);
 
-    const string dllName = "TestProjectNative";
+    const string dllName = "DemoAppNative";
 
     //The delegates of each open explorer, so the garbage collector can't free them while native code still calls them
     private static readonly Dictionary<int, Delegate[]> explorerCallbacks = new();
