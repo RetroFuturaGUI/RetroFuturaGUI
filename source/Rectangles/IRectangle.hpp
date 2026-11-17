@@ -94,6 +94,10 @@ namespace RetroFuturaGUI
         /// @brief Draws the shared quad with the shader in use.
         static void drawQuad();
 
+        /// @brief Draws the shared quad as an effect lying on its caster (a shadow, a glow). Without writing depth, and pulled
+        ///        toward the eye by about a pixel's depth, so it neither covers nor loses to its caster when tilted
+        static void drawEffectQuad();
+
     //Geometry
         Projection& _projection;
         glm::mat4

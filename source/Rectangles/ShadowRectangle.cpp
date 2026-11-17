@@ -38,5 +38,5 @@ void RetroFuturaGUI::ShadowRectangle::Draw()
     shader.SetUniformVec2("uShapeHalfSize", _shapeSize * 0.5f);
     shader.SetUniformFloat("uShadowBlur", _blur);
     shader.SetUniformFloat("uRingWidth", _ringWidth);
-    drawQuad();
+    drawEffectQuad();
 }

@@ -42,5 +42,5 @@ void RetroFuturaGUI::InnerGlowRectangle::Draw()
     shader.SetUniformFloat("uGlowWidth", _width);
     shader.SetUniformFloat("uRingWidth", _ringWidth);
     shader.SetUniformVec2("uInnerOffset", _offset);
-    drawQuad();
+    drawEffectQuad();
 }

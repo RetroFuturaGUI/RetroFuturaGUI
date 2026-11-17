@@ -183,6 +183,25 @@ void RetroFuturaGUI::IRectangle::drawQuad()
     VertexArray::Unbind();
 }
 
+void RetroFuturaGUI::IRectangle::drawEffectQuad()
+{
+    //An effect lies a hair behind or in front of its caster, closer than the depth buffer tells apart once tilted. It draws
+    //right before or after the caster, so the order alone layers them. The offset keeps one drawn after over the caster
+    GLboolean writesDepth { GL_TRUE };
+    glGetBooleanv(GL_DEPTH_WRITEMASK, &writesDepth);
+    const bool wasOffset { GL_TRUE == glIsEnabled(GL_POLYGON_OFFSET_FILL) };
+
+    glDepthMask(GL_FALSE);
+    glEnable(GL_POLYGON_OFFSET_FILL);
+    glPolygonOffset(-1.0f, -1.0f);
+    drawQuad();
+
+    if(!wasOffset)
+        glDisable(GL_POLYGON_OFFSET_FILL);
+
+    glDepthMask(writesDepth);
+}
+
 void RetroFuturaGUI::IRectangle::createQuad()
 {
     glGenBuffers(1, &_quadVbo);
