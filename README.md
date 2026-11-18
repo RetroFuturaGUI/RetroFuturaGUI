@@ -167,9 +167,9 @@ https://github.com/user-attachments/assets/9d4e9ba8-d4bf-451e-a5da-26ed630720c5
   - Anti-aliased lines with mitered joins (Polyline)
 - Text Renderer
   - All of Unicode, glyphs rendered when first shown; installed font families with their weights and slants, variable fonts, fallback fonts per character
-  - Character sets (FontManager::AddCharset, SetCharsetFont): the Unicode blocks an app's scripts need, each added to a font and size the first time a text there shows one of its characters, from the set's font or the font itself, so only the blocks used are loaded
-  - Shaping with HarfBuzz (kerning, ligatures, emoji sequences), right-to-left scripts (SheenBidi), color emoji including gradient emoji (COLR v1), vertical flow; word wrapping (EnableWordWrap: after the last space that fits, inside a word longer than the line); text held at the middle, top or bottom of its box (Text::SetAnchor with a TextAnchor)
-  - Every fill and effect inside the glyphs, outlines, images and masks (metal text)
+  - Character sets (FontManager::AddCharset, SetCharsetFont): the Unicode blocks an app's scripts need, each added to a font and size the first time a text there shows one of its characters, from the font itself, so only the blocks used are loaded. The set's font draws the characters the font lacks
+  - Shaping with HarfBuzz (kerning, ligatures, emoji sequences), right-to-left scripts (SheenBidi), color emoji including gradient emoji (COLR v1), vertical flow; word wrapping (EnableWordWrap: after the last space that fits, inside a word longer than the line); text held at the middle, top or bottom of its box (Text::SetAnchor with a TextAnchor); letter spacing between clusters, so marks stay on their letters (SetLetterSpacing)
+  - Every fill and effect inside the glyphs, outlines, images and masks (metal text); images and masks stretched, filled, fitted or repeated (ImageFit::Repeat, for seamless textures)
   - Drop shadows, glows and inner glows: their glyphs are blurred on the CPU into the glyph pages, once per blur, width and offset
 - Signals: thread-safe Connect/Disconnect, synchronous (Emit) and threaded (EmitAsync) dispatch
 - BackgroundWork: a worker thread whose results are handed back on the GUI thread

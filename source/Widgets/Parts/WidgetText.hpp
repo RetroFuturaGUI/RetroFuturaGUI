@@ -21,7 +21,8 @@ namespace RetroFuturaGUI
         Font,
         Padding,
         Alignment,
-        Flow
+        Flow,
+        LetterSpacing
     };
 
     /// @brief A widget's text: its string, font, colors per state and effects. The widget owns it and hands it out through
@@ -101,6 +102,13 @@ namespace RetroFuturaGUI
 
         /// @brief Returns the padding applied around the text
         f32 GetPadding() const;
+
+        /// @brief Sets the room added between letters, in pixels, over every flavor; below 0 moves them closer. It goes between
+        ///        clusters, so marks stay on their letters, and none follows a line's last letter. 0 by default
+        void SetLetterSpacing(const f32 pixels);
+
+        /// @brief Returns the room added between letters, in pixels
+        f32 GetLetterSpacing() const;
 
         /// @brief Returns the rendered width of the string (pixels)
         f32 GetWidth() const;
@@ -322,6 +330,9 @@ namespace RetroFuturaGUI
         /// @brief Hands the text and the follower the padding when it changed, then tells the widget
         void layoutPadding();
 
+        /// @brief Hands the text and the follower the letter spacing when it changed, then tells the widget
+        void layoutLetterSpacing();
+
         /// @brief The widget's flavors, empty for a text no flavor styles
         std::span<const u32> getFlavors() const;
 
@@ -353,6 +364,7 @@ namespace RetroFuturaGUI
         LayeredSetting<f32>
             _fontSize {}, //in pixels
             _padding {},
+            _letterSpacing {}, //in pixels
             _colorGlyphTint {};
         LayeredSetting<PlatformBridge::Fonts::Slant> _fontSlant {};
         LayeredSetting<PlatformBridge::Fonts::Weight> _fontWeight {};

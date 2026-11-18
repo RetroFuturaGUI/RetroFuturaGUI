@@ -108,6 +108,7 @@ namespace RetroFuturaGUI
             _Offset { 0.0f }; // from the pen to the glyph's origin
         bool _IsShaped { false },
             _IsRightToLeft { false }; // shaped right to left: the character's start is the glyph's right edge
+        f32 _Spacing { 0.0f }; // pixels added after it along the line. The text's letter spacing, when the next glyph starts another cluster
     };
 
     class FontManager

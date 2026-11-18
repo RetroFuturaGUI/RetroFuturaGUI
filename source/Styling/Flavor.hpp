@@ -110,7 +110,8 @@ namespace RetroFuturaGUI
         Flow,
         ColorGlyphTint,
         MaskSpan,
-        Skew
+        Skew,
+        LetterSpacing
     };
 
     /// @brief A setting of an effect (drop shadow, glow, inner glow) that a part's effect or a flavor can leave unset.
@@ -408,6 +409,10 @@ namespace RetroFuturaGUI
         void SetPadding(const f32 value);
         const std::optional<f32>& GetPadding() const;
 
+        /// @brief Sets the room added between a text's letters, in pixels. Below 0 moves them closer
+        void SetLetterSpacing(const f32 value);
+        const std::optional<f32>& GetLetterSpacing() const;
+
         /// @brief Sets how a text's lines run
         void SetFlow(const TextFlow value);
         const std::optional<TextFlow>& GetFlow() const;
@@ -473,6 +478,7 @@ namespace RetroFuturaGUI
         std::optional<PlatformBridge::Fonts::Weight> _fontWeight {};
         std::optional<TextAlignment> _alignment {};
         std::optional<f32> _padding {};
+        std::optional<f32> _letterSpacing {}; //in pixels
         std::optional<TextFlow> _flow {};
         std::optional<f32> _colorGlyphTint {};
         std::optional<MaskSpan> _maskSpan {};

@@ -3,11 +3,12 @@
 uniform sampler2D uBackgroundImage;
 uniform vec2 uImagePadding;
 uniform vec2 uImageCoverage = vec2(1.0); //how much of the inset box the image spans per axis: 1 stretched, more when filling, less when fitting
+uniform bool uImageRepeat = false; //tiled across the inset box rather than shown once
 uniform bool uImagePremultiplied = false; //a picture GL drew into, its colors multiplied by their alpha
 
-// Lays color over the plane's own image, which sits centered in the quad inset by uImagePadding, stretched to it or
-// keeping its proportions. Outside the image color is returned as it is, making the padding read as empty space rather
-// than a stretched edge pixel.
+// Lays color over the plane's own image, which sits centered in the quad inset by uImagePadding, stretched to it, keeping
+// its proportions, or tiled across it. Outside the image color is returned as it is, making the padding read as empty
+// space rather than a stretched edge pixel.
 vec4 applyImage(vec4 color)
 {
     vec2 span = vec2(1.0) - uImagePadding * 2.0;
@@ -15,9 +16,15 @@ vec4 applyImage(vec4 color)
     if(span.x <= 0.0 || span.y <= 0.0)
         return color;
 
-    vec2 imageUV = ((vLocalPos + 0.5 - uImagePadding) / span - 0.5) / uImageCoverage + 0.5;
+    vec2 boxUV = (vLocalPos + 0.5 - uImagePadding) / span;
 
-    if(any(lessThan(imageUV, vec2(0.0))) || any(greaterThan(imageUV, vec2(1.0))))
+    if(any(lessThan(boxUV, vec2(0.0))) || any(greaterThan(boxUV, vec2(1.0))))
+        return color;
+
+    vec2 imageUV = (boxUV - 0.5) / uImageCoverage + 0.5;
+
+    //A repeated image wraps past its edges, as its texture does.
+    if(!uImageRepeat && (any(lessThan(imageUV, vec2(0.0))) || any(greaterThan(imageUV, vec2(1.0)))))
         return color;
 
     vec4 image = texture(uBackgroundImage, imageUV);

@@ -92,6 +92,17 @@ void RetroFuturaGUI::WidgetText::SetPadding(const f32 padding)
     setLayout();
 }
 
+void RetroFuturaGUI::WidgetText::SetLetterSpacing(const f32 pixels)
+{
+    _letterSpacing.Set(pixels);
+    setLayout();
+}
+
+f32 RetroFuturaGUI::WidgetText::GetLetterSpacing() const
+{
+    return _text.GetLetterSpacing();
+}
+
 RetroFuturaGUI::TextAlignment RetroFuturaGUI::WidgetText::GetAlignment() const
 {
     return _text.GetTextAlignment();
@@ -553,6 +564,7 @@ void RetroFuturaGUI::WidgetText::setLayout()
     layoutFont();
     layoutAlignment();
     layoutPadding();
+    layoutLetterSpacing();
 
     if(const TextFlow* flow { _flow.Resolve(flavors, isStyled, _stylePart, TextFlow::Horizontal, [](const FlavorPart& part) -> const std::optional<TextFlow>& { return part.GetFlow(); }) })
     {
@@ -631,6 +643,22 @@ void RetroFuturaGUI::WidgetText::layoutPadding()
     _follower->SetPadding(*padding);
 }
 
+void RetroFuturaGUI::WidgetText::layoutLetterSpacing()
+{
+    const f32* spacing { _letterSpacing.Resolve(getFlavors(), nullptr != _flavors, _stylePart, 0.0f, [](const FlavorPart& part) -> const std::optional<f32>& { return part.GetLetterSpacing(); }) };
+
+    if(!spacing)
+        return;
+
+    _text.SetLetterSpacing(*spacing);
+    notifyChange(WidgetTextChange::LetterSpacing);
+
+    if(!_follower)
+        return;
+
+    _follower->SetLetterSpacing(*spacing);
+}
+
 std::span<const u32> RetroFuturaGUI::WidgetText::getFlavors() const
 {
     if(!_flavors)
@@ -678,6 +706,9 @@ void RetroFuturaGUI::WidgetText::ResetSetting(const StyleSetting setting)
         break;
         case StyleSetting::Padding:
             _padding.Reset();
+        break;
+        case StyleSetting::LetterSpacing:
+            _letterSpacing.Reset();
         break;
         case StyleSetting::Flow:
             _flow.Reset();

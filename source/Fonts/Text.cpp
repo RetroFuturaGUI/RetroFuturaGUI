@@ -377,6 +377,20 @@ void RetroFuturaGUI::Text::SetTextPadding(const f32 padding)
         _isSpanStale = true; //the lines wrap at the width the padding leaves.
 }
 
+void RetroFuturaGUI::Text::SetLetterSpacing(const f32 pixels)
+{
+    if(_letterSpacing == pixels)
+        return;
+
+    _letterSpacing = pixels;
+    _isSpanStale = true;
+}
+
+f32 RetroFuturaGUI::Text::GetLetterSpacing() const
+{
+    return _letterSpacing;
+}
+
 void RetroFuturaGUI::Text::SetParentSize(const glm::vec2 size)
 {
     if(_parentSize == size)
@@ -715,9 +729,9 @@ f32 RetroFuturaGUI::Text::getPlacedAdvance(const PlacedGlyph& placed, const Glyp
 {
     //A column's advance runs downward, against y
     if(placed._IsShaped)
-        return TextFlow::Horizontal == _textFlow ? placed._Advance.x * scale : -placed._Advance.y * scale;
+        return (TextFlow::Horizontal == _textFlow ? placed._Advance.x * scale : -placed._Advance.y * scale) + placed._Spacing;
 
-    return glyph ? getAdvance(*glyph, scale) : 0.0f;
+    return (glyph ? getAdvance(*glyph, scale) : 0.0f) + placed._Spacing;
 }
 
 f32 RetroFuturaGUI::Text::getAdvance(const Glyph& glyph, const f32 scale) const
@@ -1189,6 +1203,7 @@ void RetroFuturaGUI::Text::shapeLine(std::u32string_view line, std::vector<Place
     if(!bidiLine)
     {
         FontManager::ShapeText(*_fontInfo, _fontKey, line, ShapeDirection::LeftToRight, glyphs);
+        spaceClusters(*glyphs);
         SBParagraphRelease(paragraph);
         SBAlgorithmRelease(algorithm);
         return;
@@ -1210,9 +1225,23 @@ void RetroFuturaGUI::Text::shapeLine(std::u32string_view line, std::vector<Place
         glyphs->insert(glyphs->end(), runGlyphs.begin(), runGlyphs.end());
     }
 
+    spaceClusters(*glyphs);
     SBLineRelease(bidiLine);
     SBParagraphRelease(paragraph);
     SBAlgorithmRelease(algorithm);
+}
+
+void RetroFuturaGUI::Text::spaceClusters(std::vector<PlacedGlyph>& glyphs) const
+{
+    if(0.0f == _letterSpacing)
+        return;
+
+    //Between clusters only. A mark shares its letter's cluster and stays on it, and the line ends at its last letter
+    for(uSize glyph { 0 }; glyphs.size() > glyph + 1; ++glyph)
+    {
+        if(glyphs[glyph]._Cluster != glyphs[glyph + 1]._Cluster)
+            glyphs[glyph]._Spacing = _letterSpacing;
+    }
 }
 
 uSize RetroFuturaGUI::Text::GetBoundaryBeside(const uSize boundary, const CaretMove move) const

@@ -39,8 +39,8 @@ void RetroFuturaGUI::SvgImage::FitGeometryToTexture()
     _quadSize = widgetSize;
 
     //The size the widget's height gives at the drawing's proportions, and the one its width gives: Fit takes the one that stays
-    //inside the widget, Fill the one that covers it.
-    if(ImageFit::Stretch != _imageFit && 0.0f < _svgTextureAspectRatio)
+    //inside the widget, Fill the one that covers it. A drawing isn't tiled, so Repeat stretches it
+    if(ImageFit::Stretch != _imageFit && ImageFit::Repeat != _imageFit && 0.0f < _svgTextureAspectRatio)
     {
         const glm::vec2
             byHeight { widgetSize.y * _svgTextureAspectRatio, widgetSize.y },

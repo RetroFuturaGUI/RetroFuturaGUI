@@ -150,6 +150,9 @@ void RetroFuturaGUI::FlavorPart::Reset(const StyleSetting setting)
         case StyleSetting::MaskSpan:
             _maskSpan.reset();
         break;
+        case StyleSetting::LetterSpacing:
+            _letterSpacing.reset();
+        break;
     }
 
     StylingManager::markChanged();
@@ -604,6 +607,17 @@ void RetroFuturaGUI::FlavorPart::SetPadding(const f32 value)
 const std::optional<f32>& RetroFuturaGUI::FlavorPart::GetPadding() const
 {
     return _padding;
+}
+
+void RetroFuturaGUI::FlavorPart::SetLetterSpacing(const f32 value)
+{
+    _letterSpacing = value;
+    StylingManager::markChanged();
+}
+
+const std::optional<f32>& RetroFuturaGUI::FlavorPart::GetLetterSpacing() const
+{
+    return _letterSpacing;
 }
 
 void RetroFuturaGUI::FlavorPart::SetFlow(const TextFlow value)

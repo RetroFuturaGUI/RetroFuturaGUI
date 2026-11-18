@@ -114,6 +114,13 @@ namespace RetroFuturaGUI
         /// @brief Sets the padding applied around the text when aligning
         void SetTextPadding(const f32 padding);
 
+        /// @brief Sets the room added between letters along a line, in pixels; below 0 moves them closer. It goes between
+        ///        clusters, so marks stay on their letters, and none follows a line's last letter
+        void SetLetterSpacing(const f32 pixels);
+
+        /// @brief Returns the room added between letters along a line, in pixels
+        f32 GetLetterSpacing() const;
+
         /// @brief Sets the text content from a UTF-8 encoded string
         void SetTextUTF8(std::string_view text);
 
@@ -291,6 +298,9 @@ namespace RetroFuturaGUI
         /// @param isRightToLeft Set to whether the line reads right to left, from its first strong character
         void shapeLine(std::u32string_view line, std::vector<PlacedGlyph>* glyphs, bool* isRightToLeft) const;
 
+        /// @brief Gives each glyph the letter spacing that the next glyph starts another cluster after.
+        void spaceClusters(std::vector<PlacedGlyph>& glyphs) const;
+
         /// @brief Splits one line of the text (up to a '\n') into the lines it wraps into, appending each one's range.
         void wrapLine(const uSize start, const uSize length, const f32 width, const f32 scale);
 
@@ -375,8 +385,9 @@ namespace RetroFuturaGUI
         f32 _colorGlyphTint { 0.0f };
         MaskSpan _maskSpan { MaskSpan::WholeText };
         f32 _textPadding { 0.0f };
+        f32 _letterSpacing { 0.0f }; //in pixels.
         f32 _scrollOffset { 0.0f };
-        bool _isSpanStale { false }, //the text, the font, the size, the flow or the wrapping changed: the lines are shaped again
+        bool _isSpanStale { false }, //the text, the font, the size, the flow, the wrapping or the letter spacing changed: the lines are shaped again
             _isMeshStale { false }, //the outline or an effect changed: the glyphs' quads are built again
             _isPlacementStale { false }; //the position, the parent, the alignment, the scroll offset or the rotation changed
 

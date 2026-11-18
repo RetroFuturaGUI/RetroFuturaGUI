@@ -34,7 +34,8 @@ namespace RetroFuturaGUI
     {
         Stretch, // across the whole area, whatever its proportions
         Fill, // keeping its proportions and covering the whole area. The overhang gets cut off
-        Fit // keeping its proportions and shown whole, centered, leaving the rest of the area without it
+        Fit, // keeping its proportions and shown whole, centered, leaving the rest of the area without it
+        Repeat // at its own pixel size, tiled across the area outward from its center, for seamless textures. The texture has to wrap, as ResourceManager's do. An SvgImage shows it stretched
     };
 
     /// @brief What a grayscale mask does to the color under it.

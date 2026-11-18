@@ -3,6 +3,7 @@
 uniform sampler2D uMask;
 uniform int uMaskMode; //0: alpha, 1: shade, as MaskMode in C++
 uniform vec2 uMaskCoverage; //how much of the area the mask spans per axis: 1 stretched, more when filling, less when fitting
+uniform bool uMaskRepeat = false; //tiled across the area rather than laid once
 
 //The position the mask is laid by, -0.5 .. 0.5 across the area; a class shader can lay it otherwise (Text: per line)
 #ifndef MASK_POSITION
@@ -16,7 +17,8 @@ vec4 applyMask(vec4 color)
 {
     vec2 maskUV = MASK_POSITION / uMaskCoverage + 0.5;
 
-    if(any(lessThan(maskUV, vec2(0.0))) || any(greaterThan(maskUV, vec2(1.0))))
+    //A repeated mask wraps past its edges, as its texture does.
+    if(!uMaskRepeat && (any(lessThan(maskUV, vec2(0.0))) || any(greaterThan(maskUV, vec2(1.0)))))
         return color;
 
     float gray = texture(uMask, maskUV).r;

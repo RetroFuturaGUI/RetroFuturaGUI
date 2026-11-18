@@ -275,6 +275,7 @@ void RetroFuturaGUI::FillStyle::uploadBackgroundImage(Shader& shader, const glm:
     glActiveTexture(GL_TEXTURE1);
     glBindTexture(GL_TEXTURE_2D, _backgroundImageTextureID);
     shader.SetUniformVec2("uImageCoverage", getCoverage(_backgroundImageFit, size - 2.0f * glm::vec2(_backgroundImagePadding))); //fitted inside the padding
+    shader.SetUniformInt("uImageRepeat", ImageFit::Repeat == _backgroundImageFit ? 1 : 0);
     shader.SetUniformInt("uImagePremultiplied", _isBackgroundImagePremultiplied ? 1 : 0);
     glActiveTexture(GL_TEXTURE0);
 }
@@ -295,6 +296,7 @@ void RetroFuturaGUI::FillStyle::uploadMask(Shader& shader, const glm::vec2& size
     glActiveTexture(GL_TEXTURE3);
     glBindTexture(GL_TEXTURE_2D, _maskTextureID);
     shader.SetUniformVec2("uMaskCoverage", getCoverage(_maskFit, size));
+    shader.SetUniformInt("uMaskRepeat", ImageFit::Repeat == _maskFit ? 1 : 0);
     glActiveTexture(GL_TEXTURE0);
 }
 
@@ -312,10 +314,14 @@ glm::vec2 RetroFuturaGUI::FillStyle::getCoverage(const ImageFit fit, const glm::
     if(0 >= width || 0 >= height || 0.0f >= size.x || 0.0f >= size.y)
         return glm::vec2(1.0f);
 
+    const glm::vec2 textureSize { static_cast<f32>(width), static_cast<f32>(height) };
+
+    //One texture pixel to one screen pixel, so a tile keeps the texture's own size whatever the area's.
+    if(ImageFit::Repeat == fit)
+        return textureSize / size;
+
     //Scaled by the same factor both ways: the larger one covers the area, the smaller one fits into it
-    const glm::vec2
-        textureSize { static_cast<f32>(width), static_cast<f32>(height) },
-        factors { size / textureSize };
+    const glm::vec2 factors { size / textureSize };
     const f32 factor { ImageFit::Fill == fit ? std::max(factors.x, factors.y) : std::min(factors.x, factors.y) };
     return textureSize * factor / size;
 }
