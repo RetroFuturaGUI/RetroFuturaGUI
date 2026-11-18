@@ -1,6 +1,6 @@
 {
     "schemaVersion": 2,
-    "headersHash": "1a95d53284f742841a2d25a55afe0baf6caea4933a3b239d7e087bd9d297c7a3",
+    "headersHash": "98804c872a0168e3a098f172b7968b2514b93ca4f7ba066aa3fde8fbd0f1b79b",
     "enums": {
         "AssetKind": {
             "cpp": "RetroFuturaGUI::AssetKind",
@@ -8760,6 +8760,17 @@
                         ]
                     }
                 ],
+                "Image": [
+                    {
+                        "call": "SetImage",
+                        "params": [
+                            {
+                                "name": "path",
+                                "type": "std::string_view"
+                            }
+                        ]
+                    }
+                ],
                 "ImageFit": [
                     {
                         "call": "SetImageFit",
@@ -8778,17 +8789,6 @@
                             {
                                 "name": "padding",
                                 "type": "f32"
-                            }
-                        ]
-                    }
-                ],
-                "ImageTextureID": [
-                    {
-                        "call": "SetImageTextureID",
-                        "params": [
-                            {
-                                "name": "textureID",
-                                "type": "u32"
                             }
                         ]
                     }
@@ -12409,6 +12409,17 @@
                             {
                                 "name": "rotationSpeed",
                                 "type": "f32"
+                            }
+                        ]
+                    }
+                ],
+                "Image": [
+                    {
+                        "call": "SetImage",
+                        "params": [
+                            {
+                                "name": "path",
+                                "type": "std::string_view"
                             }
                         ]
                     }

@@ -262,6 +262,11 @@ void RetroFuturaGUI::WidgetText::SetImageTextureID(const u32 textureID)
     setShader();
 }
 
+void RetroFuturaGUI::WidgetText::SetImage(std::string_view path)
+{
+    SetImageTextureID(ResourceManager::GetTextureID(path));
+}
+
 void RetroFuturaGUI::WidgetText::SetImagePadding(const f32 padding)
 {
     _shader._ImagePadding.Set(padding);

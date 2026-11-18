@@ -17,6 +17,16 @@ RetroFuturaGUI::Texture* RetroFuturaGUI::ResourceManager::GetTexture(std::string
     return findOrLoadTexture(path);
 }
 
+u32 RetroFuturaGUI::ResourceManager::GetTextureID(std::string_view path)
+{
+    const Texture* texture { GetTexture(path) };
+
+    if(!texture)
+        return 0;
+
+    return texture->GetID();
+}
+
 std::unique_ptr<RetroFuturaGUI::SvgTexture> RetroFuturaGUI::ResourceManager::CreateSvgTexture(std::string_view path, Projection* projection, const glm::i32vec2 initialResolution)
 {
     const std::string* source { findSvgSource(path) };

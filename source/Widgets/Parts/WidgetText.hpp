@@ -170,6 +170,10 @@ namespace RetroFuturaGUI
         /// @bechaml internal
         void SetImageTextureID(const u32 textureID);
 
+        /// @brief Sets the image shown inside the glyphs from the image file at path (UTF-8), loaded through ResourceManager
+        ///        when it isn't yet. A file that can't be read shows no image. See SetImageTextureID
+        void SetImage(std::string_view path);
+
         /// @brief Sets how far the image stays clear of the text's edges, per side in pixels
         void SetImagePadding(const f32 padding);
 

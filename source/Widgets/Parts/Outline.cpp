@@ -1,4 +1,5 @@
 #include "Outline.hpp"
+#include "ResourceManager.hpp"
 
 RetroFuturaGUI::Outline::Outline(Text& text)
     : _text(text)
@@ -91,6 +92,11 @@ void RetroFuturaGUI::Outline::ResetSetting(const EffectSetting setting)
 void RetroFuturaGUI::Outline::SetImageTextureID(const u32 textureID)
 {
     _text.GetOutline().SetBackgroundImageTextureID(textureID);
+}
+
+void RetroFuturaGUI::Outline::SetImage(std::string_view path)
+{
+    SetImageTextureID(ResourceManager::GetTextureID(path));
 }
 
 void RetroFuturaGUI::Outline::SetImagePadding(const f32 padding)

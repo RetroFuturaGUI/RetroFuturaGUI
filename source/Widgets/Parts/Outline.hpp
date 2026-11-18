@@ -4,6 +4,7 @@
 #include "Text.hpp"
 #include <array>
 #include <span>
+#include <string_view>
 #include <vector>
 
 namespace RetroFuturaGUI
@@ -57,7 +58,12 @@ namespace RetroFuturaGUI
         void ResetSetting(const EffectSetting setting);
 
         /// @brief Sets the outline's own image, stretched across the whole text behind its fill, whose alpha decides how much of it shows. 0 shows no image
+        /// @bechaml internal
         void SetImageTextureID(const u32 textureID);
+
+        /// @brief Sets the outline's own image from the image file at path (UTF-8), loaded through ResourceManager when it
+        ///        isn't yet. A file that can't be read shows no image
+        void SetImage(std::string_view path);
 
         /// @brief Sets how far the image stays clear of the text's edges per side (in pixels)
         void SetImagePadding(const f32 padding);

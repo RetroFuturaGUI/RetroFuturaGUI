@@ -23,6 +23,10 @@ namespace RetroFuturaGUI
         /// @brief The texture loaded from the image file at path (UTF-8). It is kept until Free(path), or until the last scene counting it closes, so every widget showing the file borrows the same one
         static Texture* GetTexture(std::string_view path);
 
+        /// @brief The ID of the texture loaded from the image file at path (UTF-8), as GetTexture loads and keeps it. 0, which
+        ///        shows no image, when the file can't be read
+        static u32 GetTextureID(std::string_view path);
+
         /// @brief A new SvgTexture made from the SVG file at path (UTF-8). Its colors and size can be changed without touching anyone else's. After Free(path) no new copies can be acquired.
         static std::unique_ptr<SvgTexture> CreateSvgTexture(std::string_view path, Projection* projection = nullptr, const glm::i32vec2 initialResolution = glm::i32vec2(0));
 
