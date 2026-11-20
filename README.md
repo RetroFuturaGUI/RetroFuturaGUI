@@ -9,30 +9,37 @@ The framework is designed for cross-platform use, and its logic can be compiled 
 https://github.com/user-attachments/assets/9d4e9ba8-d4bf-451e-a5da-26ed630720c5
 
 
+
+## Why?
+There are many C++ GUI frameworks available, but most come with one or more drawbacks: restrictive licensing, enforced use of proprietary containers, inflexible window layouts, limited design capabilities, or poor cross-platform support, often confined to C++ only.
+RetroFuturaGUI aims to break these barriers!
+
+
+
 ## Roadmap
 | # | Name | Depends on | Current State |
 |------|-----|------------| ---- |
-| 1 | Button, Label, Window, MainWindow, Image, Grid2D, WindowBar with Buttons |  | ✅ |
+| 1 | Button, Label, Window, MainWindow, Image, Lasagna (3-D Grid), WindowBar with Buttons |  | ✅ |
 | 2 | dll/so/dylib compilation for C# and Python support, Widget ID manager | 1 | ✅ | 
 | 3 | Linux Support, Font Manager | 2 | ✅ | 
-| 4 | More Widgets (TextBox ✅, Table ✅, 3D Model ✅, Slider ✅, CheckBox ✅, ComboBox ✅, ExtendedComoBox ✅, RadioButton ✅, RadioButtonGroup ✅, SeparatorLine ✅, ColorPreview ✅, change Grid2d to "Lasagna" and add a 3rd dimension ✅, MenuBar ✅, MultilineTextBox ✅, Histogram ✅, VideoPlayer ✅, Environment ✅, LineDiagram ✅, ScrollView ✅, Color Pickers ✅, WindowTab ✅, window docking ✅, ContextMenu ✅), Scene ✅, SceneLoader ✅, AudioPlayback ✅, Popups ✅, Tooltip ✅, FileExplorer ✅, Big Refactor ✅ | 1 | ✅ | 
-| 5 | .bechaml markup language for GUI design 🥣 (**B**eautifully **E**xtended **C**ascading but **H**airbally **A**pplication **M**arkup **L**anguage), StylingManager with flavors ✅ (named, shared styles for colors, corners and shader settings, in place of the planned ColorManager and CornerRadiiManager), DropShadow ✅ and InnerShade ✅ (Text, Border, Background; InnerGlow serves as the inner shade) | 4 | |
+| 4 | More Widgets, Scene, SceneLoader, AudioPlayback, Popups, Tooltip, FileExplorer, Big Refactor | 1 | ✅ | 
+| 5 | .bechaml markup language for GUI design 🥣 (**B**eautifully **E**xtended **C**ascading but **H**airbally **A**pplication **M**arkup **L**anguage), StylingManager with flavors ✅, DropShadow ✅ InnerShade ✅ | 4 | |
 | 6 | VS Code extension with project generator/manager | 5 | | 
 | 7 | Pre-built Prefabs (StepperSlider, SpinBox, Table with Sliders, Carousel, Extended Color Pickers, MediaPlayer, LabeledCheckBox) | 6 |
 | 8 | Interoperability API Exporter | 7 |  |
-| 9 | Aesthetics: Flat Metro, Frutiger Aero (Win Vista/7, Wii, Wii U, Pikmin 3), Frutiger Metro, Y2K Futurism (F-Zero GX), Vaporwave, Outrun/Synthwave, Neumorphism, Glassmorphism/Liquid Glass, Constructivism, Comic/Anime/LoFi, Bauhaus, ... | 8 | | 
+| 9 | Aesthetics: Flat Metro, Frutiger Aero (Win Vista/7, 2000s video game platforms and games), Frutiger Metro, Y2K Futurism, Vaporwave, Outrun/Synthwave, Neumorphism, Glassmorphism/Liquid Glass, Constructivism, Comic/Anime/LoFi, Bauhaus, ... | 8 | | 
 | 10 | Android (without Android Studio), MacOS, iOS support | 8 | | 
 | 11 | dll/so/dylib compilation for C, Rust, Zig, Java, JavaScript, TypeScript, Go, Ruby, Lua, Swift, Carbon, Gleam, Goose | 8 | | 
-| 12 | gcn and wii support (libogc (devkitPro)) | 8 | | 
+| 12 | GCN and RVL support (libogc (devkitPro)) | 8 | | 
 | 13 | XBox series Support (all XBox consoles, not just the Series series, du'h) (DirectX), DirectX for Windows | 8 | | 
 | 14 | Dreamcast support (OpenGL 1.5 + PVR APi) | 8 | | 
-| 15 | Wii U support (GX2 (devkitPro)) | 8 | | 
-| 16 | 3DS support (citro3d/citro2d (devkitPro)) | 8 | | 
+| 15 | Café OS support (GX2 (devkitPro)) | 8 | | 
+| 16 | Citrus support (citro3d/citro2d (devkitPro)) | 8 | | 
 | 17 | Switch support (deko3d (devkitPro)) | 8 | | 
-| 18 | PS2 (ps2gl), PS3 (RSXGL), PS4 (OpenOrbis/GNMX/GNM) support | 8 | | 
+| 18 | PS2 (ps2gl), PS3 (RSXGL), PS4 (OpenOrbis/GNMX/GNM), PS5 (Vulkan) support | 8 | | 
 
 ### WIP in detail
-- .bechaml (milestone 5). Seven file kinds, the root element naming the kind: Project (read by CMake), AppSettings, Dictionary, Flavors, Aesthetic (the look of the scenes that include it), Scene, Window. Rules address one widget (#OkButton), a flavor (.primary), a widget type (Button) or every widget (*): `#OkButton.Border:Hover = Dictionary.Colors.HoveredLook`. In a scene, a widget's own values come before its flavors, then the Aesthetic's type entries, then .default, then the built-in look. The files are never read at run time: Roux (the config tool, its own repository) turns them into C++ before the build, shaped so hot reload stays possible later. Planned in the .bechaml and Roux repositories (Plan.md); what the library needs:
+- .bechaml (milestone 5). Seven file kinds, the root element naming the kind: Project (read by CMake), AppSettings, Dictionary, Flavors, Aesthetic (the look of the scenes that include it), Scene, Window. Rules address one widget (#OkButton), a flavor (.primary), a widget type (Button) or every widget (*): `#OkButton.Border:Hover = Dictionary.Colors.HoveredLook`. In a scene, a widget's own values come before its flavors, then the Aesthetic's type entries, then .default, then the built-in look. The files are never read at run time: Roux (the config tool, its own repository) turns them into C++ before the build, shaped so hot reload stays possible later. Planned in the .bechaml and Roux repositories. What the library needs:
   - Schema.json: the widget types, parts, settings, setters and value types the generator may call, with a compile check calling every setter in it
   - Widgets built and styled from generated code, building kept apart from styling
 - Popups
@@ -50,7 +57,7 @@ https://github.com/user-attachments/assets/9d4e9ba8-d4bf-451e-a5da-26ed630720c5
 
 - Styling (every widget, Window, Tooltip and ContextMenu)
   - A widget's look is a set of parts reached by getters: `button.GetBackground().SetColors(...)`, `textBox.GetBorder().SetWidth(...)`, `label.GetText().SetFontFamily(...)`. Beyond Background, Border and Text, widgets hand out their own: GetIndicator and GetGraph (Slider, ProgressBar, Histogram, LineDiagram), GetCheckmark (CheckBox), GetArrow and GetList (drop-downs), GetItemText (ComboBox), GetPreview (ExtendedComboBox), GetItemStyle and GetSeparatorLine (MenuBar), GetFieldStyle and GetCloseButton (WindowTab), GetTrackStyle, GetCellStyle, GetHeaderStyle, GetCellCheckBox and GetSelectionBand (Table), GetHoverText (LineDiagram), GetPlaceholder, GetCaret and GetSelectedArea (text boxes, Table)
-  - Colors per state (Enabled, Disabled, Hover, Clicked, Selected), each a list of colors: solid, animated Linear, Radial and Conic Shift gradients, raster patterns (Dotted, Checkered, Striped, Grid), fog, glass, images and recolorable SVGs, grayscale masks
+  - Colors per state (Enabled, Disabled, Hover, Clicked, Selected, Invalid), each a list of colors: solid, animated Linear, Radial and Conic Shift gradients, raster patterns (Dotted, Checkered, Striped, Grid), fog, glass, images and recolorable SVGs, grayscale masks
   - Shape: corner radii per corner, each corner rounded or cut off straight (SetCutCorners, the radius as the length cut off), a skew that leans the side edges into a parallelogram while the text stays upright (SetSkew; shadows, glows and a Button's press area lean with it), border widths and gaps, and a gap between the border and the background (SetBorderGap on the widget, per side), which moves over its own transition
   - Effects on backgrounds, borders and text, each with every fill and colors per state that follow their part's state (a state without colors shows the Enabled ones):
     - Drop shadow (GetDropShadow()): angle, distance, blur and scale
@@ -101,7 +108,7 @@ https://github.com/user-attachments/assets/9d4e9ba8-d4bf-451e-a5da-26ed630720c5
   - Tab: pages (root containers it owns, AddPage&lt;T&gt;) in a strip of fields, selected, reordered by dragging and removed by their cross (ShowCloseButtons); SetContentCornerRadii rounds its bottom corners
   - WindowTab: windows as tabs in a strip, selected, reordered, closed, pulled out and dropped back in by dragging (where the cursor is, a preview field making room there), drawn the way ImGui draws docked windows; tabs nest: a window holding windows in tabs goes into another WindowTab, and a tabbed window takes windows into its own (never one it lies inside); Ctrl+Tab and Ctrl+Page Down select the next tab, Ctrl+Shift+Tab and Ctrl+Page Up the previous one, as in browsers (in the strip of the window that has the keyboard; a nested strip switches by mouse); SetContentCornerRadii rounds the docked window's corners
   - Tab and WindowTab share their strip through ITab: the fields and their look (GetFieldStyle, GetCloseButton, title font and colors), their sizes, selecting, dragging to reorder and the close buttons. Fields that don't fit at their minimum width scroll: by the wheel over the strip, by arrows at its ends (GetScrollButton, an IconButton like the close buttons) shown while fields are hidden on their side (held, they keep scrolling), and to a field as it is selected, dragged past an end or dropped in as a window
-- WidgetRegistry: every widget is found from anywhere by its path ("MainWindow/MainScene/RootContainer/OkButton") or the path's hash (GetPathHash, Fnv1aHash), also as its type (Find<Button>); renames are followed
+- WidgetRegistry: every widget is found from anywhere by its path ("MainWindow/MainScene/RootContainer/OkButton") or the path's hash (GetPathHash, Fnv1aHash), also as its type (Find< Button>); renames are followed
 - Flavors (StylingManager), named style rules like CSS classes: a flavor sets colors per state, corner radii, cut corners, border widths, a background's or a text's image, every shader setting (fill, raster, glass, fog and their noise, masks, gaps, pixelation, CRT), the drop shadow, glow and inner glow (GetDropShadow() and so on, shown, colors per state, numbers, fill), and a text's font family, size, slant and weight, alignment, padding, flow, emoji tint, mask span and outline (GetText().GetOutline(): width, colors per state, fill), for its widgets' background, border and text; for the widget itself it sets the transitions (SetTransition, over the global default) and the border gap (SetBorderGap); the parts inside a widget have named getters, mirroring the widgets' own (GetIndicator().GetBackground(), GetGraph(), GetList().GetHighlight(), GetItemStyle(), GetSeparatorLine(), GetFieldStyle(), GetCloseButton(), GetScrollButton(), GetSelectionBand(), GetHoverText(), GetPlaceholder(), GetPreview(), GetCheckmark(), GetArrow(), GetCloseButton().GetIcon(), GetCaret(), GetSelectedArea(), GetItemText() (colors, and font, alignment and padding too), and a table's GetTrackStyle(n) for its nth track variant, GetCellStyle(), GetHeaderStyle(), GetCellCheckBox()); a window takes flavors as well (Window::AddFlavor: its background, border and transitions; a docked window still squares the corners where it meets others); a widget takes several in order (AddFlavor(".primary")), any time after it is made. Each value shows the widget's own setting if set, else the first of its flavors that sets it, else .default, else the widget type's built-in look; widgets don't own what they take from a flavor, so a change to the flavor shows on all of them at once
 - Scopes (StylingManager::GetScope), CSS-like styles for the widgets inside the library's popups, one per popup type (StyleScope::Message, Warning, Error, Value, File for the FileExplorer and its prompts) plus the shared Popup scope: an entry per widget type is a flavor (GetScope(StyleScope::File).GetEntry(WidgetTypeID::Button).GetBorder().SetColors(white, ColorState::Hover)), and accessors single out what a type alone can't, like CSS pseudo-classes (StyleAccessor::On for a toggle that is on, used inside the library only, Icon and Title for a message popup's icon and bar title, whose entries GetScope(...).GetIcon() and GetTitle() reach; IWidget::SetStyleAccessors). A field holding no valid value uses the Invalid color state instead (IWidget::SetInvalid). A widget in a popup takes its popup type's entries, then the shared Popup scope's (the accessor entries before the plain one each time), then its own flavors, .default and its built-in look. The library's own looks (the accent of an on toggle, an invalid field's red Invalid border, each message kind's accent and icon) are entries it adds only when the app hasn't defined them. Scopes set the popups' fonts, alignment and padding too, which are built-in there: the FileExplorer measures its rows, columns, header and place buttons from the fonts its Table and Buttons show, and the message and value popups their description, and they lay themselves out again when a scope or flavor changes them while open
 - Aesthetics (StylingManager::GetAesthetic), named looks for whole scenes: entries by widget type that a scene's widgets take after their own flavors and before .default (Scene::SetAesthetic, or Window::SetAesthetic for the window's scenes without one), and entries per popup type for the popups opened from them, which come before the library's own scopes (GetAesthetic("ColorfulPop", StyleScope::File)). A popup takes the Aesthetic of the window it was opened from, or of the scene that opens it through the overloads taking it first (Window::OpenPopup(scene, ...), PushPopup(scene, popup))
@@ -319,10 +326,6 @@ https://github.com/user-attachments/assets/9d4e9ba8-d4bf-451e-a5da-26ed630720c5
 #### Nice-to-have's
 - Better (relative) Viewports
 - Custom text renderer with many IANA character sets
-
-### Why?
-There are many C++ GUI frameworks available, but most come with one or more drawbacks: restrictive licensing, enforced use of proprietary containers, inflexible window layouts, limited design capabilities, or poor cross-platform support, often confined to C++ only.
-RetroFuturaGUI aims to break these barriers!
 
 ### Known Bugs
 - SvgTexture.cpp
